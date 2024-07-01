@@ -29,3 +29,4 @@ class Snapshot(models.Model):
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
     computer = models.ForeignKey(Computer, on_delete=models.CASCADE)
     components = models.ManyToManyField(Component)
+
