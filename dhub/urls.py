@@ -21,4 +21,5 @@ urlpatterns = [
     # path('api/', include('snapshot.urls')),
     path("", include("login.urls")),
     path("dashboard/", include("dashboard.urls")),
+    path("device/", include("device.urls")),
 ]

@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+<div class="row">
+  <div class="col">
+    <h3>{{ subtitle }}</h3>
+  </div>
+  <div class="col text-center">
+    <a href="{# url 'idhub:admin_people_edit' object.id #}" type="button" class="btn btn-green-admin">
+      <i class="bi bi-folder2"></i>
+      {% trans 'Lots' %}
+    </a>
+    <a href="{# url 'idhub:admin_people_edit' object.id #}" type="button" class="btn btn-green-admin">
+      <i class="bi bi-plus"></i>
+      {% trans 'Actions' %}
+    </a>
+    <a href="{# url 'idhub:admin_people_activate' object.id #}" type="button" class="btn btn-green-admin">
+      <i class="bi bi-reply"></i>
+      {% trans 'Exports' %}
+    </a>
+    <a href="#" type="button" class="btn btn-green-admin">
+      <i class="bi bi-tag"></i>
+      {% trans 'Labels' %}
+    </a>
+  </div>
+</div>
+
+<div class="dataTable-container">
+  <table class="table">
+    <thead>
+      <tr>
+        <th scope="col" data-sortable="">
+          <a class="dataTable-sorter" href="#">Title</a>
+        </th>
+      </tr>
+    </thead>
+    {% for dev in devices %}
+    <tbody>
+      <tr>
+        <td>
+          <a href="{% url 'device:details' dev.pk %}">{{ dev.type }} {{ dev.manufacturer }} {{ dev.model }}</a>
+        </td>
+      </tr>
+    </tbody>
+    {% endfor %}
+  </table>
+</div>
+{% endblock %}
