@@ -1,46 +1,19 @@
-from django.views import View
-from django.template.loader import get_template
-from django.http import HttpResponse
-from django.urls import resolve
 from django.utils.translation import gettext_lazy as _
-from django.core.exceptions import PermissionDenied
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.views.generic.base import TemplateView
+from dashboard.mixins import DashboardView
+from device.models import Device
 
 
-class Http403(PermissionDenied):
-    status_code = 403
-    default_detail = _('Permission denied. User is not authenticated')
-    default_code = 'forbidden'
+class UnassignedDevicesView(DashboardView, TemplateView):
+    template_name = "unassigned_devices.html"
+    section = "Unassigned"
+    title = _("Unassigned Devices")
+    breadcrumb = "Devices / Unassigned Devices"
 
-    def __init__(self, details=None, code=None):
-        if details is not None:
-            self.detail = details or self.default_details
-        if code is not None:
-            self.code = code or self.default_code
-
-
-class DashboardView(LoginRequiredMixin, View):
-    login_url = "/login/"
-    template_name = "dashboard.html"
-
-    def get(self, request, *args, **kwargs):
-
-        template = get_template(
-            self.template_name,
-        ).render()
-        return HttpResponse(template)
-        
-        # response = super().get(request, *args, **kwargs)
-        # return response
-        
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        devices = Device.objects.filter(owner=self.request.user)
         context.update({
-            # 'title': self.title,
-            # 'subtitle': self.subtitle,
-            # 'icon': self.icon,
-            # 'section': self.section,
-            'path': resolve(self.request.path).url_name,
-            # 'user': self.request.user,
+            'devices': devices,
         })
         return context

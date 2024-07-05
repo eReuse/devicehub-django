@@ -1,72 +1,205 @@
-<!DOCTYPE html>
+{% load i18n static %}
+
+<!doctype html>
 <html lang="en">
+  <head>
+  {% block head %}
+    {% block meta %}
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="robots" content="NONE,NOARCHIVE" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="Pangea">
+    {% endblock %}
+    <title>{% block title %}{% if title %}{{ title }} – {% endif %}DeviceHub{% endblock %}</title>
 
-<head>
-  <meta charset="utf-8">
-  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <!-- Bootstrap core CSS -->
+    {% block style %}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href= "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link href="{% static "/css/bootstrap.min.css" %}" rel="stylesheet">
 
-  <title>{% block page_title %}{% endblock %} - Usody</title>
-  <meta content="" name="description">
-  <meta content="" name="keywords">
+    <style>
+      .bd-placeholder-img {
+        font-size: 1.125rem;
+        text-anchor: middle;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        user-select: none;
+      }
 
-  <!-- Favicons -->
-  <link href="{{ url_for('static', filename='img/favicon.png') }}" rel="icon">
-  <link href="{{ url_for('static', filename='img/apple-touch-icon.png') }}" rel="apple-touch-icon">
+      @media (min-width: 768px) {
+        .bd-placeholder-img-lg {
+          font-size: 3.5rem;
+        }
+      }
+      html, body {
+        height: 100%;
+      }
 
-  <!-- Google Fonts -->
-  <link href="https://fonts.gstatic.com" rel="preconnect">
-  <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i,700,700i|Nunito:300,300i,400,400i,600,600i,700,700i|Poppins:300,300i,400,400i,500,500i,600,600i,700,700i" rel="stylesheet">
+      body {
+        display: flex;
+        flex-direction: column;
+      }
 
-  <!-- JS Files -->
-  <script src="{{ url_for('static', filename='js/jquery-3.6.0.min.js') }}"></script>
-  <script src="https://cdn.jsdelivr.net/npm/simple-datatables@5.0.3" type="text/javascript"></script>
+      .main-content {
+        flex-grow: 1;
+      }
 
+      footer {
+        width: 100%;
+      }
+    </style>
 
+  
+    <!-- Custom styles for this template -->
+    <link href="{% static "/css/dashboard.css" %}" rel="stylesheet">
+    {% endblock %}
+  {% endblock %}
+  </head>
+  <body>
+    <header class="navbar navbar-dark sticky-top admin bg-green flex-md-nowrap p-0 shadow">
+      <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3" href="#">DEVICE HUB</a>
+      <div class="navbar-nav navbar-sub-brand">
+         PANGEA
+      </div>
+      <div class="navbar-nav">
+        <div class="nav-item text-nowrap">
+            <i id="user-avatar" class="bi bi-person-circle"></i>
+            <a class="navbar-sub-brand px-3" href="#">{{ user.email }}</a>
+            <a class="logout" href="{% url 'login:logout' %}">
+              <i class="fa-solid fa-arrow-right-from-bracket"></i>
+            </a>
+        </div>
+      </div>
+    </header>
 
-  <!-- Vendor CSS Files -->
-  <link href="{{ url_for('static', filename='vendor/bootstrap/css/bootstrap.min.css') }}" rel="stylesheet">
-  <link href="{{ url_for('static', filename='vendor/bootstrap-icons/bootstrap-icons.css') }}" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/simple-datatables@5.0.3/dist/style.css" rel="stylesheet" type="text/css">
+    <div class="container-fluid">
+      <div class="row">
+        <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+          <div class="position-sticky pt-5">
+            <ul class="nav flex-column">
+              <li class="nav-item">
+                <a class="admin {% if section == 'Devices' %}active {% endif %}nav-link fw-bold" data-bs-toggle="collapse" data-bs-target="#ul_devices" aria-expanded="false" aria-controls="ul_devices" href="javascript:void()">
+                  <i class="bi bi-laptop icon_sidebar"></i>
+                  {% trans 'Devices' %}
+                </a>
+                <ul class="flex-column mb-2 ul_sidebar accordion-collapse {% if section == 'People' %}expanded{% else %}collapse{% endif %}" id="ul_devices" data-bs-parent="#sidebarMenu">
+                  <li class="nav-item">
+                    <a class="nav-link{% if path == 'admin_people_list' %} active2{% endif %}" href="{% url 'dashboard:unassigned_devices' %}">
+                      {% trans 'Unassigned devices' %}
+                    </a>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link{% if path == 'admin_people_new' %} active2{% endif %}" href="{# url 'idhub:admin_people_new' #}">
+                      {% trans 'All devices' %}
+                    </a>
+                  </li>
+                </ul>
+              </li>
+              <li class="nav-item">
+                <a class="admin {% if section == 'People' %}active {% endif %}nav-link fw-bold" data-bs-toggle="collapse" data-bs-target="#ul_lots" aria-expanded="false" aria-controls="ul_lots" href="javascript:void()">
+                  <i class="bi bi-database icon_sidebar"></i>
+                  {% trans 'Lots' %}
+                </a>
+                <ul class="flex-column mb-2 ul_sidebar accordion-collapse {% if section == 'People' %}expanded{% else %}collapse{% endif %}" id="ul_lots" data-bs-parent="#sidebarMenu">
+                  <li class="nav-items">
+                    <a class="nav-link{% if path == 'admin_people_list' %} active2{% endif %}" href="{# url 'idhub:admin_people_list' #}">
+                      {% trans 'Incoming ' %}
+                    </a>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link{% if path == 'admin_people_new' %} active2{% endif %}" href="{# url 'idhub:admin_people_new' #}">
+                      {% trans 'Outgoing ' %}
+                    </a>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link{% if path == 'admin_people_new' %} active2{% endif %}" href="{# url 'idhub:admin_people_new' #}">
+                      {% trans 'Temporal ' %}
+                    </a>
+                  </li>
+                </ul>
+              </li>
+              <li class="nav-item">
+                <a class="admin {% if section == 'People' %}active {% endif %}nav-link fw-bold" data-bs-toggle="collapse" data-bs-target="#ul_snapshots" aria-expanded="false" aria-controls="ul_snapshots" href="javascript:void()">
+                  <i class="bi bi-usb-drive icon_sidebar"></i>
+                  {% trans 'Snapshots' %}
+                </a>
+                <ul class="flex-column mb-2 ul_sidebar accordion-collapse {% if section == 'People' %}expanded{% else %}collapse{% endif %}" id="ul_snapshots" data-bs-parent="#sidebarMenu">
+                  <li class="nav-item">
+                    <a class="nav-link{% if path == 'admin_people_list' %} active2{% endif %}" href="{# url 'idhub:admin_people_list' #}">
+                      {% trans 'Upload one' %}
+                    </a>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link{% if path == 'admin_people_list' %} active2{% endif %}" href="{# url 'idhub:admin_people_list' #}">
+                      {% trans 'Old snapshots' %}
+                    </a>
+                  </li>
+                </ul>
+              </li>
+              <li class="nav-item">
+                <a class="admin {% if section == 'People' %}active {% endif %}nav-link fw-bold" data-bs-toggle="collapse" data-bs-target="#ul_placeholders" aria-expanded="false" aria-controls="ul_placeholders" href="javascript:void()">
+                  <i class="bi-menu-button-wide icon_sidebar"></i>
+                  {% trans 'Placeholders' %}
+                </a>
+                <ul class="flex-column mb-2 ul_sidebar accordion-collapse {% if section == 'People' %}expanded{% else %}collapse{% endif %}" id="ul_placeholders" data-bs-parent="#sidebarMenu">
+                  <li class="nav-item">
+                    <a class="nav-link{% if path == 'admin_people_list' %} active2{% endif %}" href="{# url 'idhub:admin_people_list' #}">
+                      {% trans 'Upload Spreadsheet' %}
+                    </a>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link{% if path == 'admin_people_list' %} active2{% endif %}" href="{% url 'device:add' %}">
+                      {% trans 'Create one' %}
+                    </a>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </div>
+        </nav>
 
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+          {% block messages %}
+            {% for message in messages %}
+              <div class="alert {{ message.tags|default:'info' }} alert-dismissible fade show mt-3" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
+                </button>
+              </div>
+            {% endfor %}
+          {% endblock messages %}
+          <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2">
+            <h1 class="h2">{{ title }}</h1>
+          </div>
+          <div class="row border-bottom mb-3">
+            <div class="col">
+              <small style="color:#899bbd"><i>{{ breadcrumb }}</i></small>
+            </div>
+            <div class="btn-toolbar mb-2 mb-md-0">
+            </div>
+          </div>
 
-  <!-- Template Main CSS File -->
-  <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
-  <link href="{{ url_for('static', filename='css/devicehub.css') }}" rel="stylesheet">
+          {% block content %}
+          {% endblock content %}
 
-  <!-- =======================================================
-  * Template Name: NiceAdmin - v2.2.0
-  * Template URL: https://bootstrapmade.com/nice-admin-bootstrap-admin-html-template/
-  * Author: BootstrapMade.com
-  * License: https://bootstrapmade.com/license/
-  ======================================================== -->
-</head>
+        </main>
+      </div>
+    </div>
 
-<body>
+    <!-- Footer -->
+  <footer class="footer text-center mt-auto py-3">
+    <div class="container">
+      <span class="text-muted">{{ commit_id }}</span>
+    </div>
+  </footer>
 
-  {% block body %}{% endblock %}
-
-  <a href="#" class="back-to-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
-
-  <!-- Vendor JS Files -->
-  <script src="{{ url_for('static', filename='vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
-
-  <!-- Template Main JS File -->
-  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
-
-  <!-- Api backend -->
-  <script>
-    const API_URLS = {
-      Auth_Token: `Basic ${btoa("{{ current_user.token }}:")}`, //
-      currentUserID: "{{ current_user.id }}",
-      lots: "{# url_for('Lot.main') #}",
-      lots_detail: "{# url_for('inventory.lotdevicelist', lot_id='ReplaceTEXT') #}",
-      devices: "{{ url_for('Device.main') }}",
-      devices_modify: "{# url_for('Lot.lot-device', id='UUID') #}",
-      devices_detail: "{# url_for('inventory.device_details', id='ReplaceTEXT')#}"
-    }
-  </script>
-  <script src="{{ url_for('static', filename='js/api.js') }}"></script>
-
-</body>
-
+    {% block script %}
+    <script src="{% static "js/jquery-3.3.1.slim.min.js" %}"></script>
+    <script src="{% static "js/popper.min.js" %}"></script>
+    <script src="{% static "js/bootstrap.min.js" %}"></script>
+    {% block extrascript %}{% endblock %}
+    {% endblock %}
+  </body>
 </html>

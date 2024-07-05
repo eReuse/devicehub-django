@@ -3,23 +3,36 @@ from user.models import User
 from utils.constants import STR_SM_SIZE, STR_SIZE
 
 
-# Create your models here.
-
-
 class Device(models.Model):
+    class Types(models.TextChoices):
+        DESKTOP = "Desktop"
+        LAPTOP = "Laptop"
+        SERVER = "Server"
+        GRAPHICCARD = "GraphicCard"
+        HARDDRIVE = "HardDrive"
+        SOLIDSTATEDRIVE = "SolidStateDrive"
+        MOTHERBOARD = "Motherboard"
+        NETWORKADAPTER = "NetworkAdapter"
+        PROCESSOR = "Processor"
+        RAMMODULE = "RamModule"
+        SOUNDCARD = "SoundCard"
+        DISPLAY = "Display"
+        BATTERY = "Battery"
+        CAMERA = "Camera"
+
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
-    type = models.CharField(max_length=STR_SM_SIZE)
+    type = models.CharField(max_length=STR_SM_SIZE, choices=Types, default=Types.LAPTOP)
     model = models.CharField(max_length=STR_SIZE, blank=True, null=True)
     manufacturer = models.CharField(max_length=STR_SIZE, blank=True, null=True)
     serial_number = models.CharField(max_length=STR_SIZE, blank=True, null=True)
     part_number = models.CharField(max_length=STR_SIZE, blank=True, null=True)
-    brand = models.TextField(blank=True, null=True)
+    brand = models.CharField(max_length=STR_SIZE, blank=True, null=True)
     generation = models.SmallIntegerField(blank=True, null=True)
-    version = models.TextField(blank=True, null=True)
+    version = models.CharField(max_length=STR_SIZE, blank=True, null=True)
     production_date = models.DateTimeField(blank=True, null=True)
-    variant = models.TextField(blank=True, null=True)
-    devicehub_id = models.TextField(unique=True, blank=True, null=True)
+    variant = models.CharField(max_length=STR_SIZE, blank=True, null=True)
+    devicehub_id = models.CharField(max_length=STR_SIZE, unique=True, blank=True, null=True)
     dhid_bk = models.CharField(max_length=STR_SIZE, blank=True, null=True)
     phid_bk = models.CharField(max_length=STR_SIZE, blank=True, null=True)
     family = models.CharField(max_length=STR_SIZE, blank=True, null=True)
@@ -40,33 +53,30 @@ class PhysicalProperties(models.Model):
 
 
 class Computer(models.Model):
-    class Types(models.TextChoices):
-        DESKTOP = "Desktop"
-        LAPTOP = "Laptop"
+    class Chassis(models.TextChoices):
+        TOWER = 'Tower'
+        ALLINONE = 'All in one'
+        MICROTOWER = 'Microtower'
+        NETBOOK = 'Netbook'
+        LAPTOP = 'Laptop'
+        TABLER = 'Tablet'
         SERVER = "Server"
+        VIRTUAL = 'Non-physical device'
+
 
     device = models.OneToOneField(Device, models.CASCADE, primary_key=True)
-    chassis = models.TextField(blank=True, null=True)
+    chassis = models.CharField(
+        blank=True,
+        null=True,
+        max_length=STR_SM_SIZE,
+        choices=Chassis
+    )
     system_uuid = models.UUIDField()
-    sku = models.TextField(blank=True, null=True)
-    type = models.CharField(max_length=STR_SM_SIZE, choices=Types, default=Types.LAPTOP)
+    sku = models.CharField(max_length=STR_SM_SIZE, blank=True, null=True)
 
 
 class Component(models.Model):
-    class Types(models.TextChoices):
-        GRAPHICCARD = "GraphicCard"
-        DATASTORAGE = "DataStorage"
-        MOTHERBOARD = "Motherboard"
-        NETWORKADAPTER = "NetworkAdapter"
-        PROCESSOR = "Processor"
-        RAMMODULE = "RamModule"
-        SOUNDCARD = "SoundCard"
-        DISPLAY = "Display"
-        BATTERY = "Battery"
-        CAMERA = "Camera"
-
     device = models.OneToOneField(Device, models.CASCADE, primary_key=True)
-    type = models.CharField(max_length=STR_SM_SIZE, choices=Types)
     computer = models.OneToOneField(Computer, models.CASCADE, null=True)
 
 
@@ -82,14 +92,9 @@ class DataStorage(models.Model):
         PCI = 'PCI'
         NVME = 'NVME'
 
-    class Type(models.TextChoices):
-        HARDDRIVE = "HardDrive"
-        SOLIDSTATEDRIVE = "SolidStateDrive"
-
-    component = models.OneToOneField(Component, models.CASCADE)
     size = models.IntegerField(blank=True, null=True)
     interface = models.CharField(max_length=STR_SM_SIZE, choices=Interface)
-    type = models.CharField(max_length=STR_SM_SIZE, choices=Type)
+    component = models.OneToOneField(Component, models.CASCADE)
 
 
 class Motherboard(models.Model):
