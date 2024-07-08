@@ -12,7 +12,7 @@
   <div class="col">
     <div class="nav nav-tabs nav-tabs-bordered">
       <li class="nav-items">
-        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#details">General details</button>
+        <a class="nav-link" href="{% url 'device:details' device.pk %}">General details</a>
       </li>
       <li class="nav-items">
         <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#physicalproperties">Physical properties</button>
@@ -92,29 +92,34 @@
     <h5 class="card-title">Physical Properties</h5>
     <div class="row mb-3">
       <div class="col-lg-3 col-md-4 label ">
-          <a href="{% url 'device:details' object.pk %}">{{ object.type }} {{ object.manufacturer }} {{ object.model }}</a>
-          <br>
-          <a href="{% url 'device:physical_edit' object.pk %}">{{ object.type }} {{ object.manufacturer }} {{ object.model }}</a>
-          <br>
-        (<a href="{# url('device:physical_edit', object.id) #}">Edit Physical Properties</a>)
+        (<a href="{% url 'device:physical_edit' object.pk %}">Edit Physical Properties</a>)
       </div>
     </div>
     
     <div class="row mb-3">
       <div class="col-lg-3 col-md-4 label ">
-       {{ form }}
+        {% load django_bootstrap5 %}
+        <form role="form" method="post">
+        {% csrf_token %}
+        {% if form.errors %}
+        <div class="alert alert-danger alert-icon alert-icon-border alert-dismissible" role="alert">
+          <div class="icon"><span class="mdi mdi-close-circle-o"></span></div>
+          <div class="message">
+            {% for field, error in form.errors.items %}
+              {{ error }}<br />
+            {% endfor %}
+            <button class="btn-close" type="button" data-dismiss="alert" aria-label="Close"></button>
+          </div>
+        </div>
+        {% endif %}
+        {% bootstrap_form form %}
+        <div class="form-actions-no-box">
+          <a class="btn btn-grey" href="{% url 'device:details' device.pk %}">{% translate "Cancel" %}</a>
+          <input class="btn btn-green-admin" type="submit" name="submit" value="{% translate 'Save' %}" />
+        </div>
+
+        </form>
       </div>
-    </div>
-
-
-    <div class="row">
-      <div class="col-lg-3 col-md-4 label ">color:</div>
-      <div class="col-lg-9 col-md-8"></div>
-    </div>
-
-    <div class="row">
-      <div class="col-lg-3 col-md-4 label ">image:</div>
-      <div class="col-lg-9 col-md-8"></div>
     </div>
   </div>
 

@@ -41,6 +41,15 @@ class Device(models.Model):
     active = models.BooleanField(default=True)
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
 
+    def has_physical_properties(self):
+        try:
+            if self.physicalproperties:
+                return True
+            else:
+                return False
+        except Exception:
+            return False
+
 
 class PhysicalProperties(models.Model):
     device = models.OneToOneField(Device, models.CASCADE, primary_key=True)

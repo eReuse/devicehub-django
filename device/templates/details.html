@@ -45,7 +45,7 @@
     <h5 class="card-title">Details</h5>
     <div class="row mb-3">
       <div class="col-lg-3 col-md-4 label ">
-        (<a href="/inventory/device/edit/4W8D3/">Edit Device</a>)
+        (<a href="{% url 'device:edit' object.id %}">Edit Device</a>)
       </div>
       <div class="col-lg-9 col-md-8">
         {%if object.hid %}Snapshot{% else %}Placeholder{% endif %}
@@ -92,46 +92,57 @@
     <h5 class="card-title">Physical Properties</h5>
     <div class="row mb-3">
       <div class="col-lg-3 col-md-4 label ">
-          <a href="{% url 'device:details' object.pk %}">{{ object.type }} {{ object.manufacturer }} {{ object.model }}</a>
-          <br>
-          <a href="{% url 'device:physical_edit' object.pk %}">{{ object.type }} {{ object.manufacturer }} {{ object.model }}</a>
-          <br>
-        (<a href="{# url('device:physical_edit', object.id) #}">Edit Physical Properties</a>)
+        (<a href="{% url 'device:physical_edit' object.pk %}">Edit Physical Properties</a>)
       </div>
     </div>
     
-    <div class="row mb-3">
+    {% if object.has_physical_properties %}
+    <div class="row">
       <div class="col-lg-3 col-md-4 label ">
         Weight:
       </div>
       <div class="col-lg-9 col-md-8">
+        {{ object.physicalproperties.weight }}
       </div>
     </div>
 
     <div class="row">
       <div class="col-lg-3 col-md-4 label ">width:</div>
-      <div class="col-lg-9 col-md-8"></div>
+      <div class="col-lg-9 col-md-8">
+        {{ object.physicalproperties.width }}
+      </div>
     </div>
 
     <div class="row">
       <div class="col-lg-3 col-md-4 label ">height:</div>
-      <div class="col-lg-9 col-md-8"></div>
+      <div class="col-lg-9 col-md-8">
+        {{ object.physicalproperties.height }}
+      </div>
     </div>
 
     <div class="row">
       <div class="col-lg-3 col-md-4 label ">depth:</div>
-      <div class="col-lg-9 col-md-8"></div>
+      <div class="col-lg-9 col-md-8">
+        {{ object.physicalproperties.depth }}
+      </div>
     </div>
 
     <div class="row">
       <div class="col-lg-3 col-md-4 label ">color:</div>
-      <div class="col-lg-9 col-md-8"></div>
+      <div class="col-lg-9 col-md-8">
+        {{ object.physicalproperties.color }}
+      </div>
     </div>
 
     <div class="row">
       <div class="col-lg-3 col-md-4 label ">image:</div>
-      <div class="col-lg-9 col-md-8"></div>
+      <div class="col-lg-9 col-md-8">
+        {% if object.physicalproperties.image %}
+          <img width="200px" src="{{ object.physicalproperties.image }}" />
+        {% endif %}
+      </div>
     </div>
+    {% endif %}
   </div>
 
 
