@@ -6,7 +6,6 @@ from django.views.generic.edit import (
     UpdateView,
 )
 from dashboard.mixins import DashboardView, DetailsMixin
-from device.forms import DeviceForm, PhysicalPropsForm
 from device.models import Device, PhysicalProperties
 
 
@@ -14,14 +13,55 @@ class NewDeviceView(DashboardView, CreateView):
     template_name = "new_device.html"
     title = _("New Device")
     breadcrumb = "Device / New Device"
-    form_class = DeviceForm
     success_url = reverse_lazy('dashboard:unassigned_devices')
+    model = Device
+    fields = (
+        'type',
+        "model",
+        "manufacturer",
+        "serial_number",
+        "part_number",
+        "brand",
+        "generation",
+        "version",
+        "production_date",
+        "variant",
+        "family",
+    )
 
     def form_valid(self, form):
         form.instance.owner = self.request.user
         response = super().form_valid(form)
         PhysicalProperties.objects.create(device=form.instance)
         return response
+    
+
+class EditDeviceView(DashboardView, UpdateView):
+    template_name = "new_device.html"
+    title = _("Update Device")
+    breadcrumb = "Device / Update Device"
+    success_url = reverse_lazy('dashboard:unassigned_devices')
+    model = Device
+    fields = (
+        'type',
+        "model",
+        "manufacturer",
+        "serial_number",
+        "part_number",
+        "brand",
+        "generation",
+        "version",
+        "production_date",
+        "variant",
+        "family",
+    )
+
+    def get_form_kwargs(self):
+        pk = self.kwargs.get('pk')
+        self.object = get_object_or_404(self.model, pk=pk)
+        self.success_url = reverse_lazy('device:details', args=[pk])
+        kwargs = super().get_form_kwargs()
+        return kwargs
     
 
 class DetailsView(DetailsMixin):
@@ -35,46 +75,36 @@ class PhysicalView(DashboardView, UpdateView):
     template_name = "physical_properties.html"
     title = _("Physical Properties")
     breadcrumb = "Device / Physical properties"
-    form_class = PhysicalPropsForm
     success_url = reverse_lazy('dashboard:unassigned_devices')
     model = PhysicalProperties
+    fields = (
+        "weight",
+        "width",
+        "height",
+        "depth",
+        "color",
+        "image",
+    )
 
-    def get(self, request, *args, **kwargs):
-        pk = kwargs['pk']
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({
+            'device': self.device,
+        })
+        return context
+
+    def get_form_kwargs(self):
+        pk = self.kwargs.get('pk')
         self.device = get_object_or_404(Device, pk=pk)
         try:
             self.object = self.device.physicalproperties
         except Exception:
             self.object = PhysicalProperties.objects.create(device=self.device)
-        self.initial.update({'instance': self.object})
-        return super().get(request, *args, **kwargs)
-
-    def get_form(self, form_class=None):
-        """Return an instance of the form to be used in this view."""
-        if form_class is None:
-            form_class = self.get_form_class()
-        # import pdb; pdb.set_trace()
-        return form_class(**self.get_form_kwargs())
-
-    def get_form_kwargs(self):
-        """Return the keyword arguments for instantiating the form."""
-        kwargs = {
-            "initial": self.get_initial(),
-            "prefix": self.get_prefix(),
-        }
-
-        if self.request.method in ("POST", "PUT"):
-            kwargs.update(
-                {
-                    "data": self.request.POST,
-                    "files": self.request.FILES,
-                }
-            )
+        kwargs = super().get_form_kwargs()
         return kwargs
-
+    
     def form_valid(self, form):
-        self.success_url = reverse_lazy('device:details', self.device.id)
-        form.instance.owner = self.request.user
+        self.success_url = reverse_lazy('device:details', args=[self.device.id])
         response = super().form_valid(form)
         return response
     
