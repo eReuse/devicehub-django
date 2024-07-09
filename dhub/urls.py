@@ -22,4 +22,5 @@ urlpatterns = [
     path("", include("login.urls")),
     path("dashboard/", include("dashboard.urls")),
     path("device/", include("device.urls")),
+    path("lot/", include("lot.urls")),
 ]
