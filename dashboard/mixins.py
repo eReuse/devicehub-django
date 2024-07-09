@@ -4,6 +4,7 @@ from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import PermissionDenied
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic.base import TemplateView
+from device.models import Device
 
 
 class Http403(PermissionDenied):
@@ -39,6 +40,12 @@ class DashboardView(LoginRequiredMixin):
         })
         return context
 
+    def get_session_devices(self):
+        # import pdb; pdb.set_trace()
+        dev_ids = self.request.session.pop("devices", [])
+        self._devices = Device.objects.filter(id__in=dev_ids).filter(owner=self.request.user)
+        return self._devices
+
 
 class DetailsMixin(DashboardView, TemplateView):
 
@@ -58,13 +65,13 @@ class DetailsMixin(DashboardView, TemplateView):
 class InventaryMixin(DashboardView, TemplateView):
 
     def post(self, request, *args, **kwargs):
-        devices = [int(x) for x in dict(self.request.POST).get("devices", [])]
-        self.request.session["devices"] = devices
+        dev_ids = dict(self.request.POST).get("devices", [])
+        self.request.session["devices"] = dev_ids
         url = self.request.POST.get("url")
         if url:
             try:
                 resource = resolve(url)
-                if resource and devices:
+                if resource and dev_ids:
                     return redirect(url)
             except Exception:
                 pass
