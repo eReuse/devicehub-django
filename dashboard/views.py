@@ -1,10 +1,10 @@
 from django.utils.translation import gettext_lazy as _
 from django.views.generic.base import TemplateView
-from dashboard.mixins import DashboardView
+from dashboard.mixins import InventaryMixin
 from device.models import Device
 
 
-class UnassignedDevicesView(DashboardView, TemplateView):
+class UnassignedDevicesView(InventaryMixin):
     template_name = "unassigned_devices.html"
     section = "Unassigned"
     title = _("Unassigned Devices")
