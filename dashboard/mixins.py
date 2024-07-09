@@ -1,5 +1,5 @@
 from django.urls import resolve
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import PermissionDenied
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -53,3 +53,21 @@ class DetailsMixin(DashboardView, TemplateView):
             'object': self.object,
         })
         return context
+
+    
+class InventaryMixin(DashboardView, TemplateView):
+
+    def post(self, request, *args, **kwargs):
+        devices = [int(x) for x in dict(self.request.POST).get("devices", [])]
+        self.request.session["devices"] = devices
+        url = self.request.POST.get("url")
+        if url:
+            try:
+                resource = resolve(url)
+                if resource and devices:
+                    return redirect(url)
+            except Exception:
+                pass
+        return super().get(request, *args, **kwargs)
+
+
