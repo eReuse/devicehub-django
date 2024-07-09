@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+<div class="row">
+  <div class="col">
+    <h3>{{ subtitle }}</h3>
+  </div>
+</div>
+
+<form method="post">
+  {% csrf_token %}
+
+{% if incoming %}
+<div class="row">
+  <div class="col-lg-3 col-md-4 label ">Incoming Lots</div>
+</div>
+
+{% for lot in lots %}
+{% if lot.is_incoming %}
+<div class="row">
+  <div class="col-lg-3 col-md-4 label "><input type="checkbox" name="lots" value="{{ lot.id }}" /></div>
+  <div class="col-lg-3 col-md-4 label ">{{ lot.name }}</div>
+</div>
+{% endif %}
+{% endfor %}
+{% endif %}
+
+{% if outgoing %}
+<div class="row">
+  <div class="col-lg-3 col-md-4 label ">Outgoing Lots</div>
+</div>
+
+{% for lot in lots %}
+{% if lot.is_outgoing %}
+<div class="row">
+  <div class="col-lg-3 col-md-4 label "><input type="checkbox" name="lots" value="{{ lot.id }}" /></div>
+  <div class="col-lg-3 col-md-4 label ">{{ lot.name }}</div>
+</div>
+{% endif %}
+{% endfor %}
+{% endif %}
+
+{% if temporal %}
+<div class="row">
+  <div class="col-lg-3 col-md-4 label ">Temporary Lots</div>
+</div>
+
+{% for lot in lots %}
+{% if lot.is_temporal %}
+<div class="row">
+  <div class="col-lg-3 col-md-4 label "><input type="checkbox" name="lots" value="{{ lot.id }}" /></div>
+  <div class="col-lg-3 col-md-4 label ">{{ lot.name }}</div>
+</div>
+{% endif %}
+{% endfor %}
+{% endif %}
+  <button type="submit">Save</button>
+</form>
+
+{% endblock %}

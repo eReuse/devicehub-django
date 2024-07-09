@@ -21,3 +21,21 @@ class Lot(models.Model):
     closed = models.BooleanField(default=True)
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
     devices = models.ManyToManyField(Device)
+
+    @property
+    def is_incoming(self):
+        if self.type == self.Types.INCOMING:
+            return True
+        return False
+
+    @property
+    def is_outgoing(self):
+        if self.type == self.Types.OUTGOING:
+                return True
+        return False
+
+    @property
+    def is_temporal(self):
+        if self.type == self.Types.TEMPORAL:
+                return True
+        return False
