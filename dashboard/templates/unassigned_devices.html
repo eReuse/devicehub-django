@@ -50,7 +50,7 @@
     </tbody>
     {% endfor %}
   </table>
-  <button type="submit" value="/lot/devices/remove" name="url">Remove</button> <button type="submit" name="url" value="{% url 'lot:add_devices' %}">add</button>
+  <button type="submit" value="{% url 'lot:del_devices' %}" name="url">Remove</button> <button type="submit" name="url" value="{% url 'lot:add_devices' %}">add</button>
   </form>
 </div>
 {% endblock %}
