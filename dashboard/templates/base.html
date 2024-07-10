@@ -104,17 +104,17 @@
                 </a>
                 <ul class="flex-column mb-2 ul_sidebar accordion-collapse {% if section == 'People' %}expanded{% else %}collapse{% endif %}" id="ul_lots" data-bs-parent="#sidebarMenu">
                   <li class="nav-items">
-                    <a class="nav-link{% if path == 'admin_people_list' %} active2{% endif %}" href="{# url 'idhub:admin_people_list' #}">
+                    <a class="nav-link{% if path == 'admin_people_list' %} active2{% endif %}" href="{% url 'lot:lots_incoming' %}">
                       {% trans 'Incoming ' %}
                     </a>
                   </li>
                   <li class="nav-item">
-                    <a class="nav-link{% if path == 'admin_people_new' %} active2{% endif %}" href="{# url 'idhub:admin_people_new' #}">
+                    <a class="nav-link{% if path == 'admin_people_new' %} active2{% endif %}" href="{% url 'lot:lots_outgoing' %}">
                       {% trans 'Outgoing ' %}
                     </a>
                   </li>
                   <li class="nav-item">
-                    <a class="nav-link{% if path == 'admin_people_new' %} active2{% endif %}" href="{# url 'idhub:admin_people_new' #}">
+                    <a class="nav-link{% if path == 'admin_people_new' %} active2{% endif %}" href="{% url 'lot:lots_temporal' %}">
                       {% trans 'Temporal ' %}
                     </a>
                   </li>

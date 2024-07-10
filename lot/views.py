@@ -1,8 +1,10 @@
 from django.urls import reverse_lazy
 from django.shortcuts import get_object_or_404
 from django.utils.translation import gettext_lazy as _
+from django.views.generic.base import TemplateView
 from django.views.generic.edit import (
     CreateView,
+    DeleteView,
     UpdateView,
     FormView
 )
@@ -31,10 +33,29 @@ class NewLotView(DashboardView, CreateView):
         return response
 
 
+class DeleteLotView(DashboardView, DeleteView):
+    template_name = "delete_lot.html"
+    title = _("Delete lot")
+    breadcrumb = "lot / Delete lot"
+    success_url = reverse_lazy('dashboard:unassigned_devices')
+    model = Lot
+    fields = (
+        "type",
+        "name",
+        "code",
+        "description",
+        "closed",
+    )
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        return response
+
+
 class EditLotView(DashboardView, UpdateView):
     template_name = "new_lot.html"
-    title = _("Update lot")
-    breadcrumb = "Lot / Update lot"
+    title = _("Edit lot")
+    breadcrumb = "Lot / Edit lot"
     success_url = reverse_lazy('dashboard:unassigned_devices')
     model = Lot
     fields = (
@@ -52,7 +73,7 @@ class EditLotView(DashboardView, UpdateView):
         kwargs = super().get_form_kwargs()
         return kwargs
 
-    
+
 class AddToLotView(DashboardView, FormView):
     template_name = "list_lots.html"
     title = _("Add to lots")
@@ -98,3 +119,28 @@ class DelToLotView(AddToLotView):
         return response
 
 
+class LotsTemporalView(DashboardView, TemplateView):
+    template_name = "lots.html"
+    title = _("Temporal lots")
+    breadcrumb = "lot / temporal lots"
+    success_url = reverse_lazy('dashboard:unassigned_devices')
+    lot_type = Lot.Types.TEMPORAL
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        lots = Lot.objects.filter(owner=self.request.user)
+        context.update({
+            'lots': lots.filter(type=self.lot_type),
+        })
+        return context
+
+class LotsOutgoingView(LotsTemporalView):
+    title = _("Outgoing lots")
+    breadcrumb = "lot / outging lots"
+    lot_type = Lot.Types.OUTGOING
+
+
+class LotsIncomingView(LotsTemporalView):
+    title = _("Incoming lots")
+    breadcrumb = "lot / Incoming lots"
+    lot_type = Lot.Types.INCOMING

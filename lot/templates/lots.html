@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+<div class="row mb-3">
+  <div class="col">
+    <h3>{{ subtitle }}</h3>
+  </div>
+  <div class="col text-center">
+    <a href="{% url 'lot:add' %}" type="button" class="btn btn-green-admin">
+      <i class="bi bi-plus"></i>
+      {% trans 'Add new lot' %}
+    </a>
+  </div>
+</div>
+
+<div class="row">
+  <table class= "table table-striped table-sm">
+  {% for lot in lots %}
+    <tr>
+      <td><a href="{% url 'dashboard:lot' lot.id %}">{{ lot.name }}</a></td>
+      <td>
+        <a href="{% url 'lot:edit' lot.id %}"><i class="bi bi-pen"></i></a>
+      </td>
+      <td>
+        <a href="{% url 'lot:delete' lot.id %}"><i class="bi bi-trash text-danger"></i></a>
+      </td>
+    </tr>
+  {% endfor %}
+  </table>
+</div>
+
+{% endblock %}
