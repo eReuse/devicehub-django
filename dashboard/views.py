@@ -22,6 +22,21 @@ class UnassignedDevicesView(InventaryMixin):
         return context
 
 
+class AllDevicesView(InventaryMixin):
+    template_name = "unassigned_devices.html"
+    section = "All"
+    title = _("All Devices")
+    breadcrumb = "Devices / All Devices"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        devices = Device.objects.filter(owner=self.request.user)
+        context.update({
+            'devices': devices,
+        })
+        return context
+
+
 class LotDashboardView(InventaryMixin, DetailsMixin):
     template_name = "unassigned_devices.html"
     section = "Unassigned"

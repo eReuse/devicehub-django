@@ -5,5 +5,6 @@ app_name = 'dashboard'
 
 urlpatterns = [
     path("", views.UnassignedDevicesView.as_view(), name="unassigned_devices"),
+    path("all/", views.AllDevicesView.as_view(), name="all_devices"),
     path("<int:pk>/", views.LotDashboardView.as_view(), name="lot"),
 ]
