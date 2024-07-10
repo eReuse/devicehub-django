@@ -87,3 +87,14 @@ class AddToLotView(DashboardView, FormView):
         return response
 
 
+class DelToLotView(AddToLotView):
+    title = _("Remove from lots")
+    breadcrumb = "lot / remove from lots"
+
+    def form_valid(self, form):
+        form.devices = self.get_session_devices()
+        form.remove()
+        response = super().form_valid(form)
+        return response
+
+
