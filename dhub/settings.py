@@ -168,3 +168,5 @@ LOGGING = {
         "level": "DEBUG",
     }
 }
+
+SNAPSHOT_PATH="/tmp/"

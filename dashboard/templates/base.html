@@ -132,7 +132,7 @@
                     </a>
                   </li>
                   <li class="nav-item">
-                    <a class="nav-link{% if path == 'admin_people_list' %} active2{% endif %}" href="{# url 'idhub:admin_people_list' #}">
+                    <a class="nav-link{% if path == 'admin_people_list' %} active2{% endif %}" href="{% url 'snapshot:list' %}">
                       {% trans 'Old snapshots' %}
                     </a>
                   </li>

@@ -33,12 +33,11 @@ class Device(models.Model):
     production_date = models.DateTimeField(blank=True, null=True)
     variant = models.CharField(max_length=STR_SIZE, blank=True, null=True)
     devicehub_id = models.CharField(max_length=STR_SIZE, unique=True, blank=True, null=True)
-    dhid_bk = models.CharField(max_length=STR_SIZE, blank=True, null=True)
-    phid_bk = models.CharField(max_length=STR_SIZE, blank=True, null=True)
     family = models.CharField(max_length=STR_SIZE, blank=True, null=True)
     hid = models.CharField(max_length=STR_SIZE, blank=True, null=True)
     chid = models.CharField(max_length=STR_SIZE, blank=True, null=True)
     active = models.BooleanField(default=True)
+    reliable = models.BooleanField(default=True)
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def has_physical_properties(self):
@@ -80,13 +79,14 @@ class Computer(models.Model):
         max_length=STR_SM_SIZE,
         choices=Chassis
     )
-    system_uuid = models.UUIDField()
+    system_uuid = models.UUIDField(blank=True, null=True)
     sku = models.CharField(max_length=STR_SM_SIZE, blank=True, null=True)
+    erasure_server = models.BooleanField(default=False)
 
 
 class Component(models.Model):
     device = models.OneToOneField(Device, models.CASCADE, primary_key=True)
-    computer = models.OneToOneField(Computer, models.CASCADE, null=True)
+    computer = models.ForeignKey(Computer, on_delete=models.CASCADE, null=True)
 
 
 class GraphicCard(models.Model):
