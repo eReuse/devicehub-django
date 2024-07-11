@@ -1,9 +1,119 @@
-# from dmidecode import DMIParse
+import os
+import json
+import shutil
+import hashlib
+
+from datetime import datetime
+from django.conf import settings
+from device.models import Device, Computer
+from snapshot.models import Snapshot
 
 
-class Parse:
-    def __init__(self, snapshot_json):
+HID = [
+    "manufacturer",
+    "model",
+    "chassis",
+    "serialNumber",
+    "sku"
+]
+
+
+class Build:
+    def __init__(self, snapshot_json, user):
         self.json = snapshot_json
+        self.user = user
+        self.hid = None
+        self.result = False
+
+        self.save_disk()
+        self.json_device = self.json["device"]
+        self.json_components = self.json["components"]
+        self.uuid = self.json["uuid"]
+        self.get_hid()
+        self.gen_computer()
+        self.gen_components()
+        self.gen_actions()
+        self.gen_snapshot()
+
+        self.result = True
+        self.move_json()
+
+    def save_disk(self):
+        snapshot_path = settings.SNAPSHOT_PATH
+        user = self.user.email
+        uuid = self.json.get("uuid", "")
+        now = datetime.now().strftime("%Y-%m-%d-%H-%M")
+        filename = f"{now}_{user}_{uuid}.json"
+        path_dir_base = os.path.join(snapshot_path, user)
+        path_upload = os.path.join(path_dir_base, 'upload')
+        path_name = os.path.join(path_upload, filename)
+        self.filename = path_name
+        self.path_dir_base = path_dir_base
+
+        if not os.path.isdir(path_dir_base):
+            os.system(f'mkdir -p {path_upload}')
+
+        with open(path_name, 'w') as file:
+            file.write(json.dumps(self.json))
+
+    def move_json(self):
+        if not self.result:
+            return
+
+        shutil.copy(self.filename, self.path_dir_base)
+        os.remove(self.filename)
+
+    def get_hid(self):
+        hid = ""
+        for f in HID:
+            hid += "-" + self.json_device[f]
+        self.hid = hid
+
+    def gen_computer(self):
+        self.device = Device.objects.filter(
+            hid=self.hid,
+            active=True,
+            reliable=True,
+            owner=self.user
+        ).first()
+
+        if self.device:
+            return
+
+        chid = hashlib.sha3_256(self.hid.encode()).hexdigest()
+        self.device = Device.objects.create(
+            serial_number=self.json_device["serialNumber"],
+            manufacturer=self.json_device["manufacturer"],
+            version=self.json_device["version"],
+            model=self.json_device["model"],
+            type=self.json_device["type"],
+            hid=self.hid,
+            chid=chid,
+            owner=self.user
+        )
+
+        Computer.objects.create(
+            device=self.device,
+            sku=self.json_device["sku"],
+            chassis=self.json_device["chassis"]
+        )
+
+    def gen_snapshot(self):
+        self.snapshot = Snapshot.objects.create(
+            uuid = self.uuid,
+            version = self.json["version"],
+            computer = self.device.computer,
+            sid = self.json.get("sid", ""),
+            settings_version = self.json.get("settings_version", ""),
+            end_time = self.json.get("endTime"),
+            owner=self.user
+        )
+
+    def gen_components(self):
+        pass
+
+    def gen_actions(self):
+        pass
 
 
 # class ParseSnapshot:

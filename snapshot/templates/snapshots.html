@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+<div class="row">
+  <div class="col">
+    <h3>{{ subtitle }}</h3>
+  </div>
+</div>
+
+<div class="dataTable-container">
+  <form method="post">
+  {% csrf_token %}
+  <table class="table">
+    <thead>
+      <tr>
+        <th scope="col" data-sortable="">
+          <a class="dataTable-sorter" href="#">Title</a>
+        </th>
+      </tr>
+    </thead>
+    {% for snap in snapshots %}
+    <tbody>
+      <tr>
+        <td>
+          <input type="checkbox" name="snapshots" value="{{ snap.id }}" />
+        </td>
+        <td>
+          <a href="{# url 'snapshot:details' snap.pk #}">{{ snap.uuid }} {{ snap.sid }} {{ snap.version }}</a>
+        </td>
+        <td>
+          <a href="{% url 'device:details' snap.computer.device.pk %}">{{ snap.computer.device.manufacturer }} {{ snap.computer.device.model }}</a>
+        </td>
+      </tr>
+    </tbody>
+    {% endfor %}
+  </table>
+  </form>
+</div>
+{% endblock %}
