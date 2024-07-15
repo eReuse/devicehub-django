@@ -1,5 +1,5 @@
 from django.db import models
-from utils.constants import STR_SM_SIZE
+from utils.constants import STR_SM_SIZE, STR_EXTEND_SIZE
 from user.models import User
 from device.models import Computer, Component
 
@@ -29,3 +29,11 @@ class Snapshot(models.Model):
     computer = models.ForeignKey(Computer, on_delete=models.CASCADE)
     components = models.ManyToManyField(Component)
 
+
+class Annotation(models.Model):
+    created = models.DateTimeField(auto_now_add=True)
+    uuid = models.UUIDField(unique=True)
+    owner = models.ForeignKey(User, on_delete=models.CASCADE)
+    key = models.CharField(max_length=STR_EXTEND_SIZE)
+    value = models.CharField(max_length=STR_EXTEND_SIZE)
+    

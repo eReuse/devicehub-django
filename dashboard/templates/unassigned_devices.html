@@ -44,7 +44,9 @@
           <input type="checkbox" name="devices" value="{{ dev.id }}" />
         </td>
         <td>
-          <a href="{% url 'device:details' dev.pk %}">{{ dev.type }} {{ dev.manufacturer }} {{ dev.model }}</a>
+          <a href="{% url 'device:details' dev.id %}">
+            {{ dev.type }} {{ dev.manufacturer }} {{ dev.model }}
+          </a>
         </td>
       </tr>
     </tbody>

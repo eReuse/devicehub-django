@@ -4,7 +4,7 @@
 {% block content %}
 <div class="row">
   <div class="col">
-    <h3>{{ object.pk }}</h3>
+    <h3>{{ object.uuid }}</h3>
   </div>
 </div>
 
@@ -45,16 +45,16 @@
     <h5 class="card-title">Details</h5>
     <div class="row mb-3">
       <div class="col-lg-3 col-md-4 label ">
-        (<a href="{% url 'device:edit' object.id %}">Edit Device</a>)
+        (<a href="{% url 'device:edit' object.uuid %}">Edit Device</a>)
       </div>
       <div class="col-lg-9 col-md-8">
-        {%if object.hid %}Snapshot{% else %}Placeholder{% endif %}
+        {% if object.hid %}Snapshot{% else %}Placeholder{% endif %}
       </div>
     </div>
 
     <div class="row">
       <div class="col-lg-3 col-md-4 label ">Phid</div>
-      <div class="col-lg-9 col-md-8">{{ object.id }}</div>
+      <div class="col-lg-9 col-md-8">{{ object.uuid }}</div>
     </div>
 
     <div class="row">
@@ -69,22 +69,17 @@
 
     <div class="row">
       <div class="col-lg-3 col-md-4 label">Manufacturer</div>
-      <div class="col-lg-9 col-md-8">{{ object.manufacturer|default:"" }}</div>
+      <div class="col-lg-9 col-md-8">{{ object.device.manufacturer|default:"" }}</div>
     </div>
 
     <div class="row">
       <div class="col-lg-3 col-md-4 label">Model</div>
-      <div class="col-lg-9 col-md-8">{{ object.model|default:"" }}</div>
-    </div>
-
-    <div class="row">
-      <div class="col-lg-3 col-md-4 label">Part Number</div>
-      <div class="col-lg-9 col-md-8">{{ object.part_number|default:"" }}</div>
+      <div class="col-lg-9 col-md-8">{{ object.device.model|default:"" }}</div>
     </div>
 
     <div class="row">
       <div class="col-lg-3 col-md-4 label">Serial Number</div>
-      <div class="col-lg-9 col-md-8">{{ object.serial_number|default:"" }}</div>
+      <div class="col-lg-9 col-md-8">{{ object.device.serialNumber|default:"" }}</div>
     </div>
   </div>
 
@@ -92,7 +87,7 @@
     <h5 class="card-title">Physical Properties</h5>
     <div class="row mb-3">
       <div class="col-lg-3 col-md-4 label ">
-        (<a href="{% url 'device:physical_edit' object.pk %}">Edit Physical Properties</a>)
+        (<a href="{% url 'device:physical_edit' object.uuid %}">Edit Physical Properties</a>)
       </div>
     </div>
     

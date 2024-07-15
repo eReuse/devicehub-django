@@ -1,3 +1,5 @@
+import json
+
 from django.urls import reverse_lazy
 from django.shortcuts import get_object_or_404
 from django.utils.translation import gettext_lazy as _
@@ -5,7 +7,10 @@ from django.views.generic.edit import (
     CreateView,
     UpdateView,
 )
+from django.views.generic.base import TemplateView
 from dashboard.mixins import DashboardView, DetailsMixin
+from snapshot.models import Annotation
+from snapshot.xapian import search
 from device.models import Device, PhysicalProperties
 
 
@@ -64,12 +69,35 @@ class EditDeviceView(DashboardView, UpdateView):
         return kwargs
     
 
-class DetailsView(DetailsMixin):
+class DetailsView2(DetailsMixin):
     template_name = "details.html"
     title = _("Device")
     breadcrumb = "Device / Details"
     model = Device
 
+class DetailsView(DashboardView, TemplateView):
+    template_name = "details.html"
+    title = _("Device")
+    breadcrumb = "Device / Details"
+
+    def get(self, request, *args, **kwargs):
+        # import pdb; pdb.set_trace()
+        self.pk = kwargs['pk']
+        annotation = get_object_or_404(Annotation, owner=self.request.user, uuid=self.pk)
+        for xa in search([str(self.pk)]):
+            self.object = json.loads(xa.document.get_data())
+            return super().get(request, *args, **kwargs)
+
+        return super().get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({
+            'object': self.object,
+        })
+        return context
+
+    
 
 class PhysicalView(DashboardView, UpdateView):
     template_name = "physical_properties.html"
