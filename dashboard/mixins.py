@@ -61,7 +61,7 @@ class DetailsMixin(DashboardView, TemplateView):
         })
         return context
 
-    
+
 class InventaryMixin(DashboardView, TemplateView):
 
     def post(self, request, *args, **kwargs):
@@ -76,5 +76,3 @@ class InventaryMixin(DashboardView, TemplateView):
             except Exception:
                 pass
         return super().get(request, *args, **kwargs)
-
-
