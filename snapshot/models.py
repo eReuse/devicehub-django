@@ -1,39 +1,76 @@
+import json
+
 from django.db import models
+
 from utils.constants import STR_SM_SIZE, STR_EXTEND_SIZE
+from snapshot.xapian import search
 from user.models import User
-from device.models import Computer, Component
-
-# Create your models here.
 
 
-class Snapshot(models.Model):
-    class SoftWare(models.TextChoices):
-        WORKBENCH= "Workbench"
+class Snapshot:
+    def __init__(self, uuid):
+        self.uuid = uuid
+        self.owner = None
+        self.doc = None
+        self.created = None
+        self.annotations =  []
 
-    class Severity(models.IntegerChoices):
-        Info = 0, "Info"
-        Notice = 1, "Notice"
-        Warning = 2, "Warning"
-        Error = 3, "Error"
+        self.get_owner()
+        self.get_time()
 
-    created = models.DateTimeField(auto_now_add=True)
-    software = models.CharField(max_length=STR_SM_SIZE, choices=SoftWare, default=SoftWare.WORKBENCH)
-    uuid = models.UUIDField(unique=True)
-    version = models.CharField(max_length=STR_SM_SIZE)
-    sid = models.CharField(max_length=STR_SM_SIZE)
-    settings_version = models.CharField(max_length=STR_SM_SIZE)
-    is_server_erase = models.BooleanField(default=False)
-    severity =  models.SmallIntegerField(choices=Severity, default=Severity.Info)
-    end_time = models.DateTimeField()
-    owner = models.ForeignKey(User, on_delete=models.CASCADE)
-    computer = models.ForeignKey(Computer, on_delete=models.CASCADE)
-    components = models.ManyToManyField(Component)
+    def get_annotations(self):
+        self.annotations = Annotation.objects.filter(
+            uuid=self.uuid
+        ).order_by("created")
+            
+    def get_owner(self):
+        if not self.annotations:
+            self.get_annotations()
+        a = self.annotations.first()
+        if a:
+            self.owner = a.owner
+
+    def get_doc(self):
+        self.doc = {}
+        qry = 'uuid:"{}"'.format(self.uuid)
+        matches = search(qry, limit=1)
+        if matches.size() < 0:
+            return
+
+        for xa in matches:
+            self.doc = json.loads(xa.document.get_data())
+
+    def get_time(self):
+        if not self.doc:
+            self.get_doc()
+        self.created = self.doc.get("endTime")
+
+        if not self.created:
+            self.created = self.annotations.last().created
+
+    def components(self):
+        return self.doc.get('components', [])
 
 
 class Annotation(models.Model):
+    class Type(models.IntegerChoices):
+        SYSTEM= 0, "System"
+        USER = 1, "User"
+
     created = models.DateTimeField(auto_now_add=True)
-    uuid = models.UUIDField(unique=True)
+    uuid = models.UUIDField()
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
+    type =  models.SmallIntegerField(choices=Type) 
     key = models.CharField(max_length=STR_EXTEND_SIZE)
     value = models.CharField(max_length=STR_EXTEND_SIZE)
+    device = models.ForeignKey('device.Device', on_delete=models.CASCADE)
     
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["type", "key", "uuid"], name="unique_type_key_uuid")
+        ]
+
+    def is_user_annotation(self):
+        if self.type == self.Type.USER:
+            return True
+        return False

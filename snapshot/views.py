@@ -2,9 +2,13 @@ from django.utils.translation import gettext_lazy as _
 from django.views.generic.base import TemplateView
 from django.views.generic.edit import FormView
 from django.urls import reverse_lazy
+from django.views.generic.edit import (
+    CreateView,
+    UpdateView,
+)
 
 from dashboard.mixins import  DashboardView
-from snapshot.models import Snapshot
+from snapshot.models import Snapshot, Annotation
 # from snapshot.forms import UploadForm
 # from django.shortcuts import render
 # from rest_framework import viewsets
@@ -24,7 +28,8 @@ class ListSnapshotsView(DashboardView, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        snapshots = Snapshot.objects.filter(owner=self.request.user)
+        # snapshots = Snapshot.objects.filter(owner=self.request.user)
+        snapshots = []
         context.update({
             'snapshots': snapshots,
         })

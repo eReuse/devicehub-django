@@ -5,6 +5,7 @@ from django.core.exceptions import PermissionDenied
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic.base import TemplateView
 from device.models import Device
+from lot.models import LotTag
 
 
 class Http403(PermissionDenied):
@@ -37,6 +38,7 @@ class DashboardView(LoginRequiredMixin):
             'section': self.section,
             'path': resolve(self.request.path).url_name,
             'user': self.request.user,
+            'lot_tags': LotTag.objects.filter(owner=self.request.user)
         })
         return context
 

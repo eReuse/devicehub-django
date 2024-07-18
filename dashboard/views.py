@@ -6,7 +6,7 @@ from dashboard.mixins import InventaryMixin, DetailsMixin
 from device.models import Device
 from snapshot.xapian import search
 from snapshot.models import Annotation
-from lot.models import Lot
+from lot.models import Lot, LotTag
 
 
 class UnassignedDevicesView(InventaryMixin):
@@ -17,30 +17,14 @@ class UnassignedDevicesView(InventaryMixin):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        annotations = Annotation.objects.filter(
-                owner=self.request.user).filter(
-                key="hidalgo1").order_by('created')
-            # 'created').distinct('value')
-            # ).annotate(num_lots=Count('lot')).filter(num_lots=0)
-
-        hids = {}
-        ids = []
-        for x in annotations:
-            if not hids.get(x.key):
-                hids[x.key] = x.uuid
-                ids.append(str(x.uuid))
-
-        devices = []
-        for xa in search(ids):
-            # import pdb; pdb.set_trace()
-            snap = json.loads(xa.document.get_data())
-            dev = snap.get("device", {})
-            dev["id"] = snap["uuid"]
-            devices.append(dev)
+        devices = Device.objects.filter(
+            owner=self.request.user
+            ).annotate(num_lots=Count('lot')).filter(num_lots=0)
 
         context.update({
-            'devices': devices
+            'devices': devices,
         })
+
         return context
 
 
