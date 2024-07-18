@@ -5,42 +5,25 @@ import xapian
 import hashlib
 
 from datetime import datetime
+from snapshot.xapian import search, index
 from snapshot.models import Snapshot, Annotation
-from snapshot.xapian import search, indexer, database
-
-
-HID_ALGO1 = [
-    "manufacturer",
-    "model",
-    "chassis",
-    "serialNumber",
-    "sku"
-]
+from device.models import Device
+from utils.constants import ALGOS
 
 
 class Build:
     def __init__(self, snapshot_json, user):
         self.json = snapshot_json
+        self.uuid = self.json['uuid']
         self.user = user
         self.hid = None
 
         self.index()
-        self.create_annotation()
+        self.create_annotations()
 
     def index(self):
-        matches = search(self.json['uuid'], limit=1)
-        if matches.size() > 0:
-            return
-
         snap = json.dumps(self.json)
-        doc = xapian.Document()
-        doc.set_data(snap)
-
-        indexer.set_document(doc)
-        indexer.index_text(snap)
-
-        # Add the document to the database.
-        database.add_document(doc)
+        index(self.uuid, snap)
 
     def get_hid_14(self):
         device = self.json['device']
@@ -52,15 +35,35 @@ class Build:
         hid = f"{manufacturer}{model}{chassis}{serial_number}{sku}"
         return hashlib.sha3_256(hid.encode()).hexdigest()
 
-    def create_annotation(self):
-        uuid = self.json['uuid']
-        owner = self.user
-        key = 'hidalgo1'
-        value = self.get_hid_14()
-        Annotation.objects.create(
-            uuid=uuid,
-            owner=owner,
-            key=key,
-            value=value
-        )
+    def create_annotations(self):
+        algorithms = {
+            'hidalgo1': self.get_hid_14(),
+        }
+
+        annotation = Annotation.objects.filter(
+            owner=self.user,
+            type=Annotation.Type.SYSTEM,
+            key='hidalgo1',
+            value = algorithms['hidalgo1']
+        ).first()
+
+        if annotation:
+            device = annotation.device
+        else:
+            device = Device.objects.create(
+                type=self.json["device"]["type"],
+                manufacturer=self.json["device"]["manufacturer"],
+                model=self.json["device"]["model"],
+                owner=self.user
+            )
+
+        for k, v in algorithms.items():
+            Annotation.objects.create(
+                uuid=self.uuid,
+                owner=self.user,
+                device=device,
+                type=Annotation.Type.SYSTEM,
+                key=k,
+                value=v
+            )
 

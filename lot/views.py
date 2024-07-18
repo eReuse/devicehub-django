@@ -9,7 +9,7 @@ from django.views.generic.edit import (
     FormView
 )
 from dashboard.mixins import DashboardView
-from lot.models import Lot
+from lot.models import Lot, LotTag
 from lot.forms import LotsForm
 
 
@@ -84,20 +84,15 @@ class AddToLotView(DashboardView, FormView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         lots = Lot.objects.filter(owner=self.request.user)
-        lots_incoming = lots.filter(type=Lot.Types.INCOMING).exists()
-        lots_outgoing = lots.filter(type=Lot.Types.OUTGOING).exists()
-        lots_temporal = lots.filter(type=Lot.Types.TEMPORAL).exists()
+        lot_tags = LotTag.objects.filter(owner=self.request.user)
         context.update({
             'lots': lots,
-            'incoming': lots_incoming,
-            'outgoing': lots_outgoing,
-            'temporal': lots_temporal
+            'lot_tags':lot_tags,
         })
         return context
 
     def get_form(self):
         form = super().get_form()
-        # import pdb; pdb.set_trace()
         form.fields["lots"].queryset = Lot.objects.filter(owner=self.request.user)
         return form
 
@@ -119,28 +114,23 @@ class DelToLotView(AddToLotView):
         return response
 
 
-class LotsTemporalView(DashboardView, TemplateView):
+class LotsTagsView(DashboardView, TemplateView):
     template_name = "lots.html"
-    title = _("Temporal lots")
-    breadcrumb = "lot / temporal lots"
+    title = _("lots")
+    breadcrumb = _("lots") + " /"
     success_url = reverse_lazy('dashboard:unassigned_devices')
-    lot_type = Lot.Types.TEMPORAL
 
     def get_context_data(self, **kwargs):
+        self.pk = kwargs.get('pk')
         context = super().get_context_data(**kwargs)
-        lots = Lot.objects.filter(owner=self.request.user)
+        tag = get_object_or_404(LotTag, owner=self.request.user, id=self.pk)
+        self.title += " {}".format(tag.name)
+        self.breadcrumb += " {}".format(tag.name)
+        lots = Lot.objects.filter(owner=self.request.user).filter(type=tag)
         context.update({
-            'lots': lots.filter(type=self.lot_type),
+            'lots': lots,
+            'title': self.title,
+            'breadcrumb': self.breadcrumb
         })
         return context
 
-class LotsOutgoingView(LotsTemporalView):
-    title = _("Outgoing lots")
-    breadcrumb = "lot / outging lots"
-    lot_type = Lot.Types.OUTGOING
-
-
-class LotsIncomingView(LotsTemporalView):
-    title = _("Incoming lots")
-    breadcrumb = "lot / Incoming lots"
-    lot_type = Lot.Types.INCOMING

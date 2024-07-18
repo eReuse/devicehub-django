@@ -9,7 +9,5 @@ urlpatterns = [
     path("edit/<int:pk>/", views.EditLotView.as_view(), name="edit"),
     path("add/devices/", views.AddToLotView.as_view(), name="add_devices"),
     path("del/devices/", views.DelToLotView.as_view(), name="del_devices"),
-    path("temporal/", views.LotsTemporalView.as_view(), name="lots_temporal"),
-    path("outgoing/", views.LotsOutgoingView.as_view(), name="lots_outgoing"),
-    path("incoming/", views.LotsIncomingView.as_view(), name="lots_incoming"),
+    path("tag/<int:pk>/", views.LotsTagsView.as_view(), name="tag"),
 ]

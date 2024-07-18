@@ -11,7 +11,8 @@ from django.views.generic.base import TemplateView
 from dashboard.mixins import DashboardView, DetailsMixin
 from snapshot.models import Annotation
 from snapshot.xapian import search
-from device.models import Device, PhysicalProperties
+from lot.models import LotTag
+from device.models import Device
 
 
 class NewDeviceView(DashboardView, CreateView):
@@ -20,26 +21,12 @@ class NewDeviceView(DashboardView, CreateView):
     breadcrumb = "Device / New Device"
     success_url = reverse_lazy('dashboard:unassigned_devices')
     model = Device
-    fields = (
-        'type',
-        "model",
-        "manufacturer",
-        "serial_number",
-        "part_number",
-        "brand",
-        "generation",
-        "version",
-        "production_date",
-        "variant",
-        "family",
-    )
 
     def form_valid(self, form):
         form.instance.owner = self.request.user
         response = super().form_valid(form)
-        PhysicalProperties.objects.create(device=form.instance)
         return response
-    
+
 
 class EditDeviceView(DashboardView, UpdateView):
     template_name = "new_device.html"
@@ -47,19 +34,6 @@ class EditDeviceView(DashboardView, UpdateView):
     breadcrumb = "Device / Update Device"
     success_url = reverse_lazy('dashboard:unassigned_devices')
     model = Device
-    fields = (
-        'type',
-        "model",
-        "manufacturer",
-        "serial_number",
-        "part_number",
-        "brand",
-        "generation",
-        "version",
-        "production_date",
-        "variant",
-        "family",
-    )
 
     def get_form_kwargs(self):
         pk = self.kwargs.get('pk')
@@ -67,73 +41,53 @@ class EditDeviceView(DashboardView, UpdateView):
         self.success_url = reverse_lazy('device:details', args=[pk])
         kwargs = super().get_form_kwargs()
         return kwargs
-    
 
-class DetailsView2(DetailsMixin):
+
+class DetailsView(DetailsMixin):
     template_name = "details.html"
     title = _("Device")
     breadcrumb = "Device / Details"
     model = Device
 
-class DetailsView(DashboardView, TemplateView):
-    template_name = "details.html"
-    title = _("Device")
-    breadcrumb = "Device / Details"
-
-    def get(self, request, *args, **kwargs):
-        # import pdb; pdb.set_trace()
-        self.pk = kwargs['pk']
-        annotation = get_object_or_404(Annotation, owner=self.request.user, uuid=self.pk)
-        for xa in search([str(self.pk)]):
-            self.object = json.loads(xa.document.get_data())
-            return super().get(request, *args, **kwargs)
-
-        return super().get(request, *args, **kwargs)
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        self.object.initial()
+        lot_tags = LotTag.objects.filter(owner=self.request.user)
         context.update({
-            'object': self.object,
+            'snapshot': self.object.get_last_snapshot(),
+            'lot_tags': lot_tags,
         })
         return context
 
-    
 
-class PhysicalView(DashboardView, UpdateView):
-    template_name = "physical_properties.html"
-    title = _("Physical Properties")
-    breadcrumb = "Device / Physical properties"
+class AddAnnotationView(DashboardView, CreateView):
+    template_name = "new_device.html"
+    title = _("New annotation")
+    breadcrumb = "Device / New annotation"
     success_url = reverse_lazy('dashboard:unassigned_devices')
-    model = PhysicalProperties
-    fields = (
-        "weight",
-        "width",
-        "height",
-        "depth",
-        "color",
-        "image",
-    )
+    model = Annotation
+    fields = ("key", "value")
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context.update({
-            'device': self.device,
-        })
-        return context
+    def form_valid(self, form):
+        self.device.get_annotations()
+        self.device.get_uuids()
+        form.instance.owner = self.request.user
+        form.instance.device = self.device
+        form.instance.uuid = self.device.uuids[0]
+        form.instance.type = Annotation.Type.USER
+        response = super().form_valid(form)
+        return response
 
     def get_form_kwargs(self):
         pk = self.kwargs.get('pk')
         self.device = get_object_or_404(Device, pk=pk)
-        try:
-            self.object = self.device.physicalproperties
-        except Exception:
-            self.object = PhysicalProperties.objects.create(device=self.device)
+        self.success_url = reverse_lazy('device:details', args=[pk])
         kwargs = super().get_form_kwargs()
         return kwargs
-    
-    def form_valid(self, form):
-        self.success_url = reverse_lazy('device:details', args=[self.device.id])
-        response = super().form_valid(form)
-        return response
-    
+
+    def get_success_url(self):
+        url = super().get_success_url()
+        import pdb; pdb.set_trace()
+        return url
+
 
