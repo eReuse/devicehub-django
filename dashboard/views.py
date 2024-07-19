@@ -17,43 +17,30 @@ class UnassignedDevicesView(InventaryMixin):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        devices = Device.objects.filter(
-            owner=self.request.user
-            ).annotate(num_lots=Count('lot')).filter(num_lots=0)
+        devices = Device.get_unassigned(self.request.user)
 
         context.update({
             'devices': devices,
         })
 
-        return context
-
-
-class AllDevicesView(InventaryMixin):
-    template_name = "unassigned_devices.html"
-    section = "All"
-    title = _("All Devices")
-    breadcrumb = "Devices / All Devices"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        devices = Device.objects.filter(owner=self.request.user)
-        context.update({
-            'devices': devices,
-        })
         return context
 
 
 class LotDashboardView(InventaryMixin, DetailsMixin):
     template_name = "unassigned_devices.html"
-    section = "Unassigned"
+    section = "dashboard_lot"
     title = _("Lot Devices")
-    breadcrumb = "Devices / Lot Devices"
+    breadcrumb = "Lot / Devices"
     model = Lot
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        devices = self.object.devices.filter(owner=self.request.user)
+        devices = self.get_devices()
         context.update({
             'devices': devices,
         })
         return context
+
+    def get_devices(self):
+        chids = self.object.devicelot_set.all().values_list("device_id", flat=True).distinct()
+        return [Device(id=x) for x in chids]

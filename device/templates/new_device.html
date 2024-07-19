@@ -22,11 +22,34 @@
   </div>
 </div>
 {% endif %}
-{% bootstrap_form form %}
+{# bootstrap_form form #}
 <div class="form-actions-no-box">
   <a class="btn btn-grey" href="{% url 'dashboard:unassigned_devices' %}">{% translate "Cancel" %}</a>
   <input class="btn btn-green-admin" type="submit" name="submit" value="{% translate 'Save' %}" />
 </div>
 
+</form>
+<script>
+  function addForm(button) {
+      var formCount = parseInt(document.getElementById('id_form-TOTAL_FORMS').value);
+      var formCopy = document.querySelector('.dynamic-form').cloneNode(true);
+      formCopy.style.display = 'block';
+      formCopy.innerHTML = formCopy.innerHTML.replace(/__prefix__/g, formCount);
+      document.getElementById('formset-container').appendChild(formCopy);
+      document.getElementById('id_form-TOTAL_FORMS').value = formCount + 1;
+  }
+</script>
+
+<form method="post">
+    {% csrf_token %}
+    <div id="formset-container">
+        {% for f in form %}
+            <div class="dynamic-form" style="display: {% if forloop.first %}block{% else %}none{% endif %};">
+                {{ f.as_p }}
+            </div>
+        {% endfor %}
+    </div>
+    <button type="button" onclick="addForm(this);">Add</button>
+    <button type="submit">Submit</button>
 </form>
 {% endblock %}

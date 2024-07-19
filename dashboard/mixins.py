@@ -5,6 +5,7 @@ from django.core.exceptions import PermissionDenied
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic.base import TemplateView
 from device.models import Device
+from snapshot.models import Annotation
 from lot.models import LotTag
 
 
@@ -45,7 +46,10 @@ class DashboardView(LoginRequiredMixin):
     def get_session_devices(self):
         # import pdb; pdb.set_trace()
         dev_ids = self.request.session.pop("devices", [])
-        self._devices = Device.objects.filter(id__in=dev_ids).filter(owner=self.request.user)
+        
+        self._devices = []
+        for x in Annotation.objects.filter(value__in=dev_ids).filter(owner=self.request.user).distinct():
+            self._devices.append(Device(id=x.value))
         return self._devices
 
 
@@ -53,7 +57,7 @@ class DetailsMixin(DashboardView, TemplateView):
 
     def get(self, request, *args, **kwargs):
         self.pk = kwargs['pk']
-        self.object = get_object_or_404(self.model, pk=self.pk)
+        self.object = get_object_or_404(self.model, pk=self.pk, owner=self.request.user)
         return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):

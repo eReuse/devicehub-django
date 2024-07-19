@@ -1,10 +1,10 @@
 from django.utils.translation import gettext_lazy as _
 from django.views.generic.base import TemplateView
-from django.views.generic.edit import FormView
 from django.urls import reverse_lazy
 from django.views.generic.edit import (
     CreateView,
     UpdateView,
+    FormView,
 )
 
 from dashboard.mixins import  DashboardView

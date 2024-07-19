@@ -7,7 +7,7 @@ from utils.constants import (
 )
 
 from user.models import User
-from device.models import Device
+# from device.models import Device
 from snapshot.models import Annotation
 
 
@@ -19,6 +19,11 @@ class LotTag(models.Model):
         return self.name
 
 
+class DeviceLot(models.Model):
+    lot = models.ForeignKey("Lot", on_delete=models.CASCADE)
+    device_id = models.CharField(max_length=STR_EXTEND_SIZE, blank=False, null=False)
+
+
 class Lot(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
@@ -28,4 +33,13 @@ class Lot(models.Model):
     closed = models.BooleanField(default=True)
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
     type = models.ForeignKey(LotTag, on_delete=models.CASCADE)
-    devices = models.ManyToManyField(Device)
+
+    def add(self, v):
+        if DeviceLot.objects.filter(lot=self, device_id=v).exists():
+            return
+        DeviceLot.objects.create(lot=self, device_id=v)
+        
+    def remove(self, v):
+        for d in DeviceLot.objects.filter(lot=self, device_id=v):
+            d.delete()
+

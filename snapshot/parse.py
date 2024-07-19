@@ -7,7 +7,6 @@ import hashlib
 from datetime import datetime
 from snapshot.xapian import search, index
 from snapshot.models import Snapshot, Annotation
-from device.models import Device
 from utils.constants import ALGOS
 
 
@@ -47,21 +46,10 @@ class Build:
             value = algorithms['hidalgo1']
         ).first()
 
-        if annotation:
-            device = annotation.device
-        else:
-            device = Device.objects.create(
-                type=self.json["device"]["type"],
-                manufacturer=self.json["device"]["manufacturer"],
-                model=self.json["device"]["model"],
-                owner=self.user
-            )
-
         for k, v in algorithms.items():
             Annotation.objects.create(
                 uuid=self.uuid,
                 owner=self.user,
-                device=device,
                 type=Annotation.Type.SYSTEM,
                 key=k,
                 value=v

@@ -6,7 +6,7 @@ from django.views.generic.edit import (
     CreateView,
     DeleteView,
     UpdateView,
-    FormView
+    FormView,
 )
 from dashboard.mixins import DashboardView
 from lot.models import Lot, LotTag
