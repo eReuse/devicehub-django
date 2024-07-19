@@ -63,7 +63,6 @@ class Annotation(models.Model):
     type =  models.SmallIntegerField(choices=Type) 
     key = models.CharField(max_length=STR_EXTEND_SIZE)
     value = models.CharField(max_length=STR_EXTEND_SIZE)
-    device = models.ForeignKey('device.Device', on_delete=models.CASCADE)
     
     class Meta:
         constraints = [

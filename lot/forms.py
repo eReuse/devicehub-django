@@ -15,13 +15,14 @@ class LotsForm(forms.Form):
     def save(self, commit=True):
         if not commit:
             return
+
         for dev in self.devices:
             for lot in self._lots:
-                lot.devices.add(dev.id)
+                lot.add(dev.id)
         return
 
     def remove(self):
         for dev in self.devices:
             for lot in self._lots:
-                lot.devices.remove(dev.id)
+                lot.remove(dev.id)
         return

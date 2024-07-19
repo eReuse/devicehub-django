@@ -27,9 +27,6 @@
         <button class="nav-link" data-bs-toggle="tab" data-bs-target="#components">Components</button>
       </li>
       <li class="nav-items">
-        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#traceabiliy">Traceability log</button>
-      </li>
-      <li class="nav-items">
         <button class="nav-link" data-bs-toggle="tab" data-bs-target="#snapshots">Snapshots</button>
       </li>
       <li class="nav-items">
@@ -47,7 +44,6 @@
         (<a href="{% url 'device:edit' object.id %}">Edit Device</a>)
       </div>
       <div class="col-lg-9 col-md-8">
-        {% if object.hid %}Snapshot{% else %}Placeholder{% endif %}
       </div>
     </div>
 
@@ -57,28 +53,23 @@
     </div>
 
     <div class="row">
-      <div class="col-lg-3 col-md-4 label ">Id device internal</div>
-      <div class="col-lg-9 col-md-8"></div>
-    </div>
-
-    <div class="row">
       <div class="col-lg-3 col-md-4 label ">Type</div>
-      <div class="col-lg-9 col-md-8">{{ snapshot.doc.device.type }}</div>
+      <div class="col-lg-9 col-md-8">{{ object.type }}</div>
     </div>
 
     <div class="row">
       <div class="col-lg-3 col-md-4 label">Manufacturer</div>
-      <div class="col-lg-9 col-md-8">{{ snapshot.doc.device.manufacturer|default:"" }}</div>
+      <div class="col-lg-9 col-md-8">{{ object.manufacturer|default:"" }}</div>
     </div>
 
     <div class="row">
       <div class="col-lg-3 col-md-4 label">Model</div>
-      <div class="col-lg-9 col-md-8">{{ snapshot.doc.device.model|default:"" }}</div>
+      <div class="col-lg-9 col-md-8">{{ object.model|default:"" }}</div>
     </div>
 
     <div class="row">
       <div class="col-lg-3 col-md-4 label">Serial Number</div>
-      <div class="col-lg-9 col-md-8">{{ snapshot.doc.device.serialNumber|default:"" }}</div>
+      <div class="col-lg-9 col-md-8">{{ object.last_snapshot.doc.device.serialNumber|default:"" }}</div>
     </div>
     <div class="row">
       <div class="col-lg-3 col-md-4 label">Identifiers</div>
@@ -132,7 +123,7 @@
     {% for tag in lot_tags %}
     <h5 class="card-title">{{ tag }}</h5>
 
-    {% for lot in object.lot_set.filter %}
+    {% for lot in tag.lot_set.filter %}
     {% if lot.type == tag %}
     <div class="row">
       <div class="col">
@@ -171,32 +162,10 @@
     </table>
   </div>
 
-  <div class="tab-pane fade profile-overview" id="traceability">
-    <h5 class="card-title">Traceability log Details</h5>
-    <div class="list-group col-6">
-      
-      <div class="list-group-item d-flex justify-content-between align-items-center">
-        Snapshot ✓
-        <small class="text-muted">14:07 23-06-2024</small>
-      </div>
-      
-      <div class="list-group-item d-flex justify-content-between align-items-center">
-        EraseCrypto ✓
-        <small class="text-muted">14:07 23-06-2024</small>
-      </div>
-      
-      <div class="list-group-item d-flex justify-content-between align-items-center">
-        EraseCrypto ✓
-        <small class="text-muted">14:07 23-06-2024</small>
-      </div>
-      
-    </div>
-  </div>
-
   <div class="tab-pane fade profile-overview" id="components">
     <h5 class="card-title">Components last snapshot</h5>
     <div class="list-group col-6">
-      {% for c in snapshot.components %}
+      {% for c in object.last_snapshot.doc.components %}
       <div class="list-group-item">
         <div class="d-flex w-100 justify-content-between">
           <h5 class="mb-1">{{ c.type }}</h5>

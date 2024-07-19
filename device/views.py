@@ -6,21 +6,23 @@ from django.utils.translation import gettext_lazy as _
 from django.views.generic.edit import (
     CreateView,
     UpdateView,
+    FormView,
 )
 from django.views.generic.base import TemplateView
-from dashboard.mixins import DashboardView, DetailsMixin
+from dashboard.mixins import DashboardView
 from snapshot.models import Annotation
 from snapshot.xapian import search
 from lot.models import LotTag
 from device.models import Device
+from device.forms import DeviceFormSet
 
 
-class NewDeviceView(DashboardView, CreateView):
+class NewDeviceView(DashboardView, FormView):
     template_name = "new_device.html"
     title = _("New Device")
     breadcrumb = "Device / New Device"
     success_url = reverse_lazy('dashboard:unassigned_devices')
-    model = Device
+    form_class = DeviceFormSet
 
     def form_valid(self, form):
         form.instance.owner = self.request.user
@@ -28,12 +30,41 @@ class NewDeviceView(DashboardView, CreateView):
         return response
 
 
+# class AddToLotView(DashboardView, FormView):
+#     template_name = "list_lots.html"
+#     title = _("Add to lots")
+#     breadcrumb = "lot / add to lots"
+#     success_url = reverse_lazy('dashboard:unassigned_devices')
+#     form_class = LotsForm
+
+#     def get_context_data(self, **kwargs):
+#         context = super().get_context_data(**kwargs)
+#         lots = Lot.objects.filter(owner=self.request.user)
+#         lot_tags = LotTag.objects.filter(owner=self.request.user)
+#         context.update({
+#             'lots': lots,
+#             'lot_tags':lot_tags,
+#         })
+#         return context
+
+#     def get_form(self):
+#         form = super().get_form()
+#         form.fields["lots"].queryset = Lot.objects.filter(owner=self.request.user)
+#         return form
+
+#     def form_valid(self, form):
+#         form.devices = self.get_session_devices()
+#         form.save()
+#         response = super().form_valid(form)
+#         return response
+
+
 class EditDeviceView(DashboardView, UpdateView):
     template_name = "new_device.html"
     title = _("Update Device")
     breadcrumb = "Device / Update Device"
     success_url = reverse_lazy('dashboard:unassigned_devices')
-    model = Device
+    model = Annotation
 
     def get_form_kwargs(self):
         pk = self.kwargs.get('pk')
@@ -43,17 +74,23 @@ class EditDeviceView(DashboardView, UpdateView):
         return kwargs
 
 
-class DetailsView(DetailsMixin):
+class DetailsView(DashboardView, TemplateView):
     template_name = "details.html"
     title = _("Device")
     breadcrumb = "Device / Details"
-    model = Device
+    model = Annotation
+
+    def get(self, request, *args, **kwargs):
+        self.pk = kwargs['pk']
+        self.object = Device(id=self.pk)
+        return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         self.object.initial()
         lot_tags = LotTag.objects.filter(owner=self.request.user)
         context.update({
+            'object': self.object,
             'snapshot': self.object.get_last_snapshot(),
             'lot_tags': lot_tags,
         })
