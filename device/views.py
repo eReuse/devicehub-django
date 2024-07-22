@@ -21,12 +21,19 @@ class NewDeviceView(DashboardView, FormView):
     template_name = "new_device.html"
     title = _("New Device")
     breadcrumb = "Device / New Device"
-    success_url = reverse_lazy('dashboard:unassigned_devices')
+    success_url = reverse_lazy('device:add')
+    # success_url = reverse_lazy('dashboard:unassigned_devices')
     form_class = DeviceFormSet
 
     def form_valid(self, form):
-        form.instance.owner = self.request.user
+        # import pdb; pdb.set_trace()
+        # form.instance.owner = self.request.user
         response = super().form_valid(form)
+        return response
+
+    def form_invalid(self, form):
+        import pdb; pdb.set_trace()
+        response = super().form_invalid(form)
         return response
 
 
