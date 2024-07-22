@@ -8,48 +8,58 @@
   </div>
 </div>
 
-{% load django_bootstrap5 %}
-<form role="form" method="post">
-{% csrf_token %}
-{% if form.errors %}
-<div class="alert alert-danger alert-icon alert-icon-border alert-dismissible" role="alert">
-  <div class="icon"><span class="mdi mdi-close-circle-o"></span></div>
-  <div class="message">
-    {% for field, error in form.errors.items %}
-      {{ error }}<br />
-    {% endfor %}
-    <button class="btn-close" type="button" data-dismiss="alert" aria-label="Close"></button>
-  </div>
-</div>
-{% endif %}
-{# bootstrap_form form #}
-<div class="form-actions-no-box">
-  <a class="btn btn-grey" href="{% url 'dashboard:unassigned_devices' %}">{% translate "Cancel" %}</a>
-  <input class="btn btn-green-admin" type="submit" name="submit" value="{% translate 'Save' %}" />
-</div>
-
-</form>
 <script>
   function addForm(button) {
       var formCount = parseInt(document.getElementById('id_form-TOTAL_FORMS').value);
-      var formCopy = document.querySelector('.dynamic-form').cloneNode(true);
-      formCopy.style.display = 'block';
+      var formCopy = $(document.querySelector('#id_form-0-name')).parent().parent().parent()[0].cloneNode(true);
+      // formCopy.style.display = 'block';
       formCopy.innerHTML = formCopy.innerHTML.replace(/__prefix__/g, formCount);
       document.getElementById('formset-container').appendChild(formCopy);
       document.getElementById('id_form-TOTAL_FORMS').value = formCount + 1;
   }
 </script>
 
-<form method="post">
-    {% csrf_token %}
-    <div id="formset-container">
-        {% for f in form %}
-            <div class="dynamic-form" style="display: {% if forloop.first %}block{% else %}none{% endif %};">
-                {{ f.as_p }}
-            </div>
-        {% endfor %}
+{% load django_bootstrap5 %}
+<form role="form" method="post">
+  {% csrf_token %}
+  {% if form.errors %}
+  <div class="alert alert-danger alert-icon alert-icon-border alert-dismissible" role="alert">
+    <div class="icon"><span class="mdi mdi-close-circle-o"></span></div>
+    <div class="message">
+      {% for field, error in form.errors.items %}
+        {{ error }}<br />
+      {% endfor %}
+      <button class="btn-close" type="button" data-dismiss="alert" aria-label="Close"></button>
     </div>
-    <button type="button" onclick="addForm(this);">Add</button>
-    <button type="submit">Submit</button>
+  </div>
+  {% endif %}
+  {{ form.management_form }}
+  <div class="container" id="formset-container">
+    <div class="row mb-2">
+      <div class="col"></div>
+      <div class="col-2 text-center">
+        <a href="javascript:void()" onclick="addForm(this);" type="button" class="btn btn-green-admin">
+          <i class="bi bi-plus"></i>
+          {% trans 'Add' %}
+        </a>
+      </div>
+    </div>
+    {% for f in form %}
+      <div class="row mb-2">
+        <div class="col">
+          {% bootstrap_field f.name %}
+        </div>
+        <div class="col">
+          {% bootstrap_field f.value %}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+  <div class="container">
+    <a class="btn btn-grey" href="{% url 'dashboard:unassigned_devices' %}">{% translate "Cancel" %}</a>
+    <input class="btn btn-green-admin" type="submit" name="submit" value="{% translate 'Save' %}" />
+  </div>
+
 </form>
+
 {% endblock %}
