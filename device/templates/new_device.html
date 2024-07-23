@@ -12,8 +12,13 @@
   function addForm(button) {
       var formCount = parseInt(document.getElementById('id_form-TOTAL_FORMS').value);
       var formCopy = $(document.querySelector('#id_form-0-name')).parent().parent().parent()[0].cloneNode(true);
-      // formCopy.style.display = 'block';
-      formCopy.innerHTML = formCopy.innerHTML.replace(/__prefix__/g, formCount);
+      formCopy.querySelectorAll('input').forEach(function(input) {
+            var name = input.name.replace(/form-\d+/g, 'form-' + formCount);
+            var id = 'id_' + name;
+            input.name = name;
+            input.id = id;
+            input.value = '';
+        });
       document.getElementById('formset-container').appendChild(formCopy);
       document.getElementById('id_form-TOTAL_FORMS').value = formCount + 1;
   }
@@ -42,6 +47,21 @@
           <i class="bi bi-plus"></i>
           {% trans 'Add' %}
         </a>
+      </div>
+    </div>
+    <div class="row mb-2">
+      <div class="col">
+        {% bootstrap_field form.0.type %}
+      </div>
+    </div>
+    <div class="row mb-2">
+      <div class="col">
+        {% bootstrap_field form.0.amount %}
+      </div>
+    </div>
+    <div class="row mb-2">
+      <div class="col">
+        {% bootstrap_field form.0.tag %}
       </div>
     </div>
     {% for f in form %}
