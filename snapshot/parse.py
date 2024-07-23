@@ -1,7 +1,6 @@
 import os
 import json
 import shutil
-import xapian
 import hashlib
 
 from datetime import datetime
@@ -39,6 +38,7 @@ class Build:
             'hidalgo1': self.get_hid_14(),
         }
 
+        # TODO is neccesary?
         annotation = Annotation.objects.filter(
             owner=self.user,
             type=Annotation.Type.SYSTEM,
@@ -47,6 +47,9 @@ class Build:
         ).first()
 
         for k, v in algorithms.items():
+            if annotation and k == annotation.key:
+                continue
+        
             Annotation.objects.create(
                 uuid=self.uuid,
                 owner=self.user,
