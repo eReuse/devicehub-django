@@ -5,7 +5,7 @@ from django.core.exceptions import PermissionDenied
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic.base import TemplateView
 from device.models import Device
-from snapshot.models import Annotation
+from evidence.models import Annotation
 from lot.models import LotTag
 
 

@@ -3,11 +3,11 @@ import json
 from django.db import models
 
 from utils.constants import STR_SM_SIZE, STR_EXTEND_SIZE
-from snapshot.xapian import search
+from evidence.xapian import search
 from user.models import User
 
 
-class Snapshot:
+class Evidence:
     def __init__(self, uuid):
         self.uuid = uuid
         self.owner = None

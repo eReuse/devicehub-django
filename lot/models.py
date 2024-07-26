@@ -8,7 +8,7 @@ from utils.constants import (
 
 from user.models import User
 # from device.models import Device
-from snapshot.models import Annotation
+from evidence.models import Annotation
 
 
 class LotTag(models.Model):

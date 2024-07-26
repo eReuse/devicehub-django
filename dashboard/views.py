@@ -4,8 +4,8 @@ from django.utils.translation import gettext_lazy as _
 from django.db.models import Count
 from dashboard.mixins import InventaryMixin, DetailsMixin
 from device.models import Device
-from snapshot.xapian import search
-from snapshot.models import Annotation
+from evidence.xapian import search
+from evidence.models import Annotation
 from lot.models import Lot, LotTag
 
 

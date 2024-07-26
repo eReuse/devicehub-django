@@ -1,7 +1,7 @@
 from django.db import models
 
 from utils.constants import STR_SM_SIZE, STR_SIZE, STR_EXTEND_SIZE, ALGOS
-from snapshot.models import Annotation, Snapshot
+from evidence.models import Annotation, Evidence
 from user.models import User
 from lot.models import DeviceLot
 
@@ -32,15 +32,15 @@ class Device:
         self.annotations =  []
         self.hids = []
         self.uuids = []
-        self.snapshots = []
-        self.last_snapshot = None
-        self.get_last_snapshot()
+        self.evidences = []
+        self.last_evidence = None
+        self.get_last_evidence()
 
     def initial(self):
         self.get_annotations()
         self.get_uuids()
         self.get_hids()
-        self.get_snapshots()
+        self.get_evidences()
         
     def get_annotations(self):
         if self.annotations:
@@ -70,17 +70,17 @@ class Device:
             key__in=ALGOS.keys(),
         ).values_list("value", flat=True)
 
-    def get_snapshots(self):
+    def get_evidences(self):
         if not self.uuids:
             self.get_uuids()
 
-        self.snapshots = [Snapshot(u) for u in self.uuids]
+        self.evidences = [Evidence(u) for u in self.uuids]
 
-    def get_last_snapshot(self):
+    def get_last_evidence(self):
         annotations = self.get_annotations()
         if annotations:
             annotation = annotations.first()
-        self.last_snapshot = Snapshot(annotation.uuid)
+        self.last_evidence = Evidence(annotation.uuid)
 
     def last_uuid(self):
         return self.uuids[0]
@@ -100,24 +100,24 @@ class Device:
 
     @property
     def manufacturer(self):
-        if not self.last_snapshot:
-            self.get_last_snapshot()
-        return self.last_snapshot.doc['device']['manufacturer']
+        if not self.last_evidence:
+            self.get_last_evidence()
+        return self.last_evidence.doc['device']['manufacturer']
 
     @property
     def type(self):
-        if not self.last_snapshot:
-            self.get_last_snapshot()
-        return self.last_snapshot.doc['device']['type']
+        if not self.last_evidence:
+            self.get_last_evidence()
+        return self.last_evidence.doc['device']['type']
 
     @property
     def model(self):
-        if not self.last_snapshot:
-            self.get_last_snapshot()
-        return self.last_snapshot.doc['device']['model']
+        if not self.last_evidence:
+            self.get_last_evidence()
+        return self.last_evidence.doc['device']['model']
 
     @property
     def type(self):
-        if not self.last_snapshot:
-            self.get_last_snapshot()
-        return self.last_snapshot.doc['device']['type']
+        if not self.last_evidence:
+            self.get_last_evidence()
+        return self.last_evidence.doc['device']['type']

@@ -27,7 +27,7 @@
         <button class="nav-link" data-bs-toggle="tab" data-bs-target="#components">Components</button>
       </li>
       <li class="nav-items">
-        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#snapshots">Snapshots</button>
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#evidences">Evidences</button>
       </li>
       <li class="nav-items">
         <a class="nav-link" href="">Web</a>
@@ -69,7 +69,7 @@
 
     <div class="row">
       <div class="col-lg-3 col-md-4 label">Serial Number</div>
-      <div class="col-lg-9 col-md-8">{{ object.last_snapshot.doc.device.serialNumber|default:"" }}</div>
+      <div class="col-lg-9 col-md-8">{{ object.last_evidence.doc.device.serialNumber|default:"" }}</div>
     </div>
     <div class="row">
       <div class="col-lg-3 col-md-4 label">Identifiers</div>
@@ -163,13 +163,13 @@
   </div>
 
   <div class="tab-pane fade profile-overview" id="components">
-    <h5 class="card-title">Components last snapshot</h5>
+    <h5 class="card-title">Components last evidence</h5>
     <div class="list-group col-6">
-      {% for c in object.last_snapshot.doc.components %}
+      {% for c in object.last_evidence.doc.components %}
       <div class="list-group-item">
         <div class="d-flex w-100 justify-content-between">
           <h5 class="mb-1">{{ c.type }}</h5>
-          <small class="text-muted">{{ snapshot.created }}</small>
+          <small class="text-muted">{{ evidence.created }}</small>
         </div>
         <p class="mb-1">
           {{ c.manufacturer }}<br />
@@ -183,10 +183,10 @@
     </div>
   </div>
 
-  <div class="tab-pane fade profile-overview" id="snapshots">
-    <h5 class="card-title">List of snapshots</h5>
+  <div class="tab-pane fade profile-overview" id="evidences">
+    <h5 class="card-title">List of evidences</h5>
     <div class="list-group col-6">
-      {% for snap in object.snapshots %}
+      {% for snap in object.evidences %}
       <div class="list-group-item">
         <div class="d-flex w-100 justify-content-between">
           <h5 class="mb-1"></h5>

@@ -19,14 +19,14 @@
         </th>
       </tr>
     </thead>
-    {% for snap in snapshots %}
+    {% for snap in evicendes %}
     <tbody>
       <tr>
         <td>
-          <input type="checkbox" name="snapshots" value="{{ snap.id }}" />
+          <input type="checkbox" name="evidences" value="{{ snap.id }}" />
         </td>
         <td>
-          <a href="{# url 'snapshot:details' snap.pk #}">{{ snap.uuid }} {{ snap.sid }} {{ snap.version }}</a>
+          <a href="{# url 'evidence:details' snap.pk #}">{{ snap.uuid }} {{ snap.sid }} {{ snap.version }}</a>
         </td>
         <td>
           <a href="{% url 'device:details' snap.computer.device.pk %}">{{ snap.computer.device.manufacturer }} {{ snap.computer.device.model }}</a>

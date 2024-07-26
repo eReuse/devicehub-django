@@ -1,15 +1,15 @@
 from rest_framework import serializers
-from snapshot.models import SnapshotJson
+from evidence.models import EvidenceJson
 
 import json
 
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
-from snapshot.parse import Parse
+from evidence.parse import Parse
 
-class SnapshotSerializer(serializers.ModelSerializer):
+class EvidenceSerializer(serializers.ModelSerializer):
     class Meta:
-        model = SnapshotJson
+        model = EvidenceJson
         fields = ['id', 'title', 'content']
 
 @csrf_exempt
