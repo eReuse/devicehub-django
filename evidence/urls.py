@@ -9,10 +9,10 @@
 #     path('', include(router.urls)),
 # ]
 from django.urls import path
-from snapshot import views 
+from evidence import views 
 
-app_name = 'snapshot'
+app_name = 'evidence'
 
 urlpatterns = [
-    path("", views.ListSnapshotsView.as_view(), name="list"),
+    path("", views.ListEvidencesView.as_view(), name="list"),
 ]

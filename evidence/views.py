@@ -8,7 +8,7 @@ from django.views.generic.edit import (
 )
 
 from dashboard.mixins import  DashboardView
-from snapshot.models import Snapshot, Annotation
+from evidence.models import Evidence, Annotation
 # from snapshot.forms import UploadForm
 # from django.shortcuts import render
 # from rest_framework import viewsets
@@ -20,18 +20,18 @@ from snapshot.models import Snapshot, Annotation
 #     serializer_class = SnapshotSerializer
 
 
-class ListSnapshotsView(DashboardView, TemplateView):
-    template_name = "snapshots.html"
-    section = "snapshots"
-    title = _("Snapshots")
-    breadcrumb = "Snapshots"
+class ListEvidencesView(DashboardView, TemplateView):
+    template_name = "evidences.html"
+    section = "evidences"
+    title = _("Evidences")
+    breadcrumb = "Evidences"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # snapshots = Snapshot.objects.filter(owner=self.request.user)
-        snapshots = []
+        # evidences = Evidence.objects.filter(owner=self.request.user)
+        evidences = []
         context.update({
-            'snapshots': snapshots,
+            'evidences': evidences,
         })
         return context
 

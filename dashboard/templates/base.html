@@ -108,19 +108,19 @@
                 </ul>
               </li>
               <li class="nav-item">
-                <a class="admin {% if section == 'People' %}active {% endif %}nav-link fw-bold" data-bs-toggle="collapse" data-bs-target="#ul_snapshots" aria-expanded="false" aria-controls="ul_snapshots" href="javascript:void()">
+                <a class="admin {% if section == 'People' %}active {% endif %}nav-link fw-bold" data-bs-toggle="collapse" data-bs-target="#ul_evidences" aria-expanded="false" aria-controls="ul_evidences" href="javascript:void()">
                   <i class="bi bi-usb-drive icon_sidebar"></i>
-                  {% trans 'Snapshots' %}
+                  {% trans 'evidences' %}
                 </a>
-                <ul class="flex-column mb-2 ul_sidebar accordion-collapse {% if section == 'People' %}expanded{% else %}collapse{% endif %}" id="ul_snapshots" data-bs-parent="#sidebarMenu">
+                <ul class="flex-column mb-2 ul_sidebar accordion-collapse {% if section == 'People' %}expanded{% else %}collapse{% endif %}" id="ul_evidences" data-bs-parent="#sidebarMenu">
                   <li class="nav-item">
                     <a class="nav-link{% if path == 'admin_people_list' %} active2{% endif %}" href="{# url 'idhub:admin_people_list' #}">
                       {% trans 'Upload one' %}
                     </a>
                   </li>
                   <li class="nav-item">
-                    <a class="nav-link{% if path == 'admin_people_list' %} active2{% endif %}" href="{% url 'snapshot:list' %}">
-                      {% trans 'Old snapshots' %}
+                    <a class="nav-link{% if path == 'admin_people_list' %} active2{% endif %}" href="{% url 'evidence:list' %}">
+                      {% trans 'Old evidences' %}
                     </a>
                   </li>
                 </ul>

@@ -4,14 +4,14 @@ import shutil
 import hashlib
 
 from datetime import datetime
-from snapshot.xapian import search, index
-from snapshot.models import Snapshot, Annotation
+from evidence.xapian import search, index
+from evidence.models import Evidence, Annotation
 from utils.constants import ALGOS
 
 
 class Build:
-    def __init__(self, snapshot_json, user):
-        self.json = snapshot_json
+    def __init__(self, evidence_json, user):
+        self.json = evidence_json
         self.uuid = self.json['uuid']
         self.user = user
         self.hid = None

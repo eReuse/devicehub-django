@@ -47,7 +47,7 @@ INSTALLED_APPS = [
     "login",
     "user",
     "device",
-    "snapshot",
+    "evidence",
     "action",
     "tag",
     "lot",
