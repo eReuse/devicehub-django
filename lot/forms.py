@@ -9,7 +9,6 @@ class LotsForm(forms.Form):
     )
 
     def clean(self):
-        # import pdb; pdb.set_trace()
         self._lots = self.cleaned_data.get("lots")
         return self._lots
     
