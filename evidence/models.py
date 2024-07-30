@@ -56,6 +56,7 @@ class Annotation(models.Model):
     class Type(models.IntegerChoices):
         SYSTEM= 0, "System"
         USER = 1, "User"
+        DOCUMENT = 2, "Document"
 
     created = models.DateTimeField(auto_now_add=True)
     uuid = models.UUIDField()
@@ -68,8 +69,3 @@ class Annotation(models.Model):
         constraints = [
             models.UniqueConstraint(fields=["type", "key", "uuid"], name="unique_type_key_uuid")
         ]
-
-    def is_user_annotation(self):
-        if self.type == self.Type.USER:
-            return True
-        return False
