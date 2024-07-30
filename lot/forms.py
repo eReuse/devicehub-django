@@ -1,6 +1,7 @@
 from django import forms
 from lot.models import Lot
 
+
 class LotsForm(forms.Form):
     lots = forms.ModelMultipleChoiceField(
         queryset=Lot.objects.all(),
