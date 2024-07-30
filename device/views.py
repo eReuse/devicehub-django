@@ -10,8 +10,8 @@ from django.views.generic.edit import (
 )
 from django.views.generic.base import TemplateView
 from dashboard.mixins import DashboardView
-from snapshot.models import Annotation
-from snapshot.xapian import search
+from evidence.models import Annotation
+from evidence.xapian import search
 from lot.models import LotTag
 from device.models import Device
 from device.forms import DeviceFormSet
@@ -95,14 +95,14 @@ class DetailsView(DashboardView, TemplateView):
         lot_tags = LotTag.objects.filter(owner=self.request.user)
         context.update({
             'object': self.object,
-            'snapshot': self.object.get_last_snapshot(),
+            'snapshot': self.object.get_last_evidence(),
             'lot_tags': lot_tags,
         })
         return context
 
 
 class AddAnnotationView(DashboardView, CreateView):
-    template_name = "new_device.html"
+    template_name = "new_annotation.html"
     title = _("New annotation")
     breadcrumb = "Device / New annotation"
     success_url = reverse_lazy('dashboard:unassigned_devices')
@@ -110,25 +110,46 @@ class AddAnnotationView(DashboardView, CreateView):
     fields = ("key", "value")
 
     def form_valid(self, form):
-        self.device.get_annotations()
-        self.device.get_uuids()
         form.instance.owner = self.request.user
-        form.instance.device = self.device
-        form.instance.uuid = self.device.uuids[0]
+        form.instance.uuid = self.annotation.uuid
         form.instance.type = Annotation.Type.USER
         response = super().form_valid(form)
         return response
 
     def get_form_kwargs(self):
         pk = self.kwargs.get('pk')
-        self.device = get_object_or_404(Device, pk=pk)
+        self.annotation = Annotation.objects.filter(
+            owner=self.request.user, value=pk, type=Annotation.Type.SYSTEM
+        ).first()
+        if not self.annotation:
+            get_object_or_404(Annotation, pk=0, owner=self.request.user)
         self.success_url = reverse_lazy('device:details', args=[pk])
         kwargs = super().get_form_kwargs()
         return kwargs
 
-    def get_success_url(self):
-        url = super().get_success_url()
-        import pdb; pdb.set_trace()
-        return url
 
+class AddDocumentView(DashboardView, CreateView):
+    template_name = "new_annotation.html"
+    title = _("New Document")
+    breadcrumb = "Device / New document"
+    success_url = reverse_lazy('dashboard:unassigned_devices')
+    model = Annotation
+    fields = ("key", "value")
 
+    def form_valid(self, form):
+        form.instance.owner = self.request.user
+        form.instance.uuid = self.annotation.uuid
+        form.instance.type = Annotation.Type.DOCUMENT
+        response = super().form_valid(form)
+        return response
+
+    def get_form_kwargs(self):
+        pk = self.kwargs.get('pk')
+        self.annotation = Annotation.objects.filter(
+            owner=self.request.user, value=pk, type=Annotation.Type.SYSTEM
+        ).first()
+        if not self.annotation:
+            get_object_or_404(Annotation, pk=0, owner=self.request.user)
+        self.success_url = reverse_lazy('device:details', args=[pk])
+        kwargs = super().get_form_kwargs()
+        return kwargs

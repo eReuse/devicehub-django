@@ -56,10 +56,32 @@ class Device:
             self.owner = self.annotations[0].owner
 
         return self.annotations
+
+    def get_user_annotations(self):
+        if not self.uuids:
+            self.get_uuids()
+
+        annotations = Annotation.objects.filter(
+            uuid__in=self.uuids,
+            owner=self.owner,
+            type=Annotation.Type.USER
+        )
+        return annotations
+            
+    def get_user_documents(self):
+        if not self.uuids:
+            self.get_uuids()
+
+        annotations = Annotation.objects.filter(
+            uuid__in=self.uuids,
+            owner=self.owner,
+            type=Annotation.Type.DOCUMENT
+        )
+        return annotations
             
     def get_uuids(self):
         for a in self.get_annotations():
-            if not a.uuid in self.uuids:
+            if a.uuid not in self.uuids:
                 self.uuids.append(a.uuid)
 
     def get_hids(self):

@@ -4,8 +4,8 @@ import hashlib
 import datetime
 
 from django import forms
-from snapshot.models import Annotation
-from snapshot.xapian import search, index
+from evidence.models import Annotation
+from evidence.xapian import search, index
 
 DEVICE_TYPES = [
     ("Desktop", "Desktop"),
@@ -27,13 +27,19 @@ DEVICE_TYPES = [
 
 class DeviceForm(forms.Form):
     type = forms.ChoiceField(choices = DEVICE_TYPES, required=False)
-    amount = forms.IntegerField(required=True, initial=1)
+    amount = forms.IntegerField(required=False, initial=1)
     tag = forms.CharField(required=False)
     name = forms.CharField(required=False)
     value = forms.CharField(required=False)
 
 
 class BaseDeviceFormSet(forms.BaseFormSet):
+    def clean(self):
+        for x in self.cleaned_data:
+            if x.get("amount"):
+                return True
+        return False
+        
     def save(self, user, commit=True):
         self.user = user
         doc = {}

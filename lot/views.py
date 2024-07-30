@@ -9,7 +9,7 @@ from django.views.generic.edit import (
     FormView,
 )
 from dashboard.mixins import DashboardView
-from lot.models import Lot, LotTag
+from lot.models import Lot, LotTag, LotAnnotation
 from lot.forms import LotsForm
 
 
@@ -134,3 +134,94 @@ class LotsTagsView(DashboardView, TemplateView):
         })
         return context
 
+
+class LotAddDocumentView(DashboardView, CreateView):
+    template_name = "new_annotation.html"
+    title = _("New Document")
+    breadcrumb = "Device / New document"
+    success_url = reverse_lazy('dashboard:unassigned_devices')
+    model = LotAnnotation
+    fields = ("key", "value")
+
+    def form_valid(self, form):
+        form.instance.owner = self.request.user
+        form.instance.lot = self.lot
+        form.instance.type = LotAnnotation.Type.DOCUMENT
+        response = super().form_valid(form)
+        return response
+
+    def get_form_kwargs(self):
+        pk = self.kwargs.get('pk')
+        self.lot = get_object_or_404(Lot, pk=pk, owner=self.request.user)
+        self.success_url = reverse_lazy('lot:documents', args=[pk])
+        kwargs = super().get_form_kwargs()
+        return kwargs
+
+
+class LotDocumentsView(DashboardView, TemplateView):
+    template_name = "documents.html"
+    title = _("New Document")
+    breadcrumb = "Device / New document"
+    
+    def get_context_data(self, **kwargs):
+        self.pk = kwargs.get('pk')
+        context = super().get_context_data(**kwargs)
+        lot = get_object_or_404(Lot, owner=self.request.user, id=self.pk)
+        documents = LotAnnotation.objects.filter(
+            lot=lot,
+            owner=self.request.user,
+            type=LotAnnotation.Type.DOCUMENT,
+        )
+        context.update({
+            'lot': lot,
+            'documents': documents,
+            'title': self.title,
+            'breadcrumb': self.breadcrumb
+        })
+        return context
+
+
+class LotAnnotationsView(DashboardView, TemplateView):
+    template_name = "annotations.html"
+    title = _("New Annotation")
+    breadcrumb = "Device / New annotation"
+    
+    def get_context_data(self, **kwargs):
+        self.pk = kwargs.get('pk')
+        context = super().get_context_data(**kwargs)
+        lot = get_object_or_404(Lot, owner=self.request.user, id=self.pk)
+        annotations = LotAnnotation.objects.filter(
+            lot=lot,
+            owner=self.request.user,
+            type=LotAnnotation.Type.USER,
+        )
+        context.update({
+            'lot': lot,
+            'annotations': annotations,
+            'title': self.title,
+            'breadcrumb': self.breadcrumb
+        })
+        return context
+
+    
+class LotAddAnnotationView(DashboardView, CreateView):
+    template_name = "new_annotation.html"
+    title = _("New Annotation")
+    breadcrumb = "Device / New annotation"
+    success_url = reverse_lazy('dashboard:unassigned_devices')
+    model = LotAnnotation
+    fields = ("key", "value")
+
+    def form_valid(self, form):
+        form.instance.owner = self.request.user
+        form.instance.lot = self.lot
+        form.instance.type = LotAnnotation.Type.USER
+        response = super().form_valid(form)
+        return response
+
+    def get_form_kwargs(self):
+        pk = self.kwargs.get('pk')
+        self.lot = get_object_or_404(Lot, pk=pk, owner=self.request.user)
+        self.success_url = reverse_lazy('lot:annotations', args=[pk])
+        kwargs = super().get_form_kwargs()
+        return kwargs
