@@ -7,18 +7,22 @@
     <h3>{{ subtitle }}</h3>
   </div>
   <div class="col text-center">
+    {% if lot %}
     <a href="{% url 'lot:documents' object.id %}" type="button" class="btn btn-green-admin">
       <i class="bi bi-folder2"></i>
       {% trans 'Documents' %}
     </a>
+    {% endif %}
     <a href="{# url 'idhub:admin_people_activate' object.id #}" type="button" class="btn btn-green-admin">
       <i class="bi bi-reply"></i>
       {% trans 'Exports' %}
     </a>
+    {% if lot %}
     <a href="{% url 'lot:annotations' object.id %}" type="button" class="btn btn-green-admin">
       <i class="bi bi-tag"></i>
       {% trans 'Annotations' %}
     </a>
+    {% endif %}
   </div>
 </div>
 

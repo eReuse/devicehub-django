@@ -31,8 +31,10 @@ class LotDashboardView(InventaryMixin, DetailsMixin):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         devices = self.get_devices()
+        lot = context.get('object')
         context.update({
             'devices': devices,
+            'lot': lot,
         })
         return context
 
