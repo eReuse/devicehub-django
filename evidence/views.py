@@ -2,13 +2,11 @@ from django.utils.translation import gettext_lazy as _
 from django.views.generic.base import TemplateView
 from django.urls import reverse_lazy
 from django.views.generic.edit import (
-    CreateView,
-    UpdateView,
     FormView,
 )
 
 from dashboard.mixins import  DashboardView
-from evidence.models import Evidence, Annotation
+from evidence.models import Evidence
 from evidence.forms import UploadForm
 # from django.shortcuts import render
 # from rest_framework import viewsets
@@ -28,8 +26,8 @@ class ListEvidencesView(DashboardView, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # evidences = Evidence.objects.filter(owner=self.request.user)
-        evidences = []
+        evidences = Evidence.get_all(self.request.user)
+
         context.update({
             'evidences': evidences,
         })
