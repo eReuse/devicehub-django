@@ -14,7 +14,7 @@
     {% for ev in evidences %}
     <tr>
       <td>
-        <a href="{# url 'evidence:details' ev #}">{{ ev }}</a>
+        <a href="{% url 'evidence:details' ev %}">{{ ev }}</a>
       </td>
       <td>
         <a href="{# url 'evidence:delete' ev #}"><i class="bi bi-trash text-danger"></i></a>

@@ -5,7 +5,7 @@ from django.views.generic.edit import (
     FormView,
 )
 
-from dashboard.mixins import  DashboardView
+from dashboard.mixins import  DashboardView, Http403
 from evidence.models import Evidence
 from evidence.forms import UploadForm
 # from django.shortcuts import render
@@ -50,3 +50,26 @@ class UploadView(DashboardView, FormView):
     def form_invalid(self, form):
         response = super().form_invalid(form)
         return response
+
+        
+class EvidenceView(DashboardView, TemplateView):
+    template_name = "ev_details.html"
+    section = "evidences"
+    title = _("Evidences")
+    breadcrumb = "Evidences / Details"
+
+    def get(self, request, *args, **kwargs):
+        self.pk = kwargs['pk']
+        self.object = Evidence(self.pk)
+        if self.object.owner != self.request.user:
+            raise Http403
+
+        self.object.get_annotations()
+        return super().get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({
+            'object': self.object,
+        })
+        return context
