@@ -33,6 +33,7 @@ class Device:
         self.hids = []
         self.uuids = []
         self.evidences = []
+        self.lots = []
         self.last_evidence = None
         self.get_last_evidence()
 
@@ -41,6 +42,7 @@ class Device:
         self.get_uuids()
         self.get_hids()
         self.get_evidences()
+        self.get_lots()
         
     def get_annotations(self):
         if self.annotations:
@@ -106,6 +108,9 @@ class Device:
 
     def last_uuid(self):
         return self.uuids[0]
+
+    def get_lots(self):
+        self.lots = [x.lot for x in DeviceLot.objects.filter(device_id=self.id)]
 
     @classmethod
     def get_unassigned(cls, user):
