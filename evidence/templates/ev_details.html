@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+<div class="row">
+  <div class="col">
+    <h3>{{ object.id }}</h3>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col">
+    <ul class="nav nav-tabs nav-tabs-bordered">
+      <li class="nav-items">
+        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#device">Devices</button>
+      </li>
+      <li class="nav-items">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tag">Tag</button>
+      </li>
+    </ul>
+  </div>
+</div>
+<div class="tab-content pt-2">
+
+  <div class="tab-pane fade show active" id="device">
+    <h5 class="card-title">List of chids</h5>
+    <div class="list-group col-6">
+      {% for snap in object.annotations %}
+      {% if snap.type == 0 %}
+      <div class="list-group-item">
+        <div class="d-flex w-100 justify-content-between">
+          <h5 class="mb-1"></h5>
+          <small class="text-muted">
+	    {{ snap.created }}
+	  </small>
+        </div>
+        <p class="mb-1">
+          {{ snap.key }}<br />
+        </p>
+        <small class="text-muted">
+	  <a href="{% url 'device:details' snap.value %}">{{ snap.value }}</a>
+        </small>
+      </div>
+      {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

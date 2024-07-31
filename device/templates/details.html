@@ -200,7 +200,7 @@
           <small class="text-muted">{{ snap.created }}</small>
         </div>
         <p class="mb-1">
-          {{ snap.uuid }}<br />
+  	  <a href="{% url 'evidence:details' snap.uuid %}">{{ snap.uuid }}</a>
         </p>
         <small class="text-muted">
         </small>
