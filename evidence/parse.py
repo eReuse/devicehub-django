@@ -10,11 +10,15 @@ from utils.constants import ALGOS
 
 
 class Build:
-    def __init__(self, evidence_json, user):
+    def __init__(self, evidence_json, user, check=False):
         self.json = evidence_json
         self.uuid = self.json['uuid']
         self.user = user
         self.hid = None
+        self.generate_chids()
+
+        if check:
+            return
 
         self.index()
         self.create_annotations()
@@ -22,6 +26,11 @@ class Build:
     def index(self):
         snap = json.dumps(self.json)
         index(self.uuid, snap)
+
+    def generate_chids(self):
+        self.algorithms = {
+            'hidalgo1': self.get_hid_14(),
+        }
 
     def get_hid_14(self):
         device = self.json['device']
@@ -34,22 +43,8 @@ class Build:
         return hashlib.sha3_256(hid.encode()).hexdigest()
 
     def create_annotations(self):
-        algorithms = {
-            'hidalgo1': self.get_hid_14(),
-        }
 
-        # TODO is neccesary?
-        annotation = Annotation.objects.filter(
-            owner=self.user,
-            type=Annotation.Type.SYSTEM,
-            key='hidalgo1',
-            value = algorithms['hidalgo1']
-        ).first()
-
-        for k, v in algorithms.items():
-            if annotation and k == annotation.key:
-                continue
-        
+        for k, v in self.algorithms.items():
             Annotation.objects.create(
                 uuid=self.uuid,
                 owner=self.user,
@@ -57,4 +52,3 @@ class Build:
                 key=k,
                 value=v
             )
-

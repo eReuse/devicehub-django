@@ -7,6 +7,25 @@ from evidence.xapian import search
 from user.models import User
 
 
+class Annotation(models.Model):
+    class Type(models.IntegerChoices):
+        SYSTEM= 0, "System"
+        USER = 1, "User"
+        DOCUMENT = 2, "Document"
+
+    created = models.DateTimeField(auto_now_add=True)
+    uuid = models.UUIDField()
+    owner = models.ForeignKey(User, on_delete=models.CASCADE)
+    type =  models.SmallIntegerField(choices=Type)
+    key = models.CharField(max_length=STR_EXTEND_SIZE)
+    value = models.CharField(max_length=STR_EXTEND_SIZE)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["type", "key", "uuid"], name="unique_type_key_uuid")
+        ]
+
+
 class Evidence:
     def __init__(self, uuid):
         self.uuid = uuid
@@ -22,7 +41,7 @@ class Evidence:
         self.annotations = Annotation.objects.filter(
             uuid=self.uuid
         ).order_by("created")
-            
+
     def get_owner(self):
         if not self.annotations:
             self.get_annotations()
@@ -51,21 +70,9 @@ class Evidence:
     def components(self):
         return self.doc.get('components', [])
 
-
-class Annotation(models.Model):
-    class Type(models.IntegerChoices):
-        SYSTEM= 0, "System"
-        USER = 1, "User"
-        DOCUMENT = 2, "Document"
-
-    created = models.DateTimeField(auto_now_add=True)
-    uuid = models.UUIDField()
-    owner = models.ForeignKey(User, on_delete=models.CASCADE)
-    type =  models.SmallIntegerField(choices=Type) 
-    key = models.CharField(max_length=STR_EXTEND_SIZE)
-    value = models.CharField(max_length=STR_EXTEND_SIZE)
-    
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(fields=["type", "key", "uuid"], name="unique_type_key_uuid")
-        ]
+    @classmethod
+    def get_all(cls, user):
+        return Annotation.objects.filter(
+            owner=user,
+            type=Annotation.Type.SYSTEM,
+        ).order_by("-created").values_list("uuid", flat=True).distinct()
