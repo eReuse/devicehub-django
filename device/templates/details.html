@@ -121,7 +121,7 @@
     {% for tag in lot_tags %}
     <h5 class="card-title">{{ tag }}</h5>
 
-    {% for lot in tag.lot_set.filter %}
+    {% for lot in object.lots %}
     {% if lot.type == tag %}
     <div class="row">
       <div class="col">
