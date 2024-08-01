@@ -94,7 +94,7 @@ class BaseDeviceFormSet(forms.BaseFormSet):
             uuid=self.uuid,
             owner=self.user,
             type=Annotation.Type.SYSTEM,
-            key='Web',
+            key='CUSTOM_ID',
             value=tag
         )
 
