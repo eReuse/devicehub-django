@@ -16,6 +16,9 @@
       </li>
       <li class="nav-items">
         <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tag">Tag</button>
+      <li class="nav-items">
+        <a href="{% url 'evidence:download' object.uuid %}" class="nav-link">Download File</a>
+      </li>
       </li>
     </ul>
   </div>
