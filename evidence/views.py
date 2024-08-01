@@ -7,7 +7,7 @@ from django.views.generic.edit import (
 
 from dashboard.mixins import  DashboardView, Http403
 from evidence.models import Evidence
-from evidence.forms import UploadForm
+from evidence.forms import UploadForm, UserTagForm
 # from django.shortcuts import render
 # from rest_framework import viewsets
 # from snapshot.serializers import SnapshotSerializer
@@ -51,12 +51,14 @@ class UploadView(DashboardView, FormView):
         response = super().form_invalid(form)
         return response
 
-        
-class EvidenceView(DashboardView, TemplateView):
+
+class EvidenceView(DashboardView, FormView):
     template_name = "ev_details.html"
     section = "evidences"
     title = _("Evidences")
     breadcrumb = "Evidences / Details"
+    success_url = reverse_lazy('evidence:list')
+    form_class = UserTagForm
 
     def get(self, request, *args, **kwargs):
         self.pk = kwargs['pk']
@@ -73,3 +75,22 @@ class EvidenceView(DashboardView, TemplateView):
             'object': self.object,
         })
         return context
+
+    def get_form_kwargs(self):
+        self.pk = self.kwargs.get('pk')
+        kwargs = super().get_form_kwargs()
+        kwargs['uuid'] = self.pk
+        return kwargs
+
+    def form_valid(self, form):
+        form.save(self.request.user)
+        response = super().form_valid(form)
+        return response
+
+    def form_invalid(self, form):
+        response = super().form_invalid(form)
+        return response
+
+    def get_success_url(self):
+        success_url = reverse_lazy('evidence:details', args=[self.pk])
+        return success_url

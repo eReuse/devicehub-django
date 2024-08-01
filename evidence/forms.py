@@ -9,7 +9,6 @@ from evidence.models import Annotation
 
 
 class UploadForm(forms.Form):
-
     evidence_file = MultipleFileField(label=_("File"))
 
     def clean(self):
@@ -47,3 +46,30 @@ class UploadForm(forms.Form):
 
         for ev in self.evidences:
             Build(ev[1], user)
+
+
+class UserTagForm(forms.Form):
+    tag = forms.CharField(label=_("Tag"))
+
+    def __init__(self, *args, **kwargs):
+        self.uuid = kwargs.pop('uuid', None)
+        super().__init__(*args, **kwargs)
+
+    def clean(self):
+        data = self.cleaned_data.get('tag')
+        if not data:
+            return False
+        self.tag = data
+        return True
+
+    def save(self, user, commit=True):
+        if not commit:
+            return
+
+        Annotation.objects.create(
+            uuid=self.uuid,
+            owner=user,
+            type=Annotation.Type.SYSTEM,
+            key='CUSTOM_ID',
+            value=self.tag
+        )
