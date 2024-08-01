@@ -1,3 +1,6 @@
+import json
+
+from django.http import HttpResponse
 from django.utils.translation import gettext_lazy as _
 from django.views.generic.base import TemplateView
 from django.urls import reverse_lazy
@@ -94,3 +97,18 @@ class EvidenceView(DashboardView, FormView):
     def get_success_url(self):
         success_url = reverse_lazy('evidence:details', args=[self.pk])
         return success_url
+
+
+class DownloadEvidenceView(DashboardView, TemplateView):
+
+    def get(self, request, *args, **kwargs):
+        pk = kwargs['pk']
+        evidence = Evidence(pk)
+        if evidence.owner != self.request.user:
+            raise Http403()
+
+        evidence.get_doc()
+        data = json.dumps(evidence.doc)
+        response = HttpResponse(data, content_type="application/json")
+        response['Content-Disposition'] = 'attachment; filename={}'.format("credential.json")
+        return response
