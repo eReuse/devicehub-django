@@ -162,7 +162,7 @@ class LotDocumentsView(DashboardView, TemplateView):
     template_name = "documents.html"
     title = _("New Document")
     breadcrumb = "Device / New document"
-    
+
     def get_context_data(self, **kwargs):
         self.pk = kwargs.get('pk')
         context = super().get_context_data(**kwargs)
@@ -185,7 +185,7 @@ class LotAnnotationsView(DashboardView, TemplateView):
     template_name = "annotations.html"
     title = _("New Annotation")
     breadcrumb = "Device / New annotation"
-    
+
     def get_context_data(self, **kwargs):
         self.pk = kwargs.get('pk')
         context = super().get_context_data(**kwargs)
@@ -203,7 +203,7 @@ class LotAnnotationsView(DashboardView, TemplateView):
         })
         return context
 
-    
+
 class LotAddAnnotationView(DashboardView, CreateView):
     template_name = "new_annotation.html"
     title = _("New Annotation")
