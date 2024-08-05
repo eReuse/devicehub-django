@@ -43,11 +43,11 @@ class Device:
         self.get_hids()
         self.get_evidences()
         self.get_lots()
-        
+
     def get_annotations(self):
         if self.annotations:
             return self.annotations
-        
+
         self.annotations = Annotation.objects.filter(
             type=Annotation.Type.SYSTEM,
             value=self.id
@@ -69,7 +69,7 @@ class Device:
             type=Annotation.Type.USER
         )
         return annotations
-            
+
     def get_user_documents(self):
         if not self.uuids:
             self.get_uuids()
@@ -80,7 +80,7 @@ class Device:
             type=Annotation.Type.DOCUMENT
         )
         return annotations
-            
+
     def get_uuids(self):
         for a in self.get_annotations():
             if a.uuid not in self.uuids:
@@ -125,6 +125,18 @@ class Device:
         #     owner=user
         #     ).annotate(num_lots=models.Count('lot')).filter(num_lots=0)
 
+    @property
+    def is_websnapshot(self):
+        if not self.last_evidence:
+            self.get_last_evidence()
+        return self.last_evidence.doc['type'] == "WebSnapshot" 
+    
+    @property
+    def last_user_evidence(self):
+        if not self.last_evidence:
+            self.get_last_evidence()
+        return self.last_evidence.doc['kv'].items()
+    
     @property
     def manufacturer(self):
         if not self.last_evidence:

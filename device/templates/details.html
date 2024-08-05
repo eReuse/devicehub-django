@@ -49,6 +49,14 @@
       <div class="col-lg-9 col-md-8">{{ object.type }}</div>
     </div>
 
+    {% if object.is_websnapshot %}
+    {% for k, v in object.last_user_evidence %}
+    <div class="row">
+      <div class="col-lg-3 col-md-4 label">{{ k }}</div>
+      <div class="col-lg-9 col-md-8">{{ v|default:"" }}</div>
+    </div>
+    {% endfor %}
+    {% else %}
     <div class="row">
       <div class="col-lg-3 col-md-4 label">Manufacturer</div>
       <div class="col-lg-9 col-md-8">{{ object.manufacturer|default:"" }}</div>
@@ -63,6 +71,7 @@
       <div class="col-lg-3 col-md-4 label">Serial Number</div>
       <div class="col-lg-9 col-md-8">{{ object.last_evidence.doc.device.serialNumber|default:"" }}</div>
     </div>
+    {% endif %}
     <div class="row">
       <div class="col-lg-3 col-md-4 label">Identifiers</div>
     </div>
