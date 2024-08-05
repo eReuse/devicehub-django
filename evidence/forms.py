@@ -1,16 +1,13 @@
 import json
-import uuid
-import hashlib
-import datetime
 import pandas as pd
 
 from django import forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
+from utils.device import create_annotation, create_doc, create_index
 from utils.forms import MultipleFileField
 from device.models import Device
 from evidence.parse import Build
-from evidence.xapian import index
 from evidence.models import Annotation
 
 
@@ -104,10 +101,8 @@ class ImportForm(forms.Form):
             self.exception(_("The file you try to import is empty!"))
 
         for n in data_pd.keys():
-            # import pdb; pdb.set_trace()
             if 'type' not in [x.lower() for x in data_pd[n]]:
                 raise ValidationError("You need a column with name 'type'")
-
         
             for k, v in data_pd[n].items():
                 if k.lower() == "type":
@@ -118,83 +113,18 @@ class ImportForm(forms.Form):
 
         return data
 
+
     def save(self, commit=True):
         table = []
         for row in self.rows:
-            table.append(self.create_annotation(row))
+            doc = create_doc(row)
+            annotation = create_annotation(doc, self.user)
+            table.append((doc, annotation))
 
         if commit:
             for doc, cred in table:
               cred.save()
-              self.index(doc)
+              create_index(doc)
             return table
 
         return
-
-    def create_annotation(self, row):
-        doc = self.create_doc(row)
-        if not doc:
-            return []
-
-        data = {
-            'uuid': doc['uuid'],
-            'owner': self.user,
-            'type': Annotation.Type.SYSTEM,
-            'key': 'CUSTOM_ID',
-            'value': doc['CUSTOMER_ID'],
-        }
-            
-        return [doc, Annotation(**data)]
-
-    def index(self, doc):
-        _uuid = doc['uuid']
-        ev = json.dumps(doc)
-        index(_uuid, ev)
-
-    def create_doc(self, row):
-        doc = {}
-        device = {"manufacturer": "", "model": ""}
-        kv = {}
-        _uuid = str(uuid.uuid4())
-        tag = hashlib.sha3_256(_uuid.encode()).hexdigest()
-        
-
-        for k, v in row.items():
-            if k.upper() == "CUSTOM_ID":
-                tag = v
-
-            if not v:
-                continue
-            
-            if k.lower() == "type":
-                device["type"] = v
-            elif k.lower() == "amount":
-                try:
-                    device["amount"] = int(v)
-                except Exception:
-                    device["amount"] = 1
-                    
-            else:
-                kv[k] = v
-
-        if 'amount' not in row.keys():
-            device["amount"] = 1
-                
-        if not device:
-            return
-        
-        doc["device"] = device
-
-        if kv:
-            doc["kv"] = kv
-
-        date = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
-        
-        if doc:
-            doc["uuid"] = _uuid
-            doc["endTime"] = date
-            doc["software"] = "DeviceHub"
-            doc["CUSTOMER_ID"] = tag
-            doc["type"] = "WebSnapshot"
-
-        return doc
