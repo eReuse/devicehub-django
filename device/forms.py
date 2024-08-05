@@ -5,7 +5,7 @@ import datetime
 
 from django import forms
 from evidence.models import Annotation
-from evidence.xapian import search, index
+from evidence.xapian import index
 
 DEVICE_TYPES = [
     ("Desktop", "Desktop"),
@@ -62,8 +62,6 @@ class BaseDeviceFormSet(forms.BaseFormSet):
 
         if not device:
             return
-        device["manufacturer"] = ""
-        device["model"] = tag
 
         doc["device"] = device
 
@@ -71,10 +69,12 @@ class BaseDeviceFormSet(forms.BaseFormSet):
             doc["kv"] = kv
 
         date = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+        
         if doc:
             doc["uuid"] = self.uuid
             doc["endTime"] = date
             doc["software"] = "DeviceHub"
+            doc["CUSTOMER_ID"] = tag
             doc["type"] = "WebSnapshot"
         
 

@@ -16,6 +16,7 @@ app_name = 'evidence'
 urlpatterns = [
     path("", views.ListEvidencesView.as_view(), name="list"),
     path("upload", views.UploadView.as_view(), name="upload"),
+    path("import", views.ImportView.as_view(), name="import"),
     path("<uuid:pk>", views.EvidenceView.as_view(), name="details"),
     path("<uuid:pk>/download", views.DownloadEvidenceView.as_view(), name="download"),
 ]
