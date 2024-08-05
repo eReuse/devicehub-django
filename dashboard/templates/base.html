@@ -132,7 +132,7 @@
                 </a>
                 <ul class="flex-column mb-2 ul_sidebar accordion-collapse {% if section == 'People' %}expanded{% else %}collapse{% endif %}" id="ul_placeholders" data-bs-parent="#sidebarMenu">
                   <li class="nav-item">
-                    <a class="nav-link{% if path == 'admin_people_list' %} active2{% endif %}" href="{# url 'idhub:admin_people_list' #}">
+                    <a class="nav-link{% if path == 'admin_people_list' %} active2{% endif %}" href="{% url 'evidence:import' %}">
                       {% trans 'Upload Spreadsheet' %}
                     </a>
                   </li>

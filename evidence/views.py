@@ -10,7 +10,7 @@ from django.views.generic.edit import (
 
 from dashboard.mixins import  DashboardView, Http403
 from evidence.models import Evidence
-from evidence.forms import UploadForm, UserTagForm
+from evidence.forms import UploadForm, UserTagForm, ImportForm
 # from django.shortcuts import render
 # from rest_framework import viewsets
 # from snapshot.serializers import SnapshotSerializer
@@ -47,6 +47,29 @@ class UploadView(DashboardView, FormView):
 
     def form_valid(self, form):
         form.save(self.request.user)
+        response = super().form_valid(form)
+        return response
+
+    def form_invalid(self, form):
+        response = super().form_invalid(form)
+        return response
+
+
+class ImportView(DashboardView, FormView):
+    template_name = "upload.html"
+    section = "evidences"
+    title = _("Import Evidence")
+    breadcrumb = "Evidences / Import"
+    success_url = reverse_lazy('evidence:list')
+    form_class = ImportForm
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+
+    def form_valid(self, form):
+        form.save()
         response = super().form_valid(form)
         return response
 
