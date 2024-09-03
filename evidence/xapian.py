@@ -32,7 +32,7 @@ def index(uuid, snap):
         matches = search(uuid, limit=1)
         if matches.size() > 0:
             return
-    except xapian.DatabaseNotFoundError:
+    except (xapian.DatabaseNotFoundError, xapian.DatabaseOpeningError):
         pass
 
     database = xapian.WritableDatabase("db", xapian.DB_CREATE_OR_OPEN)
