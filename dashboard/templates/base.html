@@ -59,7 +59,7 @@
   </head>
   <body>
     <header class="navbar navbar-dark sticky-top admin bg-green flex-md-nowrap p-0 shadow">
-      <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3" href="#">DEVICE HUB</a>
+      <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3" href="#">DEVICEHUB</a>
       <div class="navbar-nav navbar-sub-brand">
          PANGEA
       </div>
@@ -90,11 +90,6 @@
                       {% trans 'Unassigned devices' %}
                     </a>
                   </li>
-                  <li class="nav-item">
-                    <a class="nav-link{% if path == 'admin_people_new' %} active2{% endif %}" href="{% url 'dashboard:all_devices' %}">
-                      {% trans 'All devices' %}
-                    </a>
-                  </li>
                 </ul>
               </li>
               <li class="nav-item">
@@ -103,37 +98,29 @@
                   {% trans 'Lots' %}
                 </a>
                 <ul class="flex-column mb-2 ul_sidebar accordion-collapse {% if section == 'People' %}expanded{% else %}collapse{% endif %}" id="ul_lots" data-bs-parent="#sidebarMenu">
+                  {% for tag in lot_tags %}
                   <li class="nav-items">
-                    <a class="nav-link{% if path == 'admin_people_list' %} active2{% endif %}" href="{% url 'lot:lots_incoming' %}">
-                      {% trans 'Incoming ' %}
+                    <a class="nav-link{% if path == 'admin_people_list' %} active2{% endif %}" href="{% url 'lot:tag' tag.id %}">
+                      {{ tag.name }}
                     </a>
                   </li>
-                  <li class="nav-item">
-                    <a class="nav-link{% if path == 'admin_people_new' %} active2{% endif %}" href="{% url 'lot:lots_outgoing' %}">
-                      {% trans 'Outgoing ' %}
-                    </a>
-                  </li>
-                  <li class="nav-item">
-                    <a class="nav-link{% if path == 'admin_people_new' %} active2{% endif %}" href="{% url 'lot:lots_temporal' %}">
-                      {% trans 'Temporal ' %}
-                    </a>
-                  </li>
+                  {% endfor %}
                 </ul>
               </li>
               <li class="nav-item">
-                <a class="admin {% if section == 'People' %}active {% endif %}nav-link fw-bold" data-bs-toggle="collapse" data-bs-target="#ul_snapshots" aria-expanded="false" aria-controls="ul_snapshots" href="javascript:void()">
+                <a class="admin {% if section == 'People' %}active {% endif %}nav-link fw-bold" data-bs-toggle="collapse" data-bs-target="#ul_evidences" aria-expanded="false" aria-controls="ul_evidences" href="javascript:void()">
                   <i class="bi bi-usb-drive icon_sidebar"></i>
-                  {% trans 'Snapshots' %}
+                  {% trans 'evidences' %}
                 </a>
-                <ul class="flex-column mb-2 ul_sidebar accordion-collapse {% if section == 'People' %}expanded{% else %}collapse{% endif %}" id="ul_snapshots" data-bs-parent="#sidebarMenu">
+                <ul class="flex-column mb-2 ul_sidebar accordion-collapse {% if section == 'People' %}expanded{% else %}collapse{% endif %}" id="ul_evidences" data-bs-parent="#sidebarMenu">
                   <li class="nav-item">
-                    <a class="nav-link{% if path == 'admin_people_list' %} active2{% endif %}" href="{# url 'idhub:admin_people_list' #}">
+                    <a class="nav-link{% if path == 'admin_people_list' %} active2{% endif %}" href="{% url 'evidence:upload' %}">
                       {% trans 'Upload one' %}
                     </a>
                   </li>
                   <li class="nav-item">
-                    <a class="nav-link{% if path == 'admin_people_list' %} active2{% endif %}" href="{% url 'snapshot:list' %}">
-                      {% trans 'Old snapshots' %}
+                    <a class="nav-link{% if path == 'admin_people_list' %} active2{% endif %}" href="{% url 'evidence:list' %}">
+                      {% trans 'Old evidences' %}
                     </a>
                   </li>
                 </ul>
@@ -145,7 +132,7 @@
                 </a>
                 <ul class="flex-column mb-2 ul_sidebar accordion-collapse {% if section == 'People' %}expanded{% else %}collapse{% endif %}" id="ul_placeholders" data-bs-parent="#sidebarMenu">
                   <li class="nav-item">
-                    <a class="nav-link{% if path == 'admin_people_list' %} active2{% endif %}" href="{# url 'idhub:admin_people_list' #}">
+                    <a class="nav-link{% if path == 'admin_people_list' %} active2{% endif %}" href="{% url 'evidence:import' %}">
                       {% trans 'Upload Spreadsheet' %}
                     </a>
                   </li>

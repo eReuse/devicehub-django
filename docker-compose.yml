@@ -1,0 +1,12 @@
+services:
+  devicehub-django:
+    init: true
+    build:
+      dockerfile: docker/devicehub-django.Dockerfile
+    environment:
+      DEBUG: true
+    volumes:
+      - .:/opt/devicehub-django
+    ports:
+      - 8000:8000
+

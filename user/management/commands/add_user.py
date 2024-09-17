@@ -1,5 +1,6 @@
 from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
+from lot.models import LotTag
 
 
 User = get_user_model()
@@ -16,8 +17,21 @@ class Command(BaseCommand):
         email = kwargs['email']
         password = kwargs['password']
         self.create_user(email, password)
+        self.create_lot_tags()
 
     def create_user(self, email, password):
-        u = User.objects.create(email=email, password=password)
-        u.set_password(password)
-        u.save()
+        self.u = User.objects.create(email=email, password=password)
+        self.u.set_password(password)
+        self.u.save()
+
+    def create_lot_tags(self):
+        tags = [
+            "Entrada",
+            "Salida",
+            "Temporal"
+        ]
+        for tag in tags:
+            LotTag.objects.create(
+                name=tag,
+                owner=self.u
+            )

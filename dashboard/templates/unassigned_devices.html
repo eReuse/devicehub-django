@@ -7,22 +7,22 @@
     <h3>{{ subtitle }}</h3>
   </div>
   <div class="col text-center">
-    <a href="{# url 'idhub:admin_people_edit' object.id #}" type="button" class="btn btn-green-admin">
+    {% if lot %}
+    <a href="{% url 'lot:documents' object.id %}" type="button" class="btn btn-green-admin">
       <i class="bi bi-folder2"></i>
-      {% trans 'Lots' %}
+      {% trans 'Documents' %}
     </a>
-    <a href="{# url 'idhub:admin_people_edit' object.id #}" type="button" class="btn btn-green-admin">
-      <i class="bi bi-plus"></i>
-      {% trans 'Actions' %}
-    </a>
+    {% endif %}
     <a href="{# url 'idhub:admin_people_activate' object.id #}" type="button" class="btn btn-green-admin">
       <i class="bi bi-reply"></i>
       {% trans 'Exports' %}
     </a>
-    <a href="#" type="button" class="btn btn-green-admin">
+    {% if lot %}
+    <a href="{% url 'lot:annotations' object.id %}" type="button" class="btn btn-green-admin">
       <i class="bi bi-tag"></i>
-      {% trans 'Labels' %}
+      {% trans 'Annotations' %}
     </a>
+    {% endif %}
   </div>
 </div>
 
@@ -44,7 +44,9 @@
           <input type="checkbox" name="devices" value="{{ dev.id }}" />
         </td>
         <td>
-          <a href="{% url 'device:details' dev.pk %}">{{ dev.type }} {{ dev.manufacturer }} {{ dev.model }}</a>
+          <a href="{% url 'device:details' dev.id %}">
+            {{ dev.type }} {{ dev.manufacturer }} {{ dev.model }}
+          </a>
         </td>
       </tr>
     </tbody>

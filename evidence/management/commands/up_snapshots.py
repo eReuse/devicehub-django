@@ -4,7 +4,7 @@ import json
 
 from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
-from snapshot.parse import Build
+from evidence.parse import Build
 
 
 User = get_user_model()
