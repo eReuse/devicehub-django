@@ -10,6 +10,8 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
+import xapian
+
 from pathlib import Path
 from django.contrib.messages import constants as messages
 from decouple import config, Csv
@@ -45,7 +47,7 @@ INSTALLED_APPS = [
     "login",
     "user",
     "device",
-    "snapshot",
+    "evidence",
     "action",
     "tag",
     "lot",
@@ -92,10 +94,9 @@ WSGI_APPLICATION = "dhub.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "NAME": BASE_DIR / "db/db.sqlite3",
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
@@ -170,3 +171,4 @@ LOGGING = {
 }
 
 SNAPSHOT_PATH="/tmp/"
+DATA_UPLOAD_MAX_NUMBER_FILES = 1000

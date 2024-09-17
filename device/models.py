@@ -1,9 +1,12 @@
 from django.db import models
+
+from utils.constants import STR_SM_SIZE, STR_SIZE, STR_EXTEND_SIZE, ALGOS
+from evidence.models import Annotation, Evidence
 from user.models import User
-from utils.constants import STR_SM_SIZE, STR_SIZE
+from lot.models import DeviceLot
 
 
-class Device(models.Model):
+class Device:
     class Types(models.TextChoices):
         DESKTOP = "Desktop"
         LAPTOP = "Laptop"
@@ -20,155 +23,140 @@ class Device(models.Model):
         BATTERY = "Battery"
         CAMERA = "Camera"
 
-    created = models.DateTimeField(auto_now_add=True)
-    updated = models.DateTimeField(auto_now=True)
-    type = models.CharField(max_length=STR_SM_SIZE, choices=Types, default=Types.LAPTOP)
-    model = models.CharField(max_length=STR_SIZE, blank=True, null=True)
-    manufacturer = models.CharField(max_length=STR_SIZE, blank=True, null=True)
-    serial_number = models.CharField(max_length=STR_SIZE, blank=True, null=True)
-    part_number = models.CharField(max_length=STR_SIZE, blank=True, null=True)
-    brand = models.CharField(max_length=STR_SIZE, blank=True, null=True)
-    generation = models.SmallIntegerField(blank=True, null=True)
-    version = models.CharField(max_length=STR_SIZE, blank=True, null=True)
-    production_date = models.DateTimeField(blank=True, null=True)
-    variant = models.CharField(max_length=STR_SIZE, blank=True, null=True)
-    devicehub_id = models.CharField(max_length=STR_SIZE, unique=True, blank=True, null=True)
-    family = models.CharField(max_length=STR_SIZE, blank=True, null=True)
-    hid = models.CharField(max_length=STR_SIZE, blank=True, null=True)
-    chid = models.CharField(max_length=STR_SIZE, blank=True, null=True)
-    active = models.BooleanField(default=True)
-    reliable = models.BooleanField(default=True)
-    owner = models.ForeignKey(User, on_delete=models.CASCADE)
+    def __init__(self, *args, **kwargs):
+        # the id is the chid of the device
+        self.id = kwargs["id"]
+        self.pk = self.id
+        self.algorithm = None
+        self.owner = None
+        self.annotations =  []
+        self.hids = []
+        self.uuids = []
+        self.evidences = []
+        self.lots = []
+        self.last_evidence = None
+        self.get_last_evidence()
 
-    def has_physical_properties(self):
-        try:
-            if self.physicalproperties:
-                return True
-            else:
-                return False
-        except Exception:
-            return False
+    def initial(self):
+        self.get_annotations()
+        self.get_uuids()
+        self.get_hids()
+        self.get_evidences()
+        self.get_lots()
 
+    def get_annotations(self):
+        if self.annotations:
+            return self.annotations
 
-class PhysicalProperties(models.Model):
-    device = models.OneToOneField(Device, models.CASCADE, primary_key=True)
-    weight = models.FloatField(blank=True, null=True)
-    width = models.FloatField(blank=True, null=True)
-    height = models.FloatField(blank=True, null=True)
-    depth = models.FloatField(blank=True, null=True)
-    color = models.CharField(max_length=20, blank=True, null=True)
-    image = models.CharField(max_length=STR_SIZE, blank=True, null=True)
+        self.annotations = Annotation.objects.filter(
+            type=Annotation.Type.SYSTEM,
+            value=self.id
+        ).order_by("-created")
 
+        if self.annotations.count():
+            self.algorithm = self.annotations[0].key
+            self.owner = self.annotations[0].owner
 
-class Computer(models.Model):
-    class Chassis(models.TextChoices):
-        TOWER = 'Tower'
-        ALLINONE = 'All in one'
-        MICROTOWER = 'Microtower'
-        NETBOOK = 'Netbook'
-        LAPTOP = 'Laptop'
-        TABLER = 'Tablet'
-        SERVER = "Server"
-        VIRTUAL = 'Non-physical device'
+        return self.annotations
 
+    def get_user_annotations(self):
+        if not self.uuids:
+            self.get_uuids()
 
-    device = models.OneToOneField(Device, models.CASCADE, primary_key=True)
-    chassis = models.CharField(
-        blank=True,
-        null=True,
-        max_length=STR_SM_SIZE,
-        choices=Chassis
-    )
-    system_uuid = models.UUIDField(blank=True, null=True)
-    sku = models.CharField(max_length=STR_SM_SIZE, blank=True, null=True)
-    erasure_server = models.BooleanField(default=False)
+        annotations = Annotation.objects.filter(
+            uuid__in=self.uuids,
+            owner=self.owner,
+            type=Annotation.Type.USER
+        )
+        return annotations
 
+    def get_user_documents(self):
+        if not self.uuids:
+            self.get_uuids()
 
-class Component(models.Model):
-    device = models.OneToOneField(Device, models.CASCADE, primary_key=True)
-    computer = models.ForeignKey(Computer, on_delete=models.CASCADE, null=True)
+        annotations = Annotation.objects.filter(
+            uuid__in=self.uuids,
+            owner=self.owner,
+            type=Annotation.Type.DOCUMENT
+        )
+        return annotations
 
+    def get_uuids(self):
+        for a in self.get_annotations():
+            if a.uuid not in self.uuids:
+                self.uuids.append(a.uuid)
 
-class GraphicCard(models.Model):
-    component = models.OneToOneField(Component, models.CASCADE)
-    memory = models.IntegerField(blank=True, null=True)
+    def get_hids(self):
+        annotations = self.get_annotations()
 
+        self.hids = annotations.filter(
+            type=Annotation.Type.SYSTEM,
+            key__in=ALGOS.keys(),
+        ).values_list("value", flat=True)
 
-class DataStorage(models.Model):
-    class Interface(models.TextChoices):
-        ATA = 'ATA'
-        USB = 'USB'
-        PCI = 'PCI'
-        NVME = 'NVME'
+    def get_evidences(self):
+        if not self.uuids:
+            self.get_uuids()
 
-    size = models.IntegerField(blank=True, null=True)
-    interface = models.CharField(max_length=STR_SM_SIZE, choices=Interface)
-    component = models.OneToOneField(Component, models.CASCADE)
+        self.evidences = [Evidence(u) for u in self.uuids]
 
+    def get_last_evidence(self):
+        annotations = self.get_annotations()
+        if annotations:
+            annotation = annotations.first()
+        self.last_evidence = Evidence(annotation.uuid)
 
-class Motherboard(models.Model):
-    component = models.OneToOneField(Component, models.CASCADE)
-    slots = models.SmallIntegerField(blank=True, null=True)
-    usb = models.SmallIntegerField(blank=True, null=True)
-    firewire = models.SmallIntegerField(blank=True, null=True)
-    serial = models.SmallIntegerField(blank=True, null=True)
-    pcmcia = models.SmallIntegerField(blank=True, null=True)
-    bios_date = models.DateTimeField()
-    ram_slots = models.SmallIntegerField(blank=True, null=True)
-    ram_max_size = models.IntegerField(blank=True, null=True)
+    def last_uuid(self):
+        return self.uuids[0]
 
+    def get_lots(self):
+        self.lots = [x.lot for x in DeviceLot.objects.filter(device_id=self.id)]
 
-class NetworkAdapter(models.Model):
-    component = models.OneToOneField(Component, models.CASCADE)
-    speed = models.IntegerField(blank=True, null=True)
-    wireless = models.BooleanField(default=False)
+    @classmethod
+    def get_unassigned(cls, user):
+        chids = DeviceLot.objects.filter(lot__owner=user).values_list("device_id", flat=True).distinct()
+        annotations = Annotation.objects.filter(
+            owner=user,
+            type=Annotation.Type.SYSTEM,
+        ).exclude(value__in=chids).values_list("value", flat=True).distinct()
+        return [cls(id=x) for x in annotations]
 
-    def __format__(self, format_spec):
-        v = super().__format__(format_spec)
-        if 's' in format_spec:
-            v += ' – {} Mbps'.format(self.speed)
-        return v
+        # return cls.objects.filter(
+        #     owner=user
+        #     ).annotate(num_lots=models.Count('lot')).filter(num_lots=0)
 
+    @property
+    def is_websnapshot(self):
+        if not self.last_evidence:
+            self.get_last_evidence()
+        return self.last_evidence.doc['type'] == "WebSnapshot" 
     
-class Processor(models.Model):
-    component = models.OneToOneField(Component, models.CASCADE)
-    speed = models.FloatField(blank=True, null=True)
-    cores = models.SmallIntegerField(blank=True, null=True)
-    threads = models.SmallIntegerField(blank=True, null=True)
-    address = models.SmallIntegerField(blank=True, null=True)
-
-
-class RamModule(models.Model):
-    class Interface(models.TextChoices):
-        SDRAM = 'SDRAM'
-        DDR = 'DDR SDRAM'
-        DDR2 = 'DDR2 SDRAM'
-        DDR3 = 'DDR3 SDRAM'
-        DDR4 = 'DDR4 SDRAM'
-        DDR5 = 'DDR5 SDRAM'
-        DDR6 = 'DDR6 SDRAM'
-        LPDDR3 = 'LPDDR3'
-
-    class Format(models.TextChoices):
-        DIMM = 'DIMM'
-        SODIMM = 'SODIMM'
-
-    component = models.OneToOneField(Component, models.CASCADE)
-    size = models.IntegerField(blank=True, null=True)
-    interface = models.CharField(max_length=STR_SM_SIZE, choices=Interface)
-    speed = models.SmallIntegerField(blank=True, null=True)
-    interface = models.CharField(max_length=STR_SM_SIZE, choices=Interface)
-    format = models.CharField(max_length=STR_SM_SIZE, choices=Format)
-
-
-class SoundCard(models.Model):
-    component = models.OneToOneField(Component, models.CASCADE)
+    @property
+    def last_user_evidence(self):
+        if not self.last_evidence:
+            self.get_last_evidence()
+        return self.last_evidence.doc['kv'].items()
     
+    @property
+    def manufacturer(self):
+        if not self.last_evidence:
+            self.get_last_evidence()
+        return self.last_evidence.doc['device']['manufacturer']
 
-class Display(models.Model):
-    component = models.OneToOneField(Component, models.CASCADE)
-    
+    @property
+    def type(self):
+        if not self.last_evidence:
+            self.get_last_evidence()
+        return self.last_evidence.doc['device']['type']
 
-class Battery(models.Model):
-    component = models.OneToOneField(Component, models.CASCADE)
-    
+    @property
+    def model(self):
+        if not self.last_evidence:
+            self.get_last_evidence()
+        return self.last_evidence.doc['device']['model']
+
+    @property
+    def type(self):
+        if not self.last_evidence:
+            self.get_last_evidence()
+        return self.last_evidence.doc['device']['type']
