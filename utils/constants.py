@@ -20,3 +20,21 @@ HID_ALGO1 = [
 ALGOS = {
     "hidalgo1": HID_ALGO1,
 }
+
+
+CHASSIS_DH = {
+    'Tower': {'desktop', 'low-profile', 'tower', 'server'},
+    'Docking': {'docking'},
+    'AllInOne': {'all-in-one'},
+    'Microtower': {'mini-tower', 'space-saving', 'mini'},
+    'PizzaBox': {'pizzabox'},
+    'Lunchbox': {'lunchbox'},
+    'Stick': {'stick'},
+    'Netbook': {'notebook', 'sub-notebook'},
+    'Handheld': {'handheld'},
+    'Laptop': {'portable', 'laptop'},
+    'Convertible': {'convertible'},
+    'Detachable': {'detachable'},
+    'Tablet': {'tablet'},
+    'Virtual': {'_virtual'},
+}

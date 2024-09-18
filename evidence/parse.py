@@ -4,9 +4,10 @@ import shutil
 import hashlib
 
 from datetime import datetime
+from dmidecode import DMIParse
 from evidence.xapian import search, index
 from evidence.models import Evidence, Annotation
-from utils.constants import ALGOS
+from utils.constants import ALGOS, CHASSIS_DH
 
 
 class Build:
@@ -33,13 +34,17 @@ class Build:
         }
 
     def get_hid_14(self):
-        device = self.json['device']
-        manufacturer = device.get("manufacturer", '')
-        model = device.get("model", '')
-        chassis = device.get("chassis", '')
-        serial_number = device.get("serialNumber", '')
-        sku = device.get("sku", '')
-        hid = f"{manufacturer}{model}{chassis}{serial_number}{sku}"
+        if self.json.get("software") == "EreuseWorkbench":
+            hid = self.get_hid(self.json)
+        else:
+            device = self.json['device']
+            manufacturer = device.get("manufacturer", '')
+            model = device.get("model", '')
+            chassis = device.get("chassis", '')
+            serial_number = device.get("serialNumber", '')
+            sku = device.get("sku", '')
+            hid = f"{manufacturer}{model}{chassis}{serial_number}{sku}"
+            
         return hashlib.sha3_256(hid.encode()).hexdigest()
 
     def create_annotations(self):
@@ -47,8 +52,34 @@ class Build:
         for k, v in self.algorithms.items():
             Annotation.objects.create(
                 uuid=self.uuid,
-                owner=self.user,
+                owner=self.user.institution,
                 type=Annotation.Type.SYSTEM,
                 key=k,
                 value=v
             )
+
+    def get_chassis_dh(self):
+        chassis = self.get_chassis()
+        lower_type = chassis.lower()
+        for k, v in CHASSIS_DH.items():
+            if lower_type in v:
+                return k
+        return self.default
+
+    def get_sku(self):
+        return self.dmi.get("System")[0].get("SKU Number", "n/a").strip()
+    
+    def get_chassis(self):
+        return self.dmi.get("Chassis")[0].get("Type", '_virtual')
+
+    def get_hid(self, snapshot):
+        dmidecode_raw = snapshot["data"]["dmidecode"]
+        self.dmi = DMIParse(dmidecode_raw)
+
+        manufacturer = self.dmi.manufacturer().strip()
+        model = self.dmi.model().strip()
+        chassis = self.get_chassis_dh()
+        serial_number = self.dmi.serial_number()
+        sku = self.get_sku()
+
+        return f"{manufacturer}{model}{chassis}{serial_number}{sku}"

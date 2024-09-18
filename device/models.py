@@ -113,10 +113,10 @@ class Device:
         self.lots = [x.lot for x in DeviceLot.objects.filter(device_id=self.id)]
 
     @classmethod
-    def get_unassigned(cls, user):
-        chids = DeviceLot.objects.filter(lot__owner=user).values_list("device_id", flat=True).distinct()
+    def get_unassigned(cls, institution):
+        chids = DeviceLot.objects.filter(lot__owner=institution).values_list("device_id", flat=True).distinct()
         annotations = Annotation.objects.filter(
-            owner=user,
+            owner=institution,
             type=Annotation.Type.SYSTEM,
         ).exclude(value__in=chids).values_list("value", flat=True).distinct()
         return [cls(id=x) for x in annotations]
@@ -141,22 +141,17 @@ class Device:
     def manufacturer(self):
         if not self.last_evidence:
             self.get_last_evidence()
-        return self.last_evidence.doc['device']['manufacturer']
+        return self.last_evidence.get_manufacturer()
 
     @property
     def type(self):
         if not self.last_evidence:
             self.get_last_evidence()
-        return self.last_evidence.doc['device']['type']
+        return self.last_evidence.get_chassis()
 
     @property
     def model(self):
         if not self.last_evidence:
             self.get_last_evidence()
-        return self.last_evidence.doc['device']['model']
+        return self.last_evidence.get_model()
 
-    @property
-    def type(self):
-        if not self.last_evidence:
-            self.get_last_evidence()
-        return self.last_evidence.doc['device']['type']
