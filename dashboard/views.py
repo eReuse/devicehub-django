@@ -12,7 +12,7 @@ class UnassignedDevicesView(InventaryMixin):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        devices = Device.get_unassigned(self.request.user)
+        devices = Device.get_unassigned(self.request.user.institution)
 
         context.update({
             'devices': devices,

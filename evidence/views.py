@@ -89,7 +89,7 @@ class EvidenceView(DashboardView, FormView):
     def get(self, request, *args, **kwargs):
         self.pk = kwargs['pk']
         self.object = Evidence(self.pk)
-        if self.object.owner != self.request.user:
+        if self.object.owner != self.request.user.institution:
             raise Http403
 
         self.object.get_annotations()
@@ -127,7 +127,7 @@ class DownloadEvidenceView(DashboardView, TemplateView):
     def get(self, request, *args, **kwargs):
         pk = kwargs['pk']
         evidence = Evidence(pk)
-        if evidence.owner != self.request.user:
+        if evidence.owner != self.request.user.institution:
             raise Http403()
 
         evidence.get_doc()

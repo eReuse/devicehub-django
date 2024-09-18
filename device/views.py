@@ -92,7 +92,7 @@ class DetailsView(DashboardView, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         self.object.initial()
-        lot_tags = LotTag.objects.filter(owner=self.request.user)
+        lot_tags = LotTag.objects.filter(owner=self.request.user.institution)
         context.update({
             'object': self.object,
             'snapshot': self.object.get_last_evidence(),
@@ -110,7 +110,7 @@ class AddAnnotationView(DashboardView, CreateView):
     fields = ("key", "value")
 
     def form_valid(self, form):
-        form.instance.owner = self.request.user
+        form.instance.owner = self.request.user.institution
         form.instance.uuid = self.annotation.uuid
         form.instance.type = Annotation.Type.USER
         response = super().form_valid(form)
@@ -118,11 +118,12 @@ class AddAnnotationView(DashboardView, CreateView):
 
     def get_form_kwargs(self):
         pk = self.kwargs.get('pk')
+        institution = self.request.user.institution
         self.annotation = Annotation.objects.filter(
-            owner=self.request.user, value=pk, type=Annotation.Type.SYSTEM
+            owner=institution, value=pk, type=Annotation.Type.SYSTEM
         ).first()
         if not self.annotation:
-            get_object_or_404(Annotation, pk=0, owner=self.request.user)
+            get_object_or_404(Annotation, pk=0, owner=institution)
         self.success_url = reverse_lazy('device:details', args=[pk])
         kwargs = super().get_form_kwargs()
         return kwargs
@@ -137,7 +138,7 @@ class AddDocumentView(DashboardView, CreateView):
     fields = ("key", "value")
 
     def form_valid(self, form):
-        form.instance.owner = self.request.user
+        form.instance.owner = self.request.user.institution
         form.instance.uuid = self.annotation.uuid
         form.instance.type = Annotation.Type.DOCUMENT
         response = super().form_valid(form)
@@ -145,11 +146,12 @@ class AddDocumentView(DashboardView, CreateView):
 
     def get_form_kwargs(self):
         pk = self.kwargs.get('pk')
+        institution = self.request.user.institution
         self.annotation = Annotation.objects.filter(
-            owner=self.request.user, value=pk, type=Annotation.Type.SYSTEM
+            owner=institution, value=pk, type=Annotation.Type.SYSTEM
         ).first()
         if not self.annotation:
-            get_object_or_404(Annotation, pk=0, owner=self.request.user)
+            get_object_or_404(Annotation, pk=0, owner=institution)
         self.success_url = reverse_lazy('device:details', args=[pk])
         kwargs = super().get_form_kwargs()
         return kwargs

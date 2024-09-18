@@ -39,16 +39,16 @@ class DashboardView(LoginRequiredMixin):
             'section': self.section,
             'path': resolve(self.request.path).url_name,
             'user': self.request.user,
-            'lot_tags': LotTag.objects.filter(owner=self.request.user)
+            'lot_tags': LotTag.objects.filter(owner=self.request.user.institution)
         })
         return context
 
     def get_session_devices(self):
-        # import pdb; pdb.set_trace()
         dev_ids = self.request.session.pop("devices", [])
         
         self._devices = []
-        for x in Annotation.objects.filter(value__in=dev_ids).filter(owner=self.request.user).distinct():
+        annotation = Annotation.objects.filter(value__in=dev_ids)
+        for x in annotation.filter(owner=self.request.user.institution).distinct():
             self._devices.append(Device(id=x.value))
         return self._devices
 
@@ -57,7 +57,7 @@ class DetailsMixin(DashboardView, TemplateView):
 
     def get(self, request, *args, **kwargs):
         self.pk = kwargs['pk']
-        self.object = get_object_or_404(self.model, pk=self.pk, owner=self.request.user)
+        self.object = get_object_or_404(self.model, pk=self.pk, owner=self.request.user.institution)
         return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):

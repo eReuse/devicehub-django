@@ -71,7 +71,7 @@ class UserTagForm(forms.Form):
 
         Annotation.objects.create(
             uuid=self.uuid,
-            owner=user,
+            owner=user.institution,
             type=Annotation.Type.SYSTEM,
             key='CUSTOM_ID',
             value=self.tag

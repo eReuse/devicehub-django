@@ -69,7 +69,7 @@ def create_annotation(doc, user, commit=False):
     
     data = {
         'uuid': doc['uuid'],
-        'owner': user,
+        'owner': user.institution,
         'type': Annotation.Type.SYSTEM,
         'key': 'CUSTOMER_ID',
         'value': doc['CUSTOMER_ID'],
