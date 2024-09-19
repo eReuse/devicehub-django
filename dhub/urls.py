@@ -24,4 +24,5 @@ urlpatterns = [
     path("evidence/", include("evidence.urls")),
     path("device/", include("device.urls")),
     path("lot/", include("lot.urls")),
+    path('api/', include('api.urls')),
 ]

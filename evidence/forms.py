@@ -56,6 +56,15 @@ class UserTagForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         self.uuid = kwargs.pop('uuid', None)
+        annotation = Annotation.objects.filter(
+            uuid=self.uuid,
+            type=Annotation.Type.SYSTEM,
+            key='CUSTOM_ID',
+        ).first()
+        
+        if annotation:
+            kwargs['initial'].update({'tag': annotation.value})
+            
         super().__init__(*args, **kwargs)
 
     def clean(self):
