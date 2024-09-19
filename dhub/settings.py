@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     'django_extensions',
     'django_bootstrap5',
+    'django_tables2',
     "rest_framework",
     "login",
     "user",
@@ -53,6 +54,7 @@ INSTALLED_APPS = [
     "lot",
     "documents",
     "dashboard",
+    "api",
 ]
 
 
