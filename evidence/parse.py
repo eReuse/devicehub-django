@@ -13,24 +13,32 @@ from utils.constants import ALGOS, CHASSIS_DH
 def get_mac(hwinfo):
 
     low_ix = None
+    lnets = []
     
     nets = [x.split("\n") for x in hwinfo.split("\n\n") 
                 if "network interface" in x and "Attached to" in x]
             
     for n in nets:
         ix = None
-        if "Attached to:" in n:
-            for v in c.split(" "):
-                if "#" in v:
-                    ix = int(v.strip("#"))
-        if not low_ix:
-            low_ix = ix
+        mac = None
+        for l in n:
+            if "Attached to:" in l:
+                for v in l.split(" "):
+                    if "#" in v:
+                        ix = int(v.strip("#"))
+                        if not low_ix:
+                            low_ix = ix
             
-        if "HW Address:" in n:
-            if low_ix <= ix:
-                mac = c.split(" ")[-1]
-                print(f"MAC: {mac}")
-                return mac
+            if "HW Address:" in l:
+                mac = l.split(" ")[-1]
+        if ix and mac:
+            lnets.append((ix, mac))
+
+    if lnets:
+        lnets.sort()
+        mac = lnets[0][1]
+        print(f"MAC: {mac}")
+    return mac
                 
 
 class Build:
@@ -108,6 +116,5 @@ class Build:
         mac = get_mac(hwinfo_raw) or ""
         if not mac:
             print("WARNING!! No there are MAC address")
-        print(f"{manufacturer}{model}{chassis}{serial_number}{sku}{mac}")
 
         return f"{manufacturer}{model}{chassis}{serial_number}{sku}{mac}"
