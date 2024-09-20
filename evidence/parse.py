@@ -29,6 +29,7 @@ def get_mac(hwinfo):
         if "HW Address:" in n:
             if low_ix <= ix:
                 mac = c.split(" ")[-1]
+                print(f"MAC: {mac}")
                 return mac
                 
 
@@ -105,5 +106,8 @@ class Build:
         sku = self.get_sku()
         hwinfo_raw = snapshot["data"]["hwinfo"]
         mac = get_mac(hwinfo_raw) or ""
+        if not mac:
+            print("WARNING!! No there are MAC address")
+        print(f"{manufacturer}{model}{chassis}{serial_number}{sku}{mac}")
 
         return f"{manufacturer}{model}{chassis}{serial_number}{sku}{mac}"
