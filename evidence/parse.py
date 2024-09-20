@@ -10,6 +10,28 @@ from evidence.models import Evidence, Annotation
 from utils.constants import ALGOS, CHASSIS_DH
 
 
+def get_mac(hwinfo):
+
+    low_ix = None
+    
+    nets = [x.split("\n") for x in hwinfo.split("\n\n") 
+                if "network interface" in x and "Attached to" in x]
+            
+    for n in nets:
+        ix = None
+        if "Attached to:" in n:
+            for v in c.split(" "):
+                if "#" in v:
+                    ix = int(v.strip("#"))
+        if not low_ix:
+            low_ix = ix
+            
+        if "HW Address:" in n:
+            if low_ix <= ix:
+                mac = c.split(" ")[-1]
+                return mac
+                
+
 class Build:
     def __init__(self, evidence_json, user, check=False):
         self.json = evidence_json
@@ -81,5 +103,7 @@ class Build:
         chassis = self.get_chassis_dh()
         serial_number = self.dmi.serial_number()
         sku = self.get_sku()
+        hwinfo_raw = snapshot["data"]["hwinfo"]
+        mac = get_mac(hwinfo_raw) or ""
 
-        return f"{manufacturer}{model}{chassis}{serial_number}{sku}"
+        return f"{manufacturer}{model}{chassis}{serial_number}{sku}{mac}"
