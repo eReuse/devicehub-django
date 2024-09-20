@@ -116,5 +116,7 @@ class Build:
         mac = get_mac(hwinfo_raw) or ""
         if not mac:
             print("WARNING!! No there are MAC address")
+        else:
+            print(f"{manufacturer}{model}{chassis}{serial_number}{sku}{mac}")
 
         return f"{manufacturer}{model}{chassis}{serial_number}{sku}{mac}"
