@@ -10,7 +10,7 @@ set -u
 
 main() {
         # remove old database
-        sudo rm -v db/*
+        sudo rm -vf db/*
         docker compose down
         docker compose build
         docker compose up
