@@ -98,7 +98,6 @@ class TokenDeleteView(DashboardView, DeleteView):
     model = Token
 
     def get(self, request, *args, **kwargs):
-        # self.check_valid_user()
         self.pk = kwargs['pk']
         self.object = get_object_or_404(self.model, pk=self.pk)
         self.object.delete()
@@ -109,8 +108,7 @@ class TokenDeleteView(DashboardView, DeleteView):
 class TokenNewView(DashboardView, View):
 
     def get(self, request, *args, **kwargs):
-        # self.check_valid_user()
-        Token.objects.create(token=uuid4())
+        Token.objects.create(token=uuid4(), owner=self.request.user)
 
         return redirect('api:tokens')
             
