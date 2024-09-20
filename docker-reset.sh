@@ -6,7 +6,7 @@
 set -e
 set -u
 # DEBUG
-#set -x
+set -x
 
 main() {
         # remove old database
