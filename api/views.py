@@ -99,7 +99,7 @@ class TokenDeleteView(DashboardView, DeleteView):
 
     def get(self, request, *args, **kwargs):
         self.pk = kwargs['pk']
-        self.object = get_object_or_404(self.model, pk=self.pk)
+        self.object = get_object_or_404(self.model, pk=self.pk, owner=self.request.user)
         self.object.delete()
 
         return redirect('api:tokens')
