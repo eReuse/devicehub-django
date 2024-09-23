@@ -10,38 +10,6 @@ from evidence.models import Evidence, Annotation
 from utils.constants import ALGOS, CHASSIS_DH
 
 
-def get_mac2(hwinfo):
-    # This function get the network card with most lower busid
-    # but maybe is external or maybe is integrate in motherboard
-    low_ix = None
-    lnets = []
-    
-    nets = [x.split("\n") for x in hwinfo.split("\n\n") 
-                if "network interface" in x and "Attached to" in x]
-            
-    for n in nets:
-        ix = None
-        mac = None
-        for l in n:
-            if "Attached to:" in l:
-                for v in l.split(" "):
-                    if "#" in v:
-                        ix = int(v.strip("#"))
-                        if not low_ix:
-                            low_ix = ix
-            
-            if "HW Address:" in l:
-                mac = l.split(" ")[-1]
-        if ix and mac:
-            lnets.append((ix, mac))
-
-    if lnets:
-        lnets.sort()
-        mac = lnets[0][1]
-        print(f"MAC: {mac}")
-    return mac
-
-
 def get_network_cards(child, nets):
     if child['id'] == 'network':
         nets.append(child)
@@ -50,13 +18,15 @@ def get_network_cards(child, nets):
         
         
 def get_mac(lshw):
-    # This funcion get the network card integrated in motherboard
     nets = []
-    get_network_cards(json.loads(lshw), nets)
-    integrate = [x for x in nets if "pci@0000:00:" in x.get('businfo', '')]
 
-    if integrate:
-        return integrate[0]['serial']
+    get_network_cards(json.loads(lshw), nets)
+    nets_sorted = sorted(nets, key=lambda x: x['businfo'])
+    # This funcion get the network card integrated in motherboard
+    # integrate = [x for x in nets if "pci@0000:00:" in x.get('businfo', '')]
+
+    if nets_sorted:
+        return nets_sorted[0]['serial']
 
 
 class Build:
@@ -130,13 +100,10 @@ class Build:
         chassis = self.get_chassis_dh()
         serial_number = self.dmi.serial_number()
         sku = self.get_sku()
-        if not snapshot["data"].get('hwinfo'):
-            return f"{manufacturer}{model}{chassis}{serial_number}{sku}"
 
         if not snapshot["data"].get('lshw'):
             return f"{manufacturer}{model}{chassis}{serial_number}{sku}"
         
-        hwinfo_raw = snapshot["data"]["hwinfo"]
         lshw = snapshot["data"]["lshw"]
         # mac = get_mac2(hwinfo_raw) or ""
         mac = get_mac(lshw) or ""
