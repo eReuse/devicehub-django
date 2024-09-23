@@ -10,8 +10,9 @@ from evidence.models import Evidence, Annotation
 from utils.constants import ALGOS, CHASSIS_DH
 
 
-def get_mac(hwinfo):
-
+def get_mac2(hwinfo):
+    # This function get the network card with most lower busid
+    # but maybe is external or maybe is integrate in motherboard
     low_ix = None
     lnets = []
     
@@ -39,7 +40,24 @@ def get_mac(hwinfo):
         mac = lnets[0][1]
         print(f"MAC: {mac}")
     return mac
-                
+
+
+def get_network_cards(child, nets):
+    if child['id'] == 'network':
+        nets.append(child)
+    if child.get('children'):
+        [e(x, nets) for x in child['children']]
+        
+        
+def get_mac(lshw):
+    # This funcion get the network card integrated in motherboard
+    nets = []
+    get_network_cards(lshw, nets)
+    integrate = [x for x in nets if "pci@0000:00:" in x.get('businfo', '')]
+
+    if integrate:
+        return integrate[0]['serial']
+
 
 class Build:
     def __init__(self, evidence_json, user, check=False):
