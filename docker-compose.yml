@@ -5,7 +5,7 @@ services:
       dockerfile: docker/devicehub-django.Dockerfile
     environment:
       - DEBUG=true
-      - ALLOWED_HOSTS=*
+      - DOMAIN=${DOMAIN:-localhost}
     volumes:
       - .:/opt/devicehub-django
     ports:
