@@ -27,10 +27,17 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = "django-insecure-1p8rs@qf$$l^!vsbetagojw23kw@1ez(qi8^(s0t&#7!wyh!l3"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='[]', cast=Csv())
+DOMAIN = config("DOMAIN")
+assert DOMAIN not in [None, ''], "DOMAIN var is MANDATORY"
+# this var is very important, we print it
+print("DOMAIN: " + DOMAIN)
 
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default=DOMAIN, cast=Csv())
+assert DOMAIN in ALLOWED_HOSTS, "DOMAIN is not ALLOWED_HOST"
+
+CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default=f'https://{DOMAIN}', cast=Csv())
 
 # Application definition
 
