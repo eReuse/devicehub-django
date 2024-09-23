@@ -46,13 +46,13 @@ def get_network_cards(child, nets):
     if child['id'] == 'network':
         nets.append(child)
     if child.get('children'):
-        [e(x, nets) for x in child['children']]
+        [get_network_cards(x, nets) for x in child['children']]
         
         
 def get_mac(lshw):
     # This funcion get the network card integrated in motherboard
     nets = []
-    get_network_cards(lshw, nets)
+    get_network_cards(json.loads(lshw), nets)
     integrate = [x for x in nets if "pci@0000:00:" in x.get('businfo', '')]
 
     if integrate:
@@ -130,8 +130,16 @@ class Build:
         chassis = self.get_chassis_dh()
         serial_number = self.dmi.serial_number()
         sku = self.get_sku()
+        if not snapshot["data"].get('hwinfo'):
+            return f"{manufacturer}{model}{chassis}{serial_number}{sku}"
+
+        if not snapshot["data"].get('lshw'):
+            return f"{manufacturer}{model}{chassis}{serial_number}{sku}"
+        
         hwinfo_raw = snapshot["data"]["hwinfo"]
-        mac = get_mac(hwinfo_raw) or ""
+        lshw = snapshot["data"]["lshw"]
+        # mac = get_mac2(hwinfo_raw) or ""
+        mac = get_mac(lshw) or ""
         if not mac:
             print("WARNING!! No there are MAC address")
         else:
