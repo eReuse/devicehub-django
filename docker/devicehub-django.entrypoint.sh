@@ -21,24 +21,28 @@ deploy() {
                 #   inspired by https://medium.com/analytics-vidhya/django-with-docker-and-docker-compose-python-part-2-8415976470cc
                 echo "INFO detected NEW deployment"
                 ./manage.py migrate
-                ./manage.py add_institution example-org
+                INIT_ORG="${INIT_ORG:-example-org}"
+                INIT_USER="${INIT_USER:-user@example.org}"
+                INIT_PASSWD="${INIT_PASSWD:-1234}"
+                ./manage.py add_institution "${INIT_ORG}"
                 # TODO: one error on add_user, and you don't add user anymore
-                ./manage.py add_user example-org user@example.org 1234
+                ./manage.py add_user "${INIT_ORG}" "${INIT_USER}" "${INIT_PASSWD}"
+
                 if [ "${DEMO:-}" ]; then
-                        ./manage.py up_snapshots example/snapshots/ user@example.org
+                        ./manage.py up_snapshots example/snapshots/ "${INIT_USER}"
                 fi
         fi
 }
 
 runserver() {
         PORT="${PORT:-8000}"
-        if [ "${DEBUG:-}" = "true" ]; then
+        if [ "${DEBUG:-}" ]; then
                 ./manage.py runserver 0.0.0.0:${PORT}
         else
                 # TODO
                 #./manage.py collectstatic
                 true
-                if [ "${EXPERIMENTAL:-}" = "true" ]; then
+                if [ "${EXPERIMENTAL:-}" ]; then
                         # TODO
                         # reloading on source code changing is a debugging future, maybe better then use debug
                         #   src https://stackoverflow.com/questions/12773763/gunicorn-autoreload-on-source-change/24893069#24893069
