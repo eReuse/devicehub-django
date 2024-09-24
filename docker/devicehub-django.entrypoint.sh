@@ -24,6 +24,9 @@ deploy() {
                 ./manage.py add_institution example-org
                 # TODO: one error on add_user, and you don't add user anymore
                 ./manage.py add_user example-org user@example.org 1234
+                if [ "${DEMO:-}" ]; then
+                        ./manage.py up_snapshots example/snapshots/ user@example.org
+                fi
         fi
 }
 
