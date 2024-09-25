@@ -3,7 +3,6 @@ import numpy as np
 
 from datetime import datetime
 from dmidecode import DMIParse
-from evidence import base2, unit
 from utils.constants import CHASSIS_DH, DATASTORAGEINTERFACE
 
 
@@ -81,9 +80,9 @@ class ParseSnapshot:
                     "threads": int(cpu.get('Thread Count', 1)),
                     "manufacturer": cpu.get('Manufacturer'),
                     "serialNumber": serial,
-                    "generation": None,
                     "brand": cpu.get('Family'),
                     "address": self.get_cpu_address(cpu),
+                    "bogomips": self.get_bogomips(),
                 }
             )
 
@@ -182,16 +181,26 @@ class ParseSnapshot:
     def sanitize(self, action):
         return []
 
+    def get_bogomips(self):
+        if not self.hwinfo:
+            return self.default
+        
+        bogomips = 0
+        for row in self.hwinfo:
+            for cel in row:
+                if 'BogoMips' in cel:
+                    try:
+                        bogomips += float(cel.split(":")[-1])
+                    except:
+                        pass
+        return bogomips
+
     def get_networks(self):
         networks = []
         get_lshw_child(self.lshw, networks, 'network')
         
         for c in networks:
             capacity = c.get('capacity')
-            units = c.get('units')
-            speed = None
-            if capacity and units:
-                speed = unit.Quantity(capacity, units).to('Mbit/s').m
             wireless = bool(c.get('configuration', {}).get('wireless', False))
             self.components.append(
                 {
@@ -200,9 +209,10 @@ class ParseSnapshot:
                     "model": c.get('product'),
                     "manufacturer": c.get('vendor'),
                     "serialNumber": c.get('serial'),
-                    "speed": speed,
+                    "speed": capacity,
                     "variant": c.get('version', 1),
-                    "wireless": wireless,
+                    "wireless": wireless or False,
+                    "integrated": "PCI:0000:00" in c.get("businfo", ""),
                 }
             )
 
@@ -300,7 +310,7 @@ class ParseSnapshot:
         if 'x' not in sizes:
             return 0
         w, h = [int(x) for x in sizes.split('x')]
-        return np.sqrt(w**2 + h**2) * i
+        return "{:.2f}".format(np.sqrt(w**2 + h**2) * i)
 
     def get_cpu_address(self, cpu):
         default = 64
@@ -367,25 +377,16 @@ class ParseSnapshot:
         return slots
 
     def get_ram_size(self, ram):
-        try:
-            memory = ram.get("Size", "0")
-            memory = memory.split(' ')
-            if len(memory) > 1:
-                size = int(memory[0])
-                units = memory[1]
-                return base2.Quantity(size, units).to('MiB').m
-            return int(size.split(" ")[0])
-        except Exception as err:
-            logger.error("get_ram_size error: {}".format(err))
-            return 0
+        memory = ram.get("Size", "0")
+        return memory
 
     def get_ram_speed(self, ram):
         size = ram.get("Speed", "0")
-        return int(size.split(" ")[0])
+        return size
 
     def get_cpu_speed(self, cpu):
         speed = cpu.get('Max Speed', "0")
-        return float(speed.split(" ")[0]) / 1024
+        return speed
 
     def get_sku(self):
         return self.dmi.get("System")[0].get("SKU Number", self.default).strip()
@@ -468,11 +469,7 @@ class ParseSnapshot:
         self.errors("{}".format(err))
 
     def get_data_storage_size(self, x):
-        total_capacity = x.get('user_capacity', {}).get('bytes')
-        if not total_capacity:
-            return 1
-        # convert bytes to Mb
-        return total_capacity / 1024**2
+        return x.get('user_capacity', {}).get('bytes')
 
     def parse_hwinfo(self):
         hw_blocks = self.hwinfo_raw.split("\n\n")
@@ -480,7 +477,11 @@ class ParseSnapshot:
 
     def loads(self, x):
         if isinstance(x, str):
-            return json.loads(x)
+            try:
+                return json.loads(x)
+            except Exception as ss:
+                print("WARNING!! {}".format(ss))
+                return {}
         return x
 
     def errors(self, txt=None):

@@ -19,8 +19,12 @@ def get_network_cards(child, nets):
         
 def get_mac(lshw):
     nets = []
+    try:
+        get_network_cards(json.loads(lshw), nets)
+    except Exception as ss:
+        print("WARNING!! {}".format(ss))
+        return
 
-    get_network_cards(json.loads(lshw), nets)
     nets_sorted = sorted(nets, key=lambda x: x['businfo'])
     # This funcion get the network card integrated in motherboard
     # integrate = [x for x in nets if "pci@0000:00:" in x.get('businfo', '')]

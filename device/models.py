@@ -102,8 +102,9 @@ class Device:
 
     def get_last_evidence(self):
         annotations = self.get_annotations()
-        if annotations:
-            annotation = annotations.first()
+        if not annotations.count():
+            return
+        annotation = annotations.first()
         self.last_evidence = Evidence(annotation.uuid)
 
     def last_uuid(self):

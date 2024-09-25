@@ -180,9 +180,12 @@
           <small class="text-muted">{{ evidence.created }}</small>
         </div>
         <p class="mb-1">
-          {{ c.manufacturer }}<br />
-          {{ c.model }}<br />
-          {{ c.serialNumber }}<br />
+	  {% for k, v in c.items %}
+	  {% if k not in "actions,type" %}
+	    {{ k }}: {{ v }}<br />
+	  {% endif %}
+	  {% endfor %}
+	  <br />
         </p>
         <small class="text-muted">
         </small>

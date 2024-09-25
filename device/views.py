@@ -1,7 +1,7 @@
 import json
 
 from django.urls import reverse_lazy
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, Http404
 from django.utils.translation import gettext_lazy as _
 from django.views.generic.edit import (
     CreateView,
@@ -87,6 +87,9 @@ class DetailsView(DashboardView, TemplateView):
     def get(self, request, *args, **kwargs):
         self.pk = kwargs['pk']
         self.object = Device(id=self.pk)
+        if not self.object.last_evidence:
+            raise Http404
+        
         return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
