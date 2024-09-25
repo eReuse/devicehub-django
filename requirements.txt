@@ -10,3 +10,4 @@ pandas==2.2.2
 xlrd==2.0.1
 odfpy==1.4.1
 pytz==2024.2
+Pint==0.24.3

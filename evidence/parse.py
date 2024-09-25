@@ -6,7 +6,7 @@ import hashlib
 from datetime import datetime
 from dmidecode import DMIParse
 from evidence.xapian import search, index
-from evidence.models import Evidence, Annotation
+from evidence.models import Annotation
 from utils.constants import ALGOS, CHASSIS_DH
 
 
