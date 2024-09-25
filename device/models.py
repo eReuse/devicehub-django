@@ -155,3 +155,10 @@ class Device:
             self.get_last_evidence()
         return self.last_evidence.get_model()
 
+    @property
+    def components(self):
+        if not self.last_evidence:
+            self.get_last_evidence()
+        return self.last_evidence.get_components()
+        
+

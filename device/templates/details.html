@@ -173,7 +173,7 @@
   <div class="tab-pane fade profile-overview" id="components">
     <h5 class="card-title">Components last evidence</h5>
     <div class="list-group col-6">
-      {% for c in object.last_evidence.doc.components %}
+      {% for c in object.components %}
       <div class="list-group-item">
         <div class="d-flex w-100 justify-content-between">
           <h5 class="mb-1">{{ c.type }}</h5>
