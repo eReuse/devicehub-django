@@ -33,7 +33,19 @@
     <thead>
       <tr>
         <th scope="col" data-sortable="">
-          <a class="dataTable-sorter" href="#">Title</a>
+          select
+        </th>
+        <th scope="col" data-sortable="">
+          shortid
+        </th>
+        <th scope="col" data-sortable="">
+          type
+        </th>
+        <th scope="col" data-sortable="">
+          manufacturer
+        </th>
+        <th scope="col" data-sortable="">
+          model
         </th>
       </tr>
     </thead>
@@ -45,8 +57,17 @@
         </td>
         <td>
           <a href="{% url 'device:details' dev.id %}">
-            {{ dev.type }} {{ dev.manufacturer }} {{ dev.model }}
+            {{ dev.shortid }}
           </a>
+        </td>
+        <td>
+            {{ dev.type }}
+        </td>
+        <td>
+            {{ dev.manufacturer }}
+        </td>
+        <td>
+            {{ dev.model }}
         </td>
       </tr>
     </tbody>
