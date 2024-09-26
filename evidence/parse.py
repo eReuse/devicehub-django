@@ -11,7 +11,7 @@ from utils.constants import ALGOS, CHASSIS_DH
 
 
 def get_network_cards(child, nets):
-    if child['id'] == 'network':
+    if child['id'] == 'network' and "PCI:" in child.get("businfo"):
         nets.append(child)
     if child.get('children'):
         [get_network_cards(x, nets) for x in child['children']]
