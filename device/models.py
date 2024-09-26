@@ -89,10 +89,10 @@ class Device:
     def get_hids(self):
         annotations = self.get_annotations()
 
-        self.hids = annotations.filter(
+        self.hids = list(set(annotations.filter(
             type=Annotation.Type.SYSTEM,
             key__in=ALGOS.keys(),
-        ).values_list("value", flat=True)
+        ).values_list("value", flat=True)))
 
     def get_evidences(self):
         if not self.uuids:
