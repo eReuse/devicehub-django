@@ -31,7 +31,7 @@ class Lot(models.Model):
     name = models.CharField(max_length=STR_SIZE, blank=True, null=True)
     code = models.CharField(max_length=STR_SIZE, blank=True, null=True)
     description = models.CharField(max_length=STR_SIZE, blank=True, null=True)
-    closed = models.BooleanField(default=True)
+    closed = models.BooleanField(default=False)
     owner = models.ForeignKey(Institution, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     type = models.ForeignKey(LotTag, on_delete=models.CASCADE)

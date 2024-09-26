@@ -131,11 +131,13 @@ class LotsTagsView(DashboardView, TemplateView):
         tag = get_object_or_404(LotTag, owner=self.request.user.institution, id=self.pk)
         self.title += " {}".format(tag.name)
         self.breadcrumb += " {}".format(tag.name)
-        lots = Lot.objects.filter(owner=self.request.user.institution).filter(type=tag)
+        show_closed = self.request.GET.get('show_closed', 'false') == 'true'
+        lots = Lot.objects.filter(owner=self.request.user.institution).filter(type=tag, closed=show_closed)
         context.update({
             'lots': lots,
             'title': self.title,
-            'breadcrumb': self.breadcrumb
+            'breadcrumb': self.breadcrumb,
+            'show_closed': show_closed
         })
         return context
 
