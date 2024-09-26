@@ -83,12 +83,24 @@ class Evidence:
         return self.components
 
     def get_manufacturer(self):
+        if self.doc.get("type") == "WebSnapshot":
+            kv = self.doc.get('kv', {})
+            if len(kv) < 1:
+                return ""
+            return list(self.doc.get('kv').values())[0]
+
         if self.doc.get("software") != "EreuseWorkbench":
             return self.doc['device']['manufacturer']
 
         return self.dmi.manufacturer().strip()
 
     def get_model(self):
+        if self.doc.get("type") == "WebSnapshot":
+            kv = self.doc.get('kv', {})
+            if len(kv) < 2:
+                return ""
+            return list(self.doc.get('kv').values())[1]
+
         if self.doc.get("software") != "EreuseWorkbench":
             return self.doc['device']['model']
 
