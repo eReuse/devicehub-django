@@ -131,14 +131,14 @@ class Device:
     def is_websnapshot(self):
         if not self.last_evidence:
             self.get_last_evidence()
-        return self.last_evidence.doc['type'] == "WebSnapshot" 
-    
+        return self.last_evidence.doc['type'] == "WebSnapshot"
+
     @property
     def last_user_evidence(self):
         if not self.last_evidence:
             self.get_last_evidence()
         return self.last_evidence.doc['kv'].items()
-    
+
     @property
     def manufacturer(self):
         if not self.last_evidence:
@@ -147,6 +147,9 @@ class Device:
 
     @property
     def type(self):
+        if self.last_evidence.doc['type'] == "WebSnapshot":
+            return self.last_evidence.doc.get("device", {}).get("type", "")
+
         if not self.last_evidence:
             self.get_last_evidence()
         return self.last_evidence.get_chassis()
@@ -162,5 +165,3 @@ class Device:
         if not self.last_evidence:
             self.get_last_evidence()
         return self.last_evidence.get_components()
-        
-
