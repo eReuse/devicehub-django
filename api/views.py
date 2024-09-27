@@ -60,9 +60,7 @@ def NewSnapshot(request):
     # save_in_disk(data, tk.user)
 
     try:
-        # Build(data, tk.user)
-        user = User.objects.get(email="user@example.org")
-        Build(data, user)
+        Build(data, tk.user)
     except Exception:
         return JsonResponse({'status': 'fail'}, status=200)
 
