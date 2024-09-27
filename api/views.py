@@ -29,14 +29,14 @@ def NewSnapshot(request):
         return JsonResponse({'error': 'Invalid request method'}, status=400)
 
     # Authentication
-    # auth_header = request.headers.get('Authorization')
-    # if not auth_header or not auth_header.startswith('Bearer '):
-    #     return JsonResponse({'error': 'Invalid or missing token'}, status=401)
+    auth_header = request.headers.get('Authorization')
+    if not auth_header or not auth_header.startswith('Bearer '):
+        return JsonResponse({'error': 'Invalid or missing token'}, status=401)
 
-    # token = auth_header.split(' ')[1]
-    # tk = Token.objects.filter(token=token).first()
-    # if not tk:
-    #     return JsonResponse({'error': 'Invalid or missing token'}, status=401)
+    token = auth_header.split(' ')[1]
+    tk = Token.objects.filter(token=token).first()
+    if not tk:
+        return JsonResponse({'error': 'Invalid or missing token'}, status=401)
 
     # Validation snapshot
     try:

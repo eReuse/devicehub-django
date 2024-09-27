@@ -1,6 +1,9 @@
+from uuid import uuid4
+
 from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
 from user.models import Institution
+from api.models import  Token
 
 
 User = get_user_model()
@@ -28,3 +31,6 @@ class Command(BaseCommand):
         )
         self.u.set_password(self.password)
         self.u.save()
+        token = uuid4()
+        Token.objects.create(token=token, owner=self.u)
+        print(f"TOKEN: {token}")
