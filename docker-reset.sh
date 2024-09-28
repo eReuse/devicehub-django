@@ -14,7 +14,7 @@ main() {
         fi
         # remove old database
         sudo rm -vf db/*
-        docker compose down
+        docker compose down -v
         docker compose build
         docker compose up ${detach_arg:-}
 }
