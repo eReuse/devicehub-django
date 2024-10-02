@@ -1,5 +1,5 @@
 from django.urls import resolve
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, Http404
 from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import PermissionDenied
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -44,7 +44,6 @@ class DashboardView(LoginRequiredMixin):
         return context
 
     def get_session_devices(self):
-        # import pdb; pdb.set_trace()
         dev_ids = self.request.session.pop("devices", [])
         
         self._devices = []
@@ -82,3 +81,32 @@ class InventaryMixin(DashboardView, TemplateView):
             except Exception:
                 pass
         return super().get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        limit = self.request.GET.get("limit")
+        page = self.request.GET.get("page")
+        try:
+            limit = int(limit)
+            page = int(page)
+            if page < 1:
+                page = 1
+            if limit < 1:
+                limit = 10
+        except:
+            limit = 10
+            page = 1
+
+        offset = (page - 1) * limit
+        devices, count = self.get_devices(self.request.user, offset, limit)
+        total_pages = (count + limit - 1) // limit
+
+        context.update({
+            'devices': devices,
+            'count': count,
+            "limit": limit,
+            "offset": offset,
+            "page": page,
+            "total_pages": total_pages,
+        })
+        return context

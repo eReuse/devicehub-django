@@ -1,4 +1,6 @@
 from django.utils.translation import gettext_lazy as _
+from django.shortcuts import Http404
+
 from dashboard.mixins import InventaryMixin, DetailsMixin
 from device.models import Device
 from lot.models import Lot
@@ -10,15 +12,8 @@ class UnassignedDevicesView(InventaryMixin):
     title = _("Unassigned Devices")
     breadcrumb = "Devices / Unassigned Devices"
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        devices = Device.get_unassigned(self.request.user)
-
-        context.update({
-            'devices': devices,
-        })
-
-        return context
+    def get_devices(self, user, offset, limit):
+        return Device.get_unassigned(self.request.user, offset, limit)
 
 
 class LotDashboardView(InventaryMixin, DetailsMixin):
@@ -30,14 +25,13 @@ class LotDashboardView(InventaryMixin, DetailsMixin):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        devices = self.get_devices()
         lot = context.get('object')
         context.update({
-            'devices': devices,
             'lot': lot,
         })
         return context
 
-    def get_devices(self):
+    def get_devices(self, user, offset, limit):
         chids = self.object.devicelot_set.all().values_list("device_id", flat=True).distinct()
-        return [Device(id=x) for x in chids]
+        chids_page = chids[offset:offset+limit]
+        return [Device(id=x) for x in chids_page], chids.count()
