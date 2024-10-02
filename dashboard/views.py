@@ -33,4 +33,5 @@ class LotDashboardView(InventaryMixin, DetailsMixin):
 
     def get_devices(self, user, offset, limit):
         chids = self.object.devicelot_set.all().values_list("device_id", flat=True).distinct()
-        return [Device(id=x) for x in chids], chids.count()
+        chids_page = chids[offset:offset+limit]
+        return [Device(id=x) for x in chids_page], chids.count()
