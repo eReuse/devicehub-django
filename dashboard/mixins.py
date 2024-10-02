@@ -84,14 +84,18 @@ class InventaryMixin(DashboardView, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        limit = self.request.GET.get("limit", 10)
-        page = self.request.GET.get("page", 1)
-        if limit:
-            try:
-                limit = int(limit)
-                page = int(page)
-            except:
-                raise Http404
+        limit = self.request.GET.get("limit")
+        page = self.request.GET.get("page")
+        try:
+            limit = int(limit)
+            page = int(page)
+            if page < 1:
+                page = 1
+            if limit < 1:
+                limit = 10
+        except:
+            limit = 10
+            page = 1
 
         offset = (page - 1) * limit
         devices, count = self.get_devices(self.request.user, offset, limit)
