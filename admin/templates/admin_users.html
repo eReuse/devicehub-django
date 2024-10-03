@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+<div class="row">
+  <div class="col">
+    <h3>{{ subtitle }}</h3>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col">
+    {% for u in users %}
+      {{ u.email }}
+      {{ u.is_admin }}
+    {% endfor %}
+  </div>
+</div>
+
+{% endblock %}
