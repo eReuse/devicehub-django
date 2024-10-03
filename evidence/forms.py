@@ -55,7 +55,18 @@ class UserTagForm(forms.Form):
     tag = forms.CharField(label=_("Tag"))
 
     def __init__(self, *args, **kwargs):
+        self.pk = None
         self.uuid = kwargs.pop('uuid', None)
+        instance = Annotation.objects.filter(
+            uuid=self.uuid,
+            type=Annotation.Type.SYSTEM,
+            key='CUSTOM_ID'
+        ).first()
+
+        if instance:
+            kwargs["initial"]["tag"] = instance.value
+            self.pk = instance.pk
+
         super().__init__(*args, **kwargs)
 
     def clean(self):
@@ -63,10 +74,23 @@ class UserTagForm(forms.Form):
         if not data:
             return False
         self.tag = data
+        self.instance = Annotation.objects.filter(
+            uuid=self.uuid,
+            type=Annotation.Type.SYSTEM,
+            key='CUSTOM_ID'
+        ).first()
+
         return True
 
     def save(self, user, commit=True):
         if not commit:
+            return
+
+        if self.instance:
+            if not self.tag:
+                self.instance.delete()
+            self.instance.value = self.tag
+            self.instance.save()
             return
 
         Annotation.objects.create(
@@ -103,12 +127,12 @@ class ImportForm(forms.Form):
         for n in data_pd.keys():
             if 'type' not in [x.lower() for x in data_pd[n]]:
                 raise ValidationError("You need a column with name 'type'")
-        
+
             for k, v in data_pd[n].items():
                 if k.lower() == "type":
                     if v not in Device.Types.values:
                         raise ValidationError("{} is not a valid device".format(v))
-                
+
             self.rows.append(data_pd[n])
 
         return data
