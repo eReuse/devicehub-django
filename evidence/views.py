@@ -92,7 +92,7 @@ class EvidenceView(DashboardView, FormView):
     def get(self, request, *args, **kwargs):
         self.pk = kwargs['pk']
         self.object = Evidence(self.pk)
-        if self.object.owner != self.request.user:
+        if self.object.owner != self.request.user.institution:
             raise Http403
 
         self.object.get_annotations()
@@ -109,6 +109,7 @@ class EvidenceView(DashboardView, FormView):
         self.pk = self.kwargs.get('pk')
         kwargs = super().get_form_kwargs()
         kwargs['uuid'] = self.pk
+        kwargs['user'] = self.request.user
         return kwargs
 
     def form_valid(self, form):
@@ -130,7 +131,7 @@ class DownloadEvidenceView(DashboardView, TemplateView):
     def get(self, request, *args, **kwargs):
         pk = kwargs['pk']
         evidence = Evidence(pk)
-        if evidence.owner != self.request.user:
+        if evidence.owner != self.request.user.institution:
             raise Http403()
 
         evidence.get_doc()
@@ -156,7 +157,11 @@ class AnnotationDeleteView(DashboardView, DeleteView):
             # if is not possible resolve the reference path return 404
             raise Http404
 
-        self.object = get_object_or_404(self.model, pk=self.pk, owner=self.request.user)
+        self.object = get_object_or_404(
+            self.model,
+            pk=self.pk,
+            owner=self.request.user.institution
+        )
         self.object.delete()
 
 
