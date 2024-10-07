@@ -47,7 +47,9 @@ class DashboardView(LoginRequiredMixin):
         dev_ids = self.request.session.pop("devices", [])
         
         self._devices = []
-        for x in Annotation.objects.filter(value__in=dev_ids).filter(owner=self.request.user).distinct():
+        for x in Annotation.objects.filter(value__in=dev_ids).filter(
+                owner=self.request.user.institution
+        ).distinct():
             self._devices.append(Device(id=x.value))
         return self._devices
 

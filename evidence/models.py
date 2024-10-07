@@ -4,7 +4,7 @@ from django.db import models
 
 from utils.constants import STR_SM_SIZE, STR_EXTEND_SIZE
 from evidence.xapian import search
-from user.models import User
+from user.models import User, Institution
 
 
 class Annotation(models.Model):
@@ -15,7 +15,8 @@ class Annotation(models.Model):
 
     created = models.DateTimeField(auto_now_add=True)
     uuid = models.UUIDField()
-    owner = models.ForeignKey(User, on_delete=models.CASCADE)
+    owner = models.ForeignKey(Institution, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     type =  models.SmallIntegerField(choices=Type)
     key = models.CharField(max_length=STR_EXTEND_SIZE)
     value = models.CharField(max_length=STR_EXTEND_SIZE)
@@ -51,8 +52,10 @@ class Evidence:
 
     def get_doc(self):
         self.doc = {}
+        if not self.owner:
+            self.get_owner()
         qry = 'uuid:"{}"'.format(self.uuid)
-        matches = search(qry, limit=1)
+        matches = search(self.owner, qry, limit=1)
         if matches.size() < 0:
             return
 
@@ -73,6 +76,6 @@ class Evidence:
     @classmethod
     def get_all(cls, user):
         return Annotation.objects.filter(
-            owner=user,
+            owner=user.institution,
             type=Annotation.Type.SYSTEM,
         ).order_by("-created").values_list("uuid", flat=True).distinct()
