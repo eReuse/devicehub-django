@@ -56,7 +56,7 @@ class BaseDeviceFormSet(forms.BaseFormSet):
         if not commit:
             return doc
 
-        create_index(doc)
+        create_index(doc, self.user)
         create_annotation(doc, user, commit=commit)
         return doc
 

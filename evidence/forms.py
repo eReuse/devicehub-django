@@ -57,10 +57,12 @@ class UserTagForm(forms.Form):
     def __init__(self, *args, **kwargs):
         self.pk = None
         self.uuid = kwargs.pop('uuid', None)
+        self.user = kwargs.pop('user')
         instance = Annotation.objects.filter(
             uuid=self.uuid,
             type=Annotation.Type.SYSTEM,
-            key='CUSTOM_ID'
+            key='CUSTOM_ID',
+            owner=self.user.institution
         ).first()
 
         if instance:
@@ -77,7 +79,8 @@ class UserTagForm(forms.Form):
         self.instance = Annotation.objects.filter(
             uuid=self.uuid,
             type=Annotation.Type.SYSTEM,
-            key='CUSTOM_ID'
+            key='CUSTOM_ID',
+            owner=self.user.institution
         ).first()
 
         return True
@@ -95,10 +98,11 @@ class UserTagForm(forms.Form):
 
         Annotation.objects.create(
             uuid=self.uuid,
-            owner=user,
             type=Annotation.Type.SYSTEM,
             key='CUSTOM_ID',
-            value=self.tag
+            value=self.tag,
+            owner=self.user.institution,
+            user=self.user
         )
 
 
@@ -148,7 +152,7 @@ class ImportForm(forms.Form):
         if commit:
             for doc, cred in table:
               cred.save()
-              create_index(doc)
+              create_index(doc, self.user)
             return table
 
         return

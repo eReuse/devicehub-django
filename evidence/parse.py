@@ -4,7 +4,7 @@ import shutil
 import hashlib
 
 from datetime import datetime
-from evidence.xapian import search, index
+from evidence.xapian import index
 from evidence.models import Evidence, Annotation
 from utils.constants import ALGOS
 
@@ -25,7 +25,7 @@ class Build:
 
     def index(self):
         snap = json.dumps(self.json)
-        index(self.uuid, snap)
+        index(self.user.institution, self.uuid, snap)
 
     def generate_chids(self):
         self.algorithms = {
@@ -47,7 +47,8 @@ class Build:
         for k, v in self.algorithms.items():
             Annotation.objects.create(
                 uuid=self.uuid,
-                owner=self.user,
+                owner=self.user.institution,
+                user=self.user,
                 type=Annotation.Type.SYSTEM,
                 key=k,
                 value=v

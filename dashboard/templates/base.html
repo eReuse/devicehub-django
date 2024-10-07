@@ -79,6 +79,26 @@
         <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
           <div class="position-sticky pt-5">
             <ul class="nav flex-column">
+	      {% if user.is_admin %}
+              <li class="nav-item">
+                <a class="admin {% if path in 'panel users' %}active {% endif %}nav-link fw-bold" data-bs-toggle="collapse" data-bs-target="#ul_admin" aria-expanded="false" aria-controls="ul_admin" href="javascript:void()">
+                  <i class="bi bi-person-fill-gear icon_sidebar"></i>
+                  {% trans 'Admin' %}
+                </a>
+                <ul class="flex-column mb-2 ul_sidebar accordion-collapse {% if path in 'panel users' %}expanded{% else %}collapse{% endif %}" id="ul_admin" data-bs-parent="#sidebarMenu">
+                  <li class="nav-item">
+                    <a class="nav-link{% if path == 'panel' %} active2{% endif %}" href="{% url 'admin:panel' %}">
+                      {% trans 'Panel' %}
+                    </a>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link{% if path == 'users' %} active2{% endif %}" href="{% url 'admin:users' %}">
+                      {% trans 'Users' %}
+                    </a>
+                  </li>
+                </ul>
+              </li>
+	      {% endif %}
               <li class="nav-item">
                 <a class="admin {% if path == 'unassigned_devices' %}active {% endif %}nav-link fw-bold" data-bs-toggle="collapse" data-bs-target="#ul_devices" aria-expanded="false" aria-controls="ul_devices" href="javascript:void()">
                   <i class="bi bi-laptop icon_sidebar"></i>

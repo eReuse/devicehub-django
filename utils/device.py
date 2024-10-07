@@ -69,7 +69,8 @@ def create_annotation(doc, user, commit=False):
     
     data = {
         'uuid': doc['uuid'],
-        'owner': user,
+        'owner': user.institution,
+        'user': user,
         'type': Annotation.Type.SYSTEM,
         'key': 'CUSTOMER_ID',
         'value': doc['CUSTOMER_ID'],
@@ -80,10 +81,10 @@ def create_annotation(doc, user, commit=False):
     return Annotation(**data)
 
 
-def create_index(doc):
+def create_index(doc, user):
     if not doc or not doc.get('uuid'):
         return []
     
     _uuid = doc['uuid']
     ev = json.dumps(doc)
-    index(_uuid, ev)
+    index(user, _uuid, ev)
