@@ -16,7 +16,7 @@ class Annotation(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     uuid = models.UUIDField()
     owner = models.ForeignKey(Institution, on_delete=models.CASCADE)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     type =  models.SmallIntegerField(choices=Type)
     key = models.CharField(max_length=STR_EXTEND_SIZE)
     value = models.CharField(max_length=STR_EXTEND_SIZE)

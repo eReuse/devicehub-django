@@ -13,7 +13,7 @@ class UnassignedDevicesView(InventaryMixin):
     breadcrumb = "Devices / Unassigned Devices"
 
     def get_devices(self, user, offset, limit):
-        return Device.get_unassigned(self.request.user, offset, limit)
+        return Device.get_unassigned(self.request.user.institution, offset, limit)
 
 
 class LotDashboardView(InventaryMixin, DetailsMixin):
