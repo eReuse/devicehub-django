@@ -101,6 +101,29 @@ class DetailsView(DashboardView, TemplateView):
         return context
 
 
+class DeviceWebView(DashboardView, TemplateView):
+    template_name = "device_web.html"
+    title = _("Device Web")
+    breadcrumb = "Device / Web"
+    model = Annotation
+
+    def get(self, request, *args, **kwargs):
+        self.pk = kwargs['pk']
+        self.object = Device(id=self.pk)
+        return super().get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        self.object.initial()
+        lot_tags = LotTag.objects.filter(owner=self.request.user.institution)
+        context.update({
+            'object': self.object,
+            'snapshot': self.object.get_last_evidence(),
+            'lot_tags': lot_tags,
+        })
+        return context
+
+
 class AddAnnotationView(DashboardView, CreateView):
     template_name = "new_annotation.html"
     title = _("New annotation")

@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+  <h1>{{ title }}</h1>
+
+      <h5 class="card-title">Details</h5>
+      <div class="row mb-3">
+        <div class="col-lg-3 col-md-4 label">Phid</div>
+        <div class="col-lg-9 col-md-8">{{ object.id }}</div>
+      </div>
+
+      <div class="row">
+        <div class="col-lg-3 col-md-4 label">Type</div>
+        <div class="col-lg-9 col-md-8">{{ object.type }}</div>
+      </div>
+
+      {% if object.is_websnapshot %}
+        {% for k, v in object.last_user_evidence %}
+          <div class="row">
+            <div class="col-lg-3 col-md-4 label">{{ k }}</div>
+            <div class="col-lg-9 col-md-8">{{ v|default:'' }}</div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <div class="row">
+          <div class="col-lg-3 col-md-4 label">Manufacturer</div>
+          <div class="col-lg-9 col-md-8">{{ object.manufacturer|default:'' }}</div>
+        </div>
+
+        <div class="row">
+          <div class="col-lg-3 col-md-4 label">Model</div>
+          <div class="col-lg-9 col-md-8">{{ object.model|default:'' }}</div>
+        </div>
+
+        <div class="row">
+          <div class="col-lg-3 col-md-4 label">Serial Number</div>
+          <div class="col-lg-9 col-md-8">{{ object.last_evidence.doc.device.serialNumber|default:'' }}</div>
+        </div>
+      {% endif %}
+      <div class="row">
+        <div class="col-lg-3 col-md-4 label">Identifiers</div>
+      </div>
+      {% for chid in object.hids %}
+        <div class="row">
+          <div class="col">{{ chid|default:'' }}</div>
+        </div>
+      {% endfor %}
+
+  
+  {% comment %} <h2>User Anotations</h2> {% endcomment %}
+
+  <h2>Components</h2>
+  <ul>
+        {% for c in object.last_evidence.doc.components %}
+          <div class="list-group-item">
+            <div class="d-flex w-100 justify-content-between">
+              <h5 class="mb-1">{{ c.type }}</h5>
+              <small class="text-muted">{{ evidence.created }}</small>
+            </div>
+            <p class="mb-1">
+              {{ c.manufacturer }}<br />
+              {{ c.model }}<br />
+              {{ c.serialNumber }}<br />
+            </p>
+            <small class="text-muted"></small>
+          </div>
+        {% endfor %}
+
+
+
+  <h2>Last Evidence Snapshot</h2>
+  <p>{{ snapshot }}</p>
+
+  {% comment %} <h2>Lot Tags</h2>
+  <ul>
+    {% for tag in lot_tags %}
+      <li>{{ tag.name }}</li>
+    {% endfor %}
+  </ul> {% endcomment %}
+{% endblock %}
