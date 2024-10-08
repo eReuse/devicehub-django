@@ -1,81 +1,173 @@
-{% extends 'base.html' %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body {
+            font-size: .875rem;
+            background-color: #f8f9fa;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        .custom-container {
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            margin-top: 30px;
+            flex-grow: 1;
+        }
+        .section-title {
+            color: #7a9f4f;  /* Darker green for h2 */
+            border-bottom: 2px solid #9cc666;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+        .info-row {
+            margin-bottom: 10px;
+        }
+        .info-label {
+            font-weight: bold;
+            color: #545f71;
+        }
+        .info-value {
+            color: #333;
+        }
+        .component-card {
+            background-color: #f8f9fa;
+            border-left: 4px solid #9cc666;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+        }
+        .component-card:hover {
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+        .hash-value {
+            word-break: break-all;
+            background-color: #f3f3f3;
+            padding: 5px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9em;
+            border: 1px solid #e0e0e0;
+        }
+        .card-title {
+            color: #9cc666;
+        }
+        .btn-primary {
+            background-color: #9cc666;
+            border-color: #9cc666;
+            padding: 0.1em 2em;
+            font-weight: 700;
+        }
+        .btn-primary:hover {
+            background-color: #8ab555;
+            border-color: #8ab555;
+        }
+        .btn-green-user {
+            background-color: #c7e3a3;
+        }
+        .btn-grey {
+            background-color: #f3f3f3;
+        }
+        footer {
+            background-color: #545f71;
+            color: #ffffff;
+            text-align: center;
+            padding: 10px 0;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container custom-container">
+        <h1 class="text-center mb-4" style="color: #545f71;">{{ title }}</h1>
 
-{% block content %}
-
-  <h1>{{ title }}</h1>
-
-      <h5 class="card-title">Details</h5>
-      <div class="row mb-3">
-        <div class="col-lg-3 col-md-4 label">Phid</div>
-        <div class="col-lg-9 col-md-8">{{ object.id }}</div>
-      </div>
-
-      <div class="row">
-        <div class="col-lg-3 col-md-4 label">Type</div>
-        <div class="col-lg-9 col-md-8">{{ object.type }}</div>
-      </div>
-
-      {% if object.is_websnapshot %}
-        {% for k, v in object.last_user_evidence %}
-          <div class="row">
-            <div class="col-lg-3 col-md-4 label">{{ k }}</div>
-            <div class="col-lg-9 col-md-8">{{ v|default:'' }}</div>
-          </div>
-        {% endfor %}
-      {% else %}
         <div class="row">
-          <div class="col-lg-3 col-md-4 label">Manufacturer</div>
-          <div class="col-lg-9 col-md-8">{{ object.manufacturer|default:'' }}</div>
-        </div>
+            <div class="col-lg-6">
+                <h2 class="section-title">Details</h2>
+                <div class="info-row row">
+                    <div class="col-md-4 info-label">Phid</div>
+                    <div class="col-md-8 info-value">
+                        <div class="hash-value">{{ object.id }}</div>
+                    </div>
+                </div>
+                <div class="info-row row">
+                    <div class="col-md-4 info-label">Type</div>
+                    <div class="col-md-8 info-value">{{ object.type }}</div>
+                </div>
 
-        <div class="row">
-          <div class="col-lg-3 col-md-4 label">Model</div>
-          <div class="col-lg-9 col-md-8">{{ object.model|default:'' }}</div>
-        </div>
-
-        <div class="row">
-          <div class="col-lg-3 col-md-4 label">Serial Number</div>
-          <div class="col-lg-9 col-md-8">{{ object.last_evidence.doc.device.serialNumber|default:'' }}</div>
-        </div>
-      {% endif %}
-      <div class="row">
-        <div class="col-lg-3 col-md-4 label">Identifiers</div>
-      </div>
-      {% for chid in object.hids %}
-        <div class="row">
-          <div class="col">{{ chid|default:'' }}</div>
-        </div>
-      {% endfor %}
-
-  
-  {% comment %} <h2>User Anotations</h2> {% endcomment %}
-
-  <h2>Components</h2>
-  <ul>
-        {% for c in object.last_evidence.doc.components %}
-          <div class="list-group-item">
-            <div class="d-flex w-100 justify-content-between">
-              <h5 class="mb-1">{{ c.type }}</h5>
-              <small class="text-muted">{{ evidence.created }}</small>
+                {% if object.is_websnapshot %}
+                    {% for k, v in object.last_user_evidence %}
+                        <div class="info-row row">
+                            <div class="col-md-4 info-label">{{ k }}</div>
+                            <div class="col-md-8 info-value">{{ v|default:'' }}</div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="info-row row">
+                        <div class="col-md-4 info-label">Manufacturer</div>
+                        <div class="col-md-8 info-value">{{ object.manufacturer|default:'' }}</div>
+                    </div>
+                    <div class="info-row row">
+                        <div class="col-md-4 info-label">Model</div>
+                        <div class="col-md-8 info-value">{{ object.model|default:'' }}</div>
+                    </div>
+                    <div class="info-row row">
+                        <div class="col-md-4 info-label">Serial Number</div>
+                        <div class="col-md-8 info-value">{{ object.last_evidence.doc.device.serialNumber|default:'' }}</div>
+                    </div>
+                {% endif %}
             </div>
-            <p class="mb-1">
-              {{ c.manufacturer }}<br />
-              {{ c.model }}<br />
-              {{ c.serialNumber }}<br />
-            </p>
-            <small class="text-muted"></small>
-          </div>
-        {% endfor %}
 
+            <div class="col-lg-6">
+                <h2 class="section-title">Identifiers</h2>
+                {% for chid in object.hids %}
+                    <div class="info-row">
+                        <div class="hash-value">{{ chid|default:'' }}</div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
 
+        <h2 class="section-title mt-5">Components</h2>
+        <div class="row">
+            {% for c in object.last_evidence.doc.components %}
+                <div class="col-md-6 mb-3">
+                    <div class="card component-card">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ c.type }}</h5>
+                            <p class="card-text">
+                                <strong>Manufacturer:</strong> {{ c.manufacturer }}<br>
+                                <strong>Model:</strong> {{ c.model }}<br>
+                                <strong>Serial Number:</strong> {{ c.serialNumber }}
+                            </p>
+                            <small class="text-muted">{{ evidence.created }}</small>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
 
-  <h2>Last Evidence Snapshot</h2>
-  <p>{{ snapshot }}</p>
+        <h2 class="section-title mt-5">Last Evidence Snapshot</h2>
+        <div class="card">
+            <div class="card-body">
+                <p class="card-text">{{ snapshot }}</p>
+            </div>
+        </div>
+    </div>
 
-  {% comment %} <h2>Lot Tags</h2>
-  <ul>
-    {% for tag in lot_tags %}
-      <li>{{ tag.name }}</li>
-    {% endfor %}
-  </ul> {% endcomment %}
-{% endblock %}
+    <footer>
+        <p>&copy; {% now "Y" %} eReuse. All rights reserved.</p>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
