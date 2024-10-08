@@ -103,7 +103,7 @@ class DetailsView(DashboardView, TemplateView):
 
 class DeviceWebView(DashboardView, TemplateView):
     template_name = "device_web.html"
-    title = _("Device Web")
+    title = _("Device Website")
     breadcrumb = "Device / Web"
     model = Annotation
 
