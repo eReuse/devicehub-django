@@ -1,7 +1,12 @@
+import json
+
 from django.utils.translation import gettext_lazy as _
+from django.views.generic.edit import FormView
 from django.shortcuts import Http404
 
 from dashboard.mixins import InventaryMixin, DetailsMixin
+from evidence.models import Annotation
+from evidence.xapian import search
 from device.models import Device
 from lot.models import Lot
 
@@ -32,6 +37,49 @@ class LotDashboardView(InventaryMixin, DetailsMixin):
         return context
 
     def get_devices(self, user, offset, limit):
-        chids = self.object.devicelot_set.all().values_list("device_id", flat=True).distinct()
+        chids = self.object.devicelot_set.all().values_list(
+            "device_id", flat=True
+        ).distinct()
+        
         chids_page = chids[offset:offset+limit]
         return [Device(id=x) for x in chids_page], chids.count()
+
+
+class SearchView(InventaryMixin):
+    template_name = "unassigned_devices.html"
+    section = "Search"
+    title = _("Search Devices")
+    breadcrumb = "Devices / Search Devices"
+    
+    def get_devices(self, user, offset, limit):
+        post = dict(self.request.POST)
+        query = post.get("search")
+
+        if not query:
+            return [], 0
+        
+        matches = search(
+            self.request.user.institution,
+            query[0],
+            offset,
+            limit
+        )
+        
+        annotations = []
+        for x in matches:
+            annotations.extend(self.get_annotations(x))
+
+        devices = [Device(id=x) for x in set(annotations)]
+        count = matches.size()
+        return devices, count
+
+    def get_annotations(self, xp):
+        snap = xp.document.get_data()
+        uuid = json.loads(snap).get('uuid')
+        
+        return Annotation.objects.filter(
+            type=Annotation.Type.SYSTEM,
+            owner=self.request.user.institution,
+            uuid=uuid
+        ).values_list("value", flat=True).distinct()
+
