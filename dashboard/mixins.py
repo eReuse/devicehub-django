@@ -28,7 +28,7 @@ class DashboardView(LoginRequiredMixin):
     title = ""
     subtitle = ""
     section = ""
-    
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update({
@@ -39,13 +39,13 @@ class DashboardView(LoginRequiredMixin):
             'section': self.section,
             'path': resolve(self.request.path).url_name,
             'user': self.request.user,
-            'lot_tags': LotTag.objects.filter(owner=self.request.user)
+            'lot_tags': LotTag.objects.filter(owner=self.request.user.institution)
         })
         return context
 
     def get_session_devices(self):
         dev_ids = self.request.session.pop("devices", [])
-        
+
         self._devices = []
         for x in Annotation.objects.filter(value__in=dev_ids).filter(
                 owner=self.request.user.institution
@@ -58,7 +58,11 @@ class DetailsMixin(DashboardView, TemplateView):
 
     def get(self, request, *args, **kwargs):
         self.pk = kwargs['pk']
-        self.object = get_object_or_404(self.model, pk=self.pk, owner=self.request.user)
+        self.object = get_object_or_404(
+            self.model,
+            pk=self.pk,
+            owner=self.request.user.institution
+        )
         return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
@@ -78,7 +82,7 @@ class InventaryMixin(DashboardView, TemplateView):
         if url:
             dev_ids = post.get("devices", [])
             self.request.session["devices"] = dev_ids
-            
+
             try:
                 resource = resolve(url[0])
                 if resource and dev_ids:

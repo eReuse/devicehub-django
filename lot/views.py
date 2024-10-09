@@ -28,7 +28,8 @@ class NewLotView(DashboardView, CreateView):
     )
 
     def form_valid(self, form):
-        form.instance.owner = self.request.user
+        form.instance.owner = self.request.user.institution
+        form.instance.user = self.request.user
         response = super().form_valid(form)
         return response
 
@@ -68,7 +69,11 @@ class EditLotView(DashboardView, UpdateView):
 
     def get_form_kwargs(self):
         pk = self.kwargs.get('pk')
-        self.object = get_object_or_404(self.model, pk=pk)
+        self.object = get_object_or_404(
+            self.model,
+            owner=self.request.user.institution,
+            pk=pk,
+        )
         # self.success_url = reverse_lazy('dashbiard:lot', args=[pk])
         kwargs = super().get_form_kwargs()
         return kwargs
@@ -83,8 +88,8 @@ class AddToLotView(DashboardView, FormView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        lots = Lot.objects.filter(owner=self.request.user)
-        lot_tags = LotTag.objects.filter(owner=self.request.user)
+        lots = Lot.objects.filter(owner=self.request.user.institution)
+        lot_tags = LotTag.objects.filter(owner=self.request.user.institution)
         context.update({
             'lots': lots,
             'lot_tags':lot_tags,
@@ -93,7 +98,7 @@ class AddToLotView(DashboardView, FormView):
 
     def get_form(self):
         form = super().get_form()
-        form.fields["lots"].queryset = Lot.objects.filter(owner=self.request.user)
+        form.fields["lots"].queryset = Lot.objects.filter(owner=self.request.user.institution)
         return form
 
     def form_valid(self, form):
@@ -123,10 +128,10 @@ class LotsTagsView(DashboardView, TemplateView):
     def get_context_data(self, **kwargs):
         self.pk = kwargs.get('pk')
         context = super().get_context_data(**kwargs)
-        tag = get_object_or_404(LotTag, owner=self.request.user, id=self.pk)
+        tag = get_object_or_404(LotTag, owner=self.request.user.institution, id=self.pk)
         self.title += " {}".format(tag.name)
         self.breadcrumb += " {}".format(tag.name)
-        lots = Lot.objects.filter(owner=self.request.user).filter(type=tag)
+        lots = Lot.objects.filter(owner=self.request.user.institution).filter(type=tag)
         context.update({
             'lots': lots,
             'title': self.title,
@@ -144,7 +149,8 @@ class LotAddDocumentView(DashboardView, CreateView):
     fields = ("key", "value")
 
     def form_valid(self, form):
-        form.instance.owner = self.request.user
+        form.instance.owner = self.request.user.institution
+        form.instance.user = self.request.user
         form.instance.lot = self.lot
         form.instance.type = LotAnnotation.Type.DOCUMENT
         response = super().form_valid(form)
@@ -152,7 +158,7 @@ class LotAddDocumentView(DashboardView, CreateView):
 
     def get_form_kwargs(self):
         pk = self.kwargs.get('pk')
-        self.lot = get_object_or_404(Lot, pk=pk, owner=self.request.user)
+        self.lot = get_object_or_404(Lot, pk=pk, owner=self.request.user.institution)
         self.success_url = reverse_lazy('lot:documents', args=[pk])
         kwargs = super().get_form_kwargs()
         return kwargs
@@ -166,10 +172,10 @@ class LotDocumentsView(DashboardView, TemplateView):
     def get_context_data(self, **kwargs):
         self.pk = kwargs.get('pk')
         context = super().get_context_data(**kwargs)
-        lot = get_object_or_404(Lot, owner=self.request.user, id=self.pk)
+        lot = get_object_or_404(Lot, owner=self.request.user.institution, id=self.pk)
         documents = LotAnnotation.objects.filter(
             lot=lot,
-            owner=self.request.user,
+            owner=self.request.user.institution,
             type=LotAnnotation.Type.DOCUMENT,
         )
         context.update({
@@ -189,10 +195,10 @@ class LotAnnotationsView(DashboardView, TemplateView):
     def get_context_data(self, **kwargs):
         self.pk = kwargs.get('pk')
         context = super().get_context_data(**kwargs)
-        lot = get_object_or_404(Lot, owner=self.request.user, id=self.pk)
+        lot = get_object_or_404(Lot, owner=self.request.user.institution, id=self.pk)
         annotations = LotAnnotation.objects.filter(
             lot=lot,
-            owner=self.request.user,
+            owner=self.request.user.institution,
             type=LotAnnotation.Type.USER,
         )
         context.update({
@@ -213,7 +219,8 @@ class LotAddAnnotationView(DashboardView, CreateView):
     fields = ("key", "value")
 
     def form_valid(self, form):
-        form.instance.owner = self.request.user
+        form.instance.owner = self.request.user.institution
+        form.instance.user = self.request.user
         form.instance.lot = self.lot
         form.instance.type = LotAnnotation.Type.USER
         response = super().form_valid(form)
@@ -221,7 +228,7 @@ class LotAddAnnotationView(DashboardView, CreateView):
 
     def get_form_kwargs(self):
         pk = self.kwargs.get('pk')
-        self.lot = get_object_or_404(Lot, pk=pk, owner=self.request.user)
+        self.lot = get_object_or_404(Lot, pk=pk, owner=self.request.user.institution)
         self.success_url = reverse_lazy('lot:annotations', args=[pk])
         kwargs = super().get_form_kwargs()
         return kwargs
