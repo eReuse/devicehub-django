@@ -28,7 +28,7 @@ class DashboardView(LoginRequiredMixin):
     title = ""
     subtitle = ""
     section = ""
-
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update({
@@ -72,14 +72,17 @@ class DetailsMixin(DashboardView, TemplateView):
 class InventaryMixin(DashboardView, TemplateView):
 
     def post(self, request, *args, **kwargs):
-        dev_ids = dict(self.request.POST).get("devices", [])
-        self.request.session["devices"] = dev_ids
-        url = self.request.POST.get("url")
+        post = dict(self.request.POST)
+        url = post.get("url")
+
         if url:
+            dev_ids = post.get("devices", [])
+            self.request.session["devices"] = dev_ids
+            
             try:
-                resource = resolve(url)
+                resource = resolve(url[0])
                 if resource and dev_ids:
-                    return redirect(url)
+                    return redirect(url[0])
             except Exception:
                 pass
         return super().get(request, *args, **kwargs)
