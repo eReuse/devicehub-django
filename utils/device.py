@@ -87,4 +87,4 @@ def create_index(doc, user):
     
     _uuid = doc['uuid']
     ev = json.dumps(doc)
-    index(user, _uuid, ev)
+    index(user.institution, _uuid, ev)

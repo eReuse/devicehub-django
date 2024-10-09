@@ -43,5 +43,6 @@ class Command(BaseCommand):
         for tag in tags:
             LotTag.objects.create(
                 name=tag,
-                owner=self.u
+                owner=self.u.institution,
+                user=self.u
             )
