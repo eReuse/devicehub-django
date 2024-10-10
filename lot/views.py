@@ -29,6 +29,7 @@ class NewLotView(DashboardView, CreateView):
 
     def form_valid(self, form):
         form.instance.owner = self.request.user.institution
+        form.instance.user = self.request.user
         response = super().form_valid(form)
         return response
 
@@ -68,7 +69,11 @@ class EditLotView(DashboardView, UpdateView):
 
     def get_form_kwargs(self):
         pk = self.kwargs.get('pk')
-        self.object = get_object_or_404(self.model, pk=pk)
+        self.object = get_object_or_404(
+            self.model,
+            owner=self.request.user.institution,
+            pk=pk,
+        )
         # self.success_url = reverse_lazy('dashbiard:lot', args=[pk])
         kwargs = super().get_form_kwargs()
         return kwargs
@@ -145,6 +150,7 @@ class LotAddDocumentView(DashboardView, CreateView):
 
     def form_valid(self, form):
         form.instance.owner = self.request.user.institution
+        form.instance.user = self.request.user
         form.instance.lot = self.lot
         form.instance.type = LotAnnotation.Type.DOCUMENT
         response = super().form_valid(form)
@@ -214,6 +220,7 @@ class LotAddAnnotationView(DashboardView, CreateView):
 
     def form_valid(self, form):
         form.instance.owner = self.request.user.institution
+        form.instance.user = self.request.user
         form.instance.lot = self.lot
         form.instance.type = LotAnnotation.Type.USER
         response = super().form_valid(form)

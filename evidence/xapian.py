@@ -18,7 +18,6 @@ def search(institution, qs, offset=0, limit=10):
     qp.set_stemmer(xapian.Stem("english"))
     qp.set_stemming_strategy(xapian.QueryParser.STEM_SOME)
     qp.add_prefix("uuid", "uuid")
-    # qp.add_prefix("snapshot", "snapshot")
     query = qp.parse_query(qs)
     institution_term = "U{}".format(institution.id)
     final_query = xapian.Query(

@@ -185,15 +185,17 @@
           {% endblock messages %}
           <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2">
             <h1 class="h2">{{ title }}</h1>
-	     <form method="post" action="{% url 'dashboard:search' %}">
-	     {% csrf_token %}
-	       <div class="input-group rounded">
-	         <input type="search" name="search" class="form-control rounded" placeholder="Search your device..." aria-label="Search" aria-describedby="search-addon" />
-	       	 <span class="input-group-text border-0" id="search-addon">
-	       	   <i class="fas fa-search"></i>
-	         </span>
-	       </div>
-	     </form>
+
+	    <form method="post" action="{% url 'dashboard:search' %}">
+              {% csrf_token %}
+              <div class="input-group rounded">
+                <input type="search" name="search" class="form-control rounded" placeholder="Search your device..." aria-label="Search" aria-describedby="search-addon" />
+        	<span class="input-group-text border-0" id="search-addon">
+        	  <i class="fas fa-search"></i>
+        	</span>
+              </div>
+            </form>
+	    
           </div>
 	  
           <div class="row border-bottom mb-3">

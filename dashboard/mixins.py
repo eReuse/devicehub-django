@@ -45,7 +45,7 @@ class DashboardView(LoginRequiredMixin):
 
     def get_session_devices(self):
         dev_ids = self.request.session.pop("devices", [])
-        
+
         self._devices = []
         for x in Annotation.objects.filter(value__in=dev_ids).filter(
                 owner=self.request.user.institution
@@ -58,7 +58,11 @@ class DetailsMixin(DashboardView, TemplateView):
 
     def get(self, request, *args, **kwargs):
         self.pk = kwargs['pk']
-        self.object = get_object_or_404(self.model, pk=self.pk, owner=self.request.user.institution)
+        self.object = get_object_or_404(
+            self.model,
+            pk=self.pk,
+            owner=self.request.user.institution
+        )
         return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
@@ -72,14 +76,17 @@ class DetailsMixin(DashboardView, TemplateView):
 class InventaryMixin(DashboardView, TemplateView):
 
     def post(self, request, *args, **kwargs):
-        dev_ids = dict(self.request.POST).get("devices", [])
-        self.request.session["devices"] = dev_ids
-        url = self.request.POST.get("url")
+        post = dict(self.request.POST)
+        url = post.get("url")
+
         if url:
+            dev_ids = post.get("devices", [])
+            self.request.session["devices"] = dev_ids
+
             try:
-                resource = resolve(url)
+                resource = resolve(url[0])
                 if resource and dev_ids:
-                    return redirect(url)
+                    return redirect(url[0])
             except Exception:
                 pass
         return super().get(request, *args, **kwargs)
