@@ -113,14 +113,14 @@ class Device:
         self.lots = [x.lot for x in DeviceLot.objects.filter(device_id=self.id)]
 
     @classmethod
-    def get_unassigned(cls, user, offset=0, limit=None):
+    def get_unassigned(cls, institution, offset=0, limit=None):
 
         sql = """
               SELECT DISTINCT t1.value from evidence_annotation as t1
                 left join lot_devicelot as t2 on t1.value = t2.device_id
-              where t2.device_id is null and owner_id=={user} and type=={type}
+              where t2.device_id is null and owner_id=={institution} and type=={type}
         """.format(
-            user=user.id,
+            institution=institution.id,
             type=Annotation.Type.SYSTEM,
         )
         if limit:
@@ -134,19 +134,19 @@ class Device:
             annotations = cursor.fetchall()
 
         devices = [cls(id=x[0]) for x in annotations]
-        count = cls.get_unassigned_count(user)
+        count = cls.get_unassigned_count(institution)
         return devices, count
 
 
     @classmethod
-    def get_unassigned_count(cls, user):
+    def get_unassigned_count(cls, institution):
 
         sql = """
               SELECT count(DISTINCT t1.value) from evidence_annotation as t1
                 left join lot_devicelot as t2 on t1.value = t2.device_id
-              where t2.device_id is null and owner_id=={user} and type=={type};
+              where t2.device_id is null and owner_id=={institution} and type=={type};
         """.format(
-            user=user.id,
+            institution=institution.id,
             type=Annotation.Type.SYSTEM,
         )
 
@@ -170,22 +170,17 @@ class Device:
     def manufacturer(self):
         if not self.last_evidence:
             self.get_last_evidence()
-        return self.last_evidence.doc['device']['manufacturer']
+        return self.last_evidence.get_manufacturer()
 
     @property
     def type(self):
         if not self.last_evidence:
             self.get_last_evidence()
-        return self.last_evidence.doc['device']['type']
+        return self.last_evidence.get_chassis()
 
     @property
     def model(self):
         if not self.last_evidence:
             self.get_last_evidence()
-        return self.last_evidence.doc['device']['model']
+        return self.last_evidence.get_model()
 
-    @property
-    def type(self):
-        if not self.last_evidence:
-            self.get_last_evidence()
-        return self.last_evidence.doc['device']['type']

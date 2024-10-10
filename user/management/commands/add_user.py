@@ -1,6 +1,5 @@
 from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
-from lot.models import LotTag
 from user.models import Institution
 
 
@@ -31,17 +30,5 @@ class Command(BaseCommand):
             password=password,
             is_admin=is_admin,
         )
-        self.u.set_password(password)
+        self.u.set_password(self.password)
         self.u.save()
-
-    def create_lot_tags(self):
-        tags = [
-            "Entrada",
-            "Salida",
-            "Temporal"
-        ]
-        for tag in tags:
-            LotTag.objects.create(
-                name=tag,
-                owner=self.u
-            )
