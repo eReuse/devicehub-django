@@ -33,11 +33,29 @@ class TokensTable(tables.Table):
             },
             orderable=False
     )
-
+    edit_token = ButtonColumn(
+            linkify={
+                "viewname": "api:edit_token",
+                "args": [tables.A("pk")]
+                },
+            attrs = {
+                "a": {
+                    "type": "button",
+                    "class": "text-primary",
+                    "title": "Remove",
+                }
+            },
+            orderable=False,
+            verbose_name="Edit"
+            )
     token = tables.Column(verbose_name=_("Token"), empty_values=())
+    tag = tables.Column(verbose_name=_("Tag"), empty_values=())
 
     def render_view_user(self):
         return format_html('<i class="bi bi-eye"></i>')
+
+    def render_edit_token(self):
+        return format_html('<i class="bi bi-pencil-square"></i>')
 
     # def render_token(self, record):
     #     return record.get_memberships()
@@ -63,5 +81,5 @@ class TokensTable(tables.Table):
     class Meta:
         model = Token
         template_name = "custom_table.html"
-        fields = ("token", "view_user")
+        fields = ("token", "tag", "edit_token")
 
