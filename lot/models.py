@@ -6,14 +6,14 @@ from utils.constants import (
     STR_EXTEND_SIZE,
 )
 
-from user.models import User
+from user.models import Institution
 # from device.models import Device
-from evidence.models import Annotation
+# from evidence.models import Annotation
 
 
 class LotTag(models.Model):
     name = models.CharField(max_length=STR_SIZE, blank=False, null=False)
-    owner = models.ForeignKey(User, on_delete=models.CASCADE)
+    owner = models.ForeignKey(Institution, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.name
@@ -31,7 +31,7 @@ class Lot(models.Model):
     code = models.CharField(max_length=STR_SIZE, blank=True, null=True)
     description = models.CharField(max_length=STR_SIZE, blank=True, null=True)
     closed = models.BooleanField(default=True)
-    owner = models.ForeignKey(User, on_delete=models.CASCADE)
+    owner = models.ForeignKey(Institution, on_delete=models.CASCADE)
     type = models.ForeignKey(LotTag, on_delete=models.CASCADE)
 
     def add(self, v):
@@ -52,7 +52,7 @@ class LotAnnotation(models.Model):
 
     created = models.DateTimeField(auto_now_add=True)
     lot  = models.ForeignKey(Lot, on_delete=models.CASCADE)
-    owner = models.ForeignKey(User, on_delete=models.CASCADE)
+    owner = models.ForeignKey(Institution, on_delete=models.CASCADE)
     type =  models.SmallIntegerField(choices=Type) 
     key = models.CharField(max_length=STR_EXTEND_SIZE)
     value = models.CharField(max_length=STR_EXTEND_SIZE)

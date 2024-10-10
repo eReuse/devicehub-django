@@ -4,9 +4,29 @@ import shutil
 import hashlib
 
 from datetime import datetime
+from dmidecode import DMIParse
 from evidence.xapian import index
 from evidence.models import Evidence, Annotation
-from utils.constants import ALGOS
+from utils.constants import ALGOS, CHASSIS_DH
+
+
+def get_network_cards(child, nets):
+    if child['id'] == 'network':
+        nets.append(child)
+    if child.get('children'):
+        [get_network_cards(x, nets) for x in child['children']]
+        
+        
+def get_mac(lshw):
+    nets = []
+
+    get_network_cards(json.loads(lshw), nets)
+    nets_sorted = sorted(nets, key=lambda x: x['businfo'])
+    # This funcion get the network card integrated in motherboard
+    # integrate = [x for x in nets if "pci@0000:00:" in x.get('businfo', '')]
+
+    if nets_sorted:
+        return nets_sorted[0]['serial']
 
 
 class Build:
@@ -33,13 +53,17 @@ class Build:
         }
 
     def get_hid_14(self):
-        device = self.json['device']
-        manufacturer = device.get("manufacturer", '')
-        model = device.get("model", '')
-        chassis = device.get("chassis", '')
-        serial_number = device.get("serialNumber", '')
-        sku = device.get("sku", '')
-        hid = f"{manufacturer}{model}{chassis}{serial_number}{sku}"
+        if self.json.get("software") == "EreuseWorkbench":
+            hid = self.get_hid(self.json)
+        else:
+            device = self.json['device']
+            manufacturer = device.get("manufacturer", '')
+            model = device.get("model", '')
+            chassis = device.get("chassis", '')
+            serial_number = device.get("serialNumber", '')
+            sku = device.get("sku", '')
+            hid = f"{manufacturer}{model}{chassis}{serial_number}{sku}"
+            
         return hashlib.sha3_256(hid.encode()).hexdigest()
 
     def create_annotations(self):
@@ -53,3 +77,40 @@ class Build:
                 key=k,
                 value=v
             )
+
+    def get_chassis_dh(self):
+        chassis = self.get_chassis()
+        lower_type = chassis.lower()
+        for k, v in CHASSIS_DH.items():
+            if lower_type in v:
+                return k
+        return self.default
+
+    def get_sku(self):
+        return self.dmi.get("System")[0].get("SKU Number", "n/a").strip()
+    
+    def get_chassis(self):
+        return self.dmi.get("Chassis")[0].get("Type", '_virtual')
+
+    def get_hid(self, snapshot):
+        dmidecode_raw = snapshot["data"]["dmidecode"]
+        self.dmi = DMIParse(dmidecode_raw)
+
+        manufacturer = self.dmi.manufacturer().strip()
+        model = self.dmi.model().strip()
+        chassis = self.get_chassis_dh()
+        serial_number = self.dmi.serial_number()
+        sku = self.get_sku()
+
+        if not snapshot["data"].get('lshw'):
+            return f"{manufacturer}{model}{chassis}{serial_number}{sku}"
+        
+        lshw = snapshot["data"]["lshw"]
+        # mac = get_mac2(hwinfo_raw) or ""
+        mac = get_mac(lshw) or ""
+        if not mac:
+            print("WARNING!! No there are MAC address")
+        else:
+            print(f"{manufacturer}{model}{chassis}{serial_number}{sku}{mac}")
+
+        return f"{manufacturer}{model}{chassis}{serial_number}{sku}{mac}"

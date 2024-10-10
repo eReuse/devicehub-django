@@ -39,7 +39,7 @@ class DashboardView(LoginRequiredMixin):
             'section': self.section,
             'path': resolve(self.request.path).url_name,
             'user': self.request.user,
-            'lot_tags': LotTag.objects.filter(owner=self.request.user)
+            'lot_tags': LotTag.objects.filter(owner=self.request.user.institution)
         })
         return context
 
@@ -58,7 +58,7 @@ class DetailsMixin(DashboardView, TemplateView):
 
     def get(self, request, *args, **kwargs):
         self.pk = kwargs['pk']
-        self.object = get_object_or_404(self.model, pk=self.pk, owner=self.request.user)
+        self.object = get_object_or_404(self.model, pk=self.pk, owner=self.request.user.institution)
         return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):

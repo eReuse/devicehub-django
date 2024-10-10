@@ -29,7 +29,7 @@ SECRET_KEY = "django-insecure-1p8rs@qf$$l^!vsbetagojw23kw@1ez(qi8^(s0t&#7!wyh!l3
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='[]', cast=Csv())
 
 
 # Application definition
@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     'django_extensions',
     'django_bootstrap5',
+    'django_tables2',
     "rest_framework",
     "login",
     "user",
@@ -54,6 +55,7 @@ INSTALLED_APPS = [
     "documents",
     "dashboard",
     "admin",
+    "api",
 ]
 
 
