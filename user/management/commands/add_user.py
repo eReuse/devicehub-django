@@ -1,6 +1,7 @@
 from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
 from user.models import Institution
+from lot.models import LotTag
 
 
 User = get_user_model()
@@ -21,7 +22,6 @@ class Command(BaseCommand):
         is_admin = kwargs['is_admin']
         institution = Institution.objects.get(name=kwargs['institution'])
         self.create_user(institution, email, password, is_admin)
-        self.create_lot_tags()
 
     def create_user(self, institution, email, password, is_admin):
         self.u = User.objects.create(
@@ -30,5 +30,5 @@ class Command(BaseCommand):
             password=password,
             is_admin=is_admin,
         )
-        self.u.set_password(self.password)
+        self.u.set_password(password)
         self.u.save()
