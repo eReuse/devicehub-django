@@ -7,11 +7,19 @@ from django.views.generic.edit import (
     UpdateView,
     DeleteView,
 )
-from dashboard.mixins import DashboardView
-from user.models import User
+from dashboard.mixins import DashboardView, Http403
+from user.models import User, Institution
 
 
-class PanelView(DashboardView, TemplateView):
+class AdminView(DashboardView):
+    def get(self, *args, **kwargs):
+        response = super().get(*args, **kwargs)
+        if not self.request.user.is_admin:
+            raise Http403
+        
+        return response
+
+class PanelView(AdminView, TemplateView):
     template_name = "admin_panel.html"
     title = _("Admin")
     breadcrumb = _("admin") + " /"
@@ -21,7 +29,7 @@ class PanelView(DashboardView, TemplateView):
         return context
 
 
-class UsersView(DashboardView, TemplateView):
+class UsersView(AdminView, TemplateView):
     template_name = "admin_users.html"
     title = _("Users")
     breadcrumb = _("admin / Users") + " /"
@@ -34,7 +42,7 @@ class UsersView(DashboardView, TemplateView):
         return context
 
 
-class CreateUserView(DashboardView, CreateView):
+class CreateUserView(AdminView, CreateView):
     template_name = "user.html"
     title = _("User")
     breadcrumb = _("admin / User") + " /"
@@ -53,7 +61,7 @@ class CreateUserView(DashboardView, CreateView):
         return response
 
 
-class DeleteUserView(DashboardView, DeleteView):
+class DeleteUserView(AdminView, DeleteView):
     template_name = "delete_user.html"
     title = _("Delete user")
     breadcrumb = "admin / Delete user"
@@ -70,7 +78,7 @@ class DeleteUserView(DashboardView, DeleteView):
         return response
 
 
-class EditUserView(DashboardView, UpdateView):
+class EditUserView(AdminView, UpdateView):
     template_name = "user.html"
     title = _("Edit user")
     breadcrumb = "admin / Edit user"
@@ -85,5 +93,26 @@ class EditUserView(DashboardView, UpdateView):
         pk = self.kwargs.get('pk')
         self.object = get_object_or_404(self.model, pk=pk)
         #self.object.set_password(self.object.password)
+        kwargs = super().get_form_kwargs()
+        return kwargs
+
+    
+class InstitutionView(AdminView, UpdateView):
+    template_name = "institution.html"
+    title = _("Edit institution")
+    section = "admin"
+    subtitle = _('Edit institution')
+    model = Institution
+    success_url = reverse_lazy('admin:panel')
+    fields = (
+        "name",
+        "logo",
+        "location",
+        "responsable_person",
+        "supervisor_person"
+    )
+
+    def get_form_kwargs(self):
+        self.object = self.request.user.institution
         kwargs = super().get_form_kwargs()
         return kwargs
