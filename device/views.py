@@ -1,5 +1,6 @@
 import json
 
+from django.http import Http404
 from django.urls import reverse_lazy
 from django.shortcuts import get_object_or_404
 from django.utils.translation import gettext_lazy as _
@@ -119,20 +120,22 @@ class AddAnnotationView(DashboardView, CreateView):
         form.instance.owner = self.request.user.institution
         form.instance.user = self.request.user
         form.instance.uuid = self.annotation.uuid
-        form.instance.uuid = self.annotation.uuid
         form.instance.type = Annotation.Type.USER
         response = super().form_valid(form)
         return response
 
     def get_form_kwargs(self):
         pk = self.kwargs.get('pk')
+        institution = self.request.user.institution
         self.annotation = Annotation.objects.filter(
-            owner=self.request.user.institution,
+            owner=institution,
             value=pk,
             type=Annotation.Type.SYSTEM
         ).first()
+        
         if not self.annotation:
-            get_object_or_404(Annotation, pk=0, owner=self.request.user.institution)
+            raise Http404
+
         self.success_url = reverse_lazy('device:details', args=[pk])
         kwargs = super().get_form_kwargs()
         return kwargs
@@ -156,11 +159,16 @@ class AddDocumentView(DashboardView, CreateView):
 
     def get_form_kwargs(self):
         pk = self.kwargs.get('pk')
+        institution = self.request.user.institution
         self.annotation = Annotation.objects.filter(
-            owner=self.request.user.institution, value=pk, type=Annotation.Type.SYSTEM
+            owner=institution,
+            value=pk,
+            type=Annotation.Type.SYSTEM
         ).first()
+
         if not self.annotation:
-            get_object_or_404(Annotation, pk=0, owner=self.request.user.institution)
+            raise Http404
+
         self.success_url = reverse_lazy('device:details', args=[pk])
         kwargs = super().get_form_kwargs()
         return kwargs
