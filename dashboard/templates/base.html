@@ -61,12 +61,12 @@
     <header class="navbar navbar-dark sticky-top admin bg-green flex-md-nowrap p-0 shadow">
       <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3" href="#">DEVICEHUB</a>
       <div class="navbar-nav navbar-sub-brand">
-         PANGEA
+         {{ user.institution.name|upper }}
       </div>
       <div class="navbar-nav">
         <div class="nav-item text-nowrap">
             <i id="user-avatar" class="bi bi-person-circle"></i>
-            <a class="navbar-sub-brand px-3" href="#">{{ user.email }}</a>
+            <a class="navbar-sub-brand px-3" href="{% url 'user:panel' %}">{{ user.email }}</a>
             <a class="logout" href="{% url 'login:logout' %}">
               <i class="fa-solid fa-arrow-right-from-bracket"></i>
             </a>
@@ -191,6 +191,7 @@
             </form>
 	    
           </div>
+	  
           <div class="row border-bottom mb-3">
             <div class="col">
               <small style="color:#899bbd"><i>{{ breadcrumb }}</i></small>

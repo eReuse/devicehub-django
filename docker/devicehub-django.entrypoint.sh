@@ -21,7 +21,9 @@ deploy() {
                 #   inspired by https://medium.com/analytics-vidhya/django-with-docker-and-docker-compose-python-part-2-8415976470cc
                 echo "INFO detected NEW deployment"
                 ./manage.py migrate
-                ./manage.py add_user user@example.org 1234
+                ./manage.py add_institution example-org
+                # TODO: one error on add_user, and you don't add user anymore
+                ./manage.py add_user example-org user@example.org 1234
         fi
 }
 
