@@ -7,9 +7,9 @@ class SettingsForm(forms.Form):
     )
     erasure = forms.ChoiceField(
         choices = [(0, 'Not erasure'),
-            ('erasure1', 'Erasure easy'),
-            ('erasure2', 'Erasure mediom'),
-            ('erasure3', 'Erasure hard'),
+            ('basic', 'Erasure Basic'),
+            ('baseline', 'Erasure Baseline'),
+            ('enhanced', 'Erasure Enhanced'),
         ],
     )
 
