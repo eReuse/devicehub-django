@@ -8,7 +8,7 @@ from django.views.generic.edit import (
     DeleteView,
 )
 from dashboard.mixins import DashboardView
-from user.models import User
+from user.models import User, Institution
 
 
 class PanelView(DashboardView, TemplateView):
@@ -85,5 +85,26 @@ class EditUserView(DashboardView, UpdateView):
         pk = self.kwargs.get('pk')
         self.object = get_object_or_404(self.model, pk=pk)
         #self.object.set_password(self.object.password)
+        kwargs = super().get_form_kwargs()
+        return kwargs
+
+    
+class InstitutionView(DashboardView, UpdateView):
+    template_name = "institution.html"
+    title = _("Edit institution")
+    section = "admin"
+    subtitle = _('Edit institution')
+    model = Institution
+    success_url = reverse_lazy('admin:panel')
+    fields = (
+        "name",
+        "logo",
+        "location",
+        "responsable_person",
+        "supervisor_person"
+    )
+
+    def get_form_kwargs(self):
+        self.object = self.request.user.institution
         kwargs = super().get_form_kwargs()
         return kwargs
