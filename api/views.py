@@ -65,7 +65,7 @@ def NewSnapshot(request):
     # save_in_disk(data, tk.user)
 
     try:
-        Build(data, tk.user)
+        Build(data, tk.owner)
     except Exception:
         return JsonResponse({'status': 'fail'}, status=200)
 
