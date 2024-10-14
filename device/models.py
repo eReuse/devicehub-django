@@ -27,7 +27,7 @@ class Device:
         # the id is the chid of the device
         self.id = kwargs["id"]
         self.pk = self.id
-        self.shortid = self.pk[:6]
+        self.shortid = self.pk[:6].upper()
         self.algorithm = None
         self.owner = None
         self.annotations =  []
