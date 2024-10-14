@@ -61,12 +61,12 @@
     <header class="navbar navbar-dark sticky-top admin bg-green flex-md-nowrap p-0 shadow">
       <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3" href="#">DEVICEHUB</a>
       <div class="navbar-nav navbar-sub-brand">
-         PANGEA
+         {{ user.institution.name|upper }}
       </div>
       <div class="navbar-nav">
         <div class="nav-item text-nowrap">
             <i id="user-avatar" class="bi bi-person-circle"></i>
-            <a class="navbar-sub-brand px-3" href="#">{{ user.email }}</a>
+            <a class="navbar-sub-brand px-3" href="{% url 'user:panel' %}">{{ user.email }}</a>
             <a class="logout" href="{% url 'login:logout' %}">
               <i class="fa-solid fa-arrow-right-from-bracket"></i>
             </a>
@@ -79,6 +79,26 @@
         <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
           <div class="position-sticky pt-5">
             <ul class="nav flex-column">
+	      {% if user.is_admin %}
+              <li class="nav-item">
+                <a class="admin {% if path in 'panel users' %}active {% endif %}nav-link fw-bold" data-bs-toggle="collapse" data-bs-target="#ul_admin" aria-expanded="false" aria-controls="ul_admin" href="javascript:void()">
+                  <i class="bi bi-person-fill-gear icon_sidebar"></i>
+                  {% trans 'Admin' %}
+                </a>
+                <ul class="flex-column mb-2 ul_sidebar accordion-collapse {% if path in 'panel users' %}expanded{% else %}collapse{% endif %}" id="ul_admin" data-bs-parent="#sidebarMenu">
+                  <li class="nav-item">
+                    <a class="nav-link{% if path == 'panel' %} active2{% endif %}" href="{% url 'admin:panel' %}">
+                      {% trans 'Panel' %}
+                    </a>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link{% if path == 'users' %} active2{% endif %}" href="{% url 'admin:users' %}">
+                      {% trans 'Users' %}
+                    </a>
+                  </li>
+                </ul>
+              </li>
+	      {% endif %}
               <li class="nav-item">
                 <a class="admin {% if path == 'unassigned_devices' %}active {% endif %}nav-link fw-bold" data-bs-toggle="collapse" data-bs-target="#ul_devices" aria-expanded="false" aria-controls="ul_devices" href="javascript:void()">
                   <i class="bi bi-laptop icon_sidebar"></i>
@@ -143,12 +163,6 @@
                   </li>
                 </ul>
               </li>
-              <li class="nav-item">
-                <a class="nav-link fw-bold" href="{% url 'api:tokens' %}">
-                  <i class="bi-menu-button-wide icon_sidebar"></i>
-                  {% trans 'Tokens' %}
-                </a>
-              </li>
             </ul>
           </div>
         </nav>
@@ -165,7 +179,19 @@
           {% endblock messages %}
           <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2">
             <h1 class="h2">{{ title }}</h1>
+
+	    <form method="post" action="{% url 'dashboard:search' %}">
+              {% csrf_token %}
+              <div class="input-group rounded">
+                <input type="search" name="search" class="form-control rounded" placeholder="Search your device..." aria-label="Search" aria-describedby="search-addon" />
+        	<span class="input-group-text border-0" id="search-addon">
+        	  <i class="fas fa-search"></i>
+        	</span>
+              </div>
+            </form>
+	    
           </div>
+	  
           <div class="row border-bottom mb-3">
             <div class="col">
               <small style="color:#899bbd"><i>{{ breadcrumb }}</i></small>

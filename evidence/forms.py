@@ -55,16 +55,20 @@ class UserTagForm(forms.Form):
     tag = forms.CharField(label=_("Tag"))
 
     def __init__(self, *args, **kwargs):
+        self.pk = None
         self.uuid = kwargs.pop('uuid', None)
-        annotation = Annotation.objects.filter(
+        self.user = kwargs.pop('user')
+        instance = Annotation.objects.filter(
             uuid=self.uuid,
             type=Annotation.Type.SYSTEM,
             key='CUSTOM_ID',
+            owner=self.user.institution
         ).first()
-        
-        if annotation:
-            kwargs['initial'].update({'tag': annotation.value})
-            
+
+        if instance:
+            kwargs["initial"]["tag"] = instance.value
+            self.pk = instance.pk
+
         super().__init__(*args, **kwargs)
 
     def clean(self):
@@ -72,18 +76,33 @@ class UserTagForm(forms.Form):
         if not data:
             return False
         self.tag = data
+        self.instance = Annotation.objects.filter(
+            uuid=self.uuid,
+            type=Annotation.Type.SYSTEM,
+            key='CUSTOM_ID',
+            owner=self.user.institution
+        ).first()
+
         return True
 
     def save(self, user, commit=True):
         if not commit:
             return
 
+        if self.instance:
+            if not self.tag:
+                self.instance.delete()
+            self.instance.value = self.tag
+            self.instance.save()
+            return
+
         Annotation.objects.create(
             uuid=self.uuid,
-            owner=user.institution,
             type=Annotation.Type.SYSTEM,
             key='CUSTOM_ID',
-            value=self.tag
+            value=self.tag,
+            owner=self.user.institution,
+            user=self.user
         )
 
 
@@ -112,12 +131,12 @@ class ImportForm(forms.Form):
         for n in data_pd.keys():
             if 'type' not in [x.lower() for x in data_pd[n]]:
                 raise ValidationError("You need a column with name 'type'")
-        
+
             for k, v in data_pd[n].items():
                 if k.lower() == "type":
                     if v not in Device.Types.values:
                         raise ValidationError("{} is not a valid device".format(v))
-                
+
             self.rows.append(data_pd[n])
 
         return data
@@ -133,7 +152,7 @@ class ImportForm(forms.Form):
         if commit:
             for doc, cred in table:
               cred.save()
-              create_index(doc)
+              create_index(doc, self.user)
             return table
 
         return
