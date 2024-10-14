@@ -1,5 +1,6 @@
 import json
 
+from django.conf import settings
 from django.urls import reverse_lazy
 from django.shortcuts import get_object_or_404, redirect
 from django.utils.translation import gettext_lazy as _
@@ -69,9 +70,29 @@ def NewSnapshot(request):
     except Exception:
         return JsonResponse({'status': 'fail'}, status=200)
 
-    return JsonResponse({'status': 'success'}, status=200)
+    annotation = Annotation.objects.filter(
+        uuid=data['uuid'],
+        type=Annotation.Type.SYSTEM,
+        key="hidalgo1",
+        owner=tk.owner.institution
+    ).first()
 
 
+    if not annotation:
+        return JsonResponse({'status': 'fail'}, status=200)
+
+    url = "{}://{}{}".format(
+        request.scheme,
+        settings.DOMAIN,
+        reverse_lazy("device:details", args=(annotation.value,))
+    )
+    response = {
+        "status": "success",
+        "dhid": annotation.value[:5].upper(),
+        "url": url,
+        "public_url": url
+    }
+    return JsonResponse(response, status=200)
 
 
 class TokenView(DashboardView, SingleTableView):
