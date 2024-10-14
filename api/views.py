@@ -88,7 +88,7 @@ def NewSnapshot(request):
     )
     response = {
         "status": "success",
-        "dhid": annotation.value[:5].upper(),
+        "dhid": annotation.value[:6].upper(),
         "url": url,
         "public_url": url
     }
