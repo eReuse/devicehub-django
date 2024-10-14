@@ -5,8 +5,8 @@ import hashlib
 
 from datetime import datetime
 from dmidecode import DMIParse
-from evidence.xapian import search, index
 from evidence.models import Annotation
+from evidence.xapian import index
 from utils.constants import ALGOS, CHASSIS_DH
 
 
@@ -49,7 +49,7 @@ class Build:
 
     def index(self):
         snap = json.dumps(self.json)
-        index(self.uuid, snap)
+        index(self.user.institution, self.uuid, snap)
 
     def generate_chids(self):
         self.algorithms = {
@@ -76,6 +76,7 @@ class Build:
             Annotation.objects.create(
                 uuid=self.uuid,
                 owner=self.user.institution,
+                user=self.user,
                 type=Annotation.Type.SYSTEM,
                 key=k,
                 value=v

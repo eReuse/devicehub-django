@@ -42,7 +42,7 @@ CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default=f'https://{DOMAIN}
 # Application definition
 
 INSTALLED_APPS = [
-    "django.contrib.admin",
+    # "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     "lot",
     "documents",
     "dashboard",
+    "admin",
     "api",
 ]
 

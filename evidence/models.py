@@ -6,7 +6,7 @@ from django.db import models
 from utils.constants import STR_SM_SIZE, STR_EXTEND_SIZE, CHASSIS_DH
 from evidence.xapian import search
 from evidence.parse_details import ParseSnapshot
-from user.models import Institution
+from user.models import User, Institution
 
 
 class Annotation(models.Model):
@@ -18,6 +18,7 @@ class Annotation(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     uuid = models.UUIDField()
     owner = models.ForeignKey(Institution, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     type =  models.SmallIntegerField(choices=Type)
     key = models.CharField(max_length=STR_EXTEND_SIZE)
     value = models.CharField(max_length=STR_EXTEND_SIZE)
@@ -56,8 +57,10 @@ class Evidence:
 
     def get_doc(self):
         self.doc = {}
+        if not self.owner:
+            self.get_owner()
         qry = 'uuid:"{}"'.format(self.uuid)
-        matches = search(qry, limit=1)
+        matches = search(self.owner, qry, limit=1)
         if matches.size() < 0:
             return
 
