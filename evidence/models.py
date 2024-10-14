@@ -5,6 +5,7 @@ from django.db import models
 
 from utils.constants import STR_SM_SIZE, STR_EXTEND_SIZE, CHASSIS_DH
 from evidence.xapian import search
+from evidence.parse_details import ParseSnapshot
 from user.models import User, Institution
 
 
@@ -36,6 +37,8 @@ class Evidence:
         self.created = None
         self.dmi = None
         self.annotations =  []
+        self.components =  []
+        self.default = "n/a"
 
         self.get_owner()
         self.get_time()
@@ -63,11 +66,10 @@ class Evidence:
 
         for xa in matches:
             self.doc = json.loads(xa.document.get_data())
-            
+
         if self.doc.get("software") == "EreuseWorkbench":
             dmidecode_raw = self.doc["data"]["dmidecode"]
             self.dmi = DMIParse(dmidecode_raw)
-
 
     def get_time(self):
         if not self.doc:
@@ -77,34 +79,47 @@ class Evidence:
         if not self.created:
             self.created = self.annotations.last().created
 
-    def components(self):
-        return self.doc.get('components', [])
+    def get_components(self):
+        if self.doc.get("software") != "EreuseWorkbench":
+            return self.doc.get('components', [])
+        self.set_components()
+        return self.components
 
     def get_manufacturer(self):
+        if self.doc.get("type") == "WebSnapshot":
+            kv = self.doc.get('kv', {})
+            if len(kv) < 1:
+                return ""
+            return list(self.doc.get('kv').values())[0]
+
         if self.doc.get("software") != "EreuseWorkbench":
             return self.doc['device']['manufacturer']
-        
+
         return self.dmi.manufacturer().strip()
-    
+
     def get_model(self):
+        if self.doc.get("type") == "WebSnapshot":
+            kv = self.doc.get('kv', {})
+            if len(kv) < 2:
+                return ""
+            return list(self.doc.get('kv').values())[1]
+
         if self.doc.get("software") != "EreuseWorkbench":
             return self.doc['device']['model']
-        
+
         return self.dmi.model().strip()
 
     def get_chassis(self):
         if self.doc.get("software") != "EreuseWorkbench":
             return self.doc['device']['model']
-        
-        chassis = self.dmi.get("Chassis")[0].get("Type", '_virtual')        
+
+        chassis = self.dmi.get("Chassis")[0].get("Type", '_virtual')
         lower_type = chassis.lower()
-        
+
         for k, v in CHASSIS_DH.items():
             if lower_type in v:
                 return k
         return ""
-
-
 
     @classmethod
     def get_all(cls, user):
@@ -112,3 +127,7 @@ class Evidence:
             owner=user.institution,
             type=Annotation.Type.SYSTEM,
         ).order_by("-created").values_list("uuid", flat=True).distinct()
+
+    def set_components(self):
+        snapshot = ParseSnapshot(self.doc).snapshot_json
+        self.components = snapshot['components']

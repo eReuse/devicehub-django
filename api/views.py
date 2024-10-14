@@ -34,14 +34,14 @@ def NewSnapshot(request):
         return JsonResponse({'error': 'Invalid request method'}, status=400)
 
     # Authentication
-    # auth_header = request.headers.get('Authorization')
-    # if not auth_header or not auth_header.startswith('Bearer '):
-    #     return JsonResponse({'error': 'Invalid or missing token'}, status=401)
+    auth_header = request.headers.get('Authorization')
+    if not auth_header or not auth_header.startswith('Bearer '):
+        return JsonResponse({'error': 'Invalid or missing token'}, status=401)
 
-    # token = auth_header.split(' ')[1]
-    # tk = Token.objects.filter(token=token).first()
-    # if not tk:
-    #     return JsonResponse({'error': 'Invalid or missing token'}, status=401)
+    token = auth_header.split(' ')[1]
+    tk = Token.objects.filter(token=token).first()
+    if not tk:
+        return JsonResponse({'error': 'Invalid or missing token'}, status=401)
 
     # Validation snapshot
     try:
@@ -65,9 +65,7 @@ def NewSnapshot(request):
     # save_in_disk(data, tk.user)
 
     try:
-        # Build(data, tk.user)
-        user = User.objects.get(email="user@example.org")
-        Build(data, user)
+        Build(data, tk.user)
     except Exception:
         return JsonResponse({'status': 'fail'}, status=200)
 

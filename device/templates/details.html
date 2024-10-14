@@ -4,7 +4,7 @@
 {% block content %}
 <div class="row">
   <div class="col">
-    <h3>{{ object.id }}</h3>
+    <h3>{{ object.shortid }}</h3>
   </div>
 </div>
 
@@ -173,16 +173,19 @@
   <div class="tab-pane fade profile-overview" id="components">
     <h5 class="card-title">Components last evidence</h5>
     <div class="list-group col-6">
-      {% for c in object.last_evidence.doc.components %}
+      {% for c in object.components %}
       <div class="list-group-item">
         <div class="d-flex w-100 justify-content-between">
           <h5 class="mb-1">{{ c.type }}</h5>
           <small class="text-muted">{{ evidence.created }}</small>
         </div>
         <p class="mb-1">
-          {{ c.manufacturer }}<br />
-          {{ c.model }}<br />
-          {{ c.serialNumber }}<br />
+	  {% for k, v in c.items %}
+	  {% if k not in "actions,type" %}
+	    {{ k }}: {{ v }}<br />
+	  {% endif %}
+	  {% endfor %}
+	  <br />
         </p>
         <small class="text-muted">
         </small>
