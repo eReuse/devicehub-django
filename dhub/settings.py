@@ -39,6 +39,30 @@ assert DOMAIN in ALLOWED_HOSTS, "DOMAIN is not ALLOWED_HOST"
 
 CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default=f'https://{DOMAIN}', cast=Csv())
 
+
+INITIAL_ADMIN_EMAIL = config("INITIAL_ADMIN_EMAIL", default='admin@example.org')
+INITIAL_ADMIN_PASSWORD = config("INITIAL_ADMIN_PASSWORD", default='1234')
+
+DEFAULT_FROM_EMAIL = config(
+    'DEFAULT_FROM_EMAIL', default='webmaster@localhost')
+
+EMAIL_HOST = config('EMAIL_HOST', default='localhost')
+
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
+
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+
+EMAIL_PORT = config('EMAIL_PORT', default=25, cast=int)
+
+EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=False, cast=bool)
+
+EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.smtp.EmailBackend')
+
+EMAIL_FILE_PATH = config('EMAIL_FILE_PATH', default='/tmp/app-messages')
+
+ENABLE_EMAIL = config("ENABLE_EMAIL", default=True, cast=bool)
+
+
 # Application definition
 
 INSTALLED_APPS = [

@@ -1,3 +1,4 @@
+from smtplib import SMTPException
 from django.urls import reverse_lazy
 from django.shortcuts import get_object_or_404
 from django.utils.translation import gettext_lazy as _
@@ -9,6 +10,7 @@ from django.views.generic.edit import (
 )
 from dashboard.mixins import DashboardView, Http403
 from user.models import User, Institution
+from admin.email import NotifyActivateUserByEmail
 
 
 class AdminView(DashboardView):
@@ -42,7 +44,7 @@ class UsersView(AdminView, TemplateView):
         return context
 
 
-class CreateUserView(AdminView, CreateView):
+class CreateUserView(AdminView, NotifyActivateUserByEmail, CreateView):
     template_name = "user.html"
     title = _("User")
     breadcrumb = _("admin / User") + " /"
@@ -58,6 +60,12 @@ class CreateUserView(AdminView, CreateView):
         form.instance.institution = self.request.user.institution
         form.instance.set_password(form.instance.password)
         response = super().form_valid(form)
+
+        try:
+            self.send_email(form.instance)
+        except SMTPException as e:
+            messages.error(self.request, e)
+
         return response
 
 
