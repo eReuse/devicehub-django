@@ -73,6 +73,7 @@ def NewSnapshot(request):
     annotation = Annotation.objects.filter(
         uuid=data['uuid'],
         type=Annotation.Type.SYSTEM,
+        # TODO this is hardcoded, it should select the user preferred algorithm
         key="hidalgo1",
         owner=tk.owner.institution
     ).first()
