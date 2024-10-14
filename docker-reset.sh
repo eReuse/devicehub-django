@@ -9,11 +9,14 @@ set -u
 set -x
 
 main() {
+        if [ "${DETACH:-}" ]; then
+                detach_arg='-d'
+        fi
         # remove old database
         sudo rm -vf db/*
-        docker compose down
+        docker compose down -v
         docker compose build
-        docker compose up
+        docker compose up ${detach_arg:-}
 }
 
 main "${@}"

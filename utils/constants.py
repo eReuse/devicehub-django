@@ -38,3 +38,11 @@ CHASSIS_DH = {
     'Tablet': {'tablet'},
     'Virtual': {'_virtual'},
 }
+
+
+DATASTORAGEINTERFACE = [
+ 'ATA',
+ 'USB',
+ 'PCI',
+ 'NVME',
+]

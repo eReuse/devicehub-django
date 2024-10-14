@@ -2,7 +2,7 @@ import json
 
 from django.http import Http404
 from django.urls import reverse_lazy
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, Http404
 from django.utils.translation import gettext_lazy as _
 from django.views.generic.edit import (
     CreateView,
@@ -21,7 +21,7 @@ class NewDeviceView(DashboardView, FormView):
     template_name = "new_device.html"
     title = _("New Device")
     breadcrumb = "Device / New Device"
-    success_url = reverse_lazy('device:add')
+    success_url = reverse_lazy('dashboard:unassigned_devices')
     form_class = DeviceFormSet
 
     def form_valid(self, form):
@@ -91,6 +91,8 @@ class DetailsView(DashboardView, TemplateView):
     def get(self, request, *args, **kwargs):
         self.pk = kwargs['pk']
         self.object = Device(id=self.pk)
+        if not self.object.last_evidence:
+            raise Http404
         if self.object.owner != self.request.user.institution:
             raise Http403
         
