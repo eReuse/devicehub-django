@@ -154,10 +154,11 @@ class ImportForm(forms.Form):
 
         if commit:
             for doc, cred in table:
-                path_name = save_in_disk(doc, self.user.name)
+                path_name = save_in_disk(doc, self.user.institution.name, place="placeholder")
+
                 cred.save()
                 create_index(doc, self.user)
-                move_json(path_name, self.user.name)
+                move_json(path_name, self.user.institution.name, place="placeholder")
                 return table
 
         return
