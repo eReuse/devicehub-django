@@ -62,6 +62,7 @@ EMAIL_FILE_PATH = config('EMAIL_FILE_PATH', default='/tmp/app-messages')
 
 ENABLE_EMAIL = config("ENABLE_EMAIL", default=True, cast=bool)
 
+SNAPSHOTS_DIR = config("SNAPSHOTS_DIR", default="/tmp/")
 
 # Application definition
 
