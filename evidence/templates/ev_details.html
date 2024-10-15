@@ -66,8 +66,17 @@
         {% endif %}
 	{% bootstrap_form form %}
         <div class="container">
-          <a class="btn btn-grey" href="{% url 'dashboard:unassigned_devices' %}">{% translate "Cancel" %}</a>
-          <input class="btn btn-green-admin" type="submit" name="submit" value="{% translate 'Save' %}" />
+	  <div class="row">
+	    <div class="col">
+              <a class="btn btn-grey" href="">{% translate "Cancel" %}</a>
+              <input class="btn btn-green-admin" type="submit" name="submit" value="{% translate 'Save' %}" />
+	    </div>
+	    {% if form.tag.value %}
+	    <div class="col-1">
+	      <a class="btn btn-yellow" href="{% url 'evidence:delete_annotation' form.pk %}">{% translate "Delete" %}</a>
+	    </div>
+	    {% endif %}
+	  </div>
         </div>
       </form>
     </div>

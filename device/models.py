@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import models, connection
 
 from utils.constants import STR_SM_SIZE, STR_SIZE, STR_EXTEND_SIZE, ALGOS
 from evidence.models import Annotation, Evidence
@@ -27,6 +27,7 @@ class Device:
         # the id is the chid of the device
         self.id = kwargs["id"]
         self.pk = self.id
+        self.shortid = self.pk[:6].upper()
         self.algorithm = None
         self.owner = None
         self.annotations =  []
@@ -89,10 +90,10 @@ class Device:
     def get_hids(self):
         annotations = self.get_annotations()
 
-        self.hids = annotations.filter(
+        self.hids = list(set(annotations.filter(
             type=Annotation.Type.SYSTEM,
             key__in=ALGOS.keys(),
-        ).values_list("value", flat=True)
+        ).values_list("value", flat=True)))
 
     def get_evidences(self):
         if not self.uuids:
@@ -102,8 +103,9 @@ class Device:
 
     def get_last_evidence(self):
         annotations = self.get_annotations()
-        if annotations:
-            annotation = annotations.first()
+        if not annotations.count():
+            return
+        annotation = annotations.first()
         self.last_evidence = Evidence(annotation.uuid)
 
     def last_uuid(self):
@@ -113,30 +115,59 @@ class Device:
         self.lots = [x.lot for x in DeviceLot.objects.filter(device_id=self.id)]
 
     @classmethod
-    def get_unassigned(cls, institution):
-        chids = DeviceLot.objects.filter(lot__owner=institution).values_list("device_id", flat=True).distinct()
-        annotations = Annotation.objects.filter(
-            owner=institution,
-            type=Annotation.Type.SYSTEM,
-        ).exclude(value__in=chids).values_list("value", flat=True).distinct()
-        return [cls(id=x) for x in annotations]
+    def get_unassigned(cls, institution, offset=0, limit=None):
 
-        # return cls.objects.filter(
-        #     owner=user
-        #     ).annotate(num_lots=models.Count('lot')).filter(num_lots=0)
+        sql = """
+              SELECT DISTINCT t1.value from evidence_annotation as t1
+                left join lot_devicelot as t2 on t1.value = t2.device_id
+              where t2.device_id is null and owner_id=={institution} and type=={type}
+        """.format(
+            institution=institution.id,
+            type=Annotation.Type.SYSTEM,
+        )
+        if limit:
+            sql += " limit {} offset {}".format(int(limit), int(offset))
+
+        sql += ";"
+
+        annotations = []
+        with connection.cursor() as cursor:
+            cursor.execute(sql)
+            annotations = cursor.fetchall()
+
+        devices = [cls(id=x[0]) for x in annotations]
+        count = cls.get_unassigned_count(institution)
+        return devices, count
+
+
+    @classmethod
+    def get_unassigned_count(cls, institution):
+
+        sql = """
+              SELECT count(DISTINCT t1.value) from evidence_annotation as t1
+                left join lot_devicelot as t2 on t1.value = t2.device_id
+              where t2.device_id is null and owner_id=={institution} and type=={type};
+        """.format(
+            institution=institution.id,
+            type=Annotation.Type.SYSTEM,
+        )
+
+        with connection.cursor() as cursor:
+            cursor.execute(sql)
+            return cursor.fetchall()[0][0]
 
     @property
     def is_websnapshot(self):
         if not self.last_evidence:
             self.get_last_evidence()
-        return self.last_evidence.doc['type'] == "WebSnapshot" 
-    
+        return self.last_evidence.doc['type'] == "WebSnapshot"
+
     @property
     def last_user_evidence(self):
         if not self.last_evidence:
             self.get_last_evidence()
         return self.last_evidence.doc['kv'].items()
-    
+
     @property
     def manufacturer(self):
         if not self.last_evidence:
@@ -145,6 +176,9 @@ class Device:
 
     @property
     def type(self):
+        if self.last_evidence.doc['type'] == "WebSnapshot":
+            return self.last_evidence.doc.get("device", {}).get("type", "")
+
         if not self.last_evidence:
             self.get_last_evidence()
         return self.last_evidence.get_chassis()
@@ -155,3 +189,8 @@ class Device:
             self.get_last_evidence()
         return self.last_evidence.get_model()
 
+    @property
+    def components(self):
+        if not self.last_evidence:
+            self.get_last_evidence()
+        return self.last_evidence.get_components()

@@ -1,15 +1,19 @@
 import json
 
+from urllib.parse import urlparse
 from django.http import HttpResponse
 from django.utils.translation import gettext_lazy as _
+from django.shortcuts import get_object_or_404, redirect, Http404
 from django.views.generic.base import TemplateView
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, resolve
 from django.views.generic.edit import (
+    DeleteView,
     FormView,
 )
 
+
 from dashboard.mixins import  DashboardView, Http403
-from evidence.models import Evidence
+from evidence.models import Evidence, Annotation
 from evidence.forms import UploadForm, UserTagForm, ImportForm
 # from django.shortcuts import render
 # from rest_framework import viewsets
@@ -106,6 +110,7 @@ class EvidenceView(DashboardView, FormView):
         self.pk = self.kwargs.get('pk')
         kwargs = super().get_form_kwargs()
         kwargs['uuid'] = self.pk
+        kwargs['user'] = self.request.user
         return kwargs
 
     def form_valid(self, form):
@@ -135,3 +140,30 @@ class DownloadEvidenceView(DashboardView, TemplateView):
         response = HttpResponse(data, content_type="application/json")
         response['Content-Disposition'] = 'attachment; filename={}'.format("credential.json")
         return response
+
+
+class AnnotationDeleteView(DashboardView, DeleteView):
+    model = Annotation
+
+    def get(self, request, *args, **kwargs):
+        self.pk = kwargs['pk']
+
+        try:
+            referer = self.request.META["HTTP_REFERER"]
+            path_referer = urlparse(referer).path
+            resolver_match = resolve(path_referer)
+            url_name = resolver_match.view_name
+            kwargs_view = resolver_match.kwargs
+        except:
+            # if is not possible resolve the reference path return 404
+            raise Http404
+
+        self.object = get_object_or_404(
+            self.model,
+            pk=self.pk,
+            owner=self.request.user.institution
+        )
+        self.object.delete()
+
+
+        return redirect(url_name, **kwargs_view)

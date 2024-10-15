@@ -1,4 +1,4 @@
-FROM python:3.11.7-slim-bookworm
+FROM python:3.11.10-slim-bookworm
 
 # last line is dependencies for weasyprint (for generating pdfs in lafede pilot) https://doc.courtbouillon.org/weasyprint/stable/first_steps.html#debian-11
 RUN apt update && \
@@ -22,7 +22,8 @@ compile = no
 no-cache-dir = True
 END
 
-RUN pip install --upgrade pip
+# upgrade pip, which might fail on lxc, then remove the "corrupted file"
+RUN python -m pip install --upgrade pip || (rm -rf /usr/local/lib/python3.11/site-packages/pip-*.dist-info && python -m pip install --upgrade pip)
 
 COPY ./requirements.txt /opt/devicehub-django
 RUN pip install -r requirements.txt
