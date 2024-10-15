@@ -65,7 +65,6 @@ class PasswordResetView(auth_views.PasswordResetView):
     success_url = reverse_lazy('login:password_reset_done')
 
     def form_valid(self, form):
-        import pdb; pdb.set_trace()
         try:
             response = super().form_valid(form)
             return response
