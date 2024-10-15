@@ -41,15 +41,6 @@
   {{ form.management_form }}
   <div class="container" id="formset-container">
     <div class="row mb-2">
-      <div class="col"></div>
-      <div class="col-2 text-center">
-        <a href="javascript:void()" onclick="addForm(this);" type="button" class="btn btn-green-admin">
-          <i class="bi bi-plus"></i>
-          {% trans 'Add' %}
-        </a>
-      </div>
-    </div>
-    <div class="row mb-2">
       <div class="col">
         {% bootstrap_field form.0.type %}
       </div>
@@ -61,7 +52,18 @@
     </div>
     <div class="row mb-2">
       <div class="col">
-        {% bootstrap_field form.0.customer_id %}
+        {% bootstrap_field form.0.custom_id %}
+      </div>
+    </div>
+    <div class="row mb-2">
+      <div class="col-10">
+        <span class="fw-bold">{% trans 'Component details' %}</span>
+      </div>
+      <div class="col-2 text-center">
+        <a href="javascript:void()" onclick="addForm(this);" type="button" class="btn btn-green-admin text-nowrap">
+          <i class="bi bi-plus"></i>
+          {% trans 'Add component' %}
+        </a>
       </div>
     </div>
     {% for f in form %}

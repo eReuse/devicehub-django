@@ -23,7 +23,7 @@ DEVICE_TYPES = [
 class DeviceForm(forms.Form):
     type = forms.ChoiceField(choices = DEVICE_TYPES, required=False)
     amount = forms.IntegerField(required=False, initial=1)
-    customer_id = forms.CharField(required=False)
+    custom_id = forms.CharField(required=False)
     name = forms.CharField(required=False)
     value = forms.CharField(required=False)
 
@@ -49,14 +49,14 @@ class BaseDeviceFormSet(forms.BaseFormSet):
                 row["amount"] = d["amount"]
             if d.get("name"):
                 row[d["name"]] = d.get("value", '')
-            if d.get("customer_id"):
-                row['CUSTOMER_ID']= d["customer_id"]
+            if d.get("custom_id"):
+                row['CUSTOM_ID']= d["custom_id"]
 
         doc = create_doc(row)
         if not commit:
             return doc
 
-        create_index(doc)
+        create_index(doc, self.user)
         create_annotation(doc, user, commit=commit)
         return doc
 

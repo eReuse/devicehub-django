@@ -1,13 +1,19 @@
 import json
 
+from django.conf import settings
+from django.urls import reverse_lazy
 from django.shortcuts import get_object_or_404, redirect
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.csrf import csrf_exempt
 from django.core.exceptions import ValidationError
-from django.views.generic.edit import DeleteView
-from django.views.generic.base import View
-from django.http import JsonResponse
 from django_tables2 import SingleTableView
+from django.views.generic.base import View
+from django.views.generic.edit import (
+    CreateView,
+    DeleteView,
+    UpdateView,
+)
+from django.http import JsonResponse
 from uuid import uuid4
 
 from dashboard.mixins import DashboardView
@@ -29,14 +35,14 @@ def NewSnapshot(request):
         return JsonResponse({'error': 'Invalid request method'}, status=400)
 
     # Authentication
-    # auth_header = request.headers.get('Authorization')
-    # if not auth_header or not auth_header.startswith('Bearer '):
-    #     return JsonResponse({'error': 'Invalid or missing token'}, status=401)
+    auth_header = request.headers.get('Authorization')
+    if not auth_header or not auth_header.startswith('Bearer '):
+        return JsonResponse({'error': 'Invalid or missing token'}, status=401)
 
-    # token = auth_header.split(' ')[1]
-    # tk = Token.objects.filter(token=token).first()
-    # if not tk:
-    #     return JsonResponse({'error': 'Invalid or missing token'}, status=401)
+    token = auth_header.split(' ')[1]
+    tk = Token.objects.filter(token=token).first()
+    if not tk:
+        return JsonResponse({'error': 'Invalid or missing token'}, status=401)
 
     # Validation snapshot
     try:
@@ -60,15 +66,34 @@ def NewSnapshot(request):
     # save_in_disk(data, tk.user)
 
     try:
-        # Build(data, tk.user)
-        user = User.objects.get(email="user@example.org")
-        Build(data, user)
+        Build(data, tk.owner)
     except Exception:
         return JsonResponse({'status': 'fail'}, status=200)
 
-    return JsonResponse({'status': 'success'}, status=200)
+    annotation = Annotation.objects.filter(
+        uuid=data['uuid'],
+        type=Annotation.Type.SYSTEM,
+        # TODO this is hardcoded, it should select the user preferred algorithm
+        key="hidalgo1",
+        owner=tk.owner.institution
+    ).first()
 
 
+    if not annotation:
+        return JsonResponse({'status': 'fail'}, status=200)
+
+    url = "{}://{}{}".format(
+        request.scheme,
+        settings.DOMAIN,
+        reverse_lazy("device:details", args=(annotation.value,))
+    )
+    response = {
+        "status": "success",
+        "dhid": annotation.value[:6].upper(),
+        "url": url,
+        "public_url": url
+    }
+    return JsonResponse(response, status=200)
 
 
 class TokenView(DashboardView, SingleTableView):
@@ -89,7 +114,7 @@ class TokenView(DashboardView, SingleTableView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update({
-            'tokens': Token.objects,
+            'tokens': Token.objects.all(),
         })
         return context
 
@@ -105,10 +130,42 @@ class TokenDeleteView(DashboardView, DeleteView):
         return redirect('api:tokens')
 
 
-class TokenNewView(DashboardView, View):
+class TokenNewView(DashboardView, CreateView):
+    template_name = "new_token.html"
+    title = _("Credential management")
+    section = "Credential"
+    subtitle = _('New Tokens')
+    icon = 'bi bi-key'
+    model = Token
+    success_url = reverse_lazy('api:tokens')
+    fields = (
+        "tag",
+    )
 
-    def get(self, request, *args, **kwargs):
-        Token.objects.create(token=uuid4(), owner=self.request.user)
+    def form_valid(self, form):
+        form.instance.owner = self.request.user
+        form.instance.token = uuid4()
+        return super().form_valid(form)
 
-        return redirect('api:tokens')
-            
+
+class EditTokenView(DashboardView, UpdateView):
+    template_name = "new_token.html"
+    title = _("Credential management")
+    section = "Credential"
+    subtitle = _('New Tokens')
+    icon = 'bi bi-key'
+    model = Token
+    success_url = reverse_lazy('api:tokens')
+    fields = (
+        "tag",
+    )
+
+    def get_form_kwargs(self):
+        pk = self.kwargs.get('pk')
+        self.object = get_object_or_404(
+            self.model,
+            owner=self.request.user,
+            pk=pk,
+        )
+        kwargs = super().get_form_kwargs()
+        return kwargs
