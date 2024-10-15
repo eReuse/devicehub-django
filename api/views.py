@@ -1,6 +1,5 @@
 import json
 
-from django.conf import settings
 from django.urls import reverse_lazy
 from django.shortcuts import get_object_or_404, redirect
 from django.utils.translation import gettext_lazy as _
@@ -82,15 +81,14 @@ def NewSnapshot(request):
     if not annotation:
         return JsonResponse({'status': 'fail'}, status=200)
 
-    url = "{}://{}{}".format(
-        request.scheme,
-        settings.DOMAIN,
-        reverse_lazy("device:details", args=(annotation.value,))
-    )
+    url_args = reverse_lazy("device:details", args=(annotation.value,))
+    url = request.build_absolute_uri(url_args)
+
     response = {
         "status": "success",
         "dhid": annotation.value[:6].upper(),
         "url": url,
+        # TODO replace with public_url when available
         "public_url": url
     }
     return JsonResponse(response, status=200)
