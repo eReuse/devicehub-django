@@ -1,5 +1,6 @@
 from django import forms
 from utils.device import create_annotation, create_doc, create_index
+from utils.save_snapshots import move_json, save_in_disk
 
 
 DEVICE_TYPES = [
@@ -55,9 +56,12 @@ class BaseDeviceFormSet(forms.BaseFormSet):
         doc = create_doc(row)
         if not commit:
             return doc
-
+        
+        path_name = save_in_disk(doc, self.user.name)
         create_index(doc, self.user)
         create_annotation(doc, user, commit=commit)
+        move_json(path_name, self.user.name)
+        
         return doc
 
 

@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
+import os
 import xapian
 
 from pathlib import Path
@@ -62,7 +63,7 @@ EMAIL_FILE_PATH = config('EMAIL_FILE_PATH', default='/tmp/app-messages')
 
 ENABLE_EMAIL = config("ENABLE_EMAIL", default=True, cast=bool)
 
-SNAPSHOTS_DIR = config("SNAPSHOTS_DIR", default="/tmp/")
+EVIDENCES_DIR = config("EVIDENCES_DIR", default=os.path.join(BASE_DIR, "db"))
 
 # Application definition
 
