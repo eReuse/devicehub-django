@@ -1,4 +1,8 @@
+import os
 import json
+import shutil
+
+from datetime import datetime
 
 from django.conf import settings
 from django.urls import reverse_lazy
@@ -24,8 +28,37 @@ from api.models import Token
 from api.tables import TokensTable
 
 
+def move_json(path_name, user):
+    tmp_snapshots = settings.SNAPSHOTS_DIR
+    path_dir = os.path.join(tmp_snapshots, user)
+
+    if os.path.isfile(path_name):
+        shutil.copy(path_name, path_dir)
+        os.remove(path_name)
+
+
 def save_in_disk(data, user):
-    pass
+    uuid = data.get('uuid', '')
+    now = datetime.now()
+    year = now.year
+    month = now.month
+    day = now.day
+    hour = now.hour
+    minutes = now.minute
+    tmp_snapshots = settings.SNAPSHOTS_DIR
+
+    name_file = f"{year}-{month}-{day}-{hour}-{minutes}_{user}_{uuid}.json"
+    path_dir = os.path.join(tmp_snapshots, user, "errors")
+    path_name = os.path.join(path_dir, name_file)
+
+    if not os.path.isdir(path_dir):
+        os.system(f'mkdir -p {path_dir}')
+
+    with open(path_name, 'w') as snapshot_file:
+        snapshot_file.write(json.dumps(data))
+
+    return path_name
+
 
 
 @csrf_exempt
@@ -60,10 +93,11 @@ def NewSnapshot(request):
     ).first()
 
     if exist_annotation:
-        raise ValidationError("error: the snapshot {} exist".format(data['uuid']))
+        txt = "error: the snapshot {} exist".format(data['uuid'])
+        return JsonResponse({'status': txt}, status=500)
 
     # Process snapshot
-    # save_in_disk(data, tk.user)
+    path_name = save_in_disk(data, tk.owner.institution.name)
 
     try:
         Build(data, tk.owner)
@@ -93,6 +127,8 @@ def NewSnapshot(request):
         "url": url,
         "public_url": url
     }
+    move_json(path_name, tk.owner.institution.name)
+
     return JsonResponse(response, status=200)
 
 
