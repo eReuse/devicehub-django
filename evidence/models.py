@@ -129,27 +129,6 @@ class Evidence:
             key="hidalgo1",
         ).order_by("-created").values_list("uuid", flat=True).distinct()
 
-        # annotations = Annotation.objects.filter(
-        #     owner=user.institution,
-        #     type=Annotation.Type.SYSTEM
-        # )
-
-        # annotations = annotations.annotate(
-        #     priority=models.Case(
-        #         models.When(key="CUSTOM_ID", then=1),
-        #         models.When(key="hidalgo1", then=2),
-        #         default=3,
-        #         output_field=models.IntegerField(),
-        #     )
-        # )
-
-        # # sqlite not soport distinct('uuid')
-        # # filtered_uuids = annotations.order_by('uuid', 'priority', '-created').distinct(
-        # #     'uuid').values_list("uuid", flat=True)
-        # filtered_uuids = annotations.order_by('uuid', 'priority', '-created').distinct(
-        #     ).values_list("uuid", flat=True)
-        # return set(filtered_uuids)
-
     def set_components(self):
         snapshot = ParseSnapshot(self.doc).snapshot_json
         self.components = snapshot['components']
