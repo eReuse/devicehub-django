@@ -69,23 +69,17 @@ class SearchView(InventaryMixin):
         if not matches.size():
             return self.search_hids(query, offset, limit)
 
-        annotations = []
+        devices = []
         for x in matches:
-            annotations.extend(self.get_annotations(x))
+            devices.append(self.get_annotations(x))
 
-        devices = [Device(id=x) for x in set(annotations)]
         count = matches.size()
         return devices, count
 
     def get_annotations(self, xp):
         snap = xp.document.get_data()
         uuid = json.loads(snap).get('uuid')
-
-        return Annotation.objects.filter(
-            type=Annotation.Type.SYSTEM,
-            owner=self.request.user.institution,
-            uuid=uuid
-        ).values_list("value", flat=True).distinct()
+        return Device.get_annotation_from_uuid(uuid, self.request.user.institution)
 
     def search_hids(self, query, offset, limit):
         qry = Q()
