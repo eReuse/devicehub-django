@@ -7,6 +7,7 @@ services:
       - DEBUG=true
       - DOMAIN=${DOMAIN:-localhost}
       - DEMO=${DEMO:-n}
+      - PREDEFINED_TOKEN=${PREDEFINED_TOKEN:-}
     volumes:
       - .:/opt/devicehub-django
     ports:
