@@ -113,7 +113,8 @@ class Build:
         # mac = get_mac2(hwinfo_raw) or ""
         mac = get_mac(lshw) or ""
         if not mac:
-            print("WARNING!! No there are MAC address")
+            print(f"WARNING: Could not retrieve MAC address in snapshot {snapshot['uuid']}" )
+            # TODO generate system annotation for that snapshot
         else:
             print(f"{manufacturer}{model}{chassis}{serial_number}{sku}{mac}")
 
