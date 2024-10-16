@@ -30,7 +30,7 @@ deploy() {
                 # TODO: one error on add_user, and you don't add user anymore
                 ./manage.py add_user "${INIT_ORG}" "${INIT_USER}" "${INIT_PASSWD}" "${ADMIN}" "${PREDEFINED_TOKEN}"
 
-                if [ "${DEMO:-}" ]; then
+                if [ "${DEMO:-}" = 'y' ]; then
                         ./manage.py up_snapshots example/snapshots/ "${INIT_USER}"
                 fi
         fi
