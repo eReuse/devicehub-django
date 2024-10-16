@@ -90,9 +90,11 @@ class Device:
     def get_hids(self):
         annotations = self.get_annotations()
 
+        algos = list(ALGOS.keys())
+        algos.append('CUSTOM_ID')
         self.hids = list(set(annotations.filter(
             type=Annotation.Type.SYSTEM,
-            key__in=ALGOS.keys(),
+            key__in=algos,
         ).values_list("value", flat=True)))
 
     def get_evidences(self):
