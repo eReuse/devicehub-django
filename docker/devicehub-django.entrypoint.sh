@@ -24,9 +24,10 @@ deploy() {
                 INIT_ORG="${INIT_ORG:-example-org}"
                 INIT_USER="${INIT_USER:-user@example.org}"
                 INIT_PASSWD="${INIT_PASSWD:-1234}"
+                ADMIN='True'
                 ./manage.py add_institution "${INIT_ORG}"
                 # TODO: one error on add_user, and you don't add user anymore
-                ./manage.py add_user "${INIT_ORG}" "${INIT_USER}" "${INIT_PASSWD}"
+                ./manage.py add_user "${INIT_ORG}" "${INIT_USER}" "${INIT_PASSWD}" "${ADMIN}"
 
                 if [ "${DEMO:-}" ]; then
                         ./manage.py up_snapshots example/snapshots/ "${INIT_USER}"
