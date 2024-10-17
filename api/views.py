@@ -66,8 +66,8 @@ def NewSnapshot(request):
 
     try:
         Build(data, tk.owner)
-    except Exception:
-        return JsonResponse({'status': 'fail'}, status=200)
+    except Exception as err:
+        return JsonResponse({'status': f"fail: {err}"}, status=500)
 
     annotation = Annotation.objects.filter(
         uuid=data['uuid'],
