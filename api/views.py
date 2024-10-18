@@ -7,9 +7,7 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.csrf import csrf_exempt
-from django.core.exceptions import ValidationError
 from django_tables2 import SingleTableView
-from django.views.generic.base import View
 from django.views.generic.edit import (
     CreateView,
     DeleteView,
@@ -20,7 +18,6 @@ from utils.save_snapshots import move_json, save_in_disk
 from dashboard.mixins import DashboardView
 from evidence.models import Annotation
 from evidence.parse import Build
-from user.models import User
 from api.models import Token
 from api.tables import TokensTable
 
@@ -78,7 +75,7 @@ def NewSnapshot(request):
 
 
     if not annotation:
-        return JsonResponse({'status': 'fail'}, status=200)
+        return JsonResponse({'status': 'fail'}, status=500)
 
     url_args = reverse_lazy("device:details", args=(annotation.value,))
     url = request.build_absolute_uri(url_args)
