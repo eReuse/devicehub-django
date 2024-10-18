@@ -36,7 +36,7 @@ assert DOMAIN not in [None, ''], "DOMAIN var is MANDATORY"
 print("DOMAIN: " + DOMAIN)
 
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default=DOMAIN, cast=Csv())
-assert DOMAIN in ALLOWED_HOSTS, "DOMAIN is not ALLOWED_HOST"
+assert DOMAIN in ALLOWED_HOSTS, f"DOMAIN ${DOMAIN} is not ALLOWED_HOST ${ALLOWED_HOST}"
 
 CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default=f'https://{DOMAIN}', cast=Csv())
 
