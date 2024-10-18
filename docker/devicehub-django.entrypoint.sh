@@ -12,6 +12,10 @@ check_app_is_there() {
 }
 
 deploy() {
+        if [ "${DEBUG:-}" = 'true' ]; then
+                ./manage.py print_settings
+        fi
+
         # detect if existing deployment (TODO only works with sqlite)
         if [ -f "${program_dir}/db/db.sqlite3" ]; then
                 echo "INFO: detected EXISTING deployment"
@@ -38,7 +42,7 @@ deploy() {
 
 runserver() {
         PORT="${PORT:-8000}"
-        if [ "${DEBUG:-}" ]; then
+        if [ "${DEBUG:-}" = 'true' ]; then
                 ./manage.py runserver 0.0.0.0:${PORT}
         else
                 # TODO
