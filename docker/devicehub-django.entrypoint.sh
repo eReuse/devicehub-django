@@ -12,6 +12,10 @@ check_app_is_there() {
 }
 
 deploy() {
+        # TODO this is weird, find better workaround
+        git config --global --add safe.directory /opt/devicehub-django
+        export COMMIT=$(git log --format="%H %ad" --date=iso -n 1)
+
         if [ "${DEBUG:-}" = 'true' ]; then
                 ./manage.py print_settings
         fi
