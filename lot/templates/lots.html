@@ -7,6 +7,16 @@
     <h3>{{ subtitle }}</h3>
   </div>
   <div class="col text-center">
+    {% if show_closed %}
+      <a href="?show_closed=false" class="btn btn-green-admin">
+        {% trans 'Hide closed lots' %}
+      </a>
+    {% else %}
+      <a href="?show_closed=true" class="btn btn-green-admin">
+        {% trans 'Show closed lots' %}
+      </a>
+    {% endif %}
+
     <a href="{% url 'lot:add' %}" type="button" class="btn btn-green-admin">
       <i class="bi bi-plus"></i>
       {% trans 'Add new lot' %}
