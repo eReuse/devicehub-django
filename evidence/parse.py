@@ -57,7 +57,7 @@ class Build:
         }
 
     def get_hid_14(self):
-        if self.json.get("software") == "EreuseWorkbench":
+        if self.json.get("software") == "workbench-script":
             hid = self.get_hid(self.json)
         else:
             device = self.json['device']
