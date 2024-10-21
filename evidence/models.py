@@ -126,7 +126,7 @@ class Evidence:
         return Annotation.objects.filter(
             owner=user.institution,
             type=Annotation.Type.SYSTEM,
-        ).order_by("-created").values_list("uuid", flat=True).distinct()
+        ).order_by("-created").values_list("uuid", "created").distinct()
 
     def set_components(self):
         snapshot = ParseSnapshot(self.doc).snapshot_json
