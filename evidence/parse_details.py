@@ -3,6 +3,8 @@ import numpy as np
 
 from datetime import datetime
 from dmidecode import DMIParse
+from json_repair import repair_json
+
 from utils.constants import CHASSIS_DH, DATASTORAGEINTERFACE
 
 
@@ -480,7 +482,11 @@ class ParseSnapshot:
     def loads(self, x):
         if isinstance(x, str):
             try:
-                return json.loads(x)
+                try:
+                    hw = json.loads(lshw)
+                except json.decoder.JSONDecodeError:
+                    hw = json.loads(repair_json(lshw))
+                return hw
             except Exception as ss:
                 print("WARNING!! {}".format(ss))
                 return {}
