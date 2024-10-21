@@ -12,25 +12,25 @@
   <div class="col">
     <ul class="nav nav-tabs nav-tabs-bordered">
       <li class="nav-items">
-        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#details">General details</button>
+        <a href="#details" class="nav-link active" data-bs-toggle="tab" data-bs-target="#details">General details</a>
       </li>
       <li class="nav-items">
-        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#annotations">User annotations</button>
+        <a href="#annotations" class="nav-link" data-bs-toggle="tab" data-bs-target="#annotations">User annotations</a>
       </li>
       <li class="nav-items">
-        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#documents">Documents</button>
+        <a href="#documents" class="nav-link" data-bs-toggle="tab" data-bs-target="#documents">Documents</a>
       </li>
       <li class="nav-items">
-        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#lots">Lots</button>
+        <a href="#lots" class="nav-link" data-bs-toggle="tab" data-bs-target="#lots">Lots</a>
       </li>
       <li class="nav-items">
-        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#components">Components</button>
+        <a href="#components" class="nav-link" data-bs-toggle="tab" data-bs-target="#components">Components</a>
       </li>
       <li class="nav-items">
-        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#evidences">Evidences</button>
+        <a href="#evidences" class="nav-link" data-bs-toggle="tab" data-bs-target="#evidences">Evidences</a>
       </li>
       <li class="nav-items">
-        <a class="nav-link" href="">Web</a>
+        <a href="#web" class="nav-link" href="">Web</a>
       </li>
     </ul>
   </div>
@@ -214,3 +214,25 @@
   </div>
 </div>
 {% endblock %}
+
+{% block extrascript %}
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    // Obtener el hash de la URL (ejemplo: #components)
+    const hash = window.location.hash;
+
+    // Verificar si hay un hash en la URL
+    if (hash) {
+      // Buscar el botón o enlace que corresponde al hash y activarlo
+      const tabTrigger = document.querySelector(`[data-bs-target="${hash}"]`);
+      
+      if (tabTrigger) {
+        // Crear una instancia de tab de Bootstrap para activar el tab
+        const tab = new bootstrap.Tab(tabTrigger);
+        tab.show();
+      }
+    }
+  });
+</script>
+{% endblock %}
+
