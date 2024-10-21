@@ -67,7 +67,7 @@ class Evidence:
         for xa in matches:
             self.doc = json.loads(xa.document.get_data())
 
-        if self.doc.get("software") == "EreuseWorkbench":
+        if self.doc.get("software") == "workbench-script":
             dmidecode_raw = self.doc["data"]["dmidecode"]
             self.dmi = DMIParse(dmidecode_raw)
 
@@ -80,7 +80,7 @@ class Evidence:
             self.created = self.annotations.last().created
 
     def get_components(self):
-        if self.doc.get("software") != "EreuseWorkbench":
+        if self.doc.get("software") != "workbench-script":
             return self.doc.get('components', [])
         self.set_components()
         return self.components
@@ -92,7 +92,7 @@ class Evidence:
                 return ""
             return list(self.doc.get('kv').values())[0]
 
-        if self.doc.get("software") != "EreuseWorkbench":
+        if self.doc.get("software") != "workbench-script":
             return self.doc['device']['manufacturer']
 
         return self.dmi.manufacturer().strip()
@@ -104,13 +104,13 @@ class Evidence:
                 return ""
             return list(self.doc.get('kv').values())[1]
 
-        if self.doc.get("software") != "EreuseWorkbench":
+        if self.doc.get("software") != "workbench-script":
             return self.doc['device']['model']
 
         return self.dmi.model().strip()
 
     def get_chassis(self):
-        if self.doc.get("software") != "EreuseWorkbench":
+        if self.doc.get("software") != "workbench-script":
             return self.doc['device']['model']
 
         chassis = self.dmi.get("Chassis")[0].get("Type", '_virtual')
@@ -126,6 +126,7 @@ class Evidence:
         return Annotation.objects.filter(
             owner=user.institution,
             type=Annotation.Type.SYSTEM,
+            key="hidalgo1",
         ).order_by("-created").values_list("uuid", "created").distinct()
 
     def set_components(self):

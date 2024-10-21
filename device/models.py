@@ -27,7 +27,7 @@ class Device:
         # the id is the chid of the device
         self.id = kwargs["id"]
         self.pk = self.id
-        self.shortid = self.pk[:6]
+        self.shortid = self.pk[:6].upper()
         self.algorithm = None
         self.owner = None
         self.annotations =  []
@@ -90,9 +90,11 @@ class Device:
     def get_hids(self):
         annotations = self.get_annotations()
 
+        algos = list(ALGOS.keys())
+        algos.append('CUSTOM_ID')
         self.hids = list(set(annotations.filter(
             type=Annotation.Type.SYSTEM,
-            key__in=ALGOS.keys(),
+            key__in=algos,
         ).values_list("value", flat=True)))
 
     def get_evidences(self):
@@ -118,9 +120,32 @@ class Device:
     def get_unassigned(cls, institution, offset=0, limit=None):
 
         sql = """
-              SELECT DISTINCT t1.value from evidence_annotation as t1
-                left join lot_devicelot as t2 on t1.value = t2.device_id
-              where t2.device_id is null and owner_id=={institution} and type=={type}
+            WITH RankedAnnotations AS (
+                SELECT
+                    t1.value,
+                    t1.key,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY t1.uuid
+                        ORDER BY
+                            CASE
+                                WHEN t1.key = 'CUSTOM_ID' THEN 1
+                                WHEN t1.key = 'hidalgo1' THEN 2
+                                ELSE 3
+                            END,
+                            t1.created DESC
+                    ) AS row_num
+                FROM evidence_annotation AS t1
+                LEFT JOIN lot_devicelot AS t2 ON t1.value = t2.device_id
+                WHERE t2.device_id IS NULL
+                  AND t1.owner_id = {institution}
+                  AND t1.type = {type}
+            )
+            SELECT DISTINCT
+                value
+            FROM
+                RankedAnnotations
+            WHERE
+                row_num = 1
         """.format(
             institution=institution.id,
             type=Annotation.Type.SYSTEM,
@@ -144,17 +169,82 @@ class Device:
     def get_unassigned_count(cls, institution):
 
         sql = """
-              SELECT count(DISTINCT t1.value) from evidence_annotation as t1
-                left join lot_devicelot as t2 on t1.value = t2.device_id
-              where t2.device_id is null and owner_id=={institution} and type=={type};
+            WITH RankedAnnotations AS (
+                SELECT
+                    t1.value,
+                    t1.key,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY t1.uuid
+                        ORDER BY
+                            CASE
+                                WHEN t1.key = 'CUSTOM_ID' THEN 1
+                                WHEN t1.key = 'hidalgo1' THEN 2
+                                ELSE 3
+                            END,
+                            t1.created DESC
+                    ) AS row_num
+                FROM evidence_annotation AS t1
+                LEFT JOIN lot_devicelot AS t2 ON t1.value = t2.device_id
+                WHERE t2.device_id IS NULL
+                  AND t1.owner_id = {institution}
+                  AND t1.type = {type}
+            )
+            SELECT
+                COUNT(DISTINCT value)
+            FROM
+                RankedAnnotations
+            WHERE
+                row_num = 1
         """.format(
             institution=institution.id,
             type=Annotation.Type.SYSTEM,
         )
-
         with connection.cursor() as cursor:
             cursor.execute(sql)
             return cursor.fetchall()[0][0]
+
+    @classmethod
+    def get_annotation_from_uuid(cls, uuid, institution):
+        sql = """
+            WITH RankedAnnotations AS (
+                SELECT
+                    t1.value,
+                    t1.key,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY t1.uuid
+                        ORDER BY
+                            CASE
+                                WHEN t1.key = 'CUSTOM_ID' THEN 1
+                                WHEN t1.key = 'hidalgo1' THEN 2
+                                ELSE 3
+                            END,
+                            t1.created DESC
+                    ) AS row_num
+                FROM evidence_annotation AS t1
+                LEFT JOIN lot_devicelot AS t2 ON t1.value = t2.device_id
+                WHERE t2.device_id IS NULL
+                  AND t1.owner_id = {institution}
+                  AND t1.type = {type}
+                  AND t1.uuid = '{uuid}'
+            )
+            SELECT DISTINCT
+                value
+            FROM
+                RankedAnnotations
+            WHERE
+                row_num = 1;
+        """.format(
+            uuid=uuid.replace("-", ""),
+            institution=institution.id,
+            type=Annotation.Type.SYSTEM,
+        )
+
+        annotations = []
+        with connection.cursor() as cursor:
+            cursor.execute(sql)
+            annotations = cursor.fetchall()
+
+        return cls(id=annotations[0][0])
 
     @property
     def is_websnapshot(self):

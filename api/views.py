@@ -1,30 +1,25 @@
 import json
 
+from uuid import uuid4
+
 from django.urls import reverse_lazy
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.csrf import csrf_exempt
-from django.core.exceptions import ValidationError
 from django_tables2 import SingleTableView
-from django.views.generic.base import View
 from django.views.generic.edit import (
     CreateView,
     DeleteView,
     UpdateView,
 )
-from django.http import JsonResponse
-from uuid import uuid4
 
+from utils.save_snapshots import move_json, save_in_disk
 from dashboard.mixins import DashboardView
 from evidence.models import Annotation
 from evidence.parse import Build
-from user.models import User
 from api.models import Token
 from api.tables import TokensTable
-
-
-def save_in_disk(data, user):
-    pass
 
 
 @csrf_exempt
@@ -59,19 +54,42 @@ def NewSnapshot(request):
     ).first()
 
     if exist_annotation:
-        raise ValidationError("error: the snapshot {} exist".format(data['uuid']))
+        txt = "error: the snapshot {} exist".format(data['uuid'])
+        return JsonResponse({'status': txt}, status=500)
 
     # Process snapshot
-    # save_in_disk(data, tk.user)
+    path_name = save_in_disk(data, tk.owner.institution.name)
 
     try:
         Build(data, tk.owner)
-    except Exception:
-        return JsonResponse({'status': 'fail'}, status=200)
+    except Exception as err:
+        return JsonResponse({'status': f"fail: {err}"}, status=500)
 
-    return JsonResponse({'status': 'success'}, status=200)
+    annotation = Annotation.objects.filter(
+        uuid=data['uuid'],
+        type=Annotation.Type.SYSTEM,
+        # TODO this is hardcoded, it should select the user preferred algorithm
+        key="hidalgo1",
+        owner=tk.owner.institution
+    ).first()
 
 
+    if not annotation:
+        return JsonResponse({'status': 'fail'}, status=500)
+
+    url_args = reverse_lazy("device:details", args=(annotation.value,))
+    url = request.build_absolute_uri(url_args)
+
+    response = {
+        "status": "success",
+        "dhid": annotation.value[:6].upper(),
+        "url": url,
+        # TODO replace with public_url when available
+        "public_url": url
+    }
+    move_json(path_name, tk.owner.institution.name)
+
+    return JsonResponse(response, status=200)
 
 
 class TokenView(DashboardView, SingleTableView):
