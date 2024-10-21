@@ -1,4 +1,5 @@
 from django.urls import resolve
+from django.conf import settings
 from django.shortcuts import get_object_or_404, redirect, Http404
 from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import PermissionDenied
@@ -32,6 +33,7 @@ class DashboardView(LoginRequiredMixin):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update({
+            "commit_id": settings.COMMIT,
             'title': self.title,
             'subtitle': self.subtitle,
             'breadcrumb': self.breadcrumb,

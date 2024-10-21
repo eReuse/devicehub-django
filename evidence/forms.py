@@ -9,6 +9,7 @@ from utils.forms import MultipleFileField
 from device.models import Device
 from evidence.parse import Build
 from evidence.models import Annotation
+from utils.save_snapshots import move_json, save_in_disk
 
 
 class UploadForm(forms.Form):
@@ -48,7 +49,9 @@ class UploadForm(forms.Form):
             return
 
         for ev in self.evidences:
+            path_name = save_in_disk(ev[1], user.institution.name)
             Build(ev[1], user)
+            move_json(path_name, user.institution.name)
 
 
 class UserTagForm(forms.Form):
@@ -151,8 +154,11 @@ class ImportForm(forms.Form):
 
         if commit:
             for doc, cred in table:
-              cred.save()
-              create_index(doc, self.user)
-            return table
+                path_name = save_in_disk(doc, self.user.institution.name, place="placeholder")
+
+                cred.save()
+                create_index(doc, self.user)
+                move_json(path_name, self.user.institution.name, place="placeholder")
+                return table
 
         return

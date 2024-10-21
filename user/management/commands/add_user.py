@@ -17,15 +17,17 @@ class Command(BaseCommand):
         parser.add_argument('email', type=str, help='email')
         parser.add_argument('password', type=str, help='password')
         parser.add_argument('is_admin', nargs='?', default=False, type=str, help='is admin')
+        parser.add_argument('predefined_token', nargs='?', default='', type=str, help='predefined token')
 
     def handle(self, *args, **kwargs):
         email = kwargs['email']
         password = kwargs['password']
         is_admin = kwargs['is_admin']
+        predefined_token = kwargs['predefined_token']
         institution = Institution.objects.get(name=kwargs['institution'])
-        self.create_user(institution, email, password, is_admin)
+        self.create_user(institution, email, password, is_admin, predefined_token)
 
-    def create_user(self, institution, email, password, is_admin):
+    def create_user(self, institution, email, password, is_admin, predefined_token):
         self.u = User.objects.create(
             institution=institution,
             email=email,
@@ -34,6 +36,10 @@ class Command(BaseCommand):
         )
         self.u.set_password(password)
         self.u.save()
-        token = uuid4()
+        if predefined_token:
+            token = predefined_token
+        else:
+            token = uuid4()
+
         Token.objects.create(token=token, owner=self.u)
         print(f"TOKEN: {token}")
