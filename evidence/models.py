@@ -127,7 +127,7 @@ class Evidence:
             owner=user.institution,
             type=Annotation.Type.SYSTEM,
             key="hidalgo1",
-        ).order_by("-created").values_list("uuid", flat=True).distinct()
+        ).order_by("-created").values_list("uuid", "created").distinct()
 
     def set_components(self):
         snapshot = ParseSnapshot(self.doc).snapshot_json
