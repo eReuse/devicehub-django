@@ -5,6 +5,8 @@ import hashlib
 
 from datetime import datetime
 from dmidecode import DMIParse
+from json_repair import repair_json
+
 from evidence.models import Annotation
 from evidence.xapian import index
 from utils.constants import ALGOS, CHASSIS_DH
@@ -20,7 +22,12 @@ def get_network_cards(child, nets):
 def get_mac(lshw):
     nets = []
     try:
-        get_network_cards(json.loads(lshw), nets)
+        hw = json.loads(lshw)
+    except json.decoder.JSONDecodeError:
+        hw = json.loads(repair_json(lshw))
+        
+    try:
+        get_network_cards(hw, nets)
     except Exception as ss:
         print("WARNING!! {}".format(ss))
         return
