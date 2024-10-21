@@ -14,10 +14,13 @@
     {% for ev in evidences %}
     <tr>
       <td>
-        <a href="{% url 'evidence:details' ev %}">{{ ev }}</a>
+        <a href="{% url 'evidence:details' ev.0 %}">{{ ev.0 }}</a>
       </td>
       <td>
-        <a href="{# url 'evidence:delete' ev #}"><i class="bi bi-trash text-danger"></i></a>
+	<small class="text-muted">{{ ev.1 }}</small>
+      </td>
+      <td>
+        <a href="{# url 'evidence:delete' ev.0 #}"><i class="bi bi-trash text-danger"></i></a>
       </td>
     </tr>
     {% endfor %}
