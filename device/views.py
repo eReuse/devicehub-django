@@ -1,4 +1,5 @@
 import json
+from django.http import JsonResponse
 
 from django.http import Http404
 from django.urls import reverse_lazy
@@ -100,7 +101,6 @@ class DetailsView(DashboardView, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        self.object.initial()
         lot_tags = LotTag.objects.filter(owner=self.request.user.institution)
         context.update({
             'object': self.object,
@@ -116,6 +116,8 @@ class DeviceWebView(TemplateView):
     def get(self, request, *args, **kwargs):
         self.pk = kwargs['pk']
         self.object = Device(id=self.pk)
+        if self.request.headers.get('Accept') == 'application/json':
+            return self.get_json_response()
         return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
@@ -126,6 +128,23 @@ class DeviceWebView(TemplateView):
             'snapshot': self.object.get_last_evidence(),
         })
         return context
+
+    def get_json_response(self):
+        data = {
+            'object': self.get_object_data(),
+            # 'components': self.get_components_data(),
+        }
+        return JsonResponse(data)
+
+    def get_object_data(self):
+        object_data = {
+            'phid': self.object.id,
+            'type': self.object.type,
+            'manufacturer': self.object.manufacturer,
+            'model': self.object.model,
+            # 'serial_number': object.last_evidence.doc.device.serialNumber,
+        }
+        return object_data
 
 
 class AddAnnotationView(DashboardView, CreateView):
