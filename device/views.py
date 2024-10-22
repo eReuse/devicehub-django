@@ -110,11 +110,8 @@ class DetailsView(DashboardView, TemplateView):
         return context
 
 
-class DeviceWebView(DashboardView, TemplateView):
+class DeviceWebView(TemplateView):
     template_name = "device_web.html"
-    title = _("Device Website")
-    breadcrumb = "Device / Public"
-    model = Annotation
 
     def get(self, request, *args, **kwargs):
         self.pk = kwargs['pk']
@@ -124,11 +121,9 @@ class DeviceWebView(DashboardView, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         self.object.initial()
-        lot_tags = LotTag.objects.filter(owner=self.request.user.institution)
         context.update({
             'object': self.object,
             'snapshot': self.object.get_last_evidence(),
-            'lot_tags': lot_tags,
         })
         return context
 
