@@ -9,6 +9,6 @@ urlpatterns = [
     path("<str:pk>/", views.DetailsView.as_view(), name="details"),
     path("<str:pk>/annotation/add", views.AddAnnotationView.as_view(), name="add_annotation"),
     path("<str:pk>/document/add", views.AddDocumentView.as_view(), name="add_document"),
-    path("<str:pk>/web/", views.DeviceWebView.as_view(), name="device_web"),
+    path("<str:pk>/public/", views.DeviceWebView.as_view(), name="device_web"),
 
 ]
