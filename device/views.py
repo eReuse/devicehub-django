@@ -95,7 +95,7 @@ class DetailsView(DashboardView, TemplateView):
             raise Http404
         if self.object.owner != self.request.user.institution:
             raise Http403
-        
+
         return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
@@ -113,7 +113,7 @@ class DetailsView(DashboardView, TemplateView):
 class DeviceWebView(DashboardView, TemplateView):
     template_name = "device_web.html"
     title = _("Device Website")
-    breadcrumb = "Device / Web"
+    breadcrumb = "Device / Public"
     model = Annotation
 
     def get(self, request, *args, **kwargs):
@@ -157,7 +157,7 @@ class AddAnnotationView(DashboardView, CreateView):
             value=pk,
             type=Annotation.Type.SYSTEM
         ).first()
-        
+
         if not self.annotation:
             raise Http404
 
