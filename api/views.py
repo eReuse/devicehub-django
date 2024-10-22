@@ -33,7 +33,7 @@ def NewSnapshot(request):
     if not auth_header or not auth_header.startswith('Bearer '):
         return JsonResponse({'error': 'Invalid or missing token'}, status=401)
 
-    token = auth_header.split(' ')[1]
+    token = auth_header.split(' ')[1].strip("'")
     tk = Token.objects.filter(token=token).first()
     if not tk:
         return JsonResponse({'error': 'Invalid or missing token'}, status=401)
