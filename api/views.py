@@ -1,4 +1,6 @@
 import json
+import uuid
+import logging
 
 from uuid import uuid4
 
@@ -22,6 +24,9 @@ from api.models import Token
 from api.tables import TokensTable
 
 
+logger = logging.getLogger('django')
+
+
 @csrf_exempt
 def NewSnapshot(request):
     # Accept only posts
@@ -31,19 +36,28 @@ def NewSnapshot(request):
     # Authentication
     auth_header = request.headers.get('Authorization')
     if not auth_header or not auth_header.startswith('Bearer '):
+        logger.exception("Invalid or missing token {}".format(auth_header))
         return JsonResponse({'error': 'Invalid or missing token'}, status=401)
     
     token = auth_header.split(' ')[1].strip("'").strip('"')
-
+    try:
+        uuid.UUID(token)
+    except Exception:
+        logger.exception("Invalid token {}".format(token))
+        return JsonResponse({'error': 'Invalid or missing token'}, status=401)
+    
     tk = Token.objects.filter(token=token).first()
+    
     if not tk:
+        logger.exception("Invalid or missing token {}".format(token))
         return JsonResponse({'error': 'Invalid or missing token'}, status=401)
 
     # Validation snapshot
     try:
         data = json.loads(request.body)
     except json.JSONDecodeError:
-        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+        logger.exception("Invalid Snapshot of user {}".format(tk.owner))
+        return JsonResponse({'error': 'Invalid JSON'}, status=500)
 
     # try:
     #     Build(data, None, check=True)
@@ -56,6 +70,7 @@ def NewSnapshot(request):
 
     if exist_annotation:
         txt = "error: the snapshot {} exist".format(data['uuid'])
+        logger.exception(txt)
         return JsonResponse({'status': txt}, status=500)
 
     # Process snapshot
@@ -64,6 +79,7 @@ def NewSnapshot(request):
     try:
         Build(data, tk.owner)
     except Exception as err:
+        logger.exception(err)
         return JsonResponse({'status': f"fail: {err}"}, status=500)
 
     annotation = Annotation.objects.filter(
@@ -76,6 +92,7 @@ def NewSnapshot(request):
 
 
     if not annotation:
+        logger.exception("Error: No annotation for uuid: {}".format(data["uuid"]))
         return JsonResponse({'status': 'fail'}, status=500)
 
     url_args = reverse_lazy("device:details", args=(annotation.value,))
