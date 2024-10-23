@@ -139,23 +139,6 @@
 
       <h2 class="section-title mt-5">Components</h2>
       <div class="row">
-        {% comment %}Iterates over legacy snapshot components{% endcomment %}
-        {% for component in object.last_evidence.doc.components %}
-          <div class="col-md-6 mb-3">
-            <div class="card component-card">
-              <div class="card-body">
-                <h5 class="card-title">{{ component.type }}</h5>
-                <p class="card-text">
-                  <strong>Manufacturer:</strong> {{ component.manufacturer }}<br />
-                  <strong>Model:</strong> {{ component.model }}<br />
-                  <strong>Serial Number:</strong> {{ component.serialNumber }}
-                </p>
-                <small class="text-muted">{{ component.created }}</small>
-              </div>
-            </div>
-          </div>
-        {% endfor %}
-        {% comment %}Iterates over new snapshot components{% endcomment %}
         {% for component in object.components %}
           <div class="col-md-6 mb-3">
             <div class="card component-card">
