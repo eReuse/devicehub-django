@@ -205,19 +205,57 @@ class EditTokenView(DashboardView, UpdateView):
         return kwargs
 
 
-class DetailsComputerView(ApiMixing):
+class DetailsDeviceView(ApiMixing):
 
     def get(self, request, *args, **kwargs):
         response = self.auth()
         if response:
             return response
 
-        try:
-            data = json.loads(request.body)
-        except:
-            pass
-            
-        return JsonResponse({}, status=404)
+        self.pk = kwargs['pk']
+        self.object = Device(id=self.pk)
+
+        if not self.object.last_evidence:
+            return JsonResponse({}, status=404)
+
+        if self.object.owner != self.tk.owner.institution:
+            return JsonResponse({}, status=403)
+
+        data = self.get_data()
+        return JsonResponse(data, status=200)
 
     def post(self, request, *args, **kwargs):
         return JsonResponse({}, status=404)
+
+    def get_data(self):
+        data = {}
+        self.object.initial()
+        self.object.get_last_evidence()
+        evidence = self.object.last_evidence
+
+        if evidence.is_legacy():
+            data.update({
+                "device": evidence.get("device"),
+                "components": evidence.get("components"),
+            })
+        else:
+            evidence.get_doc()
+            snapshot = ParseSnapshot(evidence.doc).snapshot_json
+            data.update({
+                "device": snapshot.get("device"),
+                "components": snapshot.get("components"),
+            })
+
+        uuids = Annotation.objects.filter(
+            owner=self.tk.owner.institution,
+            value=self.pk
+        ).values("uuid")
+
+        annotations = Annotation.objects.filter(
+            uuid__in=uuids,
+            owner=self.tk.owner.institution,
+            type = Annotation.Type.USER
+        ).values_list("key", "value")
+
+        data.update({"annotations": list(annotations)})
+        return data
