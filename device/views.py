@@ -124,29 +124,19 @@ class PublicDeviceWebView(TemplateView):
         context = super().get_context_data(**kwargs)
         self.object.initial()
         context.update({
-            'object': self.object,
-            'snapshot': self.object.get_last_evidence(),
+            'object': self.object
         })
         return context
 
     def get_json_response(self):
         data = {
-            'object': self.get_object_data(),
-            # TODO i) agree on what fields to return. ii) implement get_components_data for new and old snapshot
-            # 'components': self.get_components_data(),
+            'id': self.object.id,
+            'shortid': self.object.shortid,
+            'uuids': self.object.uuids,
+            'hids': self.object.hids,
+            'components': self.object.components
         }
         return JsonResponse(data)
-
-    def get_object_data(self):
-        serial_number = self.object.last_evidence.doc.device.serialNumber if self.object.last_evidence else "None"
-        object_data = {
-            'phid': self.object.id,
-            'type': self.object.type,
-            'manufacturer': self.object.manufacturer,
-            'model': self.object.model,
-            'serial_number': serial_number,
-        }
-        return object_data
 
 
 class AddAnnotationView(DashboardView, CreateView):
