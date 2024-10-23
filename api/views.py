@@ -21,7 +21,9 @@ from utils.save_snapshots import move_json, save_in_disk
 from django.views.generic.edit import View
 from dashboard.mixins import DashboardView
 from evidence.models import Annotation
+from evidence.parse_details import ParseSnapshot
 from evidence.parse import Build
+from device.models import Device
 from api.models import Token
 from api.tables import TokensTable
 
