@@ -3,6 +3,8 @@ import numpy as np
 
 from datetime import datetime
 from dmidecode import DMIParse
+from json_repair import repair_json
+
 from utils.constants import CHASSIS_DH, DATASTORAGEINTERFACE
 
 
@@ -160,6 +162,7 @@ class ParseSnapshot:
                 continue
             model = sm.get('model_name')
             manufacturer = None
+            hours = sm.get("power_on_time", {}).get("hours", 0)
             if model and len(model.split(" ")) > 1:
                 mm = model.split(" ")
                 model = mm[-1]
@@ -175,6 +178,7 @@ class ParseSnapshot:
                     "size": self.get_data_storage_size(sm),
                     "variant": sm.get("firmware_version"),
                     "interface": self.get_data_storage_interface(sm),
+                    "hours": hours,
                 }
             )
 
@@ -478,7 +482,11 @@ class ParseSnapshot:
     def loads(self, x):
         if isinstance(x, str):
             try:
-                return json.loads(x)
+                try:
+                    hw = json.loads(lshw)
+                except json.decoder.JSONDecodeError:
+                    hw = json.loads(repair_json(lshw))
+                return hw
             except Exception as ss:
                 print("WARNING!! {}".format(ss))
                 return {}

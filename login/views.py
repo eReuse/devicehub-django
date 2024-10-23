@@ -1,5 +1,6 @@
 import logging
 
+from django.conf import settings
 from django.urls import reverse_lazy
 from django.contrib.auth import views as auth_views
 from django.contrib.auth import login as auth_login
@@ -17,7 +18,7 @@ class LoginView(auth_views.LoginView):
     extra_context = {
         'title': _('Login'),
         'success_url': reverse_lazy('dashboard:unassigned_devices'),
-        # 'commit_id': settings.COMMIT, 
+        'commit_id': settings.COMMIT,
     }
 
     def get(self, request, *args, **kwargs):
@@ -65,7 +66,6 @@ class PasswordResetView(auth_views.PasswordResetView):
     success_url = reverse_lazy('login:password_reset_done')
 
     def form_valid(self, form):
-        import pdb; pdb.set_trace()
         try:
             response = super().form_valid(form)
             return response

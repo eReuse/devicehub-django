@@ -2,9 +2,46 @@
 {% load i18n %}
 
 {% block content %}
-  <div class="row">
-    <div class="col">
-      <h3>{{ object.shortid }}</h3>
+<div class="row">
+  <div class="col">
+    <h3>{{ object.shortid }}</h3>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col">
+    <ul class="nav nav-tabs nav-tabs-bordered">
+      <li class="nav-items">
+        <a href="#details" class="nav-link active" data-bs-toggle="tab" data-bs-target="#details">General details</a>
+      </li>
+      <li class="nav-items">
+        <a href="#annotations" class="nav-link" data-bs-toggle="tab" data-bs-target="#annotations">User annotations</a>
+      </li>
+      <li class="nav-items">
+        <a href="#documents" class="nav-link" data-bs-toggle="tab" data-bs-target="#documents">Documents</a>
+      </li>
+      <li class="nav-items">
+        <a href="#lots" class="nav-link" data-bs-toggle="tab" data-bs-target="#lots">Lots</a>
+      </li>
+      <li class="nav-items">
+        <a href="#components" class="nav-link" data-bs-toggle="tab" data-bs-target="#components">Components</a>
+      </li>
+      <li class="nav-items">
+        <a href="#evidences" class="nav-link" data-bs-toggle="tab" data-bs-target="#evidences">Evidences</a>
+      </li>
+      <li class="nav-items">
+        <a href="#web" class="nav-link" href="">Web</a>
+      </li>
+    </ul>
+  </div>
+</div>
+<div class="tab-content pt-2">
+
+  <div class="tab-pane fade show active" id="details">
+    <h5 class="card-title">Details</h5>
+    <div class="row mb-3">
+      <div class="col-lg-3 col-md-4 label ">Phid</div>
+      <div class="col-lg-9 col-md-8">{{ object.id }}</div>
     </div>
   </div>
 
@@ -228,3 +265,25 @@
     })
   </script>
 {% endblock %}
+
+{% block extrascript %}
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    // Obtener el hash de la URL (ejemplo: #components)
+    const hash = window.location.hash;
+
+    // Verificar si hay un hash en la URL
+    if (hash) {
+      // Buscar el botón o enlace que corresponde al hash y activarlo
+      const tabTrigger = document.querySelector(`[data-bs-target="${hash}"]`);
+      
+      if (tabTrigger) {
+        // Crear una instancia de tab de Bootstrap para activar el tab
+        const tab = new bootstrap.Tab(tabTrigger);
+        tab.show();
+      }
+    }
+  });
+</script>
+{% endblock %}
+

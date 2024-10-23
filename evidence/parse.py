@@ -5,6 +5,8 @@ import hashlib
 
 from datetime import datetime
 from dmidecode import DMIParse
+from json_repair import repair_json
+
 from evidence.models import Annotation
 from evidence.xapian import index
 from utils.constants import ALGOS, CHASSIS_DH
@@ -20,7 +22,12 @@ def get_network_cards(child, nets):
 def get_mac(lshw):
     nets = []
     try:
-        get_network_cards(json.loads(lshw), nets)
+        hw = json.loads(lshw)
+    except json.decoder.JSONDecodeError:
+        hw = json.loads(repair_json(lshw))
+        
+    try:
+        get_network_cards(hw, nets)
     except Exception as ss:
         print("WARNING!! {}".format(ss))
         return
@@ -57,7 +64,7 @@ class Build:
         }
 
     def get_hid_14(self):
-        if self.json.get("software") == "EreuseWorkbench":
+        if self.json.get("software") == "workbench-script":
             hid = self.get_hid(self.json)
         else:
             device = self.json['device']
@@ -113,7 +120,8 @@ class Build:
         # mac = get_mac2(hwinfo_raw) or ""
         mac = get_mac(lshw) or ""
         if not mac:
-            print("WARNING!! No there are MAC address")
+            print(f"WARNING: Could not retrieve MAC address in snapshot {snapshot['uuid']}" )
+            # TODO generate system annotation for that snapshot
         else:
             print(f"{manufacturer}{model}{chassis}{serial_number}{sku}{mac}")
 
