@@ -261,3 +261,43 @@ class DetailsDeviceView(ApiMixing):
 
         data.update({"annotations": list(annotations)})
         return data
+
+
+class AddAnnotationView(ApiMixing):
+
+    def post(self, request, *args, **kwargs):
+        response = self.auth()
+        if response:
+            return response
+
+        self.pk = kwargs['pk']
+        institution = self.tk.owner.institution
+        self.annotation = Annotation.objects.filter(
+            owner=institution,
+            value=self.pk,
+            type=Annotation.Type.SYSTEM
+        ).first()
+
+        if not self.annotation:
+            return JsonResponse({}, status=404)
+
+        try:
+            data = json.loads(request.body)
+            key = data["key"]
+            value = data["value"]
+        except Exception:
+            logger.exception("Invalid Snapshot of user {}".format(self.tk.owner))
+            return JsonResponse({'error': 'Invalid JSON'}, status=500)
+
+        Annotation.objects.create(
+            uuid=self.annotation.uuid,
+            owner=self.tk.owner.institution,
+            type = Annotation.Type.USER,
+            key = key,
+            value = value
+        )
+
+        return JsonResponse({"status": "success"}, status=200)
+
+    def get(self, request, *args, **kwargs):
+        return JsonResponse({}, status=404)
