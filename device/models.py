@@ -1,8 +1,7 @@
 from django.db import models, connection
 
-from utils.constants import STR_SM_SIZE, STR_SIZE, STR_EXTEND_SIZE, ALGOS
+from utils.constants import ALGOS
 from evidence.models import Annotation, Evidence
-from user.models import User
 from lot.models import DeviceLot
 
 
