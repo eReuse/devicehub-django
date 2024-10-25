@@ -11,7 +11,10 @@ import xapian
 
 
 def search(institution, qs, offset=0, limit=10):
-    database = xapian.Database("db")
+    try:
+        database = xapian.Database("db")
+    except (xapian.DatabaseNotFoundError, xapian.DatabaseOpeningError):
+        return
 
     qp = xapian.QueryParser()
     qp.set_database(database)
@@ -31,12 +34,9 @@ def search(institution, qs, offset=0, limit=10):
 
 def index(institution, uuid, snap):
     uuid = 'uuid:"{}"'.format(uuid)
-    try:
-        matches = search(institution, uuid, limit=1)
-        if matches.size() > 0:
-            return
-    except (xapian.DatabaseNotFoundError, xapian.DatabaseOpeningError):
-        pass
+    matches = search(institution, uuid, limit=1)
+    if matches and matches.size() > 0:
+        return
 
     database = xapian.WritableDatabase("db", xapian.DB_CREATE_OR_OPEN)
     indexer = xapian.TermGenerator()
