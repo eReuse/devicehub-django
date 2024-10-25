@@ -61,7 +61,7 @@ class Evidence:
             self.get_owner()
         qry = 'uuid:"{}"'.format(self.uuid)
         matches = search(self.owner, qry, limit=1)
-        if matches.size() < 0:
+        if matches and matches.size() < 0:
             return
 
         for xa in matches:

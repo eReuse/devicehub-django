@@ -2,11 +2,16 @@ import json
 import uuid
 import hashlib
 import datetime
+import logging
 
 from django.core.exceptions import ValidationError
 from evidence.xapian import index
 from evidence.models import Annotation
 from device.models import Device
+
+
+logger = logging.getLogger('django')
+
 
 def create_doc(data):
     if not data:
@@ -76,6 +81,17 @@ def create_annotation(doc, user, commit=False):
         'value': doc['CUSTOMER_ID'],
     }
     if commit:
+        annotation = Annotation.objects.filter(
+                uuid=doc["uuid"],
+                owner=user.institution,
+                type=Annotation.Type.SYSTEM,
+        )
+
+        if annotation:
+            txt = "Warning: Snapshot {} exist as annotation !!".format(doc["uuid"])
+            logger.exception(txt)
+            return annotation
+
         return Annotation.objects.create(**data)
 
     return Annotation(**data)
