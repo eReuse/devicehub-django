@@ -14,6 +14,7 @@ class Annotation(models.Model):
         SYSTEM= 0, "System"
         USER = 1, "User"
         DOCUMENT = 2, "Document"
+        ERASE_SERVER = 3, "EraseServer"
 
     created = models.DateTimeField(auto_now_add=True)
     uuid = models.UUIDField()
