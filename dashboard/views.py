@@ -66,7 +66,7 @@ class SearchView(InventaryMixin):
             limit
         )
 
-        if not matches.size():
+        if not matches or not matches.size():
             return self.search_hids(query, offset, limit)
 
         devices = []

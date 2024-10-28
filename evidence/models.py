@@ -3,7 +3,7 @@ import json
 from dmidecode import DMIParse
 from django.db import models
 
-from utils.constants import STR_SM_SIZE, STR_EXTEND_SIZE, CHASSIS_DH
+from utils.constants import STR_EXTEND_SIZE, CHASSIS_DH
 from evidence.xapian import search
 from evidence.parse_details import ParseSnapshot
 from user.models import User, Institution
@@ -61,13 +61,13 @@ class Evidence:
             self.get_owner()
         qry = 'uuid:"{}"'.format(self.uuid)
         matches = search(self.owner, qry, limit=1)
-        if matches.size() < 0:
+        if matches and matches.size() < 0:
             return
 
         for xa in matches:
             self.doc = json.loads(xa.document.get_data())
 
-        if self.doc.get("software") == "workbench-script":
+        if not self.is_legacy():
             dmidecode_raw = self.doc["data"]["dmidecode"]
             self.dmi = DMIParse(dmidecode_raw)
 
@@ -80,7 +80,7 @@ class Evidence:
             self.created = self.annotations.last().created
 
     def get_components(self):
-        if self.doc.get("software") != "workbench-script":
+        if self.is_legacy():
             return self.doc.get('components', [])
         self.set_components()
         return self.components
@@ -92,7 +92,7 @@ class Evidence:
                 return ""
             return list(self.doc.get('kv').values())[0]
 
-        if self.doc.get("software") != "workbench-script":
+        if self.is_legacy():
             return self.doc['device']['manufacturer']
 
         return self.dmi.manufacturer().strip()
@@ -104,13 +104,13 @@ class Evidence:
                 return ""
             return list(self.doc.get('kv').values())[1]
 
-        if self.doc.get("software") != "workbench-script":
+        if self.is_legacy():
             return self.doc['device']['model']
 
         return self.dmi.model().strip()
 
     def get_chassis(self):
-        if self.doc.get("software") != "workbench-script":
+        if self.is_legacy():
             return self.doc['device']['model']
 
         chassis = self.dmi.get("Chassis")[0].get("Type", '_virtual')
@@ -132,3 +132,6 @@ class Evidence:
     def set_components(self):
         snapshot = ParseSnapshot(self.doc).snapshot_json
         self.components = snapshot['components']
+
+    def is_legacy(self):
+        return self.doc.get("software") != "workbench-script"
