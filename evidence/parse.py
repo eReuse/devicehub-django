@@ -1,15 +1,16 @@
-import os
 import json
-import shutil
 import hashlib
+import logging
 
-from datetime import datetime
 from dmidecode import DMIParse
 from json_repair import repair_json
 
 from evidence.models import Annotation
 from evidence.xapian import index
-from utils.constants import ALGOS, CHASSIS_DH
+from utils.constants import CHASSIS_DH
+
+
+logger = logging.getLogger('django')
 
 
 def get_network_cards(child, nets):
@@ -17,15 +18,18 @@ def get_network_cards(child, nets):
         nets.append(child)
     if child.get('children'):
         [get_network_cards(x, nets) for x in child['children']]
-        
-        
+
+
 def get_mac(lshw):
     nets = []
     try:
-        hw = json.loads(lshw)
+        if type(lshw) is dict:
+            hw = lshw
+        else:
+            hw = json.loads(lshw)
     except json.decoder.JSONDecodeError:
         hw = json.loads(repair_json(lshw))
-        
+
     try:
         get_network_cards(hw, nets)
     except Exception as ss:
@@ -74,10 +78,21 @@ class Build:
             serial_number = device.get("serialNumber", '')
             sku = device.get("sku", '')
             hid = f"{manufacturer}{model}{chassis}{serial_number}{sku}"
-            
+
+
         return hashlib.sha3_256(hid.encode()).hexdigest()
 
     def create_annotations(self):
+        annotation = Annotation.objects.filter(
+                uuid=self.uuid,
+                owner=self.user.institution,
+                type=Annotation.Type.SYSTEM,
+        )
+
+        if annotation:
+            txt = "Warning: Snapshot {} exist as annotation !!".format(self.uuid)
+            logger.exception(txt)
+            return
 
         for k, v in self.algorithms.items():
             Annotation.objects.create(
@@ -99,7 +114,7 @@ class Build:
 
     def get_sku(self):
         return self.dmi.get("System")[0].get("SKU Number", "n/a").strip()
-    
+
     def get_chassis(self):
         return self.dmi.get("Chassis")[0].get("Type", '_virtual')
 
@@ -115,7 +130,7 @@ class Build:
 
         if not snapshot["data"].get('lshw'):
             return f"{manufacturer}{model}{chassis}{serial_number}{sku}"
-        
+
         lshw = snapshot["data"]["lshw"]
         # mac = get_mac2(hwinfo_raw) or ""
         mac = get_mac(lshw) or ""
