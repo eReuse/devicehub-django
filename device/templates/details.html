@@ -12,22 +12,22 @@
   <div class="col">
     <ul class="nav nav-tabs nav-tabs-bordered">
       <li class="nav-items">
-        <a href="#details" class="nav-link active" data-bs-toggle="tab" data-bs-target="#details">General details</a>
+        <a href="#details" class="nav-link active" data-bs-toggle="tab" data-bs-target="#details">{% trans "General details" %}</a>
       </li>
       <li class="nav-items">
-        <a href="#annotations" class="nav-link" data-bs-toggle="tab" data-bs-target="#annotations">User annotations</a>
+        <a href="#annotations" class="nav-link" data-bs-toggle="tab" data-bs-target="#annotations">{% trans "User annotations" %}</a>
       </li>
       <li class="nav-items">
-        <a href="#documents" class="nav-link" data-bs-toggle="tab" data-bs-target="#documents">Documents</a>
+        <a href="#documents" class="nav-link" data-bs-toggle="tab" data-bs-target="#documents">{% trans "Documents" %}</a>
       </li>
       <li class="nav-items">
-        <a href="#lots" class="nav-link" data-bs-toggle="tab" data-bs-target="#lots">Lots</a>
+        <a href="#lots" class="nav-link" data-bs-toggle="tab" data-bs-target="#lots">{% trans "Lots" %}</a>
       </li>
       <li class="nav-items">
-        <a href="#components" class="nav-link" data-bs-toggle="tab" data-bs-target="#components">Components</a>
+        <a href="#components" class="nav-link" data-bs-toggle="tab" data-bs-target="#components">{% trans "Components" %}</a>
       </li>
       <li class="nav-items">
-        <a href="#evidences" class="nav-link" data-bs-toggle="tab" data-bs-target="#evidences">Evidences</a>
+        <a href="#evidences" class="nav-link" data-bs-toggle="tab" data-bs-target="#evidences">{% trans "Evidences" %}</a>
       </li>
       <li class="nav-items">
         <a href="#web" class="nav-link" href="">Web</a>
@@ -38,14 +38,21 @@
 <div class="tab-content pt-2">
 
   <div class="tab-pane fade show active" id="details">
-    <h5 class="card-title">Details</h5>
+    <h5 class="card-title">{% trans "Details" %}</h5>
     <div class="row mb-3">
       <div class="col-lg-3 col-md-4 label ">Phid</div>
       <div class="col-lg-9 col-md-8">{{ object.id }}</div>
     </div>
 
+    {% if object.is_eraseserver %}
+    <div class="row mb-3">
+      <div class="col-lg-3 col-md-4 label">{% trans "Is a erase server" %}</div>
+      <div class="col-lg-9 col-md-8"></div>
+    </div>
+    {% endif %}
+
     <div class="row">
-      <div class="col-lg-3 col-md-4 label ">Type</div>
+      <div class="col-lg-3 col-md-4 label ">{% trans "Type" %}</div>
       <div class="col-lg-9 col-md-8">{{ object.type }}</div>
     </div>
 
@@ -86,12 +93,12 @@
     <div class="btn-group dropdown ml-1 mt-1" uib-dropdown="">
       <a href="{% url 'device:add_annotation' object.pk %}" class="btn btn-primary">
         <i class="bi bi-plus"></i>
-        Add new annotation
+        {% trans "Add new annotation" %}
         <span class="caret"></span>
       </a>
     </div>
 
-    <h5 class="card-title mt-2">Annotations</h5>
+    <h5 class="card-title mt-2">{% trans "Annotations" %}</h5>
     <table class="table table-striped">
       <thead>
         <tr>
