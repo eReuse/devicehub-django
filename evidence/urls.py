@@ -18,6 +18,7 @@ urlpatterns = [
     path("upload", views.UploadView.as_view(), name="upload"),
     path("import", views.ImportView.as_view(), name="import"),
     path("<uuid:pk>", views.EvidenceView.as_view(), name="details"),
+    path("<uuid:pk>/eraseserver", views.EraseServerView.as_view(), name="erase_server"),
     path("<uuid:pk>/download", views.DownloadEvidenceView.as_view(), name="download"),
     path('annotation/<int:pk>/del', views.AnnotationDeleteView.as_view(), name='delete_annotation'),
 ]

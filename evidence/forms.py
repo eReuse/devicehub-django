@@ -162,3 +162,56 @@ class ImportForm(forms.Form):
                 return table
 
         return
+
+
+class EraseServerForm(forms.Form):
+    erase_server = forms.BooleanField(label=_("Is a Erase Server"), required=False)
+
+    def __init__(self, *args, **kwargs):
+        self.pk = None
+        self.uuid = kwargs.pop('uuid', None)
+        self.user = kwargs.pop('user')
+        instance = Annotation.objects.filter(
+            uuid=self.uuid,
+            type=Annotation.Type.ERASE_SERVER,
+            key='ERASE_SERVER',
+            owner=self.user.institution
+        ).first()
+
+        if instance:
+            kwargs["initial"]["erase_server"] = instance.value
+            self.pk = instance.pk
+
+        super().__init__(*args, **kwargs)
+
+    def clean(self):
+        self.erase_server = self.cleaned_data.get('erase_server', False)
+        self.instance = Annotation.objects.filter(
+            uuid=self.uuid,
+            type=Annotation.Type.ERASE_SERVER,
+            key='ERASE_SERVER',
+            owner=self.user.institution
+        ).first()
+
+        return True
+
+    def save(self, user, commit=True):
+        if not commit:
+            return
+
+        if not self.erase_server:
+            if self.instance:
+                self.instance.delete()
+            return
+
+        if self.instance:
+            return
+        
+        Annotation.objects.create(
+            uuid=self.uuid,
+            type=Annotation.Type.ERASE_SERVER,
+            key='ERASE_SERVER',
+            value=self.erase_server,
+            owner=self.user.institution,
+            user=self.user
+        )
