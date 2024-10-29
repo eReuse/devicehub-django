@@ -70,10 +70,17 @@ class SearchView(InventaryMixin):
             return self.search_hids(query, offset, limit)
 
         devices = []
+        dev_id = []
+
         for x in matches:
-            devices.append(self.get_annotations(x))
+            # devices.append(self.get_annotations(x))
+            dev = self.get_annotations(x)
+            if dev.id not in dev_id:
+                devices.append(dev)
+                dev_id.append(dev.id)
 
         count = matches.size()
+        # TODO fix of pagination, the count is not correct
         return devices, count
 
     def get_annotations(self, xp):
