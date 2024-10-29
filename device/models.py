@@ -108,6 +108,22 @@ class Device:
             return
         annotation = annotations.first()
         self.last_evidence = Evidence(annotation.uuid)
+        
+    def is_eraseserver(self):
+        if not self.uuids:
+            self.get_uuids()
+        if not self.uuids:
+            return False
+
+        annotation = Annotation.objects.filter(
+            uuid__in=self.uuids,
+            owner=self.owner,
+            type=Annotation.Type.ERASE_SERVER
+        ).first()
+        
+        if annotation:
+            return True
+        return False
 
     def last_uuid(self):
         return self.uuids[0]

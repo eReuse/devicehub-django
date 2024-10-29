@@ -11,18 +11,14 @@ from django.views.generic.edit import (
     FormView,
 )
 
-
 from dashboard.mixins import  DashboardView, Http403
 from evidence.models import Evidence, Annotation
-from evidence.forms import UploadForm, UserTagForm, ImportForm
-# from django.shortcuts import render
-# from rest_framework import viewsets
-# from snapshot.serializers import SnapshotSerializer
-
-
-# class SnapshotViewSet(viewsets.ModelViewSet):
-#     queryset = Snapshot.objects.all()
-#     serializer_class = SnapshotSerializer
+from evidence.forms import (
+    UploadForm,
+    UserTagForm,
+    ImportForm,
+    EraseServerForm
+)
 
 
 class ListEvidencesView(DashboardView, TemplateView):
@@ -167,3 +163,48 @@ class AnnotationDeleteView(DashboardView, DeleteView):
 
 
         return redirect(url_name, **kwargs_view)
+
+
+class EraseServerView(DashboardView, FormView):
+    template_name = "ev_eraseserver.html"
+    section = "evidences"
+    title = _("Evidences")
+    breadcrumb = "Evidences / Details"
+    success_url = reverse_lazy('evidence:list')
+    form_class = EraseServerForm
+
+    def get(self, request, *args, **kwargs):
+        self.pk = kwargs['pk']
+        self.object = Evidence(self.pk)
+        if self.object.owner != self.request.user.institution:
+            raise Http403
+
+        self.object.get_annotations()
+        return super().get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({
+            'object': self.object,
+        })
+        return context
+
+    def get_form_kwargs(self):
+        self.pk = self.kwargs.get('pk')
+        kwargs = super().get_form_kwargs()
+        kwargs['uuid'] = self.pk
+        kwargs['user'] = self.request.user
+        return kwargs
+
+    def form_valid(self, form):
+        form.save(self.request.user)
+        response = super().form_valid(form)
+        return response
+
+    def form_invalid(self, form):
+        response = super().form_invalid(form)
+        return response
+
+    def get_success_url(self):
+        success_url = reverse_lazy('evidence:details', args=[self.pk])
+        return success_url

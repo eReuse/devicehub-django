@@ -12,13 +12,16 @@
   <div class="col">
     <ul class="nav nav-tabs nav-tabs-bordered">
       <li class="nav-items">
-        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#device">Devices</button>
+        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#device">{% trans "Devices" %}</button>
       </li>
       <li class="nav-items">
-        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tag">Tag</button>
-      <li class="nav-items">
-        <a href="{% url 'evidence:download' object.uuid %}" class="nav-link">Download File</a>
+	<a href="#tag" class="nav-link" data-bs-toggle="tab" data-bs-target="#tag">{% trans "Tag" %}</a>
       </li>
+      <li class="nav-items">
+        <a href="{% url 'evidence:erase_server' object.uuid %}" class="nav-link">{% trans "Erase Server" %}</a>
+      </li>
+      <li class="nav-items">
+        <a href="{% url 'evidence:download' object.uuid %}" class="nav-link">{% trans "Download File" %}</a>
       </li>
     </ul>
   </div>
@@ -82,4 +85,25 @@
     </div>
   </div>
 </div>
+{% endblock %}
+
+{% block extrascript %}
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    // Obtener el hash de la URL (ejemplo: #components)
+    const hash = window.location.hash;
+
+    // Verificar si hay un hash en la URL
+    if (hash) {
+      // Buscar el botón o enlace que corresponde al hash y activarlo
+      const tabTrigger = document.querySelector(`[data-bs-target="${hash}"]`);
+      
+      if (tabTrigger) {
+        // Crear una instancia de tab de Bootstrap para activar el tab
+        const tab = new bootstrap.Tab(tabTrigger);
+        tab.show();
+      }
+    }
+  });
+</script>
 {% endblock %}
