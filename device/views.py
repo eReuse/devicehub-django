@@ -1,4 +1,5 @@
 import json
+from django.http import JsonResponse
 
 from django.http import Http404
 from django.urls import reverse_lazy
@@ -95,7 +96,7 @@ class DetailsView(DashboardView, TemplateView):
             raise Http404
         if self.object.owner != self.request.user.institution:
             raise Http403
-        
+
         return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
@@ -108,6 +109,39 @@ class DetailsView(DashboardView, TemplateView):
             'lot_tags': lot_tags,
         })
         return context
+
+
+class PublicDeviceWebView(TemplateView):
+    template_name = "device_web.html"
+
+    def get(self, request, *args, **kwargs):
+        self.pk = kwargs['pk']
+        self.object = Device(id=self.pk)
+        
+        if not self.object.last_evidence:
+            raise Http404
+        
+        if self.request.headers.get('Accept') == 'application/json':
+            return self.get_json_response()
+        return super().get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        self.object.initial()
+        context.update({
+            'object': self.object
+        })
+        return context
+
+    def get_json_response(self):
+        data = {
+            'id': self.object.id,
+            'shortid': self.object.shortid,
+            'uuids': self.object.uuids,
+            'hids': self.object.hids,
+            'components': self.object.components
+        }
+        return JsonResponse(data)
 
 
 class AddAnnotationView(DashboardView, CreateView):
@@ -134,7 +168,7 @@ class AddAnnotationView(DashboardView, CreateView):
             value=pk,
             type=Annotation.Type.SYSTEM
         ).first()
-        
+
         if not self.annotation:
             raise Http404
 
