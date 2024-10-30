@@ -117,6 +117,10 @@ class PublicDeviceWebView(TemplateView):
     def get(self, request, *args, **kwargs):
         self.pk = kwargs['pk']
         self.object = Device(id=self.pk)
+        
+        if not self.object.last_evidence:
+            raise Http404
+        
         if self.request.headers.get('Accept') == 'application/json':
             return self.get_json_response()
         return super().get(request, *args, **kwargs)

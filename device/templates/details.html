@@ -30,7 +30,7 @@
           <a href="#evidences" class="nav-link" data-bs-toggle="tab" data-bs-target="#evidences">{% trans 'Evidences' %}</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="{% url 'device:device_web' object.id %}">Web</a>
+          <a class="nav-link" href="{% url 'device:device_web' object.id %}" target="_blank">Web</a>
         </li>
       </ul>
     </div>
@@ -53,10 +53,6 @@
         </div>
       {% endif %}
 
-      <div class="row mb-3">
-        <div class="col-lg-3 col-md-4 label">Phid</div>
-        <div class="col-lg-9 col-md-8">{{ object.id }}</div>
-      </div>
       <div class="row mb-3">
         <div class="col-lg-3 col-md-4 label">Type</div>
         <div class="col-lg-9 col-md-8">{{ object.type }}</div>
