@@ -1,10 +1,13 @@
-
 import os
 import json
+import logging
 
 from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
 from evidence.parse import Build
+
+
+logger = logging.getLogger('django')
 
 
 User = get_user_model()
@@ -47,4 +50,8 @@ class Command(BaseCommand):
         
     def parsing(self):
         for s in self.snapshots:
-            self.devices.append(Build(s, self.user))
+            try:
+                self.devices.append(Build(s, self.user))
+            except Exception as err:
+                logger.exception(err)
+
