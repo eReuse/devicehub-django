@@ -4,6 +4,9 @@ import logging
 
 from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
+from django.conf import settings
+
+from utils.save_snapshots import move_json, save_in_disk
 from evidence.parse import Build
 
 
@@ -36,7 +39,7 @@ class Command(BaseCommand):
             self.read_directory(path)
 
         self.parsing()
-            
+
     def read_directory(self, directory):
         for filename in os.listdir(directory):
             filepath = os.path.join(directory, filename)
@@ -45,13 +48,18 @@ class Command(BaseCommand):
 
     def open(self, filepath):
         with open(filepath, 'r') as file:
-            content = json.loads(file.read())        
-            self.snapshots.append(content)
-        
+            content = json.loads(file.read())
+            path_name = save_in_disk(data, self.user.institution.name)
+            self.snapshots.append((content, path_name))
+
     def parsing(self):
-        for s in self.snapshots:
+        for s, p in self.snapshots:
             try:
                 self.devices.append(Build(s, self.user))
+                move_json(p, self.user.institution.name)
             except Exception as err:
-                logger.exception(err)
-
+                if settings.DEBUG:
+                    logger.exception("%s", err)
+                snapshot_id = s.get("uuid", "")
+                txt = "It is not possible to parse snapshot: %s."
+                logger.error(txt, snapshot_id)

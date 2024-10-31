@@ -17,6 +17,8 @@ from pathlib import Path
 from django.contrib.messages import constants as messages
 from decouple import config, Csv
 
+from utils.logger import CustomFormatter
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -205,8 +207,18 @@ LOGOUT_REDIRECT_URL = '/'
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
+    'formatters': {
+        'colored': {
+            '()': CustomFormatter,
+            'format': '%(levelname)s %(asctime)s %(message)s'
+        },
+    },
     "handlers": {
-        "console": {"level": "DEBUG", "class": "logging.StreamHandler"},
+        "console": {
+            "level": "DEBUG",
+            "class": "logging.StreamHandler",
+            "formatter": "colored"
+        },
     },
     "root": {
         "handlers": ["console"],
