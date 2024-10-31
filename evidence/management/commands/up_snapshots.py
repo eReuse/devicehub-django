@@ -49,7 +49,7 @@ class Command(BaseCommand):
     def open(self, filepath):
         with open(filepath, 'r') as file:
             content = json.loads(file.read())
-            path_name = save_in_disk(data, self.user.institution.name)
+            path_name = save_in_disk(content, self.user.institution.name)
             self.snapshots.append((content, path_name))
 
     def parsing(self):
