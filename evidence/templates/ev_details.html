@@ -29,26 +29,44 @@
 <div class="tab-content pt-2">
 
   <div class="tab-pane fade show active" id="device">
-    <h5 class="card-title">List of chids</h5>
+    <h5 class="card-title"></h5>
     <div class="list-group col-6">
-      {% for snap in object.annotations %}
-      {% if snap.type == 0 %}
-      <div class="list-group-item">
-        <div class="d-flex w-100 justify-content-between">
-          <h5 class="mb-1"></h5>
-          <small class="text-muted">
-	    {{ snap.created }}
-	  </small>
-        </div>
-        <p class="mb-1">
-          {{ snap.key }}<br />
-        </p>
-        <small class="text-muted">
-	  <a href="{% url 'device:details' snap.value %}">{{ snap.value }}</a>
-        </small>
-      </div>
-      {% endif %}
-      {% endfor %}
+      <table class="table">
+        <thead>
+          <tr>
+            <th scope="col" data-sortable="">
+              {% trans "Type" %}
+            </th>
+            <th scope="col" data-sortable="">
+              {% trans "Identificator" %}
+            </th>
+            <th scope="col" data-sortable="">
+              {% trans "Data" %}
+            </th>
+          </tr>
+        </thead>
+        {% for snap in object.annotations %}
+        <tbody>
+        {% if snap.type == 0 %}
+          <tr>
+            <td>
+              {{ snap.key }}
+            </td>
+            <td>
+              <small class="text-muted">
+                <a href="{% url 'device:details' snap.value %}">{{ snap.value }}</a>
+              </small>
+            </td>
+            <td>
+              <small class="text-muted">
+		{{ snap.created }}
+              </small>
+            </td>
+          </tr>
+        {% endif %}
+        </tbody>
+        {% endfor %}
+      </table>
     </div>
   </div>
   <div class="tab-pane fade" id="tag">
@@ -97,7 +115,7 @@
     if (hash) {
       // Buscar el botón o enlace que corresponde al hash y activarlo
       const tabTrigger = document.querySelector(`[data-bs-target="${hash}"]`);
-      
+
       if (tabTrigger) {
         // Crear una instancia de tab de Bootstrap para activar el tab
         const tab = new bootstrap.Tab(tabTrigger);
