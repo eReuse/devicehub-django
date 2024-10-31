@@ -61,5 +61,5 @@ class Command(BaseCommand):
                 if settings.DEBUG:
                     logger.exception("%s", err)
                 snapshot_id = s.get("uuid", "")
-                txt = "It is not possible to parse snapshot: %s."
+                txt = "It is not possible to parse snapshot: %s"
                 logger.error(txt, snapshot_id)
