@@ -4,7 +4,7 @@ services:
     build:
       dockerfile: docker/devicehub-django.Dockerfile
     environment:
-      - DEBUG=true
+      - DEBUG=${DEBUG:-false}
       - DOMAIN=${DOMAIN:-localhost}
       - ALLOWED_HOSTS=${ALLOWED_HOSTS:-$DOMAIN}
       - DEMO=${DEMO:-false}
