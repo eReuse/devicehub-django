@@ -88,7 +88,7 @@ def create_annotation(doc, user, commit=False):
         )
 
         if annotation:
-            txt = "Snapshot %s exist as annotation !!"
+            txt = "Warning: Snapshot %s already registered (annotation exists)"
             logger.warning(txt, doc["uuid"])
             return annotation
 

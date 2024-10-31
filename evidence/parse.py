@@ -90,7 +90,7 @@ class Build:
         )
 
         if annotation:
-            txt = "Warning: Snapshot %s exist as annotation !!"
+            txt = "Warning: Snapshot %s already registered (annotation exists)"
             logger.warning(txt, self.uuid)
             return
 
