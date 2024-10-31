@@ -88,8 +88,8 @@ def create_annotation(doc, user, commit=False):
         )
 
         if annotation:
-            txt = "Warning: Snapshot {} exist as annotation !!".format(doc["uuid"])
-            logger.exception(txt)
+            txt = "Snapshot %s exist as annotation !!"
+            logger.warning(txt, doc["uuid"])
             return annotation
 
         return Annotation.objects.create(**data)

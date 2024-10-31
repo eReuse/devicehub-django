@@ -1,4 +1,5 @@
 import json
+import logging
 import numpy as np
 
 from datetime import datetime
@@ -6,6 +7,9 @@ from dmidecode import DMIParse
 from json_repair import repair_json
 
 from utils.constants import CHASSIS_DH, DATASTORAGEINTERFACE
+
+
+logger = logging.getLogger('django')
 
 
 def get_lshw_child(child, nets, component):
@@ -483,12 +487,12 @@ class ParseSnapshot:
         if isinstance(x, str):
             try:
                 try:
-                    hw = json.loads(lshw)
+                    hw = json.loads(x)
                 except json.decoder.JSONDecodeError:
-                    hw = json.loads(repair_json(lshw))
+                    hw = json.loads(repair_json(x))
                 return hw
             except Exception as ss:
-                print("WARNING!! {}".format(ss))
+                logger.warning("%s", ss)
                 return {}
         return x
 
@@ -497,5 +501,5 @@ class ParseSnapshot:
             return self._errors
 
         logger.error(txt)
-        self._errors.append(txt)
+        self._errors.append("%s", txt)
 

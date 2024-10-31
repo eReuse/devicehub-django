@@ -36,10 +36,8 @@ class Command(BaseCommand):
                 continue
             user = institution.user_set.filter(is_admin=True).first()
             if not user:
-                txt = "Error No there are Admins for the institution: {}".format(
-                    institution.name
-                )
-                logger.exception(txt)
+                txt = "No there are Admins for the institution: %s"
+                logger.warning(txt, institution.name)
                 continue
 
             snapshots_path = os.path.join(filepath, "snapshots")
@@ -74,13 +72,12 @@ class Command(BaseCommand):
                 create_index(s, user)
                 create_annotation(s, user, commit=True)
             except Exception as err:
-                txt = "Error: in placeholder {} \n{}".format(f_path, err)
-                logger.exception(txt)
+                txt = "In placeholder %s \n%s"
+                logger.warning(txt, f_path, err)
                 
     def build_snapshot(self, s, user, f_path):
             try:
                 Build(s, user)
-            except Exception as err:
-                txt = "Error: in Snapshot {} \n{}".format(f_path, err)
-                logger.exception(txt)
-
+            except Exception:
+                txt = "Error: in Snapshot {}".format(f_path)
+                logger.error(txt)

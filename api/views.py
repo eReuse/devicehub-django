@@ -5,6 +5,7 @@ import logging
 from uuid import uuid4
 
 from django.urls import reverse_lazy
+from django.conf import settings
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.utils.translation import gettext_lazy as _
@@ -41,20 +42,20 @@ class ApiMixing(View):
         # Authentication
         auth_header = self.request.headers.get('Authorization')
         if not auth_header or not auth_header.startswith('Bearer '):
-            logger.exception("Invalid or missing token {}".format(auth_header))
+            logger.error("Invalid or missing token %s", auth_header)
             return JsonResponse({'error': 'Invalid or missing token'}, status=401)
 
         token = auth_header.split(' ')[1].strip("'").strip('"')
         try:
             uuid.UUID(token)
         except Exception:
-            logger.exception("Invalid token {}".format(token))
+            logger.error("Invalid or missing token %s", token)
             return JsonResponse({'error': 'Invalid or missing token'}, status=401)
 
         self.tk = Token.objects.filter(token=token).first()
 
         if not self.tk:
-            logger.exception("Invalid or missing token {}".format(token))
+            logger.error("Invalid or missing token %s", token)
             return JsonResponse({'error': 'Invalid or missing token'}, status=401)
 
 
@@ -72,7 +73,8 @@ class NewSnapshotView(ApiMixing):
         try:
             data = json.loads(request.body)
         except json.JSONDecodeError:
-            logger.exception("Invalid Snapshot of user {}".format(self.tk.owner))
+            txt = "error: the snapshot is not a json"
+            logger.error("%s", txt)
             return JsonResponse({'error': 'Invalid JSON'}, status=500)
 
         # Process snapshot
@@ -85,7 +87,7 @@ class NewSnapshotView(ApiMixing):
 
         if not data.get("uuid"):
             txt = "error: the snapshot not have uuid"
-            logger.exception(txt)
+            logger.error("%s", txt)
             return JsonResponse({'status': txt}, status=500)
 
         exist_annotation = Annotation.objects.filter(
@@ -94,15 +96,20 @@ class NewSnapshotView(ApiMixing):
 
         if exist_annotation:
             txt = "error: the snapshot {} exist".format(data['uuid'])
-            logger.exception(txt)
+            logger.warning("%s", txt)
             return JsonResponse({'status': txt}, status=500)
 
 
         try:
             Build(data, self.tk.owner)
         except Exception as err:
-            logger.exception(err)
-            return JsonResponse({'status': f"fail: {err}"}, status=500)
+            if settings.DEBUG:
+                logger.exception("%s", err)
+            snapshot_id = data.get("uuid", "")
+            txt = "It is not possible to parse snapshot: %s."
+            logger.error(txt, snapshot_id)
+            text = "fail: It is not possible to parse snapshot"
+            return JsonResponse({'status': text}, status=500)
 
         annotation = Annotation.objects.filter(
             uuid=data['uuid'],
@@ -114,7 +121,7 @@ class NewSnapshotView(ApiMixing):
 
 
         if not annotation:
-            logger.exception("Error: No annotation for uuid: {}".format(data["uuid"]))
+            logger.error("Error: No annotation for uuid: %s", data["uuid"])
             return JsonResponse({'status': 'fail'}, status=500)
 
         url_args = reverse_lazy("device:details", args=(annotation.value,))
@@ -286,7 +293,7 @@ class AddAnnotationView(ApiMixing):
             key = data["key"]
             value = data["value"]
         except Exception:
-            logger.exception("Invalid Snapshot of user {}".format(self.tk.owner))
+            logger.error("Invalid Snapshot of user %s", self.tk.owner)
             return JsonResponse({'error': 'Invalid JSON'}, status=500)
 
         Annotation.objects.create(

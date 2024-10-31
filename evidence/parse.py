@@ -90,8 +90,8 @@ class Build:
         )
 
         if annotation:
-            txt = "Warning: Snapshot {} exist as annotation !!".format(self.uuid)
-            logger.exception(txt)
+            txt = "Warning: Snapshot %s exist as annotation !!"
+            logger.warning(txt, self.uuid)
             return
 
         for k, v in self.algorithms.items():
