@@ -33,7 +33,7 @@ def get_mac(lshw):
     try:
         get_network_cards(hw, nets)
     except Exception as ss:
-        print("WARNING!! {}".format(ss))
+        logger.warning("%s", ss)
         return
 
     nets_sorted = sorted(nets, key=lambda x: x['businfo'])
@@ -135,9 +135,7 @@ class Build:
         # mac = get_mac2(hwinfo_raw) or ""
         mac = get_mac(lshw) or ""
         if not mac:
-            print(f"WARNING: Could not retrieve MAC address in snapshot {snapshot['uuid']}" )
-            # TODO generate system annotation for that snapshot
-        else:
-            print(f"{manufacturer}{model}{chassis}{serial_number}{sku}{mac}")
+            txt = "Could not retrieve MAC address in snapshot %s"
+            logger.warning(txt, snapshot['uuid'])
 
         return f"{manufacturer}{model}{chassis}{serial_number}{sku}{mac}"
