@@ -122,7 +122,7 @@
             </div>
             <div class="info-row row">
               <div class="col-md-4 info-label">Serial Number</div>
-              <div class="col-md-8 info-value">{{ object.last_evidence.doc.device.serialNumber|default:'' }}</div>
+              <div class="col-md-8 info-value">{{object.serial_number|default:'' }}</div>
             </div>
           {% endif %}
         </div>
