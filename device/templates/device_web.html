@@ -120,10 +120,12 @@
               <div class="col-md-4 info-label">Model</div>
               <div class="col-md-8 info-value">{{ object.model|default:'' }}</div>
             </div>
-            <div class="info-row row">
-              <div class="col-md-4 info-label">Serial Number</div>
-              <div class="col-md-8 info-value">{{object.serial_number|default:'' }}</div>
-            </div>
+            {% if user.is_authenticated %}
+              <div class="info-row row">
+                <div class="col-md-4 info-label">Serial Number</div>
+                <div class="col-md-8 info-value">{{ object.serial_number|default:'' }}</div>
+              </div>
+            {% endif %}
           {% endif %}
         </div>
 
@@ -136,28 +138,28 @@
           {% endfor %}
         </div>
       </div>
-
-      <h2 class="section-title mt-5">Components</h2>
-      <div class="row">
-        {% for component in object.components %}
-          <div class="col-md-6 mb-3">
-            <div class="card component-card">
-              <div class="card-body">
-                <h5 class="card-title">{{ component.type }}</h5>
-                <p class="card-text">
-                  {% for component_key, component_value in component.items %}
-                    {% if component_key not in 'actions,type' %}
-                      <strong>{{ component_key }}:</strong> {{ component_value }}<br />
-                    {% endif %}
-                  {% endfor %}
-                </p>
+      {% if user.is_authenticated %}
+        <h2 class="section-title mt-5">Components</h2>
+        <div class="row">
+          {% for component in object.components %}
+            <div class="col-md-6 mb-3">
+              <div class="card component-card">
+                <div class="card-body">
+                  <h5 class="card-title">{{ component.type }}</h5>
+                  <p class="card-text">
+                    {% for component_key, component_value in component.items %}
+                      {% if component_key not in 'actions,type' %}
+                        <strong>{{ component_key }}:</strong> {{ component_value }}<br />
+                      {% endif %}
+                    {% endfor %}
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
-        {% endfor %}
-      </div>
+          {% endfor %}
+        </div>
+      {% endif %}
     </div>
-
     <footer>
       <p>
         &copy;{% now 'Y' %} eReuse. All rights reserved.
