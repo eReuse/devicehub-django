@@ -58,8 +58,6 @@ class Command(BaseCommand):
                 self.devices.append(Build(s, self.user))
                 move_json(p, self.user.institution.name)
             except Exception as err:
-                if settings.DEBUG:
-                    logger.exception("%s", err)
                 snapshot_id = s.get("uuid", "")
-                txt = "It is not possible to parse snapshot: %s"
+                txt = "Could not parse snapshot: %s"
                 logger.error(txt, snapshot_id)
