@@ -1,4 +1,5 @@
 import logging
+from django.conf import settings
 
 # Colors
 RED = "\033[91m"
@@ -24,6 +25,11 @@ class CustomFormatter(logging.Formatter):
             record.msg = self.highlight_args(record.msg, record.args, color)
             record.args = ()
             
+        # provide trace when DEBUG config
+        if settings.DEBUG:
+            import traceback
+            print(traceback.format_exc())
+
         return super().format(record)
 
     def highlight_args(self, message, args, color):

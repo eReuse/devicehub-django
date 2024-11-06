@@ -18,6 +18,8 @@ deploy() {
 
         if [ "${DEBUG:-}" = 'true' ]; then
                 ./manage.py print_settings
+        else
+                echo "DOMAIN: ${DOMAIN}"
         fi
 
         # detect if existing deployment (TODO only works with sqlite)
