@@ -89,7 +89,7 @@ class Evidence:
         return self.components
 
     def get_manufacturer(self):
-        if self.is_new_snapshot():
+        if self.is_web_snapshot():
             kv = self.doc.get('kv', {})
             if len(kv) < 1:
                 return ""
@@ -101,7 +101,7 @@ class Evidence:
         return self.dmi.manufacturer().strip()
 
     def get_model(self):
-        if self.is_new_snapshot():
+        if self.is_web_snapshot():
             kv = self.doc.get('kv', {})
             if len(kv) < 2:
                 return ""
@@ -144,5 +144,5 @@ class Evidence:
     def is_legacy(self):
         return self.doc.get("software") != "workbench-script"
 
-    def is_new_snapshot(self):
+    def is_web_snapshot(self):
         return self.doc.get("type") == "WebSnapshot"

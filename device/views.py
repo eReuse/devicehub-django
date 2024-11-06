@@ -140,7 +140,7 @@ class PublicDeviceWebView(TemplateView):
             'shortid': self.object.shortid,
             'uuids': self.object.uuids,
             'hids': self.object.hids,
-            'components': self.remove_serial_numnber_from(self.object.components),
+            'components': self.remove_serial_number_from(self.object.components),
         }
 
     @property
@@ -150,7 +150,7 @@ class PublicDeviceWebView(TemplateView):
             'components': self.object.components,
         }
 
-    def remove_serial_numnber_from(self, components):
+    def remove_serial_number_from(self, components):
         for component in components:
             if 'serial_number' in component:
                 del component['SerialNumber']
