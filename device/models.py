@@ -29,7 +29,7 @@ class Device:
         self.shortid = self.pk[:6].upper()
         self.algorithm = None
         self.owner = None
-        self.annotations =  []
+        self.annotations = []
         self.hids = []
         self.uuids = []
         self.evidences = []
@@ -108,7 +108,7 @@ class Device:
             return
         annotation = annotations.first()
         self.last_evidence = Evidence(annotation.uuid)
-        
+
     def is_eraseserver(self):
         if not self.uuids:
             self.get_uuids()
@@ -120,7 +120,7 @@ class Device:
             owner=self.owner,
             type=Annotation.Type.ERASE_SERVER
         ).first()
-        
+
         if annotation:
             return True
         return False
@@ -129,7 +129,8 @@ class Device:
         return self.uuids[0]
 
     def get_lots(self):
-        self.lots = [x.lot for x in DeviceLot.objects.filter(device_id=self.id)]
+        self.lots = [
+            x.lot for x in DeviceLot.objects.filter(device_id=self.id)]
 
     @classmethod
     def get_unassigned(cls, institution, offset=0, limit=None):
@@ -178,7 +179,6 @@ class Device:
         devices = [cls(id=x[0]) for x in annotations]
         count = cls.get_unassigned_count(institution)
         return devices, count
-
 
     @classmethod
     def get_unassigned_count(cls, institution):
@@ -278,6 +278,12 @@ class Device:
         if not self.last_evidence:
             self.get_last_evidence()
         return self.last_evidence.get_manufacturer()
+
+    @property
+    def serial_number(self):
+        if not self.last_evidence:
+            self.get_last_evidence()
+        return self.last_evidence.get_serial_number()
 
     @property
     def type(self):

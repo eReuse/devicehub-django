@@ -120,10 +120,12 @@
               <div class="col-md-4 info-label">Model</div>
               <div class="col-md-8 info-value">{{ object.model|default:'' }}</div>
             </div>
-            <div class="info-row row">
-              <div class="col-md-4 info-label">Serial Number</div>
-              <div class="col-md-8 info-value">{{ object.last_evidence.doc.device.serialNumber|default:'' }}</div>
-            </div>
+            {% if user.is_authenticated %}
+              <div class="info-row row">
+                <div class="col-md-4 info-label">Serial Number</div>
+                <div class="col-md-8 info-value">{{ object.serial_number|default:'' }}</div>
+              </div>
+            {% endif %}
           {% endif %}
         </div>
 
@@ -136,7 +138,6 @@
           {% endfor %}
         </div>
       </div>
-
       <h2 class="section-title mt-5">Components</h2>
       <div class="row">
         {% for component in object.components %}
@@ -147,7 +148,9 @@
                 <p class="card-text">
                   {% for component_key, component_value in component.items %}
                     {% if component_key not in 'actions,type' %}
-                      <strong>{{ component_key }}:</strong> {{ component_value }}<br />
+                      {% if component_key != 'serialNumber' or user.is_authenticated %}
+                        <strong>{{ component_key }}:</strong> {{ component_value }}<br />
+                      {% endif %}
                     {% endif %}
                   {% endfor %}
                 </p>
@@ -157,10 +160,9 @@
         {% endfor %}
       </div>
     </div>
-
     <footer>
       <p>
-        &copy;{% now 'Y' %} eReuse. All rights reserved.
+        &copy;{% now 'Y' %}eReuse. All rights reserved.
       </p>
     </footer>
 
