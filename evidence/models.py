@@ -11,7 +11,7 @@ from user.models import User, Institution
 
 class Annotation(models.Model):
     class Type(models.IntegerChoices):
-        SYSTEM= 0, "System"
+        SYSTEM = 0, "System"
         USER = 1, "User"
         DOCUMENT = 2, "Document"
         ERASE_SERVER = 3, "EraseServer"
@@ -19,14 +19,16 @@ class Annotation(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     uuid = models.UUIDField()
     owner = models.ForeignKey(Institution, on_delete=models.CASCADE)
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
-    type =  models.SmallIntegerField(choices=Type)
+    user = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True)
+    type = models.SmallIntegerField(choices=Type)
     key = models.CharField(max_length=STR_EXTEND_SIZE)
     value = models.CharField(max_length=STR_EXTEND_SIZE)
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=["type", "key", "uuid"], name="unique_type_key_uuid")
+            models.UniqueConstraint(
+                fields=["type", "key", "uuid"], name="unique_type_key_uuid")
         ]
 
 
@@ -37,8 +39,8 @@ class Evidence:
         self.doc = None
         self.created = None
         self.dmi = None
-        self.annotations =  []
-        self.components =  []
+        self.annotations = []
+        self.components = []
         self.default = "n/a"
 
         self.get_owner()
@@ -87,7 +89,7 @@ class Evidence:
         return self.components
 
     def get_manufacturer(self):
-        if self.doc.get("type") == "WebSnapshot":
+        if self.is_web_snapshot():
             kv = self.doc.get('kv', {})
             if len(kv) < 1:
                 return ""
@@ -99,7 +101,7 @@ class Evidence:
         return self.dmi.manufacturer().strip()
 
     def get_model(self):
-        if self.doc.get("type") == "WebSnapshot":
+        if self.is_web_snapshot():
             kv = self.doc.get('kv', {})
             if len(kv) < 2:
                 return ""
@@ -122,6 +124,11 @@ class Evidence:
                 return k
         return ""
 
+    def get_serial_number(self):
+        if self.is_legacy():
+            return self.doc['device']['serialNumber']
+        return self.dmi.serial_number().strip()
+
     @classmethod
     def get_all(cls, user):
         return Annotation.objects.filter(
@@ -136,3 +143,6 @@ class Evidence:
 
     def is_legacy(self):
         return self.doc.get("software") != "workbench-script"
+
+    def is_web_snapshot(self):
+        return self.doc.get("type") == "WebSnapshot"
