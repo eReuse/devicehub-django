@@ -37,11 +37,7 @@ class PublicDeviceWebViewTests(TestCase):
         self.assertContains(response, 'Computer')
         self.assertContains(response, self.test_id)
         self.assertNotContains(response, 'Serial Number')
-        self.assertNotContains(response, 'Components')
-        self.assertNotContains(response, 'CPU')
-        self.assertNotContains(response, 'Intel')
-        self.assertNotContains(response, 'RAM')
-        self.assertNotContains(response, 'Kingston')
+        self.assertNotContains(response, 'serialNumber')
 
     @patch('device.views.Device')
     def test_html_response_authenticated(self, MockDevice):
@@ -77,8 +73,8 @@ class PublicDeviceWebViewTests(TestCase):
         self.assertEqual(json_data['shortid'], self.test_id[:6].upper())
         self.assertEqual(json_data['uuids'], [])
         self.assertEqual(json_data['hids'], ['hid1', 'hid2'])
-        self.assertNotIn('components', json_data)
         self.assertNotIn('serial_number', json_data)
+        self.assertNotIn('serialNumber', json_data)
 
     @patch('device.views.Device')
     def test_json_response_authenticated(self, MockDevice):
@@ -99,12 +95,14 @@ class PublicDeviceWebViewTests(TestCase):
             {
                 'type': 'CPU',
                 'model': 'Intel i7',
-                'manufacturer': 'Intel'
+                'manufacturer': 'Intel',
+                'serialNumber': 'SN12345678'
             },
             {
                 'type': 'RAM',
                 'size': '8GB',
-                'manufacturer': 'Kingston'
+                'manufacturer': 'Kingston',
+                'serialNumber': 'SN87654321'
             }
         ])
         self.assertEqual(json_data['serial_number'], 'SN123456')

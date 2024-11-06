@@ -28,12 +28,14 @@ class TestDevice(Device):
             {
                 'type': 'CPU',
                 'model': 'Intel i7',
-                'manufacturer': 'Intel'
+                'manufacturer': 'Intel',
+                'serialNumber': 'SN12345678'
             },
             {
                 'type': 'RAM',
                 'size': '8GB',
-                'manufacturer': 'Kingston'
+                'manufacturer': 'Kingston',
+                'serialNumber': 'SN87654321'
             }
         ]
         self.last_evidence = self._evidence
