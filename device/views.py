@@ -140,14 +140,21 @@ class PublicDeviceWebView(TemplateView):
             'shortid': self.object.shortid,
             'uuids': self.object.uuids,
             'hids': self.object.hids,
+            'components': self.remove_serial_numnber_from(self.object.components),
         }
 
     @property
     def authenticated_fields(self):
         return {
+            'serial_number': self.object.serial_number,
             'components': self.object.components,
-            'serial_number': self.object.serial_number
         }
+
+    def remove_serial_numnber_from(self, components):
+        for component in components:
+            if 'serial_number' in component:
+                del component['SerialNumber']
+        return components
 
     def get_device_data(self):
         data = self.public_fields
