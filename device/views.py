@@ -16,6 +16,7 @@ from evidence.models import Annotation
 from lot.models import LotTag
 from device.models import Device
 from device.forms import DeviceFormSet
+from device.environmental_impact.calculator import get_device_environmental_impact
 
 
 class NewDeviceView(DashboardView, FormView):
@@ -107,6 +108,7 @@ class DetailsView(DashboardView, TemplateView):
             'object': self.object,
             'snapshot': self.object.get_last_evidence(),
             'lot_tags': lot_tags,
+            'impact': get_device_environmental_impact()
         })
         return context
 
