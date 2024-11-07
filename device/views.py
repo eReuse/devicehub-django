@@ -21,9 +21,7 @@ from evidence.models import UserProperty, SystemProperty
 from lot.models import LotTag
 from device.models import Device
 from device.forms import DeviceFormSet
-if settings.DPP:
-    from dpp.models import Proof
-    from dpp.api_dlt import PROOF_TYPE
+from device.environmental_impact.calculator import get_device_environmental_impact
 
 
 class DeviceLogMixin(DashboardView):
@@ -115,11 +113,7 @@ class DetailsView(DashboardView, TemplateView):
             'object': self.object,
             'snapshot': last_evidence,
             'lot_tags': lot_tags,
-            'dpps': dpps,
-            "state_definitions": state_definitions,
-            "device_states": device_states,
-            "device_logs": device_logs,
-            "device_notes": device_notes,
+            'impact': get_device_environmental_impact()
         })
         return context
 
