@@ -19,15 +19,21 @@ DeviceHub primarily works with three types of objects:
 
 ## Installation
 
+Assuming a host with debian stable
+
 ### Quickstart
 
-For a quick start with dummy data, DeviceHub can be run directly with docker. To do so, from the root of the project run:
+For a quick start with dummy data in localhost, DeviceHub can be run directly with docker. To do so, from the root of the project run:
 
 ```bash
 ./docker-reset.sh
 ```
 
-Also there is a demo running in http://demo.ereuse.org/. The token for accessing the instance will be always: `token=5018dd65-9abd-4a62-8896-80f34ac66150`, but the instance will be reset every day a t 4 am.
+Note that everytime you perform the `docker-reset.sh` script, all data is lost.
+
+Also there is a demo running in http://demo.ereuse.org/. The token for accessing the instance will be always: `token=5018dd65-9abd-4a62-8896-80f34ac66150`, but the instance will be reset every day at 4 am.
+
+For production needs, review and change .env file properly
 
 ## Running from baremetal
 
@@ -73,7 +79,7 @@ DOMAIN=localhost
 DEBUG=True
 ```
 
-Now, expand the enviroment variables:
+Now, expand the environment variables:
 
 ```bash
 source .env
@@ -104,14 +110,13 @@ Finally, we can run the DeviceHub service by running:
 python manage.py runserver
 ```
 
-## Clean up
+### Clean up
 
 To clean up the deployment and start fresh, just delete Django's database:
 
 ```bash
 rm db/*
 ```
-
 
 ## License
 
