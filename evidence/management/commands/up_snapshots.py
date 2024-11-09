@@ -47,10 +47,23 @@ class Command(BaseCommand):
                 self.open(filepath)
 
     def open(self, filepath):
-        with open(filepath, 'r') as file:
-            content = json.loads(file.read())
-            path_name = save_in_disk(content, self.user.institution.name)
-            self.snapshots.append((content, path_name))
+        try:
+            with open(filepath, 'r') as file:
+                content = json.loads(file.read())
+                path_name = save_in_disk(content, self.user.institution.name)
+
+                self.snapshots.append((content, path_name))
+
+        except json.JSONDecodeError as e:
+            logger.error("JSON decode error in file %s: %s", filepath, e)
+            raise ValueError(f"Invalid JSON format in file {filepath}") from e
+        except FileNotFoundError as e:
+            logger.error("File not found: %s", filepath)
+            raise FileNotFoundError(f"File not found: {filepath}") from e
+        #or we cath'em all
+        except Exception as e:
+            logger.exception("Unexpected error when opening file %s: %s", filepath, e)
+            raise Exception(f"Unexpected error when opening file {filepath}") from e
 
     def parsing(self):
         for s, p in self.snapshots:
@@ -58,6 +71,8 @@ class Command(BaseCommand):
                 self.devices.append(Build(s, self.user))
                 move_json(p, self.user.institution.name)
             except Exception as err:
+                if settings.DEBUG:
+                    logger.exception("%s", err)
                 snapshot_id = s.get("uuid", "")
-                txt = "Could not parse snapshot: %s"
+                txt = "It is not possible to parse snapshot: %s"
                 logger.error(txt, snapshot_id)
