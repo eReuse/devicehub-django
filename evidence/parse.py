@@ -4,6 +4,7 @@ import logging
 
 from dmidecode import DMIParse
 from json_repair import repair_json
+from evidence.parse_details import get_lshw_child
 
 from evidence.models import Annotation
 from evidence.xapian import index
@@ -11,6 +12,23 @@ from utils.constants import CHASSIS_DH
 
 
 logger = logging.getLogger('django')
+
+def get_mac(lshw):
+    try:
+        if type(lshw) is dict:
+            hw = lshw
+        else:
+            hw = json.loads(lshw)
+    except json.decoder.JSONDecodeError:
+        hw = json.loads(repair_json(lshw))
+
+    networks = []
+    get_lshw_child(hw, networks, 'network')
+
+    if nets_sorted:
+        mac = nets_sorted[0]['serial']
+        logger.debug("The snapshot has the following MAC: %s" , mac)
+        return mac
 
 
 def get_network_cards(child, nets):
