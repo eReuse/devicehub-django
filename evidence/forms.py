@@ -38,10 +38,9 @@ class UploadForm(forms.Form):
                     raise ValidationError(              
                         _("The snapshot already exists"),
                         code="duplicate_snapshot",
-                        params={"file_name": file_name},
                     )
                 
-            #Caught any error and display it as Validation Error so the Form handles it
+            #Catch any error and display it as Validation Error so the Form handles it
             except Exception as e:
                 raise ValidationError(
                     _("Error on '%(file_name)s': %(error)s"),

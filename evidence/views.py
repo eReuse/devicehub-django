@@ -51,6 +51,7 @@ class UploadView(DashboardView, FormView):
         return response
 
     def form_invalid(self, form):
+        #TODO: change file_input field class to "is-invalid" if any errors occur
         response = super().form_invalid(form)
         return response
 
