@@ -130,7 +130,15 @@ class ImportForm(forms.Form):
         data = self.cleaned_data["file_import"]
 
         self.file_name = data.name
-        df = pd.read_excel(data)
+
+        try:
+            df = pd.read_excel(data)
+        except Exception as e:
+            raise ValidationError(
+                _("Error on '%(file_name)s': Invalid File"),
+                params={"file_name": self.file_name}
+            )
+
         df.fillna('', inplace=True)
 
         data_pd = df.to_dict(orient='index')
