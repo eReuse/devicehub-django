@@ -56,14 +56,14 @@ class Command(BaseCommand):
 
         except json.JSONDecodeError as e:
             logger.error("JSON decode error in file %s: %s", filepath, e)
-            raise ValueError(f"Invalid JSON format in file {filepath}") from e
+            raise ValueError(f"Invalid JSON format in file. Check for file integrity.") from e
         except FileNotFoundError as e:
             logger.error("File not found: %s", filepath)
-            raise FileNotFoundError(f"File not found: {filepath}") from e
+            raise FileNotFoundError(f"File not found") from e
         #or we cath'em all
         except Exception as e:
             logger.exception("Unexpected error when opening file %s: %s", filepath, e)
-            raise Exception(f"Unexpected error when opening file {filepath}") from e
+            raise Exception(f"Unexpected error when opening file") from e
 
     def parsing(self):
         for s, p in self.snapshots:

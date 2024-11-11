@@ -33,13 +33,21 @@ class UploadForm(forms.Form):
                 exist_annotation = Annotation.objects.filter(
                     uuid=file_json['uuid']
                 ).first()
-
+    
                 if exist_annotation:
-                    raise ValidationError("error: {} exist".format(file_name))
-
-            except Exception:
-                raise ValidationError("error in: {}".format(file_name))
-
+                    raise ValidationError(              
+                        _("The snapshot already exists"),
+                        code="duplicate_snapshot",
+                        params={"file_name": file_name},
+                    )
+                
+            #Caught any error and display it as Validation Error so the Form handles it
+            except Exception as e:
+                raise ValidationError(
+                    _("Error on '%(file_name)s': %(error)s"),
+                    code="error",
+                    params={"file_name": file_name, "error": getattr(e, 'message', str(e))},
+                )
             self.evidences.append((file_name, file_json))
 
         return True
