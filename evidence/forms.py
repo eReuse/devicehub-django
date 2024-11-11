@@ -15,7 +15,7 @@ from utils.save_snapshots import move_json, save_in_disk
 class UploadForm(forms.Form):
     evidence_file = MultipleFileField(label=_("File"))
 
-    def clean(self):
+    def clean_evidence_file(self):
         self.evidences = []
         data = self.cleaned_data.get('evidence_file')
         if not data:
