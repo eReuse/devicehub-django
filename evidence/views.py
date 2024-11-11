@@ -1,5 +1,6 @@
 import json
 
+from django.contrib import messages
 from urllib.parse import urlparse
 from django.http import HttpResponse
 from django.utils.translation import gettext_lazy as _
@@ -47,11 +48,11 @@ class UploadView(DashboardView, FormView):
 
     def form_valid(self, form):
         form.save(self.request.user)
+        messages.success(self.request, _("Evidence uploaded successfully."))
         response = super().form_valid(form)
         return response
 
     def form_invalid(self, form):
-        #TODO: change file_input field class to "is-invalid" if any errors occur
         response = super().form_invalid(form)
         return response
 
@@ -71,6 +72,7 @@ class ImportView(DashboardView, FormView):
 
     def form_valid(self, form):
         form.save()
+        messages.success(self.request, _("Evidence imported successfully."))
         response = super().form_valid(form)
         return response
 
