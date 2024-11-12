@@ -127,7 +127,6 @@ class UserTagForm(forms.Form):
                 institution=self.user.institution
             )
 
-
 class ImportForm(forms.Form):
     file_import = forms.FileField(label=_("File to import"))
 

@@ -122,7 +122,6 @@ class NewSnapshotView(ApiMixing):
             owner=self.tk.owner.institution
         ).first()
 
-
         if not prop:
             logger.error("Error: No property  for uuid: %s", ev_uuid)
             return JsonResponse({'status': 'fail'}, status=500)

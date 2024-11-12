@@ -85,11 +85,11 @@ class Device:
             key__in=algos,
         ).values_list("value", flat=True)))
 
-    def get_evidences(self):
+    def get_properties(self):
         if not self.uuids:
             self.get_uuids()
 
-        self.evidences = [Evidence(u) for u in self.uuids]
+        self.properties = [SystemProperty(u) for u in self.uuids]
 
     def get_last_evidence(self):
         if self.last_evidence:
@@ -103,7 +103,6 @@ class Device:
         if not properties.count():
             return
         prop = properties.first()
-
         self.last_evidence = Evidence(prop.uuid)
 
     def is_eraseserver(self):
