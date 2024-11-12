@@ -4,14 +4,16 @@ import hashlib
 from dmidecode import DMIParse
 from django.db import models
 
+
+from django.db.models import Q
 from utils.constants import STR_EXTEND_SIZE, CHASSIS_DH
 from evidence.xapian import search
 from evidence.parse_details import ParseSnapshot
 from evidence.normal_parse_details import get_inxi, get_inxi_key
 from user.models import User, Institution
 
-
-class Annotation(models.Model):
+#TODO: base class is abstract; revise if should be for query efficiency
+class Property(models.Model):
     class Type(models.IntegerChoices):
         SYSTEM = 0, "System"
         USER = 1, "User"
@@ -32,6 +34,30 @@ class Annotation(models.Model):
             models.UniqueConstraint(
                 fields=["type", "key", "uuid"], name="unique_type_key_uuid")
         ]
+        abstract = True
+
+class SystemProperty(Property):
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                check=~Q(type=1), #Enforce that type is not User
+                name='property_cannot_be_user'
+            ),
+        ]
+
+class UserProperty(Property):
+
+    type = models.SmallIntegerField(default=Property.Type.USER)
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                check=Q(type=1), #Enforce that type is User
+                name='property_needs_to_be_user'
+            ),
+        ]
+
 
 
 class Evidence:
