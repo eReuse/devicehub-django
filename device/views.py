@@ -10,7 +10,7 @@ from django.views.generic.edit import (
 )
 from django.views.generic.base import TemplateView
 from dashboard.mixins import DashboardView, Http403
-from evidence.models import Annotation
+from evidence.models import UserProperty, SystemProperty
 from lot.models import LotTag
 from device.models import Device
 from device.forms import DeviceFormSet
@@ -70,7 +70,7 @@ class EditDeviceView(DashboardView, UpdateView):
     title = _("Update Device")
     breadcrumb = "Device / Update Device"
     success_url = reverse_lazy('dashboard:unassigned_devices')
-    model = Annotation
+    model = SystemProperty
 
     def get_form_kwargs(self):
         pk = self.kwargs.get('pk')
@@ -88,7 +88,7 @@ class DetailsView(DashboardView, TemplateView):
     template_name = "details.html"
     title = _("Device")
     breadcrumb = "Device / Details"
-    model = Annotation
+    model = SystemProperty
 
     def get(self, request, *args, **kwargs):
         self.pk = kwargs['pk']
@@ -152,7 +152,7 @@ class AddUserPropertyView(DashboardView, CreateView):
     title = _("New User Property")
     breadcrumb = "Device / New Property"
     success_url = reverse_lazy('dashboard:unassigned_devices')
-    model = Annotation
+    model = UserProperty
     fields = ("key", "value")
 
     def form_valid(self, form):
@@ -185,21 +185,21 @@ class AddDocumentView(DashboardView, CreateView):
     title = _("New Document")
     breadcrumb = "Device / New document"
     success_url = reverse_lazy('dashboard:unassigned_devices')
-    model = Annotation
+    model = SystemProperty
     fields = ("key", "value")
 
     def form_valid(self, form):
         form.instance.owner = self.request.user.institution
         form.instance.user = self.request.user
         form.instance.uuid = self.annotation.uuid
-        form.instance.type = Annotation.Type.DOCUMENT
+        form.instance.type = Property.Type.DOCUMENT
         response = super().form_valid(form)
         return response
 
     def get_form_kwargs(self):
         pk = self.kwargs.get('pk')
         institution = self.request.user.institution
-        self.annotation = Annotation.objects.filter(
+        self.annotation = SystemProperty.objects.filter(
             owner=institution,
             value=pk,
             type=Annotation.Type.SYSTEM

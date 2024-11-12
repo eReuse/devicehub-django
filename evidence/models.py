@@ -68,22 +68,22 @@ class Evidence:
         self.created = None
         self.dmi = None
         self.inxi = None
-        self.annotations = []
+        self.properties = []
         self.components = []
         self.default = "n/a"
 
         self.get_owner()
         self.get_time()
 
-    def get_annotations(self):
-        self.annotations = Annotation.objects.filter(
+    def get_properties(self):
+        self.properties = SystemProperty.objects.filter(
             uuid=self.uuid
         ).order_by("created")
 
     def get_owner(self):
-        if not self.annotations:
-            self.get_annotations()
-        a = self.annotations.first()
+        if not self.properties:
+            self.get_properties()
+        a = self.properties.first()
         if a:
             self.owner = a.owner
 
@@ -145,7 +145,7 @@ class Evidence:
         self.created = self.doc.get("endTime")
 
         if not self.created:
-            self.created = self.annotations.last().created
+            self.created = self.properties.last().created
 
     def get_components(self):
         if self.is_legacy():
@@ -215,9 +215,9 @@ class Evidence:
 
     @classmethod
     def get_all(cls, user):
-        return Annotation.objects.filter(
+        return SystemProperty.objects.filter(
             owner=user.institution,
-            type=Annotation.Type.SYSTEM,
+            type=SystemProperty.Type.SYSTEM,
             key="hidalgo1",
         ).order_by("-created").values_list("uuid", "created").distinct()
 

@@ -4,11 +4,11 @@ import pandas as pd
 from django import forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
-from utils.device import create_annotation, create_doc, create_index
+from utils.device import create_property, create_doc, create_index
 from utils.forms import MultipleFileField
 from device.models import Device
 from evidence.parse import Build
-from evidence.models import Annotation
+from evidence.models import SystemProperty
 from utils.save_snapshots import move_json, save_in_disk
 
 
@@ -29,13 +29,12 @@ class UploadForm(forms.Form):
 
             try:
                 file_json = json.loads(file_data)
-                build = Build
-                snap = build(file_json, None, check=True)
-                exist_annotation = Annotation.objects.filter(
+                snap = Build(file_json, None, check=True)
+                exists_property = SystemProperty.objects.filter(
                     uuid=snap.uuid
                 ).first()
 
-                if exist_annotation:
+                if exists_property:
                     raise ValidationError(
                         _("The snapshot already exists"),
                         code="duplicate_snapshot",
@@ -89,7 +88,7 @@ class UserTagForm(forms.Form):
         if not data:
             return False
         self.tag = data
-        self.instance = Annotation.objects.filter(
+        self.instance = SystemProperty.objects.filter(
             uuid=self.uuid,
             type=Annotation.Type.SYSTEM,
             key='CUSTOM_ID',
@@ -109,9 +108,9 @@ class UserTagForm(forms.Form):
             self.instance.save()
             return
 
-        Annotation.objects.create(
+        SystemProperty.objects.create(
             uuid=self.uuid,
-            type=Annotation.Type.SYSTEM,
+            type=Property.Type.SYSTEM,
             key='CUSTOM_ID',
             value=self.tag,
             owner=self.user.institution,

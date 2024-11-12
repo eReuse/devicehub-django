@@ -2,7 +2,7 @@ import json
 from django.db import models, connection
 
 from utils.constants import ALGOS
-from evidence.models import Annotation, Evidence
+from evidence.models import SystemProperty, UserProperty, Property,  Evidence
 from lot.models import DeviceLot
 
 
@@ -31,7 +31,7 @@ class Device:
         self.shortid = self.pk[:6].upper()
         self.algorithm = None
         self.owner = None
-        self.annotations = []
+        self.properties = []
         self.hids = []
         self.uuids = []
         self.evidences = []
@@ -40,69 +40,68 @@ class Device:
         self.get_last_evidence()
 
     def initial(self):
-        self.get_annotations()
+        self.get_properties()
         self.get_uuids()
         self.get_hids()
         self.get_evidences()
         self.get_lots()
 
-    def get_annotations(self):
-        if self.annotations:
-            return self.annotations
+    def get_properties(self):
+        if self.properties:
+            return self.properties
 
-        self.annotations = Annotation.objects.filter(
-            type=Annotation.Type.SYSTEM,
+        self.properties = SystemProperty.objects.filter(
+            type=Property.Type.SYSTEM,
             value=self.id
         ).order_by("-created")
 
-        if self.annotations.count():
-            self.algorithm = self.annotations[0].key
-            self.owner = self.annotations[0].owner
+        if self.properties.count():
+            self.algorithm = self.properties[0].key
+            self.owner = self.properties[0].owner
 
-        return self.annotations
+        return self.properties
 
-    def get_user_annotations(self):
+    def get_user_properties(self):
         if not self.uuids:
             self.get_uuids()
 
-        annotations = Annotation.objects.filter(
+        user_properties = UserProperty.objects.filter(
             uuid__in=self.uuids,
             owner=self.owner,
-            type=Annotation.Type.USER
         )
-        return annotations
+        return user_properties
 
     def get_user_documents(self):
         if not self.uuids:
             self.get_uuids()
 
-        annotations = Annotation.objects.filter(
+        properties = SystemProperty.objects.filter(
             uuid__in=self.uuids,
             owner=self.owner,
-            type=Annotation.Type.DOCUMENT
+            type=Property.Type.DOCUMENT
         )
-        return annotations
+        return properties
 
     def get_uuids(self):
-        for a in self.get_annotations():
+        for a in self.get_properties():
             if a.uuid not in self.uuids:
                 self.uuids.append(a.uuid)
 
     def get_hids(self):
-        annotations = self.get_annotations()
+        properties = self.get_properties()
 
         algos = list(ALGOS.keys())
         algos.append('CUSTOM_ID')
-        self.hids = list(set(annotations.filter(
-            type=Annotation.Type.SYSTEM,
+        self.hids = list(set(properties.filter(
+            type=Property.Type.SYSTEM,
             key__in=algos,
         ).values_list("value", flat=True)))
 
-    def get_evidences(self):
+    def get_properties(self):
         if not self.uuids:
             self.get_uuids()
 
-        self.evidences = [Evidence(u) for u in self.uuids]
+        self.properties = [SystemProperty(u) for u in self.uuids]
 
     def get_last_evidence(self):
         if self.last_evidence:
@@ -112,12 +111,11 @@ class Device:
             self.last_evidence = Evidence(self.uuid)
             return
 
-        annotations = self.get_annotations()
-        if not annotations.count():
+        properties = self.get_properties()
+        if not properties.count():
             return
-        annotation = annotations.first()
-        self.last_evidence = Evidence(annotation.uuid)
-        self.uuid = annotation.uuid
+        property = property.first()
+        self.last_evidence = Evidence(property.uuid)
 
     def is_eraseserver(self):
         if not self.uuids:
@@ -125,13 +123,13 @@ class Device:
         if not self.uuids:
             return False
 
-        annotation = Annotation.objects.filter(
+        property = SystemProperty.objects.filter(
             uuid__in=self.uuids,
             owner=self.owner,
-            type=Annotation.Type.ERASE_SERVER
+            type=Property.Type.ERASE_SERVER
         ).first()
 
-        if annotation:
+        if property:
             return True
         return False
 
@@ -176,7 +174,7 @@ class Device:
                 row_num = 1
         """.format(
             institution=institution.id,
-            type=Annotation.Type.SYSTEM,
+            type=Property.Type.SYSTEM,
         )
         if limit:
             sql += " limit {} offset {}".format(int(limit), int(offset))
