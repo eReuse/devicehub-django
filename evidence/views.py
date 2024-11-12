@@ -13,7 +13,7 @@ from django.views.generic.edit import (
 )
 
 from dashboard.mixins import  DashboardView, Http403
-from evidence.models import Evidence, Annotation
+from evidence.models import Property, SystemProperty, UserProperty
 from evidence.forms import (
     UploadForm,
     UserTagForm,
@@ -95,7 +95,7 @@ class EvidenceView(DashboardView, FormView):
         if self.object.owner != self.request.user.institution:
             raise Http403
 
-        self.object.get_annotations()
+        self.object.get_properties()
         return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
@@ -141,8 +141,8 @@ class DownloadEvidenceView(DashboardView, TemplateView):
         return response
 
 
-class AnnotationDeleteView(DashboardView, DeleteView):
-    model = Annotation
+class UserPropertyDeleteView(DashboardView, DeleteView):
+    model = UserProperty
 
     def get(self, request, *args, **kwargs):
         self.pk = kwargs['pk']
@@ -182,7 +182,7 @@ class EraseServerView(DashboardView, FormView):
         if self.object.owner != self.request.user.institution:
             raise Http403
 
-        self.object.get_annotations()
+        self.object.get_properties()
         return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
