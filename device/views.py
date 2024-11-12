@@ -175,10 +175,10 @@ class PublicDeviceWebView(TemplateView):
         return JsonResponse(device_data)
 
 
-class AddAnnotationView(DashboardView, CreateView):
-    template_name = "new_annotation.html"
-    title = _("New annotation")
-    breadcrumb = "Device / New annotation"
+class AddUserPropertyView(DashboardView, CreateView):
+    template_name = "new_user_property.html"
+    title = _("New User Property")
+    breadcrumb = "Device / New Property"
     success_url = reverse_lazy('dashboard:unassigned_devices')
     model = Annotation
     fields = ("key", "value")
