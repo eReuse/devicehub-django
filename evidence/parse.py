@@ -7,7 +7,7 @@ from evidence import old_parse
 from evidence import normal_parse
 from evidence.parse_details import ParseSnapshot
 
-from evidence.models import Annotation
+from evidence.models import SystemProperty
 from evidence.xapian import index
 from evidence.normal_parse_details import get_inxi_key, get_inxi
 from django.conf import settings
@@ -127,7 +127,7 @@ class Build2:
             return
 
         self.index()
-        self.create_annotations()
+        self.create_properties()
         if settings.DPP:
             self.register_device_dlt()
 
@@ -199,24 +199,24 @@ class Build2:
 
         return doc
 
-    def create_annotations(self):
-        annotation = Annotation.objects.filter(
+    def create_properties(self):
+        property = SystemProperty.objects.filter(
                 uuid=self.uuid,
                 owner=self.user.institution,
-                type=Annotation.Type.SYSTEM,
+                type=Property.Type.SYSTEM,
         )
 
-        if annotation:
-            txt = "Warning: Snapshot %s already registered (annotation exists)"
+        if property:
+            txt = "Warning: Snapshot %s already registered (property exists)"
             logger.warning(txt, self.uuid)
             return
 
         for k, v in self.algorithms.items():
-            Annotation.objects.create(
+            SystemProperty.objects.create(
                 uuid=self.uuid,
                 owner=self.user.institution,
                 user=self.user,
-                type=Annotation.Type.SYSTEM,
+                type=Property.Type.SYSTEM,
                 key=k,
                 value=v
             )
