@@ -1,5 +1,5 @@
 from django import forms
-from utils.device import create_annotation, create_doc, create_index
+from utils.device import create_property, create_doc, create_index
 from utils.save_snapshots import move_json, save_in_disk
 
 
