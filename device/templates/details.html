@@ -15,7 +15,7 @@
           <a href="#details" class="nav-link active" data-bs-toggle="tab" data-bs-target="#details">{% trans 'General details' %}</a>
         </li>
         <li class="nav-item">
-          <a href="#annotations" class="nav-link" data-bs-toggle="tab" data-bs-target="#annotations">{% trans 'User annotations' %}</a>
+          <a href="#annotations" class="nav-link" data-bs-toggle="tab" data-bs-target="#annotations">{% trans 'User properties' %}</a>
         </li>
         <li class="nav-item">
           <a href="#documents" class="nav-link" data-bs-toggle="tab" data-bs-target="#documents">{% trans 'Documents' %}</a>
@@ -114,13 +114,13 @@
 
     <div class="tab-pane fade" id="annotations">
       <div class="btn-group mt-1 mb-3">
-        <a href="{% url 'device:add_annotation' object.pk %}" class="btn btn-primary">
+        <a href="{% url 'device:add_user_property' object.pk %}" class="btn btn-primary">
           <i class="bi bi-plus"></i>
-          {% trans 'Add new annotation' %}
+          {% trans 'New user property' %}
         </a>
       </div>
 
-      <h5 class="card-title">{% trans 'Annotations' %}</h5>
+      <h5 class="card-title">{% trans 'User properties' %}</h5>
       <table class="table table-striped">
         <thead>
           <tr>
