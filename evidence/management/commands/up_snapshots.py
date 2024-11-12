@@ -54,23 +54,15 @@ class Command(BaseCommand):
 
                 self.snapshots.append((content, path_name))
 
-        except json.JSONDecodeError as e:
-            logger.error("JSON decode error in file %s: %s", filepath, e)
-            raise ValueError(f"Invalid JSON format in file. Check for file integrity.") from e
-        except FileNotFoundError as e:
-            logger.error("File not found: %s", filepath)
-            raise FileNotFoundError(f"File not found") from e
-        #or we cath'em all
         except Exception as e:
-            logger.exception("Unexpected error when opening file %s: %s", filepath, e)
-            raise Exception(f"Unexpected error when opening file") from e
+            logger.error("Could not open file %s: %s", filepath, e)
 
     def parsing(self):
         for s, p in self.snapshots:
             try:
                 self.devices.append(Build(s, self.user))
                 move_json(p, self.user.institution.name)
-            except Exception as err:
+            except Exception as e:
                 snapshot_id = s.get("uuid", "")
-                txt = "Could not parse snapshot: %s"
-                logger.error(txt, snapshot_id)
+                txt = "Could not parse snapshot %s: %s"
+                logger.error(txt, snapshot_id, e)
