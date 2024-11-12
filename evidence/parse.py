@@ -4,6 +4,7 @@ import logging
 
 from dmidecode import DMIParse
 from json_repair import repair_json
+from evidence.parse_details import get_lshw_child
 
 from evidence.models import Annotation
 from evidence.xapian import index
@@ -12,16 +13,7 @@ from utils.constants import CHASSIS_DH
 
 logger = logging.getLogger('django')
 
-
-def get_network_cards(child, nets):
-    if child['id'] == 'network' and "PCI:" in child.get("businfo"):
-        nets.append(child)
-    if child.get('children'):
-        [get_network_cards(x, nets) for x in child['children']]
-
-
 def get_mac(lshw):
-    nets = []
     try:
         if type(lshw) is dict:
             hw = lshw
@@ -30,18 +22,16 @@ def get_mac(lshw):
     except json.decoder.JSONDecodeError:
         hw = json.loads(repair_json(lshw))
 
-    try:
-        get_network_cards(hw, nets)
-    except Exception as ss:
-        logger.warning("%s", ss)
-        return
+    nets = []
+    get_lshw_child(hw, nets, 'network')
 
     nets_sorted = sorted(nets, key=lambda x: x['businfo'])
-    # This funcion get the network card integrated in motherboard
-    # integrate = [x for x in nets if "pci@0000:00:" in x.get('businfo', '')]
 
     if nets_sorted:
-        return nets_sorted[0]['serial']
+        mac = nets_sorted[0]['serial']
+        logger.debug("The snapshot has the following MAC: %s" , mac)
+        return mac
+
 
 
 class Build:

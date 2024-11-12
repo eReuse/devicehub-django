@@ -47,17 +47,22 @@ class Command(BaseCommand):
                 self.open(filepath)
 
     def open(self, filepath):
-        with open(filepath, 'r') as file:
-            content = json.loads(file.read())
-            path_name = save_in_disk(content, self.user.institution.name)
-            self.snapshots.append((content, path_name))
+        try:
+            with open(filepath, 'r') as file:
+                content = json.loads(file.read())
+                path_name = save_in_disk(content, self.user.institution.name)
+
+                self.snapshots.append((content, path_name))
+
+        except Exception as e:
+            logger.error("Could not open file %s: %s", filepath, e)
 
     def parsing(self):
         for s, p in self.snapshots:
             try:
                 self.devices.append(Build(s, self.user))
                 move_json(p, self.user.institution.name)
-            except Exception as err:
+            except Exception as e:
                 snapshot_id = s.get("uuid", "")
-                txt = "Could not parse snapshot: %s"
-                logger.error(txt, snapshot_id)
+                txt = "Could not parse snapshot %s: %s"
+                logger.error(txt, snapshot_id, e)
