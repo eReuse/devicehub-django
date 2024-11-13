@@ -1,7 +1,7 @@
 from django.db import models, connection
 
 from utils.constants import ALGOS
-from evidence.models import SystemProperty, UserProperty, Property,  Evidence
+from evidence.models import SystemProperty, UserProperty, Property, Evidence
 from lot.models import DeviceLot
 
 
@@ -158,8 +158,8 @@ class Device:
                                 ELSE 3
                             END,
                             t1.created DESC
-                    ) AS row_num
-                FROM evidence_annotation AS t1
+                    ) AS row_num    
+                FROM evidence_systemproperty AS t1
                 LEFT JOIN lot_devicelot AS t2 ON t1.value = t2.device_id
                 WHERE t2.device_id IS NULL
                   AND t1.owner_id = {institution}
@@ -180,12 +180,12 @@ class Device:
 
         sql += ";"
 
-        annotations = []
+        properties = []
         with connection.cursor() as cursor:
             cursor.execute(sql)
-            annotations = cursor.fetchall()
+            properties = cursor.fetchall()
 
-        devices = [cls(id=x[0]) for x in annotations]
+        devices = [cls(id=x[0]) for x in properties]
         count = cls.get_unassigned_count(institution)
         return devices, count
 
@@ -193,7 +193,7 @@ class Device:
     def get_unassigned_count(cls, institution):
 
         sql = """
-            WITH RankedAnnotations AS (
+            WITH RankedProperties AS (
                 SELECT
                     t1.value,
                     t1.key,
@@ -207,30 +207,30 @@ class Device:
                             END,
                             t1.created DESC
                     ) AS row_num
-                FROM evidence_annotation AS t1
+                FROM evidence_systemproperty AS t1
                 LEFT JOIN lot_devicelot AS t2 ON t1.value = t2.device_id
                 WHERE t2.device_id IS NULL
                   AND t1.owner_id = {institution}
-                  AND t1.type = {type}
+                  And t1.type = '{type}'
             )
             SELECT
                 COUNT(DISTINCT value)
             FROM
-                RankedAnnotations
+                RankedProperties
             WHERE
                 row_num = 1
         """.format(
             institution=institution.id,
-            type=Annotation.Type.SYSTEM,
+            type=Property.Type.SYSTEM,
         )
         with connection.cursor() as cursor:
             cursor.execute(sql)
             return cursor.fetchall()[0][0]
 
     @classmethod
-    def get_annotation_from_uuid(cls, uuid, institution):
+    def get_properties_from_uuid(cls, uuid, institution):
         sql = """
-            WITH RankedAnnotations AS (
+            WITH RankedProperties AS (
                 SELECT
                     t1.value,
                     t1.key,
@@ -244,29 +244,29 @@ class Device:
                             END,
                             t1.created DESC
                     ) AS row_num
-                FROM evidence_annotation AS t1
+                FROM evidence_systemproperty AS t1
                 LEFT JOIN lot_devicelot AS t2 ON t1.value = t2.device_id
                 WHERE t2.device_id IS NULL
                   AND t1.owner_id = {institution}
-                  AND t1.type = {type}
+                  AND t1.type = '{type}'
                   AND t1.uuid = '{uuid}'
             )
             SELECT DISTINCT
                 value
             FROM
-                RankedAnnotations
+                RankedProperties
             WHERE
                 row_num = 1;
         """.format(
             uuid=uuid.replace("-", ""),
             institution=institution.id,
-            type=Annotation.Type.SYSTEM,
+            type=Property.Type.SYSTEM,
         )
 
-        annotations = []
+        properties = []
         with connection.cursor() as cursor:
             cursor.execute(sql)
-            annotations = cursor.fetchall()
+            properties = cursor.fetchall()
 
         return cls(id=annotations[0][0])
 

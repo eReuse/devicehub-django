@@ -89,7 +89,8 @@ class SearchView(InventaryMixin):
             uuid = snap["credentialSubject"]["uuid"]
         else:
             uuid = snap["uuid"]
-        return Device.get_annotation_from_uuid(uuid, self.request.user.institution)
+
+        return Device.get_properties_from_uuid(uuid, self.request.user.institution)
 
     def search_hids(self, query, offset, limit):
         qry = Q()
@@ -98,7 +99,7 @@ class SearchView(InventaryMixin):
             if i:
                 qry |= Q(value__startswith=i)
 
-        chids = Annotation.objects.filter(
+        chids = SystemProperty.objects.filter(
             type=Annotation.Type.SYSTEM,
             owner=self.request.user.institution
         ).filter(
