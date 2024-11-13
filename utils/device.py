@@ -76,7 +76,7 @@ def create_property(doc, user, commit=False):
         'uuid': doc['uuid'],
         'owner': user.institution,
         'user': user,
-        'type': Annotation.Type.SYSTEM,
+        'type': Property.Type.SYSTEM,
         'key': 'CUSTOMER_ID',
         'value': doc['CUSTOMER_ID'],
     }

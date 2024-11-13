@@ -217,7 +217,7 @@ class Evidence:
     def get_all(cls, user):
         return SystemProperty.objects.filter(
             owner=user.institution,
-            type=SystemProperty.Type.SYSTEM,
+            type=Property.Type.SYSTEM,
             key="hidalgo1",
         ).order_by("-created").values_list("uuid", "created").distinct()
 
