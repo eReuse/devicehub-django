@@ -141,31 +141,6 @@ class DownloadEvidenceView(DashboardView, TemplateView):
         return response
 
 
-class UserPropertyDeleteView(DashboardView, DeleteView):
-    model = UserProperty
-
-    def get(self, request, *args, **kwargs):
-        self.pk = kwargs['pk']
-
-        try:
-            referer = self.request.META["HTTP_REFERER"]
-            path_referer = urlparse(referer).path
-            resolver_match = resolve(path_referer)
-            url_name = resolver_match.view_name
-            kwargs_view = resolver_match.kwargs
-        except:
-            # if is not possible resolve the reference path return 404
-            raise Http404
-
-        self.object = get_object_or_404(
-            self.model,
-            pk=self.pk,
-            owner=self.request.user.institution
-        )
-        self.object.delete()
-
-
-        return redirect(url_name, **kwargs_view)
 
 
 class EraseServerView(DashboardView, FormView):
