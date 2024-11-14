@@ -45,7 +45,7 @@
             </th>
           </tr>
         </thead>
-        {% for snap in object.annotations %}
+        {% for snap in object.properties %}
         <tbody>
         {% if snap.type == 0 %}
           <tr>
@@ -94,7 +94,7 @@
 	    </div>
 	    {% if form.tag.value %}
 	    <div class="col-1">
-	      <a class="btn btn-yellow" href="{% url 'evidence:delete_annotation' form.pk %}">{% translate "Delete" %}</a>
+	      <a class="btn btn-yellow" href="{% url 'evidence:delete_user_property' form.pk %}">{% translate "Delete" %}</a>
 	    </div>
 	    {% endif %}
 	  </div>
