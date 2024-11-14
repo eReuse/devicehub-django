@@ -10,7 +10,7 @@ from django.views.generic.edit import (
 )
 from django.views.generic.base import TemplateView
 from dashboard.mixins import DashboardView, Http403
-from evidence.models import UserProperty, SystemProperty
+from evidence.models import UserProperty, SystemProperty, Property
 from lot.models import LotTag
 from device.models import Device
 from device.forms import DeviceFormSet
