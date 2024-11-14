@@ -105,7 +105,8 @@ class Device:
         properties = self.get_properties()
         if not properties.count():
             return
-        property = property.first()
+        property = properties.first()
+
         self.last_evidence = Evidence(property.uuid)
 
     def is_eraseserver(self):
@@ -135,7 +136,7 @@ class Device:
     def get_unassigned(cls, institution, offset=0, limit=None):
 
         sql = """
-            WITH RankedAnnotations AS (
+            WITH RankedProperties AS (
                 SELECT
                     t1.value,
                     t1.key,
@@ -158,7 +159,7 @@ class Device:
             SELECT DISTINCT
                 value
             FROM
-                RankedAnnotations
+                RankedProperties
             WHERE
                 row_num = 1
         """.format(
@@ -258,7 +259,7 @@ class Device:
             cursor.execute(sql)
             properties = cursor.fetchall()
 
-        return cls(id=annotations[0][0])
+        return cls(id=properties[0][0])
 
     @property
     def is_websnapshot(self):
