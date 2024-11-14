@@ -187,17 +187,17 @@ class AddUserPropertyView(DashboardView, CreateView):
         form.instance.owner = self.request.user.institution
         form.instance.user = self.request.user
         form.instance.uuid = self.annotation.uuid
-        form.instance.type = Annotation.Type.USER
+        form.instance.type = Property.Type.USER
         response = super().form_valid(form)
         return response
 
     def get_form_kwargs(self):
         pk = self.kwargs.get('pk')
         institution = self.request.user.institution
-        self.annotation = Annotation.objects.filter(
+        self.annotation = SystemProperty.objects.filter(
             owner=institution,
             value=pk,
-            type=Annotation.Type.SYSTEM
+            type=Property.Type.SYSTEM
         ).first()
 
         if not self.annotation:
@@ -230,7 +230,7 @@ class AddDocumentView(DashboardView, CreateView):
         self.annotation = SystemProperty.objects.filter(
             owner=institution,
             value=pk,
-            type=Annotation.Type.SYSTEM
+            type=Property.Type.SYSTEM
         ).first()
 
         if not self.annotation:

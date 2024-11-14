@@ -166,7 +166,7 @@ class ImportForm(forms.Form):
         table = []
         for row in self.rows:
             doc = create_doc(row)
-            annotation = create_annotation(doc, self.user)
+            annotation = create_property(doc, self.user)
             table.append((doc, annotation))
 
         if commit:
@@ -224,7 +224,7 @@ class EraseServerForm(forms.Form):
         if self.instance:
             return
 
-        Annotation.objects.create(
+        SystemProperty.objects.create(
             uuid=self.uuid,
             type=Annotation.Type.ERASE_SERVER,
             key='ERASE_SERVER',
