@@ -5,7 +5,7 @@ import logging
 from dmidecode import DMIParse
 from evidence.parse_details import ParseSnapshot
 
-from evidence.models import SystemProperty
+from evidence.models import SystemProperty, Property
 from evidence.xapian import index
 from evidence.parse_details import get_inxi_key, get_inxi
 from django.conf import settings
