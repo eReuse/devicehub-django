@@ -15,7 +15,7 @@
           <a href="#details" class="nav-link active" data-bs-toggle="tab" data-bs-target="#details">{% trans 'General details' %}</a>
         </li>
         <li class="nav-item">
-          <a href="#annotations" class="nav-link" data-bs-toggle="tab" data-bs-target="#annotations">{% trans 'User properties' %}</a>
+          <a href="#user_properties" class="nav-link" data-bs-toggle="tab" data-bs-target="#user_properties">{% trans 'User properties' %}</a>
         </li>
         <li class="nav-item">
           <a href="#documents" class="nav-link" data-bs-toggle="tab" data-bs-target="#documents">{% trans 'Documents' %}</a>
@@ -112,7 +112,7 @@
       {% endfor %}
     </div>
 
-    <div class="tab-pane fade" id="annotations">
+    <div class="tab-pane fade" id="user_properties">
       <div class="btn-group mt-1 mb-3">
         <a href="{% url 'device:add_user_property' object.pk %}" class="btn btn-primary">
           <i class="bi bi-plus"></i>
