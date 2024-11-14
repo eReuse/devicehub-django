@@ -100,7 +100,7 @@ class SearchView(InventaryMixin):
                 qry |= Q(value__startswith=i)
 
         chids = SystemProperty.objects.filter(
-            type=Annotation.Type.SYSTEM,
+            type=Property.Type.SYSTEM,
             owner=self.request.user.institution
         ).filter(
             qry
