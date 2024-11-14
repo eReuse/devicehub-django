@@ -5,7 +5,7 @@ import logging
 from django.core.management.base import BaseCommand
 from django.conf import settings
 
-from utils.device import create_annotation, create_doc, create_index
+from utils.device import create_property, create_doc, create_index
 from user.models import Institution
 from evidence.parse import Build
 

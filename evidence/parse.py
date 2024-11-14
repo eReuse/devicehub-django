@@ -6,7 +6,7 @@ from dmidecode import DMIParse
 from json_repair import repair_json
 from evidence.parse_details import get_lshw_child
 
-from evidence.models import SystemProperty
+from evidence.models import SystemProperty, Property
 from evidence.xapian import index
 from utils.constants import CHASSIS_DH
 
