@@ -8,7 +8,7 @@ from utils.device import create_property, create_doc, create_index
 from utils.forms import MultipleFileField
 from device.models import Device
 from evidence.parse import Build
-from evidence.models import SystemProperty
+from evidence.models import SystemProperty, Property
 from utils.save_snapshots import move_json, save_in_disk
 
 
@@ -70,9 +70,9 @@ class UserTagForm(forms.Form):
         self.pk = None
         self.uuid = kwargs.pop('uuid', None)
         self.user = kwargs.pop('user')
-        instance = Annotation.objects.filter(
+        instance = SystemProperty.objects.filter(
             uuid=self.uuid,
-            type=Annotation.Type.SYSTEM,
+            type=Property.Type.SYSTEM,
             key='CUSTOM_ID',
             owner=self.user.institution
         ).first()
@@ -90,7 +90,7 @@ class UserTagForm(forms.Form):
         self.tag = data
         self.instance = SystemProperty.objects.filter(
             uuid=self.uuid,
-            type=Annotation.Type.SYSTEM,
+            type=Property.Type.SYSTEM,
             key='CUSTOM_ID',
             owner=self.user.institution
         ).first()
@@ -188,9 +188,9 @@ class EraseServerForm(forms.Form):
         self.pk = None
         self.uuid = kwargs.pop('uuid', None)
         self.user = kwargs.pop('user')
-        instance = Annotation.objects.filter(
+        instance = SystemProperty.objects.filter(
             uuid=self.uuid,
-            type=Annotation.Type.ERASE_SERVER,
+            type=SystemProperty.Type.ERASE_SERVER,
             key='ERASE_SERVER',
             owner=self.user.institution
         ).first()
@@ -203,9 +203,9 @@ class EraseServerForm(forms.Form):
 
     def clean(self):
         self.erase_server = self.cleaned_data.get('erase_server', False)
-        self.instance = Annotation.objects.filter(
+        self.instance = SystemProperty.objects.filter(
             uuid=self.uuid,
-            type=Annotation.Type.ERASE_SERVER,
+            type=Property.Type.ERASE_SERVER,
             key='ERASE_SERVER',
             owner=self.user.institution
         ).first()
@@ -226,7 +226,7 @@ class EraseServerForm(forms.Form):
 
         SystemProperty.objects.create(
             uuid=self.uuid,
-            type=Annotation.Type.ERASE_SERVER,
+            type=Property.Type.ERASE_SERVER,
             key='ERASE_SERVER',
             value=self.erase_server,
             owner=self.user.institution,
