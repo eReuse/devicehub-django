@@ -7,7 +7,7 @@ from evidence import old_parse
 from evidence import normal_parse
 from evidence.parse_details import ParseSnapshot
 
-from evidence.models import SystemProperty
+from evidence.models import SystemProperty, Property
 from evidence.xapian import index
 from evidence.normal_parse_details import get_inxi_key, get_inxi
 from django.conf import settings
