@@ -59,7 +59,7 @@ class BaseDeviceFormSet(forms.BaseFormSet):
         
         path_name = save_in_disk(doc, self.user.institution.name, place="placeholder")
         create_index(doc, self.user)
-        create_annotation(doc, user, commit=commit)
+        create_property(doc, user, commit=commit)
         move_json(path_name, self.user.institution.name, place="placeholder")
         
         return doc
