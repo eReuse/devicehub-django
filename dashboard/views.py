@@ -6,7 +6,7 @@ from django.shortcuts import Http404
 from django.db.models import Q
 
 from dashboard.mixins import InventaryMixin, DetailsMixin
-from evidence.models import Property
+from evidence.models import Property, SystemProperty
 from evidence.xapian import search
 from device.models import Device
 from lot.models import Lot
@@ -74,7 +74,7 @@ class SearchView(InventaryMixin):
 
         for x in matches:
             # devices.append(self.get_annotations(x))
-            dev = self.get_property(x)
+            dev = self.get_properties(x)
             if dev.id not in dev_id:
                 devices.append(dev)
                 dev_id.append(dev.id)
