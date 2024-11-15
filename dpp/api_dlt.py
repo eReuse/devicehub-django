@@ -1,111 +1,38 @@
-import json
-import time
-import logging
-
-from django.conf import settings
 from ereuseapi.methods import API
 
-from dpp.models import Proof, UserDpp
 
+def connect_api():
 
-logger = logging.getLogger('django')
-
-
-# """The code of the status response of api dlt."""
-STATUS_CODE = {
-    "Success": 201,
-    "Notwork": 400
-}
-
-
-ALGORITHM = "sha3-256"
-
-
-PROOF_TYPE = {
-    'Register': 'Register',
-    'IssueDPP': 'IssueDPP',
-    'proof_of_recycling': 'proof_of_recycling',
-    'Erase': 'Erase',
-    'EWaste': 'EWaste',
-}
-
-
-def connect_api(user):
-
-    dp = UserDpp.objects.filter(user=user).first()
-    if not dp:
+    if not session.get('token_dlt'):
         return
-    
-    api_dlt = settings.API_DLT
-    token_dlt = dp.api_keys_dlt
 
-    if not api_dlt or not token_dlt:
-        logger.error("NOT POSSIBLE CONNECT WITH API DLT!!!")
-        return
+    token_dlt = session.get('token_dlt')
+    api_dlt = app.config.get('API_DLT')
 
     return API(api_dlt, token_dlt, "ethereum")
 
+def register_dlt():
+    api = self.connect_api()
+    if not api:
+        return
 
-def register_dlt(api, chid, phid, proof_type=None):
-    if proof_type:
-        return api.generate_proof(
-            chid,
-            ALGORITHM,
-            phid,
-            proof_type,
-            settings.ID_FEDERATED
-        )
-
-    return api.register_device(
-        chid,
-        ALGORITHM,
-        phid,
-        settings.ID_FEDERATED
-    )
-
-
-def issuer_dpp_dlt(api, dpp):
-    phid = dpp.split(":")[1]
-
-    return api.issue_passport(
-        dpp,
-        ALGORITHM,
-        phid,
-        settings.ID_FEDERATED
-    )
-
-
-
-def save_proof(signature, ev_uuid, result, proof_type, user):
-    if result['Status'] == STATUS_CODE.get("Success"):
-        timestamp = result.get('Data', {}).get('data', {}).get('timestamp')
-
-        if not timestamp:
-            return
-
-        logger.debug("timestamp: %s", timestamp)
-        d = {
-            "type": proof_type,
-            "timestamp": timestamp,
-            "issuer": user.institution,
-            "user": user,
-            "uuid": ev_uuid,
-            "signature": signature,
-        }
-        Proof.objects.create(**d)
-
-
-def register_device_dlt(chid, phid, ev_uuid, user):
+    snapshot = [x for x in self.actions if x.t == 'Snapshot']
+    if not snapshot:
+        return
+    snapshot = snapshot[0]
+    from ereuse_devicehub.modules.dpp.models import ALGORITHM
+    from ereuse_devicehub.resources.enums import StatusCode
     cny_a = 1
     while cny_a:
-        api = connect_api(user)
-        if not api:
-            cny_a = 0
-            return
-        
-        result = register_dlt(api, chid, phid)
+        api = self.connect_api()
+        result = api.register_device(
+            self.chid,
+            ALGORITHM,
+            snapshot.phid_dpp,
+            app.config.get('ID_FEDERATED')
+        )
         try:
-            assert result['Status'] == STATUS_CODE.get("Success")
+            assert result['Status'] == StatusCode.Success.value
             assert result['Data']['data']['timestamp']
             cny_a = 0
         except Exception:
@@ -115,18 +42,17 @@ def register_device_dlt(chid, phid, ev_uuid, user):
             else:
                 cny_a = 0
 
-    save_proof(phid, ev_uuid, result, PROOF_TYPE['Register'], user)
 
+    register_proof(result)
 
-    # TODO is neccesary?
-    if settings.ID_FEDERATED:
+    if app.config.get('ID_FEDERATED'):
         cny = 1
         while cny:
             try:
                 api.add_service(
-                    chid,
+                    self.chid,
                     'DeviceHub',
-                    settings.ID_FEDERATED,
+                    app.config.get('ID_FEDERATED'),
                     'Inventory service',
                     'Inv',
                 )
@@ -134,33 +60,37 @@ def register_device_dlt(chid, phid, ev_uuid, user):
             except Exception:
                 time.sleep(10)
 
+def register_proof(self, result):
+    from ereuse_devicehub.modules.dpp.models import PROOF_ENUM, Proof
+    from ereuse_devicehub.resources.enums import StatusCode
 
-def register_passport_dlt(chid, phid, ev_uuid, user):
-    token_dlt = settings.TOKEN_DLT
-    api_dlt = settings.API_DLT
-    if not token_dlt or not api_dlt:
-        return
-    
-    dpp = "{chid}:{phid}".format(chid=chid, phid=phid)
-    if Proof.objects.filter(signature=dpp, type=PROOF_TYPE['IssueDPP']).exists():
+    if result['Status'] == StatusCode.Success.value:
+        timestamp = result.get('Data', {}).get('data', {}).get('timestamp')
+
+        if not timestamp:
+            return
+
+        snapshot = [x for x in self.actions if x.t == 'Snapshot']
+        if not snapshot:
+            return
+        snapshot = snapshot[0]
+
+        d = {
+            "type": PROOF_ENUM['Register'],
+            "device": self,
+            "action": snapshot,
+            "timestamp": timestamp,
+            "issuer_id": g.user.id,
+            "documentId": snapshot.id,
+            "documentSignature": snapshot.phid_dpp,
+            "normalizeDoc": snapshot.json_hw,
+        }
+        proof = Proof(**d)
+        db.session.add(proof)
+
+    if not hasattr(self, 'components'):
         return
 
-    cny_a = 1
-    while cny_a:
-        try:
-            api = connect_api(user)
-            if not api:
-                cny_a = 0
-                return
-        
-            result = issuer_dpp_dlt(api, dpp)
-            cny_a = 0
-        except Exception as err:
-            logger.error("ERROR API issue passport return: %s", err)
-            time.sleep(10)
-
-    if result['Status'] is not STATUS_CODE.get("Success"):
-        logger.error("ERROR API issue passport return: %s", result)
-        return
-    
-    save_proof(phid, ev_uuid, result, PROOF_TYPE['IssueDPP'], user)
+    for c in self.components:
+        if isinstance(c, DataStorage):
+            c.register_dlt()
