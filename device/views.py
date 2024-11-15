@@ -1,12 +1,14 @@
 from django.http import JsonResponse
 from django.conf import settings
 from django.urls import reverse_lazy
-from django.shortcuts import get_object_or_404, Http404
+from django.contrib import messages
+from django.shortcuts import get_object_or_404, redirect, Http404
 from django.utils.translation import gettext_lazy as _
 from django.views.generic.edit import (
     CreateView,
     UpdateView,
     FormView,
+    DeleteView,
 )
 from django.views.generic.base import TemplateView
 from dashboard.mixins import DashboardView, Http403
@@ -206,6 +208,26 @@ class AddUserPropertyView(DashboardView, CreateView):
         self.success_url = reverse_lazy('device:details', args=[pk])
         kwargs = super().get_form_kwargs()
         return kwargs
+
+class DeleteUserPropertyView(DashboardView, DeleteView):
+    model = UserProperty
+
+    def post(self, request, *args, **kwargs):
+        self.pk = kwargs['pk']
+        referer = request.META.get('HTTP_REFERER')
+        if not referer:
+            raise Http404("No referer header found")
+
+        self.object = get_object_or_404(
+            self.model,
+            pk=self.pk,
+            owner=self.request.user.institution
+        )
+        self.object.delete()
+        messages.success(self.request, _("User property deleted successfully."))
+
+        # Redirect back to the original URL
+        return redirect(referer)    
 
 
 class AddDocumentView(DashboardView, CreateView):
