@@ -89,6 +89,7 @@ INSTALLED_APPS = [
     "dashboard",
     "admin",
     "api",
+    "dpp",
 ]
 
 
