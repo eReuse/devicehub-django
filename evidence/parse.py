@@ -10,32 +10,24 @@ from evidence.parse_details import get_lshw_child, ParseSnapshot
 from evidence.models import Annotation
 from evidence.xapian import index
 from utils.constants import CHASSIS_DH
+
 if settings.DPP:
     from dpp.api_dlt import register_device_dlt, register_passport_dlt
 
 
+
+from evidence.parse_details import get_inxi_key, get_inxi
+
 logger = logging.getLogger('django')
 
 
-def get_mac(lshw):
-    try:
-        if type(lshw) is dict:
-            hw = lshw
-        else:
-            hw = json.loads(lshw)
-    except json.decoder.JSONDecodeError:
-        hw = json.loads(repair_json(lshw))
+def get_mac(inxi):
+    nets = get_inxi_key(inxi, "Network")
+    networks = [(nets[i], nets[i + 1]) for i in range(0, len(nets) - 1, 2)]
 
-    nets = []
-    get_lshw_child(hw, nets, 'network')
-
-    nets_sorted = sorted(nets, key=lambda x: x['businfo'])
-
-    if nets_sorted:
-        mac = nets_sorted[0]['serial']
-        logger.debug("The snapshot has the following MAC: %s" , mac)
-        return mac
-
+    for n, iface in networks:
+        if get_inxi(n, "port"):
+            return get_inxi(iface, 'mac')
 
 
 class Build:
@@ -175,24 +167,28 @@ class Build:
         return self.dmi.get("System")[0].get("Verson", '_virtual')
 
     def get_hid(self, snapshot):
-        dmidecode_raw = snapshot["data"]["dmidecode"]
-        self.dmi = DMIParse(dmidecode_raw)
+        try:
+            self.inxi = json.loads(self.json["inxi"])
+        except Exception:
+            logger.error("No inxi in snapshot %s", self.uuid)
+            return ""
 
-        manufacturer = self.dmi.manufacturer().strip()
-        model = self.dmi.model().strip()
-        chassis = self.get_chassis_dh()
-        serial_number = self.dmi.serial_number()
-        sku = self.get_sku()
+        machine = get_inxi_key(self.inxi, 'Machine')
+        for m in machine:
+            system = get_inxi(m, "System")
+            if system:
+                manufacturer = system
+                model = get_inxi(m, "product")
+                serial_number = get_inxi(m, "serial")
+                chassis = get_inxi(m, "Type")
+            else:
+                sku = get_inxi(m, "part-nu")
 
-        if not snapshot["data"].get('lshw'):
-            return f"{manufacturer}{model}{chassis}{serial_number}{sku}"
-
-        lshw = snapshot["data"]["lshw"]
-        # mac = get_mac2(hwinfo_raw) or ""
-        mac = get_mac(lshw) or ""
+        mac = get_mac(self.inxi) or ""
         if not mac:
             txt = "Could not retrieve MAC address in snapshot %s"
             logger.warning(txt, snapshot['uuid'])
+            return f"{manufacturer}{model}{chassis}{serial_number}{sku}"
 
         return f"{manufacturer}{model}{chassis}{serial_number}{sku}{mac}"
 
