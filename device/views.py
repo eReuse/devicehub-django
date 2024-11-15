@@ -181,6 +181,45 @@ class AddUserPropertyView(DashboardView, CreateView):
         kwargs = super().get_form_kwargs()
         return kwargs
 
+class UpdateUserPropertyView(DashboardView, UpdateView):
+    template_name = "new_user_property.html"
+    title = _("Update User Property")
+    breadcrumb = "Device / Update Property"
+    model = UserProperty
+    fields = ("key", "value")
+
+    def form_valid(self, form):
+        form.instance.owner = self.request.user.institution
+        form.instance.user = self.request.user
+        form.instance.type = Property.Type.USER
+        response = super().form_valid(form)
+
+        messages.success(self.request, _("User property updated successfully."))
+        return response
+
+    def get_success_url(self):
+        referer = self.request.META.get('HTTP_REFERER')
+        if referer:
+            return referer
+        else:
+            return reverse_lazy('device:details', args=[self.object.device.pk])
+        
+    def get_form_kwargs(self):
+        pk = self.kwargs.get('pk')
+        user_property = get_object_or_404(UserProperty, pk=pk, owner=self.request.user.institution)
+        self.annotation = SystemProperty.objects.filter(
+            owner=self.request.user.institution,
+            uuid=user_property.uuid,
+            type=Property.Type.SYSTEM
+        ).first()
+
+        if not self.annotation:
+            raise Http404
+
+        kwargs = super().get_form_kwargs()
+        kwargs['instance'] = user_property
+        return kwargs
+
 class DeleteUserPropertyView(DashboardView, DeleteView):
     model = UserProperty
 
