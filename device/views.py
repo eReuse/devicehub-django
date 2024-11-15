@@ -160,7 +160,7 @@ class AddUserPropertyView(DashboardView, CreateView):
     def form_valid(self, form):
         form.instance.owner = self.request.user.institution
         form.instance.user = self.request.user
-        form.instance.uuid = self.annotation.uuid
+        form.instance.uuid = self.property.uuid
         form.instance.type = Property.Type.USER
         response = super().form_valid(form)
         return response
@@ -168,13 +168,13 @@ class AddUserPropertyView(DashboardView, CreateView):
     def get_form_kwargs(self):
         pk = self.kwargs.get('pk')
         institution = self.request.user.institution
-        self.annotation = SystemProperty.objects.filter(
+        self.property = UserProperty.objects.filter(
             owner=institution,
             value=pk,
             type=Property.Type.SYSTEM
         ).first()
 
-        if not self.annotation:
+        if not self.property:
             raise Http404
 
         self.success_url = reverse_lazy('device:details', args=[pk])
@@ -191,13 +191,8 @@ class UpdateUserPropertyView(DashboardView, UpdateView):
     def get_form_kwargs(self):
         pk = self.kwargs.get('pk')
         user_property = get_object_or_404(UserProperty, pk=pk, owner=self.request.user.institution)
-        self.property = SystemProperty.objects.filter(
-            owner=self.request.user.institution,
-            uuid=user_property.uuid,
-            type=Property.Type.SYSTEM
-        ).first()
-
-        if not self.property:
+    
+        if not user_property:
             raise Http404
 
         kwargs = super().get_form_kwargs()
@@ -205,7 +200,7 @@ class UpdateUserPropertyView(DashboardView, UpdateView):
         return kwargs
 
     def form_valid(self, form):
-        form.instance.owner = self.request  .user.institution
+        form.instance.owner = self.request      .user.institution
         form.instance.user = self.request.user
         form.instance.type = Property.Type.USER
         response = super().form_valid(form)
@@ -243,7 +238,7 @@ class DeleteUserPropertyView(DashboardView, DeleteView):
 
 
 class AddDocumentView(DashboardView, CreateView):
-    template_name = "new_annotation.html"
+    template_name = "new_user_property.html"
     title = _("New Document")
     breadcrumb = "Device / New document"
     success_url = reverse_lazy('dashboard:unassigned_devices')
@@ -253,7 +248,7 @@ class AddDocumentView(DashboardView, CreateView):
     def form_valid(self, form):
         form.instance.owner = self.request.user.institution
         form.instance.user = self.request.user
-        form.instance.uuid = self.annotation.uuid
+        form.instance.uuid = self.property.uuid
         form.instance.type = Property.Type.DOCUMENT
         response = super().form_valid(form)
         return response
@@ -261,13 +256,13 @@ class AddDocumentView(DashboardView, CreateView):
     def get_form_kwargs(self):
         pk = self.kwargs.get('pk')
         institution = self.request.user.institution
-        self.annotation = SystemProperty.objects.filter(
+        self.property = SystemProperty.objects.filter(
             owner=institution,
             value=pk,
             type=Property.Type.SYSTEM
         ).first()
 
-        if not self.annotation:
+        if not self.property:
             raise Http404
 
         self.success_url = reverse_lazy('device:details', args=[pk])
