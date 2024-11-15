@@ -1,10 +1,10 @@
+import re
 import json
 import logging
 import numpy as np
 
 from datetime import datetime
 from dmidecode import DMIParse
-from json_repair import repair_json
 
 from utils.constants import CHASSIS_DH, DATASTORAGEINTERFACE
 
@@ -12,11 +12,19 @@ from utils.constants import CHASSIS_DH, DATASTORAGEINTERFACE
 logger = logging.getLogger('django')
 
 
-def get_lshw_child(child, nets, component):
-    if child.get('id') == component:
-        nets.append(child)
-    if child.get('children'):
-        [get_lshw_child(x, nets, component) for x in child['children']]
+def get_inxi_key(inxi, component):
+    for n in inxi:
+        for k, v in n.items():
+            if component in k:
+                return v
+
+
+def get_inxi(n, name):
+    for k, v in n.items():
+        if f"#{name}" in k:
+            return v
+
+    return ""
 
 
 class ParseSnapshot:
@@ -24,20 +32,15 @@ class ParseSnapshot:
         self.default = default
         self.dmidecode_raw = snapshot["data"].get("dmidecode", "{}")
         self.smart_raw = snapshot["data"].get("disks", [])
-        self.hwinfo_raw = snapshot["data"].get("hwinfo", "")
-        self.lshw_raw = snapshot["data"].get("lshw", {}) or {}
-        self.lscpi_raw = snapshot["data"].get("lspci", "")
+        self.inxi_raw = snapshot["data"].get("inxi", "") or ""
         self.device = {"actions": []}
         self.components = []
-        self.monitors = []
 
         self.dmi = DMIParse(self.dmidecode_raw)
         self.smart = self.loads(self.smart_raw)
-        self.lshw = self.loads(self.lshw_raw)
-        self.hwinfo = self.parse_hwinfo()
+        self.inxi = self.loads(self.inxi_raw)
 
         self.set_computer()
-        self.get_hwinfo_monitors()
         self.set_components()
         self.snapshot_json = {
             "type": "Snapshot",
@@ -51,282 +54,293 @@ class ParseSnapshot:
         }
 
     def set_computer(self):
-        self.device['manufacturer'] = self.dmi.manufacturer().strip()
-        self.device['model'] = self.dmi.model().strip()
-        self.device['serialNumber'] = self.dmi.serial_number()
-        self.device['type'] = self.get_type()
-        self.device['sku'] = self.get_sku()
-        self.device['version'] = self.get_version()
-        self.device['system_uuid'] = self.get_uuid()
-        self.device['family'] = self.get_family()
-        self.device['chassis'] = self.get_chassis_dh()
+        machine = get_inxi_key(self.inxi, 'Machine')
+        for m in machine:
+            system = get_inxi(m, "System")
+            if system:
+                self.device['manufacturer'] = system
+                self.device['model'] = get_inxi(m, "product")
+                self.device['serialNumber'] = get_inxi(m, "serial")
+                self.device['type'] = get_inxi(m, "Type")
+                self.device['chassis'] = self.device['type']
+                self.device['version'] = get_inxi(m, "v")
+            else:
+                self.device['system_uuid'] = get_inxi(m, "uuid")
+                self.device['sku'] = get_inxi(m, "part-nu")
 
     def set_components(self):
+        self.get_mother_board()
         self.get_cpu()
         self.get_ram()
-        self.get_mother_board()
         self.get_graphic()
-        self.get_data_storage()
         self.get_display()
-        self.get_sound_card()
         self.get_networks()
-
-    def get_cpu(self):
-        for cpu in self.dmi.get('Processor'):
-            serial = cpu.get('Serial Number')
-            if serial == 'Not Specified' or not serial:
-                serial = cpu.get('ID').replace(' ', '')
-            self.components.append(
-                {
-                    "actions": [],
-                    "type": "Processor",
-                    "speed": self.get_cpu_speed(cpu),
-                    "cores": int(cpu.get('Core Count', 1)),
-                    "model": cpu.get('Version'),
-                    "threads": int(cpu.get('Thread Count', 1)),
-                    "manufacturer": cpu.get('Manufacturer'),
-                    "serialNumber": serial,
-                    "brand": cpu.get('Family'),
-                    "address": self.get_cpu_address(cpu),
-                    "bogomips": self.get_bogomips(),
-                }
-            )
-
-    def get_ram(self):
-        for ram in self.dmi.get("Memory Device"):
-            if ram.get('size') == 'No Module Installed':
-                continue
-            if not ram.get("Speed"):
-                continue
-
-            self.components.append(
-                {
-                    "actions": [],
-                    "type": "RamModule",
-                    "size": self.get_ram_size(ram),
-                    "speed": self.get_ram_speed(ram),
-                    "manufacturer": ram.get("Manufacturer", self.default),
-                    "serialNumber": ram.get("Serial Number", self.default),
-                    "interface": ram.get("Type", "DDR"),
-                    "format": ram.get("Form Factor", "DIMM"),
-                    "model": ram.get("Part Number", self.default),
-                }
-            )
+        self.get_sound_card()
+        self.get_data_storage()
+        self.get_battery()
 
     def get_mother_board(self):
-        for moder_board in self.dmi.get("Baseboard"):
-            self.components.append(
-                {
-                    "actions": [],
-                    "type": "Motherboard",
-                    "version": moder_board.get("Version"),
-                    "serialNumber": moder_board.get("Serial Number", "").strip(),
-                    "manufacturer": moder_board.get("Manufacturer", "").strip(),
-                    "biosDate": self.get_bios_date(),
-                    "ramMaxSize": self.get_max_ram_size(),
-                    "ramSlots": len(self.dmi.get("Memory Device")),
-                    "slots": self.get_ram_slots(),
-                    "model": moder_board.get("Product Name", "").strip(),
-                    "firewire": self.get_firmware_num(),
-                    "pcmcia": self.get_pcmcia_num(),
-                    "serial": self.get_serial_num(),
-                    "usb": self.get_usb_num(),
-                }
-            )
+        machine = get_inxi_key(self.inxi, 'Machine')
+        mb = {"type": "Motherboard",}
+        for m in machine:
+            bios_date = get_inxi(m, "date")
+            if not bios_date:
+                continue
+            mb["manufacturer"] = get_inxi(m, "Mobo")
+            mb["model"] = get_inxi(m, "model")
+            mb["serialNumber"] = get_inxi(m, "serial")
+            mb["version"] = get_inxi(m, "v")
+            mb["biosDate"] = bios_date
+            mb["biosVersion"] = self.get_bios_version()
+            mb["firewire"]: self.get_firmware_num()
+            mb["pcmcia"]: self.get_pcmcia_num()
+            mb["serial"]: self.get_serial_num()
+            mb["usb"]: self.get_usb_num()
+
+            self.get_ram_slots(mb)
+
+        self.components.append(mb)
+
+    def get_ram_slots(self, mb):
+        memory = get_inxi_key(self.inxi, 'Memory')
+        for m in memory:
+            slots = get_inxi(m, "slots")
+            if not slots:
+                continue
+            mb["slots"] = slots
+            mb["ramSlots"] = get_inxi(m, "modules")
+            mb["ramMaxSize"] = get_inxi(m, "capacity")
+
+
+    def get_cpu(self):
+        cpu = get_inxi_key(self.inxi, 'CPU')
+        cp = {"type": "Processor"}
+        vulnerabilities = []
+        for c in cpu:
+            base = get_inxi(c, "model")
+            if base:
+                cp["model"] = get_inxi(c, "model")
+                cp["arch"] = get_inxi(c, "arch")
+                cp["bits"] = get_inxi(c, "bits")
+                cp["gen"] = get_inxi(c, "gen")
+                cp["family"] = get_inxi(c, "family")
+                cp["date"] = get_inxi(c, "built")
+                continue
+            des = get_inxi(c, "L1")
+            if des:
+                cp["L1"] = des
+                cp["L2"] = get_inxi(c, "L2")
+                cp["L3"] = get_inxi(c, "L3")
+                cp["cpus"] = get_inxi(c, "cpus")
+                cp["cores"] = get_inxi(c, "cores")
+                cp["threads"] = get_inxi(c, "threads")
+                continue
+            bogo = get_inxi(c, "bogomips")
+            if bogo:
+                cp["bogomips"] = bogo
+                cp["base/boost"] = get_inxi(c, "base/boost")
+                cp["min/max"] = get_inxi(c, "min/max")
+                cp["ext-clock"] = get_inxi(c, "ext-clock")
+                cp["volts"] = get_inxi(c, "volts")
+                continue
+            ctype = get_inxi(c, "Type")
+            if ctype:
+                v = {"Type": ctype}
+                status = get_inxi(c, "status")
+                if status:
+                    v["status"] = status
+                mitigation = get_inxi(c, "mitigation")
+                if mitigation:
+                    v["mitigation"] = mitigation
+                vulnerabilities.append(v)
+
+        self.components.append(cp)
+
+
+    def get_ram(self):
+        memory = get_inxi_key(self.inxi, 'Memory')
+        mem = {"type": "RamModule"}
+
+        for m in memory:
+            base = get_inxi(m, "System RAM")
+            if base:
+                mem["size"] = get_inxi(m, "total")
+            slot = get_inxi(m, "manufacturer")
+            if slot:
+                mem["manufacturer"] = slot
+                mem["model"] = get_inxi(m, "part-no")
+                mem["serialNumber"] = get_inxi(m, "serial")
+                mem["speed"] = get_inxi(m, "speed")
+                mem["bits"] = get_inxi(m, "data")
+                mem["interface"] = get_inxi(m, "type")
+            module = get_inxi(m, "modules")
+            if module:
+                mem["modules"] = module
+
+        self.components.append(mem)
 
     def get_graphic(self):
-        displays = []
-        get_lshw_child(self.lshw, displays, 'display')
-        
-        for c in displays:
-            if not c['configuration'].get('driver', None):
+        graphics = get_inxi_key(self.inxi, 'Graphics')
+
+        for c in graphics:
+            if not get_inxi(c, "Device") or not get_inxi(c, "vendor"):
                 continue
 
             self.components.append(
                 {
-                    "actions": [],
                     "type": "GraphicCard",
                     "memory": self.get_memory_video(c),
-                    "manufacturer": c.get("vendor", self.default),
-                    "model": c.get("product", self.default),
-                    "serialNumber": c.get("serial", self.default),
+                    "manufacturer": get_inxi(c, "vendor"),
+                    "model": get_inxi(c, "Device"),
+                    "arch": get_inxi(c, "arch"),
+                    "serialNumber": get_inxi(c, "serial"),
+                    "integrated": True if get_inxi(c, "port") else False
+                }
+            )
+
+    def get_battery(self):
+        bats = get_inxi_key(self.inxi, 'Battery')
+        for b in bats:
+            self.components.append(
+                {
+                    "type": "Battery",
+                    "model": get_inxi(b, "model"),
+                    "serialNumber": get_inxi(b, "serial"),
+                    "condition": get_inxi(b, "condition"),
+                    "cycles": get_inxi(b, "cycles"),
+                    "volts": get_inxi(b, "volts")
                 }
             )
 
     def get_memory_video(self, c):
-        # get info of lspci
-        # pci_id = c['businfo'].split('@')[1]
-        # lspci.get(pci_id) | grep size
-        # lspci -v -s 00:02.0
-        return None
+        memory = get_inxi_key(self.inxi, 'Memory')
+
+        for m in memory:
+            igpu = get_inxi(m, "igpu")
+            agpu = get_inxi(m, "agpu")
+            ngpu = get_inxi(m, "ngpu")
+            gpu = get_inxi(m, "gpu")
+            if igpu or agpu or gpu or ngpu:
+                return igpu or agpu or gpu or ngpu
+
+        return self.default
 
     def get_data_storage(self):
-        for sm in self.smart:
-            if sm.get('smartctl', {}).get('exit_status') == 1:
+        hdds= get_inxi_key(self.inxi, 'Drives')
+        for d in hdds:
+            usb = get_inxi(d, "type")
+            if usb == "USB":
                 continue
-            model = sm.get('model_name')
-            manufacturer = None
-            hours = sm.get("power_on_time", {}).get("hours", 0)
-            if model and len(model.split(" ")) > 1:
-                mm = model.split(" ")
-                model = mm[-1]
-                manufacturer = " ".join(mm[:-1])
 
-            self.components.append(
-                {
-                    "actions": self.sanitize(sm),
-                    "type": self.get_data_storage_type(sm),
-                    "model": model,
-                    "manufacturer": manufacturer,
-                    "serialNumber": sm.get('serial_number'),
-                    "size": self.get_data_storage_size(sm),
-                    "variant": sm.get("firmware_version"),
-                    "interface": self.get_data_storage_interface(sm),
-                    "hours": hours,
+            serial = get_inxi(d, "serial")
+            if serial:
+                hd = {
+                    "type": "Storage",
+                    "manufacturer": get_inxi(d, "vendor"),
+                    "model": get_inxi(d, "model"),
+                    "serialNumber": get_inxi(d, "serial"),
+                    "size": get_inxi(d, "size"),
+                    "speed": get_inxi(d, "speed"),
+                    "interface": get_inxi(d, "tech"),
+                    "firmware": get_inxi(d, "fw-rev")
                 }
-            )
+                rpm = get_inxi(d, "rpm")
+                if rpm:
+                    hd["rpm"] = rpm
+
+                family = get_inxi(d, "family")
+                if family:
+                    hd["family"] = family
+
+                sata = get_inxi(d, "sata")
+                if sata:
+                    hd["sata"] = sata
+
+                continue
+
+
+            cycles = get_inxi(d, "cycles")
+            if cycles:
+                hd['cycles'] = cycles
+                hd["health"] = get_inxi(d, "health")
+                hd["time of used"] = get_inxi(d, "on")
+                hd["read used"] = get_inxi(d, "read-units")
+                hd["written used"] = get_inxi(d, "written-units")
+
+                # import pdb; pdb.set_trace()
+                self.components.append(hd)
+                continue
+
+            hd = {}
 
     def sanitize(self, action):
         return []
 
-    def get_bogomips(self):
-        if not self.hwinfo:
-            return self.default
-        
-        bogomips = 0
-        for row in self.hwinfo:
-            for cel in row:
-                if 'BogoMips' in cel:
-                    try:
-                        bogomips += float(cel.split(":")[-1])
-                    except:
-                        pass
-        return bogomips
-
     def get_networks(self):
-        networks = []
-        get_lshw_child(self.lshw, networks, 'network')
-        
-        for c in networks:
-            capacity = c.get('capacity')
-            wireless = bool(c.get('configuration', {}).get('wireless', False))
+        nets = get_inxi_key(self.inxi, "Network")
+        networks = [(nets[i], nets[i + 1]) for i in range(0, len(nets) - 1, 2)]
+
+        for n, iface in networks:
+            model = get_inxi(n, "Device")
+            if not model:
+                continue
+
+            interface = ''
+            for k in n.keys():
+                if "port" in k:
+                    interface = "Integrated"
+                if "pcie" in k:
+                    interface = "PciExpress"
+                if get_inxi(n, "type") == "USB":
+                    interface = "USB"
+
             self.components.append(
                 {
-                    "actions": [],
                     "type": "NetworkAdapter",
-                    "model": c.get('product'),
-                    "manufacturer": c.get('vendor'),
-                    "serialNumber": c.get('serial'),
-                    "speed": capacity,
-                    "variant": c.get('version', 1),
-                    "wireless": wireless or False,
-                    "integrated": "PCI:0000:00" in c.get("businfo", ""),
+                    "model": model,
+                    "manufacturer": get_inxi(n, 'vendor'),
+                    "serialNumber": get_inxi(iface, 'mac'),
+                    "speed": get_inxi(n, "speed"),
+                    "interface": interface,
                 }
             )
 
     def get_sound_card(self):
-        multimedias = []
-        get_lshw_child(self.lshw, multimedias, 'multimedia')
-        
-        for c in multimedias:
+        audio = get_inxi_key(self.inxi, "Audio")
+
+        for c in audio:
+            model = get_inxi(c, "Device")
+            if not model:
+                continue
+
             self.components.append(
                 {
-                    "actions": [],
                     "type": "SoundCard",
-                    "model": c.get('product'),
-                    "manufacturer": c.get('vendor'),
-                    "serialNumber": c.get('serial'),
+                    "model": model,
+                    "manufacturer": get_inxi(c, 'vendor'),
+                    "serialNumber": get_inxi(c, 'serial'),
                 }
             )
 
-    def get_display(self):  # noqa: C901
-        TECHS = 'CRT', 'TFT', 'LED', 'PDP', 'LCD', 'OLED', 'AMOLED'
-
-        for c in self.monitors:
-            resolution_width, resolution_height = (None,) * 2
-            refresh, serial, model, manufacturer, size = (None,) * 5
-            year, week, production_date = (None,) * 3
-
-            for x in c:
-                if "Vendor: " in x:
-                    manufacturer = x.split('Vendor: ')[-1].strip()
-                if "Model: " in x:
-                    model = x.split('Model: ')[-1].strip()
-                if "Serial ID: " in x:
-                    serial = x.split('Serial ID: ')[-1].strip()
-                if "   Resolution: " in x:
-                    rs = x.split('   Resolution: ')[-1].strip()
-                    if 'x' in rs:
-                        resolution_width, resolution_height = [
-                            int(r) for r in rs.split('x')
-                        ]
-                if "Frequencies: " in x:
-                    try:
-                        refresh = int(float(x.split(',')[-1].strip()[:-3]))
-                    except Exception:
-                        pass
-                if 'Year of Manufacture' in x:
-                    year = x.split(': ')[1]
-
-                if 'Week of Manufacture' in x:
-                    week = x.split(': ')[1]
-
-                if "Size: " in x:
-                    size = self.get_size_monitor(x)
-            technology = next((t for t in TECHS if t in c[0]), None)
-
-            if year and week:
-                d = '{} {} 0'.format(year, week)
-                production_date = datetime.strptime(d, '%Y %W %w').isoformat()
+    def get_display(self):
+        graphics = get_inxi_key(self.inxi, "Graphics")
+        for c in graphics:
+            if not get_inxi(c, "Monitor"):
+                continue
 
             self.components.append(
                 {
-                    "actions": [],
                     "type": "Display",
-                    "model": model,
-                    "manufacturer": manufacturer,
-                    "serialNumber": serial,
-                    'size': size,
-                    'resolutionWidth': resolution_width,
-                    'resolutionHeight': resolution_height,
-                    "productionDate": production_date,
-                    'technology': technology,
-                    'refreshRate': refresh,
+                    "model": get_inxi(c, "model"),
+                    "manufacturer": get_inxi(c, "vendor"),
+                    "serialNumber": get_inxi(c, "serial"),
+                    'size': get_inxi(c, "size"),
+                    'diagonal': get_inxi(c, "diag"),
+                    'resolution': get_inxi(c, "res"),
+                    "date": get_inxi(c, "built"),
+                    'ratio': get_inxi(c, "ratio"),
                 }
             )
-
-    def get_hwinfo_monitors(self):
-        for c in self.hwinfo:
-            monitor = None
-            external = None
-            for x in c:
-                if 'Hardware Class: monitor' in x:
-                    monitor = c
-                if 'Driver Info' in x:
-                    external = c
-
-            if monitor and not external:
-                self.monitors.append(c)
-
-    def get_size_monitor(self, x):
-        i = 1 / 25.4
-        t = x.split('Size: ')[-1].strip()
-        tt = t.split('mm')
-        if not tt:
-            return 0
-        sizes = tt[0].strip()
-        if 'x' not in sizes:
-            return 0
-        w, h = [int(x) for x in sizes.split('x')]
-        return "{:.2f}".format(np.sqrt(w**2 + h**2) * i)
-
-    def get_cpu_address(self, cpu):
-        default = 64
-        for ch in self.lshw.get('children', []):
-            for c in ch.get('children', []):
-                if c['class'] == 'processor':
-                    return c.get('width', default)
-        return default
 
     def get_usb_num(self):
         return len(
@@ -364,133 +378,13 @@ class ParseSnapshot:
             ]
         )
 
-    def get_bios_date(self):
-        return self.dmi.get("BIOS")[0].get("Release Date", self.default)
-
-    def get_firmware(self):
-        return self.dmi.get("BIOS")[0].get("Firmware Revision", '1')
-
-    def get_max_ram_size(self):
-        size = 0
-        for slot in self.dmi.get("Physical Memory Array"):
-            capacity = slot.get("Maximum Capacity", '0').split(" ")[0]
-            size += int(capacity)
-
-        return size
-
-    def get_ram_slots(self):
-        slots = 0
-        for x in self.dmi.get("Physical Memory Array"):
-            slots += int(x.get("Number Of Devices", 0))
-        return slots
-
-    def get_ram_size(self, ram):
-        memory = ram.get("Size", "0")
-        return memory
-
-    def get_ram_speed(self, ram):
-        size = ram.get("Speed", "0")
-        return size
-
-    def get_cpu_speed(self, cpu):
-        speed = cpu.get('Max Speed', "0")
-        return speed
-
-    def get_sku(self):
-        return self.dmi.get("System")[0].get("SKU Number", self.default).strip()
-
-    def get_version(self):
-        return self.dmi.get("System")[0].get("Version", self.default).strip()
-
-    def get_uuid(self):
-        return self.dmi.get("System")[0].get("UUID", '').strip()
-
-    def get_family(self):
-        return self.dmi.get("System")[0].get("Family", '')
-
-    def get_chassis(self):
-        return self.dmi.get("Chassis")[0].get("Type", '_virtual')
-
-    def get_type(self):
-        chassis_type = self.get_chassis()
-        return self.translation_to_devicehub(chassis_type)
-
-    def translation_to_devicehub(self, original_type):
-        lower_type = original_type.lower()
-        CHASSIS_TYPE = {
-            'Desktop': [
-                'desktop',
-                'low-profile',
-                'tower',
-                'docking',
-                'all-in-one',
-                'pizzabox',
-                'mini-tower',
-                'space-saving',
-                'lunchbox',
-                'mini',
-                'stick',
-            ],
-            'Laptop': [
-                'portable',
-                'laptop',
-                'convertible',
-                'tablet',
-                'detachable',
-                'notebook',
-                'handheld',
-                'sub-notebook',
-            ],
-            'Server': ['server'],
-            'Computer': ['_virtual'],
-        }
-        for k, v in CHASSIS_TYPE.items():
-            if lower_type in v:
-                return k
-        return self.default
-
-    def get_chassis_dh(self):
-        chassis = self.get_chassis()
-        lower_type = chassis.lower()
-        for k, v in CHASSIS_DH.items():
-            if lower_type in v:
-                return k
-        return self.default
-
-    def get_data_storage_type(self, x):
-        # TODO @cayop add more SSDS types
-        SSDS = ["nvme"]
-        SSD = 'SolidStateDrive'
-        HDD = 'HardDrive'
-        type_dev = x.get('device', {}).get('type')
-        trim = x.get('trim', {}).get("supported") in [True, "true"]
-        return SSD if type_dev in SSDS or trim else HDD
-
-    def get_data_storage_interface(self, x):
-        interface = x.get('device', {}).get('protocol', 'ATA')
-        if interface.upper() in DATASTORAGEINTERFACE:
-            return interface.upper()
-
-        txt = "Sid: {}, interface {} is not in DataStorageInterface Enum".format(
-            self.sid, interface
-        )
-        self.errors("{}".format(err))
-
-    def get_data_storage_size(self, x):
-        return x.get('user_capacity', {}).get('bytes')
-
-    def parse_hwinfo(self):
-        hw_blocks = self.hwinfo_raw.split("\n\n")
-        return [x.split("\n") for x in hw_blocks]
+    def get_bios_version(self):
+        return self.dmi.get("BIOS")[0].get("BIOS Revision", '1')
 
     def loads(self, x):
         if isinstance(x, str):
             try:
-                try:
-                    hw = json.loads(x)
-                except json.decoder.JSONDecodeError:
-                    hw = json.loads(repair_json(x))
-                return hw
+                return json.loads(x)
             except Exception as ss:
                 logger.warning("%s", ss)
                 return {}
@@ -502,4 +396,3 @@ class ParseSnapshot:
 
         logger.error(txt)
         self._errors.append("%s", txt)
-
