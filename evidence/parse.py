@@ -2,18 +2,12 @@ import json
 import hashlib
 import logging
 
-from evidence import legacy_parse
-from evidence import old_parse
-from evidence import normal_parse
-from evidence.parse_details import ParseSnapshot
+from dmidecode import DMIParse
 
 from evidence.models import SystemProperty
 from evidence.xapian import index
-from evidence.normal_parse_details import get_inxi_key, get_inxi
-from django.conf import settings
-
-if settings.DPP:
-    from dpp.api_dlt import register_device_dlt, register_passport_dlt
+from utils.constants import CHASSIS_DH
+from evidence.parse_details import get_inxi_key, get_inxi
 
 logger = logging.getLogger('django')
 
@@ -21,6 +15,10 @@ logger = logging.getLogger('django')
 def get_mac(inxi):
     nets = get_inxi_key(inxi, "Network")
     networks = [(nets[i], nets[i + 1]) for i in range(0, len(nets) - 1, 2)]
+
+    for n, iface in networks:
+        if get_inxi(n, "port"):
+            return get_inxi(iface, 'mac')
 
     for n, iface in networks:
         if get_inxi(n, "port"):
@@ -87,12 +85,28 @@ class Build:
                 value=self.sign(v)
             )
 
-    def sign(self, doc):
-        return hashlib.sha3_256(doc.encode()).hexdigest()
+    def get_hid(self, snapshot):
+        try:
+            self.inxi = json.loads(self.json["inxi"])
+        except Exception:
+            logger.error("No inxi in snapshot %s", self.uuid)
+            return ""
+        
+        machine = get_inxi_key(self.inxi, 'Machine')
+        for m in machine:
+            system = get_inxi(m, "System")
+            if system:
+                manufacturer = system
+                model = get_inxi(m, "product")
+                serial_number = get_inxi(m, "serial")
+                chassis = get_inxi(m, "Type")
+            else:
+                sku = get_inxi(m, "part-nu")
 
-    def register_device_dlt(self):
-        legacy_dpp = self.build.algorithms.get('ereuse22')
-        chid = self.sign(legacy_dpp)
-        phid = self.sign(json.dumps(self.build.get_doc()))
-        register_device_dlt(chid, phid, self.uuid, self.user)
-        register_passport_dlt(chid, phid, self.uuid, self.user)
+        mac = get_mac(self.inxi) or ""
+        if not mac:
+            txt = "Could not retrieve MAC address in snapshot %s"
+            logger.warning(txt, snapshot['uuid'])
+            return f"{manufacturer}{model}{chassis}{serial_number}{sku}"
+
+        return f"{manufacturer}{model}{chassis}{serial_number}{sku}{mac}"

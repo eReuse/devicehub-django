@@ -113,19 +113,53 @@
           <h5 class="modal-title" id="addNoteModalLabel">{% trans "Add a Note" %}</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
         </div>
-        <div class="modal-body">
-          <form method="post" action="{% url 'action:add_note' %}">
-            {% csrf_token %}
-            <div class="mb-3">
-              <input type="hidden" name="snapshot_uuid" value="{{ object.last_uuid }}">
-              <label for="noteDescription" class="form-label">{% trans "Note" %}</label>
-              <textarea class="form-control" id="noteDescription" name="note" placeholder="Max 250 characters" name="note" rows="3" required></textarea>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
-              <button type="submit" class="btn btn-green-admin">{% trans "Save Note" %}</button>
-            </div>
-          </form>
+      {% endif %}
+
+      <div class="row mb-1">
+        <div class="col-lg-3 col-md-4 label">Type</div>
+        <div class="col-lg-9 col-md-8">{{ object.type }}</div>
+      </div>
+
+      {% if object.is_websnapshot and object.last_user_evidence %}
+        {% for k, v in object.last_user_evidence %}
+          <div class="row mb-1">
+            <div class="col-lg-3 col-md-4 label">{{ k }}</div>
+            <div class="col-lg-9 col-md-8">{{ v|default:'' }}</div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <div class="row mb-1">
+          <div class="col-lg-3 col-md-4 label">
+            {% trans 'Manufacturer' %}
+          </div>
+          <div class="col-lg-9 col-md-8">{{ object.manufacturer|default:'' }}</div>
+        </div>
+
+        <div class="row mb-1">
+          <div class="col-lg-3 col-md-4 label">
+            {% trans 'Model' %}
+          </div>
+          <div class="col-lg-9 col-md-8">{{ object.model|default:'' }}</div>
+        </div>
+
+        <div class="row mb-1">
+          <div class="col-lg-3 col-md-4 label">
+            {% trans 'Version' %}
+          </div>
+          <div class="col-lg-9 col-md-8">{{ object.version|default:'' }}</div>
+        </div>
+
+        <div class="row mb-1">
+          <div class="col-lg-3 col-md-4 label">
+            {% trans 'Serial Number' %}
+          </div>
+          <div class="col-lg-9 col-md-8">{{ object.serial_number|default:'' }}</div>
+        </div>
+      {% endif %}
+
+      <div class="row mb-3">
+        <div class="col-lg-3 col-md-4 label">
+          {% trans 'Identifiers' %}
         </div>
       </div>
     </div>

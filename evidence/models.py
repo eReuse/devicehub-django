@@ -8,8 +8,7 @@ from django.db import models
 from django.db.models import Q
 from utils.constants import STR_EXTEND_SIZE, CHASSIS_DH
 from evidence.xapian import search
-from evidence.parse_details import ParseSnapshot
-from evidence.normal_parse_details import get_inxi, get_inxi_key
+from evidence.parse_details import ParseSnapshot, get_inxi, get_inxi_key
 from user.models import User, Institution
 
 
@@ -60,7 +59,7 @@ class Evidence:
         self.created = None
         self.dmi = None
         self.inxi = None
-        self.properties = []
+        self.annotations = []
         self.components = []
         self.default = "n/a"
 
@@ -111,14 +110,10 @@ class Evidence:
                     self.inxi = ev["output"]
         else:
             dmidecode_raw = self.doc["data"]["dmidecode"]
-            inxi_raw = self.doc.get("data", {}).get("inxi")
+            inxi_raw = self.doc["data"]["inxi"]
             self.dmi = DMIParse(dmidecode_raw)
             try:
                 self.inxi = json.loads(inxi_raw)
-            except Exception:
-                pass
-        if self.inxi:
-            try:
                 machine = get_inxi_key(self.inxi, 'Machine')
                 for m in machine:
                     system = get_inxi(m, "System")
@@ -128,6 +123,7 @@ class Evidence:
                         self.device_serial_number = get_inxi(m, "serial")
                         self.device_chassis = get_inxi(m, "Type")
                         self.device_version = get_inxi(m, "v")
+
             except Exception:
                 return
 
@@ -160,6 +156,9 @@ class Evidence:
         if self.inxi:
             return self.device_manufacturer
 
+        if self.inxi:
+            return self.device_manufacturer
+        
         return self.dmi.manufacturer().strip()
 
     def get_model(self):
@@ -175,12 +174,15 @@ class Evidence:
         if self.inxi:
             return self.device_model
 
+        if self.inxi:
+            return self.device_model
+        
         return self.dmi.model().strip()
 
     def get_chassis(self):
         if self.is_legacy():
-            return self.doc.get('device', {}).get('model', '')
-
+            return self.doc['device']['model']
+        
         if self.inxi:
             return self.device_chassis
 
@@ -194,12 +196,13 @@ class Evidence:
 
     def get_serial_number(self):
         if self.is_legacy():
-            return self.doc.get('device', {}).get('serialNumber', '')
-
+            return self.doc['device']['serialNumber']
+        
         if self.inxi:
             return self.device_serial_number
 
         return self.dmi.serial_number().strip()
+
 
     def get_version(self):
         if self.inxi:

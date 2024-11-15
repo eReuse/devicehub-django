@@ -392,7 +392,8 @@ class Device:
 
     @property
     def version(self):
-        self.get_last_evidence()
+        if not self.last_evidence:
+            self.get_last_evidence()
         return self.last_evidence.get_version()
 
     @property
