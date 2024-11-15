@@ -30,10 +30,7 @@ class Property(models.Model):
     value = models.CharField(max_length=STR_EXTEND_SIZE)
 
     class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=["type", "key", "uuid"], name="unique_type_key_uuid")
-        ]
+        #Only for shared behaviour, it is not a table
         abstract = True
 
 class SystemProperty(Property):
@@ -44,6 +41,12 @@ class SystemProperty(Property):
                 check=~Q(type=1), #Enforce that type is not User
                 name='property_cannot_be_user'
             ),
+        ]
+        #Django orm wont inherit constraints to child
+        #TODO: check if this is needed
+        constraints = [
+            models.UniqueConstraint(
+                fields=["type", "key", "uuid"], name="system_unique_type_key_uuid")
         ]
 
 class UserProperty(Property):
@@ -56,6 +59,10 @@ class UserProperty(Property):
                 check=Q(type=1), #Enforce that type is User
                 name='property_needs_to_be_user'
             ),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["type", "key", "uuid"], name="user_unique_type_key_uuid")
         ]
 
 
