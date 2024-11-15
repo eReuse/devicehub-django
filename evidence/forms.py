@@ -166,8 +166,8 @@ class ImportForm(forms.Form):
         table = []
         for row in self.rows:
             doc = create_doc(row)
-            annotation = create_property(doc, self.user)
-            table.append((doc, annotation))
+            property = create_property(doc, self.user)
+            table.append((doc, property))
 
         if commit:
             for doc, cred in table:
