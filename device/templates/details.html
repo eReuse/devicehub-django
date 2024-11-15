@@ -144,9 +144,9 @@
               <td>{{ a.created }}</td>
               <td>
                 <div class="btn-group float-end">
-                  <a href="{% url 'device:update_user_property' a.id %}" class="btn btn-sm btn-secondary">
-                    <i class="bi bi-pencil"></i>
-                  </a>
+                  <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#editModal{{ a.id }}">
+                    <i class="bi bi-pencil"></i> {% trans 'Edit' %}
+                  </button>
                   <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ a.id }}">
                 <i class="bi bi-trash"></i>
                   </button>
@@ -184,6 +184,33 @@
 </div>
 {% endfor %}
 
+<!-- popup modals for edit button -->
+{% for a in object.get_user_properties %}
+<div class="modal fade" id="editModal{{ a.id }}" tabindex="-1" aria-labelledby="editModalLabel{{ a.id }}" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editModalLabel{{ a.id }}">{% trans "Edit User Property" %}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="editForm{{ a.id }}" method="post" action="{% url 'device:update_user_property' a.id %}">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label for="key" class="form-label">{% trans "Key" %}</label>
+            <input type="text" class="form-control" id="key" name="key" value="{{ a.key }}">
+          </div>
+          <div class="mb-3">
+            <label for="value" class="form-label">{% trans "Value" %}</label>
+            <input type="text" class="form-control" id="value" name="value" value="{{ a.value }}">
+          </div>
+          <button type="submit" class="btn btn-primary">{% trans "Save changes" %}</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endfor %}
 
     <div class="tab-pane fade" id="documents">
       <div class="btn-group mt-1 mb-3">
