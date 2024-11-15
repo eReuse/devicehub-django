@@ -20,5 +20,4 @@ urlpatterns = [
     path("<uuid:pk>", views.EvidenceView.as_view(), name="details"),
     path("<uuid:pk>/eraseserver", views.EraseServerView.as_view(), name="erase_server"),
     path("<uuid:pk>/download", views.DownloadEvidenceView.as_view(), name="download"),
-    path('user_property/<int:pk>/del', views.UserPropertyDeleteView.as_view(), name='delete_user_property'),
 ]
