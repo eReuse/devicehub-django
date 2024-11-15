@@ -14,7 +14,6 @@ from django.conf import settings
 if settings.DPP:
     from dpp.api_dlt import register_device_dlt, register_passport_dlt
 
-
 logger = logging.getLogger('django')
 
 
