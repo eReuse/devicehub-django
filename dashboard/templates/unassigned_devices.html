@@ -20,9 +20,9 @@
       {% trans 'Exports' %}
     </a>
     {% if lot %}
-    <a href="{% url 'lot:annotations' object.id %}" type="button" class="btn btn-green-admin">
+    <a href="{% url 'lot:properties' object.id %}" type="button" class="btn btn-green-admin">
       <i class="bi bi-tag"></i>
-      {% trans 'Annotations' %}
+      {% trans 'properties' %}
     </a>
     {% endif %}
   </div>
