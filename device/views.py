@@ -1,3 +1,5 @@
+import json
+import logging
 from django.http import JsonResponse
 from django.conf import settings
 from django.urls import reverse_lazy
@@ -20,6 +22,8 @@ if settings.DPP:
     from dpp.models import Proof
     from dpp.api_dlt import PROOF_TYPE
 
+
+device_logger = logging.getLogger('device_log')
 
 class NewDeviceView(DashboardView, FormView):
     template_name = "new_device.html"
@@ -190,13 +194,15 @@ class AddUserPropertyView(DashboardView, CreateView):
         form.instance.user = self.request.user
         form.instance.uuid = self.property.uuid
         form.instance.type = Property.Type.USER
+
+        messages.success(self.request, _("User property successfully added."))
         response = super().form_valid(form)
         return response
 
     def get_form_kwargs(self):
         pk = self.kwargs.get('pk')
         institution = self.request.user.institution
-        self.property = UserProperty.objects.filter(
+        self.property = SystemProperty.objects.filter(
             owner=institution,
             value=pk,
             type=Property.Type.SYSTEM
@@ -219,7 +225,7 @@ class UpdateUserPropertyView(DashboardView, UpdateView):
     def get_form_kwargs(self):
         pk = self.kwargs.get('pk')
         user_property = get_object_or_404(UserProperty, pk=pk, owner=self.request.user.institution)
-    
+
         if not user_property:
             raise Http404
 
@@ -228,20 +234,24 @@ class UpdateUserPropertyView(DashboardView, UpdateView):
         return kwargs
 
     def form_valid(self, form):
-        form.instance.owner = self.request      .user.institution
+        old_key= self.object.key
+        old_value = self.object.value
+        new_key = form.cleaned_data['key']
+        new_value = form.cleaned_data['value']
+
+        form.instance.owner = self.request.user.institution
         form.instance.user = self.request.user
         form.instance.type = Property.Type.USER
         response = super().form_valid(form)
 
         messages.success(self.request, _("User property updated successfully."))
+        device_logger.info(
+            f"Updated property from (key='{old_key}', value='{old_value}') to (key='{new_key}', value='{new_value}') by user {self.request.user}."
+        )
         return response
 
     def get_success_url(self):
-        referer = self.request.META.get('HTTP_REFERER')
-        if referer:
-            return referer
-        else:
-            return reverse_lazy('device:details', args=[self.object.device.pk])
+        return self.request.META.get('HTTP_REFERER', reverse_lazy('device:details', args=[self.object.pk]))
 
 
 class DeleteUserPropertyView(DashboardView, DeleteView):
@@ -258,11 +268,13 @@ class DeleteUserPropertyView(DashboardView, DeleteView):
             pk=self.pk,
             owner=self.request.user.institution
         )
+        old_value = self.object.key
         self.object.delete()
+        device_logger.info(f"Deleted property with key '{old_value}' by user {self.request.user}.")
         messages.success(self.request, _("User property deleted successfully."))
 
         # Redirect back to the original URL
-        return redirect(referer)    
+        return redirect(referer)
 
 
 class AddDocumentView(DashboardView, CreateView):
