@@ -11,15 +11,15 @@
 <div class="row">
   <div class="tab-pane fade show active" id="details">
     <div class="btn-group dropdown ml-1 mt-1" uib-dropdown="">
-      <a href="{% url 'lot:add_annotation' lot.pk %}" class="btn btn-primary">
+      <a href="{% url 'lot:add_property' lot.pk %}" class="btn btn-primary">
 
         <i class="bi bi-plus"></i>
-        Add new annotation
+        Add new lot Property
         <span class="caret"></span>
       </a>
     </div>
 
-    <h5 class="card-title mt-2">Annotations</h5>
+    <h5 class="card-title mt-2">Properties</h5>
     <table class="table table-striped">
       <thead>
         <tr>
@@ -31,7 +31,7 @@
         </tr>
       </thead>
       <tbody>
-	{% for a in annotations %}
+	{% for a in properties %}
       <tr>
         <td>{{ a.key }}</td>
         <td>{{ a.value }}</td>
