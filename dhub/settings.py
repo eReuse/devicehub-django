@@ -215,12 +215,22 @@ LOGGING = {
             '()': CustomFormatter,
             'format': '%(levelname)s %(asctime)s %(message)s'
         },
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {message}',
+            'style': '{',
+        },
     },
     "handlers": {
         "console": {
             "level": "DEBUG",
             "class": "logging.StreamHandler",
             "formatter": "colored"
+        },
+        'device_log_file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': '/var/log/device_changes.log',
+            'formatter': 'verbose',
         },
     },
     "root": {
@@ -237,7 +247,12 @@ LOGGING = {
             "handlers": ["console"],
             "level": "ERROR",
             "propagate": False,
-        }
+        },
+        'device_log': {
+            'handlers': ['device_log_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
     }
 }
 
