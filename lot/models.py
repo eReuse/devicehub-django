@@ -46,5 +46,7 @@ class Lot(models.Model):
             d.delete()
 
 class LotProperty (Property):
-
+    #uuid is not needed for id
+    uuid = None
+    #lot foreign key is
     lot  = models.ForeignKey(Lot, on_delete=models.CASCADE)
