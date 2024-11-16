@@ -51,9 +51,9 @@ class Device:
         if self.properties:
             return self.properties
 
-        self.properties = SystemProperty.objects.filter(
-            value=self.id
-        ).order_by("-created")
+        self.properties = SystemProperty.objects.filter(value=self.id).order_by(
+            "-created"
+        )
 
         if self.properties.count():
             self.algorithm = self.properties[0].key
@@ -81,10 +81,14 @@ class Device:
         properties = self.get_properties()
 
         algos = list(ALGOS.keys())
-        algos.append('CUSTOM_ID')
-        self.hids = list(set(properties.filter(
-            key__in=algos,
-        ).values_list("value", flat=True)))
+        algos.append("CUSTOM_ID")
+        self.hids = list(
+            set(
+                properties.filter(
+                    key__in=algos,
+                ).values_list("value", flat=True)
+            )
+        )
 
     def get_evidences(self):
         if not self.uuids:
@@ -114,9 +118,7 @@ class Device:
             return False
 
         prop = UserProperty.objects.filter(
-            uuid__in=self.uuids,
-            owner=self.owner,
-            type=UserProperty.Type.ERASE_SERVER
+            uuid__in=self.uuids, owner=self.owner, type=UserProperty.Type.ERASE_SERVER
         ).first()
 
         if prop:
@@ -131,11 +133,10 @@ class Device:
     def get_current_state(self):
         uuid = self.last_uuid
 
-        return State.objects.filter(snapshot_uuid=uuid).order_by('-date').first()
+        return State.objects.filter(snapshot_uuid=uuid).order_by("-date").first()
 
     def get_lots(self):
-        self.lots = [
-            x.lot for x in DeviceLot.objects.filter(device_id=self.id)]
+        self.lots = [x.lot for x in DeviceLot.objects.filter(device_id=self.id)]
 
     @classmethod
     def get_all(cls, institution, offset=0, limit=None):
@@ -214,13 +215,11 @@ class Device:
                 row_num = 1
             ORDER BY created DESC
         """.format(
-            institution=institution.id,
-            algorithm=institution.algorithm
+            institution=institution.id, algorithm=institution.algorithm
         )
         with connection.cursor() as cursor:
             cursor.execute(sql)
             return cursor.fetchall()[0][0]
-
 
     @classmethod
     def get_unassigned(cls, institution, offset=0, limit=None):
@@ -254,8 +253,7 @@ class Device:
                 row_num = 1
             ORDER BY created DESC
         """.format(
-            institution=institution.id,
-            algorithm=institution.algorithm
+            institution=institution.id, algorithm=institution.algorithm
         )
         if limit:
             sql += " limit {} offset {}".format(int(limit), int(offset))
@@ -303,8 +301,7 @@ class Device:
                 row_num = 1
             ORDER BY created DESC
         """.format(
-            institution=institution.id,
-            algorithm=institution.algorithm
+            institution=institution.id, algorithm=institution.algorithm
         )
         with connection.cursor() as cursor:
             cursor.execute(sql)
@@ -355,12 +352,12 @@ class Device:
     @property
     def is_websnapshot(self):
         self.get_last_evidence()
-        return self.last_evidence.doc['type'] == "WebSnapshot"
+        return self.last_evidence.doc["type"] == "WebSnapshot"
 
     @property
     def last_user_evidence(self):
         self.get_last_evidence()
-        return self.last_evidence.doc['kv'].items()
+        return self.last_evidence.doc["kv"].items()
 
     @property
     def manufacturer(self):
@@ -381,7 +378,7 @@ class Device:
     @property
     def type(self):
         self.get_last_evidence()
-        if self.last_evidence.doc['type'] == "WebSnapshot":
+        if self.last_evidence.doc["type"] == "WebSnapshot":
             return self.last_evidence.doc.get("device", {}).get("type", "")
 
         return self.last_evidence.get_chassis()
@@ -434,3 +431,34 @@ class Device:
     def did_document(self):
         self.get_last_evidence()
         return self.last_evidence.get_did_document()
+
+    def get_components_data(self, is_user_authenticated):
+        if is_user_authenticated:
+            return self.components
+
+        public_components = json.loads(json.dumps(self.components))
+        self.remove_sensitive_data_from(public_components)
+        return public_components
+
+    def remove_sensitive_data_from(self, components):
+        for component in components:
+            component.pop("SerialNumber", None)
+            component.pop("serial_number", None)
+
+    def get_device_data(self, should_include_sensitive_fields):
+        data = {
+            "id": self.id,
+            "shortid": self.shortid,
+            "uuids": self.uuids,
+            "hids": self.hids,
+            "components": self.get_components_data(should_include_sensitive_fields),
+        }
+
+        if should_include_sensitive_fields:
+            data.update(
+                {
+                    "serial_number": self.serial_number,
+                }
+            )
+
+        return data
