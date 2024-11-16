@@ -1,3 +1,4 @@
+import json
 from django.db import models, connection
 
 from utils.constants import ALGOS
@@ -305,3 +306,32 @@ class Device:
         if not self.last_evidence:
             self.get_last_evidence()
         return self.last_evidence.get_components()
+
+    def get_components_data(self, is_user_authenticated):
+        if is_user_authenticated:
+            return self.components
+
+        public_components = json.loads(json.dumps(self.components))
+        self.remove_sensitive_data_from(public_components)
+        return public_components
+
+    def remove_sensitive_data_from(self, components):
+        for component in components:
+            component.pop('SerialNumber', None)
+            component.pop('serial_number', None)
+
+    def get_device_data(self, should_include_sensitive_fields):
+        data = {
+            'id': self.id,
+            'shortid': self.shortid,
+            'uuids': self.uuids,
+            'hids': self.hids,
+            'components': self.get_components_data(should_include_sensitive_fields),
+        }
+
+        if should_include_sensitive_fields:
+            data.update({
+                'serial_number': self.serial_number,
+            })
+
+        return data
