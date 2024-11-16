@@ -13,9 +13,9 @@ class CustomFormatter(logging.Formatter):
         if record.levelname == "ERROR":
             color = RED
         elif record.levelname == "WARNING":
-            color = PURPLE
-        elif record.levelname in ["INFO", "DEBUG"]:
             color = YELLOW
+        elif record.levelname in ["INFO", "DEBUG"]:
+            color = PURPLE
         else:
             color = RESET
             

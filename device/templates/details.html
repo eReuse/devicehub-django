@@ -61,7 +61,7 @@
         <div class="col-lg-9 col-md-8">{{ object.type }}</div>
       </div>
 
-      {% if object.is_websnapshot %}
+      {% if object.is_websnapshot and object.last_user_evidence %}
         {% for k, v in object.last_user_evidence %}
           <div class="row mb-3">
             <div class="col-lg-3 col-md-4 label">{{ k }}</div>

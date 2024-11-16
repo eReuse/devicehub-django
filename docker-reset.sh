@@ -14,6 +14,11 @@ main() {
         if [ "${DETACH:-}" ]; then
                 detach_arg='-d'
         fi
+
+        if [ ! -f .env ]; then
+                cp -v .env.example .env
+                echo "WARNING: .env was not there, .env.example was copied, this only happens once"
+        fi
         # remove old database
         sudo rm -vfr ./db/*
         docker compose down -v

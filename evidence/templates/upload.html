@@ -8,23 +8,21 @@
   </div>
 </div>
 
+<!-- override invalid-feedback class -->
+<style>
+  .invalid-feedback {
+    color: #670000; 
+    font-size: 1rem; 
+  }
+  </style>
+
 {% load django_bootstrap5 %}
 <form role="form" method="post" enctype="multipart/form-data">
 {% csrf_token %}
-{% if form.errors %}
-<div class="alert alert-danger alert-icon alert-icon-border alert-dismissible" role="alert">
-  <div class="icon"><span class="mdi mdi-close-circle-o"></span></div>
-  <div class="message">
-    {% for field, error in form.errors.items %}
-      {{ error }}<br />
-    {% endfor %}
-    <button class="btn-close" type="button" data-dismiss="alert" aria-label="Close"></button>
-  </div>
-</div>
-{% endif %}
-{% bootstrap_form form %}
-<div class="form-actions-no-box">
-  <a class="btn btn-grey" href="{% url 'dashboard:unassigned_devices' %}">{% translate "Cancel" %}</a>
+
+{% bootstrap_form form alert_error_type="none" error_css_class="alert alert-danger alert-icon alert-icon-border" %}
+      <div class="form-actions-no-box">
+  <a class="btn btn-grey"       href="{% url 'dashboard:unassigned_devices' %}">{% translate "Cancel" %}</a>
   <input class="btn btn-green-admin" type="submit" name="submit" value="{% translate 'Save' %}" />
 </div>
 
