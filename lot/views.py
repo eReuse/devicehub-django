@@ -9,9 +9,9 @@ from django.views.generic.edit import (
     FormView,
 )
 from dashboard.mixins import DashboardView
-from lot.models import Lot, LotTag, LotAnnotation
+from lot.models import Lot, LotTag, LotProperty
 from lot.forms import LotsForm
-
+from device.models import Property
 
 class NewLotView(DashboardView, CreateView):
     template_name = "new_lot.html"
@@ -143,18 +143,18 @@ class LotsTagsView(DashboardView, TemplateView):
 
 
 class LotAddDocumentView(DashboardView, CreateView):
-    template_name = "new_annotation.html"
+    template_name = "new_property.html"
     title = _("New Document")
     breadcrumb = "Device / New document"
     success_url = reverse_lazy('dashboard:unassigned_devices')
-    model = LotAnnotation
+    model = LotProperty
     fields = ("key", "value")
 
     def form_valid(self, form):
         form.instance.owner = self.request.user.institution
         form.instance.user = self.request.user
         form.instance.lot = self.lot
-        form.instance.type = LotAnnotation.Type.DOCUMENT
+        form.instance.type = Property.Type.DOCUMENT
         response = super().form_valid(form)
         return response
 
@@ -169,16 +169,16 @@ class LotAddDocumentView(DashboardView, CreateView):
 class LotDocumentsView(DashboardView, TemplateView):
     template_name = "documents.html"
     title = _("New Document")
-    breadcrumb = "Device / New document"
+    breadcrumb = "Devicce / New document"
 
     def get_context_data(self, **kwargs):
         self.pk = kwargs.get('pk')
         context = super().get_context_data(**kwargs)
         lot = get_object_or_404(Lot, owner=self.request.user.institution, id=self.pk)
-        documents = LotAnnotation.objects.filter(
+        documents = LotProperty.objects.filter(
             lot=lot,
             owner=self.request.user.institution,
-            type=LotAnnotation.Type.DOCUMENT,
+            type=Property.Type.DOCUMENT,
         )
         context.update({
             'lot': lot,
@@ -189,48 +189,48 @@ class LotDocumentsView(DashboardView, TemplateView):
         return context
 
 
-class LotAnnotationsView(DashboardView, TemplateView):
-    template_name = "annotations.html"
-    title = _("New Annotation")
-    breadcrumb = "Device / New annotation"
+class LotPropertiesView(DashboardView, TemplateView):
+    template_name = "properties.html"
+    title = _("New Lot Property")
+    breadcrumb = "Lot / New property"
 
     def get_context_data(self, **kwargs):
         self.pk = kwargs.get('pk')
         context = super().get_context_data(**kwargs)
         lot = get_object_or_404(Lot, owner=self.request.user.institution, id=self.pk)
-        annotations = LotAnnotation.objects.filter(
+        properties = LotProperty.objects.filter(
             lot=lot,
             owner=self.request.user.institution,
-            type=LotAnnotation.Type.USER,
+            type=Property.Type.USER,
         )
         context.update({
             'lot': lot,
-            'annotations': annotations,
+            'properties': properties,
             'title': self.title,
             'breadcrumb': self.breadcrumb
         })
         return context
 
 
-class LotAddAnnotationView(DashboardView, CreateView):
-    template_name = "new_annotation.html"
-    title = _("New Annotation")
-    breadcrumb = "Device / New annotation"
+class LotAddPropertyView(DashboardView, CreateView):
+    template_name = "new_property.html"
+    title = _("New Lot Property")
+    breadcrumb = "Device / New property"
     success_url = reverse_lazy('dashboard:unassigned_devices')
-    model = LotAnnotation
+    model = LotProperty
     fields = ("key", "value")
 
     def form_valid(self, form):
         form.instance.owner = self.request.user.institution
         form.instance.user = self.request.user
         form.instance.lot = self.lot
-        form.instance.type = LotAnnotation.Type.USER
+        form.instance.type = Property.Type.USER
         response = super().form_valid(form)
         return response
 
     def get_form_kwargs(self):
         pk = self.kwargs.get('pk')
         self.lot = get_object_or_404(Lot, pk=pk, owner=self.request.user.institution)
-        self.success_url = reverse_lazy('lot:annotations', args=[pk])
+        self.success_url = reverse_lazy('lot:properties', args=[pk])
         kwargs = super().get_form_kwargs()
         return kwargs
