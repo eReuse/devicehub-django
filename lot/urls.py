@@ -12,6 +12,6 @@ urlpatterns = [
     path("tag/<int:pk>/", views.LotsTagsView.as_view(), name="tag"),
     path("<int:pk>/document/", views.LotDocumentsView.as_view(), name="documents"),
     path("<int:pk>/document/add", views.LotAddDocumentView.as_view(), name="add_document"),
-    path("<int:pk>/annotation", views.LotAnnotationsView.as_view(), name="annotations"),
-    path("<int:pk>/annotation/add", views.LotAddAnnotationView.as_view(), name="add_annotation"),
+    path("<int:pk>/property", views.LotPropertiesView.as_view(), name="properties"),
+    path("<int:pk>/property/add", views.LotAddPropertyView.as_view(), name="add_property"),
 ]
