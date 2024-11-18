@@ -5,26 +5,11 @@ from utils.constants import STR_EXTEND_SIZE
 
 
 class Proof(models.Model):
+    ## The signature can be a phid or dpp depending of type of Proof
     timestamp = models.IntegerField()
     uuid = models.UUIDField()
     signature = models.CharField(max_length=STR_EXTEND_SIZE)
-    normalizeDoc = models.TextField()
     type = models.CharField(max_length=STR_EXTEND_SIZE)
-    action = models.CharField(max_length=STR_EXTEND_SIZE)
-    owner = models.ForeignKey(Institution, on_delete=models.CASCADE)
+    issuer = models.ForeignKey(Institution, on_delete=models.CASCADE)
     user = models.ForeignKey(
         User, on_delete=models.SET_NULL, null=True, blank=True)
-
-
-class Dpp(models.Model):
-    timestamp = models.IntegerField()
-    key = models.CharField(max_length=STR_EXTEND_SIZE)
-    uuid = models.UUIDField()
-    signature = models.CharField(max_length=STR_EXTEND_SIZE)
-    normalizeDoc = models.TextField()
-    type = models.CharField(max_length=STR_EXTEND_SIZE)
-    owner = models.ForeignKey(Institution, on_delete=models.CASCADE)
-    user = models.ForeignKey(
-        User, on_delete=models.SET_NULL, null=True, blank=True)
-
-    

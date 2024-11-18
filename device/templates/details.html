@@ -30,6 +30,9 @@
           <a href="#evidences" class="nav-link" data-bs-toggle="tab" data-bs-target="#evidences">{% trans 'Evidences' %}</a>
         </li>
         <li class="nav-item">
+          <a href="#dpps" class="nav-link" data-bs-toggle="tab" data-bs-target="#evidences">{% trans 'Dpps' %}</a>
+        </li>
+        <li class="nav-item">
           <a class="nav-link" href="{% url 'device:device_web' object.id %}" target="_blank">Web</a>
         </li>
       </ul>
@@ -224,6 +227,22 @@
             </div>
             <p class="mb-1">
               <a href="{% url 'evidence:details' snap.uuid %}">{{ snap.uuid }}</a>
+            </p>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+    
+    <div class="tab-pane fade" id="dpps">
+      <h5 class="card-title">{% trans 'List of dpps' %}</h5>
+      <div class="list-group col-6">
+        {% for d in dpps %}
+          <div class="list-group-item">
+            <div class="d-flex w-100 justify-content-between">
+              <small class="text-muted">{{ d.timestamp }}</small>
+            </div>
+            <p class="mb-1">
+              <a href="{% url 'evidence:details' d.uuid %}">{{ d.signature }}</a>
             </p>
           </div>
         {% endfor %}

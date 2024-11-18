@@ -22,10 +22,14 @@ def search(institution, qs, offset=0, limit=10):
     qp.set_stemming_strategy(xapian.QueryParser.STEM_SOME)
     qp.add_prefix("uuid", "uuid")
     query = qp.parse_query(qs)
-    institution_term = "U{}".format(institution.id)
-    final_query = xapian.Query(
-        xapian.Query.OP_AND, query, xapian.Query(institution_term)
-    )
+    if institution:
+        institution_term = "U{}".format(institution.id)
+        final_query = xapian.Query(
+            xapian.Query.OP_AND, query, xapian.Query(institution_term)
+        )
+    else:
+        final_query = xapian.Query(query)
+        
     enquire = xapian.Enquire(database)
     enquire.set_query(final_query)
     matches = enquire.get_mset(offset, limit)
