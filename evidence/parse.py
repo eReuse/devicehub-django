@@ -2,11 +2,9 @@ import json
 import hashlib
 import logging
 
-from dmidecode import DMIParse
-
-from evidence.models import SystemProperty
+from evidence.models import Annotation
 from evidence.xapian import index
-from utils.constants import CHASSIS_DH
+from dpp.api_dlt import register_device_dlt, register_passport_dlt
 from evidence.parse_details import get_inxi_key, get_inxi
 
 logger = logging.getLogger('django')
@@ -41,16 +39,10 @@ class Build:
 
         self.uuid = self.json['uuid']
         self.user = user
-
-        if evidence_json.get("credentialSubject"):
-            self.build = normal_parse.Build(evidence_json)
-            self.uuid = evidence_json.get("credentialSubject", {}).get("uuid")
-        elif evidence_json.get("software") != "workbench-script":
-            self.build = old_parse.Build(evidence_json)
-        elif evidence_json.get("data",{}).get("lshw"):
-            self.build = legacy_parse.Build(evidence_json)
-        else:
-            self.build = normal_parse.Build(evidence_json)
+        self.hid = None
+        self.chid = None
+        self.phid = self.get_signature(self.json)
+        self.generate_chids()
 
         if check:
             return
@@ -60,12 +52,32 @@ class Build:
 
         self.index()
         self.create_annotations()
-        if settings.DPP:
-            self.register_device_dlt()
+        self.register_device_dlt()
 
     def index(self):
         snap = json.dumps(self.evidence)
         index(self.user.institution, self.uuid, snap)
+
+    def generate_chids(self):
+        self.algorithms = {
+            'hidalgo1': self.get_hid_14(),
+        }
+
+    def get_hid_14(self):
+        if self.json.get("software") == "workbench-script":
+            hid = self.get_hid(self.json)
+        else:
+            device = self.json['device']
+            manufacturer = device.get("manufacturer", '')
+            model = device.get("model", '')
+            chassis = device.get("chassis", '')
+            serial_number = device.get("serialNumber", '')
+            sku = device.get("sku", '')
+            hid = f"{manufacturer}{model}{chassis}{serial_number}{sku}"
+
+
+        self.chid = hashlib.sha3_256(hid.encode()).hexdigest()
+        return self.chid
 
     def create_annotations(self):
         prop = SystemProperty.objects.filter(
@@ -114,3 +126,10 @@ class Build:
             return f"{manufacturer}{model}{chassis}{serial_number}{sku}"
 
         return f"{manufacturer}{model}{chassis}{serial_number}{sku}{mac}"
+
+    def get_signature(self, doc):
+        return hashlib.sha3_256(json.dumps(doc).encode()).hexdigest()
+
+    def register_device_dlt(self):
+        register_device_dlt(self.chid, self.phid, self.uuid, self.user)
+        register_passport_dlt(self.chid, self.phid, self.uuid, self.user)

@@ -81,7 +81,7 @@ class Evidence:
     def get_phid(self):
         if not self.doc:
             self.get_doc()
-
+            
         return hashlib.sha3_256(json.dumps(self.doc)).hexdigest()
 
     def get_doc(self):

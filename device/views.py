@@ -19,6 +19,7 @@ from action.models import StateDefinition, State, DeviceLog, Note
 from dashboard.mixins import DashboardView, Http403
 from evidence.models import UserProperty, SystemProperty
 from lot.models import LotTag
+from dpp.models import Proof
 from device.models import Device
 from device.forms import DeviceFormSet
 from device.environmental_impact.calculator import get_device_environmental_impact
@@ -90,30 +91,12 @@ class DetailsView(DashboardView, TemplateView):
         context = super().get_context_data(**kwargs)
         self.object.initial()
         lot_tags = LotTag.objects.filter(owner=self.request.user.institution)
-        dpps = []
-        if settings.DPP:
-            _dpps = Proof.objects.filter(
-                uuid__in=self.object.uuids,
-                type=PROOF_TYPE["IssueDPP"]
-            )
-            for x in _dpps:
-                dpp = "{}:{}".format(self.pk, x.signature)
-                dpps.append((dpp, x.signature[:10], x))
-
-        last_evidence = self.object.get_last_evidence()
-        uuids = self.object.uuids
-        state_definitions = StateDefinition.objects.filter(
-            institution=self.request.user.institution
-        ).order_by('order')
-        device_states = State.objects.filter(snapshot_uuid__in=uuids).order_by('-date')
-        device_logs = DeviceLog.objects.filter(
-            snapshot_uuid__in=uuids).order_by('-date')
-        device_notes = Note.objects.filter(snapshot_uuid__in=uuids).order_by('-date')
+        dpps = Proof.objects.filter(uuid_in=self.object.uuids)
         context.update({
             'object': self.object,
             'snapshot': last_evidence,
             'lot_tags': lot_tags,
-            'impact': get_device_environmental_impact()
+            'dpps': dpps,
         })
         return context
 
