@@ -27,4 +27,5 @@ urlpatterns = [
     path("user/", include("user.urls")),
     path("lot/", include("lot.urls")),
     path('api/', include('api.urls')),
+    path('dpp/', include('dpp.urls')),
 ]

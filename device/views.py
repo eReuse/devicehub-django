@@ -14,6 +14,7 @@ from django.views.generic.base import TemplateView
 from dashboard.mixins import DashboardView, Http403
 from evidence.models import Annotation
 from lot.models import LotTag
+from dpp.models import Proof
 from device.models import Device
 from device.forms import DeviceFormSet
 
@@ -103,10 +104,12 @@ class DetailsView(DashboardView, TemplateView):
         context = super().get_context_data(**kwargs)
         self.object.initial()
         lot_tags = LotTag.objects.filter(owner=self.request.user.institution)
+        dpps = Proof.objects.filter(uuid_in=self.object.uuids)
         context.update({
             'object': self.object,
             'snapshot': self.object.get_last_evidence(),
             'lot_tags': lot_tags,
+            'dpps': dpps,
         })
         return context
 

@@ -1,4 +1,5 @@
 import json
+import hashlib
 
 from dmidecode import DMIParse
 from django.db import models
@@ -57,6 +58,12 @@ class Evidence:
         a = self.annotations.first()
         if a:
             self.owner = a.owner
+
+    def get_phid(self):
+        if not self.doc:
+            self.get_doc()
+            
+        return hashlib.sha3_256(json.dumps(self.doc)).hexdigest()
 
     def get_doc(self):
         self.doc = {}

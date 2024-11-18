@@ -8,10 +8,12 @@ from evidence.parse_details import get_lshw_child
 
 from evidence.models import Annotation
 from evidence.xapian import index
+from dpp.api_dlt import register_device_dlt, register_passport_dlt
 from utils.constants import CHASSIS_DH
 
 
 logger = logging.getLogger('django')
+
 
 def get_mac(lshw):
     try:
@@ -40,6 +42,8 @@ class Build:
         self.uuid = self.json['uuid']
         self.user = user
         self.hid = None
+        self.chid = None
+        self.phid = self.get_signature(self.json)
         self.generate_chids()
 
         if check:
@@ -47,6 +51,7 @@ class Build:
 
         self.index()
         self.create_annotations()
+        self.register_device_dlt()
 
     def index(self):
         snap = json.dumps(self.json)
@@ -70,7 +75,8 @@ class Build:
             hid = f"{manufacturer}{model}{chassis}{serial_number}{sku}"
 
 
-        return hashlib.sha3_256(hid.encode()).hexdigest()
+        self.chid = hashlib.sha3_256(hid.encode()).hexdigest()
+        return self.chid
 
     def create_annotations(self):
         annotation = Annotation.objects.filter(
@@ -129,3 +135,10 @@ class Build:
             logger.warning(txt, snapshot['uuid'])
 
         return f"{manufacturer}{model}{chassis}{serial_number}{sku}{mac}"
+    
+    def get_signature(self, doc):
+        return hashlib.sha3_256(json.dumps(doc).encode()).hexdigest()
+
+    def register_device_dlt(self):
+        register_device_dlt(self.chid, self.phid, self.uuid, self.user)
+        register_passport_dlt(self.chid, self.phid, self.uuid, self.user)
