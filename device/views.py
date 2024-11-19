@@ -169,6 +169,9 @@ class PublicDeviceWebView(TemplateView):
         return JsonResponse(device_data)
 
 
+class ExportEnvironmentalImpactPDF(DashboardView, TemplateView):
+    pass
+
 class AddAnnotationView(DashboardView, CreateView):
     template_name = "new_annotation.html"
     title = _("New annotation")

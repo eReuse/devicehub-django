@@ -10,5 +10,7 @@ urlpatterns = [
     path("<str:pk>/annotation/add", views.AddAnnotationView.as_view(), name="add_annotation"),
     path("<str:pk>/document/add", views.AddDocumentView.as_view(), name="add_document"),
     path("<str:pk>/public/", views.PublicDeviceWebView.as_view(), name="device_web"),
+    path('<str:pk>/export-environmental-impact-pdf/',
+         views.ExportEnvironmentalImpactPDF.as_view(), name='export_environmental_impact_pdf'),
 
 ]
