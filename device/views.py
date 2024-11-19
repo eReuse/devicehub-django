@@ -174,11 +174,15 @@ class PublicDeviceWebView(TemplateView):
         return JsonResponse(device_data)
 
 
-class AddUserPropertyView(DeviceLogMixin, CreateView):
-    template_name = "new_user_property.html"
-    title = _("New User Property")
-    breadcrumb = "Device / New Property"
-    model = UserProperty
+class ExportEnvironmentalImpactPDF(DashboardView, TemplateView):
+    pass
+
+class AddAnnotationView(DashboardView, CreateView):
+    template_name = "new_annotation.html"
+    title = _("New annotation")
+    breadcrumb = "Device / New annotation"
+    success_url = reverse_lazy('dashboard:unassigned_devices')
+    model = Annotation
     fields = ("key", "value")
 
     def form_valid(self, form):

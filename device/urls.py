@@ -14,4 +14,7 @@ urlpatterns = [
     path("<str:device_id>/user_property/<int:pk>/update",
          views.UpdateUserPropertyView.as_view(), name="update_user_property"),
     path("<str:pk>/public/", views.PublicDeviceWebView.as_view(), name="device_web"),
+    path('<str:pk>/export-environmental-impact-pdf/',
+         views.ExportEnvironmentalImpactPDF.as_view(), name='export_environmental_impact_pdf'),
+
 ]
