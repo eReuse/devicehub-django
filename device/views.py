@@ -91,7 +91,7 @@ class DetailsView(DashboardView, TemplateView):
         context = super().get_context_data(**kwargs)
         self.object.initial()
         lot_tags = LotTag.objects.filter(owner=self.request.user.institution)
-        dpps = Proof.objects.filter(uuid_in=self.object.uuids)
+        dpps = Proof.objects.filter(uuid__in=self.object.uuids)
         context.update({
             'object': self.object,
             'snapshot': last_evidence,

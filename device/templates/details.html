@@ -81,7 +81,7 @@
         </li>
 	{% endif %}
         <li class="nav-item">
-          <a href="#dpps" class="nav-link" data-bs-toggle="tab" data-bs-target="#evidences">{% trans 'Dpps' %}</a>
+          <a href="#dpps" class="nav-link" data-bs-toggle="tab" data-bs-target="#dpps">{% trans 'Dpps' %}</a>
         </li>
         <li class="nav-item">
           <a class="nav-link" href="{% url 'device:device_web' object.id %}" target="_blank">Web</a>
@@ -238,7 +238,7 @@
               <small class="text-muted">{{ d.timestamp }}</small>
             </div>
             <p class="mb-1">
-              <a href="{% url 'evidence:details' d.uuid %}">{{ d.signature }}</a>
+              <a href="{% url 'did:device_web' d.uuid %}">{{ d.signature }}</a>
             </p>
           </div>
         {% endfor %}

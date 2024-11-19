@@ -11,7 +11,6 @@ xlrd==2.0.1
 odfpy==1.4.1
 pytz==2024.2
 json-repair==0.30.0
-setuptools==65.5.1
-requests==2.32.3
-wheel==0.45.1
-
+setuptools==75.5.0
+requests==2.32.3 
+wheel==0.45.0
