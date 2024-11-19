@@ -4,7 +4,7 @@ import logging
 from django.conf import settings
 from ereuseapi.methods import API
 
-from dpp.models import Proof, Dpp
+from dpp.models import Proof
 
 
 logger = logging.getLogger('django')
@@ -31,11 +31,11 @@ PROOF_TYPE = {
 
 def connect_api():
 
-    if not settings.get('TOKEN_DLT'):
+    if not settings.TOKEN_DLT:
         return
 
-    token_dlt = settings.get('TOKEN_DLT')
-    api_dlt = settings.get('API_DLT')
+    token_dlt = settings.TOKEN_DLT
+    api_dlt = settings.API_DLT
 
     return API(api_dlt, token_dlt, "ethereum")
 
@@ -51,14 +51,14 @@ def register_dlt(chid, phid, proof_type=None):
             ALGORITHM,
             phid,
             proof_type,
-            settings.get('ID_FEDERATED')
+            settings.ID_FEDERATED
         )
 
     return api.register_device(
         chid,
         ALGORITHM,
         phid,
-        settings.get('ID_FEDERATED')
+        settings.ID_FEDERATED
     )
 
 
@@ -72,7 +72,7 @@ def issuer_dpp_dlt(dpp):
         dpp,
         ALGORITHM,
         phid,
-        settings.get('ID_FEDERATED')
+        settings.ID_FEDERATED
     )
 
 
@@ -96,6 +96,11 @@ def save_proof(signature, ev_uuid, result, proof_type, user):
 
 
 def register_device_dlt(chid, phid, ev_uuid, user):
+    token_dlt = settings.TOKEN_DLT
+    api_dlt = settings.API_DLT
+    if not token_dlt or not api_dlt:
+        return
+    
     cny_a = 1
     while cny_a:
         result = register_dlt(chid, phid)
@@ -131,6 +136,11 @@ def register_device_dlt(chid, phid, ev_uuid, user):
 
 
 def register_passport_dlt(chid, phid, ev_uuid, user):
+    token_dlt = settings.TOKEN_DLT
+    api_dlt = settings.API_DLT
+    if not token_dlt or not api_dlt:
+        return
+    
     dpp = "{chid}:{phid}".format(chid=chid, phid=phid)
     if Proof.objects.filter(signature=dpp, type=PROOF_TYPE['IssueDPP']).exists():
         return
