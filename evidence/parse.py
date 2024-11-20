@@ -83,7 +83,7 @@ class Build:
 
     def get_hid(self, snapshot):
         try:
-            self.inxi = json.loads(self.json["inxi"])
+            self.inxi = json.loads(self.json["data"]["inxi"])
         except Exception:
             logger.error("No inxi in snapshot %s", self.uuid)
             return ""
