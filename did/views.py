@@ -4,6 +4,7 @@ import logging
 from django.http import JsonResponse, Http404
 from django.views.generic.base import TemplateView
 from device.models import Device
+from dpp.api_dlt import ALGORITHM
 from dpp.models import Proof
 
 
@@ -81,6 +82,48 @@ class PublicDeviceWebView(TemplateView):
     def get_json_response(self):
         device_data = self.get_device_data()
         return JsonResponse(device_data)
+
+    def get_result(self):
+        components = []
+        data = {
+            'document': {},
+            'dpp': self.pk,
+            'algorithm': ALGORITHM,
+            'components': components,
+            'manufacturer DPP': '',
+        }
+        result = {
+            '@context': ['https://ereuse.org/dpp0.json'],
+            'data': data,
+        }
+
+        if self.dpp:
+            data['document'] = self.dpp.snapshot.json_hw
+            last_dpp = self.get_last_dpp()
+            url_last = ''
+            if last_dpp:
+                url_last = 'https://{host}/{did}'.format(
+                    did=last_dpp.key, host=app.config.get('HOST')
+                )
+            data['url_last'] = url_last
+
+            for c in self.dpp.snapshot.components:
+                components.append({c.type: c.chid})
+            return result
+
+        dpps = []
+        for d in self.device.dpps:
+            rr = {
+                'dpp': d.key,
+                'document': d.snapshot.json_hw,
+                'algorithm': ALGORITHM,
+                'manufacturer DPP': '',
+            }
+            dpps.append(rr)
+        return {
+            '@context': ['https://ereuse.org/dpp0.json'],
+            'data': dpps,
+        }
 
     def get_manuals(self):
         manuals = {
