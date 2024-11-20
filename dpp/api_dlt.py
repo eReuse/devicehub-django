@@ -85,7 +85,7 @@ def save_proof(signature, ev_uuid, result, proof_type, user):
         d = {
             "type": proof_type,
             "timestamp": timestamp,
-            "issuer": user.institution.id,
+            "issuer": user.institution,
             "user": user,
             "uuid": ev_uuid,
             "signature": signature,
