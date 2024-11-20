@@ -1,5 +1,4 @@
-import json
-import logging
+from django.http import JsonResponse
 
 from django.http import JsonResponse
 from django.conf import settings
@@ -20,6 +19,7 @@ from dashboard.mixins import DashboardView, Http403
 from evidence.models import UserProperty, SystemProperty
 from lot.models import LotTag
 from dpp.models import Proof
+from dpp.api_dlt import PROOF_TYPE
 from device.models import Device
 from device.forms import DeviceFormSet
 from device.environmental_impact.calculator import get_device_environmental_impact
@@ -91,7 +91,10 @@ class DetailsView(DashboardView, TemplateView):
         context = super().get_context_data(**kwargs)
         self.object.initial()
         lot_tags = LotTag.objects.filter(owner=self.request.user.institution)
-        dpps = Proof.objects.filter(uuid__in=self.object.uuids)
+        dpps = Proof.objects.filter(
+            uuid__in=self.object.uuids,
+            type=PROOF_TYPE["IssueDPP"]
+        )
         context.update({
             'object': self.object,
             'snapshot': last_evidence,
