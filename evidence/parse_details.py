@@ -54,7 +54,7 @@ class ParseSnapshot:
         }
 
     def set_computer(self):
-        machine = get_inxi_key(self.inxi, 'Machine')
+        machine = get_inxi_key(self.inxi, 'Machine') or []
         for m in machine:
             system = get_inxi(m, "System")
             if system:
@@ -80,7 +80,7 @@ class ParseSnapshot:
         self.get_battery()
 
     def get_mother_board(self):
-        machine = get_inxi_key(self.inxi, 'Machine')
+        machine = get_inxi_key(self.inxi, 'Machine') or []
         mb = {"type": "Motherboard",}
         for m in machine:
             bios_date = get_inxi(m, "date")
@@ -102,7 +102,7 @@ class ParseSnapshot:
         self.components.append(mb)
 
     def get_ram_slots(self, mb):
-        memory = get_inxi_key(self.inxi, 'Memory')
+        memory = get_inxi_key(self.inxi, 'Memory') or []
         for m in memory:
             slots = get_inxi(m, "slots")
             if not slots:
@@ -113,7 +113,7 @@ class ParseSnapshot:
 
 
     def get_cpu(self):
-        cpu = get_inxi_key(self.inxi, 'CPU')
+        cpu = get_inxi_key(self.inxi, 'CPU') or []
         cp = {"type": "Processor"}
         vulnerabilities = []
         for c in cpu:
@@ -158,7 +158,7 @@ class ParseSnapshot:
 
 
     def get_ram(self):
-        memory = get_inxi_key(self.inxi, 'Memory')
+        memory = get_inxi_key(self.inxi, 'Memory') or []
         mem = {"type": "RamModule"}
 
         for m in memory:
@@ -180,7 +180,7 @@ class ParseSnapshot:
         self.components.append(mem)
 
     def get_graphic(self):
-        graphics = get_inxi_key(self.inxi, 'Graphics')
+        graphics = get_inxi_key(self.inxi, 'Graphics') or []
 
         for c in graphics:
             if not get_inxi(c, "Device") or not get_inxi(c, "vendor"):
@@ -199,7 +199,7 @@ class ParseSnapshot:
             )
 
     def get_battery(self):
-        bats = get_inxi_key(self.inxi, 'Battery')
+        bats = get_inxi_key(self.inxi, 'Battery') or []
         for b in bats:
             self.components.append(
                 {
@@ -213,7 +213,7 @@ class ParseSnapshot:
             )
 
     def get_memory_video(self, c):
-        memory = get_inxi_key(self.inxi, 'Memory')
+        memory = get_inxi_key(self.inxi, 'Memory') or []
 
         for m in memory:
             igpu = get_inxi(m, "igpu")
@@ -226,7 +226,7 @@ class ParseSnapshot:
         return self.default
 
     def get_data_storage(self):
-        hdds= get_inxi_key(self.inxi, 'Drives')
+        hdds= get_inxi_key(self.inxi, 'Drives') or []
         for d in hdds:
             usb = get_inxi(d, "type")
             if usb == "USB":
@@ -277,7 +277,7 @@ class ParseSnapshot:
         return []
 
     def get_networks(self):
-        nets = get_inxi_key(self.inxi, "Network")
+        nets = get_inxi_key(self.inxi, "Network") or []
         networks = [(nets[i], nets[i + 1]) for i in range(0, len(nets) - 1, 2)]
 
         for n, iface in networks:
@@ -306,7 +306,7 @@ class ParseSnapshot:
             )
 
     def get_sound_card(self):
-        audio = get_inxi_key(self.inxi, "Audio")
+        audio = get_inxi_key(self.inxi, "Audio") or []
 
         for c in audio:
             model = get_inxi(c, "Device")
@@ -323,7 +323,7 @@ class ParseSnapshot:
             )
 
     def get_display(self):
-        graphics = get_inxi_key(self.inxi, "Graphics")
+        graphics = get_inxi_key(self.inxi, "Graphics") or []
         for c in graphics:
             if not get_inxi(c, "Monitor"):
                 continue
