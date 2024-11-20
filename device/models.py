@@ -26,6 +26,7 @@ class Device:
     def __init__(self, *args, **kwargs):
         # the id is the chid of the device
         self.id = kwargs["id"]
+        self.uuid = kwargs.get("uuid")
         self.pk = self.id
         self.shortid = self.pk[:6].upper()
         self.algorithm = None
@@ -104,6 +105,14 @@ class Device:
         self.evidences = [Evidence(u) for u in self.uuids]
 
     def get_last_evidence(self):
+        if self.last_evidence:
+            return
+
+        if self.uuid:
+            import pdb; pdb.set_trace()
+            self.last_evidence = Evidence(self.uuid)
+            return
+
         annotations = self.get_annotations()
         if not annotations.count():
             return
@@ -127,6 +136,8 @@ class Device:
         return False
 
     def last_uuid(self):
+        if self.uuid:
+            return self.uuid
         return self.uuids[0]
 
     def get_lots(self):
@@ -264,47 +275,40 @@ class Device:
 
     @property
     def is_websnapshot(self):
-        if not self.last_evidence:
-            self.get_last_evidence()
+        self.get_last_evidence()
         return self.last_evidence.doc['type'] == "WebSnapshot"
 
     @property
     def last_user_evidence(self):
-        if not self.last_evidence:
-            self.get_last_evidence()
+        self.get_last_evidence()
         return self.last_evidence.doc['kv'].items()
 
     @property
     def manufacturer(self):
-        if not self.last_evidence:
-            self.get_last_evidence()
+        self.get_last_evidence()
         return self.last_evidence.get_manufacturer()
 
     @property
     def serial_number(self):
-        if not self.last_evidence:
-            self.get_last_evidence()
+        self.get_last_evidence()
         return self.last_evidence.get_serial_number()
 
     @property
     def type(self):
+        self.get_last_evidence()
         if self.last_evidence.doc['type'] == "WebSnapshot":
             return self.last_evidence.doc.get("device", {}).get("type", "")
 
-        if not self.last_evidence:
-            self.get_last_evidence()
         return self.last_evidence.get_chassis()
 
     @property
     def model(self):
-        if not self.last_evidence:
-            self.get_last_evidence()
+        self.get_last_evidence()
         return self.last_evidence.get_model()
 
     @property
     def components(self):
-        if not self.last_evidence:
-            self.get_last_evidence()
+        self.get_last_evidence()
         return self.last_evidence.get_components()
 
     def get_components_data(self, is_user_authenticated):
