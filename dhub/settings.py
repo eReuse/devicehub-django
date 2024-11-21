@@ -76,6 +76,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     'django_extensions',
     'django_bootstrap5',
+    'fontawesomefree',
     'django_tables2',
     "rest_framework",
     "login",
