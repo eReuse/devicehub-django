@@ -161,7 +161,7 @@
     <!-- pop up modal for delete confirmation -->
 {% for a in object.get_user_properties %}
 <div class="modal fade" id="deleteModal{{ a.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ a.id }}" aria-hidden="true">
-  <div class="modal-dialog">
+  <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="deleteModalLabel{{ a.id }}">{% trans "Confirm Deletion" %}</h5>
@@ -172,7 +172,7 @@
         <p><strong>{% trans "Value:" %}</strong> {{ a.value }}</p>
         <p><strong>{% trans "Created on:" %}</strong> {{ a.created }}</p>
       </div>
-      <div class="modal-footer">
+      <div class="modal-footer justify-content-center">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
         <form method="post" action="{% url 'device:delete_user_property' a.id %}">
           {% csrf_token %}
@@ -187,7 +187,7 @@
 <!-- popup modals for edit button -->
 {% for a in object.get_user_properties %}
 <div class="modal fade" id="editModal{{ a.id }}" tabindex="-1" aria-labelledby="editModalLabel{{ a.id }}" aria-hidden="true">
-  <div class="modal-dialog">
+  <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="editModalLabel{{ a.id }}">{% trans "Edit User Property" %}</h5>
@@ -204,11 +204,14 @@
             <label for="value" class="form-label">{% trans "Value" %}</label>
             <input type="text" class="form-control" id="value" name="value" value="{{ a.value }}">
           </div>
-          <button type="submit" class="btn btn-primary">{% trans "Save changes" %}</button>
+          <div class="modal-footer justify-content-center">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+            <button type="submit" class="btn btn-primary">{% trans "Save changes" %}</button>
+          </div>
         </form>
       </div>
     </div>
-  </div>
+  </div>  
 </div>
 {% endfor %}
 
