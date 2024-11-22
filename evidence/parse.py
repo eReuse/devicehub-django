@@ -49,8 +49,10 @@ class Build:
         self.create_annotations()
 
     def index(self):
+        timestamp = self.json['timestamp']
         snap = json.dumps(self.json)
-        index(self.user.institution, self.uuid, snap)
+
+        index(self.user.institution, self.get_hid(self.json) , self.uuid, timestamp, snap)
 
     def generate_chids(self):
         self.algorithms = {
