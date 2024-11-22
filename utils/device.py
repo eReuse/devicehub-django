@@ -101,6 +101,8 @@ def create_index(doc, user):
     if not doc or not doc.get('uuid'):
         return []
     
+    _timestamp = doc['endTime']
     _uuid = doc['uuid']
+    _device_id = doc['CUSTOMER_ID']
     ev = json.dumps(doc)
-    index(user.institution, _uuid, ev)
+    index(user.institution, _device_id, _uuid, _timestamp, ev)
