@@ -28,21 +28,48 @@ wait_for_dpp_shared() {
 # 3. Generate an environment .env file.
 # TODO cargar via shared
 gen_env_vars() {
-        INIT_ORG="${INIT_ORG:-example-org}"
-        INIT_USER="${INIT_USER:-user@example.org}"
-        INIT_PASSWD="${INIT_PASSWD:-1234}"
-        ADMIN='True'
-        PREDEFINED_TOKEN="${PREDEFINED_TOKEN:-}"
         # specific dpp env vars
-        if [ "${DPP:-}" = 'true' ]; then
-                # fill env vars in this docker entrypoint
-                wait_for_dpp_shared
-                export API_DLT='http://api_connector:3010'
-                export API_DLT_TOKEN="$(cat "/shared/${OPERATOR_TOKEN_FILE}")"
-                export API_RESOLVER='http://id_index_api:3012'
-                # TODO hardcoded
-                export ID_FEDERATED='DH1'
+        if [ "${DPP_MODULE}" = 'y' ]; then
+                # docker situation
+                if [ -d "${DPP_SHARED:-}" ]; then
+                        wait_for_dpp_shared
+                        export API_DLT='http://api_connector:3010'
+                        export API_DLT_TOKEN="$(cat "/shared/${OPERATOR_TOKEN_FILE}")"
+                        export API_RESOLVER='http://id_index_api:3012'
+                        # TODO hardcoded
+                        export ID_FEDERATED='DH1'
+                # .env situation
+                else
+                        dpp_env_vars="$(cat <<END
+API_DLT='${API_DLT}'
+API_DLT_TOKEN='${API_DLT_TOKEN}'
+API_RESOLVER='${API_RESOLVER}'
+ID_FEDERATED='${ID_FEDERATED}'
+END
+)"
+                fi
         fi
+
+        # generate config using env vars from docker
+        cat > .env <<END
+${dpp_env_vars:-}
+DB_USER='${DB_USER}'
+DB_PASSWORD='${DB_PASSWORD}'
+DB_HOST='${DB_HOST}'
+DB_DATABASE='${DB_DATABASE}'
+URL_MANUALS='${URL_MANUALS:-}'
+
+HOST='${HOST}'
+
+SCHEMA='dbtest'
+DB_SCHEMA='dbtest'
+
+EMAIL_DEMO='${EMAIL_DEMO}'
+PASSWORD_DEMO='${PASSWORD_DEMO}'
+
+JWT_PASS=${JWT_PASS}
+SECRET_KEY=${SECRET_KEY}
+END
 }
 
 handle_federated_id() {
@@ -86,8 +113,7 @@ config_dpp_part1() {
         else
                 # TODO when this runs more than one time per service, this is a problem, but for the docker-reset.sh workflow, that's fine
                 # TODO put this in already_configured
-                # TODO hardcoded http proto and port
-                ./manage.py dlt_insert_members "http://${DOMAIN}:8000"
+                ./manage.py dlt_insert_members "${DEVICEHUB_HOST}"
         fi
 
         # 13. Do a rsync api resolve
@@ -97,83 +123,31 @@ config_dpp_part1() {
         DATASET_FILE='/tmp/dataset.json'
         cat > "${DATASET_FILE}" <<END
 {
-  "email": "${INIT_USER}",
-  "password": "${INIT_PASSWD}",
+  "email": "${EMAIL_DEMO}",
+  "password": "${PASSWORD_DEMO}",
   "api_token": "${API_DLT_TOKEN}"
 }
 END
         ./manage.py dlt_register_user "${DATASET_FILE}"
 }
 
-# wait until idhub api is prepared to received requests
-wait_idhub() {
-        echo "Start waiting idhub API"
-        while true; do
-                result="$(curl -s "${url}" \
-                               | jq -r .error \
-                               || echo "Reported errors, idhub API is still not ready")"
-
-                if [ "${result}" = "Invalid request method" ]; then
-                        break
-                        sleep 2
-                else
-                        echo "Waiting idhub API"
-                        sleep 3
-                fi
-        done
-}
-
-demo__send_to_sign_credential() {
-        filepath="${1}"
-        # hashlib.sha3_256 of PREDEFINED_TOKEN for idhub
-        DEMO_IDHUB_PREDEFINED_TOKEN="${DEMO_IDHUB_PREDEFINED_TOKEN:-}"
-        auth_header="Authorization: Bearer ${DEMO_IDHUB_PREDEFINED_TOKEN}"
-        json_header='Content-Type: application/json'
-        curl -s -X POST \
-             -H "${json_header}" \
-             -H "${auth_header}" \
-             -d @"${filepath}" \
-             "${url}" \
-                | jq -r .data
-}
-
-run_demo() {
-        if [ "${DEMO_IDHUB_DOMAIN:-}" ]; then
-                DEMO_IDHUB_DOMAIN="${DEMO_IDHUB_DOMAIN:-}"
-                # this demo only works with FQDN domain (with no ports)
-                url="https://${DEMO_IDHUB_DOMAIN}/webhook/sign/"
-                wait_idhub
-                demo__send_to_sign_credential \
-                        'example/demo-snapshots-vc/snapshot_pre-verifiable-credential.json' \
-                        > 'example/snapshots/snapshot_workbench-script_verifiable-credential.json'
-        fi
-        ./manage.py create_default_states "${INIT_ORG}"
-        /usr/bin/time ./manage.py up_snapshots example/snapshots/ "${INIT_USER}"
-}
-
 config_phase() {
-        # TODO review this flag file
-        init_flagfile="${program_dir}/already_configured"
+        init_flagfile='/already_configured'
         if [ ! -f "${init_flagfile}" ]; then
 
-                # non DL user (only for the inventory)
-                ./manage.py add_institution "${INIT_ORG}"
-                # TODO: one error on add_user, and you don't add user anymore
-                ./manage.py add_user "${INIT_ORG}" "${INIT_USER}" "${INIT_PASSWD}" "${ADMIN}" "${PREDEFINED_TOKEN}"
-
-                if [ "${DPP:-}" = 'true' ]; then
+                if [ "${DPP_MODULE}" = 'y' ]; then
                         # 12, 13, 14
                         config_dpp_part1
-
-                        # cleanup other snapshots and copy dlt/dpp snapshots
-                        # TODO make this better
-                        rm example/snapshots/*
-                        cp example/dpp-snapshots/*.json example/snapshots/
                 fi
 
-                # # 15. Add inventory snapshots for user "${INIT_USER}".
-                if [ "${DEMO:-}" = 'true' ]; then
-                        run_demo
+                # TODO fix wrong syntax
+                # non DL user (only for the inventory)
+                #   ./manage.py adduser user2@dhub.com ${PASSWORD_DEMO}
+
+                # # 15. Add inventory snapshots for user "${EMAIL_DEMO}".
+                if [ "${IMPORT_SNAPSHOTS}" = 'y' ]; then
+                        cp /mnt/snapshots/*.json example/snapshots/
+                        /usr/bin/time ./manage.py up_snapshots "${EMAIL_DEMO}" ${PASSWORD_DEMO}
                 fi
 
                 # remain next command as the last operation for this if conditional
@@ -241,6 +215,7 @@ main() {
         program_dir='/opt/devicehub-django'
         cd "${program_dir}"
         gen_env_vars
+        config_phase
         deploy
         runserver
 }
