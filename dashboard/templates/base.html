@@ -1,4 +1,4 @@
-{% load i18n static %}
+{% load i18n static language_code %}
 
 <!doctype html>
 <html lang="en">
@@ -7,7 +7,7 @@
     {% block meta %}
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta name="robots" content="NONE,NOARCHIVE" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewp ort" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="">
     <meta name="author" content="Pangea">
     {% endblock %}
@@ -207,10 +207,25 @@
       </div>
     </div>
 
-    <!-- Footer -->
+    <!-- Footer --> 
   <footer class="footer text-center mt-auto py-3">
-    <div class="container">
-      <span class="text-muted">{{ commit_id }}</span>
+    <div class="container d-flex justify-content-center align-items-center">
+      <span class="text-muted mx-auto">{{ commit_id }}</span> 
+      <div class="dropdown ms-auto">
+        <button class="btn btn-secondary dropdown-toggle" type="button" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+          {% get_current_language as LANGUAGE_CODE %}
+          {% get_language_info_list for LANGUAGES as languages %}
+          {{ LANGUAGE_CODE|get_language_code:languages }}
+        </button> 
+        <ul class="dropdown-menu" aria-labelledby="languageDropdown">
+          {% for lang in languages %}
+            <li>
+              <a class="dropdown-item" href="{% url 'set_language' %}?language={{ lang.code }}">{{ lang.name_local }}</a>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+
     </div>
   </footer>
 
