@@ -1,0 +1,623 @@
+# ALGÚN TÍTULO DESCRIPTIVO.
+# Copyright (C) AÑO EL TITULAR DE LOS DERECHOS DE AUTOR DEL PAQUETE
+# Este archivo se distribuye bajo la misma licencia que el paquete PACKAGE.
+# PRIMER AUTOR <EMAIL@ADDRESS>, AÑO.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: VERSIÓN DEL PAQUETE\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-11-26 17:35-0300\n"
+"PO-Revision-Date: AÑO-MO-DA HO:MI+ZONE\n"
+"Last-Translator: NOMBRE COMPLETO <EMAIL@ADDRESS>\n"
+"Language-Team: LENGUAJE <LL@li.org>\n"
+"Language: es\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: admin/templates/admin_panel.html:14
+msgid "Institution"
+msgstr "Institución"
+
+#: admin/templates/admin_users.html:10
+msgid "Add new user"
+msgstr "Agregar nuevo usuario"
+
+#: admin/templates/delete_user.html:33 admin/templates/institution.html:27
+#: admin/templates/user.html:27 api/templates/new_token.html:27
+#: device/templates/new_annotation.html:39 device/templates/new_device.html:81
+#: device/templates/physical_properties.html:117
+#: evidence/templates/ev_details.html:92
+#: evidence/templates/ev_eraseserver.html:52 evidence/templates/upload.html:25
+#: lot/templates/delete_lot.html:33 lot/templates/new_annotation.html:39
+#: lot/templates/new_lot.html:27 user/templates/settings.html:27
+msgid "Cancel"
+msgstr "Cancelar"
+
+#: admin/templates/delete_user.html:34 api/tables.py:29
+#: evidence/templates/ev_details.html:97 lot/templates/delete_lot.html:34
+msgid "Delete"
+msgstr "Eliminar"
+
+#: admin/templates/institution.html:28 admin/templates/user.html:28
+#: api/templates/new_token.html:28 device/templates/new_annotation.html:40
+#: device/templates/new_device.html:82 device/templates/physical_properties.html:118
+#: evidence/templates/ev_details.html:93
+#: evidence/templates/ev_eraseserver.html:53 evidence/templates/upload.html:26
+#: lot/templates/new_annotation.html:40 lot/templates/new_lot.html:28
+#: user/templates/settings.html:28
+msgid "Save"
+msgstr "Guardar"
+
+#: admin/views.py:26 dashboard/templates/base.html:86
+msgid "Admin"
+msgstr "Administrador"
+
+#: admin/views.py:27
+msgid "admin"
+msgstr "administrador"
+
+#: admin/views.py:36 dashboard/templates/base.html:96
+msgid "Users"
+msgstr "Usuarios"
+
+#: admin/views.py:37
+msgid "admin / Users"
+msgstr "administrador / Usuarios"
+
+#: admin/views.py:49 user/views.py:18
+msgid "User"
+msgstr "Usuario"
+
+#: admin/views.py:50
+msgid "admin / User"
+msgstr "administrador / Usuario"
+
+#: admin/views.py:74
+msgid "Delete user"
+msgstr "Eliminar usuario"
+
+#: admin/views.py:91
+msgid "Edit user"
+msgstr "Editar usuario"
+
+#: admin/views.py:110 admin/views.py:112
+msgid "Edit institution"
+msgstr "Editar institución"
+
+#: api/tables.py:51
+msgid "Token"
+msgstr "Token"
+
+#: api/tables.py:52 evidence/forms.py:65 evidence/templates/ev_details.html:18
+#: evidence/templates/ev_eraseserver.html:18
+msgid "Tag"
+msgstr "Etiqueta"
+
+#: api/templates/custom_table.html:65 dashboard/templates/pagination.html:13
+msgid "Previous"
+msgstr "Anterior"
+
+#: api/templates/custom_table.html:91 dashboard/templates/pagination.html:38
+msgid "Next"
+msgstr "Siguiente"
+
+#: api/templates/token.html:13
+msgid "Generate a new token"
+msgstr "Generar un nuevo token"
+
+#: api/views.py:144 api/views.py:178 api/views.py:196
+msgid "Credential management"
+msgstr "Gestión de credenciales"
+
+#: api/views.py:146
+msgid "Managament Tokens"
+msgstr "Tokens de gestión"
+
+#: api/views.py:180 api/views.py:198
+msgid "New Tokens"
+msgstr "Nuevos Tokens"
+
+#: dashboard/mixins.py:15
+msgid "Permission denied. User is not authenticated"
+msgstr "Permiso denegado. El usuario no está autenticado"
+
+#: dashboard/templates/base.html:91
+msgid "Panel"
+msgstr "Panel"
+
+#: dashboard/templates/base.html:105 evidence/templates/ev_details.html:15
+#: evidence/templates/ev_eraseserver.html:15
+msgid "Devices"
+msgstr "Dispositivos"
+
+#: dashboard/templates/base.html:110
+msgid "Unassigned devices"
+msgstr "Dispositivos no asignados"
+
+#: dashboard/templates/base.html:118 device/templates/details.html:24
+msgid "Lots"
+msgstr "Lotes"
+
+#: dashboard/templates/base.html:133 device/templates/details.html:30
+#: evidence/views.py:28 evidence/views.py:87 evidence/views.py:174
+msgid "Evidences"
+msgstr "Evidencias"
+
+#: dashboard/templates/base.html:138
+msgid "Upload one"
+msgstr "Subir uno"
+
+#: dashboard/templates/base.html:143
+msgid "Old evidences"
+msgstr "Evidencias antiguas"
+
+#: dashboard/templates/base.html:151
+msgid "Placeholders"
+msgstr "Marcadores de posición"
+
+#: dashboard/templates/base.html:156
+msgid "Upload Spreadsheet"
+msgstr "Subir hoja de cálculo"
+
+#: dashboard/templates/base.html:161
+msgid "Create one"
+msgstr "Crear uno"
+
+#: dashboard/templates/unassigned_devices.html:15
+#: device/templates/details.html:21 device/templates/details.html:150
+msgid "Documents"
+msgstr "Documentos"
+
+#: dashboard/templates/unassigned_devices.html:20
+msgid "Exports"
+msgstr "Exportaciones"
+
+#: dashboard/templates/unassigned_devices.html:25
+#: device/templates/details.html:111
+msgid "Annotations"
+msgstr "Anotaciones"
+
+#: dashboard/views.py:18
+msgid "Unassigned Devices"
+msgstr "Dispositivos no asignados"
+
+#: dashboard/views.py:28
+msgid "Lot Devices"
+msgstr "Dispositivos del lote"
+
+#: dashboard/views.py:52
+msgid "Search Devices"
+msgstr "Buscar dispositivos"
+
+#: device/templates/details.html:15
+msgid "General details"
+msgstr "Detalles generales"
+
+#: device/templates/details.html:18
+msgid "User annotations"
+msgstr "Anotaciones del usuario"
+
+#: device/templates/details.html:27
+msgid "Components"
+msgstr "Componentes"
+
+#: device/templates/details.html:41
+msgid "Details"
+msgstr "Detalles"
+
+#: device/templates/details.html:50
+msgid "Is a erase server"
+msgstr "Es un servidor de borrado"
+
+#: device/templates/details.html:71
+msgid "Manufacturer"
+msgstr "Fabricante"
+
+#: device/templates/details.html:78
+msgid "Model"
+msgstr "Modelo"
+
+#: device/templates/details.html:85
+msgid "Serial Number"
+msgstr "Número de serie"
+
+#: device/templates/details.html:93
+msgid "Identifiers"
+msgstr "Identificadores"
+
+#: device/templates/details.html:107
+msgid "Add new annotation"
+msgstr "Agregar nueva anotación"
+
+#: device/templates/details.html:116 device/templates/details.html:155
+msgid "Key"
+msgstr "Clave"
+
+#: device/templates/details.html:119 device/templates/details.html:158
+msgid "Value"
+msgstr "Valor"
+
+#: device/templates/details.html:122 device/templates/details.html:161
+msgid "Created on"
+msgstr "Creado el"
+
+#: device/templates/details.html:146
+msgid "Add new document"
+msgstr "Agregar nuevo documento"
+
+#: device/templates/details.html:197
+msgid "Components last evidence"
+msgstr "Última evidencia de componentes"
+
+#: device/templates/details.html:218
+msgid "List of evidences"
+msgstr "Lista de evidencias"
+
+#: device/templates/new_device.html:60
+msgid "Component details"
+msgstr "Detalles del componente"
+
+#: device/templates/new_device.html:65
+msgid "Add component"
+msgstr "Agregar componente"
+
+#: device/views.py:23
+msgid "New Device"
+msgstr "Nuevo dispositivo"
+
+#: device/views.py:69
+msgid "Update Device"
+msgstr "Actualizar dispositivo"
+
+#: device/views.py:88
+msgid "Device"
+msgstr "Dispositivo"
+
+#: device/views.py:172
+msgid "New annotation"
+msgstr "Nueva anotación"
+
+#: device/views.py:205 lot/views.py:147 lot/views.py:171
+msgid "New Document"
+msgstr "Nuevo documento"
+
+#: evidence/forms.py:16
+msgid "File"
+msgstr "Archivo"
+
+#: evidence/forms.py:39
+msgid "The snapshot already exists"
+msgstr "La instantánea ya existe"
+
+#: evidence/forms.py:46
+#, python-format
+msgid "Error on '%(file_name)s': %(error)s"
+msgstr "Error en '%(file_name)s': %(error)s"
+
+#: evidence/forms.py:120
+msgid "File to import"
+msgstr "Archivo a importar"
+
+#: evidence/forms.py:138
+#, python-format
+msgid "Error on '%(file_name)s': Invalid File"
+msgstr "Error en '%(file_name)s': Archivo inválido"
+
+#: evidence/forms.py:147
+msgid "The file you try to import is empty!"
+msgstr "¡El archivo que intentas importar está vacío!"
+
+#: evidence/forms.py:183
+msgid "Is a Erase Server"
+msgstr "Es un servidor de borrado"
+
+#: evidence/templates/ev_details.html:21
+#: evidence/templates/ev_eraseserver.html:21
+msgid "Erase Server"
+msgstr "Servidor de borrado"
+
+#: evidence/templates/ev_details.html:24
+#: evidence/templates/ev_eraseserver.html:24
+msgid "Download File"
+msgstr "Descargar archivo"
+
+#: evidence/templates/ev_details.html:38
+msgid "Type"
+msgstr "Tipo"
+
+#: evidence/templates/ev_details.html:41
+msgid "Identificator"
+msgstr "Identificador"
+
+#: evidence/templates/ev_details.html:44
+msgid "Data"
+msgstr "Datos"
+
+#: evidence/views.py:44
+msgid "Upload Evidence"
+msgstr "Subir evidencia"
+
+#: evidence/views.py:51
+msgid "Evidence uploaded successfully."
+msgstr "Evidencia subida exitosamente."
+
+#: evidence/views.py:63
+msgid "Import Evidence"
+msgstr "Importar evidencia"
+
+#: evidence/views.py:75
+msgid "Evidence imported successfully."
+msgstr "Evidencia importada exitosamente."
+
+#: login/templates/2fadmin.html:8
+msgid "Two-factor Authentication"
+msgstr "Autenticación de dos factores"
+
+#: login/templates/2fadmin.html:15
+msgid "We have sent you an email with a link that you have to click to log in."
+msgstr "Te hemos enviado un correo electrónico con un enlace que debes hacer clic para iniciar sesión."
+
+#: login/templates/2fadmin_email.html:3 login/templates/2fadmin_email.txt:2
+#, python-format
+msgid "You're receiving this email because you tried to access %(site_name)s."
+msgstr "Estás recibiendo este correo electrónico porque intentaste acceder a %(site_name)s."
+
+#: login/templates/2fadmin_email.html:7 login/templates/2fadmin_email.txt:4
+msgid "Please go to the following page"
+msgstr "Por favor, ve a la siguiente página"
+
+#: login/templates/2fadmin_email.html:19 login/templates/2fadmin_email.txt:10
+#: login/templates/activate_user_email.html:24
+#: login/templates/activate_user_email.txt:15
+#: login/templates/password_reset_email.html:23
+#: login/templates/password_reset_email.txt:10
+msgid "Thanks for using our site!"
+msgstr "¡Gracias por usar nuestro sitio!"
+
+#: login/templates/2fadmin_email.html:23 login/templates/2fadmin_email.txt:12
+#: login/templates/password_reset_email.html:27
+#: login/templates/password_reset_email.txt:12
+#, python-format
+msgid "The %(site_name)s team"
+msgstr "El equipo de %(site_name)s"
+
+#: login/templates/2fadmin_email.txt:8
+#: login/templates/password_reset_email.html:19
+#: login/templates/password_reset_email.txt:8
+msgid "Your username, in case you've forgotten:"
+msgstr "Tu nombre de usuario, en caso de que lo hayas olvidado:"
+
+#: login/templates/2fadmin_email_subject.txt:2
+#, python-format
+msgid "Authentication in %(site_name)s"
+msgstr "Autenticación en %(site_name)s"
+
+#: login/templates/activate_user_email.html:2
+#: login/templates/activate_user_email.txt:3
+msgid "DeviceHub"
+msgstr "DeviceHub"
+
+#: login/templates/activate_user_email.html:4
+#: login/templates/activate_user_email.txt:5
+#, python-format
+msgid ""
+"You're receiving this email because your user account at %(site)s has been "
+"activated."
+msgstr "Estás recibiendo este correo electrónico porque tu cuenta de usuario en %(site)s ha sido activada."
+
+#: login/templates/activate_user_email.html:8
+#: login/templates/activate_user_email.txt:7
+msgid "Your username is:"
+msgstr "Tu nombre de usuario es:"
+
+#: login/templates/activate_user_email.html:12
+#: login/templates/activate_user_email.txt:9
+msgid "Please go to the following page and choose a password:"
+msgstr "Por favor, ve a la siguiente página y elige una contraseña:"
+
+#: login/templates/activate_user_email.html:28
+#: login/templates/activate_user_email.txt:17
+#, python-format
+msgid "The %(site)s team"
+msgstr "El equipo de %(site)s"
+
+#: login/templates/activate_user_subject.txt:2
+msgid "IdHub"
+msgstr "IdHub"
+
+#: login/templates/activate_user_subject.txt:3
+#, python-format
+msgid "User activation on %(site)s"
+msgstr "Activación de usuario en %(site)s"
+
+#: login/templates/login.html:43 login/templates/login2.html:50
+msgid "Forgot your password? Click here to recover"
+msgstr "¿Olvidaste tu contraseña? Haz clic aquí para recuperarla"
+
+#: login/templates/login2.html:45
+msgid "Log in"
+msgstr "Iniciar sesión"
+
+#: login/templates/password_reset.html:8
+msgid "Password reset"
+msgstr "Restablecimiento de contraseña"
+
+#: login/templates/password_reset.html:9
+msgid ""
+"Forgotten your password? Enter your email address below, and we'll email "
+"instructions for setting a new one."
+msgstr "¿Olvidaste tu contraseña? Ingresa tu dirección de correo electrónico a continuación y te enviaremos instrucciones para establecer una nueva."
+
+#: login/templates/password_reset.html:21
+msgid "Reset my password"
+msgstr "Restablecer mi contraseña"
+
+#: login/templates/password_reset_complete.html:9
+msgid "Password reset complete"
+msgstr "Restablecimiento de contraseña completo"
+
+#: login/templates/password_reset_complete.html:10
+msgid "Your password has been set. You may go ahead and log in now."
+msgstr "Tu contraseña ha sido establecida. Ahora puedes iniciar sesión."
+
+#: login/templates/password_reset_complete.html:11 login/views.py:19
+msgid "Login"
+msgstr "Iniciar sesión"
+
+#: login/templates/password_reset_confirm.html:9
+msgid "Enter new password"
+msgstr "Ingresa nueva contraseña"
+
+#: login/templates/password_reset_confirm.html:10
+msgid ""
+"Please enter your new password twice so we can verify you typed it in "
+"correctly."
+msgstr "Por favor, ingresa tu nueva contraseña dos veces para que podamos verificar que la escribiste correctamente."
+
+#: login/templates/password_reset_confirm.html:21
+msgid "Change my password"
+msgstr "Cambiar mi contraseña"
+
+#: login/templates/password_reset_confirm.html:29
+msgid "Password reset unsuccessful"
+msgstr "Restablecimiento de contraseña fallido"
+
+#: login/templates/password_reset_confirm.html:30
+msgid ""
+"The password reset link was invalid, possibly because it has already been "
+"used."
+msgstr "El enlace para restablecer la contraseña no es válido, posiblemente porque ya ha sido utilizado."
+
+#: login/templates/password_reset_confirm.html:31
+msgid "Please request a new password reset."
+msgstr "Por favor, solicita un nuevo restablecimiento de contraseña."
+
+#: login/templates/password_reset_done.html:7
+msgid "Password reset sent"
+msgstr "Restablecimiento de contraseña enviado"
+
+#: login/templates/password_reset_done.html:9
+msgid ""
+"We've emailed you instructions for setting your password, if an account "
+"exists with the email you entered. You should receive them shortly."
+msgstr "Te hemos enviado por correo electrónico las instrucciones para establecer tu contraseña, si existe una cuenta con el correo electrónico que ingresaste. Deberías recibirlas en breve."
+
+#: login/templates/password_reset_done.html:11
+msgid ""
+"If you don't receive an email, please make sure you've entered the address "
+"you registered with, and check your spam folder."
+msgstr "Si no recibes un correo electrónico, por favor asegúrate de haber ingresado la dirección con la que te registraste y revisa tu carpeta de spam."
+
+#: login/templates/password_reset_email.html:3
+#: login/templates/password_reset_email.txt:2
+#, python-format
+msgid ""
+"You're receiving this email because you requested a password reset for your "
+"user account at %(site_name)s."
+msgstr "Estás recibiendo este correo electrónico porque solicitaste un restablecimiento de contraseña para tu cuenta de usuario en %(site_name)s."
+
+#: login/templates/password_reset_email.html:7
+#: login/templates/password_reset_email.txt:4
+msgid "Please go to the following page and choose a new password:"
+msgstr "Por favor, ve a la siguiente página y elige una nueva contraseña:"
+
+#: login/templates/password_reset_subject.txt:2
+#, python-format
+msgid "Password reset on %(site_name)s"
+msgstr "Restablecimiento de contraseña en %(site_name)s"
+
+#: lot/templates/lots.html:12
+msgid "Hide closed lots"
+msgstr "Ocultar lotes cerrados"
+
+#: lot/templates/lots.html:16
+msgid "Show closed lots"
+msgstr "Mostrar lotes cerrados"
+
+#: lot/templates/lots.html:22
+msgid "Add new lot"
+msgstr "Agregar nuevo lote"
+
+#: lot/views.py:18
+msgid "New lot"
+msgstr "Nuevo lote"
+
+#: lot/views.py:39
+msgid "Delete lot"
+msgstr "Eliminar lote"
+
+#: lot/views.py:58
+msgid "Edit lot"
+msgstr "Editar lote"
+        
+#: lot/views.py:84
+msgid "Add to lots"
+msgstr "Agregar a los lotes"
+
+#: lot/views.py:112
+msgid "Remove from lots"
+msgstr "Eliminar de los lotes"
+
+#: lot/views.py:124 lot/views.py:125
+msgid "lots"
+msgstr "lotes"
+
+#: lot/views.py:194 lot/views.py:217
+msgid "New Annotation"
+msgstr "Nueva anotación"
+
+#: user/models.py:10
+msgid "Name"
+msgstr "Nombre"
+
+#: user/models.py:16
+msgid "Logo"
+msgstr "Logotipo"
+
+#: user/models.py:17
+msgid "Location"
+msgstr "Ubicación"
+
+#: user/models.py:19
+msgid "Responsable"
+msgstr "Responsable"
+
+#: user/models.py:25
+msgid "Supervisor"
+msgstr "Supervisor"
+
+#: user/models.py:67
+msgid "Email address"
+msgstr "Dirección de correo electrónico"
+
+#: user/models.py:71
+msgid "is active"
+msgstr "está activo"
+
+#: user/models.py:72
+msgid "is admin"
+msgstr "es administrador"
+
+#: user/models.py:73
+msgid "First name"
+msgstr "Nombre"
+
+#: user/models.py:74
+msgid "Last name"
+msgstr "Apellido"
+
+#: user/templates/panel.html:17
+msgid "Admin your Tokens"
+msgstr "Administra tus tokens"
+
+#: user/templates/panel.html:22
+msgid "Download a settings file"
+msgstr "Descargar un archivo de configuración"
+
+#: user/views.py:25
+msgid "Download Settings"
+msgstr "Descargar configuración"
