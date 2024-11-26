@@ -212,19 +212,23 @@
     <div class="container d-flex justify-content-center align-items-center">
       <span class="text-muted mx-auto">{{ commit_id }}</span> 
       <div class="dropdown ms-auto">
-        <button class="btn btn-secondary dropdown-toggle" type="button" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-          {% get_current_language as LANGUAGE_CODE %}
-          {% get_language_info_list for LANGUAGES as languages %}
-          {{ LANGUAGE_CODE|get_language_code:languages }}
-        </button> 
-        <ul class="dropdown-menu" aria-labelledby="languageDropdown">
-          {% for lang in languages %}
-            <li>
-              <a class="dropdown-item" href="{% url 'set_language' %}?language={{ lang.code }}">{{ lang.name_local }}</a>
-            </li>
-          {% endfor %}
-        </ul>
-      </div>
+        <form action="{% url 'set_language' %}" method="post">
+          {% csrf_token %}
+          <button class="btn btn-secondary dropdown-toggle" type="button" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+            {% get_current_language as LANGUAGE_CODE %}
+            {% get_language_info_list for LANGUAGES as languages %}
+            {{ LANGUAGE_CODE|get_language_code:languages }}
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="languageDropdown">
+            {% for lang in languages %}
+              <li>
+                <button class="dropdown-item" type="submit" name="language" value="{{ lang.code }}">{{ lang.name_local }}</button>
+              </li>
+            {% endfor %}
+          </ul>
+        </form>
+
+        <div>
 
     </div>
   </footer>
