@@ -65,7 +65,9 @@ ENABLE_EMAIL = config("ENABLE_EMAIL", default=True, cast=bool)
 
 EVIDENCES_DIR = config("EVIDENCES_DIR", default=os.path.join(BASE_DIR, "db"))
 
-
+LOCALE_PATHS = [
+    os.path.join(BASE_DIR, 'locale'),
+]
 # Application definition
 
 INSTALLED_APPS = [
@@ -122,7 +124,13 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "django.template.context_processors.i18n",
             ],
+
+            'libraries':{
+                'get_language_code': 'dashboard.templatetags.language_code',
+            }
+
         },
     },
 ]
@@ -175,8 +183,9 @@ if TIME_ZONE == "UTC":
 
 USE_L10N = True
 LANGUAGES = [
-    ('es', 'Spanish'),
-    ('en', 'English'),
+    ('es', 'spanish'),
+    ('en', 'english'),
+    ('ca', 'català'),
 ]
 
 # Static files (CSS, JavaScript, Images)
