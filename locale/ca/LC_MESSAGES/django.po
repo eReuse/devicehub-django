@@ -1,0 +1,624 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-11-26 20:13+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: ca\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: admin/templates/admin_panel.html:14
+msgid "Institution"
+msgstr "Institució"
+
+#: admin/templates/admin_users.html:10
+msgid "Add new user"
+msgstr "Afegeix un nou usuari"
+
+#: admin/templates/delete_user.html:33 admin/templates/institution.html:27
+#: admin/templates/user.html:27 api/templates/new_token.html:27
+#: device/templates/new_annotation.html:39 device/templates/new_device.html:81
+#: device/templates/physical_properties.html:117
+#: evidence/templates/ev_details.html:92
+#: evidence/templates/ev_eraseserver.html:52 evidence/templates/upload.html:25
+#: lot/templates/delete_lot.html:33 lot/templates/new_annotation.html:39
+#: lot/templates/new_lot.html:27 user/templates/settings.html:27
+msgid "Cancel"
+msgstr "Cancel·la"
+
+#: admin/templates/delete_user.html:34 api/tables.py:29
+#: evidence/templates/ev_details.html:97 lot/templates/delete_lot.html:34
+msgid "Delete"
+msgstr "Elimina"
+
+#: admin/templates/institution.html:28 admin/templates/user.html:28
+#: api/templates/new_token.html:28 device/templates/new_annotation.html:40
+#: device/templates/new_device.html:82
+#: device/templates/physical_properties.html:118
+#: evidence/templates/ev_details.html:93
+#: evidence/templates/ev_eraseserver.html:53 evidence/templates/upload.html:26
+#: lot/templates/new_annotation.html:40 lot/templates/new_lot.html:28
+#: user/templates/settings.html:28
+msgid "Save"
+msgstr "Desa"
+
+#: admin/views.py:26 dashboard/templates/base.html:86
+msgid "Admin"
+msgstr "Administrador"
+
+#: admin/views.py:27
+msgid "admin"
+msgstr "administrador"
+
+#: admin/views.py:36 dashboard/templates/base.html:96
+msgid "Users"
+msgstr "Usuaris"
+
+#: admin/views.py:37
+msgid "admin / Users"
+msgstr "administrador / Usuaris"
+
+#: admin/views.py:49 user/views.py:18
+msgid "User"
+msgstr "Usuari"
+
+#: admin/views.py:50
+msgid "admin / User"
+msgstr "administrador / Usuari"
+
+#: admin/views.py:74
+msgid "Delete user"
+msgstr "Elimina usuari"
+
+#: admin/views.py:91
+msgid "Edit user"
+msgstr "Edita usuari"
+
+#: admin/views.py:110 admin/views.py:112
+msgid "Edit institution"
+msgstr "Edita institució"
+
+#: api/tables.py:51
+msgid "Token"
+msgstr "Token"
+
+#: api/tables.py:52 evidence/forms.py:65 evidence/templates/ev_details.html:18
+#: evidence/templates/ev_eraseserver.html:18
+msgid "Tag"
+msgstr "Etiqueta"
+
+#: api/templates/custom_table.html:65 dashboard/templates/pagination.html:13
+msgid "Previous"
+msgstr "Anterior"
+
+#: api/templates/custom_table.html:91 dashboard/templates/pagination.html:38
+msgid "Next"
+msgstr "Següent"
+
+#: api/templates/token.html:13
+msgid "Generate a new token"
+msgstr "Genera un nou token"
+
+#: api/views.py:144 api/views.py:178 api/views.py:196
+msgid "Credential management"
+msgstr "Gestió de credencials"
+
+#: api/views.py:146
+msgid "Managament Tokens"
+msgstr "Tokens de gestió"
+
+#: api/views.py:180 api/views.py:198
+msgid "New Tokens"
+msgstr "Nous Tokens"
+
+#: dashboard/mixins.py:15
+msgid "Permission denied. User is not authenticated"
+msgstr "Permís denegat. L'usuari no està autenticat"
+
+#: dashboard/templates/base.html:91
+msgid "Panel"
+msgstr "Panell"
+
+#: dashboard/templates/base.html:105 evidence/templates/ev_details.html:15
+#: evidence/templates/ev_eraseserver.html:15
+msgid "Devices"
+msgstr "Dispositius"
+
+#: dashboard/templates/base.html:110
+msgid "Unassigned devices"
+msgstr "Dispositius no assignats"
+
+#: dashboard/templates/base.html:118 device/templates/details.html:24
+msgid "Lots"
+msgstr "Lots"
+
+#: dashboard/templates/base.html:133 device/templates/details.html:30
+#: evidence/views.py:28 evidence/views.py:87 evidence/views.py:174
+msgid "Evidences"
+msgstr "Evidències"
+
+#: dashboard/templates/base.html:138
+msgid "Upload one"
+msgstr "Carrega un"
+
+#: dashboard/templates/base.html:143
+msgid "Old evidences"
+msgstr "Evidències antigues"
+
+#: dashboard/templates/base.html:151
+msgid "Placeholders"
+msgstr "Marcadors de posició"
+
+#: dashboard/templates/base.html:156
+msgid "Upload Spreadsheet"
+msgstr "Carrega full de càlcul"
+
+#: dashboard/templates/base.html:161
+msgid "Create one"
+msgstr "Crea un"
+
+#: dashboard/templates/unassigned_devices.html:15
+#: device/templates/details.html:21 device/templates/details.html:150
+msgid "Documents"
+msgstr "Documents"
+
+#: dashboard/templates/unassigned_devices.html:20
+msgid "Exports"
+msgstr "Exportacions"
+
+#: dashboard/templates/unassigned_devices.html:25
+#: device/templates/details.html:111
+msgid "Annotations"
+msgstr "Annotations"
+
+#: dashboard/views.py:18
+msgid "Unassigned Devices"
+msgstr "Dispositius no assignats"
+
+#: dashboard/views.py:28
+msgid "Lot Devices"
+msgstr "Dispositius del lot"
+
+#: dashboard/views.py:52
+msgid "Search Devices"
+msgstr "Cerca dispositius"
+
+#: device/templates/details.html:15
+msgid "General details"
+msgstr "Detalls generals"
+
+#: device/templates/details.html:18
+msgid "User annotations"
+msgstr "Annotations de l'usuari"
+
+#: device/templates/details.html:27
+msgid "Components"
+msgstr "Components"
+
+#: device/templates/details.html:41
+msgid "Details"
+msgstr "Detalls"
+
+#: device/templates/details.html:50
+msgid "Is a erase server"
+msgstr "És un servidor d'esborrat"
+
+#: device/templates/details.html:71
+msgid "Manufacturer"
+msgstr "Fabricant"
+
+#: device/templates/details.html:78
+msgid "Model"
+msgstr "Model"
+
+#: device/templates/details.html:85
+msgid "Serial Number"
+msgstr "Número de sèrie"
+
+#: device/templates/details.html:93
+msgid "Identifiers"
+msgstr "Identificadors"
+
+#: device/templates/details.html:107
+msgid "Add new annotation"
+msgstr "Afegeix una nova anotació"
+
+#: device/templates/details.html:116 device/templates/details.html:155
+msgid "Key"
+msgstr "Clau"
+
+#: device/templates/details.html:119 device/templates/details.html:158
+msgid "Value"
+msgstr "Valor"
+
+#: device/templates/details.html:122 device/templates/details.html:161
+msgid "Created on"
+msgstr "Creat el"
+
+#: device/templates/details.html:146
+msgid "Add new document"
+msgstr "Afegeix un nou document"
+
+#: device/templates/details.html:197
+msgid "Components last evidence"
+msgstr "Última evidència dels components"
+
+#: device/templates/details.html:218
+msgid "List of evidences"
+msgstr "Llista d'evidències"
+
+#: device/templates/new_device.html:60
+msgid "Component details"
+msgstr "Detalls del component"
+
+#: device/templates/new_device.html:65
+msgid "Add component"
+msgstr "Afegeix component"
+
+#: device/views.py:23
+msgid "New Device"
+msgstr "Nou dispositiu"
+
+#: device/views.py:69
+msgid "Update Device"
+msgstr "Actualitza dispositiu"
+
+#: device/views.py:88
+msgid "Device"
+msgstr "Dispositiu"
+
+#: device/views.py:172
+msgid "New annotation"
+msgstr "Nova anotació"
+
+#: device/views.py:205 lot/views.py:147 lot/views.py:171
+msgid "New Document"
+msgstr "Nou document"
+
+#: evidence/forms.py:16
+msgid "File"
+msgstr "Fitxer"
+
+#: evidence/forms.py:39
+msgid "The snapshot already exists"
+msgstr "La instantània ja existeix"
+
+#: evidence/forms.py:46
+#, python-format
+msgid "Error on '%(file_name)s': %(error)s"
+msgstr "Error en '%(file_name)s': %(error)s"
+
+#: evidence/forms.py:120
+msgid "File to import"
+msgstr "Fitxer a importar"
+
+#: evidence/forms.py:138
+#, python-format
+msgid "Error on '%(file_name)s': Invalid File"
+msgstr "Error en '%(file_name)s': Fitxer invàlid"
+
+#: evidence/forms.py:147
+msgid "The file you try to import is empty!"
+msgstr "El fitxer que intentes importar està buit!"
+
+#: evidence/forms.py:183
+msgid "Is a Erase Server"
+msgstr "És un servidor d'esborrat"
+
+#: evidence/templates/ev_details.html:21
+#: evidence/templates/ev_eraseserver.html:21
+msgid "Erase Server"
+msgstr "Servidor d'esborrat"
+
+#: evidence/templates/ev_details.html:24
+#: evidence/templates/ev_eraseserver.html:24
+msgid "Download File"
+msgstr "Descarrega fitxer"
+
+#: evidence/templates/ev_details.html:38
+msgid "Type"
+msgstr "Tipus"
+
+#: evidence/templates/ev_details.html:41
+msgid "Identificator"
+msgstr "Identificador"
+
+#: evidence/templates/ev_details.html:44
+msgid "Data"
+msgstr "Dades"
+
+#: evidence/views.py:44
+msgid "Upload Evidence"
+msgstr "Carrega evidència"
+
+#: evidence/views.py:51
+msgid "Evidence uploaded successfully."
+msgstr "Evidència carregada amb èxit."
+
+#: evidence/views.py:63
+msgid "Import Evidence"
+msgstr "Importa evidència"
+
+#: evidence/views.py:75
+msgid "Evidence imported successfully."
+msgstr "Evidència importada amb èxit."
+
+#: login/templates/2fadmin.html:8
+msgid "Two-factor Authentication"
+msgstr "Autenticació de dos factors"
+
+#: login/templates/2fadmin.html:15
+msgid "We have sent you an email with a link that you have to click to log in."
+msgstr "T'hem enviat un correu electrònic amb un enllaç que has de fer clic per iniciar sessió."
+
+#: login/templates/2fadmin_email.html:3 login/templates/2fadmin_email.txt:2
+#, python-format
+msgid "You're receiving this email because you tried to access %(site_name)s."
+msgstr "Estàs rebent aquest correu electrònic perquè has intentat accedir a %(site_name)s."
+
+#: login/templates/2fadmin_email.html:7 login/templates/2fadmin_email.txt:4
+msgid "Please go to the following page"
+msgstr "Si us plau, ves a la pàgina següent"
+
+#: login/templates/2fadmin_email.html:19 login/templates/2fadmin_email.txt:10
+#: login/templates/activate_user_email.html:24
+#: login/templates/activate_user_email.txt:15
+#: login/templates/password_reset_email.html:23
+#: login/templates/password_reset_email.txt:10
+msgid "Thanks for using our site!"
+msgstr "Gràcies per utilitzar el nostre lloc!"
+
+#: login/templates/2fadmin_email.html:23 login/templates/2fadmin_email.txt:12
+#: login/templates/password_reset_email.html:27
+#: login/templates/password_reset_email.txt:12
+#, python-format
+msgid "The %(site_name)s team"
+msgstr "L'equip de %(site_name)s"
+
+#: login/templates/2fadmin_email.txt:8
+#: login/templates/password_reset_email.html:19
+#: login/templates/password_reset_email.txt:8
+msgid "Your username, in case you've forgotten:"
+msgstr "El teu nom d'usuari, per si l'has oblidat:"
+
+#: login/templates/2fadmin_email_subject.txt:2
+#, python-format
+msgid "Authentication in %(site_name)s"
+msgstr "Autenticació a %(site_name)s"
+
+#: login/templates/activate_user_email.html:2
+#: login/templates/activate_user_email.txt:3
+msgid "DeviceHub"
+msgstr "DeviceHub"
+
+#: login/templates/activate_user_email.html:4
+#: login/templates/activate_user_email.txt:5
+#, python-format
+msgid ""
+"You're receiving this email because your user account at %(site)s has been "
+"activated."
+msgstr "Estàs rebent aquest correu electrònic perquè el teu compte d'usuari a %(site)s ha estat activat."
+
+#: login/templates/activate_user_email.html:8
+#: login/templates/activate_user_email.txt:7
+msgid "Your username is:"
+msgstr "El teu nom d'usuari és:"
+
+#: login/templates/activate_user_email.html:12
+#: login/templates/activate_user_email.txt:9
+msgid "Please go to the following page and choose a password:"
+msgstr "Si us plau, ves a la pàgina següent i tria una contrasenya:"
+
+#: login/templates/activate_user_email.html:28
+#: login/templates/activate_user_email.txt:17
+#, python-format
+msgid "The %(site)s team"
+msgstr "L'equip de %(site)s"
+
+#: login/templates/activate_user_subject.txt:2
+msgid "IdHub"
+msgstr "IdHub"
+
+#: login/templates/activate_user_subject.txt:3
+#, python-format
+msgid "User activation on %(site)s"
+msgstr "Activació d'usuari a %(site)s"
+
+#: login/templates/login.html:43 login/templates/login2.html:50
+msgid "Forgot your password? Click here to recover"
+msgstr "Has oblidat la teva contrasenya? Fes clic aquí per recuperar-la"
+
+#: login/templates/login2.html:45
+msgid "Log in"
+msgstr "Inicia sessió"
+
+#: login/templates/password_reset.html:8
+msgid "Password reset"
+msgstr "Restabliment de contrasenya"
+
+#: login/templates/password_reset.html:9
+msgid ""
+"Forgotten your password? Enter your email address below, and we'll email "
+"instructions for setting a new one."
+msgstr "Has oblidat la teva contrasenya? Introdueix la teva adreça de correu electrònic a continuació i t'enviarem instruccions per establir-ne una de nova."
+
+#: login/templates/password_reset.html:21
+msgid "Reset my password"
+msgstr "Restableix la meva contrasenya"
+
+#: login/templates/password_reset_complete.html:9
+msgid "Password reset complete"
+msgstr "Restabliment de contrasenya complet"
+
+#: login/templates/password_reset_complete.html:10
+msgid "Your password has been set. You may go ahead and log in now."
+msgstr "La teva contrasenya ha estat establerta. Ara pots iniciar sessió."
+
+#: login/templates/password_reset_complete.html:11 login/views.py:19
+msgid "Login"
+msgstr "Inicia sessió"
+
+#: login/templates/password_reset_confirm.html:9
+msgid "Enter new password"
+msgstr "Introdueix una nova contrasenya"
+
+#: login/templates/password_reset_confirm.html:10
+msgid ""
+"Please enter your new password twice so we can verify you typed it in "
+"correctly."
+msgstr "Si us plau, introdueix la teva nova contrasenya dues vegades perquè puguem verificar que l'has escrit correctament."
+
+#: login/templates/password_reset_confirm.html:21
+msgid "Change my password"
+msgstr "Canvia la meva contrasenya"
+
+#: login/templates/password_reset_confirm.html:29
+msgid "Password reset unsuccessful"
+msgstr "Restabliment de contrasenya no reeixit"
+
+#: login/templates/password_reset_confirm.html:30
+msgid ""
+"The password reset link was invalid, possibly because it has already been "
+"used."
+msgstr "L'enllaç de restabliment de contrasenya no és vàlid, possiblement perquè ja s'ha utilitzat."
+
+#: login/templates/password_reset_confirm.html:31
+msgid "Please request a new password reset."
+msgstr "Si us plau, sol·licita un nou restabliment de contrasenya."
+
+#: login/templates/password_reset_done.html:7
+msgid "Password reset sent"
+msgstr "Restabliment de contrasenya enviat"
+
+#: login/templates/password_reset_done.html:9
+msgid ""
+"We've emailed you instructions for setting your password, if an account "
+"exists with the email you entered. You should receive them shortly."
+msgstr "T'hem enviat per correu electrònic instruccions per establir la teva contrasenya, si existeix un compte amb el correu electrònic que has introduït. Hauries de rebre-les en breu."
+
+#: login/templates/password_reset_done.html:11
+msgid ""
+"If you don't receive an email, please make sure you've entered the address "
+"you registered with, and check your spam folder."
+msgstr "Si no reps un correu electrònic, si us plau, assegura't que has introduït l'adreça amb la qual et vas registrar i revisa la teva carpeta de correu brossa."
+
+#: login/templates/password_reset_email.html:3
+#: login/templates/password_reset_email.txt:2
+#, python-format
+msgid ""
+"You're receiving this email because you requested a password reset for your "
+"user account at %(site_name)s."
+msgstr "Estàs rebent aquest correu electrònic perquè has sol·licitat un restabliment de contrasenya per al teu compte d'usuari a %(site_name)s."
+
+#: login/templates/password_reset_email.html:7
+#: login/templates/password_reset_email.txt:4
+msgid "Please go to the following page and choose a new password:"
+msgstr "Si us plau, aneu a la pàgina següent i trieu una nova contrasenya:"
+
+#: login/templates/password_reset_subject.txt:2
+#, python-format
+msgid "Password reset on %(site_name)s"
+msgstr "Restabliment de la contrasenya a %(site_name)s"
+
+#: lot/templates/lots.html:12
+msgid "Hide closed lots"
+msgstr "Amaga lots tancats"
+
+#: lot/templates/lots.html:16
+msgid "Show closed lots"
+msgstr "Mostra lots tancats"
+
+#: lot/templates/lots.html:22
+msgid "Add new lot"
+msgstr "Afegeix un nou lot"
+
+#: lot/views.py:18
+msgid "New lot"
+msgstr "Nou lot"
+
+#: lot/views.py:39
+msgid "Delete lot"
+msgstr "Elimina lot"
+
+#: lot/views.py:58
+msgid "Edit lot"
+msgstr "Edita lot"
+
+#: lot/views.py:84
+msgid "Add to lots"
+msgstr "Afegeix als lots"
+
+#: lot/views.py:112
+msgid "Remove from lots"
+msgstr "Elimina dels lots"
+
+#: lot/views.py:124 lot/views.py:125
+msgid "lots"
+msgstr "lots"
+
+#: lot/views.py:194 lot/views.py:217
+msgid "New Annotation"
+msgstr "Nova anotació"
+
+#: user/models.py:10
+msgid "Name"
+msgstr "Nom"
+
+#: user/models.py:16
+msgid "Logo"
+msgstr "Logotip"
+
+#: user/models.py:17
+msgid "Location"
+msgstr "Ubicació"
+
+#: user/models.py:19
+msgid "Responsable"
+msgstr "Responsable"
+
+#: user/models.py:25
+msgid "Supervisor"
+msgstr "Supervisor"
+
+#: user/models.py:67
+msgid "Email address"
+msgstr "Adreça electrònica"
+
+#: user/models.py:71
+msgid "is active"
+msgstr "està actiu"
+
+#: user/models.py:72
+msgid "is admin"
+msgstr "és administrador"
+
+#: user/models.py:73
+msgid "First name"
+msgstr "Nom"
+
+#: user/models.py:74
+msgid "Last name"
+msgstr "Cognom"
+
+#: user/templates/panel.html:17
+msgid "Admin your Tokens"
+msgstr "Administra els teus tokens"
+
+#: user/templates/panel.html:22
+msgid "Download a settings file"
+msgstr "Descarrega un fitxer de configuració"
+
+#: user/views.py:25
+msgid "Download Settings"
+msgstr "Descarrega configuració"
