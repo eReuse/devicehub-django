@@ -5,6 +5,7 @@ RUN apt update && \
     apt-get install -y \
     python3-xapian \
     git \
+    gettext \
     sqlite3 \
     curl \
     jq \
