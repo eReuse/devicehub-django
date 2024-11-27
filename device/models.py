@@ -108,7 +108,6 @@ class Device:
             return
 
         if self.uuid:
-            import pdb; pdb.set_trace()
             self.last_evidence = Evidence(self.uuid)
             return
 
