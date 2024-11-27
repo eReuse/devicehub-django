@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-11-26 20:13+0000\n"
+"POT-Creation-Date: 2024-11-27 01:54-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -25,6 +25,12 @@ msgstr "Institució"
 #: admin/templates/admin_users.html:10
 msgid "Add new user"
 msgstr "Afegeix un nou usuari"
+
+#: admin/templates/admin_users.html:20
+#, fuzzy
+#| msgid "admin"
+msgid "admin?"
+msgstr "administrador"
 
 #: admin/templates/delete_user.html:33 admin/templates/institution.html:27
 #: admin/templates/user.html:27 api/templates/new_token.html:27
@@ -103,6 +109,7 @@ msgid "Previous"
 msgstr "Anterior"
 
 #: api/templates/custom_table.html:91 dashboard/templates/pagination.html:38
+#: login/templates/login.html:39
 msgid "Next"
 msgstr "Següent"
 
@@ -168,6 +175,11 @@ msgstr "Carrega full de càlcul"
 msgid "Create one"
 msgstr "Crea un"
 
+#: dashboard/templates/base.html:186
+#| msgid "Search Devices"
+msgid "Search your device"
+msgstr "Cerca dispositius"
+
 #: dashboard/templates/unassigned_devices.html:15
 #: device/templates/details.html:21 device/templates/details.html:150
 msgid "Documents"
@@ -182,6 +194,36 @@ msgstr "Exportacions"
 msgid "Annotations"
 msgstr "Annotations"
 
+#: dashboard/templates/unassigned_devices.html:38
+msgid "select"
+msgstr "seleccionar"
+
+#: dashboard/templates/unassigned_devices.html:41
+msgid "shortid"
+msgstr "identificador curt"
+
+#: dashboard/templates/unassigned_devices.html:44
+msgid "type"
+msgstr "tipus"
+
+#: dashboard/templates/unassigned_devices.html:47
+#| msgid "Manufacturer"
+msgid "manufacturer"
+msgstr "Fabricant"
+
+#: dashboard/templates/unassigned_devices.html:50
+#| msgid "Model"
+msgid "model"
+msgstr "Model"
+
+#: dashboard/templates/unassigned_devices.html:78
+msgid "Remove"
+msgstr "Eliminar"
+
+#: dashboard/templates/unassigned_devices.html:78
+msgid "Add"
+msgstr "Afegir"
+
 #: dashboard/views.py:18
 msgid "Unassigned Devices"
 msgstr "Dispositius no assignats"
@@ -193,6 +235,27 @@ msgstr "Dispositius del lot"
 #: dashboard/views.py:52
 msgid "Search Devices"
 msgstr "Cerca dispositius"
+
+#: device/forms.py:24 evidence/templates/ev_details.html:38
+msgid "Type"
+msgstr "Tipus"
+
+#: device/forms.py:25
+msgid "Amount"
+msgstr "Quantitat"
+
+#: device/forms.py:26
+msgid "Custom id"
+msgstr "Identificador personalitzat"
+
+#: device/forms.py:27 user/models.py:10
+msgid "Name"
+msgstr "Nom"
+
+#: device/forms.py:28 device/templates/details.html:119
+#: device/templates/details.html:158
+msgid "Value"
+msgstr "Valor"
 
 #: device/templates/details.html:15
 msgid "General details"
@@ -237,10 +300,6 @@ msgstr "Afegeix una nova anotació"
 #: device/templates/details.html:116 device/templates/details.html:155
 msgid "Key"
 msgstr "Clau"
-
-#: device/templates/details.html:119 device/templates/details.html:158
-msgid "Value"
-msgstr "Valor"
 
 #: device/templates/details.html:122 device/templates/details.html:161
 msgid "Created on"
@@ -326,10 +385,6 @@ msgstr "Servidor d'esborrat"
 msgid "Download File"
 msgstr "Descarrega fitxer"
 
-#: evidence/templates/ev_details.html:38
-msgid "Type"
-msgstr "Tipus"
-
 #: evidence/templates/ev_details.html:41
 msgid "Identificator"
 msgstr "Identificador"
@@ -360,12 +415,16 @@ msgstr "Autenticació de dos factors"
 
 #: login/templates/2fadmin.html:15
 msgid "We have sent you an email with a link that you have to click to log in."
-msgstr "T'hem enviat un correu electrònic amb un enllaç que has de fer clic per iniciar sessió."
+msgstr ""
+"T'hem enviat un correu electrònic amb un enllaç que has de fer clic per "
+"iniciar sessió."
 
 #: login/templates/2fadmin_email.html:3 login/templates/2fadmin_email.txt:2
 #, python-format
 msgid "You're receiving this email because you tried to access %(site_name)s."
-msgstr "Estàs rebent aquest correu electrònic perquè has intentat accedir a %(site_name)s."
+msgstr ""
+"Estàs rebent aquest correu electrònic perquè has intentat accedir a "
+"%(site_name)s."
 
 #: login/templates/2fadmin_email.html:7 login/templates/2fadmin_email.txt:4
 msgid "Please go to the following page"
@@ -408,7 +467,9 @@ msgstr "DeviceHub"
 msgid ""
 "You're receiving this email because your user account at %(site)s has been "
 "activated."
-msgstr "Estàs rebent aquest correu electrònic perquè el teu compte d'usuari a %(site)s ha estat activat."
+msgstr ""
+"Estàs rebent aquest correu electrònic perquè el teu compte d'usuari a "
+"%(site)s ha estat activat."
 
 #: login/templates/activate_user_email.html:8
 #: login/templates/activate_user_email.txt:7
@@ -435,12 +496,25 @@ msgstr "IdHub"
 msgid "User activation on %(site)s"
 msgstr "Activació d'usuari a %(site)s"
 
-#: login/templates/login.html:43 login/templates/login2.html:50
+#: login/templates/login.html:12
+msgid "Please enter your email."
+msgstr ""
+
+#: login/templates/login.html:33
+#| msgid "Reset my password"
+msgid "Please enter your password!"
+msgstr "Restableix la meva contrasenya"
+
+#: login/templates/login.html:44 login/templates/login2.html:50
 msgid "Forgot your password? Click here to recover"
 msgstr "Has oblidat la teva contrasenya? Fes clic aquí per recuperar-la"
 
 #: login/templates/login2.html:45
 msgid "Log in"
+msgstr "Inicia sessió"
+
+#: login/templates/login_base.html:65
+msgid "Sign in"
 msgstr "Inicia sessió"
 
 #: login/templates/password_reset.html:8
@@ -451,7 +525,10 @@ msgstr "Restabliment de contrasenya"
 msgid ""
 "Forgotten your password? Enter your email address below, and we'll email "
 "instructions for setting a new one."
-msgstr "Has oblidat la teva contrasenya? Introdueix la teva adreça de correu electrònic a continuació i t'enviarem instruccions per establir-ne una de nova."
+msgstr ""
+"Has oblidat la teva contrasenya? Introdueix la teva adreça de correu "
+"electrònic a continuació i t'enviarem instruccions per establir-ne una de "
+"nova."
 
 #: login/templates/password_reset.html:21
 msgid "Reset my password"
@@ -477,7 +554,9 @@ msgstr "Introdueix una nova contrasenya"
 msgid ""
 "Please enter your new password twice so we can verify you typed it in "
 "correctly."
-msgstr "Si us plau, introdueix la teva nova contrasenya dues vegades perquè puguem verificar que l'has escrit correctament."
+msgstr ""
+"Si us plau, introdueix la teva nova contrasenya dues vegades perquè puguem "
+"verificar que l'has escrit correctament."
 
 #: login/templates/password_reset_confirm.html:21
 msgid "Change my password"
@@ -491,7 +570,9 @@ msgstr "Restabliment de contrasenya no reeixit"
 msgid ""
 "The password reset link was invalid, possibly because it has already been "
 "used."
-msgstr "L'enllaç de restabliment de contrasenya no és vàlid, possiblement perquè ja s'ha utilitzat."
+msgstr ""
+"L'enllaç de restabliment de contrasenya no és vàlid, possiblement perquè ja "
+"s'ha utilitzat."
 
 #: login/templates/password_reset_confirm.html:31
 msgid "Please request a new password reset."
@@ -505,13 +586,19 @@ msgstr "Restabliment de contrasenya enviat"
 msgid ""
 "We've emailed you instructions for setting your password, if an account "
 "exists with the email you entered. You should receive them shortly."
-msgstr "T'hem enviat per correu electrònic instruccions per establir la teva contrasenya, si existeix un compte amb el correu electrònic que has introduït. Hauries de rebre-les en breu."
+msgstr ""
+"T'hem enviat per correu electrònic instruccions per establir la teva "
+"contrasenya, si existeix un compte amb el correu electrònic que has "
+"introduït. Hauries de rebre-les en breu."
 
 #: login/templates/password_reset_done.html:11
 msgid ""
 "If you don't receive an email, please make sure you've entered the address "
 "you registered with, and check your spam folder."
-msgstr "Si no reps un correu electrònic, si us plau, assegura't que has introduït l'adreça amb la qual et vas registrar i revisa la teva carpeta de correu brossa."
+msgstr ""
+"Si no reps un correu electrònic, si us plau, assegura't que has introduït "
+"l'adreça amb la qual et vas registrar i revisa la teva carpeta de correu "
+"brossa."
 
 #: login/templates/password_reset_email.html:3
 #: login/templates/password_reset_email.txt:2
@@ -519,7 +606,9 @@ msgstr "Si no reps un correu electrònic, si us plau, assegura't que has introdu
 msgid ""
 "You're receiving this email because you requested a password reset for your "
 "user account at %(site_name)s."
-msgstr "Estàs rebent aquest correu electrònic perquè has sol·licitat un restabliment de contrasenya per al teu compte d'usuari a %(site_name)s."
+msgstr ""
+"Estàs rebent aquest correu electrònic perquè has sol·licitat un restabliment "
+"de contrasenya per al teu compte d'usuari a %(site_name)s."
 
 #: login/templates/password_reset_email.html:7
 #: login/templates/password_reset_email.txt:4
@@ -570,10 +659,6 @@ msgstr "lots"
 #: lot/views.py:194 lot/views.py:217
 msgid "New Annotation"
 msgstr "Nova anotació"
-
-#: user/models.py:10
-msgid "Name"
-msgstr "Nom"
 
 #: user/models.py:16
 msgid "Logo"
