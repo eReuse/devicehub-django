@@ -28,8 +28,6 @@ main() {
         fi
         # remove old database
         rm -vfr ./db/*
-        # deactivate configured flag
-        rm -vfr ./already_configured
         docker compose down -v
         if [ "${DEV_DOCKER_ALWAYS_BUILD:-}" = 'true' ]; then
                 docker compose pull --ignore-buildable
