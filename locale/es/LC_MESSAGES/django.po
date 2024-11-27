@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: VERSIÓN DEL PAQUETE\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-11-26 17:35-0300\n"
+"POT-Creation-Date: 2024-11-27 02:01-0300\n"
 "PO-Revision-Date: AÑO-MO-DA HO:MI+ZONE\n"
 "Last-Translator: NOMBRE COMPLETO <EMAIL@ADDRESS>\n"
 "Language-Team: LENGUAJE <LL@li.org>\n"
@@ -25,6 +25,12 @@ msgstr "Institución"
 #: admin/templates/admin_users.html:10
 msgid "Add new user"
 msgstr "Agregar nuevo usuario"
+
+#: admin/templates/admin_users.html:20
+#, fuzzy
+#| msgid "admin"
+msgid "admin?"
+msgstr "administrador"
 
 #: admin/templates/delete_user.html:33 admin/templates/institution.html:27
 #: admin/templates/user.html:27 api/templates/new_token.html:27
@@ -44,7 +50,8 @@ msgstr "Eliminar"
 
 #: admin/templates/institution.html:28 admin/templates/user.html:28
 #: api/templates/new_token.html:28 device/templates/new_annotation.html:40
-#: device/templates/new_device.html:82 device/templates/physical_properties.html:118
+#: device/templates/new_device.html:82
+#: device/templates/physical_properties.html:118
 #: evidence/templates/ev_details.html:93
 #: evidence/templates/ev_eraseserver.html:53 evidence/templates/upload.html:26
 #: lot/templates/new_annotation.html:40 lot/templates/new_lot.html:28
@@ -102,6 +109,7 @@ msgid "Previous"
 msgstr "Anterior"
 
 #: api/templates/custom_table.html:91 dashboard/templates/pagination.html:38
+#: login/templates/login.html:39
 msgid "Next"
 msgstr "Siguiente"
 
@@ -136,7 +144,7 @@ msgstr "Dispositivos"
 
 #: dashboard/templates/base.html:110
 msgid "Unassigned devices"
-msgstr "Dispositivos no asignados"
+msgstr "Sin asignar"
 
 #: dashboard/templates/base.html:118 device/templates/details.html:24
 msgid "Lots"
@@ -149,7 +157,7 @@ msgstr "Evidencias"
 
 #: dashboard/templates/base.html:138
 msgid "Upload one"
-msgstr "Subir uno"
+msgstr "Subir"
 
 #: dashboard/templates/base.html:143
 msgid "Old evidences"
@@ -157,15 +165,20 @@ msgstr "Evidencias antiguas"
 
 #: dashboard/templates/base.html:151
 msgid "Placeholders"
-msgstr "Marcadores de posición"
+msgstr "Placeholders"
 
 #: dashboard/templates/base.html:156
 msgid "Upload Spreadsheet"
-msgstr "Subir hoja de cálculo"
+msgstr "Importar hoja de cálculo"
 
 #: dashboard/templates/base.html:161
 msgid "Create one"
-msgstr "Crear uno"
+msgstr "Crear"
+
+#: dashboard/templates/base.html:186
+#| msgid "Search Devices"
+msgid "Search your device"
+msgstr "Buscar dispositivos"
 
 #: dashboard/templates/unassigned_devices.html:15
 #: device/templates/details.html:21 device/templates/details.html:150
@@ -174,16 +187,44 @@ msgstr "Documentos"
 
 #: dashboard/templates/unassigned_devices.html:20
 msgid "Exports"
-msgstr "Exportaciones"
+msgstr "Exportar"
 
 #: dashboard/templates/unassigned_devices.html:25
 #: device/templates/details.html:111
 msgid "Annotations"
 msgstr "Anotaciones"
 
+#: dashboard/templates/unassigned_devices.html:38
+msgid "select"
+msgstr "seleccionar"
+
+#: dashboard/templates/unassigned_devices.html:41
+msgid "shortid"
+msgstr "Id"
+
+#: dashboard/templates/unassigned_devices.html:44
+msgid "type"
+msgstr "Tipo"
+
+#: dashboard/templates/unassigned_devices.html:47
+msgid "manufacturer"
+msgstr "Fabricante"
+
+#: dashboard/templates/unassigned_devices.html:50
+msgid "model"
+msgstr "Modelo"
+
+#: dashboard/templates/unassigned_devices.html:78
+msgid "Remove"
+msgstr "Eliminar"
+
+#: dashboard/templates/unassigned_devices.html:78
+msgid "Add"
+msgstr "Agregar"
+
 #: dashboard/views.py:18
 msgid "Unassigned Devices"
-msgstr "Dispositivos no asignados"
+msgstr "Sin asignar"
 
 #: dashboard/views.py:28
 msgid "Lot Devices"
@@ -192,6 +233,27 @@ msgstr "Dispositivos del lote"
 #: dashboard/views.py:52
 msgid "Search Devices"
 msgstr "Buscar dispositivos"
+
+#: device/forms.py:25 evidence/templates/ev_details.html:38
+msgid "Type"
+msgstr "Tipo"
+
+#: device/forms.py:26
+msgid "Amount"
+msgstr "Cantidad"
+
+#: device/forms.py:27
+msgid "Custom id"
+msgstr "Identificador personalizado"
+
+#: device/forms.py:28 user/models.py:10
+msgid "Name"
+msgstr "Nombre"
+
+#: device/forms.py:29 device/templates/details.html:119
+#: device/templates/details.html:158
+msgid "Value"
+msgstr "Valor"
 
 #: device/templates/details.html:15
 msgid "General details"
@@ -236,10 +298,6 @@ msgstr "Agregar nueva anotación"
 #: device/templates/details.html:116 device/templates/details.html:155
 msgid "Key"
 msgstr "Clave"
-
-#: device/templates/details.html:119 device/templates/details.html:158
-msgid "Value"
-msgstr "Valor"
 
 #: device/templates/details.html:122 device/templates/details.html:161
 msgid "Created on"
@@ -325,10 +383,6 @@ msgstr "Servidor de borrado"
 msgid "Download File"
 msgstr "Descargar archivo"
 
-#: evidence/templates/ev_details.html:38
-msgid "Type"
-msgstr "Tipo"
-
 #: evidence/templates/ev_details.html:41
 msgid "Identificator"
 msgstr "Identificador"
@@ -359,12 +413,16 @@ msgstr "Autenticación de dos factores"
 
 #: login/templates/2fadmin.html:15
 msgid "We have sent you an email with a link that you have to click to log in."
-msgstr "Te hemos enviado un correo electrónico con un enlace que debes hacer clic para iniciar sesión."
+msgstr ""
+"Te hemos enviado un correo electrónico con un enlace que debes hacer clic "
+"para iniciar sesión."
 
 #: login/templates/2fadmin_email.html:3 login/templates/2fadmin_email.txt:2
 #, python-format
 msgid "You're receiving this email because you tried to access %(site_name)s."
-msgstr "Estás recibiendo este correo electrónico porque intentaste acceder a %(site_name)s."
+msgstr ""
+"Estás recibiendo este correo electrónico porque intentaste acceder a "
+"%(site_name)s."
 
 #: login/templates/2fadmin_email.html:7 login/templates/2fadmin_email.txt:4
 msgid "Please go to the following page"
@@ -407,7 +465,9 @@ msgstr "DeviceHub"
 msgid ""
 "You're receiving this email because your user account at %(site)s has been "
 "activated."
-msgstr "Estás recibiendo este correo electrónico porque tu cuenta de usuario en %(site)s ha sido activada."
+msgstr ""
+"Estás recibiendo este correo electrónico porque tu cuenta de usuario en "
+"%(site)s ha sido activada."
 
 #: login/templates/activate_user_email.html:8
 #: login/templates/activate_user_email.txt:7
@@ -434,12 +494,26 @@ msgstr "IdHub"
 msgid "User activation on %(site)s"
 msgstr "Activación de usuario en %(site)s"
 
-#: login/templates/login.html:43 login/templates/login2.html:50
+#: login/templates/login.html:12
+msgid "Please enter your email."
+msgstr ""
+
+#: login/templates/login.html:33
+#, fuzzy
+#| msgid "Reset my password"
+msgid "Please enter your password!"
+msgstr "Restablecer mi contraseña"
+
+#: login/templates/login.html:44 login/templates/login2.html:50
 msgid "Forgot your password? Click here to recover"
 msgstr "¿Olvidaste tu contraseña? Haz clic aquí para recuperarla"
 
 #: login/templates/login2.html:45
 msgid "Log in"
+msgstr "Iniciar sesión"
+
+#: login/templates/login_base.html:65
+msgid "Sign in"
 msgstr "Iniciar sesión"
 
 #: login/templates/password_reset.html:8
@@ -450,7 +524,9 @@ msgstr "Restablecimiento de contraseña"
 msgid ""
 "Forgotten your password? Enter your email address below, and we'll email "
 "instructions for setting a new one."
-msgstr "¿Olvidaste tu contraseña? Ingresa tu dirección de correo electrónico a continuación y te enviaremos instrucciones para establecer una nueva."
+msgstr ""
+"¿Olvidaste tu contraseña? Ingresa tu dirección de correo electrónico a "
+"continuación y te enviaremos instrucciones para establecer una nueva."
 
 #: login/templates/password_reset.html:21
 msgid "Reset my password"
@@ -476,7 +552,9 @@ msgstr "Ingresa nueva contraseña"
 msgid ""
 "Please enter your new password twice so we can verify you typed it in "
 "correctly."
-msgstr "Por favor, ingresa tu nueva contraseña dos veces para que podamos verificar que la escribiste correctamente."
+msgstr ""
+"Por favor, ingresa tu nueva contraseña dos veces para que podamos verificar "
+"que la escribiste correctamente."
 
 #: login/templates/password_reset_confirm.html:21
 msgid "Change my password"
@@ -490,7 +568,9 @@ msgstr "Restablecimiento de contraseña fallido"
 msgid ""
 "The password reset link was invalid, possibly because it has already been "
 "used."
-msgstr "El enlace para restablecer la contraseña no es válido, posiblemente porque ya ha sido utilizado."
+msgstr ""
+"El enlace para restablecer la contraseña no es válido, posiblemente porque "
+"ya ha sido utilizado."
 
 #: login/templates/password_reset_confirm.html:31
 msgid "Please request a new password reset."
@@ -504,13 +584,18 @@ msgstr "Restablecimiento de contraseña enviado"
 msgid ""
 "We've emailed you instructions for setting your password, if an account "
 "exists with the email you entered. You should receive them shortly."
-msgstr "Te hemos enviado por correo electrónico las instrucciones para establecer tu contraseña, si existe una cuenta con el correo electrónico que ingresaste. Deberías recibirlas en breve."
+msgstr ""
+"Te hemos enviado por correo electrónico las instrucciones para establecer tu "
+"contraseña, si existe una cuenta con el correo electrónico que ingresaste. "
+"Deberías recibirlas en breve."
 
 #: login/templates/password_reset_done.html:11
 msgid ""
 "If you don't receive an email, please make sure you've entered the address "
 "you registered with, and check your spam folder."
-msgstr "Si no recibes un correo electrónico, por favor asegúrate de haber ingresado la dirección con la que te registraste y revisa tu carpeta de spam."
+msgstr ""
+"Si no recibes un correo electrónico, por favor asegúrate de haber ingresado "
+"la dirección con la que te registraste y revisa tu carpeta de spam."
 
 #: login/templates/password_reset_email.html:3
 #: login/templates/password_reset_email.txt:2
@@ -518,7 +603,9 @@ msgstr "Si no recibes un correo electrónico, por favor asegúrate de haber ingr
 msgid ""
 "You're receiving this email because you requested a password reset for your "
 "user account at %(site_name)s."
-msgstr "Estás recibiendo este correo electrónico porque solicitaste un restablecimiento de contraseña para tu cuenta de usuario en %(site_name)s."
+msgstr ""
+"Estás recibiendo este correo electrónico porque solicitaste un "
+"restablecimiento de contraseña para tu cuenta de usuario en %(site_name)s."
 
 #: login/templates/password_reset_email.html:7
 #: login/templates/password_reset_email.txt:4
@@ -553,7 +640,7 @@ msgstr "Eliminar lote"
 #: lot/views.py:58
 msgid "Edit lot"
 msgstr "Editar lote"
-        
+
 #: lot/views.py:84
 msgid "Add to lots"
 msgstr "Agregar a los lotes"
@@ -569,10 +656,6 @@ msgstr "lotes"
 #: lot/views.py:194 lot/views.py:217
 msgid "New Annotation"
 msgstr "Nueva anotación"
-
-#: user/models.py:10
-msgid "Name"
-msgstr "Nombre"
 
 #: user/models.py:16
 msgid "Logo"
