@@ -40,7 +40,9 @@ ENV PYTHONPATH="${PYTHONPATH}:/usr/lib/python3/dist-packages"
 COPY . .
 COPY docker/devicehub-django.entrypoint.sh /
 
-RUN chown -R app:app /opt/devicehub-django
-
+# TODO I don't like this, but the whole ereuse-dpp works with user 1000 because of the volume mapping
+#   thanks https://stackoverflow.com/questions/70520205/docker-non-root-user-best-practices-for-python-images
+RUN adduser --system --no-create-home app
 USER app
+
 ENTRYPOINT sh /devicehub-django.entrypoint.sh
