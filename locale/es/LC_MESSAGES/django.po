@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: VERSIÓN DEL PAQUETE\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-11-28 03:03-0300\n"
+"POT-Creation-Date: 2024-11-28 03:34-0300\n"
 "PO-Revision-Date: AÑO-MO-DA HO:MI+ZONE\n"
 "Last-Translator: NOMBRE COMPLETO <EMAIL@ADDRESS>\n"
 "Language-Team: LENGUAJE <LL@li.org>\n"
@@ -23,10 +23,8 @@ msgid "Institution"
 msgstr "Institución"
 
 #: admin/templates/admin_users.html:10
-#, fuzzy
-#| msgid "Add new user"
 msgid "New user"
-msgstr "Agregar nuevo usuario"
+msgstr "Nuevo usuario"
 
 #: admin/templates/admin_users.html:19
 msgid "Email"
@@ -38,10 +36,8 @@ msgid "Admin"
 msgstr "Administrador"
 
 #: admin/templates/admin_users.html:21
-#, fuzzy
-#| msgid "Annotations"
 msgid "Actions"
-msgstr "Anotaciones"
+msgstr "Acciones"
 
 #: admin/templates/admin_users.html:28
 msgid "Yes"
@@ -184,13 +180,11 @@ msgstr "Placeholders"
 
 #: dashboard/templates/base.html:156
 msgid "Import from spreadsheet"
-msgstr "Importar hoja de cálculo"
+msgstr "Importar desde hoja de cálculo"
 
 #: dashboard/templates/base.html:161
-#, fuzzy
-#| msgid "Device"
 msgid "Add device"
-msgstr "Dispositivo"
+msgstr "Nuevo Dispositivo"
 
 #: dashboard/templates/base.html:186
 msgid "Search your device"
@@ -198,6 +192,7 @@ msgstr "Buscar dispositivos"
 
 #: dashboard/templates/unassigned_devices.html:15
 #: device/templates/details.html:21 device/templates/details.html:150
+#: lot/templates/documents.html:22
 msgid "Documents"
 msgstr "Documentos"
 
@@ -206,7 +201,7 @@ msgid "Exports"
 msgstr "Exportar"
 
 #: dashboard/templates/unassigned_devices.html:25
-#: device/templates/details.html:111
+#: device/templates/details.html:111 lot/templates/annotations.html:22
 msgid "Annotations"
 msgstr "Anotaciones"
 
@@ -264,7 +259,8 @@ msgid "Name"
 msgstr "Nombre"
 
 #: device/forms.py:29 device/templates/details.html:119
-#: device/templates/details.html:158
+#: device/templates/details.html:158 lot/templates/annotations.html:27
+#: lot/templates/documents.html:27
 msgid "Value"
 msgstr "Valor"
 
@@ -296,19 +292,21 @@ msgstr "Número de serie"
 msgid "Identifiers"
 msgstr "Identificadores"
 
-#: device/templates/details.html:107
+#: device/templates/details.html:107 lot/templates/annotations.html:17
 msgid "Add new annotation"
 msgstr "Agregar nueva anotación"
 
 #: device/templates/details.html:116 device/templates/details.html:155
+#: lot/templates/annotations.html:26 lot/templates/documents.html:26
 msgid "Key"
 msgstr "Clave"
 
 #: device/templates/details.html:122 device/templates/details.html:161
+#: lot/templates/annotations.html:28
 msgid "Created on"
 msgstr "Creado el"
 
-#: device/templates/details.html:146
+#: device/templates/details.html:146 lot/templates/documents.html:17
 msgid "Add new document"
 msgstr "Agregar nuevo documento"
 
@@ -341,8 +339,6 @@ msgid "Device"
 msgstr "Dispositivo"
 
 #: device/views.py:172
-#, fuzzy
-#| msgid "New Annotation"
 msgid "New annotation"
 msgstr "Nueva anotación"
 
@@ -350,7 +346,7 @@ msgstr "Nueva anotación"
 #, fuzzy
 #| msgid "Documents"
 msgid "New Document"
-msgstr "Documentos"
+msgstr "Nuevo Documento"
 
 #: evidence/forms.py:16
 msgid "File"
@@ -632,6 +628,12 @@ msgstr "Iniciar sesión"
 msgid "Login error. Check credentials."
 msgstr "Error al iniciar sesión. Verifica tus credenciales."
 
+#: lot/templates/documents.html:28
+#, fuzzy
+#| msgid "Created on"
+msgid " Created on"
+msgstr "Creado el"
+
 #: lot/templates/lots.html:12
 msgid "Hide closed lots"
 msgstr "Ocultar lotes cerrados"
@@ -719,8 +721,3 @@ msgstr "Descargar un archivo de configuración"
 #: user/views.py:25
 msgid "Download Settings"
 msgstr "Descargar configuración"
-
-#, fuzzy
-#~| msgid "Admin"
-#~ msgid "Admin?"
-#~ msgstr "Administrador"
