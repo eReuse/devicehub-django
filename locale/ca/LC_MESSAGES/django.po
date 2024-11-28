@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-11-28 03:11-0300\n"
+"POT-Creation-Date: 2024-11-28 03:35-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -36,10 +36,8 @@ msgid "Admin"
 msgstr "Administrador"
 
 #: admin/templates/admin_users.html:21
-#, fuzzy
-#| msgid "Annotations"
 msgid "Actions"
-msgstr "Annotations"
+msgstr "Accions"
 
 #: admin/templates/admin_users.html:28
 msgid "Yes"
@@ -194,6 +192,7 @@ msgstr "Cerca dispositius"
 
 #: dashboard/templates/unassigned_devices.html:15
 #: device/templates/details.html:21 device/templates/details.html:150
+#: lot/templates/documents.html:22
 msgid "Documents"
 msgstr "Documents"
 
@@ -202,7 +201,7 @@ msgid "Exports"
 msgstr "Exportacions"
 
 #: dashboard/templates/unassigned_devices.html:25
-#: device/templates/details.html:111
+#: device/templates/details.html:111 lot/templates/annotations.html:22
 msgid "Annotations"
 msgstr "Annotations"
 
@@ -258,7 +257,8 @@ msgid "Name"
 msgstr "Nom"
 
 #: device/forms.py:29 device/templates/details.html:119
-#: device/templates/details.html:158
+#: device/templates/details.html:158 lot/templates/annotations.html:27
+#: lot/templates/documents.html:27
 msgid "Value"
 msgstr "Valor"
 
@@ -290,19 +290,21 @@ msgstr "Número de sèrie"
 msgid "Identifiers"
 msgstr "Identificadors"
 
-#: device/templates/details.html:107
+#: device/templates/details.html:107 lot/templates/annotations.html:17
 msgid "Add new annotation"
 msgstr "Afegeix una nova anotació"
 
 #: device/templates/details.html:116 device/templates/details.html:155
+#: lot/templates/annotations.html:26 lot/templates/documents.html:26
 msgid "Key"
 msgstr "Clau"
 
 #: device/templates/details.html:122 device/templates/details.html:161
+#: lot/templates/annotations.html:28
 msgid "Created on"
 msgstr "Creat el"
 
-#: device/templates/details.html:146
+#: device/templates/details.html:146 lot/templates/documents.html:17
 msgid "Add new document"
 msgstr "Afegeix un nou document"
 
@@ -620,6 +622,10 @@ msgstr "Inicia sessió"
 #: login/views.py:45
 msgid "Login error. Check credentials."
 msgstr "Error d'inici de sessió. comprovar les credencials"
+
+#: lot/templates/documents.html:28
+msgid " Created on"
+msgstr "Creat el"
 
 #: lot/templates/lots.html:12
 msgid "Hide closed lots"
