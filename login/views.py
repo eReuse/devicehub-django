@@ -1,5 +1,6 @@
 import logging
 
+from django.contrib import messages
 from django.conf import settings
 from django.urls import reverse_lazy
 from django.contrib.auth import views as auth_views
@@ -39,6 +40,10 @@ class LoginView(auth_views.LoginView):
             return redirect(reverse_lazy("login:login"))
 
         return redirect(self.extra_context['success_url'])
+    
+    def form_invalid(self, form):
+        messages.error(self.request, _("Login error. Check credentials."))
+        return self.render_to_response(self.get_context_data(form=form), status=401)
 
 
 def LogoutView(request):
