@@ -113,7 +113,7 @@
                 <ul class="flex-column mb-2 ul_sidebar accordion-collapse {% if path == 'unassigned_devices' %}expanded{% else %}collapse{% endif %}" id="ul_devices" data-bs-parent="#sidebarMenu">
                   <li class="nav-item">
                     <a class="nav-link{% if path == 'unassigned_devices' %} active2{% endif %}" href="{% url 'dashboard:unassigned_devices' %}">
-                      {% trans 'Unassigned devices' %}
+                      {% trans 'Unassigned' %}
                     </a>
                   </li>
                 </ul>
@@ -141,7 +141,7 @@
                 <ul class="flex-column mb-2 ul_sidebar accordion-collapse {% if path in 'upload list' %}expanded{% else %}collapse{% endif %}" id="ul_evidences" data-bs-parent="#sidebarMenu">
                   <li class="nav-item">
                     <a class="nav-link{% if path == 'upload' %} active2{% endif %}" href="{% url 'evidence:upload' %}">
-                      {% trans 'Upload one' %}
+                      {% trans 'Upload' %}
                     </a>
                   </li>
                   <li class="nav-item">
@@ -159,12 +159,12 @@
                 <ul class="flex-column mb-2 ul_sidebar accordion-collapse {% if path in 'import add' %}expanded{% else %}collapse{% endif %}" id="ul_placeholders" data-bs-parent="#sidebarMenu">
                   <li class="nav-item">
                     <a class="nav-link{% if path == 'import' %} active2{% endif %}" href="{% url 'evidence:import' %}">
-                      {% trans 'Upload Spreadsheet' %}
+                      {% trans 'Import from spreadsheet' %}
                     </a>
                   </li>
                   <li class="nav-item">
                     <a class="nav-link{% if path == 'add' %} active2{% endif %}" href="{% url 'device:add' %}">
-                      {% trans 'Create one' %}
+                      {% trans 'Add device' %}
                     </a>
                   </li>
                 </ul>
