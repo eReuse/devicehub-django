@@ -14,18 +14,18 @@
       <a href="{% url 'lot:add_annotation' lot.pk %}" class="btn btn-primary">
 
         <i class="bi bi-plus"></i>
-        Add new annotation
+        {%trans "Add new annotation"%}
         <span class="caret"></span>
       </a>
     </div>
 
-    <h5 class="card-title mt-2">Annotations</h5>
+    <h5 class="card-title mt-2">{% trans "Annotations" %}</h5>
     <table class="table table-striped">
       <thead>
         <tr>
-          <th scope="col">Key</th>
-          <th scope="col">Value</th>
-          <th scope="col" data-type="date" data-format="YYYY-MM-DD hh:mm">Created on</th>
+          <th scope="col">{%trans "Key"%}</th>
+          <th scope="col">{%trans "Value"%}</th>
+          <th scope="col" data-type="date" data-format="YYYY-MM-DD hh:mm">{%trans "Created on" %}</th>
           <th></th>
           <th></th>
         </tr>
