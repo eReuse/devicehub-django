@@ -16,12 +16,12 @@ class ProofView(View):
     
     def get(self, request, *args, **kwargs):
         timestamp = kwargs.get("proof_id")
-        for p in Proof.objects.filter():
-            logger.error(p.timestamp)
-            
         proof = Proof.objects.filter(timestamp=timestamp).first()
         if not proof:
             return JsonResponse({}, status=404)
+
+        logger.error(proof.type)
+        logger.error(proof.signature)
         
         ev = Evidence(proof.uuid)
         if not ev.doc:
@@ -30,6 +30,8 @@ class ProofView(View):
         dev = Build(ev.doc, None, check=True)
         doc = dev.get_phid()
 
+        logger.error(doc)
+        
         data = {
             "algorithm": ALGORITHM,
             "document": json.dumps(doc)
