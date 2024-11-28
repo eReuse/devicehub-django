@@ -1,5 +1,6 @@
 import json
 import logging
+import hashlib
 
 from django.views.generic.edit import View
 from django.http import JsonResponse
@@ -31,7 +32,9 @@ class ProofView(View):
         doc = dev.get_phid()
 
         logger.error(doc)
-        
+        hs = hashlib.sha3_256(json.dumps(doc).encode()).hexdigest()
+        logger.error(hs)
+
         data = {
             "algorithm": ALGORITHM,
             "document": json.dumps(doc)
