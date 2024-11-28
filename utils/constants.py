@@ -28,9 +28,19 @@ EREUSE22 = [
     "version"
 ]
 
+LEGACY_DPP = [
+    "manufacturer",
+    "model",
+    "chassis",
+    "serialNumber",
+    "sku",
+    "type",
+    "version"
+]
+
 ALGOS = {
-    "ereuse24": EREUSE24,
-    "ereuse22": EREUSE22
+    "hidalgo1": HID_ALGO1,
+    "legacy_dpp": LEGACY_DPP
 }
 
 
