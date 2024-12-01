@@ -11,4 +11,5 @@ urlpatterns = [
     path("users/delete/<int:pk>", views.DeleteUserView.as_view(), name="delete_user"),
     path("institution/<int:pk>", views.InstitutionView.as_view(), name="institution"),
     path("states/", views.StatesPanelView.as_view(), name="states"),
+    path("states/add", views.AddStateDefinitionView.as_view(), name="add_state_definition"),
 ]
