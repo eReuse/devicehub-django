@@ -1,4 +1,5 @@
 from smtplib import SMTPException
+from django.contrib import messages
 from django.urls import reverse_lazy
 from django.shortcuts import get_object_or_404
 from django.utils.translation import gettext_lazy as _
@@ -8,6 +9,8 @@ from django.views.generic.edit import (
     UpdateView,
     DeleteView,
 )
+from django.core.exceptions import ValidationError
+from django.db import IntegrityError
 from dashboard.mixins import DashboardView, Http403
 from user.models import User, Institution
 from admin.email import NotifyActivateUserByEmail
@@ -135,7 +138,32 @@ class StatesPanelView(AdminView, TemplateView):
 
         context = super().get_context_data(**kwargs)
         context.update({
-            "states": State.objects.filter(institution=self.request.user.institution),
             "state_definitions" : StateDefinition.objects.filter(institution=self.request.user.institution).order_by('order')
+        })
+        return context
+    
+class AddStateDefinitionView(DashboardView, CreateView):
+    template_name = "states_panel.html"
+    title = _("New State Definition")
+    breadcrumb = "Admin / New state"
+    success_url = reverse_lazy('admin:states')
+    model = StateDefinition
+    fields = ('state',)
+
+    def form_valid(self, form):
+        form.instance.institution = self.request.user.institution
+        form.instance.user = self.request.user
+        try:
+            response = super().form_valid(form)
+            messages.success(self.request, _("State definition successfully added."))   
+            return response
+        except IntegrityError:
+            messages.error(self.request, _("State is already defined."))   
+            return self.form_invalid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({
+            "state_definitions": StateDefinition.objects.filter(institution=self.request.user.institution).order_by('order'),
         })
         return context
