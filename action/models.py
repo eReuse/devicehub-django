@@ -27,7 +27,9 @@ class StateDefinition(models.Model):
     state = models.CharField(max_length=50)
 
     class Meta:
-        unique_together = ('institution', 'state')
+        constraints = [
+            models.UniqueConstraint(fields=['institution', 'state'], name='unique_institution_state')
+        ]
 
     def __str__(self):
         return f"{self.institution.name} - {self.state}"
