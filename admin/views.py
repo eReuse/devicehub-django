@@ -11,6 +11,7 @@ from django.views.generic.edit import (
 from dashboard.mixins import DashboardView, Http403
 from user.models import User, Institution
 from admin.email import NotifyActivateUserByEmail
+from action.models import State, StateDefinition
 
 
 class AdminView(DashboardView):
@@ -124,3 +125,17 @@ class InstitutionView(AdminView, UpdateView):
         self.object = self.request.user.institution
         kwargs = super().get_form_kwargs()
         return kwargs
+
+class StatesPanelView(AdminView, TemplateView):
+    template_name = "states_panel.html"
+    title = _("States")
+    breadcrumb = _("admin / States") + " /"
+
+    def get_context_data(self, **kwargs):
+
+        context = super().get_context_data(**kwargs)
+        context.update({
+            "states": State.objects.filter(institution=self.request.user.institution),
+            "state_definitions" : StateDefinition.objects.filter(institution=self.request.user.institution).order_by('order')
+        })
+        return context
