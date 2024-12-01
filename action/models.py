@@ -10,8 +10,13 @@ class State(models.Model):
     state = models.CharField(max_length=50)
     snapshot_uuid = models.UUIDField()
 
-    class Meta:
-        unique_together = ('institution', 'state')
+    def clean(self):
+        if not StateDefinition.objects.filter(institution=self.institution, state=self.state).exists():
+            raise ValidationError(f"The state '{self.state}' is not valid for the institution '{self.institution.name}'.")
+    
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.institution.name} - {self.state} - {self.snapshot_uuid}"
@@ -21,13 +26,8 @@ class StateDefinition(models.Model):
     order = models.AutoField(primary_key=True)
     state = models.CharField(max_length=50)
 
-    def clean(self):
-        if not StateDefinition.objects.filter(institution=self.institution, state=self.state).exists():
-            raise ValidationError(f"The state '{self.state}' is not valid for the institution '{self.institution.name}'.")
-    
-    def save(self, *args, **kwargs):
-        self.clean()
-        super().save(*args, **kwargs)
+    class Meta:
+        unique_together = ('institution', 'state')
 
     def __str__(self):
         return f"{self.institution.name} - {self.state}"
