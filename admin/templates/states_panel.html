@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% load i18n django_bootstrap5 %}
+
+{% block content %}
+<div class="row">
+  <div class="col">
+    <h3>{{ subtitle }}</h3>
+  </div>
+  <div class="col text-end">
+    <button type="button" class="btn btn-green-admin" data-bs-toggle="modal" data-bs-target="#addStateModal">
+      {% trans "Add State Definition" %}
+    </button>
+  </div>
+</div>
+
+<div class="row mt-4">
+  <div class="col">
+    <h4>{% trans "State Definitions" %}</h4>
+    {% if state_definitions %}
+      <ul id="sortable" class="list-group mb-4">
+        {% for state_definition in state_definitions %}
+          <li class="list-group-item d-flex justify-content-between align-items-center" data-id="{{ state_definition.id }}">
+            <div class="d-flex align-items-center">
+              <span class="me-4 display-7">{{ state_definition.order }}</span>
+              <div>
+                <strong>  {{ state_definition.state }}</strong>  <br>
+              </div>
+            </div>
+            <form method="post" action="#">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-danger btn-sm">{% trans "Delete" %}</button>
+            </form>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <div class="alert alert-primary text-center mt-5" role="alert">
+        {% trans "No states found on current organization" %}
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="modal fade" id="addStateModal" tabindex="-1" aria-labelledby="addStateModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addStateModalLabel">{% trans "Add State Definition" %}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+
+        <form method="post" action="{%url 'admin:add_state_definition'%}">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label for="stateInput" class="form-label">{% trans "State" %}</label>
+            <input type="text" class="form-control" id="stateInput" name="state" maxlength="50" required>
+            <div class="form-text">{% trans "Maximum 50 characters." %}</div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Close" %}</button>
+            <button type="submit" class="btn btn-primary">{% trans "Add state definition" %}</button>
+          </div>
+        </form>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  $(function() {
+    $("#sortable").sortable({
+      update: function(event, ui) {
+        var order = $(this).sortable('toArray', { attribute: 'data-id' });
+        $.ajax({
+          url: "  ",
+          method: "POST",
+          data: {
+            order: order,
+            csrfmiddlewaretoken: '{{ csrf_token }}'
+          },
+          success: function(response) {
+            location.reload();
+          }
+        });
+      }
+    });
+    $("#sortable").disableSelection();
+  });
+</script> 
+{% endblock %}
