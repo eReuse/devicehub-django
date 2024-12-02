@@ -3,7 +3,8 @@ from django.contrib import messages
 from django.urls import reverse_lazy
 from django.shortcuts import get_object_or_404
 from django.utils.translation import gettext_lazy as _
-from django.views.generic.base import TemplateView
+from django.contrib.messages.views import SuccessMessageMixin
+from django.views.generic.base import TemplateView, ContextMixin
 from django.views.generic.edit import (
     CreateView,
     UpdateView,
@@ -14,8 +15,7 @@ from django.db import IntegrityError
 from dashboard.mixins import DashboardView, Http403
 from user.models import User, Institution
 from admin.email import NotifyActivateUserByEmail
-from action.models import State, StateDefinition
-
+from action.models import StateDefinition
 
 class AdminView(DashboardView):
     def get(self, *args, **kwargs):
@@ -129,20 +129,21 @@ class InstitutionView(AdminView, UpdateView):
         kwargs = super().get_form_kwargs()
         return kwargs
 
-class StatesPanelView(AdminView, TemplateView):
+
+class StateDefinitionContextMixin(ContextMixin):
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({
+            "state_definitions": StateDefinition.objects.filter(institution=self.request.user.institution).order_by('order'),
+        })
+        return context
+
+class StatesPanelView(AdminView, StateDefinitionContextMixin, TemplateView):
     template_name = "states_panel.html"
     title = _("States")
     breadcrumb = _("admin / States") + " /"
 
-    def get_context_data(self, **kwargs):
-
-        context = super().get_context_data(**kwargs)
-        context.update({
-            "state_definitions" : StateDefinition.objects.filter(institution=self.request.user.institution).order_by('order')
-        })
-        return context
-    
-class AddStateDefinitionView(DashboardView, CreateView):
+class AddStateDefinitionView(AdminView, StateDefinitionContextMixin, CreateView):
     template_name = "states_panel.html"
     title = _("New State Definition")
     breadcrumb = "Admin / New state"
@@ -158,12 +159,25 @@ class AddStateDefinitionView(DashboardView, CreateView):
             messages.success(self.request, _("State definition successfully added."))   
             return response
         except IntegrityError:
-            messages.error(self.request, _("State is already defined."))   
+            messages.error(self.request, _("State is already defined."))
             return self.form_invalid(form)
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context.update({
-            "state_definitions": StateDefinition.objects.filter(institution=self.request.user.institution).order_by('order'),
-        })
-        return context
+    def form_invalid(self, form):   
+        return super().form_invalid(form)
+
+
+class DeleteStateDefinitionView(AdminView, StateDefinitionContextMixin, SuccessMessageMixin, DeleteView):
+    model = StateDefinition
+    success_url = reverse_lazy('admin:states')
+
+    def get_success_message(self, cleaned_data):
+        return f'State definition: {self.object.state}, has been deleted'
+
+    def delete(self, request, *args, **kwargs):
+        self.object = self.get_object()
+
+        #only an admin of current institution can delete
+        if not object.institution == self.request.user.institution:
+            raise Http404
+
+        return super().delete(request, *args, **kwargs)
