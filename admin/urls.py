@@ -12,4 +12,5 @@ urlpatterns = [
     path("institution/<int:pk>", views.InstitutionView.as_view(), name="institution"),
     path("states/", views.StatesPanelView.as_view(), name="states"),
     path("states/add", views.AddStateDefinitionView.as_view(), name="add_state_definition"),
+    path('states/delete/<int:pk>', views.DeleteStateDefinitionView.as_view(), name='delete_state_definition'),
 ]
