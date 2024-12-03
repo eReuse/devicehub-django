@@ -1,7 +1,7 @@
 from smtplib import SMTPException
 from django.contrib import messages
 from django.urls import reverse_lazy
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect, Http404
 from django.utils.translation import gettext_lazy as _
 from django.contrib.messages.views import SuccessMessageMixin
 from django.views.generic.base import TemplateView, ContextMixin
@@ -11,8 +11,9 @@ from django.views.generic.edit import (
     DeleteView,
 )
 from django.core.exceptions import ValidationError
-from django.db import IntegrityError
+from django.db import IntegrityError,   transaction
 from dashboard.mixins import DashboardView, Http403
+from admin.forms import OrderingStateForm
 from user.models import User, Institution
 from admin.email import NotifyActivateUserByEmail
 from action.models import StateDefinition
@@ -181,3 +182,26 @@ class DeleteStateDefinitionView(AdminView, StateDefinitionContextMixin, SuccessM
             raise Http404
 
         return super().delete(request, *args, **kwargs)
+
+class UpdateStateOrderView(AdminView, TemplateView):
+    success_url = reverse_lazy('admin:states')
+
+    def post(self, request, *args, **kwargs):
+        form = OrderingStateForm(request.POST)
+
+        if form.is_valid():
+            ordered_ids = form.cleaned_data["ordering"].split(',')
+
+            with transaction.atomic():
+                current_order = 1
+                for lookup_id in ordered_ids:
+                    state_definition = StateDefinition.objects.get(id=lookup_id)
+                    state_definition.order = current_order
+                    state_definition.save()
+                    current_order += 1
+
+            messages.success(self.request, _("Order changed succesfuly."))
+            return redirect(self.success_url)
+        else:
+            return Http404
+
