@@ -13,4 +13,5 @@ urlpatterns = [
     path("states/", views.StatesPanelView.as_view(), name="states"),
     path("states/add", views.AddStateDefinitionView.as_view(), name="add_state_definition"),
     path('states/delete/<int:pk>', views.DeleteStateDefinitionView.as_view(), name='delete_state_definition'),
+    path('states/update_order/', views.UpdateStateOrderView.as_view(), name='update_state_order'),
 ]
