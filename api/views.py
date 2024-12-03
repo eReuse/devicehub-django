@@ -85,17 +85,21 @@ class NewSnapshotView(ApiMixing):
         # except Exception:
         #     return JsonResponse({'error': 'Invalid Snapshot'}, status=400)
 
-        if not data.get("uuid"):
+        ev_uuid = data.get("uuid")
+        if data.get("credentialSubject"):
+            ev_uuid = data["credentialSubject"].get("uuid")
+
+        if not ev_uuid:
             txt = "error: the snapshot not have uuid"
             logger.error("%s", txt)
             return JsonResponse({'status': txt}, status=500)
 
         exist_annotation = Annotation.objects.filter(
-            uuid=data['uuid']
+            uuid=ev_uuid
         ).first()
 
         if exist_annotation:
-            txt = "error: the snapshot {} exist".format(data['uuid'])
+            txt = "error: the snapshot {} exist".format(ev_uuid)
             logger.warning("%s", txt)
             return JsonResponse({'status': txt}, status=500)
 
@@ -105,14 +109,14 @@ class NewSnapshotView(ApiMixing):
         except Exception as err:
             if settings.DEBUG:
                 logger.exception("%s", err)
-            snapshot_id = data.get("uuid", "")
+            snapshot_id = ev_uuid
             txt = "It is not possible to parse snapshot: %s."
             logger.error(txt, snapshot_id)
             text = "fail: It is not possible to parse snapshot"
             return JsonResponse({'status': text}, status=500)
 
         annotation = Annotation.objects.filter(
-            uuid=data['uuid'],
+            uuid=ev_uuid,
             type=Annotation.Type.SYSTEM,
             # TODO this is hardcoded, it should select the user preferred algorithm
             key="hidalgo1",
@@ -121,7 +125,7 @@ class NewSnapshotView(ApiMixing):
 
 
         if not annotation:
-            logger.error("Error: No annotation for uuid: %s", data["uuid"])
+            logger.error("Error: No annotation for uuid: %s", ev_uuid)
             return JsonResponse({'status': 'fail'}, status=500)
 
         url_args = reverse_lazy("device:details", args=(annotation.value,))
