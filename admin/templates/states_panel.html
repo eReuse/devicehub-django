@@ -40,11 +40,11 @@
         </tbody>
       </table>
 
-      <p class="text-end transparent">{% trans "Move state definitions to reorder" %}</p>
+      <p class="text-end transparent">{% trans "Move and drag state definitions to reorder" %}</p>
   <form id="orderingForm" method="post" action="{% url 'admin:update_state_order' %}">
         {% csrf_token %}
         <input type="hidden" id="orderingInput" name="ordering">
-         <button id="saveOrderBtn" disabled="true" class="btn btn-success mt-5 float-start" >{% trans "Update Order" %}</button>
+         <button id="saveOrderBtn" class="btn btn-success mt-5 float-start collapse" >{% trans "Update Order" %}</button>
       </form>
 
 
@@ -127,8 +127,12 @@
       animation: 150,
       swapThreshold: 0.10,
       onChange: () => {
-        saveOrderingButton.disabled = false;
-    }
+        //TODO: change hide/show animation to a nicer one 
+        const collapse = new bootstrap.Collapse(saveOrderingButton, {
+          toggle: false
+        });
+        collapse.show();
+      }
     });
 
  function saveOrdering() {
