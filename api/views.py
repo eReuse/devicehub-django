@@ -90,15 +90,15 @@ class NewSnapshotView(ApiMixing):
             ev_uuid = data["credentialSubject"].get("uuid")
 
         if not ev_uuid:
-            txt = "error: the snapshot does not have an uuid"
+            txt = "error: the snapshot not have uuid"
             logger.error("%s", txt)
             return JsonResponse({'status': txt}, status=500)
 
-        exist_property = SystemProperty.objects.filter(
+        exist_annotation = Annotation.objects.filter(
             uuid=ev_uuid
         ).first()
 
-        if exist_property:
+        if exist_annotation:
             txt = "error: the snapshot {} exist".format(ev_uuid)
             logger.warning("%s", txt)
             return JsonResponse({'status': txt}, status=500)
@@ -115,16 +115,17 @@ class NewSnapshotView(ApiMixing):
             text = "fail: It is not possible to parse snapshot"
             return JsonResponse({'status': text}, status=500)
 
-        prop = SystemProperty.objects.filter(
+        annotation = Annotation.objects.filter(
             uuid=ev_uuid,
+            type=Annotation.Type.SYSTEM,
             # TODO this is hardcoded, it should select the user preferred algorithm
             key="ereuse24",
             owner=self.tk.owner.institution
         ).first()
 
 
-        if not prop:
-            logger.error("Error: No property  for uuid: %s", ev_uuid)
+        if not annotation:
+            logger.error("Error: No annotation for uuid: %s", ev_uuid)
             return JsonResponse({'status': 'fail'}, status=500)
 
         url_args = reverse_lazy("device:details", args=(prop.value,))

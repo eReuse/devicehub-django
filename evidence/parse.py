@@ -26,18 +26,19 @@ def get_mac(inxi):
 
 class Build:
     def __init__(self, evidence_json, user, check=False):
-        """
-        This Build do the save in xapian as document, in Annotations and do
-        register in dlt if is configured for that.
-
-        We have 4 cases for parser diferents snapshots than come from workbench.
-        1) worbench 11 is old_parse.
-        2) legacy is the worbench-script when create a snapshot for devicehub-teal
-        3) some snapshots come as a credential. In this case is parsed as normal_parse
-        4) normal snapshot from worbench-script is the most basic and is parsed as normal_parse
-        """
         self.evidence = evidence_json.copy()
-        self.uuid = self.evidence.get('uuid')
+        self.json = evidence_json.copy()
+        if evidence_json.get("credentialSubject"):
+            self.json.update(evidence_json["credentialSubject"])
+        if evidence_json.get("evidence"):
+            self.json["data"] = {}
+            for ev in evidence_json["evidence"]:
+                k = ev.get("operation")
+                if not k:
+                    continue
+                self.json["data"][k] = ev.get("output")
+
+        self.uuid = self.json['uuid']
         self.user = user
 
         if evidence_json.get("credentialSubject"):
@@ -91,7 +92,7 @@ class Build:
         except Exception:
             logger.error("No inxi in snapshot %s", self.uuid)
             return ""
-        
+
         machine = get_inxi_key(self.inxi, 'Machine')
         for m in machine:
             system = get_inxi(m, "System")
