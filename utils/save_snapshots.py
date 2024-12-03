@@ -19,7 +19,10 @@ def move_json(path_name, user, place="snapshots"):
 
 
 def save_in_disk(data, user, place="snapshots"):
-    uuid = data.get('uuid', '')
+    uuid = data.get("uuid")
+    if data.get("credentialSubject"):
+        uuid = data["credentialSubject"].get("uuid")
+
     now = datetime.now()
     year = now.year
     month = now.month
