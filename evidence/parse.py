@@ -32,7 +32,18 @@ def get_mac(inxi):
 
 class Build:
     def __init__(self, evidence_json, user, check=False):
-        self.json = evidence_json
+        self.evidence = evidence_json.copy()
+        self.json = evidence_json.copy()
+        if evidence_json.get("credentialSubject"):
+            self.json.update(evidence_json["credentialSubject"])
+        if evidence_json.get("evidence"):
+            self.json["data"] = {}
+            for ev in evidence_json["evidence"]:
+                k = ev.get("operation")
+                if not k:
+                    continue
+                self.json["data"][k] = ev.get("output")
+
         self.uuid = self.json['uuid']
         self.user = user
         self.hid = None
@@ -49,7 +60,7 @@ class Build:
             self.register_device_dlt()
 
     def index(self):
-        snap = json.dumps(self.json)
+        snap = json.dumps(self.evidence)
         index(self.user.institution, self.uuid, snap)
 
     def generate_chids(self):
