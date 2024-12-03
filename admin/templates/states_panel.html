@@ -17,22 +17,37 @@
   <div class="col">
     <h4>{% trans "State Definitions" %}</h4>
     {% if state_definitions %}
-      <ul id="sortable" class="list-group mb-4">
-        {% for state_definition in state_definitions %}
-          <li class="list-group-item d-flex justify-content-between align-items-center" data-id="{{ state_definition.id }}">
-            <div class="d-flex align-items-center">
-              <span class="me-4 display-7">{{ state_definition.order }}</span>
-              <div>
-                <strong>  {{ state_definition.state }}</strong>  <br>
-              </div>
-            </div>
-            <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteStateModal{{ state_definition.id }}">
-              {% trans "Delete" %}
-            </button>
-          </li>
-        {% endfor %}
-      </ul>
-    {% else %}
+      <p>{% trans "Move state definitions to reorder" %}</p>
+      <table class="table table-hover table-mb-4">
+        <thead>
+          <tr>
+            <th scope="col">{% trans "Order" %}</th>
+            <th scope="col">{% trans "State" %}</th>
+            <th scope="col"></th>
+          </tr>
+        </thead>
+        <tbody id="sortable_list">
+          {% for state_definition in state_definitions %}
+            <tr data-id="{{ state_definition.id }}">
+              <td class="order-number">{{ state_definition.order }}</td>
+              <td>{{ state_definition.state }}</td>
+              <td class="text-end">
+                <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteStateModal{{ state_definition.id }}">
+                  {% trans "Delete" %}
+                </button>
+              </td> 
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <form id="orderingForm" method="post">
+        {% csrf_token %}
+        <input type="hidden" id="orderingInput" name="ordering">
+         <button id="saveOrderBtn" class="btn btn-outline-primary mt-5 float-start" style="display: none;">{% trans "Save" %}</button>
+      </form>
+
+
+    {% else %}  
       <div class="alert alert-primary text-center mt-5" role="alert">
         {% trans "No states found on current organization" %}
       </div>
@@ -69,7 +84,6 @@
 </div>
 
 <!-- delete state definition Modal -->
-{% if state_definitions %}
 {% for state_definition in state_definitions %}
 <div class="modal fade" id="deleteStateModal{{ state_definition.id }}" tabindex="-1" aria-labelledby="deleteStateModalLabel{{ state_definition.id }}" aria-hidden="true">
   <div class="modal-dialog">
@@ -98,6 +112,32 @@
   </div>
 </div>
 {% endfor %}
-{% endif %}
+
+
+<script>
+  //following https://dev.to/nemecek_f/django-how-to-let-user-re-order-sort-table-of-content-with-drag-and-drop-3nlp
+  const saveOrderingButton = document.getElementById('saveOrdering');
+  const orderingForm = document.getElementById('orderingForm');
+  const formInput = orderingForm.querySelector('#orderingInput');
+
+  const sortable = new Sortable(document.getElementById('sortable_list'), {
+      animation: 150,
+      onEnd: function (/**Event*/evt) {
+        document.getElementById('saveOrderBtn').style.display = 'block';
+      }
+    });
+
+ function saveOrdering() {
+    const rows = document.getElementById("groups").querySelectorAll('tr');
+    let ids = [];
+    for (let row of rows) {
+        ids.push(row.dataset.lookup);
+    }
+    formInput.value = ids.join(',');
+    orderingForm.submit();
+ }
+ 
+</script>
+
 
 {% endblock %}
