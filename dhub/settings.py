@@ -87,8 +87,6 @@ INSTALLED_APPS = [
     "action",
     "admin",
     "api",
-    "dpp",
-    "did",
 ]
 
 DPP = config("DPP", default=False, cast=bool)

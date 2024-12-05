@@ -9,6 +9,11 @@ from evidence.models import Annotation
 from evidence.xapian import index
 from dpp.api_dlt import register_device_dlt, register_passport_dlt
 from evidence.parse_details import get_inxi_key, get_inxi
+from django.conf import settings
+
+if settings.DPP:
+    from dpp.api_dlt import register_device_dlt, register_passport_dlt
+
 
 logger = logging.getLogger('django')
 
@@ -55,7 +60,8 @@ class Build:
 
         self.index()
         self.create_annotations()
-        self.register_device_dlt()
+        if settings.DPP:
+            self.register_device_dlt()
 
     def index(self):
         snap = json.dumps(self.evidence)
@@ -156,26 +162,6 @@ class Build:
                 value=self.sign(v)
             )
 
-<<<<<<< HEAD
-=======
-    def get_chassis_dh(self):
-        chassis = self.get_chassis()
-        lower_type = chassis.lower()
-        for k, v in CHASSIS_DH.items():
-            if lower_type in v:
-                return k
-        return self.default
-
-    def get_sku(self):
-        return self.dmi.get("System")[0].get("SKU Number", "n/a").strip()
-
-    def get_chassis(self):
-        return self.dmi.get("Chassis")[0].get("Type", '_virtual') #
-
-    def get_version(self):
-        return self.dmi.get("System")[0].get("Verson", '_virtual')
-
->>>>>>> 5949049 (new document and out device and components)
     def get_hid(self, snapshot):
         try:
             self.inxi = self.json["data"]["inxi"]
