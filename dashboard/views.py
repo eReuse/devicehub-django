@@ -84,8 +84,11 @@ class SearchView(InventaryMixin):
         return devices, count
 
     def get_annotations(self, xp):
-        snap = xp.document.get_data()
-        uuid = json.loads(snap).get('uuid')
+        snap = json.loads(xp.document.get_data())
+        if snap.get("credentialSubject"):
+            uuid = snap["credentialSubject"]["uuid"]
+        else:
+            uuid = snap["uuid"]
         return Device.get_annotation_from_uuid(uuid, self.request.user.institution)
 
     def search_hids(self, query, offset, limit):
