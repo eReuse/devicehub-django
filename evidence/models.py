@@ -71,24 +71,36 @@ class Evidence:
         for xa in matches:
             self.doc = json.loads(xa.document.get_data())
 
-        if not self.is_legacy():
-            dmidecode_raw = self.doc["data"]["dmidecode"]
-            inxi_raw = self.doc["data"]["inxi"]
-            self.dmi = DMIParse(dmidecode_raw)
-            try:
-                self.inxi = json.loads(inxi_raw)
-                machine = get_inxi_key(self.inxi, 'Machine')
-                for m in machine:
-                    system = get_inxi(m, "System")
-                    if system:
-                        self.device_manufacturer = system
-                        self.device_model = get_inxi(m, "product")
-                        self.device_serial_number = get_inxi(m, "serial")
-                        self.device_chassis = get_inxi(m, "Type")
-                        self.device_version = get_inxi(m, "v")
+        if self.is_legacy():
+            return
 
+        if self.doc.get("credentialSubject"):
+            for ev in self.doc["evidence"]:
+                if "dmidecode" == ev.get("operation"):
+                    dmidecode_raw = ev["output"]
+                if "inxi" == ev.get("operation"):
+                    self.inxi = ev["output"]
+        else:
+            dmidecode_raw = self.doc["data"]["dmidecode"]
+            try:
+                self.inxi = json.loads(self.doc["data"]["inxi"])
             except Exception:
                 return
+
+        self.dmi = DMIParse(dmidecode_raw)
+        try:
+            machine = get_inxi_key(self.inxi, 'Machine')
+            for m in machine:
+                system = get_inxi(m, "System")
+                if system:
+                    self.device_manufacturer = system
+                    self.device_model = get_inxi(m, "product")
+                    self.device_serial_number = get_inxi(m, "serial")
+                    self.device_chassis = get_inxi(m, "Type")
+                    self.device_version = get_inxi(m, "v")
+
+        except Exception:
+            return
 
     def get_time(self):
         if not self.doc:
@@ -116,7 +128,7 @@ class Evidence:
 
         if self.inxi:
             return self.device_manufacturer
-        
+
         return self.dmi.manufacturer().strip()
 
     def get_model(self):
@@ -131,13 +143,13 @@ class Evidence:
 
         if self.inxi:
             return self.device_model
-        
+
         return self.dmi.model().strip()
 
     def get_chassis(self):
         if self.is_legacy():
             return self.doc['device']['model']
-        
+
         if self.inxi:
             return self.device_chassis
 
@@ -152,7 +164,7 @@ class Evidence:
     def get_serial_number(self):
         if self.is_legacy():
             return self.doc['device']['serialNumber']
-        
+
         if self.inxi:
             return self.device_serial_number
 
@@ -178,6 +190,9 @@ class Evidence:
         self.components = snapshot['components']
 
     def is_legacy(self):
+        if self.doc.get("credentialSubject"):
+            return False
+
         return self.doc.get("software") != "workbench-script"
 
     def is_web_snapshot(self):
