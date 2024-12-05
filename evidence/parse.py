@@ -28,6 +28,7 @@ class Build:
     def __init__(self, evidence_json, user, check=False):
         self.evidence = evidence_json.copy()
         self.json = evidence_json.copy()
+
         if evidence_json.get("credentialSubject"):
             self.json.update(evidence_json["credentialSubject"])
         if evidence_json.get("evidence"):
@@ -88,7 +89,9 @@ class Build:
 
     def get_hid(self, snapshot):
         try:
-            self.inxi = json.loads(self.json["data"]["inxi"])
+            self.inxi = self.json["data"]["inxi"]
+            if isinstance(self.inxi, str):
+                self.inxi = json.loads(self.inxi)
         except Exception:
             logger.error("No inxi in snapshot %s", self.uuid)
             return ""

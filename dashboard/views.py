@@ -119,14 +119,13 @@ class SearchView(InventaryMixin):
         # TODO fix of pagination, the count is not correct
         return devices, count
 
-    def get_properties(self, xp):
+    def get_annotations(self, xp):
         snap = json.loads(xp.document.get_data())
         if snap.get("credentialSubject"):
             uuid = snap["credentialSubject"]["uuid"]
         else:
             uuid = snap["uuid"]
-
-        return Device.get_properties_from_uuid(uuid, self.request.user.institution)
+        return Device.get_annotation_from_uuid(uuid, self.request.user.institution)
 
     def search_hids(self, query, offset, limit):
         qry = Q()

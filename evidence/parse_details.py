@@ -29,9 +29,20 @@ def get_inxi(n, name):
 class ParseSnapshot:
     def __init__(self, snapshot, default="n/a"):
         self.default = default
-        self.dmidecode_raw = snapshot["data"].get("dmidecode", "{}")
-        self.smart_raw = snapshot["data"].get("disks", [])
-        self.inxi_raw = snapshot["data"].get("inxi", "") or ""
+        self.dmidecode_raw = snapshot.get("data", {}).get("dmidecode", "{}")
+        self.smart_raw = snapshot.get("data", {}).get("smartctl", [])
+        self.inxi_raw = snapshot.get("data", {}).get("inxi", "") or ""
+        for ev in snapshot.get("evidence", []):
+            if "dmidecode" == ev.get("operation"):
+                self.dmidecode_raw = ev["output"]
+            if "inxi" == ev.get("operation"):
+                self.inxi_raw = ev["output"]
+            if "smartctl" == ev.get("operation"):
+                self.smart_raw = ev["output"]
+        data = snapshot
+        if snapshot.get("credentialSubject"):
+            data = snapshot["credentialSubject"]
+
         self.device = {"actions": []}
         self.components = []
 
@@ -44,11 +55,10 @@ class ParseSnapshot:
         self.snapshot_json = {
             "type": "Snapshot",
             "device": self.device,
-            "software": snapshot["software"],
+            "software": data["software"],
             "components": self.components,
-            "uuid": snapshot['uuid'],
-            "version": snapshot['version'],
-            "endTime": snapshot["timestamp"],
+            "uuid": data['uuid'],
+            "endTime": data["timestamp"],
             "elapsed": 1,
         }
 
@@ -266,7 +276,6 @@ class ParseSnapshot:
                 hd["read used"] = get_inxi(d, "read-units")
                 hd["written used"] = get_inxi(d, "written-units")
 
-                # import pdb; pdb.set_trace()
                 self.components.append(hd)
                 continue
 
