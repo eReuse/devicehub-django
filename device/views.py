@@ -14,6 +14,7 @@ from django.views.generic.edit import (
     DeleteView,
 )
 from django.views.generic.base import TemplateView
+from action.models import StateDefinition
 from dashboard.mixins import DashboardView, Http403
 from evidence.models import UserProperty, SystemProperty, Property
 from lot.models import LotTag
@@ -112,6 +113,7 @@ class DetailsView(DashboardView, TemplateView):
             'object': self.object,
             'snapshot': self.object.get_last_evidence(),
             'lot_tags': lot_tags,
+            "state_definitions": StateDefinition.objects.filter(institution=self.request.user.institution).order_by('order'),
         })
         return context
 
