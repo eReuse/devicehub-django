@@ -311,7 +311,7 @@ class Device:
         if is_user_authenticated:
             return self.components
 
-        public_components = json.loads(json.dumps(self.components))
+        public_components = [component.copy() for component in self.components]
         self.remove_sensitive_data_from(public_components)
         return public_components
 
