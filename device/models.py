@@ -301,6 +301,12 @@ class Device:
         return self.last_evidence.get_model()
 
     @property
+    def version(self):
+        if not self.last_evidence:
+            self.get_last_evidence()
+        return self.last_evidence.get_version()
+
+    @property
     def components(self):
         if not self.last_evidence:
             self.get_last_evidence()
