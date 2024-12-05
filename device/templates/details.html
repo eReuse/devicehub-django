@@ -2,11 +2,30 @@
 {% load i18n %}
 
 {% block content %}
-  <div class="row">
-    <div class="col">
-      <h3>{{ object.shortid }}</h3>
-    </div>
+
+<div class="row">
+  <div class="col">
+    <h3>{{ object.shortid }}</h3>
   </div>
+  <div class="col text-end">
+
+    <div class="dropdown">
+      <button class="btn btn-green-admin dropdown-toggle" type="button" id="addStateDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+        {% trans "Change state to" %}
+      </button>
+      <ul class="dropdown-menu" aria-labelledby="addStateDropdown">
+        {% for state in state_definitions %}
+          <li>
+            <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#addStateModal{{ state.id }}">
+              {{ state.state }}
+            </a>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+  
+  </div>
+</div>
 
   <div class="row">
     <div class="col">
@@ -341,6 +360,64 @@
     </div>
     {% endif %}
   </div>
+
+<!-- add state to device popup modal-->
+{% for state in state_definitions %}
+<div class="modal fade" id="addStateModal{{ state.id }}" tabindex="-1" aria-labelledby="addStateModalLabel{{ state.id }}" aria-hidden="true">
+  <div class="modal-dialog">
+
+    <form method="post" action="">
+      {% csrf_token %}
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="addStateModalLabel{{ state.id }}">{% trans "Summary of changes" %}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body m-2">
+
+
+          <div class="mb-3">
+            <div class="d-flex align-items-center">
+              <i class="bi bi-arrow-right-circle text-danger me-2"></i>
+
+              <span class="text-danger fw-bold me-2">{% trans "From:" %}</span>
+              <span class="text-danger fw-italic">state_placeholder</span>
+            
+            </div>
+            <div class="d-flex align-items-center mt-2">
+              <i class="bi bi-arrow-right-circle text-success me-2"></i>
+              <span class="text-success fw-bold me-2">{% trans "To:" %}</span>
+              <span class="text-success fw-italic">{{ state.state }}</span>
+            </div>
+          </div>
+
+          <div class="form-check form-switch mt-3 d-flex justify-content-end">
+            <label class="form-check-label font-monospace" for="addNoteCheckbox{{ state.id }}">
+              {% trans "Add a note" %}
+            </label>
+            <input class="form-check-input ms-2" type="checkbox" id="addNoteCheckbox{{ state.id }}" data-bs-toggle="collapse" data-bs-target="#collapseInput{{ state.id }}" name="add_note">
+          </div>
+          
+          <div class="mb-3 mt-2 collapse" id="collapseInput{{ state.id }}">
+            <textarea type="text" class="form-control" id="stateNote{{ state.id }}" name="note" rows="4" maxlength="200" placeholder="{% trans "Max 200 characters" %}"></textarea>
+          </div>  
+          
+          <input type="hidden" name="state_id" value="{{ state.id }}">
+
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+          <button type="submit" class="btn btn-primary">{% trans "Add State" %}</button>
+        </div>
+        
+      </div>
+    </form>
+    
+  </div>
+</div>
+{% endfor %}
+
+
 {% endblock %}
 
 {% block extrascript %}
