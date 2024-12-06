@@ -2,6 +2,8 @@ from django.views import View
 from django.shortcuts import redirect, get_object_or_404
 from django.contrib import messages
 from action.forms import AddStateForm
+from django.views.generic.edit import DeleteView
+from django.urls import reverse_lazy
 from action.models import State, StateDefinition
 from device.models import Device
 import logging
@@ -36,4 +38,17 @@ class NewActionView(View):
             return redirect(request.META.get('HTTP_REFERER'))
         else:
             messages.error(request, "There was an error with your submission.")
+            return redirect(request.META.get('HTTP_REFERER'))
+
+class ActionUndoView(DeleteView):
+    model = State
+    success_url = reverse_lazy('state_list')
+
+    def delete(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        time_since_creation = timezone.now() - self.object.date
+        if time_since_creation.total_seconds() <= 3600:  # 1 hour is 3600 seconds
+            return super().delete(request, *args, **kwargs)
+        else:
+            messages.error(request, "You can undo an action within one hour of its creation.")
             return redirect(request.META.get('HTTP_REFERER'))
