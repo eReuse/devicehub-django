@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError
 
 class State(models.Model):
     date = models.DateTimeField(auto_now_add=True)
-    institution = models.ForeignKey(Institution, on_delete=models.CASCADE)
+    institution = models.ForeignKey(Institution, on_delete=models.SET_NULL, null=True)
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
 
     state = models.CharField(max_length=50)
