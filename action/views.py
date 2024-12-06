@@ -6,7 +6,8 @@ from action.models import State, StateDefinition
 from device.models import Device
 import logging
 
-logger = logging.getLogger(__name__)
+
+device_logger = logging.getLogger('device_log')
 
 class NewActionView(View):
 
@@ -26,6 +27,10 @@ class NewActionView(View):
                 user=request.user,
                 institution=request.user.institution,
             )
+            #TODO: also change logger for full fledged table
+            device_logger.info(
+            f"Updated State to (key='{state_definition.state}', for device value='{snapshot_uuid}') by user {self.request.user}."
+        )
 
             messages.success(request, f"Action to '{state_definition.state}' has been added.")
             return redirect(request.META.get('HTTP_REFERER'))
