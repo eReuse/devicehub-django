@@ -116,7 +116,7 @@ class DetailsView(DashboardView, TemplateView):
             'snapshot': last_evidence,
             'lot_tags': lot_tags,
             "state_definitions": StateDefinition.objects.filter(institution=self.request.user.institution).order_by('order'),
-            "device_states": State.objects.filter(snapshot_uuid=uuid).order_by('date'),
+            "device_states": State.objects.filter(snapshot_uuid=uuid).order_by('-date'),
         })
         return context
 
