@@ -63,77 +63,91 @@
       </ul>
     </div>
   </div>
-
-  <div class="tab-content pt-2">
+  <div class="tab-content pt-4">
     <div class="tab-pane fade show active" id="details">
-      <h5 class="card-title">{% trans 'Details' %}</h5>
-      <div class="row mb-3">
-        <div class="col-lg-3 col-md-4 label">Phid</div>
-        <div class="col-lg-9 col-md-8">{{ object.id }}</div>
+      <div class="row">
+        <!-- Device Details -->
+        <div class="col-lg-6">
+          <h5 class="card-title">{% trans 'Details' %}</h5>
+          <hr>
+          <div class="row mb-3">
+            <div class="col-sm-4 text-muted fw-bold">{% trans 'Phid' %}</div>
+            <div class="col-sm-8">{{ object.id }}</div>
+          </div>
+
+          {% if object.is_eraseserver %}
+          <div class="row mb-3">
+            <div class="col-sm-4 text-muted fw-bold">{% trans 'Is an erase server' %}</div>
+            <div class="col-sm-8">{% trans 'Yes' %}</div>
+          </div>
+          {% endif %}
+
+          <div class="row mb-3">
+            <div class="col-sm-4 text-muted fw-bold">{% trans 'Type' %}</div>
+            <div class="col-sm-8">{{ object.type }}</div>
+          </div>
+
+          {% if object.is_websnapshot and object.last_user_evidence %}
+            {% for k, v in object.last_user_evidence.items %}
+            <div class="row mb-3">
+              <div class="col-sm-4 text-muted fw-bold">{{ k }}</div>
+              <div class="col-sm-8">{{ v|default:'' }}</div>
+            </div>
+            {% endfor %}
+          {% else %}
+          <div class="row mb-3">
+            <div class="col-sm-4 text-muted fw-bold">{% trans 'Manufacturer' %}</div>
+            <div class="col-sm-8">{{ object.manufacturer|default:'' }}</div>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-sm-4 text-muted fw-bold">{% trans 'Model' %}</div>
+            <div class="col-sm-8">{{ object.model|default:'' }}</div>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-sm-4 text-muted fw-bold">{% trans 'Serial Number' %}</div>
+            <div class="col-sm-8">{{ object.serial_number|default:'' }}</div>
+          </div>
+          {% endif %}
+
+          <div class="row mb-3">
+            <div class="col-sm-4 text-muted fw-bold">{% trans 'Identifiers' %}</div>
+            <div class="col-sm-8">
+              {% for chid in object.hids %}
+                <div>{{ chid|default:'' }}</div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+
+
+          <!-- Device Current State -->
+        <div class="col-lg-6">
+          <h5 class="card-title">{% trans 'Current State' %}</h5>
+          <hr>
+          <div class="row mb-3">
+            <div class="col-sm-4 text-muted fw-bold">{% trans 'State' %}</div>
+            <div class="col-sm-8">{{ device_states.0.state }}</div>
+          </div>
+          <div class="row mb-3">
+            <div class="col-sm-4 text-muted fw-bold">{% trans 'Date' %}</div>
+            <div class="col-sm-8">{{ device_states.0.date|date:"SHORT_DATETIME_FORMAT" }}</div>
+          </div>
+
+          <!-- TODO: display last note? -->
+          {% if last_note %}
+          <div class="row mb-3">
+            <div class="col-sm-4 text-muted fw-bold">{% trans 'Note' %}</div>
+            <div class="col-sm-8">{{ object.last_state.note }}</div>
+          </div>
+          {% endif %}
+        </div>
       </div>
-
-      {% if object.is_eraseserver %}
-        <div class="row mb-3">
-          <div class="col-lg-3 col-md-4 label">
-            {% trans 'Is a erase server' %}
-          </div>
-          <div class="col-lg-9 col-md-8"></div>
-        </div>
-      {% endif %}
-
-      <div class="row mb-1">
-        <div class="col-lg-3 col-md-4 label">Type</div>
-        <div class="col-lg-9 col-md-8">{{ object.type }}</div>
-      </div>
-
-      {% if object.is_websnapshot and object.last_user_evidence %}
-        {% for k, v in object.last_user_evidence %}
-          <div class="row mb-1">
-            <div class="col-lg-3 col-md-4 label">{{ k }}</div>
-            <div class="col-lg-9 col-md-8">{{ v|default:'' }}</div>
-          </div>
-        {% endfor %}
-      {% else %}
-        <div class="row mb-1">
-          <div class="col-lg-3 col-md-4 label">
-            {% trans 'Manufacturer' %}
-          </div>
-          <div class="col-lg-9 col-md-8">{{ object.manufacturer|default:'' }}</div>
-        </div>
-
-        <div class="row mb-1">
-          <div class="col-lg-3 col-md-4 label">
-            {% trans 'Model' %}
-          </div>
-          <div class="col-lg-9 col-md-8">{{ object.model|default:'' }}</div>
-        </div>
-
-        <div class="row mb-1">
-          <div class="col-lg-3 col-md-4 label">
-            {% trans 'Version' %}
-          </div>
-          <div class="col-lg-9 col-md-8">{{ object.version|default:'' }}</div>
-        </div>
-
-        <div class="row mb-1">
-          <div class="col-lg-3 col-md-4 label">
-            {% trans 'Serial Number' %}
-          </div>
-          <div class="col-lg-9 col-md-8">{{ object.serial_number|default:'' }}</div>
-        </div>
-      {% endif %}
-
-      <div class="row mb-3">
-        <div class="col-lg-3 col-md-4 label">
-          {% trans 'Identifiers' %}
-        </div>
-      </div>
-      {% for chid in object.hids %}
-        <div class="row mb-3">
-          <div class="col">{{ chid|default:'' }}</div>
-        </div>
-      {% endfor %}
     </div>
+  </div>
+
+<!-- End of Details -->
 
     <div class="tab-pane fade" id="user_properties">
       <div class="btn-group mt-1 mb-3">
@@ -174,14 +188,14 @@
                 <i class="bi bi-trash"></i>
                   </button>
                 </div>
-              </td>   
+              </td>
             </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
 
-    <!-- pop up modal for delete confirmation -->
+<!-- pop up modal for delete confirmation -->
 {% for a in object.get_user_properties %}
 <div class="modal fade" id="deleteModal{{ a.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ a.id }}" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
@@ -234,7 +248,7 @@
         </form>
       </div>
     </div>
-  </div>  
+  </div>
 </div>
 {% endfor %}
 
@@ -386,14 +400,14 @@
               <i class="bi bi-arrow-right-circle text-danger me-2"></i>
 
               <span class="text-danger fw-bold me-2">{% trans "From:" %}</span>
-              <span class="text-danger fw-italic">state_placeholder</span>  
+              <span class="text-danger fw-italic">state_placeholder</span>
             </div>
             <div class="d-flex align-items-center mt-2">
               <i class="bi bi-arrow-right-circle text-success me-2"></i>
               <span class="text-success fw-bold me-2">{% trans "To:" %}</span>
               <span class="text-success fw-italic">{{ state.state }}</span>
-            </div>  
-          </div>  
+            </div>
+          </div>
 
           <div class="form-check form-switch mt-3 d-flex justify-content-end">
             <label class="form-check-label font-monospace" for="addNoteCheckbox{{ state.id }}">
@@ -401,22 +415,23 @@
             </label>
             <input class="form-check-input ms-2" type="checkbox" id="addNoteCheckbox{{ state.id }}" data-bs-toggle="collapse" data-bs-target="#collapseInput{{ state.id }}" name="add_note">
           </div>
-          
+
           <div class="mb-3 mt-2 collapse" id="collapseInput{{ state.id }}">
             <textarea type="text" class="form-control" id="stateNote{{ state.id }}" name="note" rows="4" maxlength="200" placeholder="{% trans "Max 200 characters" %}"></textarea>
-          </div>  
-          
+          </div>
+
           <input type="hidden" name="state_id" value="{{ state.id }}">
+          <input type="hidden" name="snapshot_uuid" value="{{ object.last_uuid }}">
 
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
           <button type="submit" class="btn btn-primary">{% trans "Add State" %}</button>
         </div>
-        
+
       </div>
     </form>
-    
+
   </div>
 </div>
 {% endfor %}
