@@ -30,9 +30,7 @@ class NewActionView(View):
                 institution=request.user.institution,
             )
             #TODO: also change logger for full fledged table
-            device_logger.info(
-            f"Updated State to (key='{state_definition.state}', for device value='{snapshot_uuid}') by user {self.request.user}."
-        )
+            device_logger.info(f"Updated State to (key='{state_definition.state}', for device value='{snapshot_uuid}') by user {self.request.user}.")
 
             messages.success(request, f"Action to '{state_definition.state}' has been added.")
             return redirect(request.META.get('HTTP_REFERER'))
@@ -42,13 +40,19 @@ class NewActionView(View):
 
 class ActionUndoView(DeleteView):
     model = State
-    success_url = reverse_lazy('state_list')
 
     def delete(self, request, *args, **kwargs):
         self.object = self.get_object()
         time_since_creation = timezone.now() - self.object.date
         if time_since_creation.total_seconds() <= 3600:  # 1 hour is 3600 seconds
-            return super().delete(request, *args, **kwargs)
+            device_logger.info(f"Action to state'{self.object.state}' has been deleted.")
+            data_to_return= super().delete(request, *args, **kwarg)
+
+            messages.success(request, f"Action to state'{self.object.state}' has been deleted.")
+            return data_to_return
         else:
             messages.error(request, "You can undo an action within one hour of its creation.")
-            return redirect(request.META.get('HTTP_REFERER'))
+            return reverse_lazy(self.get_success_url())
+
+    def get_success_url(self):
+        return self.request.META.get('HTTP_REFERER', reverse_lazy('device:details', args=[self.object.snapshot_uuid]))
