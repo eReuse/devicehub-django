@@ -12,20 +12,13 @@ from evidence.parse_details import ParseSnapshot
 from evidence.normal_parse_details import get_inxi, get_inxi_key
 from user.models import User, Institution
 
-#TODO: base class is abstract; revise if should be for query efficiency
-class Property(models.Model):
-    class Type(models.IntegerChoices):
-        SYSTEM = 0, "System"
-        USER = 1, "User"
-        DOCUMENT = 2, "Document"
-        ERASE_SERVER = 3, "EraseServer"
 
+class Property(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     uuid = models.UUIDField()
     owner = models.ForeignKey(Institution, on_delete=models.CASCADE)
     user = models.ForeignKey(
         User, on_delete=models.SET_NULL, null=True, blank=True)
-    type = models.SmallIntegerField(choices=Type)
     key = models.CharField(max_length=STR_EXTEND_SIZE)
     value = models.CharField(max_length=STR_EXTEND_SIZE)
 
@@ -33,38 +26,29 @@ class Property(models.Model):
         #Only for shared behaviour, it is not a table
         abstract = True
 
-class SystemProperty(Property):
 
+class SystemProperty(Property):
     class Meta:
         constraints = [
-            models.CheckConstraint(
-                check=~Q(type=1), #Enforce that type is not User
-                name='property_cannot_be_user'
-            ),
-        ]
-        #Django orm wont inherit constraints to child
-        #TODO: check if this is needed
-        constraints = [
             models.UniqueConstraint(
-                fields=["type", "key", "uuid"], name="system_unique_type_key_uuid")
+                fields=["key", "uuid"], name="system_unique_type_key_uuid")
         ]
+
 
 class UserProperty(Property):
+    class Type(models.IntegerChoices):
+        SYSTEM = 0, "System"
+        USER = 1, "User"
+        DOCUMENT = 2, "Document"
+        ERASE_SERVER = 3, "EraseServer"
 
-    type = models.SmallIntegerField(default=Property.Type.USER)
+    type = models.SmallIntegerField(choices=Type, default=Property.Type.USER)
 
     class Meta:
         constraints = [
-            models.CheckConstraint(
-                check=Q(type=1), #Enforce that type is User
-                name='property_needs_to_be_user'
-            ),
-        ]
-        constraints = [
             models.UniqueConstraint(
-                fields=["type", "key", "uuid"], name="user_unique_type_key_uuid")
+                fields=["key", "uuid"], name="user_unique_type_key_uuid")
         ]
-
 
 
 class Evidence:
