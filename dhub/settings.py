@@ -65,6 +65,8 @@ ENABLE_EMAIL = config("ENABLE_EMAIL", default=True, cast=bool)
 
 EVIDENCES_DIR = config("EVIDENCES_DIR", default=os.path.join(BASE_DIR, "db"))
 
+DEVICE_LOG_PATH = config("DEVICE_LOG_PATH", default="/tmp")
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -229,7 +231,7 @@ LOGGING = {
         'device_log_file': {
             'level': 'INFO',
             'class': 'logging.FileHandler',
-            'filename': '/var/log/device_changes.log',
+            'filename': DEVICE_LOG_PATH + "/device_changes.log",
             'formatter': 'verbose',
         },
     },
