@@ -173,6 +173,11 @@ class AddUserPropertyView(DashboardView, CreateView):
         form.instance.type = Property.Type.USER
 
         messages.success(self.request, _("User property successfully added."))
+
+        device_logger.info(
+            f"Created user property (key='{form.instance.key}', value='{form.instance.value}') by user {self.request.user}, for evidence uuid: {self.property.uuid}."
+        )
+
         response = super().form_valid(form)
         return response
 
