@@ -11,7 +11,6 @@ from django.views.generic.edit import (
 from dashboard.mixins import DashboardView
 from lot.models import Lot, LotTag, LotProperty
 from lot.forms import LotsForm
-from device.models import Property
 
 class NewLotView(DashboardView, CreateView):
     template_name = "new_lot.html"
@@ -154,7 +153,7 @@ class LotAddDocumentView(DashboardView, CreateView):
         form.instance.owner = self.request.user.institution
         form.instance.user = self.request.user
         form.instance.lot = self.lot
-        form.instance.type = Property.Type.DOCUMENT
+        form.instance.type = LotProperty.Type.DOCUMENT
         response = super().form_valid(form)
         return response
 
@@ -178,7 +177,7 @@ class LotDocumentsView(DashboardView, TemplateView):
         documents = LotProperty.objects.filter(
             lot=lot,
             owner=self.request.user.institution,
-            type=Property.Type.DOCUMENT,
+            type=LotProperty.Type.DOCUMENT,
         )
         context.update({
             'lot': lot,
@@ -201,7 +200,7 @@ class LotPropertiesView(DashboardView, TemplateView):
         properties = LotProperty.objects.filter(
             lot=lot,
             owner=self.request.user.institution,
-            type=Property.Type.USER,
+            type=LotProperty.Type.USER,
         )
         context.update({
             'lot': lot,
@@ -224,7 +223,7 @@ class LotAddPropertyView(DashboardView, CreateView):
         form.instance.owner = self.request.user.institution
         form.instance.user = self.request.user
         form.instance.lot = self.lot
-        form.instance.type = Property.Type.USER
+        form.instance.type = LotProperty.Type.USER
         response = super().form_valid(form)
         return response
 
