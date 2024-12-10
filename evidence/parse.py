@@ -6,7 +6,7 @@ from dmidecode import DMIParse
 from json_repair import repair_json
 from evidence.parse_details import get_lshw_child
 
-from evidence.models import SystemProperty, Property
+from evidence.models import SystemProperty
 from evidence.xapian import index
 from utils.constants import CHASSIS_DH
 
@@ -76,7 +76,6 @@ class Build:
         property = SystemProperty.objects.filter(
                 uuid=self.uuid,
                 owner=self.user.institution,
-                type=Property.Type.SYSTEM,
         )
 
         if property:
@@ -89,7 +88,6 @@ class Build:
                 uuid=self.uuid,
                 owner=self.user.institution,
                 user=self.user,
-                type=Property.Type.SYSTEM,
                 key=k,
                 value=v
             )

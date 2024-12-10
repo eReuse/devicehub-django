@@ -8,7 +8,7 @@ from utils.device import create_property, create_doc, create_index
 from utils.forms import MultipleFileField
 from device.models import Device
 from evidence.parse import Build
-from evidence.models import SystemProperty, Property
+from evidence.models import SystemProperty
 from utils.save_snapshots import move_json, save_in_disk
 
 
@@ -70,7 +70,6 @@ class UserTagForm(forms.Form):
         self.user = kwargs.pop('user')
         instance = SystemProperty.objects.filter(
             uuid=self.uuid,
-            type=Property.Type.SYSTEM,
             key='CUSTOM_ID',
             owner=self.user.institution
         ).first()
@@ -88,7 +87,6 @@ class UserTagForm(forms.Form):
         self.tag = data
         self.instance = SystemProperty.objects.filter(
             uuid=self.uuid,
-            type=Property.Type.SYSTEM,
             key='CUSTOM_ID',
             owner=self.user.institution
         ).first()
@@ -108,7 +106,6 @@ class UserTagForm(forms.Form):
 
         SystemProperty.objects.create(
             uuid=self.uuid,
-            type=Property.Type.SYSTEM,
             key='CUSTOM_ID',
             value=self.tag,
             owner=self.user.institution,
