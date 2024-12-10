@@ -6,7 +6,7 @@ import logging
 
 from django.core.exceptions import ValidationError
 from evidence.xapian import index
-from evidence.models import SystemProperty, Property
+from evidence.models import SystemProperty
 from device.models import Device
 
 
@@ -76,7 +76,6 @@ def create_property(doc, user, commit=False):
         'uuid': doc['uuid'],
         'owner': user.institution,
         'user': user,
-        'type': Property.Type.SYSTEM,
         'key': 'CUSTOMER_ID',
         'value': doc['CUSTOMER_ID'],
     }
@@ -84,7 +83,6 @@ def create_property(doc, user, commit=False):
         property = SystemProperty.objects.filter(
                 uuid=doc["uuid"],
                 owner=user.institution,
-                type=Property.Type.SYSTEM,
         )
 
         if property:
