@@ -15,7 +15,7 @@ from django.views.generic.edit import (
 from django.views.generic.base import TemplateView
 from action.models import StateDefinition, State
 from dashboard.mixins import DashboardView, Http403
-from evidence.models import UserProperty, SystemProperty, Property
+from evidence.models import UserProperty, SystemProperty
 from lot.models import LotTag
 from device.models import Device
 from device.forms import DeviceFormSet
@@ -198,7 +198,7 @@ class AddUserPropertyView(DashboardView, CreateView):
         form.instance.owner = self.request.user.institution
         form.instance.user = self.request.user
         form.instance.uuid = self.property.uuid
-        form.instance.type = Property.Type.USER
+        form.instance.type = UserProperty.Type.USER
 
         messages.success(self.request, _("User property successfully added."))
 
@@ -215,7 +215,6 @@ class AddUserPropertyView(DashboardView, CreateView):
         self.property = SystemProperty.objects.filter(
             owner=institution,
             value=pk,
-            type=Property.Type.SYSTEM
         ).first()
 
         if not self.property:
@@ -251,7 +250,7 @@ class UpdateUserPropertyView(DashboardView, UpdateView):
 
         form.instance.owner = self.request.user.institution
         form.instance.user = self.request.user
-        form.instance.type = Property.Type.USER
+        form.instance.type = UserProperty.Type.USER
         response = super().form_valid(form)
 
         messages.success(self.request, _("User property updated successfully."))
@@ -292,14 +291,14 @@ class AddDocumentView(DashboardView, CreateView):
     title = _("New Document")
     breadcrumb = "Device / New document"
     success_url = reverse_lazy('dashboard:unassigned_devices')
-    model = SystemProperty
+    model = UserProperty
     fields = ("key", "value")
 
     def form_valid(self, form):
         form.instance.owner = self.request.user.institution
         form.instance.user = self.request.user
         form.instance.uuid = self.property.uuid
-        form.instance.type = Property.Type.DOCUMENT
+        form.instance.type = UserProperty.Type.DOCUMENT
         response = super().form_valid(form)
         return response
 
@@ -309,7 +308,6 @@ class AddDocumentView(DashboardView, CreateView):
         self.property = SystemProperty.objects.filter(
             owner=institution,
             value=pk,
-            type=Property.Type.SYSTEM
         ).first()
 
         if not self.property:
