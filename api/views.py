@@ -21,7 +21,7 @@ from django.views.generic.edit import (
 from utils.save_snapshots import move_json, save_in_disk
 from django.views.generic.edit import View
 from dashboard.mixins import DashboardView
-from evidence.models import SystemProperty, UserProperty, Property
+from evidence.models import SystemProperty, UserProperty
 from evidence.parse_details import ParseSnapshot
 from evidence.parse import Build
 from device.models import Device
@@ -117,7 +117,6 @@ class NewSnapshotView(ApiMixing):
 
         property = SystemProperty.objects.filter(
             uuid=ev_uuid,
-            type=Property.Type.SYSTEM,
             # TODO this is hardcoded, it should select the user preferred algorithm
             key="hidalgo1",
             owner=self.tk.owner.institution
@@ -285,7 +284,6 @@ class AddPropertyView(ApiMixing):
         self.property = SystemProperty.objects.filter(
             owner=institution,
             value=self.pk,
-            type=Property.Type.SYSTEM
         ).first()
 
         if not self.property:
