@@ -6,7 +6,7 @@ from django.shortcuts import Http404
 from django.db.models import Q
 
 from dashboard.mixins import InventaryMixin, DetailsMixin
-from evidence.models import Property, SystemProperty
+from evidence.models import SystemProperty
 from evidence.xapian import search
 from device.models import Device
 from lot.models import Lot
@@ -100,7 +100,6 @@ class SearchView(InventaryMixin):
                 qry |= Q(value__startswith=i)
 
         chids = SystemProperty.objects.filter(
-            type=Property.Type.SYSTEM,
             owner=self.request.user.institution
         ).filter(
             qry
