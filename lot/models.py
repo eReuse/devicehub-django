@@ -6,8 +6,8 @@ from utils.constants import (
     STR_EXTEND_SIZE,
 )
 
-from user.models import User, Institution
-from device.models import Property
+from user.models import User, Institution   
+from evidence.models import Property    
 # from device.models import Device
 
 
@@ -46,7 +46,19 @@ class Lot(models.Model):
             d.delete()
 
 class LotProperty (Property):
-    #uuid is not needed for id
-    uuid = None
-    #lot foreign key is
     lot  = models.ForeignKey(Lot, on_delete=models.CASCADE)
+
+    class Type(models.IntegerChoices):
+        SYSTEM = 0, "System"
+        USER = 1, "User"
+        DOCUMENT = 2, "Document"
+        ERASE_SERVER = 3, "EraseServer"
+
+    type = models.SmallIntegerField(choices=Type.choices, default=Type.USER)
+                        
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["key", "lot", "type"], name="lot_unique_type_key_lot"
+            )
+        ]

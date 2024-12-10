@@ -15,7 +15,6 @@ from user.models import User, Institution
 
 class Property(models.Model):
     created = models.DateTimeField(auto_now_add=True)
-    uuid = models.UUIDField()
     owner = models.ForeignKey(Institution, on_delete=models.CASCADE)
     user = models.ForeignKey(
         User, on_delete=models.SET_NULL, null=True, blank=True)
@@ -28,6 +27,8 @@ class Property(models.Model):
 
 
 class SystemProperty(Property):
+    uuid = models.UUIDField()
+
     class Meta:
         constraints = [
             models.UniqueConstraint(
@@ -36,18 +37,19 @@ class SystemProperty(Property):
 
 
 class UserProperty(Property):
+    uuid = models.UUIDField()
+
     class Type(models.IntegerChoices):
-        SYSTEM = 0, "System"
         USER = 1, "User"
         DOCUMENT = 2, "Document"
         ERASE_SERVER = 3, "EraseServer"
 
-    type = models.SmallIntegerField(choices=Type, default=Property.Type.USER)
+    type = models.SmallIntegerField(choices=Type, default=Type.USER)
 
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["key", "uuid"], name="user_unique_type_key_uuid")
+                fields=["key", "uuid", "type"], name="user_unique_type_key_uuid")
         ]
 
 
@@ -208,7 +210,6 @@ class Evidence:
     def get_all(cls, user):
         return SystemProperty.objects.filter(
             owner=user.institution,
-            type=Property.Type.SYSTEM,
             key="hidalgo1",
         ).order_by("-created").values_list("uuid", "created").distinct()
 
