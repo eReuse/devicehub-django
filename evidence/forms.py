@@ -186,9 +186,9 @@ class EraseServerForm(forms.Form):
         self.pk = None
         self.uuid = kwargs.pop('uuid', None)
         self.user = kwargs.pop('user')
-        instance = SystemProperty.objects.filter(
+        instance = UserProperty.objects.filter(
             uuid=self.uuid,
-            type=SystemProperty.Type.ERASE_SERVER,
+            type=UserProperty.Type.ERASE_SERVER,
             key='ERASE_SERVER',
             owner=self.user.institution
         ).first()
@@ -201,9 +201,9 @@ class EraseServerForm(forms.Form):
 
     def clean(self):
         self.erase_server = self.cleaned_data.get('erase_server', False)
-        self.instance = SystemProperty.objects.filter(
+        self.instance = UserProperty.objects.filter(
             uuid=self.uuid,
-            type=Property.Type.ERASE_SERVER,
+            type=UserProperty.Type.ERASE_SERVER,
             key='ERASE_SERVER',
             owner=self.user.institution
         ).first()
@@ -222,9 +222,9 @@ class EraseServerForm(forms.Form):
         if self.instance:
             return
 
-        SystemProperty.objects.create(
+        UserProperty.objects.create(
             uuid=self.uuid,
-            type=Property.Type.ERASE_SERVER,
+            type=UserProperty.Type.ERASE_SERVER,
             key='ERASE_SERVER',
             value=self.erase_server,
             owner=self.user.institution,
