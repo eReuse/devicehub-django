@@ -13,7 +13,7 @@ from django.views.generic.edit import (
 )
 
 from dashboard.mixins import  DashboardView, Http403
-from evidence.models import Property, SystemProperty, UserProperty, Evidence
+from evidence.models import SystemProperty, UserProperty, Evidence
 from evidence.forms import (
     UploadForm,
     UserTagForm,
