@@ -1,7 +1,7 @@
 from django.db import models, connection
 
 from utils.constants import ALGOS
-from evidence.models import SystemProperty, UserProperty, Property, Evidence
+from evidence.models import SystemProperty, UserProperty, Evidence
 from lot.models import DeviceLot
 
 
@@ -49,7 +49,6 @@ class Device:
             return self.properties
 
         self.properties = SystemProperty.objects.filter(
-            type=Property.Type.SYSTEM,
             value=self.id
         ).order_by("-created")
 
@@ -66,6 +65,7 @@ class Device:
         user_properties = UserProperty.objects.filter(
             uuid__in=self.uuids,
             owner=self.owner,
+            type=UserProperty.Type.USER,
         )
         return user_properties
 
@@ -73,10 +73,10 @@ class Device:
         if not self.uuids:
             self.get_uuids()
 
-        properties = SystemProperty.objects.filter(
+        properties = UserProperty.objects.filter(
             uuid__in=self.uuids,
             owner=self.owner,
-            type=Property.Type.DOCUMENT
+            type=UserProperty.Type.DOCUMENT
         )
         return properties
 
@@ -91,7 +91,6 @@ class Device:
         algos = list(ALGOS.keys())
         algos.append('CUSTOM_ID')
         self.hids = list(set(properties.filter(
-            type=Property.Type.SYSTEM,
             key__in=algos,
         ).values_list("value", flat=True)))
 
@@ -115,10 +114,10 @@ class Device:
         if not self.uuids:
             return False
 
-        property = SystemProperty.objects.filter(
+        property = UserProperty.objects.filter(
             uuid__in=self.uuids,
             owner=self.owner,
-            type=Property.Type.ERASE_SERVER
+            type=UserProperty.Type.ERASE_SERVER
         ).first()
 
         if property:
@@ -154,7 +153,6 @@ class Device:
                 LEFT JOIN lot_devicelot AS t2 ON t1.value = t2.device_id
                 WHERE t2.device_id IS NULL
                   AND t1.owner_id = {institution}
-                  AND t1.type = {type}
             )
             SELECT DISTINCT
                 value
@@ -164,7 +162,6 @@ class Device:
                 row_num = 1
         """.format(
             institution=institution.id,
-            type=Property.Type.SYSTEM,
         )
         if limit:
             sql += " limit {} offset {}".format(int(limit), int(offset))
@@ -202,7 +199,6 @@ class Device:
                 LEFT JOIN lot_devicelot AS t2 ON t1.value = t2.device_id
                 WHERE t2.device_id IS NULL
                   AND t1.owner_id = {institution}
-                  And t1.type = '{type}'
             )
             SELECT
                 COUNT(DISTINCT value)
@@ -212,7 +208,6 @@ class Device:
                 row_num = 1
         """.format(
             institution=institution.id,
-            type=Property.Type.SYSTEM,
         )
         with connection.cursor() as cursor:
             cursor.execute(sql)
@@ -239,7 +234,6 @@ class Device:
                 LEFT JOIN lot_devicelot AS t2 ON t1.value = t2.device_id
                 WHERE t2.device_id IS NULL
                   AND t1.owner_id = {institution}
-                  AND t1.type = '{type}'
                   AND t1.uuid = '{uuid}'
             )
             SELECT DISTINCT
@@ -251,7 +245,6 @@ class Device:
         """.format(
             uuid=uuid.replace("-", ""),
             institution=institution.id,
-            type=Property.Type.SYSTEM,
         )
 
         properties = []
