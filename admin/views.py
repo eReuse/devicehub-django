@@ -1,3 +1,4 @@
+import logging
 from smtplib import SMTPException
 from django.contrib import messages
 from django.urls import reverse_lazy
@@ -17,6 +18,8 @@ from admin.forms import OrderingStateForm
 from user.models import User, Institution
 from admin.email import NotifyActivateUserByEmail
 from action.models import StateDefinition
+
+device_logger = logging.getLogger('device_log')
 
 class AdminView(DashboardView):
     def get(self, *args, **kwargs):
@@ -139,10 +142,12 @@ class StateDefinitionContextMixin(ContextMixin):
         })
         return context
 
+
 class StatesPanelView(AdminView, StateDefinitionContextMixin, TemplateView):
     template_name = "states_panel.html"
     title = _("States")
     breadcrumb = _("admin / States") + " /"
+
 
 class AddStateDefinitionView(AdminView, StateDefinitionContextMixin, CreateView):
     template_name = "states_panel.html"
@@ -157,7 +162,8 @@ class AddStateDefinitionView(AdminView, StateDefinitionContextMixin, CreateView)
         form.instance.user = self.request.user
         try:
             response = super().form_valid(form)
-            messages.success(self.request, _("State definition successfully added."))   
+            messages.success(self.request, _("State definition successfully added."))
+            device_logger.info(f"<Created> StateDefinition with value {form.instance.state} by user {self.request.user}.")
             return response
         except IntegrityError:
             messages.error(self.request, _("State is already defined."))
@@ -172,6 +178,7 @@ class DeleteStateDefinitionView(AdminView, StateDefinitionContextMixin, SuccessM
     success_url = reverse_lazy('admin:states')
 
     def get_success_message(self, cleaned_data):
+        device_logger.info(f"<Deleted> StateDefinition with value {self.object.state} by user {self.request.user}.")
         return f'State definition: {self.object.state}, has been deleted'
 
     def delete(self, request, *args, **kwargs):
@@ -182,6 +189,7 @@ class DeleteStateDefinitionView(AdminView, StateDefinitionContextMixin, SuccessM
             raise Http404
 
         return super().delete(request, *args, **kwargs)
+
 
 class UpdateStateOrderView(AdminView, TemplateView):
     success_url = reverse_lazy('admin:states')
@@ -194,12 +202,17 @@ class UpdateStateOrderView(AdminView, TemplateView):
 
             with transaction.atomic():
                 current_order = 1
+                _log = []
                 for lookup_id in ordered_ids:
                     state_definition = StateDefinition.objects.get(id=lookup_id)
                     state_definition.order = current_order
                     state_definition.save()
+                    _log.append(f"{state_definition.state} (ID: {lookup_id} -> Order: {current_order})")
                     current_order += 1
 
+            device_logger.info(
+                f"<Updated Order> State order updated by user {self.request.user}: {', '.join(_log)}"
+            )
             messages.success(self.request, _("Order changed succesfuly."))
             return redirect(self.success_url)
         else:
