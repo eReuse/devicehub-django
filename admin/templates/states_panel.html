@@ -107,7 +107,7 @@
         </div>
       </div>
       <div class="modal-footer">
-        <form method="post" action="{% url 'admin:delete_state_definition' state_definition.order %}">
+        <form method="post" action="{% url 'admin:delete_state_definition' state_definition.pk %}">
           {% csrf_token %}
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
             {% trans "Cancel" %}
