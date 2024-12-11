@@ -15,7 +15,6 @@ services:
       - DEMO_IDHUB_PREDEFINED_TOKEN=${IDHUB_PREDEFINED_TOKEN:-}
       - PREDEFINED_TOKEN=${PREDEFINED_TOKEN:-}
       - DPP=${DPP:-false}
-    # TODO manage volumes dev vs prod
     volumes:
       - .:/opt/devicehub-django
     ports:
