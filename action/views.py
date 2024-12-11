@@ -11,6 +11,7 @@ import logging
 
 device_logger = logging.getLogger('device_log')
 
+
 class NewActionView(View):
 
     def post(self, request, *args, **kwargs):
@@ -30,7 +31,7 @@ class NewActionView(View):
                 institution=request.user.institution,
             )
             #TODO: also change logger for full fledged table
-            device_logger.info(f"Updated State to (key='{state_definition.state}', for device value='{snapshot_uuid}') by user {self.request.user}.")
+            device_logger.info(f"<Updated> State to '{state_definition.state}', for device '{snapshot_uuid}') by user {self.request.user}.")
 
             messages.success(request, f"Action to '{state_definition.state}' has been added.")
             return redirect(request.META.get('HTTP_REFERER'))
@@ -38,21 +39,23 @@ class NewActionView(View):
             messages.error(request, "There was an error with your submission.")
             return redirect(request.META.get('HTTP_REFERER'))
 
+
 class ActionUndoView(DeleteView):
     model = State
 
     def delete(self, request, *args, **kwargs):
         self.object = self.get_object()
         time_since_creation = timezone.now() - self.object.date
-        if time_since_creation.total_seconds() <= 3600:  # 1 hour is 3600 seconds
-            device_logger.info(f"Action to state'{self.object.state}' has been deleted.")
+        if time_since_creation.total_seconds() <= 3600:  # 1 hour = 3600 seconds
             data_to_return= super().delete(request, *args, **kwarg)
 
-            messages.success(request, f"Action to state'{self.object.state}' has been deleted.")
+            messages.success(request, f"Action to state'{self.object.state}' has been delete.")
             return data_to_return
         else:
+            #TODO: revise if condition is correct
             messages.error(request, "You can undo an action within one hour of its creation.")
             return reverse_lazy(self.get_success_url())
 
     def get_success_url(self):
+        device_logger.info(f"<Deleted> State '{self.object.state}', for device '{self.object.snapshot_uuid}') by user {self.request.user}.")
         return self.request.META.get('HTTP_REFERER', reverse_lazy('device:details', args=[self.object.snapshot_uuid]))
