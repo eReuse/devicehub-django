@@ -1,7 +1,5 @@
-import json
 from django.http import JsonResponse
-
-from django.http import Http404
+from django.conf import settings
 from django.urls import reverse_lazy
 from django.shortcuts import get_object_or_404, Http404
 from django.utils.translation import gettext_lazy as _
@@ -16,6 +14,9 @@ from evidence.models import Annotation
 from lot.models import LotTag
 from device.models import Device
 from device.forms import DeviceFormSet
+if settings.DPP:
+    from dpp.models import Proof
+    from dpp.api_dlt import PROOF_TYPE
 
 
 class NewDeviceView(DashboardView, FormView):
@@ -103,10 +104,17 @@ class DetailsView(DashboardView, TemplateView):
         context = super().get_context_data(**kwargs)
         self.object.initial()
         lot_tags = LotTag.objects.filter(owner=self.request.user.institution)
+        dpps = []
+        if settings.DPP:
+            dpps = Proof.objects.filter(
+                uuid__in=self.object.uuids,
+                type=PROOF_TYPE["IssueDPP"]
+            )
         context.update({
             'object': self.object,
             'snapshot': self.object.get_last_evidence(),
             'lot_tags': lot_tags,
+            'dpps': dpps,
         })
         return context
 

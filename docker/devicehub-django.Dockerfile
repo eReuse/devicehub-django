@@ -7,7 +7,13 @@ RUN apt update && \
     git \
     sqlite3 \
     jq \
+    time \
+    vim \
     && rm -rf /var/lib/apt/lists/*
+
+# TODO I don't like this, but the whole ereuse-dpp works with user 1000 because of the volume mapping
+#   thanks https://stackoverflow.com/questions/70520205/docker-non-root-user-best-practices-for-python-images
+RUN adduser --home /opt/devicehub-django -u 1000 app
 
 WORKDIR /opt/devicehub-django
 
@@ -27,10 +33,16 @@ RUN python -m pip install --upgrade pip || (rm -rf /usr/local/lib/python3.11/sit
 
 COPY ./requirements.txt /opt/devicehub-django
 RUN pip install -r requirements.txt
+# TODO hardcoded, is ignored in requirements.txt
+RUN pip install -i https://test.pypi.org/simple/ ereuseapitest==0.0.14
 
 # TODO Is there a better way?
 #   Set PYTHONPATH to include the directory with the xapian module
 ENV PYTHONPATH="${PYTHONPATH}:/usr/lib/python3/dist-packages"
 
 COPY docker/devicehub-django.entrypoint.sh /
+
+RUN chown -R app:app /opt/devicehub-django
+
+USER app
 ENTRYPOINT sh /devicehub-django.entrypoint.sh
