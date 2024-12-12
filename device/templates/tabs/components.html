@@ -1,0 +1,27 @@
+
+{% load i18n %}
+
+<div class="tab-pane fade" id="components">
+    <h5 class="card-title">{% trans 'Components last evidence' %}
+    </h5>
+      <div class="list-group col-6">
+        {% for c in object.components %}
+          <div class="list-group-item">
+            <div class="d-flex w-100 justify-content-between">
+                <h5 class="mb-1">{{ c.type }}
+                </h5>
+                <small class="text-muted">{{ evidence.created }}
+                </small>
+            </div>
+            <p class="mb-1">
+              {% for k, v in c.items %}
+                {% if k not in 'actions,type' %}
+                    {{ k }}: {{ v }}
+                    <br />
+                {% endif %}
+              {% endfor %}
+            </p>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
