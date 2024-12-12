@@ -1,0 +1,128 @@
+
+{% load i18n %}
+
+<!-- Device Details -->
+    <div class="tab-pane fade show active" id="details">
+      <div class="row">
+
+        <div class="col-lg-6">
+          <h5 class="card-title">{% trans 'Details' %}
+          </h5>
+          <hr>
+          <div class="row mb-3">
+            <div class="col-sm-4 text-muted fw-bold">{% trans 'Phid' %}
+            </div>
+            <div class="col-sm-8">{{ object.id }}
+            </div>
+          </div>
+
+          {% if object.is_eraseserver %}
+          <div class="row mb-3">
+            <div class="col-sm-4 text-muted fw-bold">{% trans 'Is an erase server' %}
+            </div>
+            <div class="col-sm-8">{% trans 'Yes' %}
+            </div>
+          </div>
+          {% endif %}
+
+          <div class="row mb-3">
+            <div class="col-sm-4 text-muted fw-bold">{% trans 'Type' %}
+            </div>
+            <div class="col-sm-8">{{ object.type }}
+            </div>
+          </div>
+
+          {% if object.is_websnapshot and object.last_user_evidence %}
+            {% for k, v in object.last_user_evidence.items %}
+            <div class="row mb-3">
+              <div class="col-sm-4 text-muted fw-bold">{{ k }}
+              </div>
+              <div class="col-sm-8">{{ v|default:'' }}
+              </div>
+            </div>
+            {% endfor %}
+          {% else %}
+          <div class="row mb-3">
+            <div class="col-sm-4 text-muted fw-bold">{% trans 'Manufacturer' %}
+            </div>
+            <div class="col-sm-8">{{ object.manufacturer|default:'' }}
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-sm-4 text-muted fw-bold">{% trans 'Model' %}
+            </div>
+            <div class="col-sm-8">{{ object.model|default:'' }}
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-sm-4 text-muted fw-bold">{% trans 'Serial Number' %}
+            </div>
+            <div class="col-sm-8">{{ object.serial_number|default:'' }}
+            </div>
+          </div>
+          {% endif %}
+
+          <div class="row mb-3">
+            <div class="col-sm-4 text-muted fw-bold">{% trans 'Identifiers' %}
+            </div>
+            <div class="col-sm-8">
+              {% for chid in object.hids %}
+                <div>{{ chid|default:'' }}
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+
+
+          <!-- Device Current State -->
+        <div class="col-lg-6">
+          <h5 class="card-title">{% trans 'Current State' %}
+          </h5>
+          <hr>
+          <div class="table-responsive">
+        <table class="table table-striped table-bordered">
+          <thead class="table">
+            <tr>
+              <th scope="col">{% trans 'State' %}
+              </th>
+              <th scope="col">{% trans 'User' %}
+              </th>
+              <th scope="col">{% trans 'Date' %}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if device_states %}
+            <tr class="table-success">
+              <td>{{ device_states.0.state }}
+              </td>
+              <td>{{ device_states.0.user.responsable_person|default:device_states.0.user.username }}
+              </td>
+              <td>{{ device_states.0.date|date:"SHORT_DATETIME_FORMAT" }}
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="3" class="text-center">{% trans 'No state recorded.' %}
+              </td>
+            </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+
+          <!-- TODO: display last note? -->
+          {% if last_note %}
+          <div class="row mb-3">
+            <div class="col-sm-4 text-muted fw-bold">{% trans 'Note' %}
+            </div>
+            <div class="col-sm-8">{{ object.last_state.note }}
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
