@@ -31,11 +31,11 @@ class UploadForm(forms.Form):
             try:
                 file_json = json.loads(file_data)
                 snap = Build(file_json, None, check=True)
-                exists_property = SystemProperty.objects.filter(
+                exist_annotation = Annotation.objects.filter(
                     uuid=snap.uuid
                 ).first()
 
-                if exists_property:
+                if exist_annotation:
                     raise ValidationError(
                         _("The snapshot already exists"),
                         code="duplicate_snapshot",
@@ -234,7 +234,7 @@ class EraseServerForm(forms.Form):
         if self.instance:
             return
 
-        UserProperty.objects.create(
+        Annotation.objects.create(
             uuid=self.uuid,
             type=UserProperty.Type.ERASE_SERVER,
             key='ERASE_SERVER',
