@@ -3,6 +3,7 @@ from django.db import models, connection
 from utils.constants import ALGOS
 from evidence.models import SystemProperty, UserProperty, Evidence
 from lot.models import DeviceLot
+from action.models import State
 
 
 class Device:
@@ -126,6 +127,11 @@ class Device:
 
     def last_uuid(self):
         return self.uuids[0]
+
+    def get_current_state(self):
+        uuid = self.last_uuid
+
+        return State.objects.filter(snapshot_uuid=uuid).order_by('-date').first()
 
     def get_lots(self):
         self.lots = [
