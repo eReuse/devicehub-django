@@ -7,7 +7,6 @@ from evidence.parse_details import ParseSnapshot
 
 from evidence.models import Annotation
 from evidence.xapian import index
-from dpp.api_dlt import register_device_dlt, register_passport_dlt
 from evidence.parse_details import get_inxi_key, get_inxi
 from django.conf import settings
 
@@ -78,27 +77,16 @@ class Build:
             sku = device.get("sku", '')
             hid = f"{manufacturer}{model}{chassis}{serial_number}{sku}"
 
-
         self.chid = hashlib.sha3_256(hid.encode()).hexdigest()
         return self.chid
 
     def get_chid_dpp(self):
         if self.json.get("software") == "workbench-script":
-            dmidecode_raw = self.json["data"]["dmidecode"]
-            dmi = DMIParse(dmidecode_raw)
-
-            manufacturer = dmi.manufacturer().strip()
-            model = dmi.model().strip()
-            chassis = self.get_chassis_dh()
-            serial_number = dmi.serial_number()
-            sku = self.get_sku()
-            typ = chassis
-            version = self.get_version()
-            hid = f"{manufacturer}{model}{chassis}{serial_number}{sku}{typ}{version}"
+            device = ParseSnapshot(self.json).device
         else:
             device = self.json['device']
-            hid = self.get_id_hw_dpp(device)
 
+        hid = self.get_id_hw_dpp(device)
         self.chid = hashlib.sha3_256(hid.encode("utf-8")).hexdigest()
         return self.chid
 

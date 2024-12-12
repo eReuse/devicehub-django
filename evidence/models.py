@@ -68,8 +68,11 @@ class Evidence:
 
     def get_doc(self):
         self.doc = {}
+        self.inxi = None
+
         if not self.owner:
             self.get_owner()
+
         qry = 'uuid:"{}"'.format(self.uuid)
         matches = search(self.owner, qry, limit=1)
         if matches and matches.size() < 0:
@@ -93,6 +96,10 @@ class Evidence:
             self.dmi = DMIParse(dmidecode_raw)
             try:
                 self.inxi = json.loads(inxi_raw)
+            except Exception:
+                pass
+        if self.inxi:
+            try:
                 machine = get_inxi_key(self.inxi, 'Machine')
                 for m in machine:
                     system = get_inxi(m, "System")
@@ -102,7 +109,6 @@ class Evidence:
                         self.device_serial_number = get_inxi(m, "serial")
                         self.device_chassis = get_inxi(m, "Type")
                         self.device_version = get_inxi(m, "v")
-
             except Exception:
                 return
 
@@ -153,9 +159,6 @@ class Evidence:
     def get_chassis(self):
         if self.is_legacy():
             return self.doc['device']['model']
-
-        if self.inxi:
-            return self.device_chassis
 
         if self.inxi:
             return self.device_chassis
