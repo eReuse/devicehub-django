@@ -1,0 +1,19 @@
+
+{% load i18n %}
+
+<div class="tab-pane fade" id="evidences">
+      <h5 class="card-title">{% trans 'List of evidences' %}</h5>
+      <div class="list-group col-6">
+        {% for snap in object.evidences %}
+          <div class="list-group-item">
+            <div class="d-flex w-100 justify-content-between">
+              <small class="text-muted">{{ snap.created }}</small>
+            </div>
+            <p class="mb-1">
+              <a href="{% url 'evidence:details' snap.uuid %}">{{ snap.uuid }}</a>
+            </p>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
