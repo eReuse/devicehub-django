@@ -1,0 +1,19 @@
+
+{% load i18n %}
+
+<div class="tab-pane fade" id="lots">
+      {% for tag in lot_tags %}
+          <h5 class="card-title">{{ tag }}
+          </h5>
+        {% for lot in object.lots %}
+          {% if lot.type == tag %}
+            <div class="row mb-3">
+              <div class="col">
+                  <a href="{% url 'dashboard:lot' lot.id %}">{{ lot.name }}
+                  </a>
+              </div>
+            </div>
+          {% endif %}
+        {% endfor %}
+      {% endfor %}
+    </div>
