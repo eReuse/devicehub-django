@@ -38,6 +38,9 @@
               </td>
               <td>{{ state_definition.state }}</td>
               <td class="text-end">
+                <button type="button" class="btn btn-primary btn-sm me-1" data-bs-toggle="modal" data-bs-target="#editStateModal{{ state_definition.id }}">
+                  <i class="bi bi-pencil"></i>
+                </button>
                 <button type="button" id="delete-btn" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteStateModal{{ state_definition.id }}">
                 <i class="bi bi-trash"></i>
                 </button>
@@ -89,6 +92,40 @@
     </div>
   </div>
 </div>
+
+<!-- Edit State Definition Modals -->
+{% for state_definition in state_definitions %}
+<div class="modal fade" id="editStateModal{{ state_definition.id }}" tabindex="-1" aria-labelledby="editStateModalLabel{{ state_definition.id }}" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="post" action="{% url 'admin:edit_state_definition' state_definition.id %}">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title" id="editStateModalLabel{{ state_definition.id }}">
+            {% trans "Edit State Definition" %}
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="editStateInput{{ state_definition.id }}" class="form-label">{% trans "State" %}</label>
+            <input type="text" class="form-control" id="editStateInput{{ state_definition.id }}" name="state" maxlength="50" value="{{ state_definition.state }}" required>
+            <div class="form-text">{% trans "Maximum 50 characters." %}</div>
+          </div>
+          <div class="alert alert-warning" role="alert">
+            {% trans "Existing devices with this state will not have their state names changed." %}
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+          <button type="submit" class="btn btn-primary">{% trans "Save Changes" %}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endfor %}
+
 
 <!-- delete state definition Modal -->
 {% for state_definition in state_definitions %}
