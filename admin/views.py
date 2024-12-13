@@ -153,7 +153,7 @@ class AddStateDefinitionView(AdminView, StateDefinitionContextMixin, CreateView)
     template_name = "states_panel.html"
     title = _("New State Definition")
     breadcrumb = "Admin / New state"
-    success_url = reverse_lazy('admin:states')
+    success_url = reverse_lazy('admin:states_panel')
     model = StateDefinition
     fields = ('state',)
 
@@ -175,7 +175,7 @@ class AddStateDefinitionView(AdminView, StateDefinitionContextMixin, CreateView)
 
 class DeleteStateDefinitionView(AdminView, StateDefinitionContextMixin, SuccessMessageMixin, DeleteView):
     model = StateDefinition
-    success_url = reverse_lazy('admin:states')
+    success_url = reverse_lazy('admin:states_panel')
 
     def get_success_message(self, cleaned_data):
         device_logger.info(f"<Deleted> StateDefinition with value {self.object.state} by user {self.request.user}.")
@@ -192,7 +192,7 @@ class DeleteStateDefinitionView(AdminView, StateDefinitionContextMixin, SuccessM
 
 
 class UpdateStateOrderView(AdminView, TemplateView):
-    success_url = reverse_lazy('admin:states')
+    success_url = reverse_lazy('admin:states_panel')
 
     def post(self, request, *args, **kwargs):
         form = OrderingStateForm(request.POST)
@@ -218,3 +218,19 @@ class UpdateStateOrderView(AdminView, TemplateView):
         else:
             return Http404
 
+
+class UpdateStateDefinitionView(AdminView, UpdateView):
+    model = StateDefinition
+    template_name = 'states_panel.html'
+    fields = ['state']
+    pk_url_kwarg = 'pk'
+
+    def get_queryset(self):
+        return StateDefinition.objects.filter(institution=self.request.user.institution)
+
+    def get_success_url(self):
+        messages.success(self.request, _("State definition updated successfully."))
+        return reverse_lazy('admin:states_panel')
+
+    def form_valid(self, form):
+        return super().form_valid(form)
