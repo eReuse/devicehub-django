@@ -107,14 +107,16 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
         </div>
         <div class="modal-body">
+          <div class="alert alert-warning text-center" role="alert">
+            {% trans "Existing devices with this state will not have their state names changed." %}
+          </div>
           <div class="mb-3">
             <label for="editStateInput{{ state_definition.id }}" class="form-label">{% trans "State" %}</label>
             <input type="text" class="form-control" id="editStateInput{{ state_definition.id }}" name="state" maxlength="50" value="{{ state_definition.state }}" required>
             <div class="form-text">{% trans "Maximum 50 characters." %}</div>
           </div>
-          <div class="alert alert-warning" role="alert">
-            {% trans "Existing devices with this state will not have their state names changed." %}
-          </div>
+
+        <p class="text-muted text-end">{% trans "Any changes in order will not be saved." %}</p>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
@@ -139,16 +141,20 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
       </div>
       <div class="modal-body">
-        <p class="text-danger fw-semibold h6 pb-3">{% trans "Are you sure you want to delete this state definition?" %}</p>
-        <p class="text-muted">{% trans "This action cannot be undone and any changes in order will not be saved." %}</p>
-
+        <div class="alert alert-warning text-center" role="alert">
+            {% trans "Devices with a State of this description will not have their State altered" %}
+          </div>
         <div class="d-flex align-items-center border rounded p-3 mt-3">
           <span class="badge bg-secondary me-3 display-6">{{ state_definition.order }}</span>
           <div>
             <p class="mb-0 fw-bold">{{ state_definition.state }}</p>
           </div>
         </div>
+
+        <p class="text-muted text-end mt-3">{% trans "Any changes in order will not be saved." %}</p>
+
       </div>
+
       <div class="modal-footer">
         <form method="post" action="{% url 'admin:delete_state_definition' state_definition.pk %}">
           {% csrf_token %}
