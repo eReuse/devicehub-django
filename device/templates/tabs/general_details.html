@@ -101,8 +101,15 @@
               </td>
               <td>{{ device_states.0.user.responsable_person|default:device_states.0.user.username }}
               </td>
-              <td>{{ device_states.0.date|date:"SHORT_DATETIME_FORMAT" }}
+              <td>{{ device_states.0.date|date:"M j, Y, H:i" }}
               </td>
+              {% if device_states.0.date|timesince < '1 hour' %}
+              <td>
+                 <a href="#" data-bs-toggle="modal" data-bs-target="#deleteStateModal{{ device_states.0.id }}" title="{% trans 'Undo' %}">
+                  <i class="bi bi-trash text-danger"></i>
+                </a>
+              </td>
+              {% endif %}
             </tr>
             {% else %}
             <tr>
@@ -126,3 +133,37 @@
         </div>
       </div>
     </div>
+
+ <div class="modal fade" id="deleteStateModal{{ device_states.0.id }}" tabindex="-1" aria-labelledby="deleteStateModalLabel{{ state_change.id }}" aria-hidden="true">
+   <div class="modal-dialog">
+     <div class="modal-content">
+       <div class="modal-header">
+         <h5 class="modal-title" id="deleteStateModalLabel{{ device_states.0.id }}">{% trans 'Confirm Delete' %}</h5>
+         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
+       </div>
+       <div class="modal-body">
+         <p>{% trans 'Are you sure you want to undo this state?' %}</p>
+
+         <!-- TODO: check if usage of humanize django module is useful for date formatting -->
+         <div class="d-flex align-items-center border rounded p-3 mt-3">
+           <span
+             class="badge bg-secondary me-3 display-9">
+             {{ device_states.0.date|date:"M j, Y, H:i" }}
+           </span>
+           <p
+             class="mb-0 fw-bold">
+             {{ device_states.0.state }}
+           </p>
+         </div>
+
+       </div>
+       <div class="modal-footer">
+         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans 'Cancel' %}</button>
+         <form method="post" action="{% url 'action:undo_action' device_states.0.id %}">
+           {% csrf_token %}
+           <button type="submit" class="btn btn-danger">{% trans 'Delete' %}</button>
+         </form>
+       </div>
+     </div>
+   </div>
+ </div>
