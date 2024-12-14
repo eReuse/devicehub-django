@@ -184,9 +184,15 @@
             {% endfor %}
           {% endblock messages %}
           <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2">
-            <h1 class="h2">{{ title }}</h1>
-
-	    <form method="post" action="{% url 'dashboard:search' %}">
+            <h1 class="h2">{{ title }}
+              {% if help_text %}
+              <span class="ms-1" data-bs-toggle="tooltip" data-bs-placement="right" title="{{ help_text }}">
+                <i class="fas fa-question-circle text-secondary h6 align-top"></i>
+              </span> 
+            {% endif %}
+            </h1>
+             
+	          <form method="post" action="{% url 'dashboard:search' %}">
               {% csrf_token %}
               <div class="input-group rounded">
                 <input type="search" name="search" class="form-control rounded" placeholder="Search your device..." aria-label="Search" aria-describedby="search-addon" />
@@ -227,4 +233,13 @@
     {% block extrascript %}{% endblock %}
     {% endblock %}
   </body>
+
+  <script>
+     //If help_text is passed to the view as context, a hover-able help icon is displayed 
+      var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+      var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+      });
+  </script>
+
 </html>
