@@ -8,14 +8,14 @@
   </div>
   <div class="col text-end">
     <button type="button" class="btn btn-green-admin" data-bs-toggle="modal" data-bs-target="#addStateModal">
-      {% trans "Add State Definition" %}
+      <i class="fas fa-plus text-secondary align-center p-1"></i>
+      {% trans "Add" %}
     </button>
   </div>
 </div>
 
-<div class="row mt-4">
+<div class="row mt-5">
   <div class="col">
-    <h4>{% trans "State Definitions" %}</h4>
     {% if state_definitions %}
       <table class="table table-hover table-border">
         <caption>{% trans 'Move and drag state definitions to reorder' %}</caption>
