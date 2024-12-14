@@ -139,14 +139,15 @@ class StateDefinitionContextMixin(ContextMixin):
         context = super().get_context_data(**kwargs)
         context.update({
             "state_definitions": StateDefinition.objects.filter(institution=self.request.user.institution).order_by('order'),
+            "help_text": _('State definitions are the custom finite states that a device can be in.'),
         })
         return context
 
 
 class StatesPanelView(AdminView, StateDefinitionContextMixin, TemplateView):
     template_name = "states_panel.html"
-    title = _("States")
-    breadcrumb = _("admin / States") + " /"
+    title = _("States Panel")
+    breadcrumb = _("admin / States Panel") + " /"
 
 
 class AddStateDefinitionView(AdminView, StateDefinitionContextMixin, CreateView):
