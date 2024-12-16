@@ -29,17 +29,17 @@ class UploadForm(forms.Form):
 
             try:
                 file_json = json.loads(file_data)
-                Build(file_json, None, check=True)
+                snap = Build(file_json, None, check=True)
                 exist_annotation = Annotation.objects.filter(
-                    uuid=file_json['uuid']
+                    uuid=snap.uuid
                 ).first()
-    
+
                 if exist_annotation:
-                    raise ValidationError(              
+                    raise ValidationError(
                         _("The snapshot already exists"),
                         code="duplicate_snapshot",
                     )
-                
+
             #Catch any error and display it as Validation Error so the Form handles it
             except Exception as e:
                 raise ValidationError(
@@ -221,7 +221,7 @@ class EraseServerForm(forms.Form):
 
         if self.instance:
             return
-        
+
         Annotation.objects.create(
             uuid=self.uuid,
             type=Annotation.Type.ERASE_SERVER,
