@@ -45,17 +45,10 @@ class ActionUndoView(DeleteView):
 
     def delete(self, request, *args, **kwargs):
         self.object = self.get_object()
-        time_since_creation = timezone.now() - self.object.date
-        if time_since_creation.total_seconds() <= 3600:  # 1 hour = 3600 seconds
-            data_to_return= super().delete(request, *args, **kwarg)
-
-            messages.success(request, f"Action to state'{self.object.state}' has been delete.")
-            return data_to_return
-        else:
-            #TODO: revise if condition is correct
-            messages.error(request, "You can undo an action within one hour of its creation.")
-            return reverse_lazy(self.get_success_url())
+        return super().delete(request, *args, **kwarg)
 
     def get_success_url(self):
+
+        messages.info(self.request, f"Action to state: {self.object.state} has been deleted.")
         device_logger.info(f"<Deleted> State '{self.object.state}', for device '{self.object.snapshot_uuid}') by user {self.request.user}.")
         return self.request.META.get('HTTP_REFERER', reverse_lazy('device:details', args=[self.object.snapshot_uuid]))
