@@ -90,7 +90,7 @@
               </th>
               <th scope="col">{% trans 'User' %}
               </th>
-              <th scope="col">{% trans 'Date' %}
+              <th scope="col">{% trans 'Since' %}
               </th>
             </tr>
           </thead>
@@ -101,15 +101,14 @@
               </td>
               <td>{{ device_states.0.user.responsable_person|default:device_states.0.user.username }}
               </td>
-              <td>{{ device_states.0.date|date:"M j, Y, H:i" }}
+              <td>{{ device_states.0.date|timesince }}
               </td>
-              {% if device_states.0.date|timesince < '1 hour' %}
-              <td>
-                 <a href="#" data-bs-toggle="modal" data-bs-target="#deleteStateModal{{ device_states.0.id }}" title="{% trans 'Undo' %}">
-                  <i class="bi bi-trash text-danger"></i>
+              <td class="text-end">
+                 <a href="#" data-bs-toggle="modal" class="text-danger" data-bs-target="#deleteStateModal{{ device_states.0.id }}" title="{% trans 'Undo' %}">
+                     {%  trans 'undo' %}
+                     <i class="fas fa-undo ps-1"></i>
                 </a>
               </td>
-              {% endif %}
             </tr>
             {% else %}
             <tr>
