@@ -133,6 +133,8 @@
       </div>
     </div>
 
+
+{% if device_states %}
  <div class="modal fade" id="deleteStateModal{{ device_states.0.id }}" tabindex="-1" aria-labelledby="deleteStateModalLabel{{ state_change.id }}" aria-hidden="true">
    <div class="modal-dialog">
      <div class="modal-content">
@@ -166,3 +168,4 @@
      </div>
    </div>
  </div>
+{% endif %}
