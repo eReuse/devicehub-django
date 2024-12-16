@@ -55,8 +55,8 @@ END
         cat > .env <<END
 ${dpp_env_vars:-}
 END
-}
         fi
+}
 
 handle_federated_id() {
 
