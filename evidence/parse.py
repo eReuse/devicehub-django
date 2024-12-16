@@ -3,20 +3,15 @@ import hashlib
 import logging
 
 from dmidecode import DMIParse
-from json_repair import repair_json
-from django.conf import settings
-from evidence.parse_details import get_lshw_child, ParseSnapshot
+from evidence.parse_details import ParseSnapshot
 
 from evidence.models import Annotation
 from evidence.xapian import index
-from utils.constants import CHASSIS_DH
+from evidence.parse_details import get_inxi_key, get_inxi
+from django.conf import settings
 
 if settings.DPP:
     from dpp.api_dlt import register_device_dlt, register_passport_dlt
-
-
-
-from evidence.parse_details import get_inxi_key, get_inxi
 
 logger = logging.getLogger('django')
 
@@ -82,27 +77,16 @@ class Build:
             sku = device.get("sku", '')
             hid = f"{manufacturer}{model}{chassis}{serial_number}{sku}"
 
-
         self.chid = hashlib.sha3_256(hid.encode()).hexdigest()
         return self.chid
 
     def get_chid_dpp(self):
         if self.json.get("software") == "workbench-script":
-            dmidecode_raw = self.json["data"]["dmidecode"]
-            dmi = DMIParse(dmidecode_raw)
-
-            manufacturer = dmi.manufacturer().strip()
-            model = dmi.model().strip()
-            chassis = self.get_chassis_dh()
-            serial_number = dmi.serial_number()
-            sku = self.get_sku()
-            typ = chassis
-            version = self.get_version()
-            hid = f"{manufacturer}{model}{chassis}{serial_number}{sku}{typ}{version}"
+            device = ParseSnapshot(self.json).device
         else:
             device = self.json['device']
-            hid = self.get_id_hw_dpp(device)
 
+        hid = self.get_id_hw_dpp(device)
         self.chid = hashlib.sha3_256(hid.encode("utf-8")).hexdigest()
         return self.chid
 
@@ -160,23 +144,6 @@ class Build:
                 key=k,
                 value=v
             )
-
-    def get_chassis_dh(self):
-        chassis = self.get_chassis()
-        lower_type = chassis.lower()
-        for k, v in CHASSIS_DH.items():
-            if lower_type in v:
-                return k
-        return self.default
-
-    def get_sku(self):
-        return self.dmi.get("System")[0].get("SKU Number", "n/a").strip()
-
-    def get_chassis(self):
-        return self.dmi.get("Chassis")[0].get("Type", '_virtual') #
-
-    def get_version(self):
-        return self.dmi.get("System")[0].get("Verson", '_virtual')
 
     def get_hid(self, snapshot):
         try:
