@@ -69,7 +69,11 @@
             {{ dev.manufacturer }}
         </td>
         <td>
+	  {% if dev.version %}
+            {{dev.version}} {{ dev.model }}
+	  {% else %}
             {{ dev.model }}
+	  {% endif %}
         </td>
       </tr>
     </tbody>
