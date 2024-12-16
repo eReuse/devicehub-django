@@ -18,20 +18,28 @@ class CustomFormatter(logging.Formatter):
             color = PURPLE
         else:
             color = RESET
-            
+
         record.levelname = f"{color}{record.levelname}{RESET}"
 
         if record.args:
-            record.msg = self.highlight_args(record.msg, record.args, color)
-            record.args = ()
-            
-        # provide trace when DEBUG config
-        if settings.DEBUG:
-            import traceback
-            print(traceback.format_exc())
+            try:
+                record.msg = record.msg % record.args
+                record.args = ()
+            except (TypeError, ValueError):
+                record.msg = f"{color}{record.msg}{RESET}"
+
+        # Highlight the final formatted message
+        record.msg = self.highlight_message(record.msg, color)
+
+        # pedro says: I discovered that trace is provided anyway with
+        # this commented (reason: strange None msgs)
+        # is this needed?
+        ### provide trace when DEBUG config
+        #if settings.DEBUG:
+        #    import traceback
+        #    print(traceback.format_exc())
 
         return super().format(record)
 
-    def highlight_args(self, message, args, color):
-        highlighted_args = tuple(f"{color}{arg}{RESET}" for arg in args)
-        return message % highlighted_args
+    def highlight_message(self, message, color):
+        return f"{color}{message}{RESET}"

@@ -91,6 +91,11 @@ INSTALLED_APPS = [
     "api",
 ]
 
+DPP = config("DPP", default=False, cast=bool)
+
+if DPP:
+    INSTALLED_APPS.extend(["dpp", "did"])
+
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -239,3 +244,9 @@ LOGGING = {
 SNAPSHOT_PATH="/tmp/"
 DATA_UPLOAD_MAX_NUMBER_FILES = 1000
 COMMIT = config('COMMIT', default='')
+
+# DLT SETTINGS
+TOKEN_DLT = config("API_DLT_TOKEN", default=None)
+API_DLT = config("API_DLT", default=None)
+API_RESOLVER = config("API_RESOLVER", default=None)
+ID_FEDERATED = config("ID_FEDERATED", default=None)
