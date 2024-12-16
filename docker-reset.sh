@@ -21,6 +21,8 @@ main() {
         fi
         # remove old database
         rm -vfr ./db/*
+        # deactivate configured flag
+        rm -vfr ./already_configured
         docker compose down -v
         docker compose build
         docker compose up ${detach_arg:-}
