@@ -98,7 +98,8 @@ class DetailsView(DashboardView, TemplateView):
             'object': self.object,
             'snapshot': last_evidence,
             'lot_tags': lot_tags,
-            'dpps': dpps,
+            'impact': get_device_environmental_impact(),
+            'dpps': dpps
         })
         return context
 
@@ -161,6 +162,7 @@ class PublicDeviceWebView(TemplateView):
 
 class ExportEnvironmentalImpactPDF(DashboardView, TemplateView):
     pass
+
 
 class AddAnnotationView(DashboardView, CreateView):
     template_name = "new_annotation.html"
