@@ -116,7 +116,7 @@ class DetailsView(DashboardView, TemplateView):
             'snapshot': self.object.get_last_evidence(),
             'lot_tags': lot_tags,
             'impact': get_device_environmental_impact(),
-            'dpps': dpps
+            'dpps': dpps,
         })
         return context
 

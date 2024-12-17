@@ -50,13 +50,12 @@ API_RESOLVER=${API_RESOLVER}
 ID_FEDERATED=${ID_FEDERATED}
 END
 )"
-        fi
-
         # generate config using env vars from docker
         # TODO rethink if this is needed because now this is django, not flask
         cat > .env <<END
 ${dpp_env_vars:-}
 END
+        fi
 }
 
 handle_federated_id() {
