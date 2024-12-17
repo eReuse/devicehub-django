@@ -89,6 +89,7 @@ INSTALLED_APPS = [
     "dashboard",
     "admin",
     "api",
+    "environmental_impact"
 ]
 
 DPP = config("DPP", default=False, cast=bool)

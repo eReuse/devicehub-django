@@ -29,16 +29,16 @@
         <li class="nav-item">
           <a href="#evidences" class="nav-link" data-bs-toggle="tab" data-bs-target="#evidences">{% trans 'Evidences' %}</a>
         </li>
-	{% if dpps %}
-        <li class="nav-item">
-          <a href="#dpps" class="nav-link" data-bs-toggle="tab" data-bs-target="#dpps">{% trans 'Dpps' %}</a>
-        </li>
-	{% endif %}
+        {% if dpps %}
+          <li class="nav-item">
+            <a href="#dpps" class="nav-link" data-bs-toggle="tab" data-bs-target="#dpps">{% trans 'Dpps' %}</a>
+          </li>
+        {% endif %}
         <li class="nav-item">
           <a class="nav-link" href="{% url 'device:device_web' object.id %}" target="_blank">Web</a>
         </li>
         <li class="nav-item">
-          <a href="#enviromental_impact" class="nav-link" data-bs-toggle="tab" data-bs-target="#enviromental_impact">{% trans 'Enviromental impact' %}</a>
+          <a href="#environmental_impact" class="nav-link" data-bs-toggle="tab" data-bs-target="#environmental_impact">{% trans 'Environmental impact' %}</a>
         </li>
       </ul>
     </div>
@@ -244,15 +244,15 @@
         {% endfor %}
       </div>
     </div>
-    <div class="tab-pane fade" id="enviromental_impact">
+
+    <div class="tab-pane fade" id="environmental_impact">
       <div class="container-fluid py-3">
         <div class="d-flex justify-content-end mb-3">
-          <a href="{% url 'device:export_environmental_impact_pdf' object.pk %}" class="btn btn-success">
+          <a class="btn btn-success">
             <i class="bi bi-file-earmark-pdf"></i>
-              {% trans 'Export to PDF' %}
-            </a>
+            {% trans 'Export to PDF' %}
+          </a>
         </div>
-        {% comment %} <h5 class="card-title text-success">Environmental Impact Assessment</h5> {% endcomment %}
 
         <div class="row g-4 mb-4">
           <div class="col-md-4">
@@ -267,40 +267,59 @@
               </div>
             </div>
           </div>
-          {% comment %} <div class="col-md-4">
+
+          <div class="col-md-4">
+            <div class="card h-100 border-danger">
+              <div class="card-body text-center">
+                <div class="mb-3">
+                  <i class="bi bi-cloud-fill text-danger" style="font-size: 2rem;"></i>
+                </div>
+                <h5 class="card-title text-danger">Carbon Consumed</h5>
+                <h2 class="mb-2">{{ impact.co2_emissions }}</h2>
+                <p class="card-text text-muted">kg CO₂e consumed</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-4">
             <div class="card h-100 border-success">
               <div class="card-body text-center">
                 <div class="mb-3">
                   <i class="bi bi-recycle text-success" style="font-size: 2rem;"></i>
                 </div>
-                <h5 class="card-title text-success">Whatever other metric we might wanna show</h5>
+                <h5 class="card-title text-success">Additional Impact Metric</h5>
                 <h2 class="mb-2">85%</h2>
                 <p class="card-text text-muted">whatever</p>
               </div>
             </div>
-          </div> {% endcomment %}
-        <div class="card">
-          <div class="card-body">
-            <h5 class="card-title">Impact Details</h5>
+          </div>
+        </div>
 
-            <div class="table-responsive">
-              <table class="table table-bordered">
-                <tbody>
-                  <tr>
-                    <th scope="row" class="bg-light" style="width: 30%;">Manufacturing Impact Avoided</th>
-                    <td>
-                      <span class="text-success">{{ impact.carbon_saved }}</span> kg CO₂e
-                      <br />
-                      <small class="text-muted">Based on average laptop manufacturing emissions</small>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+        <div class="row">
+          <div class="col">
+            <div class="card">
+              <div class="card-body">
+                <h5 class="card-title">Impact Details</h5>
+                <div class="table-responsive">
+                  <table class="table table-bordered">
+                    <tbody>
+                      <tr>
+                        <th scope="row" class="bg-light" style="width: 30%;">Manufacturing Impact Avoided</th>
+                        <td>
+                          <span class="text-success">{{ impact.carbon_saved }}</span> kg CO₂e
+                          <br />
+                          <small class="text-muted">Based on average laptop manufacturing emissions</small>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
 
-            <div class="mt-3">
-              <h6>Calculation Method</h6>
-              <small class="text-muted">Based on industry standards X Y and Z</small>
+                <div class="mt-3">
+                  <h6>Calculation Method</h6>
+                  <small class="text-muted">Based on industry standards X Y and Z</small>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -308,22 +327,22 @@
     </div>
 
     {% if dpps %}
-    <div class="tab-pane fade" id="dpps">
-      <h5 class="card-title">{% trans 'List of dpps' %}</h5>
-      <div class="list-group col">
-        {% for d in dpps %}
-          <div class="list-group-item">
-            <div class="d-flex w-100 justify-content-between">
-              <small class="text-muted">{{ d.timestamp }}</small>
-	      <span>{{ d.type }}</span>
+      <div class="tab-pane fade" id="dpps">
+        <h5 class="card-title">{% trans 'List of dpps' %}</h5>
+        <div class="list-group col">
+          {% for d in dpps %}
+            <div class="list-group-item">
+              <div class="d-flex w-100 justify-content-between">
+                <small class="text-muted">{{ d.timestamp }}</small>
+                <span>{{ d.type }}</span>
+              </div>
+              <p class="mb-1">
+                <a href="{% url 'did:device_web' d.signature %}">{{ d.signature }}</a>
+              </p>
             </div>
-            <p class="mb-1">
-              <a href="{% url 'did:device_web' d.signature %}">{{ d.signature }}</a>
-            </p>
-          </div>
-        {% endfor %}
+          {% endfor %}
+        </div>
       </div>
-    </div>
     {% endif %}
   </div>
 {% endblock %}
