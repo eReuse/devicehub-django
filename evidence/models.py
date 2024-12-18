@@ -46,12 +46,6 @@ class UserProperty(Property):
 
     type = models.SmallIntegerField(choices=Type, default=Type.USER)
 
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=["key", "uuid", "type"], name="user_unique_type_key_uuid")
-        ]
-
 
 class Evidence:
     def __init__(self, uuid):
