@@ -31,14 +31,71 @@
         </tr>
       </thead>
       <tbody>
-	{% for a in properties %}
-      <tr>
-        <td>{{ a.key }}</td>
-        <td>{{ a.value }}</td>
-        <td>{{ a.created }}</td>
-        <td></td>
-        <td></td>
-      </tr>
+        {% for a in properties %}
+        <tr>
+          <td>{{ a.key }}</td>
+          <td>{{ a.value }}</td>
+          <td>{{ a.created }}</td>
+          <td class="text-center">
+            <a href="#" class="text-info" data-bs-toggle="modal" data-bs-target="#editPropertyModal{{ a.id }}">
+              <i class="bi bi-pencil"></i>
+            </a>
+          </td>
+          <td class="text-center">
+            <a href="#" class="text-danger" data-bs-toggle="modal" data-bs-target="#deletePropertyModal{{ a.id }}">
+              <i class="bi bi-trash"></i>
+            </a>
+          </td>
+        </tr>
+      
+        <div class="modal fade" id="editPropertyModal{{ a.id }}" tabindex="-1" aria-labelledby="editPropertyModalLabel{{ a.id }}" aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="editPropertyModalLabel{{ a.id }}">{% trans "Edit Property" %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
+              </div>
+              <div class="modal-body">
+                <form method="post" action="{% url 'lot:update_property' a.id %}">
+                  {% csrf_token %}
+                  <div class="mb-3">
+                    <label for="propertyKey{{ a.id }}" class="form-label">{% trans "Key" %}</label>
+                    <input type="text" class="form-control" id="propertyKey{{ a.id }}" name="key" value="{{ a.key }}" required>
+                  </div>
+                  <div class="mb-3">
+                    <label for="propertyValue{{ a.id }}" class="form-label">{% trans "Value" %}</label>
+                    <input type="text" class="form-control" id="propertyValue{{ a.id }}" name="value" value="{{ a.value }}" required>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+                    <button type="submit" class="btn btn-primary">{% trans "Save changes" %}</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      
+        <div class="modal fade" id="deletePropertyModal{{ a.id }}" tabindex="-1" aria-labelledby="deletePropertyModalLabel{{ a.id }}" aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="deletePropertyModalLabel{{ a.id }}">{% trans "Delete Property" %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
+              </div>
+              <div class="modal-body">
+                <p>{% trans "Are you sure you want to delete this property?" %}</p>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+                <form method="post" action="{% url 'lot:delete_property' a.id %}">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-danger">{% trans "Delete" %}</button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
       {% endfor %}
         
       </tbody>
