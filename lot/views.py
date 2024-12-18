@@ -1,5 +1,6 @@
 from django.urls import reverse_lazy
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect, Http404
+from django.contrib import messages
 from django.utils.translation import gettext_lazy as _
 from django.views.generic.base import TemplateView
 from django.views.generic.edit import (
@@ -211,7 +212,7 @@ class LotPropertiesView(DashboardView, TemplateView):
         return context
 
 
-class LotAddPropertyView(DashboardView, CreateView):
+class AddLotPropertyView(DashboardView, CreateView):
     template_name = "new_property.html"
     title = _("New Lot Property")
     breadcrumb = "Device / New property"
@@ -233,3 +234,61 @@ class LotAddPropertyView(DashboardView, CreateView):
         self.success_url = reverse_lazy('lot:properties', args=[pk])
         kwargs = super().get_form_kwargs()
         return kwargs
+
+
+class UpdateLotPropertyView(DashboardView, UpdateView):
+    template_name = "properties.html"
+    title = _("Update lot Property")
+    breadcrumb = "Lot / Update Property"
+    model = LotProperty
+    fields = ("key", "value")
+
+    def get_form_kwargs(self):
+        pk = self.kwargs.get('pk')
+        lot_property = get_object_or_404(LotProperty, pk=pk, owner=self.request.user.institution)
+
+        if not lot_property:
+            raise Http404
+
+        kwargs = super().get_form_kwargs()
+        kwargs['instance'] = lot_property
+        return kwargs
+
+    def form_valid(self, form):
+        old_key= self.object.key
+        old_value = self.object.value
+        new_key = form.cleaned_data['key']
+        new_value = form.cleaned_data['value']
+
+        form.instance.owner = self.request.user.institution
+        form.instance.user = self.request.user
+        form.instance.type = LotProperty.Type.USER
+        response = super().form_valid(form)
+
+        messages.success(self.request, _("Lot property updated successfully."))
+        return response
+
+    def get_success_url(self):
+        return self.request.META.get('HTTP_REFERER', reverse_lazy('device:details', args=[self.object.pk]))
+
+
+class DeleteLotPropertyView(DashboardView, DeleteView):
+    model = LotProperty
+
+    def post(self, request, *args, **kwargs):
+        self.pk = kwargs['pk']
+        referer = request.META.get('HTTP_REFERER')
+        if not referer:
+            raise Http404("No referer header found")
+
+        self.object = get_object_or_404(
+            self.model,
+            pk=self.pk,
+            owner=self.request.user.institution
+        )
+        old_value = self.object.key
+        self.object.delete()
+        messages.success(self.request, _("Lot property deleted successfully."))
+
+        # Redirect back to the original URL
+        return redirect(referer)
