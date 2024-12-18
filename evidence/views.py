@@ -141,8 +141,6 @@ class DownloadEvidenceView(DashboardView, TemplateView):
         return response
 
 
-
-
 class EraseServerView(DashboardView, FormView):
     template_name = "ev_eraseserver.html"
     section = "evidences"
