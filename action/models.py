@@ -52,3 +52,30 @@ class StateDefinition(models.Model):
 
     def __str__(self):
         return f"{self.institution.name} - {self.state}"
+
+
+class Note(models.Model):
+    institution = models.ForeignKey(Institution, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    date = models.DateTimeField(auto_now_add=True)
+    description = models.TextField(max_lenght=250)
+    snapshot_uuid = models.UUIDField()
+
+    class Meta:
+        ordering = ['-date']
+
+    def __str__(self):
+        return f" Note: {self.description}, by {self.user.username} @ {self.user.institution} - {self.date}, for {self.snapshot_uuid}"
+
+class DeviceLog(models.Model):
+    institution = models.ForeignKey(Institution, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    date = models.DateTimeField(auto_now_add=True)
+    event = models.CharField(max_length=255)
+    snapshot_uuid = models.UUIDField()
+
+    class Meta:
+        ordering = ['-date']
+
+    def __str__(self):
+        return f"{self.event} by {self.user.username} @ {self.institution.name} - {self.date}, for {self.snapshot_uuid}"
