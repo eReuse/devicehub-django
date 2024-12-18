@@ -3,9 +3,6 @@
 
 <!-- Device Details -->
     <div class="tab-pane fade show active" id="details">
-      <div class="row">
-
-        <div class="col-lg-6">
           <h5 class="card-title">{% trans 'Details' %}
           </h5>
           <hr>
@@ -73,99 +70,5 @@
                 </div>
               {% endfor %}
             </div>
-          </div>
-        </div>
-
-
-          <!-- Device Current State -->
-        <div class="col-lg-6">
-          <h5 class="card-title">{% trans 'Current State' %}
-          </h5>
-          <hr>
-          <div class="table-responsive">
-        <table class="table table-striped table-bordered">
-          <thead class="table">
-            <tr>
-              <th scope="col">{% trans 'State' %}
-              </th>
-              <th scope="col">{% trans 'User' %}
-              </th>
-              <th scope="col">{% trans 'Since' %}
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {% if device_states %}
-            <tr class="table-success">
-              <td>{{ device_states.0.state }}
-              </td>
-              <td>{{ device_states.0.user.responsable_person|default:device_states.0.user.username }}
-              </td>
-              <td>{{ device_states.0.date|timesince }}
-              </td>
-              <td class="text-end">
-                 <a href="#" data-bs-toggle="modal" class="text-danger" data-bs-target="#deleteStateModal{{ device_states.0.id }}" title="{% trans 'Undo' %}">
-                     {%  trans 'undo' %}
-                     <i class="fas fa-undo ps-1"></i>
-                </a>
-              </td>
-            </tr>
-            {% else %}
-            <tr>
-              <td colspan="3" class="text-center">{% trans 'No state recorded.' %}
-              </td>
-            </tr>
-            {% endif %}
-          </tbody>
-        </table>
-      </div>
-
-          <!-- TODO: display last note? -->
-          {% if last_note %}
-          <div class="row mb-3">
-            <div class="col-sm-4 text-muted fw-bold">{% trans 'Note' %}
-            </div>
-            <div class="col-sm-8">{{ object.last_state.note }}
-            </div>
-          </div>
-          {% endif %}
         </div>
       </div>
-    </div>
-
-
-{% if device_states %}
- <div class="modal fade" id="deleteStateModal{{ device_states.0.id }}" tabindex="-1" aria-labelledby="deleteStateModalLabel{{ state_change.id }}" aria-hidden="true">
-   <div class="modal-dialog">
-     <div class="modal-content">
-       <div class="modal-header">
-         <h5 class="modal-title" id="deleteStateModalLabel{{ device_states.0.id }}">{% trans 'Confirm Delete' %}</h5>
-         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
-       </div>
-       <div class="modal-body">
-         <p>{% trans 'Are you sure you want to undo this state?' %}</p>
-
-         <!-- TODO: check if usage of humanize django module is useful for date formatting -->
-         <div class="d-flex align-items-center border rounded p-3 mt-3">
-           <span
-             class="badge bg-secondary me-3 display-9">
-             {{ device_states.0.date|date:"M j, Y, H:i" }}
-           </span>
-           <p
-             class="mb-0 fw-bold">
-             {{ device_states.0.state }}
-           </p>
-         </div>
-
-       </div>
-       <div class="modal-footer">
-         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans 'Cancel' %}</button>
-         <form method="post" action="{% url 'action:undo_action' device_states.0.id %}">
-           {% csrf_token %}
-           <button type="submit" class="btn btn-danger">{% trans 'Delete' %}</button>
-         </form>
-       </div>
-     </div>
-   </div>
- </div>
-{% endif %}
