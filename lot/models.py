@@ -52,13 +52,5 @@ class LotProperty (Property):
         SYSTEM = 0, "System"
         USER = 1, "User"
         DOCUMENT = 2, "Document"
-        ERASE_SERVER = 3, "EraseServer"
 
     type = models.SmallIntegerField(choices=Type.choices, default=Type.USER)
-                        
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=["key", "lot", "type"], name="lot_unique_type_key_lot"
-            )
-        ]
