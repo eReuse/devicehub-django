@@ -58,7 +58,7 @@ class Note(models.Model):
     institution = models.ForeignKey(Institution, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     date = models.DateTimeField(auto_now_add=True)
-    description = models.TextField(max_lenght=250)
+    description = models.TextField()
     snapshot_uuid = models.UUIDField()
 
     class Meta:
