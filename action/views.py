@@ -1,10 +1,11 @@
 from django.views import View
 from django.shortcuts import redirect, get_object_or_404
 from django.contrib import messages
-from action.forms import AddStateForm
-from django.views.generic.edit import DeleteView
+from action.forms import ChangeStateForm, AddNoteForm
+from django.views.generic.edit import DeleteView, CreateView, FormView
 from django.urls import reverse_lazy
-from action.models import State, StateDefinition
+from django.utils.translation import gettext_lazy as _
+from action.models import State, StateDefinition, Note
 from device.models import Device
 import logging
 
@@ -12,36 +13,35 @@ import logging
 device_logger = logging.getLogger('device_log')
 
 
-class NewActionView(View):
+class ChangeStateView(View):
 
     def post(self, request, *args, **kwargs):
-        form = AddStateForm(request.POST)
+        form = ChangeStateForm(request.POST)
         
         if form.is_valid():
-            state_definition_id = form.cleaned_data['state_id']
-            state_definition = get_object_or_404(StateDefinition, pk=state_definition_id)
+            previous_state = form.cleaned_data['previous_state']
+            new_state = form.cleaned_data['new_state']
             snapshot_uuid = form.cleaned_data['snapshot_uuid']
-            #TODO: implement notes
-            note = form.cleaned_data.get('note', '')
 
-            state = State.objects.create(
+            State.objects.create(
                 snapshot_uuid=snapshot_uuid,
-                state=state_definition.state,
-                user=request.user,
-                institution=request.user.institution,
+                state=new_state,
+                user=self.request.user,
+                institution=self.request.user.institution,
             )
-            #TODO: also change logger for full fledged table
-            device_logger.info(f"<Updated> State to '{state_definition.state}', for device '{snapshot_uuid}') by user {self.request.user}.")
 
-            messages.success(request, f"Action to '{state_definition.state}' has been added.")
-            return redirect(request.META.get('HTTP_REFERER'))
+            device_logger.info(f"<Updated> State to '{new_state}', from '{previous_state}' ) by user {self.request.user}.")
+
+            message = _("State changed from '{}' to '{}'.".format(previous_state, new_state) )
+            messages.success(request,message)
         else:
             messages.error(request, "There was an error with your submission.")
-            return redirect(request.META.get('HTTP_REFERER'))
+
+        return redirect(request.META.get('HTTP_REFERER') )
 
 
-class ActionUndoView(DeleteView):
-    model = State
+class UndoStateView(DeleteView):
+    model = State   
 
     def delete(self, request, *args, **kwargs):
         self.object = self.get_object()
@@ -52,3 +52,24 @@ class ActionUndoView(DeleteView):
         messages.info(self.request, f"Action to state: {self.object.state} has been deleted.")
         device_logger.info(f"<Deleted> State '{self.object.state}', for device '{self.object.snapshot_uuid}') by user {self.request.user}.")
         return self.request.META.get('HTTP_REFERER', reverse_lazy('device:details', args=[self.object.snapshot_uuid]))
+
+
+class AddNoteView(View):
+
+    def post(self, request, *args, **kwargs):
+        form = AddNoteForm(request.POST)
+
+        if form.is_valid():
+            note = form.cleaned_data['note']
+            snapshot_uuid = form.cleaned_data['snapshot_uuid']
+            Note.objects.create(
+                snapshot_uuid=snapshot_uuid,
+                description=note,
+                user=self.request.user,
+                institution=self.request.user.institution,
+            )
+            messages.success(request, _("Note has been added"))
+        else:
+            messages.error(request, "There was an error with your submission.")
+
+        return redirect(request.META.get('HTTP_REFERER') )
