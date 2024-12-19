@@ -8,7 +8,7 @@ from utils.device import create_property, create_doc, create_index
 from utils.forms import MultipleFileField
 from device.models import Device
 from evidence.parse import Build
-from evidence.models import SystemProperty
+from evidence.models import SystemProperty, UserProperty
 from utils.save_snapshots import move_json, save_in_disk
 
 
