@@ -13,7 +13,7 @@ from django.views.generic.edit import (
     DeleteView,
 )
 from django.views.generic.base import TemplateView
-from action.models import StateDefinition, State
+from action.models import StateDefinition, State, DeviceLog
 from dashboard.mixins import DashboardView, Http403
 from evidence.models import UserProperty, SystemProperty
 from lot.models import LotTag
@@ -23,8 +23,6 @@ if settings.DPP:
     from dpp.models import Proof
     from dpp.api_dlt import PROOF_TYPE
 
-
-device_logger = logging.getLogger('device_log')
 
 class NewDeviceView(DashboardView, FormView):
     template_name = "new_device.html"
@@ -126,6 +124,7 @@ class DetailsView(DashboardView, TemplateView):
             'dpps': dpps,
             "state_definitions": StateDefinition.objects.filter(institution=self.request.user.institution).order_by('order'),
             "device_states": State.objects.filter(snapshot_uuid=uuid).order_by('-date'),
+            "device_logs": DeviceLog.objects.filter(snapshot_uuid=uuid).order_by('-date'),
         })
         return context
 
@@ -200,12 +199,15 @@ class AddUserPropertyView(DashboardView, CreateView):
         form.instance.uuid = self.property.uuid
         form.instance.type = UserProperty.Type.USER
 
-        messages.success(self.request, _("User property successfully added."))
-
-        device_logger.info(
-            f"Created user property (key='{form.instance.key}', value='{form.instance.value}') by user {self.request.user}, for evidence uuid: {self.property.uuid}."
+        message = _("New annotation: {}: {}".format(form.instance.key, form.instance.value))
+        DeviceLog.objects.create(
+            snapshot_uuid=form.instance.uuid,
+            event=message,
+            user=self.request.user,
+            institution=self.request.user.institution
         )
 
+        messages.success(self.request, _("User property successfully added."))
         response = super().form_valid(form)
         return response
 
@@ -252,10 +254,14 @@ class UpdateUserPropertyView(DashboardView, UpdateView):
         form.instance.user = self.request.user
         form.instance.type = UserProperty.Type.USER
         response = super().form_valid(form)
-
         messages.success(self.request, _("User property updated successfully."))
-        device_logger.info(
-            f"Updated property from (key='{old_key}', value='{old_value}') to (key='{new_key}', value='{new_value}') by user {self.request.user}."
+
+        message = _("Update annotation: {}: {} to {}:{}".format(old_key, old_value, new_key, new_value ))
+        DeviceLog.objects.create(
+            snapshot_uuid=form.instance.uuid,
+            event=message,
+            user=self.request.user,
+            institution=self.request.user.institution
         )
         return response
 
@@ -277,10 +283,16 @@ class DeleteUserPropertyView(DashboardView, DeleteView):
             pk=self.pk,
             owner=self.request.user.institution
         )
-        old_value = self.object.key
+        message = _("deleted annotation: {}:{}".format(self.object.key, self.object.value ))
+        DeviceLog.objects.create(
+            snapshot_uuid=self.object.uuid,
+            event=message,
+            user=self.request.user,
+            institution=self.request.user.institution
+        )
+
         self.object.delete()
-        device_logger.info(f"Deleted property with key '{old_value}' by user {self.request.user}.")
-        messages.success(self.request, _("User property deleted successfully."))
+        messages.info(self.request, _("User property deleted successfully."))
 
         # Redirect back to the original URL
         return redirect(referer)
