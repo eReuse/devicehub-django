@@ -5,12 +5,9 @@ from action.forms import ChangeStateForm, AddNoteForm
 from django.views.generic.edit import DeleteView, CreateView, FormView
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
-from action.models import State, StateDefinition, Note
+from action.models import State, StateDefinition, Note, DeviceLog
 from device.models import Device
 import logging
-
-
-device_logger = logging.getLogger('device_log')
 
 
 class ChangeStateView(View):
@@ -30,9 +27,13 @@ class ChangeStateView(View):
                 institution=self.request.user.institution,
             )
 
-            device_logger.info(f"<Updated> State to '{new_state}', from '{previous_state}' ) by user {self.request.user}.")
-
             message = _("State changed from '{}' to '{}'.".format(previous_state, new_state) )
+            DeviceLog.objects.create(
+                snapshot_uuid=snapshot_uuid,
+                event=message,
+                user=self.request.user,
+                institution=self.request.user.institution,
+            )
             messages.success(request,message)
         else:
             messages.error(request, "There was an error with your submission.")
@@ -48,9 +49,7 @@ class UndoStateView(DeleteView):
         return super().delete(request, *args, **kwarg)
 
     def get_success_url(self):
-
         messages.info(self.request, f"Action to state: {self.object.state} has been deleted.")
-        device_logger.info(f"<Deleted> State '{self.object.state}', for device '{self.object.snapshot_uuid}') by user {self.request.user}.")
         return self.request.META.get('HTTP_REFERER', reverse_lazy('device:details', args=[self.object.snapshot_uuid]))
 
 
@@ -65,6 +64,14 @@ class AddNoteView(View):
             Note.objects.create(
                 snapshot_uuid=snapshot_uuid,
                 description=note,
+                user=self.request.user,
+                institution=self.request.user.institution,
+            )
+
+            message = _("Note: '{}' ".format(note) )
+            DeviceLog.objects.create(
+                snapshot_uuid=snapshot_uuid,
+                event=message,
                 user=self.request.user,
                 institution=self.request.user.institution,
             )
