@@ -29,7 +29,7 @@
                 <input type="hidden" name="new_state" value="{{ state.state }}">
 
                 <a class="dropdown-item d-flex justify-content-between align-items-center" href="#" onclick="document.getElementById('changeStateForm{{ state.id }}').submit(); return false;">
-                  <span>{{ state.state }}</span>
+                  <span class="font-monospace">{{ state.state }}</span>
                   <span class="badge bg-secondary rounded-pill-sm">{{ forloop.counter }}</span>
                 </a>
               </form>
