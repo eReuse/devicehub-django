@@ -199,7 +199,7 @@ class AddUserPropertyView(DashboardView, CreateView):
         form.instance.uuid = self.property.uuid
         form.instance.type = UserProperty.Type.USER
 
-        message = _("New annotation: {}: {}".format(form.instance.key, form.instance.value))
+        message = _("<Created> UserProperty: {}: {}".format(form.instance.key, form.instance.value))
         DeviceLog.objects.create(
             snapshot_uuid=form.instance.uuid,
             event=message,
@@ -256,7 +256,7 @@ class UpdateUserPropertyView(DashboardView, UpdateView):
         response = super().form_valid(form)
         messages.success(self.request, _("User property updated successfully."))
 
-        message = _("Update annotation: {}: {} to {}:{}".format(old_key, old_value, new_key, new_value ))
+        message = _("<Updated> UserProperty: {}: {} to {}: {}".format(old_key, old_value, new_key, new_value ))
         DeviceLog.objects.create(
             snapshot_uuid=form.instance.uuid,
             event=message,
@@ -283,7 +283,7 @@ class DeleteUserPropertyView(DashboardView, DeleteView):
             pk=self.pk,
             owner=self.request.user.institution
         )
-        message = _("deleted annotation: {}:{}".format(self.object.key, self.object.value ))
+        message = _("<Deleted> User Property: {}:{}".format(self.object.key, self.object.value ))
         DeviceLog.objects.create(
             snapshot_uuid=self.object.uuid,
             event=message,
