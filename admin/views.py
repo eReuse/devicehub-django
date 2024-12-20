@@ -177,7 +177,6 @@ class DeleteStateDefinitionView(AdminView, StateDefinitionContextMixin, SuccessM
     success_url = reverse_lazy('admin:states_panel')
 
     def get_success_message(self, cleaned_data):
-        device_logger.info(f"<Deleted> StateDefinition with value {self.object.state} by user {self.request.user}.")
         return f'State definition: {self.object.state}, has been deleted'
 
     def delete(self, request, *args, **kwargs):
@@ -209,9 +208,6 @@ class UpdateStateOrderView(AdminView, TemplateView):
                     _log.append(f"{state_definition.state} (ID: {lookup_id} -> Order: {current_order})")
                     current_order += 1
 
-            device_logger.info(
-                f"<Updated Order> State order updated by user {self.request.user}: {', '.join(_log)}"
-            )
             messages.success(self.request, _("Order changed succesfuly."))
             return redirect(self.success_url)
         else:
