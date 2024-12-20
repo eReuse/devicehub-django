@@ -19,7 +19,6 @@ from user.models import User, Institution
 from admin.email import NotifyActivateUserByEmail
 from action.models import StateDefinition
 
-device_logger = logging.getLogger('device_log')
 
 class AdminView(DashboardView):
     def get(self, *args, **kwargs):
@@ -164,7 +163,6 @@ class AddStateDefinitionView(AdminView, StateDefinitionContextMixin, CreateView)
         try:
             response = super().form_valid(form)
             messages.success(self.request, _("State definition successfully added."))
-            device_logger.info(f"<Created> StateDefinition with value {form.instance.state} by user {self.request.user}.")
             return response
         except IntegrityError:
             messages.error(self.request, _("State is already defined."))
