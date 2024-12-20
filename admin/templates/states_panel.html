@@ -8,7 +8,6 @@
   </div>
   <div class="col text-end">
     <button type="button" class="btn btn-green-admin" data-bs-toggle="modal" data-bs-target="#addStateModal">
-      <i class="fas fa-plus text-secondary align-center p-1"></i>
       {% trans "Add" %}
     </button>
   </div>
@@ -23,11 +22,9 @@
     </caption>
   <thead class="table-light">
     <tr>
-      <th scope="col" width="1%">
+      <th scope="col" width="5%" class="text-start">
       </th>
-      <th scope="col" width="7%" class="text-center">#
-      </th>
-      <th scope="col" class="">{% trans "State Definition" %}
+      <th scope="col">{% trans "State Definition" %}
       </th>
       <th scope="col" width="15%" class="text-center">{% trans "Actions" %}
       </th>
@@ -41,42 +38,32 @@
         class="align-items-center">
 
         <td class="text-center">
-          <i class="bi bi-grip-vertical text-muted" aria-hidden="true">
+          <i class="fas fa-light fa-grip" aria-hidden="true">
           </i>
+          <strong class="ps-2">{{ state_definition.order }} </strong>
         </td>
-        <td class="fw-bold text-center">
-          {{ state_definition.order }}
-        </td>
-        <td>
+        <td class="font-monospace">
           {{ state_definition.state }}
         </td>
 
         <!-- action buttons -->
-        <td class="text-center">
-          <div class="d-flex justify-content-center gap-1">
-            <button
-              type="button"
-              class="btn btn-sm btn-info"
-              data-bs-toggle="modal"
-              data-bs-target="#editStateModal{{ state_definition.id }}">
+        <td>
+          <div class="btn-group float-end">
+            <button type="button" class="btn btn-sm btn-info text-white" data-bs-toggle="modal" data-bs-target="#editStateModal{{ state_definition.id }}">
               <i class="bi bi-pencil">
-              </i>
+              </i> {% trans 'Edit' %}
             </button>
-            <button
-              type="button"
-              id="delete-btn"
-              class="btn btn-sm btn-danger"
-              data-bs-toggle="modal"
-              data-bs-target="#deleteStateModal{{ state_definition.id }}">
+            <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteStateModal{{ state_definition.id }}">
               <i class="bi bi-trash">
               </i>
             </button>
           </div>
+
         </td>
       </tr>
     {% endfor %}
   </tbody>
-</table>
+  </table>
 
   <form id="orderingForm" method="post" action="{% url 'admin:update_state_order' %}">
         {% csrf_token %}
@@ -148,7 +135,7 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
-          <button type="submit" class="btn btn-primary">{% trans "Save Changes" %}</button>
+          <button type="submit" class="btn btn-green-admin">{% trans "Save Changes" %}</button>
         </div>
       </form>
     </div>
