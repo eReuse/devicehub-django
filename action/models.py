@@ -67,6 +67,7 @@ class Note(models.Model):
     def __str__(self):
         return f" Note: {self.description}, by {self.user.username} @ {self.user.institution} - {self.date}, for {self.snapshot_uuid}"
 
+
 class DeviceLog(models.Model):
     institution = models.ForeignKey(Institution, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
