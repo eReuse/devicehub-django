@@ -223,12 +223,6 @@ LOGGING = {
             "class": "logging.StreamHandler",
             "formatter": "colored"
         },
-        'device_log_file': {
-            'level': 'INFO',
-            'class': 'logging.FileHandler',
-            'filename': DEVICE_LOG_PATH + "/device_changes.log",
-            'formatter': 'verbose',
-        },
     },
     "root": {
         "handlers": ["console"],
@@ -244,11 +238,6 @@ LOGGING = {
             "handlers": ["console"],
             "level": "ERROR",
             "propagate": False,
-        },
-        'device_log': {
-            'handlers': ['device_log_file'],
-            'level': 'INFO',
-            'propagate': False,
         },
     }
 }
