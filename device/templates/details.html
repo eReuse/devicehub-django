@@ -24,7 +24,7 @@
             <li style="width: 100%;">
               <form id="changeStateForm{{ state.id }}" method="post" action="{% url 'action:change_state' %}">
                 {% csrf_token %}
-                <input type="hidden" name="previous_state" value="{{ device_states.0.state }}">
+                <input type="hidden" name="previous_state" value="{{ device_states.0.state|default:"nil" }}">
                 <input type="hidden" name="snapshot_uuid" value="{{ object.last_uuid }}">
                 <input type="hidden" name="new_state" value="{{ state.state }}">
 
