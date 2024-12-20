@@ -2,7 +2,7 @@ import json
 import hashlib
 import logging
 
-from dmidecode import DMIParse
+from evidence import legacy_parse
 from evidence.parse_details import ParseSnapshot
 
 from evidence.models import Annotation
@@ -27,6 +27,10 @@ def get_mac(inxi):
 
 class Build:
     def __init__(self, evidence_json, user, check=False):
+        if evidence_json.get("data",{}).get("lshw"):
+            if evidence_json.get("software") == "workbench-script":
+                return legacy_parse.Build(evidence_json, user, check=check)
+
         self.evidence = evidence_json.copy()
         self.json = evidence_json.copy()
 

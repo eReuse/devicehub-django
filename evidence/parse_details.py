@@ -1,12 +1,9 @@
-import re
 import json
 import logging
-import numpy as np
 
-from datetime import datetime
 from dmidecode import DMIParse
 
-from utils.constants import CHASSIS_DH, DATASTORAGEINTERFACE
+from evidence import legacy_parse_details
 
 
 logger = logging.getLogger('django')
@@ -29,6 +26,10 @@ def get_inxi(n, name):
 
 class ParseSnapshot:
     def __init__(self, snapshot, default="n/a"):
+        if snapshot.get("data",{}).get("lshw"):
+            if snapshot.get("software") == "workbench-script":
+                return legacy_parse_details.ParseSnapshot(snapshot, default=default)
+
         self.default = default
         self.dmidecode_raw = snapshot.get("data", {}).get("dmidecode", "{}")
         self.smart_raw = snapshot.get("data", {}).get("smartctl", [])
