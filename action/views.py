@@ -27,7 +27,7 @@ class ChangeStateView(View):
                 institution=self.request.user.institution,
             )
 
-            message = _("State changed from '{}' to '{}'.".format(previous_state, new_state) )
+            message = _("<Created> State '{}'. Previous State: '{}' ".format(new_state, previous_state) )
             DeviceLog.objects.create(
                 snapshot_uuid=snapshot_uuid,
                 event=message,
@@ -68,7 +68,7 @@ class AddNoteView(View):
                 institution=self.request.user.institution,
             )
 
-            message = _("Note: '{}' ".format(note) )
+            message = _("<Created> Note: '{}' ".format(note) )
             DeviceLog.objects.create(
                 snapshot_uuid=snapshot_uuid,
                 event=message,
