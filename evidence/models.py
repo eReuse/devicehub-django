@@ -7,6 +7,7 @@ from django.db import models
 from utils.constants import STR_EXTEND_SIZE, CHASSIS_DH
 from evidence.xapian import search
 from evidence.parse_details import ParseSnapshot, get_inxi, get_inxi_key
+from evidence.legacy_parse_details import ParseSnapshot as legacy_ParseSnapshot
 from user.models import User, Institution
 
 
@@ -92,7 +93,7 @@ class Evidence:
                     self.inxi = ev["output"]
         else:
             dmidecode_raw = self.doc["data"]["dmidecode"]
-            inxi_raw = self.doc["data"]["inxi"]
+            inxi_raw = self.doc.get("data", {}).get("inxi")
             self.dmi = DMIParse(dmidecode_raw)
             try:
                 self.inxi = json.loads(inxi_raw)
@@ -195,7 +196,12 @@ class Evidence:
         ).order_by("-created").values_list("uuid", "created").distinct()
 
     def set_components(self):
-        snapshot = ParseSnapshot(self.doc).snapshot_json
+        parse = ParseSnapshot
+        if self.doc.get("software") == "workbench-script":
+            if self.doc.get("data", {}).get("lshw"):
+                parse = legacy_ParseSnapshot
+
+        snapshot = parse(self.doc).snapshot_json
         self.components = snapshot['components']
 
     def is_legacy(self):
