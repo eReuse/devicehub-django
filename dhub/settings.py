@@ -65,7 +65,6 @@ ENABLE_EMAIL = config("ENABLE_EMAIL", default=True, cast=bool)
 
 EVIDENCES_DIR = config("EVIDENCES_DIR", default=os.path.join(BASE_DIR, "db"))
 
-DEVICE_LOG_PATH = config("DEVICE_LOG_PATH", default="/tmp")
 
 # Application definition
 
