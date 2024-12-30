@@ -7,7 +7,6 @@ from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
 from action.models import State, StateDefinition, Note, DeviceLog
 from device.models import Device
-import logging
 
 
 class ChangeStateView(View):
@@ -34,7 +33,8 @@ class ChangeStateView(View):
                 user=self.request.user,
                 institution=self.request.user.institution,
             )
-            messages.success(request,message)
+
+            messages.success(request, _("State succesfuly changed from '{}' to '{}' ".format(previous_state, new_state) ) )
         else:
             messages.error(request, "There was an error with your submission.")
 
