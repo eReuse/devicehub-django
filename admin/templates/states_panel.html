@@ -12,7 +12,6 @@
     </button>
   </div>
 </div>
-
 <div class="row mt-4">
   <div class="col">
     {% if state_definitions %}
@@ -37,10 +36,10 @@
         style="cursor: grab;"
         class="align-items-center">
 
-        <td class="text-center">
-          <i class="fas fa-light fa-grip" aria-hidden="true">
+        <td class="">
+          <i class="fas fa-duotone fa-solid fa-grip px-1" aria-hidden="true">
           </i>
-          <strong class="ps-2">{{ state_definition.order }} </strong>
+          <strong> {{ state_definition.order }} </strong>
         </td>
         <td class="font-monospace">
           {{ state_definition.state }}
