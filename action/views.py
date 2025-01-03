@@ -2,7 +2,7 @@ from django.views import View
 from django.shortcuts import redirect, get_object_or_404
 from django.contrib import messages
 from action.forms import ChangeStateForm, AddNoteForm
-from django.views.generic.edit import DeleteView, CreateView, FormView
+from django.views.generic.edit import DeleteView, CreateView, UpdateView, FormView
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
 from action.models import State, StateDefinition, Note, DeviceLog
@@ -68,3 +68,29 @@ class AddNoteView(View):
             messages.error(request, "There was an error with your submission.")
 
         return redirect(request.META.get('HTTP_REFERER') )
+
+class UpdateNoteView(UpdateView):
+    model = Note
+    fields = ['description']
+    template_name = 'device/templates/details.html'
+    pk_url_kwarg = 'pk'
+
+    def form_valid(self, form):
+        old_description = self.get_object().description
+        new_description = self.object.description
+        snapshot_uuid = self.object.snapshot_uuid
+
+        if old_description != new_description:
+            message = _("<Updated> Note. Old Description: '{}'. New Description: '{}'").format(old_description, new_description)
+            DeviceLog.objects.create(
+                snapshot_uuid=snapshot_uuid,
+                event=message,
+                user=self.request.user,
+                institution=self.request.user.institution,
+            )
+
+        messages.success(self.request, "Note has been updated.")
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return self.request.META.get('HTTP_REFERER', reverse_lazy('device:details'))
