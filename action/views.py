@@ -41,18 +41,6 @@ class ChangeStateView(View):
         return redirect(request.META.get('HTTP_REFERER') )
 
 
-class UndoStateView(DeleteView):
-    model = State   
-
-    def delete(self, request, *args, **kwargs):
-        self.object = self.get_object()
-        return super().delete(request, *args, **kwarg)
-
-    def get_success_url(self):
-        messages.info(self.request, f"Action to state: {self.object.state} has been deleted.")
-        return self.request.META.get('HTTP_REFERER', reverse_lazy('device:details', args=[self.object.snapshot_uuid]))
-
-
 class AddNoteView(View):
 
     def post(self, request, *args, **kwargs):
