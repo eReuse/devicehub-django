@@ -72,7 +72,7 @@ class AddNoteView(View):
 class UpdateNoteView(UpdateView):
     model = Note
     fields = ['description']
-    template_name = 'device/templates/details.html'
+    template_name = "blank.html"
     pk_url_kwarg = 'pk'
 
     def form_valid(self, form):
@@ -94,3 +94,38 @@ class UpdateNoteView(UpdateView):
 
     def get_success_url(self):
         return self.request.META.get('HTTP_REFERER', reverse_lazy('device:details'))
+
+
+class DeleteNoteView(View):
+    model = Note
+
+    def post(self, request, *args, **kwargs):
+        self.pk = kwargs['pk']
+        referer = request.META.get('HTTP_REFERER')
+        if not referer:
+            raise Http404("No referer header found")
+
+        self.object = get_object_or_404(
+            self.model,
+            pk=self.pk,
+            institution=self.request.user.institution
+        )
+        description = self.object.description
+        snapshot_uuid= self.object.snapshot_uuid
+
+        if request.user != self.object.user and not request.user.is_admin:
+            messages.error(request, _("You do not have permission to delete this note."))
+            return redirect(referer)
+
+        message = _("<Deleted> Note. Description: '{}'. ").format(description)
+        DeviceLog.objects.create(
+            snapshot_uuid=snapshot_uuid,
+            event=message,
+            user=request.user,
+            institution=request.user.institution,
+        )
+        messages.warning(self.request, _("Note '{}' deleted successfully.").format(description))
+
+        self.object.delete()
+
+        return redirect(referer)
