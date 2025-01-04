@@ -69,6 +69,7 @@ class AddNoteView(View):
 
         return redirect(request.META.get('HTTP_REFERER') )
 
+
 class UpdateNoteView(UpdateView):
     model = Note
     fields = ['description']
@@ -88,10 +89,16 @@ class UpdateNoteView(UpdateView):
                 user=self.request.user,
                 institution=self.request.user.institution,
             )
-
-        messages.success(self.request, "Note has been updated.")
+            messages.success(self.request, "Note has been updated.")
         return super().form_valid(form)
-
+    
+    def form_invalid(self, form):
+        new_description = form.cleaned_data.get('description', '').strip()
+        if not new_description:
+            messages.error(self.request, _("Note cannot be empty."))
+        super().form_invalid(form)
+        return redirect(self.get_success_url())
+    
     def get_success_url(self):
         return self.request.META.get('HTTP_REFERER', reverse_lazy('device:details'))
 
