@@ -19,10 +19,10 @@
     <h5 id="notesOffcanvasLabel">{% trans "Latest Notes" %}</h5>
     <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
   </div>        
-  <div class="offcanvas-body">
+  <div class="offcanvas-body" style="margin-bottom: 5rem;">
     {% for note in device_notes|slice:":4" %}
       <div class="card mb-3 shadow-sm">
-        <div class="card-body">
+        <div class="card-body"> 
           <div>
             <small class="text-muted">
               {{ note.date|timesince }} {% trans "ago" %}
@@ -49,6 +49,7 @@
           {% if user == note.user or user.is_admin %}
             <div class="d-flex justify-content-end align-items-center">
 
+              <!-- update note button -->
               <form
                 id="updateNoteForm{{ note.id }}"
                 method="post"
@@ -69,13 +70,19 @@
                 </a>
               </form>
 
-              <form class="d-inline" method="post" action="">
-                {% csrf_token %}
-                <a type="submit" class="text-danger" onclick="return confirm('{% trans 'Are you sure you want to delete this note?' %}')" title="{% trans 'Delete note' %}">
-                  <i class="bi bi-trash"></i>
-                </a>
-              </form>
+              <!-- delete note button -->
+              <button type="button" class="btn btn-link btn-outline-danger btn-sm text-danger" id="deleteIcon{{ note.id }}" title="{% trans 'Delete note' %}" data-bs-toggle="collapse" data-bs-target="#confirmDelete{{ note.id }}">
+                <i class="bi bi-trash"></i>
+              </button>
             </div>
+            <form class="d-inline" method="post" action="{% url 'action:delete_note' note.id %}">
+              {% csrf_token %}  
+              <div class="collapse mt-2 text-end" id="confirmDelete{{ note.id }}">
+                <a href="#" class="btn btn-sm btn-outline-danger" onclick="submitDeleteForm({{ note.id }}); return false;">
+                  {% trans 'Confirm delete' %}
+                </a>
+              </div>
+            </form>
           {% endif %}
           
         </div>
@@ -188,6 +195,7 @@
 
   {% include 'tabs/evidences.html' %}
 
+  <!-- Add a note popup -->
   <div class="modal fade" id="addNoteModal" tabindex="-1" aria-labelledby="addNoteModalLabel" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -250,6 +258,10 @@
       const descriptionField = document.getElementById('descriptionInput' + noteId);
       descriptionField.value = newText;
       document.getElementById('updateNoteForm' + noteId).submit();
+    }
+    //simpler are u sure? confirmation message
+    function submitDeleteForm(noteId) {
+      document.getElementById('confirmDelete' + noteId).closest('form').submit();
     }
   </script>
 {% endblock %}
