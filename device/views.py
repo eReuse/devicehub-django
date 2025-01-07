@@ -17,7 +17,7 @@ from evidence.models import UserProperty, SystemProperty
 from lot.models import LotTag
 from device.models import Device
 from device.forms import DeviceFormSet
-from environmental_impact.calculator import get_device_environmental_impact
+from environmental_impact.algorithms.algorithm_factory import FactoryEnvironmentImpactAlgorithm
 if settings.DPP:
     from dpp.models import Proof
     from dpp.api_dlt import PROOF_TYPE
@@ -95,11 +95,16 @@ class DetailsView(DashboardView, TemplateView):
                 uuid__in=self.object.uuids,
                 type=PROOF_TYPE["IssueDPP"]
             )
+        enviromental_impact_algorithm = FactoryEnvironmentImpactAlgorithm.run_environmental_impact_calculation(
+            "dummy_calc"
+        )
+        enviromental_impact = enviromental_impact_algorithm.get_device_environmental_impact(
+            self.object)
         context.update({
             'object': self.object,
             'snapshot': last_evidence,
             'lot_tags': lot_tags,
-            'impact': get_device_environmental_impact(self.object),
+            'impact': enviromental_impact,
             'dpps': dpps,
         })
         return context
