@@ -12,6 +12,7 @@ from django.views.generic.edit import (
     FormView,
 )
 
+from action.models import DeviceLog
 from dashboard.mixins import  DashboardView, Http403
 from evidence.models import SystemProperty, UserProperty, Evidence
 from evidence.forms import (
@@ -184,3 +185,35 @@ class EraseServerView(DashboardView, FormView):
     def get_success_url(self):
         success_url = reverse_lazy('evidence:details', args=[self.pk])
         return success_url
+
+
+class DeleteEvidenceTagView(DashboardView, DeleteView):
+    model = SystemProperty
+
+    def get_queryset(self):
+        # only those with 'CUSTOM_ID'
+        return SystemProperty.objects.filter(owner=self.request.user.institution, key='CUSTOM_ID')
+
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+
+        message = _("<Deleted> Evidence Tag: {}").format(self.object.value) 
+        DeviceLog.objects.create(
+            snapshot_uuid=self.object.uuid,
+            event=message,
+            user=self.request.user,
+            institution=self.request.user.institution
+        )
+        self.object.delete()        
+
+        messages.info(self.request, _("Evicende Tag deleted successfully."))
+        return self.handle_success()
+
+    def handle_success(self):
+        return redirect(self.get_success_url())
+
+    def get_success_url(self):
+        return self.request.META.get(
+            'HTTP_REFERER', 
+            reverse_lazy('evidence:details', args=[self.object.uuid])
+        )
