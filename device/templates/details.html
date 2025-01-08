@@ -34,13 +34,13 @@
           <blockquote
               class="blockquote mt-2 p-2 bg-light fst-italic"
               contenteditable="true"
-              style="font-size: 1em!important"
+              style="font-size: 1.2em!important"
               data-note-id="{{ note.id }}"
               title="{% trans 'Click to edit this note' %}"
               oninput="toggleSaveLink(this)">
           {% else %}
           </div>
-            <blockquote style="font-size: 1em!important" class="blockquote mt-2 p-2 fst-italic">
+            <blockquote style="font-size: 1.2em!important" class="blockquote mt-2 p-2 fst-italic">
           {% endif %}
           <p data-note-id="{{ note.id }}">
             {{ note.description }}
@@ -70,7 +70,7 @@
                   title="{% trans 'Save changes' %}"
                   onclick="submitUpdatedNote('{{ note.id }}'); return false;"
                 >
-                  <i class="fas fa-save"></i>
+                  <i class="fas fa-save px-1"></i>
                 </a>
               </form>
               
@@ -119,7 +119,9 @@
           {% trans "Change state" %}
           {% if device_states %}
             ({{ device_states.0.state }})
-          {% endif %}
+          {% else %}
+            ( {% trans "None" %} )
+            {% endif %}
         </a>
         <ul class="dropdown-menu" aria-labelledby="addStateDropdown" style="width: 100%;">
           {% for state in state_definitions %}
