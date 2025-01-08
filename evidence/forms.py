@@ -10,6 +10,7 @@ from device.models import Device
 from evidence.parse import Build
 from evidence.models import SystemProperty, UserProperty
 from utils.save_snapshots import move_json, save_in_disk
+from action.models import DeviceLog
 
 
 class UploadForm(forms.Form):
@@ -100,19 +101,31 @@ class UserTagForm(forms.Form):
             return
 
         if self.instance:
+            old_value = self.instance.value
             if not self.tag:
+                message =_("<Deleted> Evidence Tag. Old Value: '{}'").format(old_value)
                 self.instance.delete()
-            self.instance.value = self.tag
-            self.instance.save()
-            return
-
-        SystemProperty.objects.create(
-            uuid=self.uuid,
-            key='CUSTOM_ID',
-            value=self.tag,
-            owner=self.user.institution,
-            user=self.user
-        )
+            else:
+                self.instance.value = self.tag
+                self.instance.save()
+                if old_value != self.tag:
+                    message=_("<Updated> Evidence Tag. Old Value: '{}'. New Value: '{}'").format(old_value, self.tag)
+        else:
+            message =_("<Created> Evidence Tag. Value: '{}'").format(self.tag)
+            SystemProperty.objects.create(
+                uuid=self.uuid,
+                key='CUSTOM_ID',
+                value=self.tag,
+                owner=self.user.institution,
+                user=self.user
+            )
+        
+        DeviceLog.objects.create(
+                snapshot_uuid=self.uuid,
+                event= message,
+                user=self.user,
+                institution=self.user.institution
+            )
 
 
 class ImportForm(forms.Form):
