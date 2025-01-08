@@ -73,7 +73,6 @@ class AddNoteView(View):
 class UpdateNoteView(UpdateView):
     model = Note
     fields = ['description']
-    template_name = "blank.html"
     pk_url_kwarg = 'pk'
 
     def form_valid(self, form):
