@@ -65,7 +65,7 @@
                 <a
                   type="submit"
                   id="saveLink{{ note.id }}"
-                  class="text-muted disabled me-4"
+                  class="text-muted disabled me-4  border border-light rounded"
                   style="pointer-events: none;"
                   title="{% trans 'Save changes' %}"
                   onclick="submitUpdatedNote('{{ note.id }}'); return false;"
@@ -257,8 +257,8 @@
     function toggleSaveLink(blockquoteElem) {
       const saveLink = document.getElementById("saveLink" + blockquoteElem.dataset.noteId);
 
-      saveLink.classList.remove("disabled", "text-muted");
-      saveLink.classList.add("text-success");
+      saveLink.classList.remove("disabled", "text-muted", "border-light");
+      saveLink.classList.add("text-success", "border-success");
       saveLink.style.pointerEvents = "auto"; 
       
     }
