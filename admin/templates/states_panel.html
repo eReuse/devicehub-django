@@ -21,8 +21,10 @@
     </caption>
   <thead class="table-light">
     <tr>
-      <th scope="col" width="5%" class="text-start">
+      <th scope="col" width="1%" class="text-start">
       </th>
+      <th scope="col" width="5%" class="text-center">
+      #</th>
       <th scope="col">{% trans "State Definition" %}
       </th>
       <th scope="col" width="15%" class="text-center">{% trans "Actions" %}
@@ -37,9 +39,11 @@
         class="align-items-center">
 
         <td class="">
-          <i class="fas fa-duotone fa-solid fa-grip px-1" aria-hidden="true">
-          </i>
-          <strong> {{ state_definition.order }} </strong>
+          <i class="bi bi-grip-vertical" aria-hidden="true">
+            </i>
+        </td>
+        <td class="text-center">
+          <strong>{{ state_definition.order }} </strong>
         </td>
         <td class="font-monospace">
           {{ state_definition.state }}
@@ -48,16 +52,22 @@
         <!-- action buttons -->
         <td>
           <div class="btn-group float-end">
-            <button type="button" class="btn btn-sm btn-info text-white" data-bs-toggle="modal" data-bs-target="#editStateModal{{ state_definition.id }}">
-              <i class="bi bi-pencil">
-              </i> {% trans 'Edit' %}
+            <!-- Edit Button -->
+            <button 
+              type="button    " 
+              class="btn btn-sm btn-outline-info d-flex align-items-center" 
+              data-bs-toggle="modal"  data-bs-target="#editStateModal{{ state_definition.id }}">
+              <i class="bi bi-pencil me-1"></i>
+              {% trans 'Edit' %}
             </button>
-            <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteStateModal{{ state_definition.id }}">
-              <i class="bi bi-trash">
-              </i>
+            <button 
+              type="button" class="btn btn-sm btn-outline-danger d-flex align-items-center" 
+              data-bs-toggle="modal" 
+              data-bs-target="#deleteStateModal{{ state_definition.id }}" >
+              <i class="bi bi-trash me-1"></i>
+              {% trans 'Delete' %}
             </button>
           </div>
-
         </td>
       </tr>
     {% endfor %}
