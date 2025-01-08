@@ -190,7 +190,6 @@ class AddUserPropertyView(DashboardView, CreateView):
     template_name = "new_user_property.html"
     title = _("New User Property")
     breadcrumb = "Device / New Property"
-    success_url = reverse_lazy('dashboard:unassigned_devices')
     model = UserProperty
     fields = ("key", "value")
 
@@ -215,17 +214,13 @@ class AddUserPropertyView(DashboardView, CreateView):
     def get_form_kwargs(self):
         pk = self.kwargs.get('pk')
         institution = self.request.user.institution
-        self.property = SystemProperty.objects.filter(
-            owner=institution,
-            value=pk,
-        ).first()
+        self.property = get_object_or_404(SystemProperty, owner=institution, value=pk)
 
-        if not self.property:
-            raise Http404
+        return super().get_form_kwargs()
 
-        self.success_url = reverse_lazy('device:details', args=[pk])
-        kwargs = super().get_form_kwargs()
-        return kwargs
+    def get_success_url(self):
+        return reverse_lazy('device:details', args=[self.kwargs.get('pk')])
+
 
 class UpdateUserPropertyView(DashboardView, UpdateView):
     template_name = "new_user_property.html"
@@ -234,37 +229,34 @@ class UpdateUserPropertyView(DashboardView, UpdateView):
     model = UserProperty
     fields = ("key", "value")
 
-    def get_form_kwargs(self):
+    def get_queryset(self):
         pk = self.kwargs.get('pk')
-        user_property = get_object_or_404(UserProperty, pk=pk, owner=self.request.user.institution)
-
-        if not user_property:
-            raise Http404
-
-        kwargs = super().get_form_kwargs()
-        kwargs['instance'] = user_property
-        return kwargs
+        institution = self.request.user.institution
+        return UserProperty.objects.filter(pk=pk, owner=institution)
 
     def form_valid(self, form):
-        old_key= self.object.key
-        old_value = self.object.value
-        new_key = form.cleaned_data['key']
-        new_value = form.cleaned_data['value']
+
+        old_instance = self.get_object()
+        old_key = old_instance.key
+        old_value = old_instance.value
 
         form.instance.owner = self.request.user.institution
         form.instance.user = self.request.user
         form.instance.type = UserProperty.Type.USER
-        response = super().form_valid(form)
-        messages.success(self.request, _("User property updated successfully."))
 
-        message = _("<Updated> UserProperty: {}: {} to {}: {}".format(old_key, old_value, new_key, new_value ))
+        new_key = form.cleaned_data['key']
+        new_value = form.cleaned_data['value']
+
+        message = _("<Updated> UserProperty: {}: {} to {}: {}".format(old_key, old_value, new_key, new_value))
         DeviceLog.objects.create(
             snapshot_uuid=form.instance.uuid,
             event=message,
             user=self.request.user,
             institution=self.request.user.institution
         )
-        return response
+
+        messages.success(self.request, _("User property updated successfully."))
+        return super().form_valid(form)
 
     def get_success_url(self):
         return self.request.META.get('HTTP_REFERER', reverse_lazy('device:details', args=[self.object.pk]))
@@ -273,17 +265,14 @@ class UpdateUserPropertyView(DashboardView, UpdateView):
 class DeleteUserPropertyView(DashboardView, DeleteView):
     model = UserProperty
 
-    def post(self, request, *args, **kwargs):
-        self.pk = kwargs['pk']
-        referer = request.META.get('HTTP_REFERER')
-        if not referer:
-            raise Http404("No referer header found")
+    def get_queryset(self):
+        return UserProperty.objects.filter(owner=self.request.user.institution)
 
-        self.object = get_object_or_404(
-            self.model,
-            pk=self.pk,
-            owner=self.request.user.institution
-        )
+    #using post() method because delete() method from DeleteView has some issues with messages framework
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        self.object.delete()
+
         message = _("<Deleted> User Property: {}:{}".format(self.object.key, self.object.value ))
         DeviceLog.objects.create(
             snapshot_uuid=self.object.uuid,
@@ -292,12 +281,15 @@ class DeleteUserPropertyView(DashboardView, DeleteView):
             institution=self.request.user.institution
         )
 
-        self.object.delete()
         messages.info(self.request, _("User property deleted successfully."))
 
-        # Redirect back to the original URL
-        return redirect(referer)
+        return self.handle_success()
 
+    def handle_success(self):
+        return redirect(self.get_success_url())
+
+    def get_success_url(self):
+        return self.request.META.get('HTTP_REFERER', reverse_lazy('device:details', args=[self.object.pk]))
 
 class AddDocumentView(DashboardView, CreateView):
     template_name = "new_user_property.html"
