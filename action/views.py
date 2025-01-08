@@ -9,65 +9,68 @@ from action.models import State, StateDefinition, Note, DeviceLog
 from device.models import Device
 
 
-class ChangeStateView(View):
+class ChangeStateView(FormView):
+    form_class = ChangeStateForm
 
-    def post(self, request, *args, **kwargs):
-        form = ChangeStateForm(request.POST)
-        
-        if form.is_valid():
-            previous_state = form.cleaned_data['previous_state']
-            new_state = form.cleaned_data['new_state']
-            snapshot_uuid = form.cleaned_data['snapshot_uuid']
+    def form_valid(self, form):
+        previous_state = form.cleaned_data['previous_state']
+        new_state = form.cleaned_data['new_state']
+        snapshot_uuid = form.cleaned_data['snapshot_uuid']
 
-            State.objects.create(
-                snapshot_uuid=snapshot_uuid,
-                state=new_state,
-                user=self.request.user,
-                institution=self.request.user.institution,
-            )
+        State.objects.create(
+            snapshot_uuid=snapshot_uuid,
+            state=new_state,
+            user=self.request.user,
+            institution=self.request.user.institution,
+        )
 
-            message = _("<Created> State '{}'. Previous State: '{}' ".format(new_state, previous_state) )
-            DeviceLog.objects.create(
-                snapshot_uuid=snapshot_uuid,
-                event=message,
-                user=self.request.user,
-                institution=self.request.user.institution,
-            )
+        message = _("<Created> State '{}'. Previous State: '{}'").format(new_state, previous_state)
+        DeviceLog.objects.create(
+            snapshot_uuid=snapshot_uuid,
+            event=message,
+            user=self.request.user,
+            institution=self.request.user.institution,
+        )
+        messages.success(self.request, _("State successfully changed from '{}' to '{}'").format(previous_state, new_state))
+        return super().form_valid(form)
 
-            messages.success(request, _("State succesfuly changed from '{}' to '{}' ".format(previous_state, new_state) ) )
-        else:
-            messages.error(request, "There was an error with your submission.")
+    def form_invalid(self, form):
+        messages.error(self.request, _("There was an error with your submission."))
+        return redirect(self.get_success_url())
 
-        return redirect(request.META.get('HTTP_REFERER') )
+    def get_success_url(self):
+        return self.request.META.get('HTTP_REFERER') or reverse_lazy('device:details')
 
 
-class AddNoteView(View):
+class AddNoteView(FormView):
+    form_class = AddNoteForm
 
-    def post(self, request, *args, **kwargs):
-        form = AddNoteForm(request.POST)
+    def form_valid(self, form):
+        note_text = form.cleaned_data['note']
+        snapshot_uuid = form.cleaned_data['snapshot_uuid']
+        Note.objects.create(
+            snapshot_uuid=snapshot_uuid,
+            description=note_text,
+            user=self.request.user,
+            institution=self.request.user.institution,
+        )
 
-        if form.is_valid():
-            note = form.cleaned_data['note']
-            snapshot_uuid = form.cleaned_data['snapshot_uuid']
-            Note.objects.create(
-                snapshot_uuid=snapshot_uuid,
-                description=note,
-                user=self.request.user,
-                institution=self.request.user.institution,
-            )
+        message = _("<Created> Note: '{}'").format(note_text)
+        DeviceLog.objects.create(
+            snapshot_uuid=snapshot_uuid,
+            event=message,
+            user=self.request.user,
+            institution=self.request.user.institution,
+        )
+        messages.success(self.request, _("Note has been added"))
+        return super().form_valid(form)
 
-            message = _("<Created> Note: '{}' ".format(note) )
-            DeviceLog.objects.create(
-                snapshot_uuid=snapshot_uuid,
-                event=message,
-                user=self.request.user,
-                institution=self.request.user.institution,
-            )
-            messages.success(request, _("Note has been added"))
-        else:
-            messages.error(request, "There was an error with your submission.")
+    def form_invalid(self, form):
+        messages.error(self.request, _("There was an error with your submission."))
+        return redirect(self.get_success_url())
 
-        return redirect(request.META.get('HTTP_REFERER') )
+    def get_success_url(self):
+        return self.request.META.get('HTTP_REFERER') or reverse_lazy('device:details')
 
 
 class UpdateNoteView(UpdateView):
