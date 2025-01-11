@@ -8,7 +8,6 @@ from utils.device import create_annotation, create_doc, create_index
 from utils.forms import MultipleFileField
 from device.models import Device
 from evidence.parse import Build
-from evidence.legacy_parse import Build as legacy_build
 from evidence.models import Annotation
 from utils.save_snapshots import move_json, save_in_disk
 
@@ -31,10 +30,6 @@ class UploadForm(forms.Form):
             try:
                 file_json = json.loads(file_data)
                 build = Build
-                if file_json.get("data",{}).get("lshw"):
-                    if file_json.get("software") == "workbench-script":
-                        build  = legacy_build
-
                 snap = build(file_json, None, check=True)
                 exist_annotation = Annotation.objects.filter(
                     uuid=snap.uuid
@@ -65,10 +60,6 @@ class UploadForm(forms.Form):
             path_name = save_in_disk(ev[1], user.institution.name)
             build = Build
             file_json = ev[1]
-            if file_json.get("data",{}).get("lshw"):
-                if file_json.get("software") == "workbench-script":
-                    build  = legacy_build
-
             build(file_json, user)
             move_json(path_name, user.institution.name)
 

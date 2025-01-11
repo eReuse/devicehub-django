@@ -13,10 +13,13 @@ logger = logging.getLogger('django')
 
 
 def get_lshw_child(child, nets, component):
-    if child.get('id') == component:
-        nets.append(child)
-    if child.get('children'):
-        [get_lshw_child(x, nets, component) for x in child['children']]
+    try:
+        if child.get('id') == component:
+            nets.append(child)
+        if child.get('children'):
+            [get_lshw_child(x, nets, component) for x in child['children']]
+    except Exception:
+        return []
 
 class ParseSnapshot:
     def __init__(self, snapshot, default="n/a"):
@@ -314,10 +317,14 @@ class ParseSnapshot:
 
     def get_cpu_address(self, cpu):
         default = 64
-        for ch in self.lshw.get('children', []):
-            for c in ch.get('children', []):
-                if c['class'] == 'processor':
-                    return c.get('width', default)
+
+        try:
+            for ch in self.lshw.get('children', []):
+                for c in ch.get('children', []):
+                    if c['class'] == 'processor':
+                        return c.get('width', default)
+        except:
+            return default
         return default
 
     def get_usb_num(self):
