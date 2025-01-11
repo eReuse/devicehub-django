@@ -6,8 +6,8 @@ from django.db import models
 
 from utils.constants import STR_EXTEND_SIZE, CHASSIS_DH
 from evidence.xapian import search
-from evidence.parse_details import ParseSnapshot, get_inxi, get_inxi_key
-from evidence.legacy_parse_details import ParseSnapshot as legacy_ParseSnapshot
+from evidence.parse_details import ParseSnapshot
+from evidence.normal_parse_details import get_inxi, get_inxi_key
 from user.models import User, Institution
 
 
@@ -135,7 +135,7 @@ class Evidence:
             return list(self.doc.get('kv').values())[0]
 
         if self.is_legacy():
-            return self.doc['device']['manufacturer']
+            return self.doc.get('device', {}).get('manufacturer', '')
 
         if self.inxi:
             return self.device_manufacturer
@@ -150,7 +150,7 @@ class Evidence:
             return list(self.doc.get('kv').values())[1]
 
         if self.is_legacy():
-            return self.doc['device']['model']
+            return self.doc.get('device', {}).get('model', '')
 
         if self.inxi:
             return self.device_model
@@ -159,7 +159,7 @@ class Evidence:
 
     def get_chassis(self):
         if self.is_legacy():
-            return self.doc['device']['model']
+            return self.doc.get('device', {}).get('model', '')
 
         if self.inxi:
             return self.device_chassis
@@ -174,7 +174,7 @@ class Evidence:
 
     def get_serial_number(self):
         if self.is_legacy():
-            return self.doc['device']['serialNumber']
+            return self.doc.get('device', {}).get('serialNumber', '')
 
         if self.inxi:
             return self.device_serial_number
@@ -196,13 +196,7 @@ class Evidence:
         ).order_by("-created").values_list("uuid", "created").distinct()
 
     def set_components(self):
-        parse = ParseSnapshot
-        if self.doc.get("software") == "workbench-script":
-            if self.doc.get("data", {}).get("lshw"):
-                parse = legacy_ParseSnapshot
-
-        snapshot = parse(self.doc).snapshot_json
-        self.components = snapshot['components']
+        self.components = ParseSnapshot(self.doc).components
 
     def is_legacy(self):
         if self.doc.get("credentialSubject"):

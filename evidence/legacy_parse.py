@@ -1,17 +1,11 @@
 import json
-import hashlib
 import logging
 
 from dmidecode import DMIParse
 from json_repair import repair_json
-from django.conf import settings
+from evidence.mixin_parse import BuildMix
 from evidence.legacy_parse_details import get_lshw_child, ParseSnapshot
-
-from evidence.models import Annotation
-from evidence.xapian import index
 from utils.constants import CHASSIS_DH
-if settings.DPP:
-    from dpp.api_dlt import register_device_dlt, register_passport_dlt
 
 
 logger = logging.getLogger('django')
@@ -37,100 +31,21 @@ def get_mac(lshw):
         return mac
 
 
-class Build:
-    def __init__(self, evidence_json, user, check=False):
-        self.json = evidence_json
-        self.uuid = self.json['uuid']
-        self.user = user
-        self.hid = None
-        self.chid = None
-        self.phid = self.get_signature(self.json)
-        self.generate_chids()
+class Build(BuildMix):
+    # This parse is for get info from snapshots created with
+    # workbench-script but builded for send to devicehub-teal
 
-        if check:
-            return
-
-        self.index()
-        self.create_annotations()
-        if settings.DPP:
-            self.register_device_dlt()
-
-    def index(self):
-        snap = json.dumps(self.json)
-        index(self.user.institution, self.uuid, snap)
-
-    def generate_chids(self):
-        self.algorithms = {
-            'hidalgo1': self.get_hid(),
-            'legacy_dpp': self.get_chid_dpp(),
-        }
-
-    def get_chid_dpp(self):
+    def get_details(self):
         dmidecode_raw = self.json["data"]["dmidecode"]
-        dmi = DMIParse(dmidecode_raw)
+        self.dmi = DMIParse(dmidecode_raw)
 
-        manufacturer = dmi.manufacturer().strip()
-        model = dmi.model().strip()
-        chassis = self.get_chassis_dh()
-        serial_number = dmi.serial_number()
-        sku = self.get_sku()
-        typ = chassis
-        version = self.get_version()
-        hid = f"{manufacturer}{model}{chassis}{serial_number}{sku}{typ}{version}"
-
-        self.chid = hashlib.sha3_256(hid.encode("utf-8")).hexdigest()
-        return self.chid
-
-    def get_id_hw_dpp(self, d):
-        manufacturer = d.get("manufacturer", '')
-        model = d.get("model", '')
-        chassis = d.get("chassis", '')
-        serial_number = d.get("serialNumber", '')
-        sku = d.get("sku", '')
-        typ = d.get("type", '')
-        version = d.get("version", '')
-
-        return f"{manufacturer}{model}{chassis}{serial_number}{sku}{typ}{version}"
-
-    def get_phid(self):
-        data = ParseSnapshot(self.json)
-        self.device = data.device
-        self.components = data.components
-
-        self.device.pop("actions", None)
-        for c in self.components:
-            c.pop("actions", None)
-
-        device = self.get_id_hw_dpp(self.device)
-        components = sorted(self.components, key=lambda x: x.get("type"))
-        doc = [("computer", device)]
-
-        for c in components:
-            doc.append((c.get("type"), self.get_id_hw_dpp(c)))
-
-        return doc
-
-    def create_annotations(self):
-        annotation = Annotation.objects.filter(
-                uuid=self.uuid,
-                owner=self.user.institution,
-                type=Annotation.Type.SYSTEM,
-        )
-
-        if annotation:
-            txt = "Warning: Snapshot %s already registered (annotation exists)"
-            logger.warning(txt, self.uuid)
-            return
-
-        for k, v in self.algorithms.items():
-            Annotation.objects.create(
-                uuid=self.uuid,
-                owner=self.user.institution,
-                user=self.user,
-                type=Annotation.Type.SYSTEM,
-                key=k,
-                value=v
-            )
+        self.manufacturer = self.dmi.manufacturer().strip()
+        self.model = self.dmi.model().strip()
+        self.chassis = self.get_chassis_dh()
+        self.serial_number = self.dmi.serial_number()
+        self.sku = self.get_sku()
+        self.typ = self.chassis
+        self.version = self.get_version()
 
     def get_chassis_dh(self):
         chassis = self.get_chassis()
@@ -149,36 +64,6 @@ class Build:
     def get_version(self):
         return self.dmi.get("System")[0].get("Verson", '_virtual')
 
-    def get_hid(self):
-        snapshot = self.json
-        dmidecode_raw = snapshot["data"]["dmidecode"]
-        self.dmi = DMIParse(dmidecode_raw)
-
-        manufacturer = self.dmi.manufacturer().strip()
-        model = self.dmi.model().strip()
-        chassis = self.get_chassis_dh()
-        serial_number = self.dmi.serial_number()
-        sku = self.get_sku()
-
-        if not snapshot["data"].get('lshw'):
-            return f"{manufacturer}{model}{chassis}{serial_number}{sku}"
-
-        lshw = snapshot["data"]["lshw"]
-        # mac = get_mac2(hwinfo_raw) or ""
-        mac = get_mac(lshw) or ""
-        if not mac:
-            txt = "Could not retrieve MAC address in snapshot %s"
-            logger.warning(txt, snapshot['uuid'])
-
-        hid = f"{manufacturer}{model}{chassis}{serial_number}{sku}{mac}"
-        self.chid = hashlib.sha3_256(hid.encode()).hexdigest()
-        return self.chid
-
-    def get_signature(self, doc):
-        return hashlib.sha3_256(json.dumps(doc).encode()).hexdigest()
-
-    def register_device_dlt(self):
-        chid = self.algorithms.get('legacy_dpp')
-        phid = self.get_signature(self.get_phid())
-        register_device_dlt(chid, phid, self.uuid, self.user)
-        register_passport_dlt(chid, phid, self.uuid, self.user)
+    def _get_components(self):
+        data = ParseSnapshot(self.json)
+        self.components = data.components
