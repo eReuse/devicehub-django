@@ -10,7 +10,7 @@ logger = logging.getLogger('django')
 class BuildMix:
     def __init__(self, evidence_json):
         self.json = evidence_json
-        self.uuid = self.json['uuid']
+        self.uuid = self.json.get('uuid')
         self.manufacturer = ""
         self.model = ""
         self.serial_number = ""
