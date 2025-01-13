@@ -49,6 +49,7 @@ class Build(BuildMix):
         if not self.json.get("credentialSubject"):
             return
 
+        self.uuid = self.json.get("credentialSubject", {}).get("uuid")
         self.json.update(self.json["credentialSubject"])
         if self.json.get("evidence"):
             self.json["data"] = {}
