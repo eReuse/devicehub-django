@@ -39,11 +39,12 @@ class Build:
         4) normal snapshot from worbench-script is the most basic and is parsed as normal_parse
         """
         self.evidence = evidence_json.copy()
-        self.uuid = self.evidence['uuid']
+        self.uuid = self.evidence.get('uuid')
         self.user = user
 
         if evidence_json.get("credentialSubject"):
             self.build = normal_parse.Build(evidence_json)
+            self.uuid = evidence_json.get("credentialSubject", {}).get("uuid")
         elif evidence_json.get("software") != "workbench-script":
             self.build = old_parse.Build(evidence_json)
         elif evidence_json.get("data",{}).get("lshw"):
