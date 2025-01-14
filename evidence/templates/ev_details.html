@@ -47,7 +47,6 @@
         </thead>
         {% for snap in object.properties %}
         <tbody>
-        {% if snap.type == 0 %}
           <tr>
             <td>
               {{ snap.key }}
@@ -63,7 +62,6 @@
               </small>
             </td>
           </tr>
-        {% endif %}
         </tbody>
         {% endfor %}
       </table>
