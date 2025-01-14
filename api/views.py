@@ -115,7 +115,7 @@ class NewSnapshotView(ApiMixing):
             text = "fail: It is not possible to parse snapshot"
             return JsonResponse({'status': text}, status=500)
 
-        property = SystemProperty.objects.filter(
+        prop = SystemProperty.objects.filter(
             uuid=ev_uuid,
             # TODO this is hardcoded, it should select the user preferred algorithm
             key="hidalgo1",
@@ -123,7 +123,7 @@ class NewSnapshotView(ApiMixing):
         ).first()
 
 
-        if not property:
+        if not prop:
             logger.error("Error: No property  for uuid: %s", ev_uuid)
             return JsonResponse({'status': 'fail'}, status=500)
 
