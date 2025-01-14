@@ -76,12 +76,12 @@ class Device:
         if not self.uuids:
             self.get_uuids()
 
-        properties = UserProperty.objects.filter(
+        user_properties = UserProperty.objects.filter(
             uuid__in=self.uuids,
             owner=self.owner,
             type=UserProperty.Type.DOCUMENT
         )
-        return properties
+        return user_properties
 
     def get_uuids(self):
         for a in self.get_properties():
@@ -114,9 +114,9 @@ class Device:
         properties = self.get_properties()
         if not properties.count():
             return
-        property = properties.first()
+        prop = properties.first()
 
-        self.last_evidence = Evidence(property.uuid)
+        self.last_evidence = Evidence(prop.uuid)
 
     def is_eraseserver(self):
         if not self.uuids:
@@ -124,13 +124,13 @@ class Device:
         if not self.uuids:
             return False
 
-        property = UserProperty.objects.filter(
+        prop = UserProperty.objects.filter(
             uuid__in=self.uuids,
             owner=self.owner,
             type=UserProperty.Type.ERASE_SERVER
         ).first()
 
-        if property:
+        if prop:
             return True
         return False
 
