@@ -80,15 +80,15 @@ def create_property(doc, user, commit=False):
         'value': doc['CUSTOMER_ID'],
     }
     if commit:
-        property = SystemProperty.objects.filter(
+        prop = SystemProperty.objects.filter(
                 uuid=doc["uuid"],
                 owner=user.institution,
         )
 
-        if property:
+        if prop:
             txt = "Warning: Snapshot %s already registered (system property exists)"
             logger.warning(txt, doc["uuid"])
-            return property
+            return prop
 
         return SystemProperty.objects.create(**data)
 
