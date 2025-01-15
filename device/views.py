@@ -117,12 +117,15 @@ class DetailsView(DashboardView, TemplateView):
             )
         last_evidence= self.object.get_last_evidence(),
         uuid=self.object.last_uuid()
+        state_definitions = StateDefinition.objects.filter(
+            institution=self.request.user.institution
+        ).order_by('order')
         context.update({
             'object': self.object,
             'snapshot': last_evidence,
             'lot_tags': lot_tags,
             'dpps': dpps,
-            "state_definitions": StateDefinition.objects.filter(institution=self.request.user.institution).order_by('order'),
+            "state_definitions": state_definitions,
             "device_states": State.objects.filter(snapshot_uuid=uuid).order_by('-date'),
             "device_logs": DeviceLog.objects.filter(snapshot_uuid=uuid).order_by('-date'),
             "device_notes": Note.objects.filter(snapshot_uuid=uuid).order_by('-date'),
