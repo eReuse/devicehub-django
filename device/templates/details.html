@@ -4,7 +4,7 @@
 {% block content %}
 
 <div class="position-fixed" style="bottom: 2rem; right: 2rem; z-index: 9999; display: flex; gap: 0.5rem;">
-  <button class="btn btn-warning d-flex align-items-center shadow" type="button"
+  <button class="btn btn-yellow d-flex align-items-center shadow" type="button"
           data-bs-toggle="offcanvas" data-bs-target="#notesOffcanvas" aria-controls="notesOffcanvas"
           data-bs-toggle="tooltip" data-bs-placement="left" title="{% trans 'View recent notes' %}">
     <i class="bi bi-journal-text me-1"></i>
@@ -18,18 +18,18 @@
   <div class="offcanvas-header">
     <h5 id="notesOffcanvasLabel">{% trans "Latest Notes" %}</h5>
     <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-  </div>        
+  </div>
   <div class="offcanvas-body" style="margin-bottom: 5rem;">
     {% for note in device_notes|slice:":4" %}
       <div class="card mb-3 shadow-sm">
-        <div class="card-body"> 
+        <div class="card-body">
           <div>
             <small class="text-muted">
               {{ note.date|timesince }} {% trans "ago" %}
             </small>
 
           {% if user == note.user or user.is_admin %}
-          <span class="badge bg-warning text-dark ms-2">{% trans "Editable" %}</span>
+          <span class="badge bg-yellow text-dark ms-2">{% trans "Editable" %}</span>
           </div>
           <blockquote
               class="blockquote mt-2 p-2 bg-light fst-italic"
@@ -49,7 +49,7 @@
               <small>{{ note.user.get_full_name|default:note.user.username }}</small>
             </footer>
           </blockquote>
-          
+
           {% if user == note.user or user.is_admin %}
             <div class="d-flex justify-content-end align-items-center">
 
@@ -73,7 +73,7 @@
                   <i class="fas fa-save px-1"></i>
                 </a>
               </form>
-              
+
               <!-- delete note button -->
               <button type="button" class="btn btn-link btn-outline-danger btn-sm text-danger" id="deleteIcon{{ note.id }}" title="{% trans 'Delete note' %}" data-bs-toggle="collapse" data-bs-target="#confirmDelete{{ note.id }}">
                 <i class="bi bi-trash"></i>
@@ -95,7 +95,7 @@
               </div>
             </form>
           {% endif %}
-          
+
         </div>
       </div>
     {% empty %}
@@ -150,7 +150,7 @@
         </button>
       {% endif %}
       <!-- Add note button -->
-      <button class="btn btn-warning ms-2" type="button" data-bs-toggle="modal" data-bs-target="#addNoteModal">
+      <button class="btn btn-yellow ms-2" type="button" data-bs-toggle="modal" data-bs-target="#addNoteModal">
         <i class="bi bi-sticky"></i> {% trans "Add a note" %}
       </button>
 
@@ -263,8 +263,8 @@
 
       saveLink.classList.remove("disabled", "text-muted", "border-light");
       saveLink.classList.add("text-success", "border-success");
-      saveLink.style.pointerEvents = "auto"; 
-      
+      saveLink.style.pointerEvents = "auto";
+
     }
     //updates note-update-form with new value from blockquote
     function submitUpdatedNote(noteId) {
