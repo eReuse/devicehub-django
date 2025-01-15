@@ -52,7 +52,7 @@
       }
     </style>
 
-  
+
     <!-- Custom styles for this template -->
     <link href="{% static "/css/dashboard.css" %}" rel="stylesheet">
     {% endblock %}
@@ -82,23 +82,23 @@
             <ul class="nav flex-column">
 	      {% if user.is_admin %}
               <li class="nav-item">
-                <a class="admin {% if path in 'panel users states_panel' %}active {% endif %}nav-link fw-bold" data-bs-toggle="collapse" data-bs-target="#ul_admin" aria-expanded="false" aria-controls="ul_admin" href="javascript:void()">
+                <a class="admin {% if path in 'panel users states_panel edit_user delete_user new_user institution' %}active {% endif %}nav-link fw-bold" data-bs-toggle="collapse" data-bs-target="#ul_admin" aria-expanded="false" aria-controls="ul_admin" href="javascript:void()">
                   <i class="bi bi-person-fill-gear icon_sidebar"></i>
                   {% trans 'Admin' %}
                 </a>
-                <ul class="flex-column mb-2 ul_sidebar accordion-collapse {% if path in 'panel users' %}expanded{% else %}collapse{% endif %}" id="ul_admin" data-bs-parent="#sidebarMenu">
+                <ul class="flex-column mb-2 ul_sidebar accordion-collapse {% if path in 'panel institution users edit_user new_user delete_user states_panel' %}expanded{% else %}collapse{% endif %}" id="ul_admin" data-bs-parent="#sidebarMenu">
                   <li class="nav-item">
-                    <a class="nav-link{% if path == 'panel' %} active2{% endif %}" href="{% url 'admin:panel' %}">
+                    <a class="nav-link{% if path in 'panel institution' %} active2{% endif %}" href="{% url 'admin:panel' %}">
                       {% trans 'Panel' %}
                     </a>
                   </li>
                   <li class="nav-item">
-                    <a class="nav-link{% if path == 'users' %} active2{% endif %}" href="{% url 'admin:users' %}">
+                    <a class="nav-link{% if path in 'users edit_user new_user delete_user' %} active2{% endif %}" href="{% url 'admin:users' %}">
                       {% trans 'Users' %}
                     </a>
                   </li>
                   <li class="nav-item">
-                    <a class="nav-link{% if path == 'states' %} active2{% endif %}" href="{% url 'admin:states_panel' %}">
+                    <a class="nav-link{% if path == 'states_panel' %} active2{% endif %}" href="{% url 'admin:states_panel' %}">
                       {% trans 'States' %}
                     </a>
                   </li>
@@ -188,10 +188,10 @@
               {% if help_text %}
               <span class="ms-1" data-bs-toggle="tooltip" data-bs-placement="right" title="{{ help_text }}">
                 <i class="fas fa-question-circle text-secondary h6 align-top"></i>
-              </span> 
+              </span>
             {% endif %}
             </h1>
-             
+
 	          <form method="post" action="{% url 'dashboard:search' %}">
               {% csrf_token %}
               <div class="input-group rounded">
@@ -201,9 +201,9 @@
         	</span>
               </div>
             </form>
-	    
+
           </div>
-	  
+
           <div class="row border-bottom mb-3">
             <div class="col">
               <small style="color:#899bbd"><i>{{ breadcrumb }}</i></small>
@@ -235,7 +235,7 @@
   </body>
 
   <script>
-     //If help_text is passed to the view as context, a hover-able help icon is displayed 
+     //If help_text is passed to the view as context, a hover-able help icon is displayed
       var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
       var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
         return new bootstrap.Tooltip(tooltipTriggerEl);
