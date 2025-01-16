@@ -2,6 +2,7 @@ import os
 import json
 import django
 import logging
+import argparse
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'dhub.settings')
 
@@ -14,13 +15,12 @@ from evidence.parse import Build
 from evidence.models import Annotation
 
 
-logger = logging.getLogger('django')
+logger = logging.getLogger(__name__)
 
 User = get_user_model()
 
 SEPARATOR = ";"
 PATH_SNAPTHOPS = "examples/snapshots"
-email_user = "user@example.org"
 
 
 ### read csv ###
@@ -43,7 +43,12 @@ def open_csv(csv):
         return []
 
     header = rows[0].split(SEPARATOR)
-    return [get_dict(row, header) for row in rows[1:]]
+    data = []
+    for row in rows[1:]:
+        drow = get_dict(row.split(SEPARATOR), header)
+        if drow:
+            data.append(drow)
+    return data
 ### end read csv ###
 
 
@@ -70,7 +75,7 @@ def open_snapshot(uuid):
     return snap, snapshot_path
 ### end read snapshot ###
 
-
+### migration ###
 def create_custom_id(dhid, uuid, user):
     tag = Annotation.objects.filter(
         uuid=uuid,
@@ -93,6 +98,9 @@ def create_custom_id(dhid, uuid, user):
 
 
 def migrate_snapshots(row, user):
+    # import pdb; pdb.set_trace()
+    if not row or not user:
+        return
     dhid = row.get("dhid")
     uuid = row.get("uuid")
     snapshot, snapshot_path = open_snapshot(uuid)
@@ -106,3 +114,55 @@ def migrate_snapshots(row, user):
 
     # insert dhid
     create_custom_id(dhid, uuid)
+
+### end migration ###
+
+
+### initial main ###
+def prepare_logger():
+
+    logger.setLevel(logging.INFO)
+
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.INFO)
+    formatter = logging.Formatter('[%(asctime)s] workbench: %(levelname)s: %(message)s')
+    console_handler.setFormatter(formatter)
+    logger.addHandler(console_handler)
+
+
+def parse_args():
+    """
+    Parse config argument, if available
+    """
+    parser = argparse.ArgumentParser(
+        usage="migration-script.py [-h] [--csv CSV]",
+        description="Csv file with datas to migratie.")
+    parser.add_argument(
+        '--csv',
+        help="path to the data file."
+    )
+    parser.add_argument(
+        '--email',
+        help="email of user.",
+    )
+    parser.add_argument(
+        '--snapshots',
+        help="dir where reside the snapshots.",
+    )
+    return parser.parse_args()
+
+
+def main():
+    prepare_logger()
+    logger.info("START")
+    args = parse_args()
+
+    PATH_SNAPTHOPS = args.snapshots
+    user = User.objects.get(email=args.email)
+
+    for row in open_csv(args.csv):
+        migrate_snapshots(row, user)
+
+
+if __name__ == '__main__':
+    main()
