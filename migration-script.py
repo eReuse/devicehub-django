@@ -13,6 +13,7 @@ from django.contrib.auth import get_user_model
 from utils.save_snapshots import move_json, save_in_disk
 from evidence.parse import Build
 from evidence.models import Annotation
+from lot.models import Lot, LotTag, DeviceLot
 
 
 logger = logging.getLogger(__name__)
@@ -120,6 +121,62 @@ def migrate_snapshots(row, user):
 ### end migration snapshots ###
 
 
+### migration lots ###
+def migrate_lots(row, user):
+    tag = row.get("type", "Temporal")
+    name = row.get("name")
+    ltag = LotTag.objects.filter(name=tag, owner=user.institution).first()
+    if tag and not ltag:
+        ltag = LotTag.objects.create(
+            name=tag,
+            owner=user.institution,
+            user=user
+        )
+
+    lot = Lot.objects.filter(name=tag, owner=user.institution).first()
+    if not lot:
+        lot = Lot.objects.create(
+            name=name,
+            owner=user.institution,
+            user=user,
+            type=ltag
+        )
+
+
+def add_device_in_lot(row, user):
+    lot_name = row.get("lot_name")
+    dhid = row.get("dhid")
+
+    if not lot_name or not dhid:
+        return
+
+    dev = Annotation.objects.filter(
+        type=Annotation.Type.SYSTEM,
+        key='CUSTOM_ID',
+        value=dhid,
+        owner=user.institution,
+    ).first()
+
+    lot = Lot.objects.filter(
+        name=lot_name,
+        owner=user.institution,
+        user=user,
+    ).first()
+
+    if not lot:
+        lot = Lot.objects.create(
+            name=lot_name,
+            owner=user.institution,
+            user=user,
+        )
+
+    if DeviceLot.objects.filter(lot=lot, device_id=dev.uuid).exists():
+        return
+    DeviceLot.objects.create(lot=lot, device_id=dev.uuid)
+
+### end migration lots ###
+
+
 ### initial main ###
 def prepare_logger():
 
@@ -140,8 +197,16 @@ def parse_args():
         usage="migration-script.py [-h] [--csv CSV]",
         description="Csv file with datas to migratie.")
     parser.add_argument(
-        '--csv',
-        help="path to the data file."
+        '--csv-dhid',
+        help="path to the csv file with relation dhid and uuid."
+    )
+    parser.add_argument(
+        '--lots',
+        help="path to the csv file with relation lot_name and type of lot."
+    )
+    parser.add_argument(
+        '--csv-lots',
+        help="path to the csv file with relation lot_name and type of lot."
     )
     parser.add_argument(
         '--email',
@@ -158,14 +223,21 @@ def main():
     prepare_logger()
     logger.info("START")
     args = parse_args()
-
-    global PATH_SNAPTHOPS
-    PATH_SNAPTHOPS = args.snapshots
     user = User.objects.get(email=args.email)
 
-    for row in open_csv(args.csv):
-        migrate_snapshots(row, user)
+    if args.snapshots:
+        global PATH_SNAPTHOPS
+        PATH_SNAPTHOPS = args.snapshots
 
+    if args.csv_dhid:
+    # migration snapthots
+        for row in open_csv(args.csv):
+            migrate_snapshots(row, user)
+
+    # migration lots
+    if args.lots:
+        for row in open_csv(args.lots):
+            migrate_lots(row, user)
 
 if __name__ == '__main__':
     main()
