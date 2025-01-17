@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 User = get_user_model()
 
 SEPARATOR = ";"
+QUOTA = '"'
 PATH_SNAPTHOPS = "examples/snapshots"
 
 
@@ -30,7 +31,7 @@ def get_dict(row, header):
     if len(row) != len(header):
         return
 
-    return {row[i]: header[i] for i in range(len(header))}
+    return {header[i]: row[i] for i in range(len(header))}
 
 
 def open_csv(csv):
@@ -42,10 +43,11 @@ def open_csv(csv):
     if len(rows) < 2:
         return []
 
-    header = rows[0].split(SEPARATOR)
+    header = [x.replace(QUOTA, '') for x in rows[0].split(SEPARATOR)]
     data = []
     for row in rows[1:]:
-        drow = get_dict(row.split(SEPARATOR), header)
+        lrow = [x.replace(QUOTA, '') for x in row.split(SEPARATOR)]
+        drow = get_dict(lrow, header)
         if drow:
             data.append(drow)
     return data
@@ -75,7 +77,8 @@ def open_snapshot(uuid):
     return snap, snapshot_path
 ### end read snapshot ###
 
-### migration ###
+
+### migration snapshots ###
 def create_custom_id(dhid, uuid, user):
     tag = Annotation.objects.filter(
         uuid=uuid,
@@ -98,7 +101,6 @@ def create_custom_id(dhid, uuid, user):
 
 
 def migrate_snapshots(row, user):
-    # import pdb; pdb.set_trace()
     if not row or not user:
         return
     dhid = row.get("dhid")
@@ -109,13 +111,13 @@ def migrate_snapshots(row, user):
 
     # insert snapshot
     path_name = save_in_disk(snapshot, user.institution.name)
-    Build(path_name, user)
+    Build(snapshot, user)
     move_json(path_name, user.institution.name)
 
     # insert dhid
-    create_custom_id(dhid, uuid)
+    create_custom_id(dhid, uuid, user)
 
-### end migration ###
+### end migration snapshots ###
 
 
 ### initial main ###
@@ -157,6 +159,7 @@ def main():
     logger.info("START")
     args = parse_args()
 
+    global PATH_SNAPTHOPS
     PATH_SNAPTHOPS = args.snapshots
     user = User.objects.get(email=args.email)
 
