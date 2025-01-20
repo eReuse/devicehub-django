@@ -81,6 +81,10 @@ def open_snapshot(uuid):
 
 ### migration snapshots ###
 def create_custom_id(dhid, uuid, user):
+
+    if not uuid or not dhid:
+        return
+
     tag = Annotation.objects.filter(
         uuid=uuid,
         type=Annotation.Type.SYSTEM,
@@ -88,7 +92,7 @@ def create_custom_id(dhid, uuid, user):
         owner=user.institution
     ).first()
 
-    if tag:
+    if tag or not uuid or not dhid:
         return
 
     Annotation.objects.create(
@@ -104,10 +108,15 @@ def create_custom_id(dhid, uuid, user):
 def migrate_snapshots(row, user):
     if not row or not user:
         return
+
     dhid = row.get("dhid")
     uuid = row.get("uuid")
     snapshot, snapshot_path = open_snapshot(uuid)
     if not snapshot or not snapshot_path:
+        return
+
+    logger.info(snapshot.get("version"))
+    if snapshot.get('version') == "2022.12.2-beta":
         return
 
     # insert snapshot
@@ -116,7 +125,11 @@ def migrate_snapshots(row, user):
     move_json(path_name, user.institution.name)
 
     # insert dhid
-    create_custom_id(dhid, uuid, user)
+    try:
+        create_custom_id(dhid, uuid, user)
+    except Exception as err:
+        logger.error(err)
+        logger.error("DHID: %s uuid: %s", dhid, uuid)
 
 ### end migration snapshots ###
 
@@ -133,14 +146,15 @@ def migrate_lots(row, user):
             user=user
         )
 
-    lot = Lot.objects.filter(name=tag, owner=user.institution).first()
-    if not lot:
-        lot = Lot.objects.create(
-            name=name,
-            owner=user.institution,
-            user=user,
-            type=ltag
-        )
+    if Lot.objects.filter(name=tag, owner=user.institution).first():
+        return
+
+    Lot.objects.create(
+        name=name,
+        owner=user.institution,
+        user=user,
+        type=ltag
+    )
 
 
 def add_device_in_lot(row, user):
@@ -157,6 +171,10 @@ def add_device_in_lot(row, user):
         owner=user.institution,
     ).first()
 
+    if not dev:
+        logger.warning("Not exist dhid %s", dhid)
+        return
+
     lot = Lot.objects.filter(
         name=lot_name,
         owner=user.institution,
@@ -170,9 +188,9 @@ def add_device_in_lot(row, user):
             user=user,
         )
 
-    if DeviceLot.objects.filter(lot=lot, device_id=dev.uuid).exists():
+    if DeviceLot.objects.filter(lot=lot, device_id=dhid).exists():
         return
-    DeviceLot.objects.create(lot=lot, device_id=dev.uuid)
+    DeviceLot.objects.create(lot=lot, device_id=dhid)
 
 ### end migration lots ###
 
@@ -184,7 +202,7 @@ def prepare_logger():
 
     console_handler = logging.StreamHandler()
     console_handler.setLevel(logging.INFO)
-    formatter = logging.Formatter('[%(asctime)s] workbench: %(levelname)s: %(message)s')
+    formatter = logging.Formatter('[%(asctime)s] migrate: %(levelname)s: %(message)s')
     console_handler.setFormatter(formatter)
     logger.addHandler(console_handler)
 
@@ -205,7 +223,7 @@ def parse_args():
         help="path to the csv file with relation lot_name and type of lot."
     )
     parser.add_argument(
-        '--csv-lots',
+        '--csv-lots-dhid',
         help="path to the csv file with relation lot_name and type of lot."
     )
     parser.add_argument(
@@ -231,7 +249,7 @@ def main():
 
     if args.csv_dhid:
     # migration snapthots
-        for row in open_csv(args.csv):
+        for row in open_csv(args.csv_dhid):
             migrate_snapshots(row, user)
 
     # migration lots
@@ -239,5 +257,9 @@ def main():
         for row in open_csv(args.lots):
             migrate_lots(row, user)
 
+    # migration dhids in lots
+    if args.csv_lots_dhid:
+        for row in open_csv(args.csv_lots_dhid):
+            add_device_in_lot(row, user)
 if __name__ == '__main__':
     main()
