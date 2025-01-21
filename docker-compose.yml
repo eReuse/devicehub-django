@@ -5,13 +5,14 @@ services:
       dockerfile: docker/devicehub-django.Dockerfile
     environment:
       - DEBUG=${DEBUG:-false}
-      - DOMAIN=${DOMAIN:-localhost}
-      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-$DOMAIN}
+      - DOMAIN=${DH_DOMAIN:-localhost}
+      - PORT=${DH_PORT:-8000}
+      - ALLOWED_HOSTS=${DH_ALLOWED_HOSTS:-$DH_DOMAIN}
       - DEMO=${DEMO:-false}
       - PREDEFINED_TOKEN=${PREDEFINED_TOKEN:-}
       - DPP=${DPP:-false}
     volumes:
       - .:/opt/devicehub-django
     ports:
-      - 8000:8000
+      - ${DH_PORT}:${DH_PORT}
 
