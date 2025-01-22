@@ -141,6 +141,7 @@ config_phase() {
                 # # 15. Add inventory snapshots for user "${INIT_USER}".
                 if [ "${DEMO:-}" = 'true' ]; then
                         /usr/bin/time ./manage.py up_snapshots example/snapshots/ "${INIT_USER}"
+                        ./manage.py create_default_states "${INIT_ORG}"
                 fi
 
                 # remain next command as the last operation for this if conditional
