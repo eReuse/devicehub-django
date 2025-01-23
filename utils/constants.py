@@ -13,7 +13,7 @@ HID_ALGO1 = [
     "manufacturer",
     "model",
     "chassis",
-    "serialNumber",
+    "serial_number",
     "sku"
 ]
 
@@ -21,7 +21,7 @@ LEGACY_DPP = [
     "manufacturer",
     "model",
     "chassis",
-    "serialNumber",
+    "serial_number",
     "sku",
     "type",
     "version"
