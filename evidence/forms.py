@@ -29,7 +29,8 @@ class UploadForm(forms.Form):
 
             try:
                 file_json = json.loads(file_data)
-                snap = Build(file_json, None, check=True)
+                build = Build
+                snap = build(file_json, None, check=True)
                 exist_annotation = Annotation.objects.filter(
                     uuid=snap.uuid
                 ).first()
@@ -57,7 +58,9 @@ class UploadForm(forms.Form):
 
         for ev in self.evidences:
             path_name = save_in_disk(ev[1], user.institution.name)
-            Build(ev[1], user)
+            build = Build
+            file_json = ev[1]
+            build(file_json, user)
             move_json(path_name, user.institution.name)
 
 
