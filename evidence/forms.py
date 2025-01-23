@@ -71,6 +71,7 @@ class UserTagForm(forms.Form):
         self.pk = None
         self.uuid = kwargs.pop('uuid', None)
         self.user = kwargs.pop('user')
+
         instance = SystemProperty.objects.filter(
             uuid=self.uuid,
             key='CUSTOM_ID',
@@ -88,6 +89,7 @@ class UserTagForm(forms.Form):
         if not data:
             return False
         self.tag = data
+
         self.instance = SystemProperty.objects.filter(
             uuid=self.uuid,
             key='CUSTOM_ID',
@@ -103,15 +105,18 @@ class UserTagForm(forms.Form):
         if self.instance:
             old_value = self.instance.value
             if not self.tag:
-                message =_("<Deleted> Evidence Tag. Old Value: '{}'").format(old_value)
+                message = _("<Deleted> Evidence Tag. Old Value: '{}'").format(
+                    old_value
+                )
                 self.instance.delete()
             else:
                 self.instance.value = self.tag
                 self.instance.save()
                 if old_value != self.tag:
-                    message=_("<Updated> Evidence Tag. Old Value: '{}'. New Value: '{}'").format(old_value, self.tag)
+                    msg = "<Updated> Evidence Tag. Old Value: '{}'. New Value: '{}'"
+                    message=_(msg).format(old_value, self.tag)
         else:
-            message =_("<Created> Evidence Tag. Value: '{}'").format(self.tag)
+            message = _("<Created> Evidence Tag. Value: '{}'").format(self.tag)
             SystemProperty.objects.create(
                 uuid=self.uuid,
                 key='CUSTOM_ID',
@@ -119,7 +124,7 @@ class UserTagForm(forms.Form):
                 owner=self.user.institution,
                 user=self.user
             )
-        
+
         DeviceLog.objects.create(
                 snapshot_uuid=self.uuid,
                 event= message,
@@ -175,8 +180,8 @@ class ImportForm(forms.Form):
         table = []
         for row in self.rows:
             doc = create_doc(row)
-            property = create_property(doc, self.user)
-            table.append((doc, property))
+            prop = create_property(doc, self.user)
+            table.append((doc, prop))
 
         if commit:
             for doc, cred in table:
