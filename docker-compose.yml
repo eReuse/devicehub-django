@@ -47,7 +47,7 @@ services:
       - EMAIL_PORT=${IDHUB_EMAIL_PORT}
       - EMAIL_USE_TLS=${IDHUB_EMAIL_USE_TLS}
       - EMAIL_BACKEND=${IDHUB_EMAIL_BACKEND}
-      - SUPPORTED_CREDENTIALS=['DeviceSnapshotV1']
+      - SUPPORTED_CREDENTIALS=['Snapshot']
       - SYNC_ORG_DEV=${IDHUB_SYNC_ORG_DEV}
     ports:
       - 9001:9001
