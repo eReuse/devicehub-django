@@ -71,17 +71,6 @@ class Device:
         )
         return user_properties
 
-    def get_user_documents(self):
-        if not self.uuids:
-            self.get_uuids()
-
-        user_properties = UserProperty.objects.filter(
-            uuid__in=self.uuids,
-            owner=self.owner,
-            type=UserProperty.Type.DOCUMENT
-        )
-        return user_properties
-
     def get_uuids(self):
         for a in self.get_properties():
             if a.uuid not in self.uuids:
@@ -164,7 +153,7 @@ class Device:
                                 ELSE 3
                             END,
                             t1.created DESC
-                    ) AS row_num    
+                    ) AS row_num
                 FROM evidence_systemproperty AS t1
                 LEFT JOIN lot_devicelot AS t2 ON t1.value = t2.device_id
                 WHERE t2.device_id IS NULL

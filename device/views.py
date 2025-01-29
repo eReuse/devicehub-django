@@ -293,34 +293,3 @@ class DeleteUserPropertyView(DashboardView, DeleteView):
 
     def get_success_url(self):
         return self.request.META.get('HTTP_REFERER', reverse_lazy('device:details', args=[self.object.pk]))
-
-class AddDocumentView(DashboardView, CreateView):
-    template_name = "new_user_property.html"
-    title = _("New Document")
-    breadcrumb = "Device / New document"
-    success_url = reverse_lazy('dashboard:unassigned_devices')
-    model = UserProperty
-    fields = ("key", "value")
-
-    def form_valid(self, form):
-        form.instance.owner = self.request.user.institution
-        form.instance.user = self.request.user
-        form.instance.uuid = self.property.uuid
-        form.instance.type = UserProperty.Type.DOCUMENT
-        response = super().form_valid(form)
-        return response
-
-    def get_form_kwargs(self):
-        pk = self.kwargs.get('pk')
-        institution = self.request.user.institution
-        self.property = SystemProperty.objects.filter(
-            owner=institution,
-            value=pk,
-        ).first()
-
-        if not self.property:
-            raise Http404
-
-        self.success_url = reverse_lazy('device:details', args=[pk])
-        kwargs = super().get_form_kwargs()
-        return kwargs
