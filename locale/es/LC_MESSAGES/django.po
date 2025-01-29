@@ -6,17 +6,90 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: VERSIÓN DEL PAQUETE\n"
+"Project-Id-Version: 1.0 \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-11-28 03:34-0300\n"
-"PO-Revision-Date: AÑO-MO-DA HO:MI+ZONE\n"
+"POT-Creation-Date: 2025-01-29 11:33-0300\n"
+"PO-Revision-Date: 2025-01-27 12:49-0300\n"
 "Last-Translator: NOMBRE COMPLETO <EMAIL@ADDRESS>\n"
-"Language-Team: LENGUAJE <LL@li.org>\n"
+"Language-Team: \n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: action/management/commands/create_default_states.py:17
+msgid "INBOX"
+msgstr "BANDEJA DE ENTRADA"
+
+#: action/management/commands/create_default_states.py:18
+msgid "VISUAL INSPECTION"
+msgstr "INSPECCIÓN VISUAL"
+
+#: action/management/commands/create_default_states.py:19
+msgid "REPAIR"
+msgstr "REPARACIÓN"
+
+#: action/management/commands/create_default_states.py:20
+msgid "INSTALL"
+msgstr "INSTALACIÓN"
+
+#: action/management/commands/create_default_states.py:21
+msgid "TEST"
+msgstr "PRUEBA"
+
+#: action/management/commands/create_default_states.py:22
+msgid "PACKAGING"
+msgstr "EMPAQUE"
+
+#: action/management/commands/create_default_states.py:23
+msgid "DONATION"
+msgstr "DONACIÓN"
+
+#: action/management/commands/create_default_states.py:24
+msgid "DISMANTLE"
+msgstr "DESMANTE"
+
+#: action/views.py:27
+msgid "<Created> State '{}'. Previous State: '{}'"
+msgstr ""
+
+#: action/views.py:34
+msgid "State successfully changed from '{}' to '{}'"
+msgstr "El estado se cambió correctamente de '{}' a '{}'"
+
+#: action/views.py:38 action/views.py:69
+msgid "There was an error with your submission."
+msgstr "Hubo un error con tu envío."
+
+#: action/views.py:58
+msgid "<Created> Note: '{}'"
+msgstr ""
+
+#: action/views.py:65
+msgid "Note has been added"
+msgstr "Se ha agregado la nota"
+
+#: action/views.py:87
+msgid "<Updated> Note. Old Description: '{}'. New Description: '{}'"
+msgstr ""
+"<Actualizado> Nota. Descripción anterior: '{}'. Nueva descripción: '{}'"
+
+#: action/views.py:100
+msgid "Note cannot be empty."
+msgstr "La nota no puede estar vacía."
+
+#: action/views.py:126
+msgid "You do not have permission to delete this note."
+msgstr "No tenés permiso para eliminar esta nota."
+
+#: action/views.py:129
+msgid "<Deleted> Note. Description: '{}'. "
+msgstr "<Eliminado> Nota. Descripción: '{}'."
+
+#: action/views.py:136
+msgid "Note '{}' deleted successfully."
+msgstr "Nota '{}' eliminada correctamente."
 
 #: admin/templates/admin_panel.html:14
 msgid "Institution"
@@ -28,18 +101,20 @@ msgstr "Nuevo usuario"
 
 #: admin/templates/admin_users.html:19
 msgid "Email"
-msgstr "Email"
+msgstr "Correo electrónico"
 
-#: admin/templates/admin_users.html:20 admin/views.py:26
-#: dashboard/templates/base.html:86
+#: admin/templates/admin_users.html:20 admin/views.py:33
+#: dashboard/templates/base.html:87
 msgid "Admin"
 msgstr "Administrador"
 
-#: admin/templates/admin_users.html:21
+#: admin/templates/admin_users.html:21 admin/templates/states_panel.html:30
+#: device/templates/tabs/user_properties.html:21
 msgid "Actions"
 msgstr "Acciones"
 
 #: admin/templates/admin_users.html:28
+#: device/templates/tabs/general_details.html:20
 msgid "Yes"
 msgstr "Sí"
 
@@ -48,69 +123,190 @@ msgid "No"
 msgstr "No"
 
 #: admin/templates/delete_user.html:33 admin/templates/institution.html:27
+#: admin/templates/states_panel.html:145 admin/templates/states_panel.html:185
 #: admin/templates/user.html:27 api/templates/new_token.html:27
-#: device/templates/new_annotation.html:39 device/templates/new_device.html:81
+#: device/templates/details.html:230 device/templates/new_device.html:81
+#: device/templates/new_user_property.html:39
 #: device/templates/physical_properties.html:117
-#: evidence/templates/ev_details.html:92
+#: device/templates/tabs/user_properties.html:83
+#: device/templates/tabs/user_properties.html:121
+#: evidence/templates/ev_details.html:90
 #: evidence/templates/ev_eraseserver.html:52 evidence/templates/upload.html:25
-#: lot/templates/delete_lot.html:33 lot/templates/new_annotation.html:39
-#: lot/templates/new_lot.html:27 user/templates/settings.html:27
+#: lot/templates/delete_lot.html:33 lot/templates/new_lot.html:27
+#: lot/templates/new_property.html:39 lot/templates/properties.html:70
+#: lot/templates/properties.html:90 user/templates/settings.html:27
 msgid "Cancel"
 msgstr "Cancelar"
 
-#: admin/templates/delete_user.html:34 api/tables.py:29
-#: evidence/templates/ev_details.html:97 lot/templates/delete_lot.html:34
+#: admin/templates/delete_user.html:34 admin/templates/states_panel.html:67
+#: admin/templates/states_panel.html:188 api/tables.py:29
+#: device/templates/tabs/user_properties.html:47
+#: device/templates/tabs/user_properties.html:87
+#: evidence/templates/ev_details.html:95 lot/templates/delete_lot.html:34
+#: lot/templates/properties.html:93
 msgid "Delete"
 msgstr "Eliminar"
 
 #: admin/templates/institution.html:28 admin/templates/user.html:28
-#: api/templates/new_token.html:28 device/templates/new_annotation.html:40
-#: device/templates/new_device.html:82
+#: api/templates/new_token.html:28 device/templates/new_device.html:82
+#: device/templates/new_user_property.html:40
 #: device/templates/physical_properties.html:118
-#: evidence/templates/ev_details.html:93
+#: evidence/templates/ev_details.html:91
 #: evidence/templates/ev_eraseserver.html:53 evidence/templates/upload.html:26
-#: lot/templates/new_annotation.html:40 lot/templates/new_lot.html:28
+#: lot/templates/new_lot.html:28 lot/templates/new_property.html:40
 #: user/templates/settings.html:28
 msgid "Save"
 msgstr "Guardar"
 
-#: admin/views.py:27
+#: admin/templates/states_panel.html:11
+#: dashboard/templates/unassigned_devices.html:87
+msgid "Add"
+msgstr "Agregar"
+
+#: admin/templates/states_panel.html:20
+msgid "Move and drag state definitions to reorder"
+msgstr "Mové y arrastrá las definiciones de estado para reordenarlas"
+
+#: admin/templates/states_panel.html:28
+msgid "State Definition"
+msgstr "Definición de Estado"
+
+#: admin/templates/states_panel.html:60
+#: device/templates/tabs/user_properties.html:40
+msgid "Edit"
+msgstr "Editar"
+
+#: admin/templates/states_panel.html:79
+msgid "Update Order"
+msgstr "Actualizar orden"
+
+#: admin/templates/states_panel.html:85
+msgid "No states found on current organization"
+msgstr "No se encontraron estados en la organización actual"
+
+#: admin/templates/states_panel.html:96
+msgid "Add State Definition"
+msgstr "Agregar Definición de Estado"
+
+#: admin/templates/states_panel.html:104 admin/templates/states_panel.html:137
+msgid "State"
+msgstr "Estado"
+
+#: admin/templates/states_panel.html:106 admin/templates/states_panel.html:139
+msgid "Maximum 50 characters."
+msgstr "Máximo 50 caracteres."
+
+#: admin/templates/states_panel.html:109 admin/templates/states_panel.html:130
+#: admin/templates/states_panel.html:164 device/templates/details.html:219
+#: lot/templates/properties.html:56 lot/templates/properties.html:84
+msgid "Close"
+msgstr "Cerrar"
+
+#: admin/templates/states_panel.html:110
+msgid "Add state definition"
+msgstr "Agregar definición de estado"
+
+#: admin/templates/states_panel.html:128
+msgid "Edit State Definition"
+msgstr "Editar Definición de Estado"
+
+#: admin/templates/states_panel.html:134
+msgid ""
+"Existing devices with this state will not have their state names changed."
+msgstr ""
+"Los dispositivos existentes con este estado no tendrán sus nombres de estado "
+"modificados."
+
+#: admin/templates/states_panel.html:142 admin/templates/states_panel.html:177
+msgid "Any changes in order will not be saved."
+msgstr "Cualquier cambio en el orden no se guardará."
+
+#: admin/templates/states_panel.html:146
+msgid "Save Changes"
+msgstr "Guardar Cambios"
+
+#: admin/templates/states_panel.html:162
+msgid "Delete State Definition"
+msgstr "Eliminar Definición de Estado"
+
+#: admin/templates/states_panel.html:168
+msgid ""
+"Devices with a State of this description will not have their State altered"
+msgstr ""
+"Los dispositivos con un Estado de esta descripción no tendrán su Estado "
+"modificado."
+
+#: admin/views.py:34
 msgid "admin"
 msgstr "administrador"
 
-#: admin/views.py:36 dashboard/templates/base.html:96
+#: admin/views.py:43 dashboard/templates/base.html:97
 msgid "Users"
 msgstr "Usuarios"
 
-#: admin/views.py:37
+#: admin/views.py:44
 msgid "admin / Users"
 msgstr "administrador / Usuarios"
 
-#: admin/views.py:49 user/views.py:18
+#: admin/views.py:56 device/templates/tabs/log.html:10 user/views.py:18
 msgid "User"
 msgstr "Usuario"
 
-#: admin/views.py:50
+#: admin/views.py:57
 msgid "admin / User"
 msgstr "administrador / Usuario"
 
-#: admin/views.py:74
+#: admin/views.py:81
 msgid "Delete user"
 msgstr "Eliminar usuario"
 
-#: admin/views.py:91
+#: admin/views.py:98
 msgid "Edit user"
 msgstr "Editar usuario"
 
-#: admin/views.py:110 admin/views.py:112
+#: admin/views.py:117 admin/views.py:119
 msgid "Edit institution"
 msgstr "Editar institución"
+
+#: admin/views.py:141
+msgid "State definitions are the custom finite states that a device can be in."
+msgstr ""
+"Las definiciones de estado son los estados personalizados en los que puede "
+"estar un dispositivo."
+
+#: admin/views.py:148
+msgid "States Panel"
+msgstr "Panel de Estados"
+
+#: admin/views.py:149
+msgid "admin / States Panel"
+msgstr "administrador / Panel de Estados"
+
+#: admin/views.py:154
+msgid "New State Definition"
+msgstr "Nueva Definición de Estado"
+
+#: admin/views.py:165
+msgid "State definition successfully added."
+msgstr "Definición de estado agregada correctamente."
+
+#: admin/views.py:168
+msgid "State is already defined."
+msgstr "El estado ya está definido."
+
+#: admin/views.py:211
+msgid "Order changed succesfuly."
+msgstr "Orden cambiado correctamente."
+
+#: admin/views.py:227
+msgid "State definition updated successfully."
+msgstr "Definición de estado actualizada correctamente."
 
 #: api/tables.py:51
 msgid "Token"
 msgstr "Token"
 
-#: api/tables.py:52 evidence/forms.py:65 evidence/templates/ev_details.html:18
+#: api/tables.py:52 evidence/forms.py:69 evidence/templates/ev_details.html:18
 #: evidence/templates/ev_eraseserver.html:18
 msgid "Tag"
 msgstr "Etiqueta"
@@ -128,15 +324,15 @@ msgstr "Siguiente"
 msgid "Generate a new token"
 msgstr "Generar un nuevo token"
 
-#: api/views.py:144 api/views.py:178 api/views.py:196
+#: api/views.py:147 api/views.py:181 api/views.py:199
 msgid "Credential management"
 msgstr "Gestión de credenciales"
 
-#: api/views.py:146
+#: api/views.py:149
 msgid "Managament Tokens"
 msgstr "Tokens de gestión"
 
-#: api/views.py:180 api/views.py:198
+#: api/views.py:183 api/views.py:201
 msgid "New Tokens"
 msgstr "Nuevos Tokens"
 
@@ -144,54 +340,83 @@ msgstr "Nuevos Tokens"
 msgid "Permission denied. User is not authenticated"
 msgstr "Permiso denegado. El usuario no está autenticado"
 
-#: dashboard/templates/base.html:91
+#: dashboard/templates/base.html:92
 msgid "Panel"
 msgstr "Panel"
 
-#: dashboard/templates/base.html:105 evidence/templates/ev_details.html:15
+#: dashboard/templates/base.html:102
+msgid "States"
+msgstr "Estados"
+
+#: dashboard/templates/base.html:111 evidence/templates/ev_details.html:15
 #: evidence/templates/ev_eraseserver.html:15
 msgid "Devices"
 msgstr "Dispositivos"
 
-#: dashboard/templates/base.html:110
+#: dashboard/templates/base.html:116
+#: dashboard/templates/inventory_dashboard.html:29
 msgid "Unassigned"
 msgstr "Sin asignar"
 
-#: dashboard/templates/base.html:118 device/templates/details.html:24
+#: dashboard/templates/base.html:124 device/templates/details.html:178
 msgid "Lots"
 msgstr "Lotes"
 
-#: dashboard/templates/base.html:133 device/templates/details.html:30
-#: evidence/views.py:28 evidence/views.py:87 evidence/views.py:174
+#: dashboard/templates/base.html:139 device/templates/details.html:184
+#: evidence/views.py:29 evidence/views.py:88 evidence/views.py:148
 msgid "Evidences"
 msgstr "Evidencias"
 
-#: dashboard/templates/base.html:138
+#: dashboard/templates/base.html:144
 msgid "Upload"
 msgstr "Subir"
 
-#: dashboard/templates/base.html:143
+#: dashboard/templates/base.html:149
 msgid "Old evidences"
 msgstr "Evidencias antiguas"
 
-#: dashboard/templates/base.html:151
+#: dashboard/templates/base.html:157
 msgid "Placeholders"
 msgstr "Placeholders"
 
-#: dashboard/templates/base.html:156
+#: dashboard/templates/base.html:162
 msgid "Import from spreadsheet"
 msgstr "Importar desde hoja de cálculo"
 
-#: dashboard/templates/base.html:161
+#: dashboard/templates/base.html:167
 msgid "Add device"
-msgstr "Nuevo Dispositivo"
+msgstr "Agregar dispositivo"
 
-#: dashboard/templates/base.html:186
+#: dashboard/templates/base.html:198
 msgid "Search your device"
 msgstr "Buscar dispositivos"
 
+#: dashboard/templates/inventory_dashboard.html:13
+msgid "Total Devices"
+msgstr "Total de Dispositivos"
+
+#: dashboard/templates/inventory_dashboard.html:21
+msgid "Assigned"
+msgstr "Asignados"
+
+#: dashboard/templates/inventory_dashboard.html:38
+msgid "States Distribution"
+msgstr "Distribución de Estados"
+
+#: dashboard/templates/inventory_dashboard.html:40
+msgid "Active"
+msgstr "Activo"
+
+#: dashboard/templates/inventory_dashboard.html:41
+msgid "Repair"
+msgstr "Reparación"
+
+#: dashboard/templates/inventory_dashboard.html:42
+msgid "Discarded"
+msgstr "Descartado"
+
 #: dashboard/templates/unassigned_devices.html:15
-#: device/templates/details.html:21 device/templates/details.html:150
+#: device/templates/details.html:175 device/templates/tabs/documents.html:12
 #: lot/templates/documents.html:22
 msgid "Documents"
 msgstr "Documentos"
@@ -201,48 +426,42 @@ msgid "Exports"
 msgstr "Exportar"
 
 #: dashboard/templates/unassigned_devices.html:25
-#: device/templates/details.html:111 lot/templates/annotations.html:22
-msgid "Annotations"
-msgstr "Anotaciones"
+msgid "properties"
+msgstr "propiedades"
 
 #: dashboard/templates/unassigned_devices.html:41
 msgid "Short ID"
-msgstr ""
+msgstr "ID Corto"
 
 #: dashboard/templates/unassigned_devices.html:44 device/forms.py:25
+#: device/templates/tabs/general_details.html:26
 #: evidence/templates/ev_details.html:38
 msgid "Type"
 msgstr "Tipo"
 
 #: dashboard/templates/unassigned_devices.html:47
-#: device/templates/details.html:71
+#: device/templates/tabs/general_details.html:43
 msgid "Manufacturer"
 msgstr "Fabricante"
 
 #: dashboard/templates/unassigned_devices.html:50
-#: device/templates/details.html:78
+#: device/templates/tabs/general_details.html:50
 msgid "Model"
 msgstr "Modelo"
 
-#: dashboard/templates/unassigned_devices.html:80
+#: dashboard/templates/unassigned_devices.html:84
 msgid "Remove"
 msgstr "Eliminar"
 
-#: dashboard/templates/unassigned_devices.html:83
-msgid "Add"
-msgstr "Agregar"
-
 #: dashboard/views.py:18
 msgid "Unassigned Devices"
-msgstr "Sin asignar"
+msgstr "Dispositivos sin asignar"
 
 #: dashboard/views.py:28
 msgid "Lot Devices"
 msgstr "Dispositivos del lote"
 
 #: dashboard/views.py:52
-#, fuzzy
-#| msgid "Search your device"
 msgid "Search Devices"
 msgstr "Buscar dispositivos"
 
@@ -252,71 +471,110 @@ msgstr "Cantidad"
 
 #: device/forms.py:27
 msgid "Custom id"
-msgstr "Identificador personalizado"
+msgstr "ID personalizado"
 
 #: device/forms.py:28 user/models.py:10
 msgid "Name"
 msgstr "Nombre"
 
-#: device/forms.py:29 device/templates/details.html:119
-#: device/templates/details.html:158 lot/templates/annotations.html:27
-#: lot/templates/documents.html:27
+#: device/forms.py:29 device/templates/tabs/documents.html:21
+#: device/templates/tabs/user_properties.html:19
+#: device/templates/tabs/user_properties.html:116
+#: lot/templates/annotations.html:27 lot/templates/documents.html:27
+#: lot/templates/properties.html:66
 msgid "Value"
 msgstr "Valor"
 
-#: device/templates/details.html:15
+#: device/templates/details.html:9
+msgid "View recent notes"
+msgstr "Ver notas recientes"
+
+#: device/templates/details.html:11
+msgid "Journal"
+msgstr "Diario"
+
+#: device/templates/details.html:19
+msgid "Latest Notes"
+msgstr "Últimas notas"
+
+#: device/templates/details.html:28
+msgid "ago"
+msgstr "hace"
+
+#: device/templates/details.html:32
+msgid "Editable"
+msgstr "Editar lote"
+
+#: device/templates/details.html:39
+msgid "Click to edit this note"
+msgstr "Haz click para editar esta nota"
+
+#: device/templates/details.html:70
+#: device/templates/tabs/user_properties.html:123
+#: lot/templates/properties.html:71
+msgid "Save changes"
+msgstr "Guardar Cambios"
+
+#: device/templates/details.html:78
+msgid "Delete note"
+msgstr "Eliminar nota"
+
+#: device/templates/details.html:86
+msgid "Are you sure you want to delete this note?"
+msgstr "¿Estás seguro que quieres eliminar esta nota??"
+
+#: device/templates/details.html:92
+msgid "Confirm delete"
+msgstr "Confirmar borrado"
+
+#: device/templates/details.html:102
+msgid "No notes available."
+msgstr "No hay notas disponibles"
+
+#: device/templates/details.html:119 device/templates/details.html:146
+msgid "Change state"
+msgstr "Cambiar estado"
+
+#: device/templates/details.html:123
+msgid "None"
+msgstr "N/a"
+
+#: device/templates/details.html:154
+msgid "Add a note"
+msgstr "Agregar nota"
+
+#: device/templates/details.html:166
 msgid "General details"
 msgstr "Detalles generales"
 
-#: device/templates/details.html:18
-msgid "User annotations"
-msgstr "Anotaciones del usuario"
+#: device/templates/details.html:169
+msgid "Log"
+msgstr ""
 
-#: device/templates/details.html:27
+#: device/templates/details.html:172
+#: device/templates/tabs/user_properties.html:13
+msgid "User properties"
+msgstr "Propiedades del usuario"
+
+#: device/templates/details.html:181
 msgid "Components"
 msgstr "Componentes"
 
-#: device/templates/details.html:41
-msgid "Details"
-msgstr "Detalles"
-
-#: device/templates/details.html:50
-msgid "Is a erase server"
-msgstr "Es un servidor de borrado"
-
-#: device/templates/details.html:85
-msgid "Serial Number"
-msgstr "Número de serie"
-
-#: device/templates/details.html:93
-msgid "Identifiers"
-msgstr "Identificadores"
-
-#: device/templates/details.html:107 lot/templates/annotations.html:17
-msgid "Add new annotation"
-msgstr "Agregar nueva anotación"
-
-#: device/templates/details.html:116 device/templates/details.html:155
-#: lot/templates/annotations.html:26 lot/templates/documents.html:26
-msgid "Key"
-msgstr "Clave"
-
-#: device/templates/details.html:122 device/templates/details.html:161
-#: lot/templates/annotations.html:28
-msgid "Created on"
-msgstr "Creado el"
-
-#: device/templates/details.html:146 lot/templates/documents.html:17
-msgid "Add new document"
-msgstr "Agregar nuevo documento"
-
-#: device/templates/details.html:197
-msgid "Components last evidence"
-msgstr "Última evidencia de componentes"
+#: device/templates/details.html:188
+msgid "Dpps"
+msgstr ""
 
 #: device/templates/details.html:218
-msgid "List of evidences"
-msgstr "Lista de evidencias"
+msgid "Add a Note"
+msgstr "Agregar nuevo lote"
+
+#: device/templates/details.html:226
+msgid "Note"
+msgstr ""
+
+#: device/templates/details.html:231
+msgid "Save Note"
+msgstr "Guardar nota"
 
 #: device/templates/new_device.html:60
 msgid "Component details"
@@ -326,55 +584,187 @@ msgstr "Detalles del componente"
 msgid "Add component"
 msgstr "Agregar componente"
 
-#: device/views.py:23
+#: device/templates/tabs/components.html:5
+msgid "Components last evidence"
+msgstr "Última evidencia de componentes"
+
+#: device/templates/tabs/documents.html:8 lot/templates/documents.html:17
+msgid "Add new document"
+msgstr "Agregar nuevo documento"
+
+#: device/templates/tabs/documents.html:18
+#: device/templates/tabs/user_properties.html:18
+#: device/templates/tabs/user_properties.html:111
+#: lot/templates/annotations.html:26 lot/templates/documents.html:26
+#: lot/templates/properties.html:62
+msgid "Key"
+msgstr "Clave"
+
+#: device/templates/tabs/documents.html:24
+#: device/templates/tabs/user_properties.html:20
+#: lot/templates/annotations.html:28
+msgid "Created on"
+msgstr "Creado el"
+
+#: device/templates/tabs/evidences.html:5
+msgid "List of evidences"
+msgstr "Lista de evidencias"
+
+#: device/templates/tabs/general_details.html:6
+msgid "Details"
+msgstr "Detalles"
+
+#: device/templates/tabs/general_details.html:10
+msgid "Phid"
+msgstr ""
+
+#: device/templates/tabs/general_details.html:18
+msgid "Is an erase server"
+msgstr "Es un servidor de borrado"
+
+#: device/templates/tabs/general_details.html:58
+msgid "Version"
+msgstr "Versión"
+
+#: device/templates/tabs/general_details.html:64
+msgid "Serial Number"
+msgstr "Número de serie"
+
+#: device/templates/tabs/general_details.html:72
+msgid "Identifiers"
+msgstr "Identificadores"
+
+#: device/templates/tabs/log.html:8
+msgid "Date"
+msgstr "Fecha"
+
+#: device/templates/tabs/log.html:9
+msgid "Event"
+msgstr "Evento"
+
+#: device/templates/tabs/log.html:22
+msgid "No logs recorded."
+msgstr "No existen registros"
+
+#: device/templates/tabs/user_properties.html:9
+msgid "New user property"
+msgstr "Nuevo propiedad del usuario"
+
+#: device/templates/tabs/user_properties.html:63
+msgid "Confirm Deletion"
+msgstr "Confirmar borrado"
+
+#: device/templates/tabs/user_properties.html:70
+msgid "Key:"
+msgstr "Llave:"
+
+#: device/templates/tabs/user_properties.html:74
+msgid "Value:"
+msgstr "Valor:"
+
+#: device/templates/tabs/user_properties.html:78
+msgid "Created on:"
+msgstr "Creado el:"
+
+#: device/templates/tabs/user_properties.html:102
+msgid "Edit User Property"
+msgstr "Editar propiedad del usuarior"
+
+#: device/views.py:29
 msgid "New Device"
 msgstr "Nuevo dispositivo"
 
-#: device/views.py:69
+#: device/views.py:75
 msgid "Update Device"
 msgstr "Actualizar dispositivo"
 
-#: device/views.py:88
+#: device/views.py:94
 msgid "Device"
 msgstr "Dispositivo"
 
-#: device/views.py:172
-msgid "New annotation"
-msgstr "Nueva anotación"
+#: device/views.py:194
+msgid "New User Property"
+msgstr "Nueva propiedad del usuario"
 
-#: device/views.py:205 lot/views.py:147 lot/views.py:171
-#, fuzzy
-#| msgid "Documents"
+#: device/views.py:205
+msgid "<Created> UserProperty: {}: {}"
+msgstr ""
+
+#: device/views.py:213
+msgid "User property successfully added."
+msgstr "Evidencia importada exitosamente."
+
+#: device/views.py:230
+msgid "Update User Property"
+msgstr "Actualizar Propiedad del usuario"
+
+#: device/views.py:253
+msgid "<Updated> UserProperty: {}: {} to {}: {}"
+msgstr ""
+
+#: device/views.py:261
+msgid "User property updated successfully."
+msgstr "Propiedad del usuario actualiazada exitosamente."
+
+#: device/views.py:279
+msgid "<Deleted> User Property: {}:{}"
+msgstr ""
+
+#: device/views.py:287
+msgid "User property deleted successfully."
+msgstr "Propiedad del usuario borrada exitosamente."
+
+#: device/views.py:299 lot/views.py:147 lot/views.py:171
 msgid "New Document"
 msgstr "Nuevo Documento"
 
-#: evidence/forms.py:16
+#: dhub/settings.py:186
+msgid "spanish"
+msgstr "español"
+
+#: dhub/settings.py:187
+msgid "english"
+msgstr "inglés"
+
+#: dhub/settings.py:188
+msgid "català"
+msgstr "catalán"
+
+#: evidence/forms.py:17
 msgid "File"
 msgstr "Archivo"
 
-#: evidence/forms.py:39
+#: evidence/forms.py:41
 msgid "The snapshot already exists"
 msgstr "La instantánea ya existe"
 
-#: evidence/forms.py:46
+#: evidence/forms.py:48
 #, python-format
 msgid "Error on '%(file_name)s': %(error)s"
 msgstr "Error en '%(file_name)s': %(error)s"
 
+#: evidence/forms.py:109
+msgid "<Deleted> Evidence Tag. Old Value: '{}'"
+msgstr ""
+
 #: evidence/forms.py:120
+msgid "<Created> Evidence Tag. Value: '{}'"
+msgstr ""
+
+#: evidence/forms.py:139
 msgid "File to import"
 msgstr "Archivo a importar"
 
-#: evidence/forms.py:138
+#: evidence/forms.py:157
 #, python-format
 msgid "Error on '%(file_name)s': Invalid File"
 msgstr "Error en '%(file_name)s': Archivo inválido"
 
-#: evidence/forms.py:147
+#: evidence/forms.py:166
 msgid "The file you try to import is empty!"
 msgstr "¡El archivo que intentas importar está vacío!"
 
-#: evidence/forms.py:183
+#: evidence/forms.py:202
 msgid "Is a Erase Server"
 msgstr "Es un servidor de borrado"
 
@@ -396,21 +786,29 @@ msgstr "Identificador"
 msgid "Data"
 msgstr "Datos"
 
-#: evidence/views.py:44
+#: evidence/views.py:45
 msgid "Upload Evidence"
 msgstr "Subir evidencia"
 
-#: evidence/views.py:51
+#: evidence/views.py:52
 msgid "Evidence uploaded successfully."
 msgstr "Evidencia subida exitosamente."
 
-#: evidence/views.py:63
+#: evidence/views.py:64
 msgid "Import Evidence"
 msgstr "Importar evidencia"
 
-#: evidence/views.py:75
+#: evidence/views.py:76
 msgid "Evidence imported successfully."
 msgstr "Evidencia importada exitosamente."
+
+#: evidence/views.py:200
+msgid "<Deleted> Evidence Tag: {}"
+msgstr ""
+
+#: evidence/views.py:209
+msgid "Evicende Tag deleted successfully."
+msgstr "Tag de la evidencia eliminado exitosamente."
 
 #: login/templates/2fadmin.html:8
 msgid "Two-factor Authentication"
@@ -628,6 +1026,14 @@ msgstr "Iniciar sesión"
 msgid "Login error. Check credentials."
 msgstr "Error al iniciar sesión. Verifica tus credenciales."
 
+#: lot/templates/annotations.html:17
+msgid "Add new annotation"
+msgstr "Agregar nueva anotación"
+
+#: lot/templates/annotations.html:22
+msgid "Annotations"
+msgstr "Anotaciones"
+
 #: lot/templates/documents.html:28
 #, fuzzy
 #| msgid "Created on"
@@ -645,6 +1051,18 @@ msgstr "Mostrar lotes cerrados"
 #: lot/templates/lots.html:22
 msgid "Add new lot"
 msgstr "Agregar nuevo lote"
+
+#: lot/templates/properties.html:55
+msgid "Edit Property"
+msgstr "Editar propiedad"
+
+#: lot/templates/properties.html:83
+msgid "Delete Property"
+msgstr "Eliminar propiedad"
+
+#: lot/templates/properties.html:87
+msgid "Are you sure you want to delete this property?"
+msgstr "¿Seguro que deseas eliminar esta propiedad?"
 
 #: lot/views.py:18
 msgid "New lot"
@@ -671,8 +1089,20 @@ msgid "lots"
 msgstr "lotes"
 
 #: lot/views.py:194 lot/views.py:217
-msgid "New Annotation"
-msgstr "Nueva anotación"
+msgid "New Lot Property"
+msgstr "Nueva propiedad de lote"
+
+#: lot/views.py:241
+msgid "Update lot Property"
+msgstr "Actualizar propiedad de lote"
+
+#: lot/views.py:268
+msgid "Lot property updated successfully."
+msgstr "Evidencia importada exitosamente."
+
+#: lot/views.py:291
+msgid "Lot property deleted successfully."
+msgstr "Evidencia importada exitosamente."
 
 #: user/models.py:16
 msgid "Logo"
@@ -721,3 +1151,12 @@ msgstr "Descargar un archivo de configuración"
 #: user/views.py:25
 msgid "Download Settings"
 msgstr "Descargar configuración"
+
+#~ msgid "User annotations"
+#~ msgstr "Anotaciones del usuario"
+
+#~ msgid "New annotation"
+#~ msgstr "Nueva anotación"
+
+#~ msgid "New Annotation"
+#~ msgstr "Nueva anotación"
