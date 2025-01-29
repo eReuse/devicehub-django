@@ -41,8 +41,7 @@ class UserProperty(Property):
 
     class Type(models.IntegerChoices):
         USER = 1, "User"
-        DOCUMENT = 2, "Document"
-        ERASE_SERVER = 3, "EraseServer"
+        ERASE_SERVER = 2, "EraseServer"
 
     type = models.SmallIntegerField(choices=Type, default=Type.USER)
 
