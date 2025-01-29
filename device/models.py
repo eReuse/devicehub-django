@@ -345,3 +345,8 @@ class Device:
             })
 
         return data
+    
+    @property
+    def did_document(self):
+        self.get_last_evidence()
+        return self.last_evidence.get_did_document()

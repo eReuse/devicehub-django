@@ -206,3 +206,14 @@ class Evidence:
 
     def is_web_snapshot(self):
         return self.doc.get("type") == "WebSnapshot"
+
+    def did_document(self):
+        if not self.doc.get("credentialSubject"):
+            return ''
+        did = self.doc.get('issuer')
+        if not "did:web" in did:
+            return ''
+
+        return  "https://{}/did.json".format(
+            did.split("did:web:")[1].replace(":", "/")
+        )
