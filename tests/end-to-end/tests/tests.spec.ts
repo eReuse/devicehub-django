@@ -156,6 +156,7 @@ test.only('States: duplication tests', async ({ page }) => {
     await page.getByRole('textbox', { name: 'State' }).fill('TEST_STATE');
     await page.getByRole('button', { name: 'Add state definition' }).click();
 
+    // you edit state, and target name already exists
     // TODO uncomment. "Cannot create key that already exists (UNIQUE constraint)"
     // edit state (duplicated during edit): TEST_STATE_EDIT -> TEST_STATE
     //await page.getByRole('row', { name: 'TEST_STATE  Edit  Delete' }).getByRole('button').first().click();
