@@ -2,108 +2,6 @@
 {% load i18n %}
 
 {% block content %}
-
-<div class="position-fixed" style="bottom: 2rem; right: 2rem; z-index: 9999; display: flex; gap: 0.5rem;">
-  <button class="btn btn-yellow d-flex align-items-center shadow" type="button"
-          data-bs-toggle="offcanvas" data-bs-target="#notesOffcanvas" aria-controls="notesOffcanvas"
-          data-bs-toggle="tooltip" data-bs-placement="left" title="{% trans 'View recent notes' %}">
-    <i class="bi bi-journal-text me-1"></i>
-    {% trans "Journal" %}
-  </button>
-</div>
-
-<!-- side panel for latest notes -->
-
-<div class="offcanvas offcanvas-end" tabindex="-1" id="notesOffcanvas" aria-labelledby="notesOffcanvasLabel">
-  <div class="offcanvas-header">
-    <h5 id="notesOffcanvasLabel">{% trans "Latest Notes" %}</h5>
-    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-  </div>
-  <div class="offcanvas-body" style="margin-bottom: 5rem;">
-    {% for note in device_notes|slice:":4" %}
-      <div class="card mb-3 shadow-sm">
-        <div class="card-body">
-          <div>
-            <small class="text-muted">
-              {{ note.date|timesince }} {% trans "ago" %}
-            </small>
-
-          {% if user == note.user or user.is_admin %}
-          <span class="badge bg-yellow text-dark ms-2">{% trans "Editable" %}</span>
-          </div>
-          <blockquote
-              class="blockquote mt-2 p-2 bg-light fst-italic"
-              contenteditable="true"
-              style="font-size: 1.2em!important"
-              data-note-id="{{ note.id }}"
-              title="{% trans 'Click to edit this note' %}"
-              oninput="toggleSaveLink(this)">
-          {% else %}
-          </div>
-            <blockquote style="font-size: 1.2em!important" class="blockquote mt-2 p-2 fst-italic">
-          {% endif %}
-          <p data-note-id="{{ note.id }}">
-            {{ note.description }}
-          </p>
-            <footer class="blockquote-footer text-end mt-2" contenteditable="false">
-              <small>{{ note.user.get_full_name|default:note.user.username }}</small>
-            </footer>
-          </blockquote>
-
-          {% if user == note.user or user.is_admin %}
-            <div class="d-flex justify-content-end align-items-center">
-
-              <!-- update note button -->
-              <form
-                id="updateNoteForm{{ note.id }}"
-                method="post"
-                action="{% url 'action:update_note' note.id %}"
-                class="d-inline"
-              >
-                {% csrf_token %}
-                <input type="hidden" name="description" id="descriptionInput{{ note.id }}" value="">
-                <a
-                  type="submit"
-                  id="saveLink{{ note.id }}"
-                  class="text-muted disabled me-4  border border-light rounded"
-                  style="pointer-events: none;"
-                  title="{% trans 'Save changes' %}"
-                  onclick="submitUpdatedNote('{{ note.id }}'); return false;"
-                >
-                  <i class="fas fa-save px-1"></i>
-                </a>
-              </form>
-
-              <!-- delete note button -->
-              <button type="button" class="btn btn-link btn-outline-danger btn-sm text-danger" id="deleteIcon{{ note.id }}" title="{% trans 'Delete note' %}" data-bs-toggle="collapse" data-bs-target="#confirmDelete{{ note.id }}">
-                <i class="bi bi-trash"></i>
-              </button>
-            </div>
-            <form class="d-inline" method="post" action="{% url 'action:delete_note' note.id %}">
-              {% csrf_token %}
-              <div class="collapse mt-2" id="confirmDelete{{ note.id }}">
-                <div class="card card-body border border-danger text-center">
-                  <p class="mb-2">{% trans 'Are you sure you want to delete this note?' %}</p>
-                  <a
-                    href="#"
-                    class="btn btn-sm btn-outline-danger"
-                    onclick="submitDeleteForm({{ note.id }}); return false;"
-                  >
-                    {% trans 'Confirm delete' %}
-                  </a>
-                </div>
-              </div>
-            </form>
-          {% endif %}
-
-        </div>
-      </div>
-    {% empty %}
-      <p>{% trans "No notes available." %}</p>
-    {% endfor %}
-  </div>
-</div>
-
 <!-- Top bar buttons -->
 <div class="row">
   <div class="col">
@@ -166,13 +64,7 @@
           <a href="#details" class="nav-link active" data-bs-toggle="tab" data-bs-target="#details">{% trans 'General details' %}</a>
         </li>
         <li class="nav-item">
-          <a href="#log" class="nav-link" data-bs-toggle="tab" data-bs-target="#log">{% trans 'Log' %}</a>
-        </li>
-        <li class="nav-item">
-          <a href="#user_properties" class="nav-link" data-bs-toggle="tab" data-bs-target="#user_properties">{% trans 'User properties' %}</a>
-        </li>
-        <li class="nav-item">
-          <a href="#documents" class="nav-link" data-bs-toggle="tab" data-bs-target="#documents">{% trans 'Documents' %}</a>
+          <a href="#user_properties" class="nav-link" data-bs-toggle="tab" data-bs-target="#user_properties">{% trans 'Properties' %}</a>
         </li>
         <li class="nav-item">
           <a href="#lots" class="nav-link" data-bs-toggle="tab" data-bs-target="#lots">{% trans 'Lots' %}</a>
@@ -191,6 +83,9 @@
         <li class="nav-item">
           <a class="nav-link" href="{% url 'device:device_web' object.id %}" target="_blank">Web</a>
         </li>
+        <li class="nav-item">
+          <a href="#log" class="nav-link" data-bs-toggle="tab" data-bs-target="#log">{% trans 'Log' %}</a>
+        </li>
       </ul>
     </div>
   </div>
@@ -201,8 +96,6 @@
   {% include 'tabs/log.html' %}
 
   {% include 'tabs/user_properties.html' %}
-
-  {% include 'tabs/documents.html' %}
 
   {% include 'tabs/lots.html' %}
 
@@ -256,27 +149,5 @@
         }
       }
     })
-
-    //Enable save button on note if changes are made to it
-    function toggleSaveLink(blockquoteElem) {
-      const saveLink = document.getElementById("saveLink" + blockquoteElem.dataset.noteId);
-
-      saveLink.classList.remove("disabled", "text-muted", "border-light");
-      saveLink.classList.add("text-success", "border-success");
-      saveLink.style.pointerEvents = "auto";
-
-    }
-    //updates note-update-form with new value from blockquote
-    function submitUpdatedNote(noteId) {
-      const noteParagraph = document.querySelector('p[data-note-id="' + noteId + '"]');
-      const newText = noteParagraph.innerText.trim();
-      const descriptionField = document.getElementById('descriptionInput' + noteId);
-      descriptionField.value = newText;
-      document.getElementById('updateNoteForm' + noteId).submit();
-    }
-    //simpler are u sure? confirmation message
-    function submitDeleteForm(noteId) {
-      document.getElementById('confirmDelete' + noteId).closest('form').submit();
-    }
   </script>
 {% endblock %}
