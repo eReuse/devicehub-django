@@ -6,8 +6,8 @@ from utils.constants import (
     STR_EXTEND_SIZE,
 )
 
-from user.models import User, Institution   
-from evidence.models import Property    
+from user.models import User, Institution
+from evidence.models import Property
 # from device.models import Device
 
 
@@ -40,7 +40,7 @@ class Lot(models.Model):
         if DeviceLot.objects.filter(lot=self, device_id=v).exists():
             return
         DeviceLot.objects.create(lot=self, device_id=v)
-        
+
     def remove(self, v):
         for d in DeviceLot.objects.filter(lot=self, device_id=v):
             d.delete()
@@ -51,6 +51,5 @@ class LotProperty (Property):
     class Type(models.IntegerChoices):
         SYSTEM = 0, "System"
         USER = 1, "User"
-        DOCUMENT = 2, "Document"
 
     type = models.SmallIntegerField(choices=Type.choices, default=Type.USER)
