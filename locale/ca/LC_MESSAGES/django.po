@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 0.1 \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-01-29 17:02-0300\n"
+"POT-Creation-Date: 2025-01-29 19:04-0300\n"
 "PO-Revision-Date: 2025-01-29 17:02-0300\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -210,7 +210,8 @@ msgstr "Edita la definició d'estat"
 #: admin/templates/states_panel.html:134
 msgid ""
 "Existing devices with this state will not have their state names changed."
-msgstr "Els dispositius amb aquest estat no veuran canviats els seus noms d'estat."
+msgstr ""
+"Els dispositius amb aquest estat no veuran canviats els seus noms d'estat."
 
 #: admin/templates/states_panel.html:142 admin/templates/states_panel.html:177
 msgid "Any changes in order will not be saved."
@@ -227,7 +228,9 @@ msgstr "Elimina la definició d'estat"
 #: admin/templates/states_panel.html:168
 msgid ""
 "Devices with a State of this description will not have their State altered"
-msgstr "Els dispositius amb un estat d'aquesta descripció no veuran alterat el seu estat."
+msgstr ""
+"Els dispositius amb un estat d'aquesta descripció no veuran alterat el seu "
+"estat."
 
 #: admin/views.py:34
 msgid "admin"
@@ -264,34 +267,36 @@ msgstr "Edita institució"
 #: admin/views.py:141
 msgid "State definitions are the custom finite states that a device can be in."
 msgstr ""
+"Les definicions d'estat són els estats personalitzats en què pot estar un "
+"dispositiu."
 
 #: admin/views.py:148
 msgid "States Panel"
-msgstr ""
+msgstr "Panell d'estats"
 
 #: admin/views.py:149
 msgid "admin / States Panel"
-msgstr "administrador / Usuari"
+msgstr "administrador / Panell d'estats"
 
 #: admin/views.py:154
 msgid "New State Definition"
-msgstr ""
+msgstr "Nova definició d'estat"
 
 #: admin/views.py:165
 msgid "State definition successfully added."
-msgstr ""
+msgstr "Definició d'estat afegida correctament."
 
 #: admin/views.py:168
 msgid "State is already defined."
-msgstr ""
+msgstr "L'estat ja està definit."
 
 #: admin/views.py:211
 msgid "Order changed succesfuly."
-msgstr "Evidència carregada amb èxit."
+msgstr "Ordre canviat correctament."
 
 #: admin/views.py:227
 msgid "State definition updated successfully."
-msgstr "Evidència carregada amb èxit."
+msgstr "Definició d'estat actualitzada correctament."
 
 #: api/tables.py:51
 msgid "Token"
@@ -334,6 +339,7 @@ msgstr "Permís denegat. L'usuari no està autenticat"
 #: dashboard/templates/base.html:92
 msgid "Panel"
 msgstr "Panell"
+
 #: dashboard/templates/base.html:102
 msgid "States"
 msgstr "Estats"
@@ -707,18 +713,6 @@ msgstr "Propietat d'usuari eliminada correctament."
 #: device/views.py:299 lot/views.py:147 lot/views.py:171
 msgid "New Document"
 msgstr "Nou document"
-
-#: dhub/settings.py:190
-msgid "spanish"
-msgstr "espanyol"
-
-#: dhub/settings.py:191
-msgid "english"
-msgstr "anglès"
-
-#: dhub/settings.py:192
-msgid "català"
-msgstr "català"
 
 #: evidence/forms.py:17
 msgid "File"
