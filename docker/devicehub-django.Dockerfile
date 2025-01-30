@@ -6,6 +6,7 @@ RUN apt update && \
     python3-xapian \
     git \
     sqlite3 \
+    curl \
     jq \
     time \
     vim \
