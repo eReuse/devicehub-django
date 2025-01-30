@@ -32,7 +32,10 @@ main() {
         rm -vfr ./already_configured
         docker compose down -v
         if [ "${DEV_DOCKER_ALWAYS_BUILD:-}" = 'true' ]; then
+                docker compose pull --ignore-buildable
                 docker compose build
+        else
+                docker compose pull
         fi
         docker compose up ${detach_arg:-}
 }
