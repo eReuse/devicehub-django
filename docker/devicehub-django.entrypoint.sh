@@ -120,8 +120,12 @@ END
 
 # wait until idhub api is prepared to received requests
 wait_idhub() {
+        echo "Start waiting idhub API"
         while true; do
-                result="$(curl -s "${url}" | jq -r .error)"
+                result="$(curl -s "${url}" \
+                               | jq -r .error \
+                               || echo "Reported errors, idhub API is still not ready")"
+
                 if [ "${result}" = "Invalid request method" ]; then
                         break
                 else
