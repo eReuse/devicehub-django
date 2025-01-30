@@ -128,9 +128,10 @@ wait_idhub() {
 
                 if [ "${result}" = "Invalid request method" ]; then
                         break
+                        sleep 2
                 else
                         echo "Waiting idhub API"
-                        sleep 1
+                        sleep 3
                 fi
         done
 }
