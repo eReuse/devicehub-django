@@ -148,7 +148,7 @@
               <li class="nav-item">
                 <a class="admin {% if path in 'import add' %}active {% endif %}nav-link fw-bold" data-bs-toggle="collapse" data-bs-target="#ul_placeholders" aria-expanded="false" aria-controls="ul_placeholders" href="javascript:void()">
                   <i class="bi-menu-button-wide icon_sidebar"></i>
-                  {% trans 'Placeholders' %}
+                  {% trans '+ Add device' %}
                 </a>
                 <ul class="flex-column mb-2 ul_sidebar accordion-collapse {% if path in 'import add' %}expanded{% else %}collapse{% endif %}" id="ul_placeholders" data-bs-parent="#sidebarMenu">
                   <li class="nav-item">
@@ -158,7 +158,7 @@
                   </li>
                   <li class="nav-item">
                     <a class="nav-link{% if path == 'add' %} active2{% endif %}" href="{% url 'device:add' %}">
-                      {% trans 'Create one' %}
+                      {% trans 'Add one' %}
                     </a>
                   </li>
                 </ul>

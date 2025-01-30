@@ -40,7 +40,7 @@ main() {
         docker compose up ${detach_arg:-}
 }
 
-main "${@}"
+main "${@:-default_value}"
 
 # written in emacs
 # -*- mode: shell-script; -*-
