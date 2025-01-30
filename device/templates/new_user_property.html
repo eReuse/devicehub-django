@@ -36,7 +36,7 @@
     {% endfor %}
   </div>
   <div class="container">
-    <a class="btn btn-grey" href="{% url 'dashboard:unassigned_devices' %}">{% translate "Cancel" %}</a>
+    <a class="btn btn-grey" href="{% url 'device:details' pk %}#user_properties">{% translate "Cancel" %}</a>
     <input class="btn btn-green-admin" type="submit" name="submit" value="{% translate 'Save' %}" />
   </div>
 
