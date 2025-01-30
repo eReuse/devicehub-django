@@ -14,13 +14,14 @@ class State(models.Model):
     def clean(self):
         if not StateDefinition.objects.filter(institution=self.institution, state=self.state).exists():
             raise ValidationError(f"The state '{self.state}' is not valid for the institution '{self.institution.name}'.")
-    
+
     def save(self, *args, **kwargs):
         self.clean()
         super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.institution.name} - {self.state} - {self.snapshot_uuid}"
+
 
 class StateDefinition(models.Model):
     institution = models.ForeignKey(Institution, on_delete=models.CASCADE)
@@ -41,7 +42,7 @@ class StateDefinition(models.Model):
             self.order = (max_order or 0) + 1
         super().save(*args, **kwargs)
 
-    
+
     def delete(self, *args, **kwargs):
         institution = self.institution
         order = self.order
