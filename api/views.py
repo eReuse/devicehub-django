@@ -90,7 +90,7 @@ class NewSnapshotView(ApiMixing):
             ev_uuid = data["credentialSubject"].get("uuid")
 
         if not ev_uuid:
-            txt = "error: the snapshot not have uuid"
+            txt = "error: the snapshot does not have an uuid"
             logger.error("%s", txt)
             return JsonResponse({'status': txt}, status=500)
 
