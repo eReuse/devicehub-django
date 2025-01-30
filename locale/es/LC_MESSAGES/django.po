@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 1.0 \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-01-29 11:33-0300\n"
+"POT-Creation-Date: 2025-01-29 19:04-0300\n"
 "PO-Revision-Date: 2025-01-27 12:49-0300\n"
 "Last-Translator: NOMBRE COMPLETO <EMAIL@ADDRESS>\n"
 "Language-Team: \n"
@@ -718,25 +718,13 @@ msgstr "Propiedad del usuario borrada exitosamente."
 msgid "New Document"
 msgstr "Nuevo Documento"
 
-#: dhub/settings.py:186
-msgid "spanish"
-msgstr "español"
-
-#: dhub/settings.py:187
-msgid "english"
-msgstr "inglés"
-
-#: dhub/settings.py:188
-msgid "català"
-msgstr "catalán"
-
 #: evidence/forms.py:17
 msgid "File"
 msgstr "Archivo"
 
 #: evidence/forms.py:41
 msgid "The snapshot already exists"
-msgstr "La instantánea ya existe"
+msgstr "El snapshot ya existe"
 
 #: evidence/forms.py:48
 #, python-format
@@ -1151,6 +1139,15 @@ msgstr "Descargar un archivo de configuración"
 #: user/views.py:25
 msgid "Download Settings"
 msgstr "Descargar configuración"
+
+#~ msgid "english"
+#~ msgstr "inglés"
+
+#~ msgid "català"
+#~ msgstr "catalán"
+
+#~ msgid "spanish"
+#~ msgstr "español"
 
 #~ msgid "User annotations"
 #~ msgstr "Anotaciones del usuario"
