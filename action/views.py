@@ -2,6 +2,7 @@ from django.views import View
 from django.shortcuts import redirect, get_object_or_404
 from django.contrib import messages
 from action.forms import ChangeStateForm, AddNoteForm
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic.edit import DeleteView, CreateView, UpdateView, FormView
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
@@ -9,7 +10,7 @@ from action.models import State, StateDefinition, Note, DeviceLog
 from device.models import Device
 
 
-class ChangeStateView(FormView):
+class ChangeStateView(LoginRequiredMixin, FormView):
     form_class = ChangeStateForm
 
     def form_valid(self, form):
@@ -42,7 +43,7 @@ class ChangeStateView(FormView):
         return self.request.META.get('HTTP_REFERER') or reverse_lazy('device:details')
 
 
-class AddNoteView(FormView):
+class AddNoteView(LoginRequiredMixin, FormView):
     form_class = AddNoteForm
 
     def form_valid(self, form):
@@ -73,7 +74,7 @@ class AddNoteView(FormView):
         return self.request.META.get('HTTP_REFERER') or reverse_lazy('device:details')
 
 
-class UpdateNoteView(UpdateView):
+class UpdateNoteView(LoginRequiredMixin, UpdateView):
     model = Note
     fields = ['description']
     pk_url_kwarg = 'pk'
@@ -93,19 +94,19 @@ class UpdateNoteView(UpdateView):
             )
             messages.success(self.request, "Note has been updated.")
         return super().form_valid(form)
-    
+
     def form_invalid(self, form):
         new_description = form.cleaned_data.get('description', '').strip()
         if not new_description:
             messages.error(self.request, _("Note cannot be empty."))
         super().form_invalid(form)
         return redirect(self.get_success_url())
-    
+
     def get_success_url(self):
         return self.request.META.get('HTTP_REFERER', reverse_lazy('device:details'))
 
 
-class DeleteNoteView(View):
+class DeleteNoteView(LoginRequiredMixin, View):
     model = Note
 
     def post(self, request, *args, **kwargs):

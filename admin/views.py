@@ -25,7 +25,7 @@ class AdminView(DashboardView):
         response = super().get(*args, **kwargs)
         if not self.request.user.is_admin:
             raise Http403
-        
+
         return response
 
 class PanelView(AdminView, TemplateView):
@@ -111,7 +111,7 @@ class EditUserView(AdminView, UpdateView):
         kwargs = super().get_form_kwargs()
         return kwargs
 
-    
+
 class InstitutionView(AdminView, UpdateView):
     template_name = "institution.html"
     title = _("Edit institution")
@@ -168,8 +168,9 @@ class AddStateDefinitionView(AdminView, StateDefinitionContextMixin, CreateView)
             messages.error(self.request, _("State is already defined."))
             return self.form_invalid(form)
 
-    def form_invalid(self, form):   
-        return super().form_invalid(form)
+    def form_invalid(self, form):
+        super().form_invalid(form)
+        return redirect(self.success_url)
 
 
 class DeleteStateDefinitionView(AdminView, StateDefinitionContextMixin, SuccessMessageMixin, DeleteView):
@@ -218,14 +219,21 @@ class UpdateStateDefinitionView(AdminView, UpdateView):
     model = StateDefinition
     template_name = 'states_panel.html'
     fields = ['state']
+    success_url = reverse_lazy('admin:states_panel')
     pk_url_kwarg = 'pk'
 
     def get_queryset(self):
         return StateDefinition.objects.filter(institution=self.request.user.institution)
 
-    def get_success_url(self):
-        messages.success(self.request, _("State definition updated successfully."))
-        return reverse_lazy('admin:states_panel')
-
     def form_valid(self, form):
-        return super().form_valid(form)
+        try:
+            response = super().form_valid(form)
+            messages.success(self.request, _("State definition updated successfully."))
+            return response
+        except IntegrityError:
+            messages.error(self.request, _("State is already defined."))
+            return self.form_invalid(form)
+
+    def form_invalid(self, form):
+        super().form_invalid(form)
+        return redirect(self.get_success_url())
