@@ -31,6 +31,7 @@ main() {
         # deactivate configured flag
         rm -vfr ./already_configured
         docker compose down -v
+        docker compose pull --ignore-buildable
         if [ "${DEV_DOCKER_ALWAYS_BUILD:-}" = 'true' ]; then
                 docker compose build
         fi
