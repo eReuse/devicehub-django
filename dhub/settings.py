@@ -180,7 +180,7 @@ if TIME_ZONE == "UTC":
 
 USE_L10N = True
 LANGUAGES = [
-    ('es', 'spanish'),
+    ('es', 'español'),
     ('en', 'english'),
     ('ca', 'català'),
 ]
