@@ -118,8 +118,48 @@ END
         ./manage.py dlt_register_user "${DATASET_FILE}"
 }
 
+# wait until idhub api is prepared to received requests
+wait_idhub() {
+        while true; do
+                result="$(curl -s "${url}" | jq -r .error)"
+                if [ "${result}" = "Invalid request method" ]; then
+                        break
+                else
+                        echo "Waiting idhub API"
+                        sleep 1
+                fi
+        done
+}
+
+demo__send_to_sign_credential() {
+        filepath="${1}"
+        # hashlib.sha3_256 of PREDEFINED_TOKEN for idhub
+        DEMO_IDHUB_PREDEFINED_TOKEN="${DEMO_IDHUB_PREDEFINED_TOKEN:-}"
+        auth_header="Authorization: Bearer ${DEMO_IDHUB_PREDEFINED_TOKEN}"
+        json_header='Content-Type: application/json'
+        curl -s -X POST \
+             -H "${json_header}" \
+             -H "${auth_header}" \
+             -d @"${filepath}" \
+             "${url}" \
+                | jq -r .data
+}
+
+run_demo() {
+        if [ "${DEMO_IDHUB_DOMAIN:-}" ]; then
+                DEMO_IDHUB_DOMAIN="${DEMO_IDHUB_DOMAIN:-}"
+                # this demo only works with FQDN domain (with no ports)
+                url="https://${DEMO_IDHUB_DOMAIN}/webhook/sign/"
+                wait_idhub
+                demo__send_to_sign_credential \
+                        'example/demo-snapshots-vc/snapshot_pre-verifiable-credential.json' \
+                        > 'example/snapshots/snapshot_workbench-script_verifiable-credential.json'
+        fi
+        /usr/bin/time ./manage.py up_snapshots example/snapshots/ "${INIT_USER}"
+}
+
 config_phase() {
-	# TODO review this flag file
+        # TODO review this flag file
         init_flagfile="${program_dir}/already_configured"
         if [ ! -f "${init_flagfile}" ]; then
 
@@ -132,7 +172,7 @@ config_phase() {
                         # 12, 13, 14
                         config_dpp_part1
 
-                        # cleanup other spnapshots and copy dlt/dpp snapshots
+                        # cleanup other snapshots and copy dlt/dpp snapshots
                         # TODO make this better
                         rm example/snapshots/*
                         cp example/dpp-snapshots/*.json example/snapshots/
@@ -140,7 +180,7 @@ config_phase() {
 
                 # # 15. Add inventory snapshots for user "${INIT_USER}".
                 if [ "${DEMO:-}" = 'true' ]; then
-                        /usr/bin/time ./manage.py up_snapshots example/snapshots/ "${INIT_USER}"
+                        run_demo
                 fi
 
                 # remain next command as the last operation for this if conditional
