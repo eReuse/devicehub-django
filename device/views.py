@@ -1,7 +1,9 @@
 import json
 import logging
+
 from django.http import JsonResponse
 from django.conf import settings
+from django.db import IntegrityError
 from django.urls import reverse_lazy
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect, Http404
@@ -23,6 +25,16 @@ if settings.DPP:
     from dpp.models import Proof
     from dpp.api_dlt import PROOF_TYPE
 
+
+class DeviceLogMixin(DashboardView):
+
+    def log_registry(self, _uuid, msg):
+        DeviceLog.objects.create(
+            snapshot_uuid=_uuid,
+            event=msg,
+            user=self.request.user,
+            institution=self.request.user.institution
+        )
 
 class NewDeviceView(DashboardView, FormView):
     template_name = "new_device.html"
@@ -189,7 +201,7 @@ class PublicDeviceWebView(TemplateView):
         return JsonResponse(device_data)
 
 
-class AddUserPropertyView(DashboardView, CreateView):
+class AddUserPropertyView(DeviceLogMixin, CreateView):
     template_name = "new_user_property.html"
     title = _("New User Property")
     breadcrumb = "Device / New Property"
@@ -202,17 +214,19 @@ class AddUserPropertyView(DashboardView, CreateView):
         form.instance.uuid = self.property.uuid
         form.instance.type = UserProperty.Type.USER
 
-        message = _("<Created> UserProperty: {}: {}".format(form.instance.key, form.instance.value))
-        DeviceLog.objects.create(
-            snapshot_uuid=form.instance.uuid,
-            event=message,
-            user=self.request.user,
-            institution=self.request.user.institution
-        )
+        try:
+            response = super().form_valid(form)
+            messages.success(self.request, _("Property successfully added."))
+            log_message = _("<Created> UserProperty: {}: {}".format(
+                form.instance.key,
+                form.instance.value
+            ))
 
-        messages.success(self.request, _("User property successfully added."))
-        response = super().form_valid(form)
-        return response
+            self.log_registry(form.instance.uuid, log_message)
+            return response
+        except IntegrityError:
+            messages.error(self.request, _("Property is already defined."))
+            return self.form_invalid(form)
 
     def get_form_kwargs(self):
         pk = self.kwargs.get('pk')
@@ -222,10 +236,15 @@ class AddUserPropertyView(DashboardView, CreateView):
         return super().get_form_kwargs()
 
     def get_success_url(self):
-        return reverse_lazy('device:details', args=[self.kwargs.get('pk')])
+        pk = self.kwargs.get('pk')
+        return reverse_lazy('device:details', args=[pk]) + "#user_properties"
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['pk'] = self.kwargs.get('pk')
+        return context
 
-class UpdateUserPropertyView(DashboardView, UpdateView):
+class UpdateUserPropertyView(DeviceLogMixin, UpdateView):
     template_name = "new_user_property.html"
     title = _("Update User Property")
     breadcrumb = "Device / Update Property"
@@ -250,22 +269,34 @@ class UpdateUserPropertyView(DashboardView, UpdateView):
         new_key = form.cleaned_data['key']
         new_value = form.cleaned_data['value']
 
-        message = _("<Updated> UserProperty: {}: {} to {}: {}".format(old_key, old_value, new_key, new_value))
-        DeviceLog.objects.create(
-            snapshot_uuid=form.instance.uuid,
-            event=message,
-            user=self.request.user,
-            institution=self.request.user.institution
-        )
+        try:
+            super().form_valid(form)
+            messages.success(self.request, _("Property updated successfully."))
+            log_message = _("<Updated> UserProperty: {}: {} to {}: {}".format(
+                old_key,
+                old_value,
+                new_key,
+                new_value
+            ))
+            self.log_registry(form.instance.uuid, log_message)
+            # return response
+            return redirect(self.get_success_url()+"#user_properties")
+        except IntegrityError:
+            messages.error(self.request, _("Property is already defined."))
+            return self.form_invalid(form)
 
-        messages.success(self.request, _("User property updated successfully."))
-        return super().form_valid(form)
+    def form_invalid(self, form):
+        super().form_invalid(form)
+        return redirect(self.get_success_url()+"#user_properties")
 
     def get_success_url(self):
-        return self.request.META.get('HTTP_REFERER', reverse_lazy('device:details', args=[self.object.pk]))
+        return self.request.META.get(
+            'HTTP_REFERER',
+            reverse_lazy('device:details', args=[self.object.pk])
+        )
 
 
-class DeleteUserPropertyView(DashboardView, DeleteView):
+class DeleteUserPropertyView(DeviceLogMixin, DeleteView):
     model = UserProperty
 
     def get_queryset(self):
@@ -276,14 +307,11 @@ class DeleteUserPropertyView(DashboardView, DeleteView):
         self.object = self.get_object()
         self.object.delete()
 
-        message = _("<Deleted> User Property: {}:{}".format(self.object.key, self.object.value ))
-        DeviceLog.objects.create(
-            snapshot_uuid=self.object.uuid,
-            event=message,
-            user=self.request.user,
-            institution=self.request.user.institution
-        )
-
+        msg = _("<Deleted> User Property: {}:{}".format(
+            self.object.key,
+            self.object.value
+        ))
+        self.log_registry(self.object.uuid, msg)
         messages.info(self.request, _("User property deleted successfully."))
 
         return self.handle_success()
@@ -292,4 +320,6 @@ class DeleteUserPropertyView(DashboardView, DeleteView):
         return redirect(self.get_success_url())
 
     def get_success_url(self):
-        return self.request.META.get('HTTP_REFERER', reverse_lazy('device:details', args=[self.object.pk]))
+        pk = self.object.pk
+        url = reverse_lazy('device:details', args=[pk])
+        return self.request.META.get('HTTP_REFERER', url) + "#user_properties"

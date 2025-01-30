@@ -37,13 +37,19 @@ class SystemProperty(Property):
 
 
 class UserProperty(Property):
-    uuid = models.UUIDField()
 
     class Type(models.IntegerChoices):
         USER = 1, "User"
         ERASE_SERVER = 2, "EraseServer"
 
+    uuid = models.UUIDField()
     type = models.SmallIntegerField(choices=Type, default=Type.USER)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["key", "uuid"], name="userproperty_unique_type_key_uuid")
+        ]
 
 
 class Evidence:
