@@ -53,35 +53,6 @@ class NewDeviceView(DashboardView, FormView):
         return response
 
 
-# class AddToLotView(DashboardView, FormView):
-#     template_name = "list_lots.html"
-#     title = _("Add to lots")
-#     breadcrumb = "lot / add to lots"
-#     success_url = reverse_lazy('dashboard:unassigned_devices')
-#     form_class = LotsForm
-
-#     def get_context_data(self, **kwargs):
-#         context = super().get_context_data(**kwargs)
-#         lots = Lot.objects.filter(owner=self.request.user)
-#         lot_tags = LotTag.objects.filter(owner=self.request.user)
-#         context.update({
-#             'lots': lots,
-#             'lot_tags':lot_tags,
-#         })
-#         return context
-
-#     def get_form(self):
-#         form = super().get_form()
-#         form.fields["lots"].queryset = Lot.objects.filter(owner=self.request.user)
-#         return form
-
-#     def form_valid(self, form):
-#         form.devices = self.get_session_devices()
-#         form.save()
-#         response = super().form_valid(form)
-#         return response
-
-
 class EditDeviceView(DashboardView, UpdateView):
     template_name = "new_device.html"
     title = _("Update Device")
@@ -132,15 +103,19 @@ class DetailsView(DashboardView, TemplateView):
         state_definitions = StateDefinition.objects.filter(
             institution=self.request.user.institution
         ).order_by('order')
+        device_states = State.objects.filter(snapshot_uuid=uuid).order_by('-date')
+        device_logs = DeviceLog.objects.filter(
+            snapshot_uuid=uuid).order_by('-date')
+        device_notes = Note.objects.filter(snapshot_uuid=uuid).order_by('-date')
         context.update({
             'object': self.object,
             'snapshot': last_evidence,
             'lot_tags': lot_tags,
             'dpps': dpps,
             "state_definitions": state_definitions,
-            "device_states": State.objects.filter(snapshot_uuid=uuid).order_by('-date'),
-            "device_logs": DeviceLog.objects.filter(snapshot_uuid=uuid).order_by('-date'),
-            "device_notes": Note.objects.filter(snapshot_uuid=uuid).order_by('-date'),
+            "device_states": device_states,
+            "device_logs": device_logs,
+            "device_notes": device_notes,
         })
         return context
 
@@ -203,7 +178,10 @@ class AddUserPropertyView(DeviceLogMixin, CreateView):
     def get_form_kwargs(self):
         pk = self.kwargs.get('pk')
         institution = self.request.user.institution
-        self.property = get_object_or_404(SystemProperty, owner=institution, value=pk)
+        self.property = SystemProperty.objects.filter(
+            owner=institution, value=pk).first()
+        if not self.property:
+            raise Http404
 
         return super().get_form_kwargs()
 
@@ -216,6 +194,7 @@ class AddUserPropertyView(DeviceLogMixin, CreateView):
         context['pk'] = self.kwargs.get('pk')
         return context
 
+
 class UpdateUserPropertyView(DeviceLogMixin, UpdateView):
     template_name = "new_user_property.html"
     title = _("Update User Property")
@@ -223,21 +202,15 @@ class UpdateUserPropertyView(DeviceLogMixin, UpdateView):
     model = UserProperty
     fields = ("key", "value")
 
-    def get_queryset(self):
+    def get_form_kwargs(self):
         pk = self.kwargs.get('pk')
         institution = self.request.user.institution
-        return UserProperty.objects.filter(pk=pk, owner=institution)
+        self.object = get_object_or_404(UserProperty, owner=institution, pk=pk)
+        self.old_key = self.object.key
+        self.old_value = self.object.value
+        return super().get_form_kwargs()
 
     def form_valid(self, form):
-
-        old_instance = self.get_object()
-        old_key = old_instance.key
-        old_value = old_instance.value
-
-        form.instance.owner = self.request.user.institution
-        form.instance.user = self.request.user
-        form.instance.type = UserProperty.Type.USER
-
         new_key = form.cleaned_data['key']
         new_value = form.cleaned_data['value']
 
@@ -245,27 +218,25 @@ class UpdateUserPropertyView(DeviceLogMixin, UpdateView):
             super().form_valid(form)
             messages.success(self.request, _("Property updated successfully."))
             log_message = _("<Updated> UserProperty: {}: {} to {}: {}".format(
-                old_key,
-                old_value,
+                self.old_key,
+                self.old_value,
                 new_key,
                 new_value
             ))
             self.log_registry(form.instance.uuid, log_message)
             # return response
-            return redirect(self.get_success_url()+"#user_properties")
+            return redirect(self.get_success_url())
         except IntegrityError:
             messages.error(self.request, _("Property is already defined."))
             return self.form_invalid(form)
 
     def form_invalid(self, form):
         super().form_invalid(form)
-        return redirect(self.get_success_url()+"#user_properties")
+        return redirect(self.get_success_url())
 
     def get_success_url(self):
-        return self.request.META.get(
-            'HTTP_REFERER',
-            reverse_lazy('device:details', args=[self.object.pk])
-        )
+        pk = self.kwargs.get('device_id')
+        return reverse_lazy('device:details', args=[pk]) + "#user_properties"
 
 
 class DeleteUserPropertyView(DeviceLogMixin, DeleteView):
@@ -274,9 +245,12 @@ class DeleteUserPropertyView(DeviceLogMixin, DeleteView):
     def get_queryset(self):
         return UserProperty.objects.filter(owner=self.request.user.institution)
 
-    #using post() method because delete() method from DeleteView has some issues with messages framework
+    #using post() method because delete() method from DeleteView has some issues
+    # with messages framework
     def post(self, request, *args, **kwargs):
-        self.object = self.get_object()
+        pk = self.kwargs.get('pk')
+        institution = self.request.user.institution
+        self.object = get_object_or_404(UserProperty, owner=institution, pk=pk)
         self.object.delete()
 
         msg = _("<Deleted> User Property: {}:{}".format(
@@ -286,12 +260,8 @@ class DeleteUserPropertyView(DeviceLogMixin, DeleteView):
         self.log_registry(self.object.uuid, msg)
         messages.info(self.request, _("User property deleted successfully."))
 
-        return self.handle_success()
-
-    def handle_success(self):
         return redirect(self.get_success_url())
 
     def get_success_url(self):
-        pk = self.object.pk
-        url = reverse_lazy('device:details', args=[pk])
-        return self.request.META.get('HTTP_REFERER', url) + "#user_properties"
+        pk = self.kwargs.get('device_id')
+        return reverse_lazy('device:details', args=[pk]) + "#user_properties"

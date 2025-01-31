@@ -82,7 +82,7 @@
       <div class="modal-footer justify-content-center">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}
           </button>
-        <form method="post" action="{% url 'device:delete_user_property' a.id %}">
+        <form method="post" action="{% url 'device:delete_user_property' object.id a.id %}">
           {% csrf_token %}
             <button type="submit" class="btn btn-danger">{% trans "Delete" %}
             </button>
@@ -105,7 +105,7 @@
           </button>
       </div>
       <div class="modal-body">
-        <form id="editForm{{ a.id }}" method="post" action="{% url 'device:update_user_property' a.id %}">
+        <form id="editForm{{ a.id }}" method="post" action="{% url 'device:update_user_property' object.id a.id %}">
           {% csrf_token %}
           <div class="mb-3">
               <label for="key" class="form-label">{% trans "Key" %}
