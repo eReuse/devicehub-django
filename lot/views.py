@@ -1,3 +1,4 @@
+from django.db import IntegrityError
 from django.urls import reverse_lazy
 from django.shortcuts import get_object_or_404, redirect, Http404
 from django.contrib import messages
@@ -98,7 +99,8 @@ class AddToLotView(DashboardView, FormView):
 
     def get_form(self):
         form = super().get_form()
-        form.fields["lots"].queryset = Lot.objects.filter(owner=self.request.user.institution)
+        form.fields["lots"].queryset = Lot.objects.filter(
+            owner=self.request.user.institution)
         return form
 
     def form_valid(self, form):
@@ -132,7 +134,9 @@ class LotsTagsView(DashboardView, TemplateView):
         self.title += " {}".format(tag.name)
         self.breadcrumb += " {}".format(tag.name)
         show_closed = self.request.GET.get('show_closed', 'false') == 'true'
-        lots = Lot.objects.filter(owner=self.request.user.institution).filter(type=tag, closed=show_closed)
+        lots = Lot.objects.filter(owner=self.request.user.institution).filter(
+            type=tag, closed=show_closed
+        )
         context.update({
             'lots': lots,
             'title': self.title,
@@ -178,8 +182,13 @@ class AddLotPropertyView(DashboardView, CreateView):
         form.instance.user = self.request.user
         form.instance.lot = self.lot
         form.instance.type = LotProperty.Type.USER
-        response = super().form_valid(form)
-        return response
+        try:
+            response = super().form_valid(form)
+            messages.success(self.request, _("Property successfully added."))
+            return response
+        except IntegrityError:
+            messages.error(self.request, _("Property is already defined."))
+            return self.form_invalid(form)
 
     def get_form_kwargs(self):
         pk = self.kwargs.get('pk')
@@ -187,6 +196,11 @@ class AddLotPropertyView(DashboardView, CreateView):
         self.success_url = reverse_lazy('lot:properties', args=[pk])
         kwargs = super().get_form_kwargs()
         return kwargs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['lot_id'] = self.lot.id
+        return context
 
 
 class UpdateLotPropertyView(DashboardView, UpdateView):
@@ -198,31 +212,33 @@ class UpdateLotPropertyView(DashboardView, UpdateView):
 
     def get_form_kwargs(self):
         pk = self.kwargs.get('pk')
-        lot_property = get_object_or_404(LotProperty, pk=pk, owner=self.request.user.institution)
+        lot_property = get_object_or_404(
+            LotProperty,
+            pk=pk,
+            owner=self.request.user.institution
+        )
 
         if not lot_property:
             raise Http404
 
+        lot_pk = lot_property.lot.pk
+        self.success_url = reverse_lazy('lot:properties', args=[lot_pk])
         kwargs = super().get_form_kwargs()
         kwargs['instance'] = lot_property
         return kwargs
 
     def form_valid(self, form):
-        old_key= self.object.key
-        old_value = self.object.value
-        new_key = form.cleaned_data['key']
-        new_value = form.cleaned_data['value']
+        try:
+            response = super().form_valid(form)
+            messages.success(self.request, _("Property updated successfully."))
+            return response
+        except IntegrityError:
+            messages.error(self.request, _("Property is already defined."))
+            return self.form_invalid(form)
 
-        form.instance.owner = self.request.user.institution
-        form.instance.user = self.request.user
-        form.instance.type = LotProperty.Type.USER
-        response = super().form_valid(form)
-
-        messages.success(self.request, _("Lot property updated successfully."))
-        return response
-
-    def get_success_url(self):
-        return self.request.META.get('HTTP_REFERER', reverse_lazy('device:details', args=[self.object.pk]))
+    def form_invalid(self, form):
+        super().form_invalid(form)
+        return redirect(self.get_success_url())
 
 
 class DeleteLotPropertyView(DashboardView, DeleteView):
@@ -230,18 +246,15 @@ class DeleteLotPropertyView(DashboardView, DeleteView):
 
     def post(self, request, *args, **kwargs):
         self.pk = kwargs['pk']
-        referer = request.META.get('HTTP_REFERER')
-        if not referer:
-            raise Http404("No referer header found")
-
         self.object = get_object_or_404(
             self.model,
             pk=self.pk,
             owner=self.request.user.institution
         )
-        old_value = self.object.key
+        lot_pk = self.object.lot.pk
         self.object.delete()
         messages.success(self.request, _("Lot property deleted successfully."))
+        self.success_url = reverse_lazy('lot:properties', args=[lot_pk])
 
         # Redirect back to the original URL
-        return redirect(referer)
+        return redirect(self.success_url)
