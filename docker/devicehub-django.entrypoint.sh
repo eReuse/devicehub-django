@@ -5,6 +5,14 @@ set -u
 # DEBUG
 set -x
 
+wait_for_postgres() {
+        # thanks https://testdriven.io/blog/dockerizing-django-with-postgres-gunicorn-and-nginx/
+        while ! nc -z $DB_HOST $DB_PORT ; do
+                sleep 0.5
+        done
+}
+
+
 # TODO there is a conflict between two shared vars
 #   1. from the original docker compose devicehub-teal
 #   2. from the new docker compose that integrates all dpp services
@@ -33,6 +41,13 @@ gen_env_vars() {
         INIT_PASSWD="${INIT_PASSWD:-1234}"
         ADMIN='True'
         PREDEFINED_TOKEN="${PREDEFINED_TOKEN:-}"
+
+        DB_NAME=${DB_NAME:-devicehub}
+        DB_USER=${DB_USER:-ereuse}
+        DB_PASSWORD=${DB_PASSWORD:-ereuse}
+        DB_HOST=${DB_HOST:-localhost}
+        DB_PORT=${DB_PORT:-5432}
+
         # specific dpp env vars
         if [ "${DPP:-}" = 'true' ]; then
                 # fill env vars in this docker entrypoint
@@ -210,10 +225,13 @@ deploy() {
                 echo "DOMAIN: ${DOMAIN}"
         fi
 
-        # detect if existing deployment (TODO only works with sqlite)
-        if [ -f "${program_dir}/db/db.sqlite3" ]; then
-                echo "INFO: detected EXISTING deployment"
+        #IMPORTANT: run python manage.py dumpdata --natural-foreign --natural-primary > sqlite3dump.json
+        # detect if exists a sqlite3 dump
+        if [ -f "${program_dir}/db/sqlite3dump.json" ]; then
+                echo "INFO: detected EXISTING sqlite3 deployment. Migrating to postgres"
                 ./manage.py migrate
+                ./manage.py loaddata ${program_dir}/db/sqltie3dump.json
+
         else
                 # move the migrate thing in docker entrypoint
                 #   inspired by https://medium.com/analytics-vidhya/django-with-docker-and-docker-compose-python-part-2-8415976470cc
@@ -248,6 +266,7 @@ main() {
         program_dir='/opt/devicehub-django'
         cd "${program_dir}"
         gen_env_vars
+        wait_for_postgres
         deploy
         runserver
 }

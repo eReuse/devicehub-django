@@ -133,9 +133,13 @@ WSGI_APPLICATION = "dhub.wsgi.application"
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db/db.sqlite3",
+    'default': {
+        'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.postgresql'),
+        'NAME': os.getenv('DB_NAME', 'devicehub'),
+        'USER': os.getenv('DB_USER', 'devicehub'),
+        'PASSWORD': os.getenv('DB_PASSWORD', 'devicehub'),
+        'HOST': os.getenv('DB_HOST', 'postgres'),
+        'PORT': os.getenv('DB_PORT', '5432'),
     }
 }
 
