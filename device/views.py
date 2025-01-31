@@ -98,15 +98,15 @@ class DetailsView(DashboardView, TemplateView):
                 uuid__in=self.object.uuids,
                 type=PROOF_TYPE["IssueDPP"]
             )
-        last_evidence= self.object.get_last_evidence(),
-        uuid=self.object.last_uuid()
+        last_evidence = self.object.get_last_evidence()
+        uuids = self.object.uuids
         state_definitions = StateDefinition.objects.filter(
             institution=self.request.user.institution
         ).order_by('order')
-        device_states = State.objects.filter(snapshot_uuid=uuid).order_by('-date')
+        device_states = State.objects.filter(snapshot_uuid__in=uuids).order_by('-date')
         device_logs = DeviceLog.objects.filter(
-            snapshot_uuid=uuid).order_by('-date')
-        device_notes = Note.objects.filter(snapshot_uuid=uuid).order_by('-date')
+            snapshot_uuid__in=uuids).order_by('-date')
+        device_notes = Note.objects.filter(snapshot_uuid__in=uuids).order_by('-date')
         context.update({
             'object': self.object,
             'snapshot': last_evidence,
