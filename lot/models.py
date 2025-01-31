@@ -53,3 +53,9 @@ class LotProperty (Property):
         USER = 1, "User"
 
     type = models.SmallIntegerField(choices=Type.choices, default=Type.USER)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["key", "lot"], name="property_unique_type_key_lot")
+        ]
