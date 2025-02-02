@@ -5,6 +5,7 @@ RUN apt update && \
     apt-get install -y \
     python3-xapian \
     python3-psycopg2 \
+    netcat-traditional\
     git \
     sqlite3 \
     curl \
