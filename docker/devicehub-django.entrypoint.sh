@@ -6,6 +6,7 @@ set -u
 set -x
 
 program_dir='/opt/devicehub-django'
+#source .env
 . "${program_dir}/.env"
 
 wait_for_postgres() {
@@ -45,11 +46,11 @@ gen_env_vars() {
         ADMIN='True'
         PREDEFINED_TOKEN="${PREDEFINED_TOKEN:-}"
 
-        DB_NAME=${DB_NAME:-devicehub}
-        DB_USER=${DB_USER:-ereuse}
-        DB_PASSWORD=${DB_PASSWORD:-ereuse}
-        DB_HOST=${DB_HOST:-localhost}
-        DB_PORT=${DB_PORT:-5432}
+        DB_NAME="${DB_NAME:-devicehub}"
+        DB_USER="${DB_USER:-ereuse}"
+        DB_PASSWORD="${DB_PASSWORD:-ereuse}"
+        DB_HOST="${DB_HOST:-localhost}"
+        DB_PORT="${DB_PORT:-5432}"
 
         # specific dpp env vars
         if [ "${DPP:-}" = 'true' ]; then

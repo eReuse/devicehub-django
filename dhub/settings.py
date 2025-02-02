@@ -136,9 +136,9 @@ DATABASES = {
     'default': {
         'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.postgresql'),
         'NAME': os.getenv('DB_NAME', 'devicehub'),
-        'USER': os.getenv('DB_USER', 'devicehub'),
-        'PASSWORD': os.getenv('DB_PASSWORD', 'devicehub'),
-        'HOST': os.getenv('DB_HOST', 'postgres'),
+        'USER': os.getenv('DB_USER', 'ereuse'),
+        'PASSWORD': os.getenv('DB_PASSWORD', 'ereuse'),
+        'HOST': os.getenv('DB_HOST', 'devicehub-postgres'),
         'PORT': os.getenv('DB_PORT', '5432'),
     }
 }

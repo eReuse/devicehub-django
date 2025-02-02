@@ -21,24 +21,18 @@ services:
     ports:
       - ${DEVICEHUB_PORT:-8000}:${DEVICEHUB_PORT:-8000}
     depends_on:
-      - postgres
+      - devicehub-postgres
 
   devicehub-postgres:
     image: postgres:17
     environment:
-      - DB_NAME=${DB_NAME:-devicehub}
-      - db_USER=${DB_USER:-devicehub}
-      - db_PASSWORD=${DB_PASSWORD:-devicehub}
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
     volumes:
       - pg_data:/var/lib/postgresql/data
-    ports:
-      - ${DB_PORT}:${DB_PORT}
-
-
-
-volumes:
-  pg_data:
-
+  #ports:
+  #  - ${DB_PORT}:${DB_PORT}
 
   # TODO add database service for idhub, meanwhile sqlite
 
@@ -76,3 +70,6 @@ volumes:
       - 9001:9001
 
   # TODO add database service for idhub, meanwhile sqlite
+
+volumes:
+  pg_data:
