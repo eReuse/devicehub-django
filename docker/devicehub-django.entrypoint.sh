@@ -5,9 +5,12 @@ set -u
 # DEBUG
 set -x
 
+program_dir='/opt/devicehub-django'
+. "${program_dir}/.env"
+
 wait_for_postgres() {
         # thanks https://testdriven.io/blog/dockerizing-django-with-postgres-gunicorn-and-nginx/
-        while ! nc -z $DB_HOST $DB_PORT ; do
+        while ! nc -z "$DB_HOST" "$DB_PORT" ; do
                 sleep 0.5
         done
 }
@@ -263,7 +266,6 @@ runserver() {
 }
 
 main() {
-        program_dir='/opt/devicehub-django'
         cd "${program_dir}"
         gen_env_vars
         wait_for_postgres
