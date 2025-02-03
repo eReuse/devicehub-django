@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+{% load i18n django_bootstrap5 %}
+
+{% block content %}
+<div class="row">
+  <div class="col">
+    <h3>{{ subtitle }}</h3>
+  </div>
+  <div class="col text-end">
+    <button type="button" class="btn btn-green-admin" data-bs-toggle="modal" data-bs-target="#addLotTagModal">
+      {% trans "Add" %}
+    </button>
+  </div>
+</div>
+<div class="row mt-4">
+  <div class="col">
+    {% if lot_tags %}
+  <table class="table table-hover table-bordered align-middle">
+  <thead class="table-light">
+    <tr>
+      <th scope="col">{% trans "Tag" %}
+      </th>
+      <th scope="col" width="15%" class="text-center">{% trans "Actions" %}
+      </th>
+    </tr>
+  </thead>
+  <tbody id="sortable_list">
+    {% for tag in lot_tags %}
+      <tr>
+        <td class="font-monospace">
+          {{ tag.name }}
+        </td>
+
+        <!-- action buttons -->
+        <td>
+          <div class="btn-group float-end">
+            <button
+              type="button"
+              class="btn btn-sm btn-outline-info d-flex align-items-center"
+              data-bs-toggle="modal"  data-bs-target="#editLotTagModal{{ tag.id }}">
+              <i class="bi bi-pencil me-1"></i>
+              {% trans 'Edit' %}
+            </button>
+            <button
+              type="button" class="btn btn-sm btn-outline-danger d-flex align-items-center"
+              data-bs-toggle="modal"
+              data-bs-target="#deleteLotTagModal{{ tag.id }}" >
+              <i class="bi bi-trash me-1"></i>
+              {% trans 'Delete' %}
+            </button>
+          </div>
+        </td>
+      </tr>
+    {% endfor %}
+  </tbody>
+  </table>
+
+
+    {% else %}
+      <div class="alert alert-primary text-center mt-5" role="alert">
+        {% trans "No Lot Tags found on current organization" %}
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- add lot tag Modal -->
+<div class="modal fade" id="addLotTagModal" tabindex="-1" aria-labelledby="addLoTagModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addLotTagModalLabel">{% trans "Add Lot Tag" %}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+
+        <form method="post" action="{% url 'admin:add_lot_tag' %}">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label for="lotTagInput" class="form-label">{% trans "Tag" %}</label>
+            <input type="text" class="form-control" id="lotTagInput" name="name" maxlength="50" required>
+            <div class="form-text">{% trans "Maximum 50 characters." %}</div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Close" %}</button>
+            <button type="submit" class="btn btn-primary">{% trans "Add Lot tag" %}</button>
+          </div>
+        </form>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Lot Tag Modals -->
+{% for tag in lot_tags %}
+<div class="modal fade" id="editLotTagModal{{ tag.id }}" tabindex="-1" aria-labelledby="editLotTagModalLabel{{ tag.id }}" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="post" action="{% url 'admin:edit_lot_tag' tag.id %}">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title" id="editLotTagModalLabel{{ tag.id }}">
+            {% trans "Edit Lot Tag" %}
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="editLotTagInput{{ tag.id }}" class="form-label">{% trans "Tag" %}</label>
+            <input type="text" class="form-control" id="editLotTagInput{{ tag.id }}" name="name" maxlength="50" value="{{ tag.name }}" required>
+            <div class="form-text">{% trans "Maximum 50 characters." %}</div>
+          </div>
+
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+          <button type="submit" class="btn btn-green-admin">{% trans "Save Changes" %}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endfor %}
+
+
+<!-- delete lot tag definition Modal -->
+{% for tag in lot_tags %}
+<div class="modal fade" id="deleteLotTagModal{{ tag.id }}" tabindex="-1" aria-labelledby="deleteLotTagModalLabel{{ tag.id }}" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold" id="deleteLotTagModalLabel{{ tag.id }}">
+          {% trans "Delete Lot Tag" %}
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
+      </div>
+      <div class="modal-body">
+	{% if tag.lot_set.first %}
+        <div class="alert alert-warning text-center" role="alert">
+            {% trans "There are lots with this tag. Change the tag for this lots" %}
+        </div>
+	{% endif %}
+        <div class="d-flex align-items-center border rounded p-3 mt-3">
+          <div>
+            <p class="mb-0 fw-bold">{{ tag.name }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <form method="post" action="{% url 'admin:delete_lot_tag' tag.pk %}">
+          {% csrf_token %}
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            {% trans "Cancel" %}
+          </button>
+	  {% if tag.lot_set.first %}
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            {% trans "Delete" %}
+          </button>
+  	  {% else %}
+          <button type="submit" class="btn btn-danger">
+            {% trans "Delete" %}
+          </button>
+  	  {% endif %}
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endfor %}
+{% endblock %}
