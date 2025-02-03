@@ -18,6 +18,7 @@ from admin.forms import OrderingStateForm
 from user.models import User, Institution
 from admin.email import NotifyActivateUserByEmail
 from action.models import StateDefinition
+from lot.models import LotTag
 
 
 class AdminView(DashboardView):
@@ -110,6 +111,74 @@ class EditUserView(AdminView, UpdateView):
         #self.object.set_password(self.object.password)
         kwargs = super().get_form_kwargs()
         return kwargs
+
+
+class LotTagPanelView(AdminView, TemplateView):
+    template_name = "lot_tag_panel.html"
+    title = _("Lot Tag Panel")
+    breadcrumb = _("admin / Lot Tag Panel")
+
+
+class AddLotTagView(AdminView, CreateView):
+    template_name = "lot_tag_panel.html"
+    title = _("New lot tag Definition")
+    breadcrumb = "Admin / New lot tag"
+    success_url = reverse_lazy('admin:tag_panel')
+    model = LotTag
+    fields = ('name',)
+
+    def form_valid(self, form):
+        form.instance.owner = self.request.user.institution
+        form.instance.user = self.request.user
+
+        response = super().form_valid(form)
+        messages.success(self.request, _("Lot Tag successfully added."))
+        return response
+
+
+class DeleteLotTagView(AdminView, DeleteView):
+    model = LotTag
+    success_url = reverse_lazy('admin:tag_panel')
+
+    def post(self, request, *args, **kwargs):
+        pk = kwargs.get('pk')
+        self.object = get_object_or_404(
+            self.model,
+            owner=self.request.user.institution,
+            pk=pk
+        )
+
+        if self.object.lot_set.first():
+            msg = _('This tag have lots. Impossible deleted.')
+            messages.warning(self.request, msg)
+            return redirect(reverse_lazy('admin:tag_panel'))
+
+        response = super().delete(request, *args, **kwargs)
+        msg = _('Lot Tag has been deleted.')
+        messages.success(self.request, msg)
+        return response
+
+
+class UpdateLotTagView(AdminView, UpdateView):
+    model = LotTag
+    template_name = 'lot_tag_panel.html'
+    fields = ['name']
+    success_url = reverse_lazy('admin:tag_panel')
+
+    def get_form_kwargs(self):
+        pk = self.kwargs.get('pk')
+        self.object = get_object_or_404(
+            self.model,
+            owner=self.request.user.institution,
+            pk=pk
+        )
+        return super().get_form_kwargs()
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        msg = _("Lot Tag updated successfully.")
+        messages.success(self.request, msg)
+        return response
 
 
 class InstitutionView(AdminView, UpdateView):
