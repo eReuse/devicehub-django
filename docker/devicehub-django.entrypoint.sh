@@ -229,12 +229,14 @@ deploy() {
                 echo "DOMAIN: ${DOMAIN}"
         fi
 
-        #IMPORTANT: run python manage.py dumpdata --natural-foreign --natural-primary > sqlite3dump.json
+        #IMPORTANT: run python manage.py dumpdata --natural-foreign --natural-primary > sqlite3dump.json on root folder
         # detect if exists a sqlite3 dump
-        if [ -f "${program_dir}/db/sqlite3dump.json" ]; then
+        if [ -f "${program_dir}/sqlite3dump.json" ]; then
                 echo "INFO: detected EXISTING sqlite3 deployment. Migrating to postgres"
                 ./manage.py migrate
-                ./manage.py loaddata ${program_dir}/db/sqltie3dump.json
+                ./manage.py loaddata ${program_dir}/sqlite3dump.json
+                rm "${program_dir}/sqlite3dump.json"
+                echo "INFO: Old sqlite data loaded successfully"
 
         else
                 # move the migrate thing in docker entrypoint
