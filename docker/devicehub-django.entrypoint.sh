@@ -187,6 +187,7 @@ config_phase() {
         init_flagfile="${program_dir}/already_configured"
         if [ ! -f "${init_flagfile}" ]; then
 
+                echo "INFO: detected NEW deployment"
                 # non DL user (only for the inventory)
                 ./manage.py add_institution "${INIT_ORG}"
                 # TODO: one error on add_user, and you don't add user anymore
@@ -209,6 +210,8 @@ config_phase() {
 
                 # remain next command as the last operation for this if conditional
                 touch "${init_flagfile}"
+        else
+                echo "INFO: detected PREVIOUS deployment"
         fi
 }
 
@@ -229,22 +232,10 @@ deploy() {
                 echo "DOMAIN: ${DOMAIN}"
         fi
 
-        #IMPORTANT: run python manage.py dumpdata --natural-foreign --natural-primary > sqlite3dump.json on root folder
-        # detect if exists a sqlite3 dump
-        if [ -f "${program_dir}/sqlite3dump.json" ]; then
-                echo "INFO: detected EXISTING sqlite3 deployment. Migrating to postgres"
-                ./manage.py migrate
-                ./manage.py loaddata ${program_dir}/sqlite3dump.json
-                rm "${program_dir}/sqlite3dump.json"
-                echo "INFO: Old sqlite data loaded successfully"
-
-        else
-                # move the migrate thing in docker entrypoint
-                #   inspired by https://medium.com/analytics-vidhya/django-with-docker-and-docker-compose-python-part-2-8415976470cc
-                echo "INFO detected NEW deployment"
-                ./manage.py migrate
-                config_phase
-        fi
+        # move the migrate thing in docker entrypoint
+        #   inspired by https://medium.com/analytics-vidhya/django-with-docker-and-docker-compose-python-part-2-8415976470cc
+        ./manage.py migrate
+        config_phase
 }
 
 runserver() {
