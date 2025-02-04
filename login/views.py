@@ -17,18 +17,18 @@ class LoginView(auth_views.LoginView):
     template_name = 'login.html'
     extra_context = {
         'title': _('Login'),
-        'success_url': reverse_lazy('dashboard:unassigned_devices'),
+        'success_url': reverse_lazy('dashboard:unassigned'),
         'commit_id': settings.COMMIT,
     }
 
     def get(self, request, *args, **kwargs):
         self.extra_context['success_url'] = request.GET.get(
             'next',
-            reverse_lazy('dashboard:unassigned_devices')
+            reverse_lazy('dashboard:unassigned')
         )
         if not self.request.user.is_anonymous:
-            return redirect(reverse_lazy('dashboard:unassigned_devices'))
-            
+            return redirect(reverse_lazy('dashboard:unassigned'))
+
         return super().get(request, *args, **kwargs)
 
     def form_valid(self, form):
@@ -72,4 +72,3 @@ class PasswordResetView(auth_views.PasswordResetView):
         except Exception as err:
             logger.error(err)
         return HttpResponseRedirect(self.success_url)
-

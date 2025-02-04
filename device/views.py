@@ -23,7 +23,7 @@ class NewDeviceView(DashboardView, FormView):
     template_name = "new_device.html"
     title = _("New Device")
     breadcrumb = "Device / New Device"
-    success_url = reverse_lazy('dashboard:unassigned_devices')
+    success_url = reverse_lazy('dashboard:unassigned')
     form_class = DeviceFormSet
 
     def form_valid(self, form):
@@ -40,7 +40,7 @@ class NewDeviceView(DashboardView, FormView):
 #     template_name = "list_lots.html"
 #     title = _("Add to lots")
 #     breadcrumb = "lot / add to lots"
-#     success_url = reverse_lazy('dashboard:unassigned_devices')
+#     success_url = reverse_lazy('dashboard:unassigned')
 #     form_class = LotsForm
 
 #     def get_context_data(self, **kwargs):
@@ -69,7 +69,7 @@ class EditDeviceView(DashboardView, UpdateView):
     template_name = "new_device.html"
     title = _("Update Device")
     breadcrumb = "Device / Update Device"
-    success_url = reverse_lazy('dashboard:unassigned_devices')
+    success_url = reverse_lazy('dashboard:unassigned')
     model = Annotation
 
     def get_form_kwargs(self):
@@ -179,7 +179,7 @@ class AddAnnotationView(DashboardView, CreateView):
     template_name = "new_annotation.html"
     title = _("New annotation")
     breadcrumb = "Device / New annotation"
-    success_url = reverse_lazy('dashboard:unassigned_devices')
+    success_url = reverse_lazy('dashboard:unassigned')
     model = Annotation
     fields = ("key", "value")
 
@@ -212,7 +212,7 @@ class AddDocumentView(DashboardView, CreateView):
     template_name = "new_annotation.html"
     title = _("New Document")
     breadcrumb = "Device / New document"
-    success_url = reverse_lazy('dashboard:unassigned_devices')
+    success_url = reverse_lazy('dashboard:unassigned')
     model = Annotation
     fields = ("key", "value")
 

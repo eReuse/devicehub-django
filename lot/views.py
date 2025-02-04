@@ -17,7 +17,7 @@ class NewLotView(DashboardView, CreateView):
     template_name = "new_lot.html"
     title = _("New lot")
     breadcrumb = "lot / New lot"
-    success_url = reverse_lazy('dashboard:unassigned_devices')
+    success_url = reverse_lazy('dashboard:unassigned')
     model = Lot
     fields = (
         "type",
@@ -38,7 +38,7 @@ class DeleteLotView(DashboardView, DeleteView):
     template_name = "delete_lot.html"
     title = _("Delete lot")
     breadcrumb = "lot / Delete lot"
-    success_url = reverse_lazy('dashboard:unassigned_devices')
+    success_url = reverse_lazy('dashboard:unassigned')
     model = Lot
     fields = (
         "type",
@@ -57,7 +57,7 @@ class EditLotView(DashboardView, UpdateView):
     template_name = "new_lot.html"
     title = _("Edit lot")
     breadcrumb = "Lot / Edit lot"
-    success_url = reverse_lazy('dashboard:unassigned_devices')
+    success_url = reverse_lazy('dashboard:unassigned')
     model = Lot
     fields = (
         "type",
@@ -83,7 +83,7 @@ class AddToLotView(DashboardView, FormView):
     template_name = "list_lots.html"
     title = _("Add to lots")
     breadcrumb = "lot / add to lots"
-    success_url = reverse_lazy('dashboard:unassigned_devices')
+    success_url = reverse_lazy('dashboard:unassigned')
     form_class = LotsForm
 
     def get_context_data(self, **kwargs):
@@ -123,7 +123,7 @@ class LotsTagsView(DashboardView, TemplateView):
     template_name = "lots.html"
     title = _("lots")
     breadcrumb = _("lots") + " /"
-    success_url = reverse_lazy('dashboard:unassigned_devices')
+    success_url = reverse_lazy('dashboard:unassigned')
 
     def get_context_data(self, **kwargs):
         self.pk = kwargs.get('pk')
@@ -146,7 +146,7 @@ class LotAddDocumentView(DashboardView, CreateView):
     template_name = "new_annotation.html"
     title = _("New Document")
     breadcrumb = "Device / New document"
-    success_url = reverse_lazy('dashboard:unassigned_devices')
+    success_url = reverse_lazy('dashboard:unassigned')
     model = LotAnnotation
     fields = ("key", "value")
 
@@ -216,7 +216,7 @@ class LotAddAnnotationView(DashboardView, CreateView):
     template_name = "new_annotation.html"
     title = _("New Annotation")
     breadcrumb = "Device / New annotation"
-    success_url = reverse_lazy('dashboard:unassigned_devices')
+    success_url = reverse_lazy('dashboard:unassigned')
     model = LotAnnotation
     fields = ("key", "value")
 
