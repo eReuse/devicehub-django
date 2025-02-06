@@ -31,11 +31,13 @@ class BuildMix:
         return hid
 
     def generate_chids(self):
-        self.algorithms = {
-            'hidalgo1': self.get_hid('hidalgo1'),
-        }
-        if settings.DPP:
-            self.algorithms["legacy_dpp"] = self.get_hid("legacy_dpp")
+        self.algorithms = {}
+        for k in ALGOS.keys():
+            if not settings.DPP and k == 'ereuse22':
+                continue
+
+            self.algorithms[k] = self.get_hid(k)
+
 
     def get_doc(self):
         self._get_components()
@@ -43,7 +45,7 @@ class BuildMix:
             c.pop("actions", None)
 
         components = sorted(self.components, key=lambda x: x.get("type"))
-        device = self.algorithms.get('legacy_dpp')
+        device = self.algorithms.get('ereuse22')
 
         doc = [("computer", device)]
 
@@ -51,7 +53,7 @@ class BuildMix:
             doc.append((c.get("type"), self.get_id_hw_dpp(c)))
 
     def get_id_hw_dpp(self, d):
-        algorithm = ALGOS.get("legacy_dpp", [])
+        algorithm = ALGOS.get("ereuse22", [])
         hid = ""
         for f in algorithm:
             hid += d.get(f, '')

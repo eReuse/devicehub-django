@@ -9,7 +9,7 @@ STR_EXTEND_SIZE = 256
 
 
 # Algorithms for build hids
-HID_ALGO1 = [
+EREUSE24 = [
     "manufacturer",
     "model",
     "chassis",
@@ -17,7 +17,8 @@ HID_ALGO1 = [
     "sku"
 ]
 
-LEGACY_DPP = [
+# EREUSE22 is used for build the chid of DPP
+EREUSE22 = [
     "manufacturer",
     "model",
     "chassis",
@@ -28,8 +29,8 @@ LEGACY_DPP = [
 ]
 
 ALGOS = {
-    "hidalgo1": HID_ALGO1,
-    "legacy_dpp": LEGACY_DPP
+    "ereuse24": EREUSE24,
+    "ereuse22": EREUSE22
 }
 
 
