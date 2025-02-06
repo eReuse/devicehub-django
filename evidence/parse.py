@@ -88,7 +88,7 @@ class Build:
         return hashlib.sha3_256(doc.encode()).hexdigest()
 
     def register_device_dlt(self):
-        legacy_dpp = self.build.algorithms.get('legacy_dpp')
+        legacy_dpp = self.build.algorithms.get('ereuse22')
         chid = self.sign(legacy_dpp)
         phid = self.sign(json.dumps(self.build.get_doc()))
         register_device_dlt(chid, phid, self.uuid, self.user)

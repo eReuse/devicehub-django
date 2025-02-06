@@ -150,7 +150,7 @@ class Device:
                         ORDER BY
                             CASE
                                 WHEN t1.key = 'CUSTOM_ID' THEN 1
-                                WHEN t1.key = 'hidalgo1' THEN 2
+                                WHEN t1.key = 'ereuse24' THEN 2
                                 ELSE 3
                             END,
                             t1.created DESC
@@ -196,7 +196,7 @@ class Device:
                         ORDER BY
                             CASE
                                 WHEN t1.key = 'CUSTOM_ID' THEN 1
-                                WHEN t1.key = 'hidalgo1' THEN 2
+                                WHEN t1.key = 'ereuse24' THEN 2
                                 ELSE 3
                             END,
                             t1.created DESC
@@ -231,7 +231,7 @@ class Device:
                         ORDER BY
                             CASE
                                 WHEN t1.key = 'CUSTOM_ID' THEN 1
-                                WHEN t1.key = 'hidalgo1' THEN 2
+                                WHEN t1.key = 'ereuse24' THEN 2
                                 ELSE 3
                             END,
                             t1.created DESC
