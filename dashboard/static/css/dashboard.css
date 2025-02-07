@@ -174,3 +174,15 @@ h3 {
 .btn-orange {
   background-color: #f5b587;
 }
+
+/* Clase para botones con funcionalidad no implementados */
+.btn-todo {
+  background-color: #6c757d;
+  color: #fff; /* texto en blanco*/
+  opacity: 0.65;
+  cursor: not-allowed;
+
+.btn-todo:disabled {
+  pointer-events: none;
+ }
+}

@@ -9,12 +9,19 @@
     <h3>{{ subtitle }}</h3>
   </div>
   <div class="col text-center">
-    <a href="{# url 'dashboard:exports' object.id #}" type="button" class="btn btn-green-admin">
+    {% if lot %}
+    <a href="{% url 'lot:documents' object.id %}" type="button" class="btn btn-green-admin">
+      <i class="bi bi-folder2"></i>
+      {% trans 'Documents' %}
+    </a>
+    {% endif %}
+
+    <a href="{# url 'dashboard:exports' object.id #}" type="button" class="btn btn-todo" data-bs-toggle="tooltip" title="NOT IMPLEMENTED. This action tries to emulate what devicehub-teal did, which was related to opening a dialog where you can select different options for export the devices as csv for all selected devices" >
       <i class="bi bi-reply"></i>
       {% trans 'Exports' %}
     </a>
     {% if lot %}
-    <a href="{% url 'lot:properties' object.id %}" type="button" class="btn btn-green-admin">
+    <a href="{% url 'lot:annotations' object.id %}" type="button" class="btn btn-green-admin" >
       <i class="bi bi-tag"></i>
       {% trans 'properties' %}
     </a>

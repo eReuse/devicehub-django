@@ -249,6 +249,15 @@
     <script src="{% static "js/jquery-3.3.1.slim.min.js" %}"></script>
     <script src="{% static "js/popper.min.js" %}"></script>
     <script src="{% static "js/bootstrap.min.js" %}"></script>
+
+    <script>
+     // initialize bootstrap tooltips for those objects with data-bs-toggle="tooltip"
+     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+     var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+       return new bootstrap.Tooltip(tooltipTriggerEl);
+     });
+    </script>
+
     {% block extrascript %}{% endblock %}
     {% endblock %}
   </body>
