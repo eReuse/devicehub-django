@@ -1,5 +1,6 @@
 import ast
 import logging
+import datetime
 
 from django.db import IntegrityError
 from django.urls import reverse_lazy
@@ -9,6 +10,7 @@ from django.core.cache import cache
 from django.utils.translation import gettext_lazy as _
 from django.db.models import Q, Count, Case, When, IntegerField
 from django.views.generic.base import TemplateView, View
+from django.forms import modelformset_factory, Select
 from django.views.generic.edit import (
     CreateView,
     DeleteView,
@@ -20,8 +22,31 @@ from dashboard.mixins import DashboardView
 from lot.tables import LotTable
 from device.models import Device
 from evidence.models import SystemProperty
-from lot.models import Lot, LotTag, LotProperty
-from lot.forms import LotsForm
+from lot.tables import LotTable
+from lot.forms import (
+    LotsForm,
+    LotSubscriptionForm,
+    AddDonorForm,
+    BeneficiaryForm,
+    PlaceReturnDeviceForm,
+    SelectFormSet
+)
+from lot.models import (
+    Lot,
+    LotTag,
+    LotProperty,
+    LotSubscription,
+    Beneficiary,
+    Donor,
+    DeviceBeneficiary
+)
+from dhemail.views import (
+    NotifyEmail,
+    SubscriptionEmail,
+    DonorEmail,
+    BeneficiaryAgreementEmail,
+    BeneficiaryEmail,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -287,26 +312,74 @@ class LotsTagsView(DashboardView, SingleTableView):
         return counts
 
 
-class LotPropertiesView(DashboardView, TemplateView):
+class DashboardLotMixing(DashboardView):
+    lot = None
+
+    def get_context_data(self, **kwargs):
+        self.pk = kwargs.get('pk')
+        context = super().get_context_data(**kwargs)
+        self.get_lot()
+
+        self.subscriptions = LotSubscription.objects.filter(
+            lot=self.lot,
+        )
+
+        if not self.request.user.is_admin:
+            self.subscriptions = self.subscriptions.filter(user=self.request.user)
+
+        self.is_shop = self.subscriptions.filter(
+            type=LotSubscription.Type.SHOP,
+            user=self.request.user
+        ).first()
+
+        self.is_circuit_manager = self.subscriptions.filter(
+            type=LotSubscription.Type.CIRCUIT_MANAGER,
+            user=self.request.user
+        ).first()
+
+        beneficiaries = Beneficiary.objects.filter(lot=self.lot)
+        donor = Donor.objects.filter(lot=self.lot).first()
+        context.update({
+            'lot': self.lot,
+            'breadcrumb': self.breadcrumb,
+            "title": "{} - {}".format(self.lot.name, self.title),
+            'subscripted': self.subscriptions.first(),
+            'is_circuit_manager': self.is_circuit_manager,
+            'is_shop': self.is_shop,
+            'donor': donor,
+            'beneficiaries': beneficiaries,
+            'subscriptions': self.subscriptions,
+        })
+
+        return context
+
+    def get_lot(self):
+        if self.lot:
+            return
+
+        self.lot = get_object_or_404(
+            Lot,
+            owner=self.request.user.institution,
+            id=self.pk
+        )
+
+
+class LotPropertiesView(DashboardLotMixing, TemplateView):
     template_name = "properties.html"
     title = _("New Lot Property")
     breadcrumb = "Lot / New property"
 
     def get_context_data(self, **kwargs):
-        self.pk = kwargs.get('pk')
         context = super().get_context_data(**kwargs)
-        lot = get_object_or_404(Lot, owner=self.request.user.institution, id=self.pk)
         properties = LotProperty.objects.filter(
-            lot=lot,
+            lot=self.lot,
             owner=self.request.user.institution,
             type=LotProperty.Type.USER,
         )
         context.update({
-            'lot': lot,
             'properties': properties,
-            'title': self.title,
-            'breadcrumb': self.breadcrumb
         })
+
         return context
 
 
@@ -341,7 +414,11 @@ class AddLotPropertyView(DashboardView, CreateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['lot_id'] = self.lot.id
+        context["title"] = "{} - {}".format(self.title, self.lot.name)
         return context
+
+    def get_success_url(self):
+        return reverse_lazy("lot:properties", args=[self.lot.id])
 
 
 class UpdateLotPropertyView(DashboardView, UpdateView):
@@ -399,3 +476,708 @@ class DeleteLotPropertyView(DashboardView, DeleteView):
 
         # Redirect back to the original URL
         return redirect(self.success_url)
+
+
+class SubscriptLotView(DashboardLotMixing, SubscriptionEmail, FormView):
+    template_name = "subscription.html"
+    title = _("Subscription")
+    breadcrumb = "Lot / Subscription"
+    form_class = LotSubscriptionForm
+    lot = None
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        subscriptor = self.is_shop or self.is_circuit_manager
+        if not self.request.user.is_admin and not subscriptor:
+            self.subscriptions = []
+
+        context.update({
+            'lot': self.lot,
+            'subscriptors': self.subscriptions,
+            "action": _("Subscribe")
+        })
+        return context
+
+    def get_form_kwargs(self):
+        self.pk = self.kwargs.get('pk')
+        self.success_url = reverse_lazy('dashboard:lot', args=[self.pk])
+        kwargs = super().get_form_kwargs()
+        kwargs["institution"] = self.request.user.institution
+        kwargs["lot_pk"] = self.pk
+        return kwargs
+
+    def get_lot(self):
+        self.lot = get_object_or_404(
+            Lot,
+            owner=self.request.user.institution,
+            id=self.pk
+        )
+
+    def form_valid(self, form):
+        form.save()
+        self.template_subscriptor(form)
+        self.send_email(form._user)
+        response = super().form_valid(form)
+        return response
+
+    def get_success_url(self):
+        return reverse_lazy("lot:subscription", args=[self.lot.id])
+
+
+class UnsubscriptLotView(DashboardView, TemplateView):
+
+    def get(self, *args, **kwargs):
+        super().get(*args, **kwargs)
+        pk = self.kwargs.get('pk')
+        id = self.kwargs.get('id')
+        self.success_url = reverse_lazy('lot:subscription', args=[pk])
+
+        self.object = get_object_or_404(
+            LotSubscription,
+            lot_id=pk,
+            id=id
+        )
+
+        if self.object.user == self.request.user or self.request.user.is_admin:
+            self.object.delete()
+            # TODO
+            # self.send_email()
+
+        return redirect(self.success_url)
+
+
+class ParticipantsView(DashboardLotMixing, TemplateView):
+    template_name = "participants.html"
+    title = _("Participants un this lot")
+    breadcrumb = "Lot / Participants"
+
+
+class DonorMixing(DashboardLotMixing, FormView):
+    template_name = "donor.html"
+    form_class = AddDonorForm
+    lot = None
+    donor = None
+
+    def get_form_kwargs(self):
+        self.pk = self.kwargs.get('pk')
+        self.success_url = reverse_lazy('dashboard:lot', args=[self.pk])
+        self.get_lot()
+        self.get_donor()
+        cmanager = LotSubscription.objects.filter(
+            lot=self.lot,
+            type=LotSubscription.Type.CIRCUIT_MANAGER,
+            user=self.request.user
+        ).first()
+
+        if not self.request.user.is_admin and not cmanager:
+            raise Http404
+
+        kwargs = super().get_form_kwargs()
+        kwargs["institution"] = self.request.user.institution
+        kwargs["lot"] = self.lot
+        if self.donor:
+            kwargs["initial"] = {"user": self.donor.email}
+            kwargs["donor"] = self.donor
+        return kwargs
+
+
+
+    def get_donor(self):
+        if not self.lot:
+            self.get_lot()
+
+        self.donor = Donor.objects.filter(
+            lot=self.lot,
+        ).first()
+
+
+class AddDonorView(DonorMixing, DonorEmail):
+    title = _("Add Donor")
+    breadcrumb = "Lot / {}".format(title)
+
+    def form_valid(self, form):
+        form.save()
+        self.send_email(form.donor)
+        response = super().form_valid(form)
+        return response
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["action"] = _("Add")
+        return context
+
+
+class DelDonorView(DonorMixing):
+    title = _("Remove Donor")
+    breadcrumb = "Lot / {}".format(title)
+
+    def form_valid(self, form):
+        form.remove()
+        response = super().form_valid(form)
+        return response
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["action"] = _("Remove")
+        return context
+
+
+class WebMixing(TemplateView):
+    object = None
+
+    def get_object(self):
+        if self.object:
+            return
+
+        pk = self.kwargs.get('pk')
+        id = self.kwargs.get('id')
+
+        self.object = get_object_or_404(
+            self.model,
+            id=id,
+            lot_id=pk
+        )
+
+    def get_context_data(self, **kwargs):
+        self.get_object()
+        context = super().get_context_data(**kwargs)
+        context["object"] = self.object
+        context["devices"] = self.get_devices()
+        return context
+
+    def get_devices(self):
+        chids = self.get_chids()
+
+        props = SystemProperty.objects.filter(
+            value__in=chids
+        ).order_by("-created")
+
+        chids_ordered = []
+        for x in props:
+            if x.value not in chids_ordered:
+                chids_ordered.append(x.value)
+
+        return [Device(id=x, lot=self.object.lot) for x in chids_ordered]
+
+
+class DonorView(WebMixing):
+    template_name = "donor_web.html"
+    model = Donor
+
+    def get_chids(self):
+        return self.object.lot.devicelot_set.all().values_list(
+            "device_id", flat=True
+        ).distinct()
+
+
+class AcceptDonorView(TemplateView, NotifyEmail):
+    template_name = "donor_web.html"
+
+    def get(self, *args, **kwargs):
+        super().get(*args, **kwargs)
+        pk = self.kwargs.get('pk')
+        id = self.kwargs.get('id')
+        self.success_url = reverse_lazy('lot:web_donor', args=[pk, id])
+
+        self.object = get_object_or_404(
+            Donor,
+            id=id,
+            lot_id=pk
+        )
+        self.object.reconciliation = datetime.datetime.now()
+        self.object.save()
+        self.get_templates_email()
+        subscriptors = LotSubscription.objects.filter(
+            lot_id=pk,
+        )
+        for s in subscriptors:
+            self.send_email(s.user)
+
+        return redirect(self.success_url)
+
+    def get_templates_email(self):
+        self.email_template_html = 'subscription/incoming_lot_ready_email.html'
+        self.email_template = 'subscription/incoming_lot_ready_email.txt'
+        self.email_template_subject = 'subscription/incoming_lot_ready_subject.txt'
+
+
+class BeneficiaryView(DashboardLotMixing, BeneficiaryAgreementEmail, FormView):
+    template_name = "beneficiaries.html"
+    title = _("Beneficiaries")
+    breadcrumb = "Lot / Beneficiary"
+    form_class = BeneficiaryForm
+    lot = None
+
+    def get_context_data(self, **kwargs):
+        self.pk = self.kwargs.get('pk')
+        context = super().get_context_data(**kwargs)
+        self.get_lot()
+
+        self.is_shop = LotSubscription.objects.filter(
+            lot=self.lot,
+            user=self.request.user,
+            type=LotSubscription.Type.SHOP
+        ).first()
+
+        beneficiaries = []
+        if self.request.user.is_admin or self.is_shop:
+            if self.is_shop:
+                beneficiaries = self.is_shop.beneficiary_set.filter(lot=self.lot)
+            else:
+                beneficiaries = Beneficiary.objects.filter(lot=self.lot)
+
+        new_devices = {}
+        for d in self.request.session.get("devices", []):
+            d_ben = DeviceBeneficiary.objects.filter(
+                device_id=d,
+                beneficiary__lot=self.lot
+            ).first()
+            new_devices[d] = d_ben.beneficiary.email if d_ben else ''
+
+        context.update({
+            'lot': self.lot,
+            'beneficiaries': beneficiaries,
+            "action": _("Add"),
+            "new_devices": new_devices.items()
+        })
+        return context
+
+    def get_form_kwargs(self):
+        self.pk = self.kwargs.get('pk')
+        self.success_url = reverse_lazy('lot:beneficiary', args=[self.pk])
+
+        self.is_shop = LotSubscription.objects.filter(
+            lot_id=self.pk,
+            user=self.request.user,
+            type=LotSubscription.Type.SHOP
+        ).first()
+
+        kwargs = super().get_form_kwargs()
+        kwargs["shop"] = self.is_shop
+        kwargs["lot_pk"] = self.pk
+        return kwargs
+
+    def get_lot(self):
+        if self.lot:
+            return
+
+        self.lot = get_object_or_404(
+            Lot,
+            owner=self.request.user.institution,
+            id=self.pk
+        )
+
+    def form_valid(self, form):
+        form.devices = self.get_session_devices()
+        form.save()
+        self.beneficiary = form.ben
+        self.send_email(form.ben)
+        self.send_email_subscriptors()
+
+        response = super().form_valid(form)
+        return response
+
+    def send_email_subscriptors(self):
+        self.email_template_html = 'subscription/interest_beneficiary_email.html'
+        self.email_template = 'subscription/interest_beneficiary_email.txt'
+        self.email_template_subject = 'subscription/interest_beneficiary_subject.txt'
+        self.get_lot()
+        for c in self.lot.lotsubscription_set.filter():
+            self.send_email(c.user)
+
+
+class DeleteBeneficiaryView(DashboardView, TemplateView):
+
+    def get(self, *args, **kwargs):
+        super().get(*args, **kwargs)
+        pk = self.kwargs.get('pk')
+        id = self.kwargs.get('id')
+        self.success_url = reverse_lazy('lot:beneficiary', args=[pk])
+
+        self.object = get_object_or_404(
+            Beneficiary,
+            lot_id=pk,
+            id=id
+        )
+
+        subscriptor = LotSubscription.objects.filter(
+            type=LotSubscription.Type.SHOP,
+            lot_id=pk,
+            user=self.request.user
+        ).first()
+
+        if subscriptor or self.request.user.is_admin:
+            self.object.delete()
+            # TODO
+            # self.send_email()
+
+        return redirect(self.success_url)
+
+
+class ListDevicesBeneficiaryView(DashboardLotMixing, BeneficiaryEmail, FormView):
+    template_name = "beneficiaries_devices.html"
+    title = _("Beneficiaries")
+    breadcrumb = "Lot / Beneficiary / Devices"
+    lot = None
+
+    def get(self, *args, **kwargs):
+        res = super().get(*args, **kwargs)
+        if not self.beneficiary.devicebeneficiary_set.first():
+            url = reverse_lazy("dashboard:lot", args=[self.beneficiary.lot.id])
+            return redirect(url)
+
+        return res
+
+    def get_form_class(self):
+        return modelformset_factory(
+            DeviceBeneficiary,
+            fields=["status"],
+            widgets={"status": Select(attrs={"class": "form-select"})},
+            labels={"status": ""},
+            extra=0
+        )
+
+    def get_form(self):
+        form_class = self.get_form_class()
+        formset = form_class(**self.get_form_kwargs())
+
+        for f in formset:
+            f.device = Device(id=f.instance.device_id)
+            choices = f.fields['status'].choices
+            f.fields['status'].choices = choices[1:]
+
+        return formset
+
+    def get_form_kwargs(self):
+        self.pk = self.kwargs.get('pk')
+        self.id = self.kwargs.get('id')
+        kwargs = super().get_form_kwargs()
+
+        self.success_url = reverse_lazy(
+            'lot:devices_beneficiary',
+            args=[self.pk, self.id]
+        )
+
+        self.beneficiary = get_object_or_404(
+            Beneficiary,
+            lot_id=self.pk,
+            id=self.id
+        )
+
+        kwargs["queryset"] = self.beneficiary.devicebeneficiary_set.filter()
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        self.pk = self.kwargs.get('pk')
+        self.id = self.kwargs.get('id')
+        self.get_lot()
+
+        context = super().get_context_data(**kwargs)
+        self.is_shop = LotSubscription.objects.filter(
+            lot=self.lot,
+            user=self.request.user,
+            type=LotSubscription.Type.SHOP
+        ).first()
+
+        if not self.request.user.is_admin and not self.is_shop:
+            raise Http404
+
+        if not self.request.user.is_admin and self.beneficiary.shop != self.is_shop:
+            raise Http404
+
+        new_devices = self.request.session.get("devices")
+        devices = len(context.get("form", []))
+        returned = self.beneficiary.devicebeneficiary_set.filter(
+            status=DeviceBeneficiary.Status.RETURNED
+        ).first()
+
+        context.update({
+            'lot': self.lot,
+            'beneficiary': self.beneficiary,
+            'new_devices': new_devices,
+            'devices': devices,
+            'returned': returned
+        })
+
+        return context
+
+    def get_lot(self):
+        self.lot = get_object_or_404(
+            Lot,
+            owner=self.request.user.institution,
+            id=self.pk
+        )
+
+    def get_subscriptors(self):
+        return LotSubscription.objects.filter(
+            lot=self.lot,
+        )
+
+    def form_valid(self, form):
+        form.save()
+        response = super().form_valid(form)
+
+        if form.changed_objects:
+            devs_confirmed = []
+            devs_delivered = []
+            for ff in form.changed_objects:
+                f = ff[0]
+                if f.status == f.Status.CONFIRMED:
+                    devs_confirmed.append(f.device_id)
+                if f.status == f.Status.DELIVERED:
+                    devs_delivered.append(f.device_id)
+
+            if devs_confirmed:
+                self.email_template_subject = 'beneficiary/confirm/subject.txt'
+                self.email_template = 'beneficiary/confirm/email.txt'
+                self.email_template_html = 'beneficiary/confirm/email.html'
+                self.send_email(self.beneficiary)
+
+                self.email_template_html = 'subscription/confirm_beneficiary_email.html'
+                self.email_template = 'subscription/confirm_beneficiary_email.txt'
+                self.email_template_subject = 'subscription/confirm_beneficiary_subject.txt'
+
+                for c in self.get_subscriptors():
+                    self.send_email(c.user)
+
+            if devs_delivered:
+                self.email_template_subject = 'beneficiary/delivery/subject.txt'
+                self.email_template = 'beneficiary/delivery/email.txt'
+                self.email_template_html = 'beneficiary/delivery/email.html'
+                self.send_email(self.beneficiary)
+
+                self.email_template_subject = 'beneficiary/return/subject.txt'
+                self.email_template = 'beneficiary/return/email.txt'
+                self.email_template_html = 'beneficiary/return/email.html'
+                self.send_email(self.beneficiary)
+
+                self.email_template_html = 'subscription/delivery_beneficiary_email.html'
+                self.email_template = 'subscription/delivery_beneficiary_email.txt'
+                self.email_template_subject = 'subscription/delivery_beneficiary_subject.txt'
+
+                for c in self.get_subscriptors():
+                    self.send_email(c.user)
+
+        return response
+
+
+class DelDeviceBeneficiaryView(DashboardView, TemplateView):
+
+    def get(self, *args, **kwargs):
+        super().get(*args, **kwargs)
+        pk = self.kwargs.get('pk')
+        id = self.kwargs.get('id')
+        dev_id = self.kwargs.get('dev_id')
+        self.success_url = reverse_lazy('lot:devices_beneficiary', args=[pk, id])
+
+        subscriptor = LotSubscription.objects.filter(
+            type=LotSubscription.Type.SHOP,
+            lot_id=pk,
+            user=self.request.user
+        ).first()
+
+        device = DeviceBeneficiary.objects.filter(
+            beneficiary_id=id,
+            device_id=dev_id
+        ).first()
+
+        if subscriptor or self.request.user.is_admin:
+            if device:
+                device.delete()
+            # TODO
+            # self.send_email()
+
+        return redirect(self.success_url)
+
+
+class AddDevicesBeneficiaryView(DashboardView, NotifyEmail, TemplateView):
+
+    def get(self, *args, **kwargs):
+        super().get(*args, **kwargs)
+        pk = self.kwargs.get('pk')
+        id = self.kwargs.get('id')
+        self.success_url = reverse_lazy('lot:devices_beneficiary', args=[pk, id])
+
+        subscriptor = LotSubscription.objects.filter(
+            type=LotSubscription.Type.SHOP,
+            lot_id=pk,
+            user=self.request.user
+        ).first()
+
+        self.beneficiary = get_object_or_404(
+            Beneficiary,
+            lot_id=pk,
+            id=id
+        )
+
+        if subscriptor or self.request.user.is_admin:
+            devices = self.request.session.get("devices", [])
+            for dev in devices:
+                exist = DeviceBeneficiary.objects.filter(device_id=dev).first()
+                if exist:
+                    messages.error(self.request, _("Device {} was already assigned to {}").format(
+                        dev[:6].upper(), exist.beneficiary.email
+                    ))
+                else:
+                    self.beneficiary.add(dev)
+
+            self.request.session["devices"] = []
+            self.send_email_subscriptors()
+
+
+        return redirect(self.success_url)
+
+    def send_email_subscriptors(self):
+        self.email_template_html = 'subscription/interest_beneficiary_email.html'
+        self.email_template = 'subscription/interest_beneficiary_email.txt'
+        self.email_template_subject = 'subscription/interest_beneficiary_subject.txt'
+        pk = self.kwargs.get('pk')
+        if not pk:
+            return
+
+        subscriptors = LotSubscription.objects.filter(
+            lot=self.beneficiary.lot,
+        )
+
+        for c in subscriptors:
+            self.send_email(c.user)
+
+    def get_email_context(self, user):
+        context = super().get_email_context(user)
+        context['beneficiary'] = self.beneficiary
+        return context
+
+
+class WebBeneficiaryView(WebMixing, FormView):
+    template_name = "beneficiary_web.html"
+    model = Beneficiary
+    form_class = PlaceReturnDeviceForm
+
+    def get(self, *args, **kwargs):
+        res = super().get(*args, **kwargs)
+        if not self.object.sign_conditions:
+            url = reverse_lazy("lot:agreement_beneficiary", args=[
+                self.object.lot.id, self.object.id])
+            return redirect(url)
+
+        return res
+
+    def get_chids(self):
+        return self.object.devicebeneficiary_set.all().values_list(
+            "device_id", flat=True
+        ).distinct()
+
+    def get_formset(self):
+        self.get_object()
+        self.pk = self.kwargs.get('pk')
+        self.id = self.kwargs.get('id')
+        self.success_url = reverse_lazy(
+            'lot:web_beneficiary',
+            args=[self.pk, self.id]
+        )
+        devices = self.object.devicebeneficiary_set.filter(
+            status=DeviceBeneficiary.Status.DELIVERED
+        )
+        self.beneficiary = self.object
+        initial_data = []
+        for dev in devices:
+            initial_data.append(
+                {'id': dev.id, 'device_id': dev.device_id, 'returned': False}
+            )
+        return SelectFormSet(self.request.POST or None, initial=initial_data)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        formset = self.get_formset()
+
+        for f in formset:
+            for dev in context.get("devices", []):
+                if f.initial.get("device_id") == dev.id:
+                    dev.form = f
+                    break
+
+
+        context["formset"] = formset
+        context["count_returned"] = len(formset)
+        return context
+
+    def form_valid(self, form):
+        formset = self.get_formset()
+
+        if formset.is_valid():
+            place = form.cleaned_data["place"]
+            devices_returned = []
+            for f in formset:
+                if f.cleaned_data["returned"]:
+                    devices_returned.append(f.cleaned_data["id"])
+
+            for dev in self.object.devicebeneficiary_set.filter(id__in=devices_returned):
+                dev.returned_place = place
+                dev.status = DeviceBeneficiary.Status.RETURNED
+                dev.save()
+
+            # TODO
+            # self.send_email()
+
+            return super().form_valid(form)
+
+        return self.render_to_response(self.get_context_data(form=form))
+
+
+class AgreementBeneficiaryView(TemplateView):
+    template_name = "beneficiary_agreement.html"
+
+    def get_context_data(self, **kwargs):
+        self.pk = self.kwargs.get('pk')
+        self.id = self.kwargs.get('id')
+        context = super().get_context_data(**kwargs)
+
+        beneficiary = get_object_or_404(
+            Beneficiary,
+            lot_id=self.pk,
+            id=self.id
+        )
+
+        context.update({
+            'object': beneficiary,
+        })
+        return context
+
+
+class AcceptBeneficiaryView(TemplateView, NotifyEmail):
+    template_name = "beneficiary_agreement.html"
+    email_template_html = 'subscription/accept_conditions_beneficiary_email.html'
+    email_template = 'subscription/accept_conditions_beneficiary_email.txt'
+    email_template_subject = 'subscription/accept_conditions_beneficiary_subject.txt'
+
+    def get(self, *args, **kwargs):
+        super().get(*args, **kwargs)
+        pk = self.kwargs.get('pk')
+        id = self.kwargs.get('id')
+        self.success_url = reverse_lazy('lot:web_beneficiary', args=[pk, id])
+
+        self.object = get_object_or_404(
+            Beneficiary,
+            id=id,
+            lot_id=pk
+        )
+        self.object.sign_conditions = datetime.datetime.now()
+        self.object.save()
+        self.beneficiary = self.object
+        self.send_email_subscriptors()
+
+        return redirect(self.success_url)
+
+    def send_email_subscriptors(self):
+
+        subscriptors = LotSubscription.objects.filter(
+            lot=self.beneficiary.lot,
+        )
+
+        for c in subscriptors:
+            self.send_email(c.user)
+
+    def get_email_context(self, user):
+        context = super().get_email_context(user)
+        context['beneficiary'] = self.beneficiary
+        return context

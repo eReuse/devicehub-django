@@ -20,7 +20,7 @@ from dashboard.mixins import InventaryMixin, DetailsMixin, DeviceTableMixin
 from evidence.models import SystemProperty
 from evidence.xapian import search
 from device.models import Device
-from lot.models import Lot
+from lot.models import Lot, LotSubscription, Donor
 
 
 class UnassignedDevicesView(DeviceTableMixin, InventaryMixin):
@@ -61,8 +61,19 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         lot = context.get('object')
+        subscriptions = LotSubscription.objects.filter(
+            lot=lot,
+            user=self.request.user
+        )
+        is_shop = subscriptions.filter(type=LotSubscription.Type.SHOP).first()
+        is_circuit_manager = subscriptions.filter(
+            type=LotSubscription.Type.CIRCUIT_MANAGER
+        ).first()
+
+        donor = Donor.objects.filter(lot=lot).first()
 
         context.update({
+            'title': "{} {}".format(_("Lot"), lot.name),
             'lot': lot,
             'count': len(self.get_queryset()),
             'paginate_choices': self.paginate_choices,
@@ -71,7 +82,10 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
             'search_query': self.request.GET.get('q', ''),
             'breadcrumb' : _("Lot / {} / Devices").format(
                 lot.name),
-            'title' : lot.name
+            'subscripted': subscriptions.first(),
+            'is_circuit_manager': is_circuit_manager,
+            'is_shop': is_shop,
+            'donor': donor,
         })
         return context
 
@@ -87,7 +101,7 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
                 if Device(id=x).matches_query(search_query)
             ]
 
-        return [Device(id=x) for x in chids]
+        return [Device(id=x, lot=self.object) for x in chids]
 
     def get_table_data(self):
         table_data = []
@@ -104,6 +118,7 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
                 'version': getattr(device, 'version', ''),
                 'cpu': getattr(device, 'cpu', ''),
                 'current_state': current_state.state if current_state else '--',
+                'status_beneficiary': device.status_beneficiary,
                 'last_updated': parse_datetime(device.updated) if device.updated else "--"
             })
         return table_data

@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+{% include 'tabs.html' %}
+
+{% if new_devices %}
+<div class="row">
+  <div class="col mt-2">
+    <table class="table table-hover table-bordered align-middel">
+      <thead class="table-light">
+        <tr>
+          <th scope="col">{% trans 'shortId' %}</th>
+          <th scope="col">{% trans 'Beneficiary' %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for d in new_devices %}
+        <tr{% if d.1 %} class="btn-yellow"{% endif %}>
+          <td class="font-monospace">
+	    {{ d.0|slice:":6"|upper }}
+	  </td>
+          <td class="font-monospace">{{ d.1 }}</td>
+	</tr>
+	{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+{% if beneficiaries %}
+<div class="row mt-3">
+  <div class="col">
+    <table class="table table-hover table-bordered align-middel">
+      <thead class="table-light">
+        <tr>
+          <th scope="col">{% trans 'Beneficiary' %}</th>
+          <th scope="col">{% trans 'Shop' %}</th>
+          <th scope="col">{% trans 'Sign conditions' %}</th>
+          <th scope="col">{% trans 'Devices' %}</th>
+          <th scope="col"></th>
+          <th scope="col"></th>
+          <th scope="col"></th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for s in beneficiaries %}
+        <tr>
+          <td class="font-monospace">{{ s.email }}</td>
+          <td class="font-monospace">{{ s.shop.user.email }}</td>
+          <td class="font-monospace">
+	    {% if s.sign_conditions %}
+	    {{ s.sign_conditions }}
+	    <i class="bi bi-shield-check text-primary"></i>
+	    {% else %}
+	    <i class="bi bi-shield-slash text-danger"></i>
+	    {% endif %}
+	  </td>
+
+
+          <td class="font-monospace">
+	    <a href="{% url 'lot:devices_beneficiary' lot.id s.id %}">
+	       {% trans 'Devices' %}
+	    </a>
+	  </td>
+          <td class="font-monospace">
+	    <a href="{% url 'lot:web_beneficiary' lot.id s.id %}">
+	       {% trans 'web' %}
+	    </a>
+	  </td>
+          <td class="font-monospace">
+            <a href="{% url 'lot:add_device_beneficiary' lot.id s.id %}" type="button" class="btn btn-sm btn-outline-primary d-flex align-items-center">
+              <i class="bi bi-plus-circle me-1"></i>
+              {% trans 'Assign' %}
+            </a>
+	  </td>
+          <td class="font-monospace">
+            <button type="button" class="btn btn-sm btn-outline-danger d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#deleteModal{{ s.id }}">
+              <i class="bi bi-trash me-1"></i>
+              {% trans 'Delete' %}
+            </button>
+	  </td>
+        </tr>
+        <div class="modal fade" id="deleteModal{{ s.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ s.id }}" aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel{{ s.id }}">{% trans "Delete Beneficiary" %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
+              </div>
+              <div class="modal-body">
+                <p>{% trans "Are you sure you want to delete this beneficiary?" %}</p>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+		  {% trans "Cancel" %}
+		</button>
+             	<a type="submit" class="btn btn-danger" href="{% url 'lot:del_beneficiary' lot.id s.id %}">
+	         {% trans 'Delete' %}
+		</a>
+	      </div>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<div class="mt-4">
+  <button class="btn btn-green-admin" type="button" data-bs-toggle="collapse" data-bs-target="#add_beneficiary">
+    {% trans 'Add Beneficiary' %}
+  </button>
+
+  <div class="collapse mt-3" id="add_beneficiary">
+    <div class="card card-body">
+       {% trans 'Add an email of beneficiary' %}.
+    </div>
+    {% load django_bootstrap5 %}
+    <form role="form" method="post">
+      {% csrf_token %}
+      {% if form.errors %}
+      <div class="alert alert-danger alert-icon alert-icon-border alert-dismissible" role="alert">
+        <div class="icon"><span class="mdi mdi-close-circle-o"></span></div>
+        <div class="message">
+          {% for field, error in form.errors.items %}
+            {{ error }}<br />
+          {% endfor %}
+          <button class="btn-close" type="button" data-dismiss="alert" aria-label="Close"></button>
+        </div>
+      </div>
+      {% endif %}
+      {% bootstrap_form form %}
+      <div class="form-actions-no-box">
+        <a class="btn btn-grey" href="{% url 'dashboard:lot' lot.id %}">{% translate "Cancel" %}</a>
+        <input class="btn btn-green-admin" type="submit" name="submit" value="{{ action }}" />
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

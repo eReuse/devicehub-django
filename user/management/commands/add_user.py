@@ -28,14 +28,12 @@ class Command(BaseCommand):
         self.create_user(institution, email, password, is_admin, predefined_token)
 
     def create_user(self, institution, email, password, is_admin, predefined_token):
-        self.u = User.objects.create(
+        self.u = User.objects.create_superuser(
             institution=institution,
             email=email,
             password=password,
-            is_admin=is_admin,
         )
-        self.u.set_password(password)
-        self.u.save()
+
         if predefined_token:
             token = predefined_token
         else:

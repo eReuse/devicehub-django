@@ -1,0 +1,3 @@
+Te recordamos que si quieres devolver o reciclar los equipos puedes indicarnoslo en la pagina: {{ web_beneficiary }}.
+
+Un cordial saludo
