@@ -37,6 +37,22 @@
                 </div>
             </form>
         </div>
+        <div class="col text-center">
+          {% if lot %}
+          <a href="{% url 'lot:properties' object.id %}" type="button" class="btn btn-green-admin">
+            <i class="bi bi-tag"></i>
+            {% trans 'properties' %}
+          </a>
+          <a href="{% url 'lot:subscription' object.id %}" type="button" class="btn btn-green-admin">
+            <i class="bi bi-tag"></i>
+            {% trans 'Subscription' %}
+          </a>
+          <a href="{% url 'lot:unsubscription' object.id %}" type="button" class="btn btn-green-admin">
+            <i class="bi bi-tag"></i>
+            {% trans 'Unsubscription' %}
+          </a>
+          {% endif %}
+        </div>
     {% endif %}
 
   <div class="container-fluid px-0">

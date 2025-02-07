@@ -88,4 +88,15 @@ class LotProperty(Property):
         constraints = [
             models.UniqueConstraint(
                 fields=["key", "lot"], name="property_unique_type_key_lot")
+            ]
+
+
+class LotSubscription(models.Model):
+    lot = models.ForeignKey(Lot, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=False, blank=False)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["lot", "user"], name="unique_lot_user")
         ]
