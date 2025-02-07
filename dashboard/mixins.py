@@ -95,7 +95,7 @@ class InventaryMixin(DashboardView, TemplateView):
 
             try:
                 resource = resolve(url[0])
-                if resource and dev_ids:
+                if resource:
                     return redirect(url[0])
             except Exception:
                 pass
@@ -152,6 +152,7 @@ class DeviceTableMixin():
             'version': getattr(device, 'version', ''),
             'cpu': getattr(device, 'cpu', ''),
             'current_state': current_state.state if current_state else '--',
+            'status_beneficiary': getattr(device,'status_beneficiary', ''),
             'last_updated': parse_datetime(device.updated) if device.updated else "--"
         }
 

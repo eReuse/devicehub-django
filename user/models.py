@@ -33,7 +33,7 @@ class Institution(models.Model):
 
 
 class UserManager(BaseUserManager):
-    def create_user(self, email, institution, password=None):
+    def create_user(self, email, institution, password=None, commit=True):
         """
         Creates and saves a User with the given email, date of
         birth and password.
@@ -47,20 +47,48 @@ class UserManager(BaseUserManager):
         )
 
         user.set_password(password)
-        user.save(using=self._db)
+        if commit:
+            user.save(using=self._db)
         return user
 
     def create_superuser(self, email, institution, password=None):
         """
-        Creates and saves a superuser with the given email, date of
-        birth and password.
+        Creates and saves a superuser with the given email and password.
+        """
+        user = self.create_user(
+            email,
+            institution,
+            password=password,
+            commit=False
+        )
+
+        user.is_admin = True
+        user.save(using=self._db)
+        return user
+
+    def create_circuit_manager(self, email, institution, password=None):
+        """
+        Creates and saves a circuit manager with the given email and password.
         """
         user = self.create_user(
             email,
             institution=institution,
             password=password,
         )
-        user.is_admin = True
+        user.is_circuit_manager = True
+        user.save(using=self._db)
+        return user
+
+    def create_shop(self, email, institution, password=None):
+        """
+        Creates and saves a shop with the given email and password.
+        """
+        user = self.create_user(
+            email,
+            institution=institution,
+            password=password,
+        )
+        user.is_shop = True
         user.save(using=self._db)
         return user
 
@@ -73,11 +101,12 @@ class User(AbstractBaseUser):
     )
     is_active = models.BooleanField(_("is active"), default=True)
     is_admin = models.BooleanField(_("is admin"), default=False)
+    is_circuit_manager = models.BooleanField(_("is circuitmanager"), default=False)
+    is_shop = models.BooleanField(_("is shop"), default=False)
     first_name = models.CharField(_("First name"), max_length=255, blank=True, null=True)
     last_name = models.CharField(_("Last name"), max_length=255, blank=True, null=True)
     accept_gdpr = models.BooleanField(default=False)
-    institution = models.ForeignKey(Institution, on_delete=models.CASCADE)
-
+    institution = models.ForeignKey(Institution, on_delete=models.CASCADE, related_name="users")
 
     objects = UserManager()
 

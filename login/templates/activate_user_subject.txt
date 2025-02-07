@@ -1,4 +1,4 @@
 {% load i18n %}{% autoescape off %}
-{% trans "IdHub" as site %}
+{% trans "DeviceHub" as site %}
 {% blocktrans %}User activation on {{site}}{% endblocktrans %}
 {% endautoescape %}

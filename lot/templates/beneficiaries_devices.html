@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+{% include 'tabs.html' %}
+
+<form method="post">
+    {% csrf_token %}
+
+    {{ form.management_form }}
+<div class="row mt-3">
+  <div class="col">
+    Beneficiary: {{ beneficiary.email }}
+  </div>
+</div>
+<div class="row mt-3">
+  <div class="col">
+
+    <table class="table table-hover table-bordered align-middel">
+      <thead class="table-light">
+        <tr>
+          <th scope="col">{% trans 'ShortId' %}</th>
+          <th scope="col">{% trans 'Manufacturer' %}</th>
+          <th scope="col">{% trans 'Model' %}</th>
+          <th scope="col">{% trans 'Serial Number' %}</th>
+          <th scope="col">{% trans 'Status' %}</th>
+	  {% if returned %}
+          <th scope="col">{% trans 'Returned' %}</th>
+	  {% endif %}
+          <th scope="col"></th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for f in form %}
+        <tr>
+          <td class="font-monospace">{{ f.device.shortid }}</td>
+          <td class="font-monospace">{{ f.device.manufacturer }}</td>
+          <td class="font-monospace">{{ f.device.model }}</td>
+          <td class="font-monospace">{{ f.device.serial_number }}</td>
+	  <td class="font-monospace">{{ f }}</td>
+	  {% if returned %}
+          <td class="font-monospace">{{ f.instance.returned_place|default:"" }}</td>
+	  {% endif %}
+          <td class="font-monospace">
+	    <a href="{% url 'lot:del_device_beneficiary' lot.id beneficiary.id f.device.id %}">
+	       {% trans 'Delete' %}
+	    </a>
+	  </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="mt-4">
+{% if new_devices %}
+  <a class="btn btn-green-admin ml-2" type="button" href="{% url 'lot:add_device_beneficiary' lot.id beneficiary.id %}">
+    {% trans 'Add Devices' %}
+  </a>
+{% endif %}
+{% if devices %}
+  <button  class="btn btn-green-admin" type="submit">{% trans 'Save' %}</button>
+{% endif %}
+</div>
+
+</form>
+{% endblock %}

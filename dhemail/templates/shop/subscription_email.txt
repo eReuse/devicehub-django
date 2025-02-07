@@ -1,0 +1,1 @@
+Se te envia este email porque el administrador del dominio {{ site_name }} te ha añadido al lote {{ lot.name }} para que puedas gestionar la oferta de los items que en el residen.
