@@ -15,7 +15,7 @@ from django.views.generic.edit import (
 from django_tables2 import SingleTableView
 from dashboard.mixins import DashboardView
 from lot.tables import LotTable
-from lot.models import Lot, LotTag, LotProperty
+from lot.models import Lot, LotTag, LotProperty, LotSubscription
 from lot.forms import LotsForm
 
 class LotSuccessUrlMixin():
@@ -372,3 +372,58 @@ class DeleteLotPropertyView(DashboardView, DeleteView):
 
         # Redirect back to the original URL
         return redirect(self.success_url)
+
+class SubscriptLotView(DashboardView, CreateView):
+    template_name = "subscription.html"
+    title = _("Subscription")
+    breadcrumb = "Lot / Subscription"
+    model = LotSubscription
+    fields = ("user",)
+
+    def get_context_data(self, **kwargs):
+        self.pk = self.kwargs.get('pk')
+        context = super().get_context_data(**kwargs)
+        self.lot = get_object_or_404(
+            Lot, owner=self.request.user.institution,
+            id=self.pk
+        )
+        context.update({
+            'lot': self.lot,
+        })
+        return context
+
+    def form_valid(self, form):
+        # form.instance.user = self.request.user
+        form.instance.lot = self.lot
+        form.instance.type = LotAnnotation.Type.USER
+        response = super().form_valid(form)
+        return response
+
+    def get_form_kwargs(self):
+        self.pk = self.kwargs.get('pk')
+        self.success_url = reverse_lazy('dashboard:lot', args=[self.pk])
+        kwargs = super().get_form_kwargs()
+        return kwargs
+
+
+class UnsubscriptLotView(DashboardView, CreateView):
+    template_name = "subscription.html"
+    title = _("Subscription")
+    breadcrumb = "Lot / Subscription"
+    model = LotSubscription
+    fields = ("key", "value")
+
+    def form_valid(self, form):
+        form.instance.user = self.request.user
+        form.instance.lot = self.lot
+        self.success_url = reverse_lazy('lot', args=[self.lot.pk])
+        response = super().form_valid(form)
+        return response
+
+    def get_form_kwargs(self):
+        pk = self.kwargs.get('pk')
+        self.subscription = get_object_or_404(self.model, pk=pk, user=self.request.user)
+        self.lot = self.subscription.lot
+        self.success_url = reverse_lazy('lot:suscription', args=[pk])
+        kwargs = super().get_form_kwargs()
+        return kwargs

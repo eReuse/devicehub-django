@@ -18,6 +18,14 @@
       <i class="bi bi-tag"></i>
       {% trans 'properties' %}
     </a>
+    <a href="{% url 'lot:subscription' object.id %}" type="button" class="btn btn-green-admin">
+      <i class="bi bi-tag"></i>
+      {% trans 'Subscription' %}
+    </a>
+    <a href="{% url 'lot:unsubscription' object.id %}" type="button" class="btn btn-green-admin">
+      <i class="bi bi-tag"></i>
+      {% trans 'Unsubscription' %}
+    </a>
     {% endif %}
   </div>
 </div>
