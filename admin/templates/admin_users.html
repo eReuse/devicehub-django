@@ -1,15 +1,18 @@
 {% extends "base.html" %}
 {% load i18n %}
 
+{% block actions %}
+
+    <a href="{% url 'admin:new_user' %}" class="btn btn-green-admin">
+      <i class="bi bi-person-add"></i>
+      {% translate "New user" %}
+    </a>
+{% endblock %}
+
+
 {% block content %}
-<div class="row">
-  <div class="col">
-    <h3>{{ subtitle }}</h3>
-  </div>
-  <div class="col-2">
-    <a href="{% url 'admin:new_user' %}" class="btn btn-green-admin">{% translate "Add new user" %}</a>
-  </div>
-</div>
+  <h3>{{ subtitle }}</h3>
+
 
 <div class="row">
   <div class="col">
