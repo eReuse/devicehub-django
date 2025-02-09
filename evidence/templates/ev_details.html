@@ -1,5 +1,13 @@
 {% extends "base.html" %}
 {% load i18n %}
+{% block actions %}
+
+        <a href="{% url 'evidence:download' object.uuid %}" class="btn btn-green-admin">
+          <i class="bi bi-file-earmark-arrow-down"></i>
+          {% trans "Download File" %}
+        </a>
+
+{% endblock %}
 
 {% block content %}
 <div class="row">
@@ -8,20 +16,57 @@
   </div>
 </div>
 
+{% load django_bootstrap5 %}
+<form role="form" method="post" class="p-2 mb-4 border rounded shadow-sm d-flex d-inline-flex align-items-center gap-3" style="max-width: 400px; {% if form2.erase_server.value %}background-color: #d5f7de;{% else %}background-color: #f7e7d5;{% endif %}">
+  {% csrf_token %}
+
+  {% if form2.errors %}
+    <div class="alert alert-danger d-flex align-items-center alert-dismissible fade show w-100" role="alert">
+      <i class="mdi mdi-alert-circle me-2"></i>
+      <div>
+        {% for field, error in form2.errors.items %}
+          <strong>{{ field|title }}:</strong> {{ error }}<br />
+        {% endfor %}
+      </div>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  {% endif %}
+
+  <!-- erase server swithc -->
+<div class="form-check form-switch m-0">
+  <input
+    class="form-check-input"
+    type="checkbox"
+    id="{{ form2.erase_server.id_for_label }}"
+    name="{{ form2.erase_server.name }}"
+    {% if form2.erase_server.value %}
+      checked
+    {% endif %}>
+
+  <label class="form-check-label ps-1" for="{{ form2.erase_server.id_for_label }}">
+    {% if form2.erase_server.value %}
+       <i class="pe-1 bi bi-eraser"></i>
+      {% translate "It is an erase server" %}
+    {% else %}
+       <i class="pe-1 bi bi-x-circle"></i>
+      {% translate "It is not an erase server" %}
+    {% endif %}
+  </label>
+</div>
+  <!-- submit button -->
+  <button class="btn btn-sm btn btn-outline-success" d-flex align-items-end gap-1" type="submit" name="submit_form2">
+    <i class="bi bi-floppy2-fill"></i> {% translate 'Save' %}
+  </button>
+</form>
+
 <div class="row">
   <div class="col">
     <ul class="nav nav-tabs nav-tabs-bordered">
       <li class="nav-items">
-        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#device">{% trans "Devices" %}</button>
+        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#device">{% trans "Device" %}</button>
       </li>
       <li class="nav-items">
-	<a href="#tag" class="nav-link" data-bs-toggle="tab" data-bs-target="#tag">{% trans "Tag" %}</a>
-      </li>
-      <li class="nav-items">
-        <a href="{% url 'evidence:erase_server' object.uuid %}" class="nav-link">{% trans "Erase Server" %}</a>
-      </li>
-      <li class="nav-items">
-        <a href="{% url 'evidence:download' object.uuid %}" class="nav-link">{% trans "Download File" %}</a>
+	      <a href="#tag" class="nav-link" data-bs-toggle="tab" data-bs-target="#tag">{% trans "Tag" %}</a>
       </li>
     </ul>
   </div>
@@ -35,13 +80,13 @@
         <thead>
           <tr>
             <th scope="col" data-sortable="">
-              {% trans "Type" %}
+              {% trans "Algorithm" %}
             </th>
             <th scope="col" data-sortable="">
-              {% trans "Identificator" %}
+              {% trans "Device ID" %}
             </th>
             <th scope="col" data-sortable="">
-              {% trans "Data" %}
+              {% trans "Date" %}
             </th>
           </tr>
         </thead>
@@ -53,7 +98,8 @@
             </td>
             <td>
               <small class="text-muted">
-                <a href="{% url 'device:details' snap.value %}">{{ snap.value }}</a>
+                <a href="{% url 'device:details' snap.value %}">{{  snap.value|truncatechars:7|upper }}</a>
+            {{ dev.shortid }}
               </small>
             </td>
             <td>
@@ -67,6 +113,7 @@
       </table>
     </div>
   </div>
+
   <div class="tab-pane fade" id="tag">
     {% load django_bootstrap5 %}
     <div class="list-group col-6">
@@ -88,7 +135,7 @@
 	  <div class="row">
 	    <div class="col">
               <a class="btn btn-grey" href="">{% translate "Cancel" %}</a>
-              <input class="btn btn-green-admin" type="submit" name="submit" value="{% translate 'Save' %}" />
+              <input class="btn btn-green-admin" type="submit" name="submit_form1" value="{% translate 'Save' %}" />
 	    </div>
 	    {% if form.tag.value %}
 	    <div class="col-1">
@@ -101,6 +148,7 @@
     </div>
   </div>
 </div>
+
 {% endblock %}
 
 {% block extrascript %}

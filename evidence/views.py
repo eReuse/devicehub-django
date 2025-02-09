@@ -103,6 +103,7 @@ class EvidenceView(DashboardView, FormView):
         context = super().get_context_data(**kwargs)
         context.update({
             'object': self.object,
+            'form2': EraseServerForm(**self.get_form_kwargs(), data=self.request.POST or None),
         })
         return context
 
@@ -112,6 +113,23 @@ class EvidenceView(DashboardView, FormView):
         kwargs['uuid'] = self.pk
         kwargs['user'] = self.request.user
         return kwargs
+
+    def post(self, request, *args, **kwargs):
+        form1 = self.get_form()
+        #Empty param @initial makes it work, but i doubt it is the correct logic
+        form2 = EraseServerForm(request.POST, user=self.request.user, initial={}, uuid=self.kwargs.get('pk'))
+
+        if "submit_form1" in request.POST and form1.is_valid():
+            return self.form_valid(form1)
+        elif "submit_form2" in request.POST and form2.is_valid():
+            return self.form2_valid(form2)
+
+        return self.form_invalid(form1, form2)
+
+    def form2_valid(self, form):
+        form.save(self.request.user)
+        response = super().form_valid(form)
+        return response
 
     def form_valid(self, form):
         form.save(self.request.user)
@@ -142,51 +160,6 @@ class DownloadEvidenceView(DashboardView, TemplateView):
         return response
 
 
-class EraseServerView(DashboardView, FormView):
-    template_name = "ev_eraseserver.html"
-    section = "evidences"
-    title = _("Evidences")
-    breadcrumb = "Evidences / Details"
-    success_url = reverse_lazy('evidence:list')
-    form_class = EraseServerForm
-
-    def get(self, request, *args, **kwargs):
-        self.pk = kwargs['pk']
-        self.object = Evidence(self.pk)
-        if self.object.owner != self.request.user.institution:
-            raise Http403
-
-        self.object.get_properties()
-        return super().get(request, *args, **kwargs)
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context.update({
-            'object': self.object,
-        })
-        return context
-
-    def get_form_kwargs(self):
-        self.pk = self.kwargs.get('pk')
-        kwargs = super().get_form_kwargs()
-        kwargs['uuid'] = self.pk
-        kwargs['user'] = self.request.user
-        return kwargs
-
-    def form_valid(self, form):
-        form.save(self.request.user)
-        response = super().form_valid(form)
-        return response
-
-    def form_invalid(self, form):
-        response = super().form_invalid(form)
-        return response
-
-    def get_success_url(self):
-        success_url = reverse_lazy('evidence:details', args=[self.pk])
-        return success_url
-
-
 class DeleteEvidenceTagView(DashboardView, DeleteView):
     model = SystemProperty
 
@@ -197,14 +170,14 @@ class DeleteEvidenceTagView(DashboardView, DeleteView):
     def get(self, request, *args, **kwargs):
         self.object = self.get_object()
 
-        message = _("<Deleted> Evidence Tag: {}").format(self.object.value) 
+        message = _("<Deleted> Evidence Tag: {}").format(self.object.value)
         DeviceLog.objects.create(
             snapshot_uuid=self.object.uuid,
             event=message,
             user=self.request.user,
             institution=self.request.user.institution
         )
-        self.object.delete()        
+        self.object.delete()
 
         messages.info(self.request, _("Evicende Tag deleted successfully."))
         return self.handle_success()
@@ -214,6 +187,6 @@ class DeleteEvidenceTagView(DashboardView, DeleteView):
 
     def get_success_url(self):
         return self.request.META.get(
-            'HTTP_REFERER', 
+            'HTTP_REFERER',
             reverse_lazy('evidence:details', args=[self.object.uuid])
         )
