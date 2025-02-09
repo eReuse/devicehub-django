@@ -241,7 +241,7 @@
 	     {% for snap in object.evidences %}
              <tr>
                <td>
-                  <a href="{% url 'evidence:details' snap.uuid %}">{{ snap.uuid }}</a>
+                  <a href="{% url 'evidence:details' snap.uuid %}">{{ snap.uuid|truncatechars:7|upper }}</a>
 	       </td>
                <td>
 		 {% if snap.did_document %}
