@@ -65,6 +65,7 @@ ENABLE_EMAIL = config("ENABLE_EMAIL", default=True, cast=bool)
 
 EVIDENCES_DIR = config("EVIDENCES_DIR", default=os.path.join(BASE_DIR, "db"))
 
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -77,16 +78,13 @@ INSTALLED_APPS = [
     'django_extensions',
     'django_bootstrap5',
     'django_tables2',
-    "rest_framework",
     "login",
     "user",
     "device",
     "evidence",
-    "action",
-    "tag",
     "lot",
-    "documents",
     "dashboard",
+    "action",
     "admin",
     "api",
 ]
@@ -215,6 +213,10 @@ LOGGING = {
             '()': CustomFormatter,
             'format': '%(levelname)s %(asctime)s %(message)s'
         },
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {message}',
+            'style': '{',
+        },
     },
     "handlers": {
         "console": {
@@ -237,7 +239,7 @@ LOGGING = {
             "handlers": ["console"],
             "level": "ERROR",
             "propagate": False,
-        }
+        },
     }
 }
 

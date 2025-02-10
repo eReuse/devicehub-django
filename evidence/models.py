@@ -4,6 +4,8 @@ import hashlib
 from dmidecode import DMIParse
 from django.db import models
 
+
+from django.db.models import Q
 from utils.constants import STR_EXTEND_SIZE, CHASSIS_DH
 from evidence.xapian import search
 from evidence.parse_details import ParseSnapshot
@@ -11,26 +13,42 @@ from evidence.normal_parse_details import get_inxi, get_inxi_key
 from user.models import User, Institution
 
 
-class Annotation(models.Model):
-    class Type(models.IntegerChoices):
-        SYSTEM = 0, "System"
-        USER = 1, "User"
-        DOCUMENT = 2, "Document"
-        ERASE_SERVER = 3, "EraseServer"
-
+class Property(models.Model):
     created = models.DateTimeField(auto_now_add=True)
-    uuid = models.UUIDField()
     owner = models.ForeignKey(Institution, on_delete=models.CASCADE)
     user = models.ForeignKey(
         User, on_delete=models.SET_NULL, null=True, blank=True)
-    type = models.SmallIntegerField(choices=Type)
     key = models.CharField(max_length=STR_EXTEND_SIZE)
     value = models.CharField(max_length=STR_EXTEND_SIZE)
 
     class Meta:
+        #Only for shared behaviour, it is not a table
+        abstract = True
+
+
+class SystemProperty(Property):
+    uuid = models.UUIDField()
+
+    class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["type", "key", "uuid"], name="unique_type_key_uuid")
+                fields=["key", "uuid"], name="system_unique_type_key_uuid")
+        ]
+
+
+class UserProperty(Property):
+
+    class Type(models.IntegerChoices):
+        USER = 1, "User"
+        ERASE_SERVER = 2, "EraseServer"
+
+    uuid = models.UUIDField()
+    type = models.SmallIntegerField(choices=Type, default=Type.USER)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["key", "uuid"], name="userproperty_unique_type_key_uuid")
         ]
 
 
@@ -42,22 +60,22 @@ class Evidence:
         self.created = None
         self.dmi = None
         self.inxi = None
-        self.annotations = []
+        self.properties = []
         self.components = []
         self.default = "n/a"
 
         self.get_owner()
         self.get_time()
 
-    def get_annotations(self):
-        self.annotations = Annotation.objects.filter(
+    def get_properties(self):
+        self.properties = SystemProperty.objects.filter(
             uuid=self.uuid
         ).order_by("created")
 
     def get_owner(self):
-        if not self.annotations:
-            self.get_annotations()
-        a = self.annotations.first()
+        if not self.properties:
+            self.get_properties()
+        a = self.properties.first()
         if a:
             self.owner = a.owner
 
@@ -119,7 +137,7 @@ class Evidence:
         self.created = self.doc.get("endTime")
 
         if not self.created:
-            self.created = self.annotations.last().created
+            self.created = self.properties.last().created
 
     def get_components(self):
         if self.is_legacy():
@@ -189,9 +207,8 @@ class Evidence:
 
     @classmethod
     def get_all(cls, user):
-        return Annotation.objects.filter(
+        return SystemProperty.objects.filter(
             owner=user.institution,
-            type=Annotation.Type.SYSTEM,
             key="hidalgo1",
         ).order_by("-created").values_list("uuid", "created").distinct()
 

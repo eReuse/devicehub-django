@@ -21,7 +21,7 @@ from django.views.generic.edit import (
 from utils.save_snapshots import move_json, save_in_disk
 from django.views.generic.edit import View
 from dashboard.mixins import DashboardView
-from evidence.models import Annotation
+from evidence.models import SystemProperty, UserProperty
 from evidence.parse_details import ParseSnapshot
 from evidence.parse import Build
 from device.models import Device
@@ -94,11 +94,11 @@ class NewSnapshotView(ApiMixing):
             logger.error("%s", txt)
             return JsonResponse({'status': txt}, status=500)
 
-        exist_annotation = Annotation.objects.filter(
+        exist_property = SystemProperty.objects.filter(
             uuid=ev_uuid
         ).first()
 
-        if exist_annotation:
+        if exist_property:
             txt = "error: the snapshot {} exist".format(ev_uuid)
             logger.warning("%s", txt)
             return JsonResponse({'status': txt}, status=500)
@@ -115,25 +115,24 @@ class NewSnapshotView(ApiMixing):
             text = "fail: It is not possible to parse snapshot"
             return JsonResponse({'status': text}, status=500)
 
-        annotation = Annotation.objects.filter(
+        prop = SystemProperty.objects.filter(
             uuid=ev_uuid,
-            type=Annotation.Type.SYSTEM,
             # TODO this is hardcoded, it should select the user preferred algorithm
             key="hidalgo1",
             owner=self.tk.owner.institution
         ).first()
 
 
-        if not annotation:
-            logger.error("Error: No annotation for uuid: %s", ev_uuid)
+        if not prop:
+            logger.error("Error: No property  for uuid: %s", ev_uuid)
             return JsonResponse({'status': 'fail'}, status=500)
 
-        url_args = reverse_lazy("device:details", args=(annotation.value,))
+        url_args = reverse_lazy("device:details", args=(property.value,))
         url = request.build_absolute_uri(url_args)
 
         response = {
             "status": "success",
-            "dhid": annotation.value[:6].upper(),
+            "dhid": property.value[:6].upper(),
             "url": url,
             # TODO replace with public_url when available
             "public_url": url
@@ -259,22 +258,21 @@ class DetailsDeviceView(ApiMixing):
                 "components": snapshot.get("components"),
             })
 
-        uuids = Annotation.objects.filter(
+        uuids = SystemProperty.objects.filter(
             owner=self.tk.owner.institution,
             value=self.pk
         ).values("uuid")
 
-        annotations = Annotation.objects.filter(
+        properties = UserProperty.objects.filter(
             uuid__in=uuids,
             owner=self.tk.owner.institution,
-            type = Annotation.Type.USER
         ).values_list("key", "value")
 
-        data.update({"annotations": list(annotations)})
+        data.update({"properties": list(properties)})
         return data
 
 
-class AddAnnotationView(ApiMixing):
+class AddPropertyView(ApiMixing):
 
     def post(self, request, *args, **kwargs):
         response = self.auth()
@@ -283,13 +281,12 @@ class AddAnnotationView(ApiMixing):
 
         self.pk = kwargs['pk']
         institution = self.tk.owner.institution
-        self.annotation = Annotation.objects.filter(
+        self.property = SystemProperty.objects.filter(
             owner=institution,
             value=self.pk,
-            type=Annotation.Type.SYSTEM
         ).first()
 
-        if not self.annotation:
+        if not self.property:
             return JsonResponse({}, status=404)
 
         try:
@@ -300,10 +297,9 @@ class AddAnnotationView(ApiMixing):
             logger.error("Invalid Snapshot of user %s", self.tk.owner)
             return JsonResponse({'error': 'Invalid JSON'}, status=500)
 
-        Annotation.objects.create(
-            uuid=self.annotation.uuid,
+        UserProperty.objects.create(
+            uuid=self.property.uuid,
             owner=self.tk.owner.institution,
-            type = Annotation.Type.USER,
             key = key,
             value = value
         )

@@ -6,7 +6,7 @@ import logging
 
 from django.core.exceptions import ValidationError
 from evidence.xapian import index
-from evidence.models import Annotation
+from evidence.models import SystemProperty
 from device.models import Device
 
 
@@ -68,7 +68,7 @@ def create_doc(data):
     return doc
 
 
-def create_annotation(doc, user, commit=False):
+def create_property(doc, user, commit=False):
     if not doc or not doc.get('uuid') or not doc.get("CUSTOMER_ID"):
         return []
     
@@ -76,25 +76,23 @@ def create_annotation(doc, user, commit=False):
         'uuid': doc['uuid'],
         'owner': user.institution,
         'user': user,
-        'type': Annotation.Type.SYSTEM,
         'key': 'CUSTOMER_ID',
         'value': doc['CUSTOMER_ID'],
     }
     if commit:
-        annotation = Annotation.objects.filter(
+        prop = SystemProperty.objects.filter(
                 uuid=doc["uuid"],
                 owner=user.institution,
-                type=Annotation.Type.SYSTEM,
         )
 
-        if annotation:
-            txt = "Warning: Snapshot %s already registered (annotation exists)"
+        if prop:
+            txt = "Warning: Snapshot %s already registered (system property exists)"
             logger.warning(txt, doc["uuid"])
-            return annotation
+            return prop
 
-        return Annotation.objects.create(**data)
+        return SystemProperty.objects.create(**data)
 
-    return Annotation(**data)
+    return SystemProperty(**data)
 
 
 def create_index(doc, user):

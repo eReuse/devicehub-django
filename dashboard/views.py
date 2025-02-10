@@ -6,7 +6,7 @@ from django.shortcuts import Http404
 from django.db.models import Q
 
 from dashboard.mixins import InventaryMixin, DetailsMixin
-from evidence.models import Annotation
+from evidence.models import SystemProperty
 from evidence.xapian import search
 from device.models import Device
 from lot.models import Lot
@@ -74,7 +74,7 @@ class SearchView(InventaryMixin):
 
         for x in matches:
             # devices.append(self.get_annotations(x))
-            dev = self.get_annotations(x)
+            dev = self.get_properties(x)
             if dev.id not in dev_id:
                 devices.append(dev)
                 dev_id.append(dev.id)
@@ -83,13 +83,14 @@ class SearchView(InventaryMixin):
         # TODO fix of pagination, the count is not correct
         return devices, count
 
-    def get_annotations(self, xp):
+    def get_properties(self, xp):
         snap = json.loads(xp.document.get_data())
         if snap.get("credentialSubject"):
             uuid = snap["credentialSubject"]["uuid"]
         else:
             uuid = snap["uuid"]
-        return Device.get_annotation_from_uuid(uuid, self.request.user.institution)
+
+        return Device.get_properties_from_uuid(uuid, self.request.user.institution)
 
     def search_hids(self, query, offset, limit):
         qry = Q()
@@ -98,8 +99,7 @@ class SearchView(InventaryMixin):
             if i:
                 qry |= Q(value__startswith=i)
 
-        chids = Annotation.objects.filter(
-            type=Annotation.Type.SYSTEM,
+        chids = SystemProperty.objects.filter(
             owner=self.request.user.institution
         ).filter(
             qry
