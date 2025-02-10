@@ -46,6 +46,12 @@
           <th scope="col" class="text-center">
             {% trans "Model" %}
           </th>
+          <th scope="col" class="text-center">
+            {% trans "Current State" %}
+          </th>
+          <th scope="col" data-type="date" class="text-center" data-format="YYYY-MM-DD HH:mm">
+            {% trans "Evidence last updated" %}
+          </th>
         </tr>
       </thead>
       <tbody>
@@ -64,16 +70,23 @@
           </td>
           <td class="text-center">
             {{ dev.manufacturer }}
-        </td>
-        <td>
-	  {% if dev.version %}
-            {{dev.version}} {{ dev.model }}
-	  {% else %}
-            {{ dev.model }}
-	  {% endif %}
-        </td>
-      </tr>
-    </tbody>
+          </td>
+          <td class="text-center">
+	          {% if dev.version %}
+              {{dev.version}} {{ dev.model }}
+	          {% else %}
+              {{ dev.model }}
+	          {% endif %}
+          </td>
+          <td class="text-center">
+            {{ dev.get_current_state.state|default:"N/A" }}
+          </td>
+          <td class="text-center">
+          <td width="13%">{{ log.date|date:"M j, Y, H:i" }}</td>
+            {{ dev.get_last_evidence.created }}
+          </td>
+        </tr>
+      </tbody>
     {% endfor %}
   </table>
     <div class="d-flex justify-content-start mt-5">

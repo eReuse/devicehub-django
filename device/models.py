@@ -125,10 +125,14 @@ class Device:
     def last_uuid(self):
         if self.uuid:
             return self.uuid
+
+        if not self.uuids:
+            self.get_uuids()
+
         return self.uuids[0]
 
     def get_current_state(self):
-        uuid = self.last_uuid
+        uuid = self.last_uuid()
 
         return State.objects.filter(snapshot_uuid=uuid).order_by('-date').first()
 
