@@ -64,15 +64,23 @@
       <div class="navbar-nav navbar-sub-brand">
          {{ user.institution.name|upper }}
       </div>
-      <div class="navbar-nav">
-        <div class="nav-item text-nowrap">
-            <i id="user-avatar" class="bi bi-person-circle"></i>
-            <a class="navbar-sub-brand px-3" href="{% url 'user:panel' %}">{{ user.email }}</a>
-            <a class="logout" href="{% url 'login:logout' %}">
-              <i class="fa-solid fa-arrow-right-from-bracket"></i>
+
+      <nav class="navbar navbar-expand-sm">
+        <div class="container-fluid d-flex justify-content-end">
+          <div class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle navbar-sub-brand px-3" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              {{ user.email }}
             </a>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><a class="dropdown-item" href="{% url 'user:panel' %}"><i class="bi bi-person"></i> Profile</a></li>
+              <li><a class="dropdown-item" href="{% url 'api:tokens' %}"><i class="bi bi-key"></i> Tokens</a></li>
+              <li><a class="dropdown-item" href="{% url 'user:settings' %}"><i class="bi bi-gear"></i> Settings File</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item text-danger" href="{% url 'login:logout' %}"><i class="fa-solid fa-arrow-right-from-bracket"></i> Logout</a></li>
+            </ul>
+          </div>
         </div>
-      </div>
+      </nav>
     </header>
 
     <div class="container-fluid">
@@ -216,7 +224,6 @@
           {% block actions %}
           {% endblock %}
           </div>
-
           {% block content %}
           {% endblock content %}
 
