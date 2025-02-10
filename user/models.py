@@ -33,7 +33,7 @@ class Institution(models.Model):
 
 
 class UserManager(BaseUserManager):
-    def create_user(self, email, institution, password=None):
+    def create_user(self, email, password=None):
         """
         Creates and saves a User with the given email, date of
         birth and password.
@@ -42,8 +42,7 @@ class UserManager(BaseUserManager):
             raise ValueError("Users must have an email address")
 
         user = self.model(
-            email=self.normalize_email(email),
-            institution=institution
+            email=self.normalize_email(email)
         )
 
         user.set_password(password)
@@ -56,11 +55,16 @@ class UserManager(BaseUserManager):
         """
         user = self.create_user(
             email,
-            institution=institution,
             password=password,
         )
-        user.is_admin = True
-        user.save(using=self._db)
+
+        user.institutions.create(
+            institution=institution,
+            is_active=True,
+            is_admin=True
+        )
+
+
         return user
 
     def create_circuit_manager(self, email, institution, password=None):
@@ -72,8 +76,14 @@ class UserManager(BaseUserManager):
             institution=institution,
             password=password,
         )
-        user.is_circuit_manager = True
-        user.save(using=self._db)
+
+        user.institutions.create(
+            institution=institution,
+            is_active=True,
+            is_circuit_manager=True
+        )
+
+
         return user
 
     def create_shop(self, email, institution, password=None):
@@ -85,8 +95,12 @@ class UserManager(BaseUserManager):
             institution=institution,
             password=password,
         )
-        user.is_shop = True
-        user.save(using=self._db)
+        user.institutions.create(
+            institution=institution,
+            is_active=True,
+            is_shop=True
+        )
+
         return user
 
 
@@ -96,15 +110,10 @@ class User(AbstractBaseUser):
         max_length=255,
         unique=True,
     )
-    is_active = models.BooleanField(_("is active"), default=True)
-    is_admin = models.BooleanField(_("is admin"), default=False)
-    is_circuit_manager = models.BooleanField(_("is circuitmanager"), default=False)
-    is_shop = models.BooleanField(_("is shop"), default=False)
+
     first_name = models.CharField(_("First name"), max_length=255, blank=True, null=True)
     last_name = models.CharField(_("Last name"), max_length=255, blank=True, null=True)
     accept_gdpr = models.BooleanField(default=False)
-    institution = models.ForeignKey(Institution, on_delete=models.CASCADE)
-
 
     objects = UserManager()
 
@@ -134,3 +143,15 @@ class User(AbstractBaseUser):
     def username(self):
         "Is the email of the user"
         return self.email
+
+
+class UserInstitution(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="institutions")
+    institution = models.ForeignKey(Institution, on_delete=models.CASCADE, related_name="users")
+    is_active = models.BooleanField(_("is active"), default=True)
+    is_admin = models.BooleanField(_("is admin"), default=False)
+    is_circuit_manager = models.BooleanField(_("is circuit manager"), default=False)
+    is_shop = models.BooleanField(_("is shop"), default=False)
+
+    class Meta:
+        unique_together = ('user', 'institution')
