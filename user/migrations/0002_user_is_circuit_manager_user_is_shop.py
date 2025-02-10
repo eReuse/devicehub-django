@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='user',
             name='is_circuit_manager',
-            field=models.BooleanField(default=False, verbose_name='is circuitmanager'),
+            field=models.BooleanField(default=False, verbose_name='is circuit manager'),
         ),
         migrations.AddField(
             model_name='user',

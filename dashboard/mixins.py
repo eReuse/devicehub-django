@@ -31,6 +31,22 @@ class DashboardView(LoginRequiredMixin):
     subtitle = ""
     section = ""
 
+    def get_institution(self, request):
+        if request.user.institutions.count() == 1:
+            request.user.institution = request.user.institutions.first().institution
+
+    def get(self, request, *args, **kwargs):
+        self.get_institution(request)
+        return super().get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+
+        if request.user.institutions.count() == 1:
+            request.user.institution = request.user.institutions.first().institution
+
+        return super().post(request, *args, **kwargs)
+
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         lot_tags = LotTag.objects.filter(
@@ -63,6 +79,7 @@ class DashboardView(LoginRequiredMixin):
 class DetailsMixin(DashboardView, TemplateView):
 
     def get(self, request, *args, **kwargs):
+        self.get_institution(request)
         self.pk = kwargs['pk']
         self.object = get_object_or_404(
             self.model,
@@ -108,7 +125,7 @@ class InventaryMixin(DashboardView, TemplateView):
                 page = 1
             if limit < 1:
                 limit = 10
-        except:
+        except Exception:
             limit = 10
             page = 1
 
