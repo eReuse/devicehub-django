@@ -80,6 +80,7 @@ class DetailsView(DashboardView, TemplateView):
     model = SystemProperty
 
     def get(self, request, *args, **kwargs):
+        self.get_institution(request)
         self.pk = kwargs['pk']
         self.object = Device(id=self.pk)
         if not self.object.last_evidence:
