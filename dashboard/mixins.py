@@ -6,7 +6,7 @@ from django.core.exceptions import PermissionDenied
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic.base import TemplateView
 from device.models import Device
-from evidence.models import Annotation
+from evidence.models import SystemProperty
 from lot.models import LotTag
 
 
@@ -49,7 +49,7 @@ class DashboardView(LoginRequiredMixin):
         dev_ids = self.request.session.pop("devices", [])
 
         self._devices = []
-        for x in Annotation.objects.filter(value__in=dev_ids).filter(
+        for x in SystemProperty.objects.filter(value__in=dev_ids).filter(
                 owner=self.request.user.institution
         ).distinct():
             self._devices.append(Device(id=x.value))

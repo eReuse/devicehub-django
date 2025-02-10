@@ -1,8 +1,9 @@
 from django.db import models, connection
 
 from utils.constants import ALGOS
-from evidence.models import Annotation, Evidence
+from evidence.models import SystemProperty, UserProperty, Evidence
 from lot.models import DeviceLot
+from action.models import State
 
 
 class Device:
@@ -30,7 +31,7 @@ class Device:
         self.shortid = self.pk[:6].upper()
         self.algorithm = None
         self.owner = None
-        self.annotations = []
+        self.properties = []
         self.hids = []
         self.uuids = []
         self.evidences = []
@@ -39,61 +40,48 @@ class Device:
         self.get_last_evidence()
 
     def initial(self):
-        self.get_annotations()
+        self.get_properties()
         self.get_uuids()
         self.get_hids()
         self.get_evidences()
         self.get_lots()
 
-    def get_annotations(self):
-        if self.annotations:
-            return self.annotations
+    def get_properties(self):
+        if self.properties:
+            return self.properties
 
-        self.annotations = Annotation.objects.filter(
-            type=Annotation.Type.SYSTEM,
+        self.properties = SystemProperty.objects.filter(
             value=self.id
         ).order_by("-created")
 
-        if self.annotations.count():
-            self.algorithm = self.annotations[0].key
-            self.owner = self.annotations[0].owner
+        if self.properties.count():
+            self.algorithm = self.properties[0].key
+            self.owner = self.properties[0].owner
 
-        return self.annotations
+        return self.properties
 
-    def get_user_annotations(self):
+    def get_user_properties(self):
         if not self.uuids:
             self.get_uuids()
 
-        annotations = Annotation.objects.filter(
+        user_properties = UserProperty.objects.filter(
             uuid__in=self.uuids,
             owner=self.owner,
-            type=Annotation.Type.USER
+            type=UserProperty.Type.USER,
         )
-        return annotations
-
-    def get_user_documents(self):
-        if not self.uuids:
-            self.get_uuids()
-
-        annotations = Annotation.objects.filter(
-            uuid__in=self.uuids,
-            owner=self.owner,
-            type=Annotation.Type.DOCUMENT
-        )
-        return annotations
+        return user_properties
 
     def get_uuids(self):
-        for a in self.get_annotations():
+        for a in self.get_properties():
             if a.uuid not in self.uuids:
                 self.uuids.append(a.uuid)
 
     def get_hids(self):
-        annotations = self.get_annotations()
+        properties = self.get_properties()
 
         algos = list(ALGOS.keys())
         algos.append('CUSTOM_ID')
-        self.hids = list(set(annotations.filter(
-            type=Annotation.Type.SYSTEM,
+        self.hids = list(set(properties.filter(
             key__in=algos,
         ).values_list("value", flat=True)))
 
@@ -111,12 +99,12 @@ class Device:
             self.last_evidence = Evidence(self.uuid)
             return
 
-        annotations = self.get_annotations()
-        if not annotations.count():
+        properties = self.get_properties()
+        if not properties.count():
             return
-        annotation = annotations.first()
-        self.last_evidence = Evidence(annotation.uuid)
-        self.uuid = annotation.uuid
+        prop = properties.first()
+
+        self.last_evidence = Evidence(prop.uuid)
 
     def is_eraseserver(self):
         if not self.uuids:
@@ -124,13 +112,13 @@ class Device:
         if not self.uuids:
             return False
 
-        annotation = Annotation.objects.filter(
+        prop = UserProperty.objects.filter(
             uuid__in=self.uuids,
             owner=self.owner,
-            type=Annotation.Type.ERASE_SERVER
+            type=UserProperty.Type.ERASE_SERVER
         ).first()
 
-        if annotation:
+        if prop:
             return True
         return False
 
@@ -138,6 +126,11 @@ class Device:
         if self.uuid:
             return self.uuid
         return self.uuids[0]
+
+    def get_current_state(self):
+        uuid = self.last_uuid
+
+        return State.objects.filter(snapshot_uuid=uuid).order_by('-date').first()
 
     def get_lots(self):
         self.lots = [
@@ -147,7 +140,7 @@ class Device:
     def get_unassigned(cls, institution, offset=0, limit=None):
 
         sql = """
-            WITH RankedAnnotations AS (
+            WITH RankedProperties AS (
                 SELECT
                     t1.value,
                     t1.key,
@@ -161,33 +154,31 @@ class Device:
                             END,
                             t1.created DESC
                     ) AS row_num
-                FROM evidence_annotation AS t1
+                FROM evidence_systemproperty AS t1
                 LEFT JOIN lot_devicelot AS t2 ON t1.value = t2.device_id
                 WHERE t2.device_id IS NULL
                   AND t1.owner_id = {institution}
-                  AND t1.type = {type}
             )
             SELECT DISTINCT
                 value
             FROM
-                RankedAnnotations
+                RankedProperties
             WHERE
                 row_num = 1
         """.format(
             institution=institution.id,
-            type=Annotation.Type.SYSTEM,
         )
         if limit:
             sql += " limit {} offset {}".format(int(limit), int(offset))
 
         sql += ";"
 
-        annotations = []
+        properties = []
         with connection.cursor() as cursor:
             cursor.execute(sql)
-            annotations = cursor.fetchall()
+            properties = cursor.fetchall()
 
-        devices = [cls(id=x[0]) for x in annotations]
+        devices = [cls(id=x[0]) for x in properties]
         count = cls.get_unassigned_count(institution)
         return devices, count
 
@@ -195,7 +186,7 @@ class Device:
     def get_unassigned_count(cls, institution):
 
         sql = """
-            WITH RankedAnnotations AS (
+            WITH RankedProperties AS (
                 SELECT
                     t1.value,
                     t1.key,
@@ -209,30 +200,28 @@ class Device:
                             END,
                             t1.created DESC
                     ) AS row_num
-                FROM evidence_annotation AS t1
+                FROM evidence_systemproperty AS t1
                 LEFT JOIN lot_devicelot AS t2 ON t1.value = t2.device_id
                 WHERE t2.device_id IS NULL
                   AND t1.owner_id = {institution}
-                  AND t1.type = {type}
             )
             SELECT
                 COUNT(DISTINCT value)
             FROM
-                RankedAnnotations
+                RankedProperties
             WHERE
                 row_num = 1
         """.format(
             institution=institution.id,
-            type=Annotation.Type.SYSTEM,
         )
         with connection.cursor() as cursor:
             cursor.execute(sql)
             return cursor.fetchall()[0][0]
 
     @classmethod
-    def get_annotation_from_uuid(cls, uuid, institution):
+    def get_properties_from_uuid(cls, uuid, institution):
         sql = """
-            WITH RankedAnnotations AS (
+            WITH RankedProperties AS (
                 SELECT
                     t1.value,
                     t1.key,
@@ -246,31 +235,29 @@ class Device:
                             END,
                             t1.created DESC
                     ) AS row_num
-                FROM evidence_annotation AS t1
+                FROM evidence_systemproperty AS t1
                 LEFT JOIN lot_devicelot AS t2 ON t1.value = t2.device_id
                 WHERE t2.device_id IS NULL
                   AND t1.owner_id = {institution}
-                  AND t1.type = {type}
                   AND t1.uuid = '{uuid}'
             )
             SELECT DISTINCT
                 value
             FROM
-                RankedAnnotations
+                RankedProperties
             WHERE
                 row_num = 1;
         """.format(
             uuid=uuid.replace("-", ""),
             institution=institution.id,
-            type=Annotation.Type.SYSTEM,
         )
 
-        annotations = []
+        properties = []
         with connection.cursor() as cursor:
             cursor.execute(sql)
-            annotations = cursor.fetchall()
+            properties = cursor.fetchall()
 
-        return cls(id=annotations[0][0])
+        return cls(id=properties[0][0])
 
     @property
     def is_websnapshot(self):
@@ -307,8 +294,7 @@ class Device:
 
     @property
     def version(self):
-        if not self.last_evidence:
-            self.get_last_evidence()
+        self.get_last_evidence()
         return self.last_evidence.get_version()
 
     @property

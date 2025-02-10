@@ -7,8 +7,8 @@ from utils.constants import (
 )
 
 from user.models import User, Institution
+from evidence.models import Property
 # from device.models import Device
-# from evidence.models import Annotation
 
 
 class LotTag(models.Model):
@@ -40,22 +40,22 @@ class Lot(models.Model):
         if DeviceLot.objects.filter(lot=self, device_id=v).exists():
             return
         DeviceLot.objects.create(lot=self, device_id=v)
-        
+
     def remove(self, v):
         for d in DeviceLot.objects.filter(lot=self, device_id=v):
             d.delete()
 
-
-class LotAnnotation(models.Model):
-    class Type(models.IntegerChoices):
-        SYSTEM= 0, "System"
-        USER = 1, "User"
-        DOCUMENT = 2, "Document"
-
-    created = models.DateTimeField(auto_now_add=True)
+class LotProperty (Property):
     lot  = models.ForeignKey(Lot, on_delete=models.CASCADE)
-    owner = models.ForeignKey(Institution, on_delete=models.CASCADE)
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
-    type =  models.SmallIntegerField(choices=Type) 
-    key = models.CharField(max_length=STR_EXTEND_SIZE)
-    value = models.CharField(max_length=STR_EXTEND_SIZE)
+
+    class Type(models.IntegerChoices):
+        SYSTEM = 0, "System"
+        USER = 1, "User"
+
+    type = models.SmallIntegerField(choices=Type.choices, default=Type.USER)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["key", "lot"], name="property_unique_type_key_lot")
+        ]

@@ -2,11 +2,60 @@
 {% load i18n %}
 
 {% block content %}
-  <div class="row">
-    <div class="col">
-      <h3>{{ object.shortid }}</h3>
+<!-- Top bar buttons -->
+<div class="row">
+  <div class="col">
+    <h3>{{ object.shortid }}</h3>
+  </div>
+  <div class="col text-end">
+    <div class="btn-group" role="group" aria-label="Actions">
+
+      <!-- change state button -->
+      {% if state_definitions %}
+      <div class="dropdown ms-2">
+        <a class="btn btn-green-admin dropdown-toggle" id="addStateDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+          {% trans "Change state" %}
+          {% if device_states %}
+            ({{ device_states.0.state }})
+          {% else %}
+            ( {% trans "None" %} )
+            {% endif %}
+        </a>
+        <ul class="dropdown-menu" aria-labelledby="addStateDropdown" style="width: 100%;">
+          {% for state in state_definitions %}
+            <li style="width: 100%;">
+              <form id="changeStateForm{{ state.id }}" method="post" action="{% url 'action:change_state' %}">
+                {% csrf_token %}
+                <input type="hidden" name="previous_state" value="{{ device_states.0.state|default:"nil" }}">
+                <input type="hidden" name="snapshot_uuid" value="{{ object.last_uuid }}">
+                <input type="hidden" name="new_state" value="{{ state.state }}">
+
+                <a class="dropdown-item d-flex justify-content-between align-items-center" href="#" onclick="document.getElementById('changeStateForm{{ state.id }}').submit(); return false;">
+                  <span class="font-monospace">{{ state.state }}</span>
+                  <span class="badge bg-secondary rounded-pill-sm">{{ forloop.counter }}</span>
+                </a>
+              </form>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% else %}
+        <button class="btn btn-green-admin" type="button" disabled>
+          <i class="bi bi-plus"></i> {% trans "Change state" %}
+          {% if device_states %}
+            ({{ device_states.0.state }})
+          {% endif %}
+        </button>
+      {% endif %}
+      <!-- Add note button -->
+      <button class="btn btn-yellow ms-2" type="button" data-bs-toggle="modal" data-bs-target="#addNoteModal">
+        <i class="bi bi-sticky"></i> {% trans "Add a note" %}
+      </button>
+
     </div>
   </div>
+</div>
+
 
   <div class="row">
     <div class="col">
@@ -15,10 +64,7 @@
           <a href="#details" class="nav-link active" data-bs-toggle="tab" data-bs-target="#details">{% trans 'General details' %}</a>
         </li>
         <li class="nav-item">
-          <a href="#annotations" class="nav-link" data-bs-toggle="tab" data-bs-target="#annotations">{% trans 'User annotations' %}</a>
-        </li>
-        <li class="nav-item">
-          <a href="#documents" class="nav-link" data-bs-toggle="tab" data-bs-target="#documents">{% trans 'Documents' %}</a>
+          <a href="#user_properties" class="nav-link" data-bs-toggle="tab" data-bs-target="#user_properties">{% trans 'Properties' %}</a>
         </li>
         <li class="nav-item">
           <a href="#lots" class="nav-link" data-bs-toggle="tab" data-bs-target="#lots">{% trans 'Lots' %}</a>
@@ -37,246 +83,52 @@
         <li class="nav-item">
           <a class="nav-link" href="{% url 'device:device_web' object.id %}" target="_blank">Web</a>
         </li>
+        <li class="nav-item">
+          <a href="#log" class="nav-link" data-bs-toggle="tab" data-bs-target="#log">{% trans 'Log' %}</a>
+        </li>
       </ul>
     </div>
   </div>
+  <div class="tab-content pt-4">
 
-  <div class="tab-content pt-2">
-    <div class="tab-pane fade show active" id="details">
-      <h5 class="card-title">{% trans 'Details' %}</h5>
-      <div class="row mb-3">
-        <div class="col-lg-3 col-md-4 label">Phid</div>
-        <div class="col-lg-9 col-md-8">{{ object.id }}</div>
-      </div>
+  {% include 'tabs/general_details.html' %}
 
-      {% if object.is_eraseserver %}
-        <div class="row mb-3">
-          <div class="col-lg-3 col-md-4 label">
-            {% trans 'Is a erase server' %}
-          </div>
-          <div class="col-lg-9 col-md-8"></div>
+  {% include 'tabs/log.html' %}
+
+  {% include 'tabs/user_properties.html' %}
+
+  {% include 'tabs/lots.html' %}
+
+  {% include 'tabs/components.html' %}
+
+  {% include 'tabs/evidences.html' %}
+
+  <!-- Add a note popup -->
+  <div class="modal fade" id="addNoteModal" tabindex="-1" aria-labelledby="addNoteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="addNoteModalLabel">{% trans "Add a Note" %}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
         </div>
-      {% endif %}
-
-      <div class="row mb-1">
-        <div class="col-lg-3 col-md-4 label">Type</div>
-        <div class="col-lg-9 col-md-8">{{ object.type }}</div>
-      </div>
-
-      {% if object.is_websnapshot and object.last_user_evidence %}
-        {% for k, v in object.last_user_evidence %}
-          <div class="row mb-1">
-            <div class="col-lg-3 col-md-4 label">{{ k }}</div>
-            <div class="col-lg-9 col-md-8">{{ v|default:'' }}</div>
-          </div>
-        {% endfor %}
-      {% else %}
-        <div class="row mb-1">
-          <div class="col-lg-3 col-md-4 label">
-            {% trans 'Manufacturer' %}
-          </div>
-          <div class="col-lg-9 col-md-8">{{ object.manufacturer|default:'' }}</div>
-        </div>
-
-        <div class="row mb-1">
-          <div class="col-lg-3 col-md-4 label">
-            {% trans 'Model' %}
-          </div>
-          <div class="col-lg-9 col-md-8">{{ object.model|default:'' }}</div>
-        </div>
-
-        <div class="row mb-1">
-          <div class="col-lg-3 col-md-4 label">
-            {% trans 'Version' %}
-          </div>
-          <div class="col-lg-9 col-md-8">{{ object.version|default:'' }}</div>
-        </div>
-
-        <div class="row mb-1">
-          <div class="col-lg-3 col-md-4 label">
-            {% trans 'Serial Number' %}
-          </div>
-          <div class="col-lg-9 col-md-8">{{ object.serial_number|default:'' }}</div>
-        </div>
-      {% endif %}
-
-      <div class="row mb-3">
-        <div class="col-lg-3 col-md-4 label">
-          {% trans 'Identifiers' %}
-        </div>
-      </div>
-      {% for chid in object.hids %}
-        <div class="row mb-3">
-          <div class="col">{{ chid|default:'' }}</div>
-        </div>
-      {% endfor %}
-    </div>
-
-    <div class="tab-pane fade" id="annotations">
-      <div class="btn-group mt-1 mb-3">
-        <a href="{% url 'device:add_annotation' object.pk %}" class="btn btn-primary">
-          <i class="bi bi-plus"></i>
-          {% trans 'Add new annotation' %}
-        </a>
-      </div>
-
-      <h5 class="card-title">{% trans 'Annotations' %}</h5>
-      <table class="table table-striped">
-        <thead>
-          <tr>
-            <th scope="col">
-              {% trans 'Key' %}
-            </th>
-            <th scope="col">
-              {% trans 'Value' %}
-            </th>
-            <th scope="col" data-type="date" data-format="YYYY-MM-DD HH:mm">
-              {% trans 'Created on' %}
-            </th>
-            <th></th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for a in object.get_user_annotations %}
-            <tr>
-              <td>{{ a.key }}</td>
-              <td>{{ a.value }}</td>
-              <td>{{ a.created }}</td>
-              <td></td>
-              <td></td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-
-    <div class="tab-pane fade" id="documents">
-      <div class="btn-group mt-1 mb-3">
-        <a href="{% url 'device:add_document' object.pk %}" class="btn btn-primary">
-          <i class="bi bi-plus"></i>
-          {% trans 'Add new document' %}
-        </a>
-      </div>
-
-      <h5 class="card-title">{% trans 'Documents' %}</h5>
-      <table class="table table-striped">
-        <thead>
-          <tr>
-            <th scope="col">
-              {% trans 'Key' %}
-            </th>
-            <th scope="col">
-              {% trans 'Value' %}
-            </th>
-            <th scope="col" data-type="date" data-format="YYYY-MM-DD HH:mm">
-              {% trans 'Created on' %}
-            </th>
-            <th></th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for a in object.get_user_documents %}
-            <tr>
-              <td>{{ a.key }}</td>
-              <td>{{ a.value }}</td>
-              <td>{{ a.created }}</td>
-              <td></td>
-              <td></td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-
-    <div class="tab-pane fade" id="lots">
-      {% for tag in lot_tags %}
-        <h5 class="card-title">{{ tag }}</h5>
-        {% for lot in object.lots %}
-          {% if lot.type == tag %}
-            <div class="row mb-3">
-              <div class="col">
-                <a href="{% url 'dashboard:lot' lot.id %}">{{ lot.name }}</a>
-              </div>
+        <div class="modal-body">
+          <form method="post" action="{% url 'action:add_note' %}">
+            {% csrf_token %}
+            <div class="mb-3">
+              <input type="hidden" name="snapshot_uuid" value="{{ object.last_uuid }}">
+              <label for="noteDescription" class="form-label">{% trans "Note" %}</label>
+              <textarea class="form-control" id="noteDescription" name="note" placeholder="Max 250 characters" name="note" rows="3" required></textarea>
             </div>
-          {% endif %}
-        {% endfor %}
-      {% endfor %}
-    </div>
-
-    <div class="tab-pane fade" id="components">
-      <h5 class="card-title">{% trans 'Components last evidence' %}</h5>
-      <div class="list-group col-6">
-        {% for c in object.components %}
-          <div class="list-group-item">
-            <div class="d-flex w-100 justify-content-between">
-              <h5 class="mb-1">{{ c.type }}</h5>
-              <small class="text-muted">{{ evidence.created }}</small>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+              <button type="submit" class="btn btn-green-admin">{% trans "Save Note" %}</button>
             </div>
-            <p class="mb-1">
-              {% for k, v in c.items %}
-                {% if k not in 'actions,type' %}
-                  {{ k }}: {{ v }}<br />
-                {% endif %}
-              {% endfor %}
-            </p>
-          </div>
-        {% endfor %}
+          </form>
+        </div>
       </div>
     </div>
-
-    <div class="tab-pane fade" id="evidences">
-      <h5 class="card-title">{% trans 'List of evidences' %}</h5>
-      <div class="list-group col">
-	  <table class="table">
-           <thead>
-             <tr>
-               <th scope="col">uuid</th>
-               <th scope="col">Did Document</th>
-               <th scope="col">{% trans "Date" %}</th>
-             </tr>
-           </thead>
-           <tbody>
-	     {% for snap in object.evidences %}
-             <tr>
-               <td>
-                  <a href="{% url 'evidence:details' snap.uuid %}">{{ snap.uuid }}</a>
-	       </td>
-               <td>
-		 {% if snap.did_document %}
-		 <a href="{{ snap.did_document }}" target="_blank">DID</a>
-		 {% endif %}
-	       </td>
-               <td>
-                 <small class="text-muted">{{ snap.created }}</small>
-	       </td>
-             </tr>
-	     {% endfor %}
-           </tbody>
-         </table>
-      </div>
-    </div>
-
-    {% if dpps %}
-    <div class="tab-pane fade" id="dpps">
-      <h5 class="card-title">{% trans 'List of dpps' %}</h5>
-      <div class="list-group col">
-        {% for d in dpps %}
-          <div class="list-group-item">
-            <div class="d-flex w-100 justify-content-between">
-              <small class="text-muted">{{ d.timestamp }}</small>
-	      <span>{{ d.type }}</span>
-            </div>
-            <p class="mb-1">
-              <a href="{% url 'did:device_web' d.signature %}">{{ d.signature }}</a>
-            </p>
-          </div>
-        {% endfor %}
-      </div>
-    </div>
-    {% endif %}
   </div>
+
 {% endblock %}
 
 {% block extrascript %}
