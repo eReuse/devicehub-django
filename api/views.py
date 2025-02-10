@@ -118,7 +118,7 @@ class NewSnapshotView(ApiMixing):
         prop = SystemProperty.objects.filter(
             uuid=ev_uuid,
             # TODO this is hardcoded, it should select the user preferred algorithm
-            key="hidalgo1",
+            key="ereuse24",
             owner=self.tk.owner.institution
         ).first()
 

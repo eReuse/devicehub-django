@@ -209,7 +209,7 @@ class Evidence:
     def get_all(cls, user):
         return SystemProperty.objects.filter(
             owner=user.institution,
-            key="hidalgo1",
+            key="ereuse24",
         ).order_by("-created").values_list("uuid", "created").distinct()
 
     def set_components(self):
