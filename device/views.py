@@ -5,6 +5,7 @@ from django.http import JsonResponse
 from django.conf import settings
 from django.db import IntegrityError
 from django.urls import reverse_lazy
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect, Http404
 from django.utils.translation import gettext_lazy as _
@@ -104,9 +105,21 @@ class DetailsView(DashboardView, TemplateView):
             institution=self.request.user.institution
         ).order_by('order')
         device_states = State.objects.filter(snapshot_uuid__in=uuids).order_by('-date')
-        device_logs = DeviceLog.objects.filter(
-            snapshot_uuid__in=uuids).order_by('-date')
         device_notes = Note.objects.filter(snapshot_uuid__in=uuids).order_by('-date')
+
+        # Paginate device_logs
+        # TODO: when clicking pagination button, it reloads the page on the details tab, instead of the log  one
+        device_logs_list = DeviceLog.objects.filter(snapshot_uuid__in=uuids).order_by('-date')
+        paginator = Paginator(device_logs_list, 10)  # Show last 10 logs
+
+        page = self.request.GET.get('page')
+        try:
+            device_logs = paginator.page(page)
+        except PageNotAnInteger:
+            device_logs = paginator.page(1)
+        except EmptyPage:
+            device_logs = paginator.page(paginator.num_pages)
+
         context.update({
             'object': self.object,
             'snapshot': last_evidence,
