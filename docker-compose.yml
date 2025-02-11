@@ -1,7 +1,7 @@
 services:
   devicehub-django:
     init: true
-    image: farga.pangea.org/ereuse/devicehub-django/latest
+    image: farga.pangea.org/ereuse/devicehub-django:latest
     build:
       context: .
       dockerfile: docker/devicehub-django.Dockerfile
@@ -27,7 +27,7 @@ services:
     # https://docs.docker.com/compose/how-tos/profiles/
     profiles: [idhub]
     init: true
-    image: farga.pangea.org/ereuse/idhub/latest
+    image: farga.pangea.org/ereuse/idhub:latest
     environment:
       - DOMAIN=${IDHUB_DOMAIN:-localhost}
       - ALLOWED_HOSTS=${IDHUB_ALLOWED_HOSTS:-$IDHUB_DOMAIN}
