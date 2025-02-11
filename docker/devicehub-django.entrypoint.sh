@@ -200,9 +200,11 @@ check_app_is_there() {
 }
 
 deploy() {
-        # TODO this is weird, find better workaround
-        git config --global --add safe.directory "${program_dir}"
-        export COMMIT=$(git log --format="%H %ad" --date=iso -n 1)
+        if [ -d /opt/devicehub-django/.git ]; then
+                # TODO this is weird, find better workaround
+                git config --global --add safe.directory "${program_dir}"
+                export COMMIT=$(git log --format="%H %ad" --date=iso -n 1)
+        fi
 
         if [ "${DEBUG:-}" = 'true' ]; then
                 ./manage.py print_settings
@@ -218,6 +220,9 @@ deploy() {
                 # move the migrate thing in docker entrypoint
                 #   inspired by https://medium.com/analytics-vidhya/django-with-docker-and-docker-compose-python-part-2-8415976470cc
                 echo "INFO detected NEW deployment"
+                if [ ! -d "${program_dir}/db/" ]; then
+                        mkdir -p "${program_dir}/db/"
+                fi
                 ./manage.py migrate
                 config_phase
         fi
