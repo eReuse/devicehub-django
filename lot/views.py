@@ -294,6 +294,19 @@ class SubscriptLotView(DashboardView, CreateView):
         })
         return context
 
+    def get_form(self):
+
+        form = super().get_form()
+        users_subscript = self.model.objects.filter(
+            lot=self.lot).values_list('user', flat=True)
+
+        queryset = form.fields["user"].queryset
+        form.fields["user"].queryset = queryset.filter(
+            institutions__institution=self.request.user.institution,
+        ).exclude(id__in=users_subscript)
+
+        return form
+
     def form_valid(self, form):
         # form.instance.user = self.request.user
         form.instance.lot = self.lot
