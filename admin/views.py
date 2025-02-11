@@ -127,6 +127,16 @@ class InstitutionView(AdminView, UpdateView):
         "supervisor_person"
     )
 
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        form.fields["name"].help_text = _("Full name of the institution.")
+        form.fields["logo"].help_text = _("URL to the institution's logo.")
+        form.fields["location"].help_text = _("The address or city of the institution.")
+        form.fields["responsable_person"].help_text = _("Name of the institution's responsable person.")
+        form.fields["supervisor_person"].help_text = _("The supervisor's full name.")
+
+        return form
+
     def get_form_kwargs(self):
         self.object = self.request.user.institution
         kwargs = super().get_form_kwargs()

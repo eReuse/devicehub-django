@@ -1,32 +1,49 @@
 {% extends "base.html" %}
-{% load i18n %}
+{% load i18n django_bootstrap5 %}
 
 {% block content %}
-<div class="row">
-  <div class="col">
-    <h3>{{ subtitle }}</h3>
+<div class="ms-3 mt-4">
+  <div class="row mb-3">
+    <div class="col">
+      <h3>{{ subtitle }}</h3>
+    </div>
   </div>
-</div>
 
-{% load django_bootstrap5 %}
-<form role="form" method="post">
-{% csrf_token %}
-{% if form.errors %}
-<div class="alert alert-danger alert-icon alert-icon-border alert-dismissible" role="alert">
-  <div class="icon"><span class="mdi mdi-close-circle-o"></span></div>
-  <div class="message">
-    {% for field, error in form.errors.items %}
-      {{ error }}<br />
-    {% endfor %}
-    <button class="btn-close" type="button" data-dismiss="alert" aria-label="Close"></button>
-  </div>
-</div>
-{% endif %}
-{% bootstrap_form form %}
-<div class="form-actions-no-box">
-  <a class="btn btn-grey" href="{% url 'admin:panel' %}">{% translate "Cancel" %}</a>
-  <input class="btn btn-green-admin" type="submit" name="submit" value="{% translate 'Save' %}" />
-</div>
+  <form role="form" method="post" enctype="multipart/form-data">
+    {% csrf_token %}
 
-</form>
+    {% if form.errors %}
+      <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <strong>{% translate "Please fix the following errors:" %}</strong>
+        <ul>
+          {% for field, errors in form.errors.items %}
+            <li>{{ field|title }}: {{ errors|join:", " }}</li>
+          {% endfor %}
+        </ul>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    {% endif %}
+
+    <div class="row">
+      <div class="col-md-6">
+        {% bootstrap_field form.name addon_before='<i class="bi bi-building"></i>' %}
+        {% bootstrap_field form.location addon_before='<i class="bi bi-geo-alt-fill"></i>' %}
+      </div>
+      <div class="col-md-6">
+        {% bootstrap_field form.responsable_person addon_before='<i class="bi bi-person-fill"></i>' %}
+        {% bootstrap_field form.supervisor_person addon_before='<i class="bi bi-person-check-fill"></i>' %}
+        {% bootstrap_field form.logo addon_before='<i class="bi bi-image-fill"></i>' %}
+      </div>
+    </div>
+
+    <div class="form-actions mt-5 ms-2">
+      <a class="btn btn-secondary" href="{% url 'admin:panel' %}">
+        {% translate "Cancel" %}
+      </a>
+      <button type="submit" class="btn btn-green-admin ms-3">
+        <i class="bi bi-floppy me-2"></i>{% translate "Save" %}
+      </button>
+    </div>
+  </form>
+</div>
 {% endblock %}
