@@ -30,10 +30,6 @@ class Command(BaseCommand):
         path = kwargs['path']
         email = kwargs['email']
         self.user = User.objects.get(email=email)
-        user_institution = self.user.institutions.first()
-        if not user_institution:
-            return
-        self.user.institution = user_institution.institution
 
         if os.path.isfile(path):
             self.open(path)
