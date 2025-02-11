@@ -52,6 +52,8 @@ class BuildMix:
         for c in components:
             doc.append((c.get("type"), self.get_id_hw_dpp(c)))
 
+        return doc
+
     def get_id_hw_dpp(self, d):
         algorithm = ALGOS.get("ereuse22", [])
         hid = ""
