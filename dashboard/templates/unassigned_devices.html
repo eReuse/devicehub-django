@@ -28,6 +28,18 @@
 <div class="dataTable-container mt-4">
   <form method="post">
     {% csrf_token %}
+
+    <div class="d-flex justify-content-end m-2 mb-4">
+      <button id="remove-button" class="btn btn btn-danger me-2" type="submit" value="{% url 'lot:del_devices' %}" name="url" disabled>
+        <i class="bi bi-folder-minus pe-2"></i>
+        {% trans 'Unassign' %}
+      </button>
+      <button class="btn btn-green-user" type="submit" name="url" value="{% url 'lot:add_devices' %}">
+        <i class="bi bi-folder-symlink"></i>
+        {% trans 'Assign to lot' %}
+      </button>
+    </div>
+
     <table class="table table-hover table-bordered">
       <thead class="table-light">
         <tr>
@@ -82,22 +94,12 @@
             {{ dev.get_current_state.state|default:"N/A" }}
           </td>
           <td class="text-center">
-          <td width="13%">{{ log.date|date:"M j, Y, H:i" }}</td>
-            {{ dev.get_last_evidence.created }}
+            {{ dev.last_evidence.created }}
           </td>
         </tr>
       </tbody>
     {% endfor %}
   </table>
-    <div class="d-flex justify-content-start mt-5">
-      <button id="remove-button" class="btn btn-danger me-2" type="submit" value="{% url 'lot:del_devices' %}" name="url" disabled>
-        <i class="bi bi-trash"></i> {% trans 'Remove' %}
-      </button>
-      <button class="btn btn-green-user" type="submit" name="url" value="{% url 'lot:add_devices' %}">
-        <i class="bi bi-folder-plus ps-2"></i>
-        {% trans 'Assign to lot' %}
-      </button>
-    </div>
   </form>
 </div>
 
