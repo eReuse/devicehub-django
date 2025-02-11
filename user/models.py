@@ -33,7 +33,7 @@ class Institution(models.Model):
 
 
 class UserManager(BaseUserManager):
-    def create_user(self, email, password=None):
+    def create_user(self, email, institution, password=None, commit=True):
         """
         Creates and saves a User with the given email, date of
         birth and password.
@@ -42,11 +42,13 @@ class UserManager(BaseUserManager):
             raise ValueError("Users must have an email address")
 
         user = self.model(
-            email=self.normalize_email(email)
+            email=self.normalize_email(email),
+            institution=institution
         )
 
         user.set_password(password)
-        user.save(using=self._db)
+        if commit:
+            user.save(using=self._db)
         return user
 
     def create_superuser(self, email, institution, password=None):
@@ -55,16 +57,13 @@ class UserManager(BaseUserManager):
         """
         user = self.create_user(
             email,
+            institution,
             password=password,
+            commit=False
         )
 
-        user.institutions.create(
-            institution=institution,
-            is_active=True,
-            is_admin=True
-        )
-
-
+        user.is_admin = True
+        user.save(using=self._db)
         return user
 
     def create_circuit_manager(self, email, institution, password=None):
@@ -73,17 +72,13 @@ class UserManager(BaseUserManager):
         """
         user = self.create_user(
             email,
-            institution=institution,
+            institution,
             password=password,
+            commit=False
         )
 
-        user.institutions.create(
-            institution=institution,
-            is_active=True,
-            is_circuit_manager=True
-        )
-
-
+        user.is_circuit_manager = True
+        user.save(using=self._db)
         return user
 
     def create_shop(self, email, institution, password=None):
@@ -92,15 +87,13 @@ class UserManager(BaseUserManager):
         """
         user = self.create_user(
             email,
-            institution=institution,
+            institution,
             password=password,
-        )
-        user.institutions.create(
-            institution=institution,
-            is_active=True,
-            is_shop=True
+            commit=False
         )
 
+        user.is_shop = True
+        user.save(using=self._db)
         return user
 
 
@@ -114,6 +107,11 @@ class User(AbstractBaseUser):
     first_name = models.CharField(_("First name"), max_length=255, blank=True, null=True)
     last_name = models.CharField(_("Last name"), max_length=255, blank=True, null=True)
     accept_gdpr = models.BooleanField(default=False)
+    is_active = models.BooleanField(_("is active"), default=True)
+    is_admin = models.BooleanField(_("is admin"), default=False)
+    is_circuit_manager = models.BooleanField(_("is circuit manager"), default=False)
+    is_shop = models.BooleanField(_("is shop"), default=False)
+    institution = models.ForeignKey(Institution, on_delete=models.CASCADE, related_name="users")
 
     objects = UserManager()
 
@@ -143,15 +141,3 @@ class User(AbstractBaseUser):
     def username(self):
         "Is the email of the user"
         return self.email
-
-
-class UserInstitution(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="institutions")
-    institution = models.ForeignKey(Institution, on_delete=models.CASCADE, related_name="users")
-    is_active = models.BooleanField(_("is active"), default=True)
-    is_admin = models.BooleanField(_("is admin"), default=False)
-    is_circuit_manager = models.BooleanField(_("is circuit manager"), default=False)
-    is_shop = models.BooleanField(_("is shop"), default=False)
-
-    class Meta:
-        unique_together = ('user', 'institution')

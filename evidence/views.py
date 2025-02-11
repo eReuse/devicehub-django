@@ -91,7 +91,6 @@ class EvidenceView(DashboardView, FormView):
     form_class = UserTagForm
 
     def get(self, request, *args, **kwargs):
-        self.get_institution(request)
         self.pk = kwargs['pk']
         self.object = Evidence(self.pk)
         if self.object.owner != self.request.user.institution:
@@ -132,7 +131,6 @@ class EvidenceView(DashboardView, FormView):
 class DownloadEvidenceView(DashboardView, TemplateView):
 
     def get(self, request, *args, **kwargs):
-        self.get_institution(request)
         pk = kwargs['pk']
         evidence = Evidence(pk)
         if evidence.owner != self.request.user.institution:
@@ -154,7 +152,6 @@ class EraseServerView(DashboardView, FormView):
     form_class = EraseServerForm
 
     def get(self, request, *args, **kwargs):
-        self.get_institution(request)
         self.pk = kwargs['pk']
         self.object = Evidence(self.pk)
         if self.object.owner != self.request.user.institution:
