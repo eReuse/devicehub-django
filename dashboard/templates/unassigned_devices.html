@@ -93,8 +93,9 @@
       <button id="remove-button" class="btn btn-danger me-2" type="submit" value="{% url 'lot:del_devices' %}" name="url" disabled>
         <i class="bi bi-trash"></i> {% trans 'Remove' %}
       </button>
-      <button class="btn btn-success" type="submit" name="url" value="{% url 'lot:add_devices' %}">
-        {% trans 'Add' %}
+      <button class="btn btn-green-user" type="submit" name="url" value="{% url 'lot:add_devices' %}">
+        <i class="bi bi-folder-plus ps-2"></i>
+        {% trans 'Assign to lot' %}
       </button>
     </div>
   </form>

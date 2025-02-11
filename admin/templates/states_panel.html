@@ -1,17 +1,20 @@
 {% extends "base.html" %}
 {% load i18n django_bootstrap5 %}
 
+{% block actions %}
+    <button type="button" class="btn btn-green-admin" data-bs-toggle="modal" data-bs-target="#addStateModal">
+      <i class="bi bi-plus"></i>
+      {% trans "New State" %}
+    </button>
+{% endblock %}
+
 {% block content %}
 <div class="row">
   <div class="col">
     <h3>{{ subtitle }}</h3>
   </div>
-  <div class="col text-end">
-    <button type="button" class="btn btn-green-admin" data-bs-toggle="modal" data-bs-target="#addStateModal">
-      {% trans "Add" %}
-    </button>
-  </div>
 </div>
+
 <div class="row mt-4">
   <div class="col">
     {% if state_definitions %}
