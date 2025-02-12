@@ -11,12 +11,12 @@ class Build(BuildMix):
     # normaly is worbench 11
 
     def get_details(self):
-        device = self.json.get('device', {})
-        self.manufacturer = device.get("manufacturer", '')
-        self.model = device.get("model", '')
-        self.chassis = device.get("chassis", '')
-        self.serial_number = device.get("serialNumber", '')
-        self.sku = device.get("sku", '')
+        self.device = self.json.get('device', {})
+        self.manufacturer = self.device.get("manufacturer", '')
+        self.model = self.device.get("model", '')
+        self.chassis = self.device.get("chassis", '')
+        self.serial_number = self.device.get("serialNumber", '')
+        self.sku = self.device.get("sku", '')
 
     def _get_components(self):
         self.components = self.json.get("components", [])

@@ -41,8 +41,6 @@ class BuildMix:
 
     def get_doc(self):
         self._get_components()
-        for c in self.components:
-            c.pop("actions", None)
 
         components = sorted(self.components, key=lambda x: x.get("type"))
         device = self.algorithms.get('ereuse22')
