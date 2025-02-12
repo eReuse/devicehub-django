@@ -12,7 +12,7 @@ from dpp.models import Proof
 
 
 class ProofView(View):
-    
+
     def get(self, request, *args, **kwargs):
         timestamp = kwargs.get("proof_id")
         proof = Proof.objects.filter(timestamp=timestamp).first()
@@ -22,9 +22,9 @@ class ProofView(View):
         ev = Evidence(proof.uuid)
         if not ev.doc:
             return JsonResponse({}, status=404)
-        
+
         dev = Build(ev.doc, None, check=True)
-        doc = dev.get_phid()
+        doc = dev.build.get_doc()
 
         data = {
             "algorithm": ALGORITHM,

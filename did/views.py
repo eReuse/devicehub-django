@@ -106,7 +106,7 @@ class PublicDeviceWebView(TemplateView):
             'device': {},
         }
         dev = Build(self.object.last_evidence.doc, None, check=True)
-        doc = dev.get_doc()
+        doc = dev.build.get_doc()
         data['document'] = json.dumps(doc)
         data['device'] = doc.device
         data['components'] = doc.components
