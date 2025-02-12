@@ -108,8 +108,8 @@ class PublicDeviceWebView(TemplateView):
         dev = Build(self.object.last_evidence.doc, None, check=True)
         doc = dev.build.get_doc()
         data['document'] = json.dumps(doc)
-        data['device'] = dev.device
-        data['components'] = dev.components
+        data['device'] = dev.build.device
+        data['components'] = dev.build.components
 
         self.object.get_evidences()
         last_dpp = Proof.objects.filter(
