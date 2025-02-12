@@ -107,16 +107,9 @@ class PublicDeviceWebView(TemplateView):
         }
         dev = Build(self.object.last_evidence.doc, None, check=True)
         doc = dev.build.get_doc()
-        components = [x for x in doc if x[0] != "computer"]
-        device = ''
-
-        for d in doc:
-            if d[0] == "computer":
-                device = d[1]
-
         data['document'] = json.dumps(doc)
-        data['device'] = device
-        data['components'] = components
+        data['device'] = dev.device
+        data['components'] = dev.components
 
         self.object.get_evidences()
         last_dpp = Proof.objects.filter(
@@ -142,7 +135,7 @@ class PublicDeviceWebView(TemplateView):
         for d in self.object.evidences:
             d.get_doc()
             dev = Build(d.doc, None, check=True)
-            doc = dev.get_phid()
+            doc = dev.build.get_doc()
             ev = json.dumps(doc)
             phid = dev.get_signature(doc)
             dpp = "{}:{}".format(self.pk, phid)
