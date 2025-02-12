@@ -66,4 +66,9 @@ class Build(BuildMix):
 
     def _get_components(self):
         data = ParseSnapshot(self.json)
+        self.device = data.device
         self.components = data.components
+
+        self.device.pop("actions", None)
+        for c in self.components:
+            c.pop("actions", None)
