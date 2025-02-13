@@ -78,7 +78,36 @@
             </a>
           </td>
           <td class="text-center">
-            {{ dev.type }}
+            {% if dev.type == "Laptop" or dev.type == "Netbook" %}
+              <i class="bi bi-laptop"></i>
+            {% elif dev.type == "Desktop" or dev.type == "Server" %}
+              <i class="bi bi-pc-display"></i>
+            {% elif dev.type == "Motherboard" %}
+              <i class="bi bi-motherboard"></i>
+            {% elif dev.type == "GraphicCard" %}
+              <i class="bi bi-gpu-card"></i>
+            {% elif dev.type == "HardDrive" %}
+              <i class="bi bi-hdd"></i>
+            {% elif dev.type == "SolidStateDrive" %}
+              <i class="bi bi-device-ssd"></i>
+            {% elif dev.type == "NetworkAdapter" %}
+              <i class="bi bi-ethernet"></i>
+            {% elif dev.type == "Processor" %}
+              <i class="bi bi-cpu"></i>
+            {% elif dev.type == "RamModule" %}
+              <i class="bi bi-memory"></i>
+            {% elif dev.type == "SoundCard" %}
+              <i class="bi bi-speaker"></i>
+            {% elif dev.type == "Display" %}
+              <i class="bi bi-display"></i>
+            {% elif dev.type == "Battery" %}
+              <i class="bi bi-battery"></i>
+            {% elif dev.type == "Camera" %}
+              <i class="bi bi-camera"></i>
+            {% else %}
+              <i class="bi bi-question-circle"></i>
+            {% endif %}
+             {{dev.type}}
           </td>
           <td class="text-center">
             {{ dev.manufacturer }}
