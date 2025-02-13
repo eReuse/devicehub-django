@@ -42,19 +42,6 @@ gen_env_vars() {
                 export API_RESOLVER='http://id_index_api:3012'
                 # TODO hardcoded
                 export ID_FEDERATED='DH1'
-                # propagate to .env
-                dpp_env_vars="$(cat <<END
-API_DLT=${API_DLT}
-API_DLT_TOKEN=${API_DLT_TOKEN}
-API_RESOLVER=${API_RESOLVER}
-ID_FEDERATED=${ID_FEDERATED}
-END
-)"
-        # generate config using env vars from docker
-        # TODO rethink if this is needed because now this is django, not flask
-        cat > .env <<END
-${dpp_env_vars:-}
-END
         fi
 }
 
