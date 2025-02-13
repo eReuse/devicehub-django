@@ -137,15 +137,15 @@ class PublicDeviceWebView(TemplateView):
             dev = Build(d.doc, None, check=True)
             doc = dev.build.get_doc()
             ev = json.dumps(doc)
-            phid = dev.get_signature(doc)
+            phid = dev.sign(ev)
             dpp = "{}:{}".format(self.pk, phid)
             rr = {
                 'dpp': dpp,
                 'document': ev,
                 'algorithm': ALGORITHM,
                 'manufacturer DPP': '',
-                'device': dev.device,
-                'components': dev.components
+                'device': dev.build.device,
+                'components': dev.build.components
             }
 
             tmpl = dpp_tmpl.copy()
