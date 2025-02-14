@@ -17,7 +17,7 @@ class BuildMix:
         self.chassis = ""
         self.sku = ""
         self.mac = ""
-        self.tpy = ""
+        self.type = ""
         self.version = ""
         self.get_details()
         self.generate_chids()
@@ -41,8 +41,6 @@ class BuildMix:
 
     def get_doc(self):
         self._get_components()
-        for c in self.components:
-            c.pop("actions", None)
 
         components = sorted(self.components, key=lambda x: x.get("type"))
         device = self.algorithms.get('ereuse22')
@@ -51,6 +49,8 @@ class BuildMix:
 
         for c in components:
             doc.append((c.get("type"), self.get_id_hw_dpp(c)))
+
+        return doc
 
     def get_id_hw_dpp(self, d):
         algorithm = ALGOS.get("ereuse22", [])

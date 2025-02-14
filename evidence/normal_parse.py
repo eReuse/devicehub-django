@@ -36,7 +36,9 @@ class Build(BuildMix):
                 self.manufacturer = system
                 self.model = get_inxi(m, "product")
                 self.serial_number = get_inxi(m, "serial")
-                self.chassis = get_inxi(m, "Type")
+                self.type = get_inxi(m, "Type")
+                self.chassis = self.type
+                self.version = get_inxi(m, "v")
             else:
                 self.sku = get_inxi(m, "part-nu")
 
@@ -61,4 +63,9 @@ class Build(BuildMix):
 
     def _get_components(self):
         data = ParseSnapshot(self.json)
+        self.device = data.device
         self.components = data.components
+
+        self.device.pop("actions", None)
+        for c in self.components:
+            c.pop("actions", None)
