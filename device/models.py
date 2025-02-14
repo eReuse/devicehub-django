@@ -139,7 +139,7 @@ class Device:
     @classmethod
     def get_all(cls, institution, offset=0, limit=None):
         sql = """
-            WITH RankedAnnotations AS (
+            WITH RankedProperties AS (
                 SELECT
                     t1.value,
                     t1.key,
@@ -148,24 +148,22 @@ class Device:
                         ORDER BY
                             CASE
                                 WHEN t1.key = 'CUSTOM_ID' THEN 1
-                                WHEN t1.key = 'hidalgo1' THEN 2
+                                WHEN t1.key = 'ereuse24' THEN 2
                                 ELSE 3
                             END,
                             t1.created DESC
                     ) AS row_num
-                FROM evidence_annotation AS t1
+                FROM evidence_systemproperty AS t1
                 WHERE t1.owner_id = {institution}
-                  AND t1.type = {type}
             )
             SELECT DISTINCT
                 value
             FROM
-                RankedAnnotations
+                RankedProperties
             WHERE
                 row_num = 1
         """.format(
             institution=institution.id,
-            type=Annotation.Type.SYSTEM,
         )
         if limit:
             sql += " limit {} offset {}".format(int(limit), int(offset))
@@ -185,7 +183,7 @@ class Device:
     def get_all_count(cls, institution):
 
         sql = """
-            WITH RankedAnnotations AS (
+            WITH RankedProperties AS (
                 SELECT
                     t1.value,
                     t1.key,
@@ -194,24 +192,23 @@ class Device:
                         ORDER BY
                             CASE
                                 WHEN t1.key = 'CUSTOM_ID' THEN 1
-                                WHEN t1.key = 'hidalgo1' THEN 2
+                                WHEN t1.key = 'ereuse24' THEN 2
                                 ELSE 3
                             END,
                             t1.created DESC
                     ) AS row_num
-                FROM evidence_annotation AS t1
-                WHERE t1.owner_id = {institution}
-                  AND t1.type = {type}
+
+                FROM evidence_systemproperty AS t1
+               WHERE t1.owner_id = {institution}
             )
             SELECT
                 COUNT(DISTINCT value)
             FROM
-                RankedAnnotations
+                RankedProperties
             WHERE
                 row_num = 1
         """.format(
-            institution=institution.id,
-            type=Annotation.Type.SYSTEM,
+            institution=institution.id
         )
         with connection.cursor() as cursor:
             cursor.execute(sql)
