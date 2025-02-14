@@ -17,6 +17,8 @@ class Build(BuildMix):
         self.chassis = self.device.get("chassis", '')
         self.serial_number = self.device.get("serialNumber", '')
         self.sku = self.device.get("sku", '')
+        self.type = self.device.get("type", '')
+        self.version = self.device.get("version", '')
 
     def _get_components(self):
         self.components = self.json.get("components", [])
