@@ -136,6 +136,7 @@ class Device:
         self.lots = [
             x.lot for x in DeviceLot.objects.filter(device_id=self.id)]
 
+    @classmethod
     def get_all(cls, institution, offset=0, limit=None):
         sql = """
             WITH RankedAnnotations AS (
