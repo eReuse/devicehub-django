@@ -32,7 +32,7 @@
 
   
 {% load django_bootstrap5 %}
-<form role="form" method="post" enctype="multipart/form-data" class="needs-validation row d-flex justify-content-center " novalidate>
+<form role="form" method="post" enctype="multipart/form-data" class="row d-flex justify-content-center ">
   {% csrf_token %}
 
   <!-- Drag n drop -->
@@ -43,7 +43,7 @@
     {# support for both evidence file and spreadsheet forms #}
     {% if form.evidence_file %}
       {% bootstrap_form form exclude="evidence_file" alert_error_type="none" error_css_class="alert alert-danger" %}
-      <input type="file" id="file-input" name="{{ form.evidence_file.html_name }}" class="visually-hidden" {% if form.evidence_file.field.widget.attrs.multiple %}multiple{% endif %}>
+      <input type="file" id="file-input" name="{{ form.evidence_file.html_name }}" class="visually-hidden" {% if form.evidence_file.field.widget.attrs.multiple %}multiple required{% endif %}>
     {% elif form.file_import %}
       {% bootstrap_form form exclude="file_import" alert_error_type="none" error_css_class="alert alert-danger" %}
       <input type="file" id="file-input" name="{{ form.file_import.html_name }}" class="visually-hidden">

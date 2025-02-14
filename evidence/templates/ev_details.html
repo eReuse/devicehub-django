@@ -12,9 +12,9 @@
 {% block content %}
 <div class="row">
 
-  <div class="col-md-12 mb-3">
+  <div class="col-md-12 mb-4">
     <div class="card d-flex flex-wrap">
-      <div class="card-header bg-light">
+      <div class="card-header">
         <strong class="card-title">Evidence
           <span class="text-muted" id="uuid">{{ object.uuid }}</span>
           <button class="btn btn-sm btn-outline-secondary ms-1" onclick="copyToClipboard()">
@@ -41,6 +41,10 @@
                     </div>
                   {% endif %}
 
+                   <!-- submit button -->
+                  <button class="btn btn-sm btn btn-outline-success" d-flex align-items-end gap-1" type="submit" name="submit_form2">
+                    <i class="bi bi-floppy2-fill"></i> {% translate 'Save' %}
+                  </button>
                   <!-- erase server switch -->
                   <div class="form-check form-switch m-0">
                     <input
@@ -52,7 +56,6 @@
                       {% if form2.erase_server.value %}
                         checked
                       {% endif %}>
-
                     <label class="form-check-label ps-1" for="{{ form2.erase_server.id_for_label }}">
                       {% if form2.erase_server.value %}
                         <i class="pe-1 bi bi-eraser"></i>
@@ -63,10 +66,7 @@
                       {% endif %}
                     </label>
                   </div>
-                  <!-- submit button -->
-                  <button class="btn btn-sm btn btn-outline-success" d-flex align-items-end gap-1" type="submit" name="submit_form2">
-                    <i class="bi bi-floppy2-fill"></i> {% translate 'Save' %}
-                  </button>
+
                 </form>
 
             </div>
