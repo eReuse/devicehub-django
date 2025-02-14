@@ -6,11 +6,11 @@
     {% for d in dpps %}
       <div class="list-group-item">
         <div class="d-flex w-100 justify-content-between">
-          <small class="text-muted">{{ d.timestamp }}</small>
-          <span>{{ d.type }}</span>
+          <small class="text-muted">{{ d.2.timestamp }}</small>
+          <span>{{ d.2.type }}</span>
         </div>
         <p class="mb-1">
-          <a href="{% url 'did:device_web' d.signature %}">{{ d.signature }}</a>
+          <a href="{% url 'did:device_web' d.0 %}">{{ d.1 }}...</a>
         </p>
       </div>
     {% endfor %}
