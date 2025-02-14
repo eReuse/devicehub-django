@@ -20,3 +20,7 @@ class Build(BuildMix):
 
     def _get_components(self):
         self.components = self.json.get("components", [])
+
+        self.device.pop("actions", None)
+        for c in self.components:
+            c.pop("actions", None)
