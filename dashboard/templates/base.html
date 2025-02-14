@@ -82,16 +82,11 @@
             <ul class="nav flex-column">
 	      {% if user.is_admin %}
               <li class="nav-item">
-                <a class="admin {% if path in 'panel users states_panel edit_user delete_user new_user institution' %}active {% endif %}nav-link fw-bold" data-bs-toggle="collapse" data-bs-target="#ul_admin" aria-expanded="false" aria-controls="ul_admin" href="javascript:void()">
+                <a class="admin {% if path in 'panel users states_panel tag_panel edit_user delete_user new_user institution' %}active {% endif %}nav-link fw-bold" data-bs-toggle="collapse" data-bs-target="#ul_admin" aria-expanded="false" aria-controls="ul_admin" href="javascript:void()">
                   <i class="bi bi-person-fill-gear icon_sidebar"></i>
                   {% trans 'Admin' %}
                 </a>
-                <ul class="flex-column mb-2 ul_sidebar accordion-collapse {% if path in 'panel institution users edit_user new_user delete_user states_panel' %}expanded{% else %}collapse{% endif %}" id="ul_admin" data-bs-parent="#sidebarMenu">
-                <a class="admin {% if path in 'panel users tag_panel' %}active {% endif %}nav-link fw-bold" data-bs-toggle="collapse" data-bs-target="#ul_admin" aria-expanded="false" aria-controls="ul_admin" href="javascript:void()">
-                  <i class="bi bi-person-fill-gear icon_sidebar"></i>
-                  {% trans 'Admin' %}
-                </a>
-                <ul class="flex-column mb-2 ul_sidebar accordion-collapse {% if path in 'panel users tag_panel' %}expanded{% else %}collapse{% endif %}" id="ul_admin" data-bs-parent="#sidebarMenu">
+                <ul class="flex-column mb-2 ul_sidebar accordion-collapse {% if path in 'panel users tag_panel states_panel' %}expanded{% else %}collapse{% endif %}" id="ul_admin" data-bs-parent="#sidebarMenu">
                   <li class="nav-item">
                     <a class="nav-link{% if path in 'panel institution' %} active2{% endif %}" href="{% url 'admin:panel' %}">
                       {% trans 'Panel' %}
@@ -105,6 +100,7 @@
                   <li class="nav-item">
                     <a class="nav-link{% if path == 'states_panel' %} active2{% endif %}" href="{% url 'admin:states_panel' %}">
                       {% trans 'States' %}
+		    </a>
                   </li>
 		  <li class="nav-item">
                     <a class="nav-link{% if path == 'tag_panel' %} active2{% endif %}" href="{% url 'admin:tag_panel' %}">
