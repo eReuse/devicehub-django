@@ -29,7 +29,6 @@ class AllDevicesView(InventaryMixin):
     breadcrumb = "Devices / All Devices"
 
     def get_devices(self, user, offset, limit):
-        import pdb; pdb.set_trace()
         return Device.get_all(self.request.user.institution, offset, limit)
 
 
