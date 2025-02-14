@@ -137,6 +137,87 @@ class Device:
         self.lots = [
             x.lot for x in DeviceLot.objects.filter(device_id=self.id)]
 
+    def get_all(cls, institution, offset=0, limit=None):
+        sql = """
+            WITH RankedAnnotations AS (
+                SELECT
+                    t1.value,
+                    t1.key,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY t1.uuid
+                        ORDER BY
+                            CASE
+                                WHEN t1.key = 'CUSTOM_ID' THEN 1
+                                WHEN t1.key = 'hidalgo1' THEN 2
+                                ELSE 3
+                            END,
+                            t1.created DESC
+                    ) AS row_num
+                FROM evidence_annotation AS t1
+                WHERE t1.owner_id = {institution}
+                  AND t1.type = {type}
+            )
+            SELECT DISTINCT
+                value
+            FROM
+                RankedAnnotations
+            WHERE
+                row_num = 1
+        """.format(
+            institution=institution.id,
+            type=Annotation.Type.SYSTEM,
+        )
+        if limit:
+            sql += " limit {} offset {}".format(int(limit), int(offset))
+
+        sql += ";"
+
+        annotations = []
+        with connection.cursor() as cursor:
+            cursor.execute(sql)
+            annotations = cursor.fetchall()
+
+        devices = [cls(id=x[0]) for x in annotations]
+        count = cls.get_all_count(institution)
+        return devices, count
+
+    @classmethod
+    def get_all_count(cls, institution):
+
+        sql = """
+            WITH RankedAnnotations AS (
+                SELECT
+                    t1.value,
+                    t1.key,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY t1.uuid
+                        ORDER BY
+                            CASE
+                                WHEN t1.key = 'CUSTOM_ID' THEN 1
+                                WHEN t1.key = 'hidalgo1' THEN 2
+                                ELSE 3
+                            END,
+                            t1.created DESC
+                    ) AS row_num
+                FROM evidence_annotation AS t1
+                WHERE t1.owner_id = {institution}
+                  AND t1.type = {type}
+            )
+            SELECT
+                COUNT(DISTINCT value)
+            FROM
+                RankedAnnotations
+            WHERE
+                row_num = 1
+        """.format(
+            institution=institution.id,
+            type=Annotation.Type.SYSTEM,
+        )
+        with connection.cursor() as cursor:
+            cursor.execute(sql)
+            return cursor.fetchall()[0][0]
+
+
     @classmethod
     def get_unassigned(cls, institution, offset=0, limit=None):
 

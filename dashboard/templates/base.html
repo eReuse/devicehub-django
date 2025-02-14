@@ -115,6 +115,19 @@
               </li>
 	      {% endif %}
               <li class="nav-item">
+                <a class="admin {% if path in 'all_device' %}active {% endif %}nav-link fw-bold" data-bs-toggle="collapse" data-bs-target="#ul_device" aria-expanded="false" aria-controls="ul_lots" href="javascript:void()">
+                  <i class="bi bi-database icon_sidebar"></i>
+                  {% trans 'Device' %}
+                </a>
+                <ul class="flex-column mb-2 ul_sidebar accordion-collapse {% if path in 'all_device' %}expanded{% else %}collapse{% endif %}" id="ul_device" data-bs-parent="#sidebarMenu">
+		  <li class="nav-item">
+                    <a class="nav-link{% if path == 'all_device' %} active2{% endif %}" href="{% url 'dashboard:all_device' %}">
+                      {% trans 'All' %}
+                    </a>
+                  </li>
+                </ul>
+              </li>
+              <li class="nav-item">
                 <a class="admin {% if path == 'tags' or path == 'lot' or path in 'unassigned dashboard' %}active {% endif %}nav-link fw-bold" data-bs-toggle="collapse" data-bs-target="#ul_lots" aria-expanded="false" aria-controls="ul_lots" href="javascript:void()">
                   <i class="bi bi-database icon_sidebar"></i>
                   {% trans 'Lots' %}
@@ -148,17 +161,17 @@
                   </li>
                   <li class="nav-item">
                     <a class="nav-link{% if path == 'upload' %} active2{% endif %}" href="{% url 'evidence:upload' %}">
-                      {% trans 'Upload one' %}
+                      {% trans 'Upload with JSON file' %}
                     </a>
                   </li>
                   <li class="nav-item">
                     <a class="nav-link{% if path == 'import' %} active2{% endif %}" href="{% url 'evidence:import' %}">
-                      {% trans 'Upload Spreadsheet' %}
+                      {% trans 'Upload with Spreadsheet' %}
                     </a>
                   </li>
                   <li class="nav-item">
                     <a class="nav-link{% if path == 'add' %} active2{% endif %}" href="{% url 'device:add' %}">
-                      {% trans 'Create one' %}
+                      {% trans 'Upload with Web Form' %}
                     </a>
                   </li>
                 </ul>
