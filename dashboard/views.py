@@ -22,6 +22,17 @@ class UnassignedDevicesView(InventaryMixin):
         return Device.get_unassigned(self.request.user.institution, offset, limit)
 
 
+class AllDevicesView(InventaryMixin):
+    template_name = "unassigned_devices.html"
+    section = "All"
+    title = _("All Devices")
+    breadcrumb = "Devices / All Devices"
+
+    def get_devices(self, user, offset, limit):
+        import pdb; pdb.set_trace()
+        return Device.get_all(self.request.user.institution, offset, limit)
+
+
 class LotDashboardView(InventaryMixin, DetailsMixin):
     template_name = "unassigned_devices.html"
     section = "dashboard_lot"
