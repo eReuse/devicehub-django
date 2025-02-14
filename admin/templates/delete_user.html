@@ -1,19 +1,24 @@
 {% extends "base.html" %}
 {% load i18n %}
 
+{% load django_bootstrap5 %}
+
 {% block content %}
 <div class="row">
   <div class="col">
     <h3>{{ subtitle }}</h3>
   </div>
 </div>
-
-{% load django_bootstrap5 %}
-<div class="row mb-3">
-  <div class="col">
-    Are you sure than want remove the lot {{ object.name }} with {{ object.devices.count }} devices.
+  <div class="row mb-4">
+    <div class="col">
+      <div class="alert alert-warning" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        {% blocktranslate %}
+          Are you sure you want to remove the lot <strong>{{ object.name }}</strong> with <strong>{{ object.devices.count }}</strong> devices?
+        {% endblocktranslate %}
+      </div>
+    </div>
   </div>
-</div>
 
 <form role="form" method="post">
 {% csrf_token %}
@@ -31,7 +36,10 @@
 {% bootstrap_form form %}
 <div class="form-actions-no-box">
   <a class="btn btn-grey" href="{% url 'admin:users' %}">{% translate "Cancel" %}</a>
-  <input class="btn btn-green-admin" type="submit" name="submit" value="{% translate 'Delete' %}" />
+  <button type="submit" class="btn btn-danger">
+    <i class="bi bi-trash me-1"></i>
+    {% translate "Delete" %}
+  </button>
 </div>
 
 </form>

@@ -28,33 +28,30 @@
 <form role="form" method="post">
   {% csrf_token %}
   {% if form.errors %}
-  <div class="alert alert-danger alert-icon alert-icon-border alert-dismissible" role="alert">
-    <div class="icon"><span class="mdi mdi-close-circle-o"></span></div>
-    <div class="message">
-      {% for field, error in form.errors.items %}
-        {{ error }}<br />
-      {% endfor %}
-      <button class="btn-close" type="button" data-dismiss="alert" aria-label="Close"></button>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      <div class="d-flex align-items-center">
+        <i class="bi bi-exclamation-circle me-2"></i>
+        <div>
+          {% for field, error in form.errors.items %}
+            {{ error }}<br />
+          {% endfor %}
+        </div>
+      </div>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
-  </div>
   {% endif %}
   {{ form.management_form }}
   <div class="container" id="formset-container">
-    <div class="row mb-2">
-      <div class="col">
+    <div class="row mb-3">
+      <div class="col-md-4">
         {% bootstrap_field form.0.type %}
       </div>
-    </div>
-    <div class="row mb-2">
-      <div class="col">
-        {% bootstrap_field form.0.amount %}
-      </div>
-    </div>
-    <div class="row mb-2">
-      <div class="col">
+      <div class="col-md-4">
         {% bootstrap_field form.0.custom_id %}
       </div>
-    </div>
+      <div class="col-md-4">
+        {% bootstrap_field form.0.amount %}
+      </div>    </div>
     <div class="row mb-2">
       <div class="col-10">
         <span class="fw-bold">{% trans 'Component details' %}</span>

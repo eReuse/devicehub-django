@@ -1,25 +1,22 @@
 {% extends "base.html" %}
 {% load i18n %}
 
+{% block actions %}
+  <a href="{% url 'lot:add_property' lot.pk %}" class="btn btn-green-admin d-flex align-items-center">
+    <i class="bi bi-plus pe-2"></i>
+    Add Property
+    <span class="caret"></span>
+  </a>
+{% endblock %}
+
 {% block content %}
-<div class="row">
-  <div class="col">
-    <h3>Lot {{ lot.name }}</h3>
-  </div>
-</div>
+<h3>Lot {{ lot.name }}</h3>
 
 <div class="row">
   <div class="tab-pane fade show active" id="details">
     <div class="d-flex justify-content-end mt-1 mb-3">
-      <a href="{% url 'lot:add_property' lot.pk %}" class="btn btn-green-admin d-flex align-items-center">
-
-        <i class="bi bi-plus"></i>
-        Add new lot Property
-        <span class="caret"></span>
-      </a>
     </div>
 
-    <h5 class="card-title mt-2">Properties</h5>
     <table class="table table-hover table-bordered table-responsive align-middle">
       <thead class="table-light">
         <tr>
