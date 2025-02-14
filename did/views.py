@@ -118,7 +118,7 @@ class PublicDeviceWebView(TemplateView):
 
         key = self.pk
         if last_dpp:
-            key = last_dpp.signature
+            key += ":"+last_dpp.signature
 
         url = "https://{}/did/{}".format(
             self.request.get_host(),
