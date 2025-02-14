@@ -44,7 +44,7 @@ class Build(BuildMix):
         self.chassis = self.get_chassis_dh()
         self.serial_number = self.dmi.serial_number()
         self.sku = self.get_sku()
-        self.typ = self.chassis
+        self.type = self.chassis
         self.version = self.get_version()
 
     def get_chassis_dh(self):
