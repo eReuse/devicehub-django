@@ -17,7 +17,7 @@ from lot.forms import LotsForm
 class NewLotView(DashboardView, CreateView):
     template_name = "new_lot.html"
     title = _("New lot")
-    breadcrumb = "lot / New lot"
+    breadcrumb = _("Lot") + " / " + _("New") + " / "
     success_url = reverse_lazy('dashboard:unassigned_devices')
     model = Lot
     fields = (
@@ -38,7 +38,7 @@ class NewLotView(DashboardView, CreateView):
 class DeleteLotView(DashboardView, DeleteView):
     template_name = "delete_lot.html"
     title = _("Delete lot")
-    breadcrumb = "lot / Delete lot"
+    breadcrumb = _("Lot") + " / " + _("Delete") + " / "
     success_url = reverse_lazy('dashboard:unassigned_devices')
     model = Lot
     fields = (
@@ -57,7 +57,7 @@ class DeleteLotView(DashboardView, DeleteView):
 class EditLotView(DashboardView, UpdateView):
     template_name = "new_lot.html"
     title = _("Edit lot")
-    breadcrumb = "Lot / Edit lot"
+    breadcrumb = _("Lot") + " / " + _("Edit") + " / "
     success_url = reverse_lazy('dashboard:unassigned_devices')
     model = Lot
     fields = (
@@ -83,7 +83,7 @@ class EditLotView(DashboardView, UpdateView):
 class AddToLotView(DashboardView, FormView):
     template_name = "list_lots.html"
     title = _("Add to lots")
-    breadcrumb = "lot / add to lots"
+    breadcrumb = _("Lot") + " / " + _("Assign Device") + " / "
     success_url = reverse_lazy('dashboard:unassigned_devices')
     form_class = LotsForm
 
@@ -112,7 +112,7 @@ class AddToLotView(DashboardView, FormView):
 
 class DelToLotView(AddToLotView):
     title = _("Remove from lots")
-    breadcrumb = "lot / remove from lots"
+    breadcrumb = _("Lot") + " / " + _("Unassign Device") + " / "
 
     def form_valid(self, form):
         form.devices = self.get_session_devices()
@@ -124,7 +124,7 @@ class DelToLotView(AddToLotView):
 class LotsTagsView(DashboardView, TemplateView):
     template_name = "lots.html"
     title = _("lots")
-    breadcrumb = _("lots") + " /"
+    breadcrumb = _("Lot") + " / "
     success_url = reverse_lazy('dashboard:unassigned_devices')
 
     def get_context_data(self, **kwargs):
@@ -149,7 +149,7 @@ class LotsTagsView(DashboardView, TemplateView):
 class LotPropertiesView(DashboardView, TemplateView):
     template_name = "properties.html"
     title = _("New Lot Property")
-    breadcrumb = "Lot / New property"
+    breadcrumb = _("Lot") + " / " + _("Property") + " / "
 
     def get_context_data(self, **kwargs):
         self.pk = kwargs.get('pk')
@@ -172,7 +172,7 @@ class LotPropertiesView(DashboardView, TemplateView):
 class AddLotPropertyView(DashboardView, CreateView):
     template_name = "new_property.html"
     title = _("New Lot Property")
-    breadcrumb = "Device / New property"
+    breadcrumb = _("Lot") + " / " + _("Property") + " / " +_("New")
     success_url = reverse_lazy('dashboard:unassigned_devices')
     model = LotProperty
     fields = ("key", "value")
@@ -206,7 +206,7 @@ class AddLotPropertyView(DashboardView, CreateView):
 class UpdateLotPropertyView(DashboardView, UpdateView):
     template_name = "properties.html"
     title = _("Update lot Property")
-    breadcrumb = "Lot / Update Property"
+    breadcrumb = _("Lot") + " / " + _("Property") + " / " +_("Update")
     model = LotProperty
     fields = ("key", "value")
 

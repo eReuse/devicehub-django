@@ -16,7 +16,7 @@ class UnassignedDevicesView(InventaryMixin):
     template_name = "unassigned_devices.html"
     section = "Unassigned"
     title = _("Unassigned Devices")
-    breadcrumb = "Devices / Unassigned Devices"
+    breadcrumb = _("Devices") + " / " + _("Unassigned") + " / "
 
     def get_devices(self, user, offset, limit):
         return Device.get_unassigned(self.request.user.institution, offset, limit)
@@ -26,7 +26,7 @@ class LotDashboardView(InventaryMixin, DetailsMixin):
     template_name = "unassigned_devices.html"
     section = "dashboard_lot"
     title = _("Lot Devices")
-    breadcrumb = "Lot / Devices"
+    breadcrumb = _("Lot") + " / " + _("Devices") + " / "
     model = Lot
 
     def get_context_data(self, **kwargs):
@@ -50,7 +50,7 @@ class SearchView(InventaryMixin):
     template_name = "unassigned_devices.html"
     section = "Search"
     title = _("Search Devices")
-    breadcrumb = "Devices / Search Devices"
+    breadcrumb = _("Devices") + " / " + _("Search") + " / "
 
     def get_devices(self, user, offset, limit):
         post = dict(self.request.POST)

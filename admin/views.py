@@ -31,7 +31,7 @@ class AdminView(DashboardView):
 class PanelView(AdminView, TemplateView):
     template_name = "admin_panel.html"
     title = _("Admin")
-    breadcrumb = _("admin") + " /"
+    breadcrumb = _("Admin") + " / " + _("Panel") + " /"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -41,7 +41,7 @@ class PanelView(AdminView, TemplateView):
 class UsersView(AdminView, TemplateView):
     template_name = "admin_users.html"
     title = _("Users")
-    breadcrumb = _("admin / Users") + " /"
+    breadcrumb = _("Admin") + " / " + _("Panel") + " / " + _("Users")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -54,7 +54,7 @@ class UsersView(AdminView, TemplateView):
 class CreateUserView(AdminView, NotifyActivateUserByEmail, CreateView):
     template_name = "user.html"
     title = _("User")
-    breadcrumb = _("admin / User") + " /"
+    breadcrumb = _("Admin") + " / " + _("Users") + " / " +_("New")
     success_url = reverse_lazy('admin:users')
     model = User
     fields = (
@@ -79,7 +79,7 @@ class CreateUserView(AdminView, NotifyActivateUserByEmail, CreateView):
 class DeleteUserView(AdminView, DeleteView):
     template_name = "delete_user.html"
     title = _("Delete user")
-    breadcrumb = "admin / Delete user"
+    breadcrumb = _("Admin") + " / " + _("Users") + " / " +_("Delete")
     success_url = reverse_lazy('admin:users')
     model = User
     fields = (
@@ -96,7 +96,7 @@ class DeleteUserView(AdminView, DeleteView):
 class EditUserView(AdminView, UpdateView):
     template_name = "user.html"
     title = _("Edit user")
-    breadcrumb = "admin / Edit user"
+    breadcrumb = _("Admin") + " / " + _("Users") + " / " +_("Edit")
     success_url = reverse_lazy('admin:users')
     model = User
     fields = (
@@ -116,6 +116,7 @@ class InstitutionView(AdminView, UpdateView):
     template_name = "institution.html"
     title = _("Edit institution")
     section = "admin"
+    breadcrumb = _("Admin") + " / " + _("Institution") + " / "
     subtitle = _('Edit institution')
     model = Institution
     success_url = reverse_lazy('admin:panel')
@@ -156,7 +157,7 @@ class StateDefinitionContextMixin(ContextMixin):
 class StatesPanelView(AdminView, StateDefinitionContextMixin, TemplateView):
     template_name = "states_panel.html"
     title = _("States Panel")
-    breadcrumb = _("admin / States Panel") + " /"
+    breadcrumb = _("Admin") + " / " + _("States") + " / "
 
 
 class AddStateDefinitionView(AdminView, StateDefinitionContextMixin, CreateView):
