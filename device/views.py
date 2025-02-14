@@ -94,10 +94,14 @@ class DetailsView(DashboardView, TemplateView):
         lot_tags = LotTag.objects.filter(owner=self.request.user.institution)
         dpps = []
         if settings.DPP:
-            dpps = Proof.objects.filter(
+            _dpps = Proof.objects.filter(
                 uuid__in=self.object.uuids,
                 type=PROOF_TYPE["IssueDPP"]
             )
+            for x in _dpps:
+                dpp = "{}:{}".format(self.pk, x.signature)
+                dpps.append((dpp, x.signature[:10], x))
+
         last_evidence = self.object.get_last_evidence()
         uuids = self.object.uuids
         state_definitions = StateDefinition.objects.filter(
