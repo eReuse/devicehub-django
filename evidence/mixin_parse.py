@@ -17,7 +17,7 @@ class BuildMix:
         self.chassis = ""
         self.sku = ""
         self.mac = ""
-        self.tpy = ""
+        self.type = ""
         self.version = ""
         self.get_details()
         self.generate_chids()
