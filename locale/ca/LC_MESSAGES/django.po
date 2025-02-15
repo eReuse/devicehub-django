@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 0.1 \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-01-29 19:04-0300\n"
+"POT-Creation-Date: 2025-02-14 19:03-0300\n"
 "PO-Revision-Date: 2025-01-29 17:02-0300\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,241 +16,230 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: action/management/commands/create_default_states.py:17
-msgid "INBOX"
-msgstr "SAFATA D'ENTRADA"
-
-#: action/management/commands/create_default_states.py:18
-msgid "VISUAL INSPECTION"
-msgstr "INSPECCIÓ VISUAL"
-
-#: action/management/commands/create_default_states.py:19
-msgid "REPAIR"
-msgstr "REPARACIÓ"
-
-#: action/management/commands/create_default_states.py:20
-msgid "INSTALL"
-msgstr "INSTALLACIÓ"
-
-#: action/management/commands/create_default_states.py:21
-msgid "TEST"
-msgstr "PROVA"
-
-#: action/management/commands/create_default_states.py:22
-msgid "PACKAGING"
-msgstr "EMBALATGE"
-
-#: action/management/commands/create_default_states.py:23
-msgid "DONATION"
-msgstr "DONACIÓ"
-
-#: action/management/commands/create_default_states.py:24
-msgid "DISMANTLE"
-msgstr "DESMUNTATGE"
-
-#: action/views.py:27
+#: action/views.py:28
 msgid "<Created> State '{}'. Previous State: '{}'"
 msgstr ""
 
-#: action/views.py:34
+#: action/views.py:35
 msgid "State successfully changed from '{}' to '{}'"
 msgstr ""
 
-#: action/views.py:38 action/views.py:69
+#: action/views.py:39 action/views.py:70
 msgid "There was an error with your submission."
 msgstr "Hi ha hagut un error amb la teva tramesa."
 
-#: action/views.py:58
+#: action/views.py:59
 msgid "<Created> Note: '{}'"
 msgstr ""
 
-#: action/views.py:65
+#: action/views.py:66
 msgid "Note has been added"
 msgstr "S'ha afegit la nota"
 
-#: action/views.py:87
+#: action/views.py:88
 msgid "<Updated> Note. Old Description: '{}'. New Description: '{}'"
 msgstr "<Actualitzada> Nota. Descripció antiga: '{}'. Descripció nova: '{}'"
 
-#: action/views.py:100
+#: action/views.py:101
 msgid "Note cannot be empty."
 msgstr "La nota no pot estar buida."
 
-#: action/views.py:126
+#: action/views.py:127
 msgid "You do not have permission to delete this note."
 msgstr "No tens permís per eliminar aquesta nota."
 
-#: action/views.py:129
+#: action/views.py:130
 msgid "<Deleted> Note. Description: '{}'. "
 msgstr ""
 
-#: action/views.py:136
+#: action/views.py:137
 msgid "Note '{}' deleted successfully."
 msgstr "Nota '{}' eliminada correctament."
 
-#: admin/templates/admin_panel.html:14
+#: admin/templates/admin_panel.html:13 admin/views.py:119
 msgid "Institution"
 msgstr "Institució"
 
-#: admin/templates/admin_users.html:10
+#: admin/templates/admin_panel.html:16
+msgid "Edit and manage the institution's details and settings."
+msgstr ""
+
+#: admin/templates/admin_panel.html:20
+msgid "Edit Institution"
+msgstr "Edita institució"
+
+#: admin/templates/admin_users.html:8
 msgid "New user"
 msgstr "Afegeix un nou usuari"
 
-#: admin/templates/admin_users.html:19
+#: admin/templates/admin_users.html:21
 msgid "Email"
 msgstr "Correu electrònic"
 
-#: admin/templates/admin_users.html:20 admin/views.py:33
-#: dashboard/templates/base.html:87
+#: admin/templates/admin_users.html:22 admin/views.py:33 admin/views.py:34
+#: admin/views.py:44 admin/views.py:57 admin/views.py:82 admin/views.py:99
+#: admin/views.py:119 admin/views.py:160 dashboard/templates/base.html:94
 msgid "Admin"
 msgstr "Administrador"
 
-#: admin/templates/admin_users.html:21 admin/templates/states_panel.html:30
-#: device/templates/tabs/user_properties.html:21
+#: admin/templates/admin_users.html:23 admin/templates/states_panel.html:29
+#: device/templates/tabs/user_properties.html:21 lot/templates/lots.html:57
 msgid "Actions"
 msgstr "Accions"
 
-#: admin/templates/admin_users.html:28
+#: admin/templates/admin_users.html:30
 #: device/templates/tabs/general_details.html:20
 msgid "Yes"
 msgstr "Sí"
 
-#: admin/templates/admin_users.html:28
+#: admin/templates/admin_users.html:30
 msgid "No"
 msgstr "No"
 
-#: admin/templates/delete_user.html:33 admin/templates/institution.html:27
-#: admin/templates/states_panel.html:145 admin/templates/states_panel.html:185
+#: admin/templates/delete_user.html:16
+#, python-format
+msgid ""
+"\n"
+"          Are you sure you want to remove the lot <strong>%(object.name)s</"
+"strong> with <strong>%(object.devices.count)s</strong> devices?\n"
+"        "
+msgstr ""
+"\n"
+"          Are you sure you want to remove the lot <strong>%(object.name)s</"
+"strong> with <strong>%(object.devices.count)s</strong> devices?\n"
+"        "
+
+#: admin/templates/delete_user.html:38 admin/templates/institution.html:41
+#: admin/templates/states_panel.html:144 admin/templates/states_panel.html:184
 #: admin/templates/user.html:27 api/templates/new_token.html:27
-#: device/templates/details.html:230 device/templates/new_device.html:81
+#: device/templates/details.html:117 device/templates/new_device.html:78
 #: device/templates/new_user_property.html:39
-#: device/templates/physical_properties.html:117
-#: device/templates/tabs/user_properties.html:83
-#: device/templates/tabs/user_properties.html:121
-#: evidence/templates/ev_details.html:90
-#: evidence/templates/ev_eraseserver.html:52 evidence/templates/upload.html:25
+#: device/templates/tabs/user_properties.html:70
+#: device/templates/tabs/user_properties.html:102
+#: evidence/templates/ev_details.html:153 evidence/templates/upload.html:73
 #: lot/templates/delete_lot.html:33 lot/templates/new_lot.html:27
-#: lot/templates/new_property.html:39 lot/templates/properties.html:70
-#: lot/templates/properties.html:90 user/templates/settings.html:27
+#: lot/templates/new_property.html:39 lot/templates/properties.html:68
+#: lot/templates/properties.html:88 user/templates/settings.html:27
 msgid "Cancel"
 msgstr "Cancel·la"
 
-#: admin/templates/delete_user.html:34 admin/templates/states_panel.html:67
-#: admin/templates/states_panel.html:188 api/tables.py:29
-#: device/templates/tabs/user_properties.html:47
-#: device/templates/tabs/user_properties.html:87
-#: evidence/templates/ev_details.html:95 lot/templates/delete_lot.html:34
-#: lot/templates/properties.html:93
+#: admin/templates/delete_user.html:41 admin/templates/states_panel.html:66
+#: admin/templates/states_panel.html:187 admin/views.py:82 api/tables.py:29
+#: device/templates/tabs/user_properties.html:44
+#: device/templates/tabs/user_properties.html:73
+#: evidence/templates/ev_details.html:158 lot/templates/delete_lot.html:34
+#: lot/templates/lots.html:81 lot/templates/properties.html:43
+#: lot/templates/properties.html:91 lot/views.py:41
 msgid "Delete"
 msgstr "Elimina"
 
-#: admin/templates/institution.html:28 admin/templates/user.html:28
-#: api/templates/new_token.html:28 device/templates/new_device.html:82
+#: admin/templates/institution.html:17
+msgid "Please fix the following errors:"
+msgstr "Si us plau, ves a la pàgina següent"
+
+#: admin/templates/institution.html:44 admin/templates/user.html:28
+#: api/templates/new_token.html:28 device/templates/new_device.html:79
 #: device/templates/new_user_property.html:40
-#: device/templates/physical_properties.html:118
-#: evidence/templates/ev_details.html:91
-#: evidence/templates/ev_eraseserver.html:53 evidence/templates/upload.html:26
+#: evidence/templates/ev_details.html:46 evidence/templates/ev_details.html:154
 #: lot/templates/new_lot.html:28 lot/templates/new_property.html:40
 #: user/templates/settings.html:28
 msgid "Save"
 msgstr "Desa"
 
-#: admin/templates/states_panel.html:11
-#: dashboard/templates/unassigned_devices.html:87
-msgid "Add"
-msgstr "Afegeix"
+#: admin/templates/states_panel.html:7
+msgid "New State"
+msgstr "Nou estat"
 
-#: admin/templates/states_panel.html:20
+#: admin/templates/states_panel.html:19
 msgid "Move and drag state definitions to reorder"
 msgstr "Mou i arrossega les definicions d'estat per reordenar-les"
 
-#: admin/templates/states_panel.html:28
+#: admin/templates/states_panel.html:27
 msgid "State Definition"
 msgstr "Definició d'estat"
 
-#: admin/templates/states_panel.html:60
-#: device/templates/tabs/user_properties.html:40
+#: admin/templates/states_panel.html:59 admin/views.py:99
+#: device/templates/tabs/user_properties.html:37 lot/templates/lots.html:77
+#: lot/templates/properties.html:39 lot/views.py:60
 msgid "Edit"
 msgstr "Edita"
 
-#: admin/templates/states_panel.html:79
+#: admin/templates/states_panel.html:78
 msgid "Update Order"
 msgstr "Actualitza l'ordre"
 
-#: admin/templates/states_panel.html:85
+#: admin/templates/states_panel.html:84
 msgid "No states found on current organization"
 msgstr "No s'han trobat estats a l'organització actual"
 
-#: admin/templates/states_panel.html:96
+#: admin/templates/states_panel.html:95
 msgid "Add State Definition"
 msgstr "Afegeix una definició d'estat"
 
-#: admin/templates/states_panel.html:104 admin/templates/states_panel.html:137
+#: admin/templates/states_panel.html:103 admin/templates/states_panel.html:136
 msgid "State"
 msgstr "Estat"
 
-#: admin/templates/states_panel.html:106 admin/templates/states_panel.html:139
+#: admin/templates/states_panel.html:105 admin/templates/states_panel.html:138
 msgid "Maximum 50 characters."
 msgstr "Màxim 50 caràcters."
 
-#: admin/templates/states_panel.html:109 admin/templates/states_panel.html:130
-#: admin/templates/states_panel.html:164 device/templates/details.html:219
-#: lot/templates/properties.html:56 lot/templates/properties.html:84
+#: admin/templates/states_panel.html:108 admin/templates/states_panel.html:129
+#: admin/templates/states_panel.html:163 device/templates/details.html:106
+#: lot/templates/properties.html:54 lot/templates/properties.html:82
 msgid "Close"
 msgstr "Tanca"
 
-#: admin/templates/states_panel.html:110
+#: admin/templates/states_panel.html:109
 msgid "Add state definition"
 msgstr "Afegeix una definició d'estat"
 
-#: admin/templates/states_panel.html:128
+#: admin/templates/states_panel.html:127
 msgid "Edit State Definition"
 msgstr "Edita la definició d'estat"
 
-#: admin/templates/states_panel.html:134
+#: admin/templates/states_panel.html:133
 msgid ""
 "Existing devices with this state will not have their state names changed."
 msgstr ""
 "Els dispositius amb aquest estat no veuran canviats els seus noms d'estat."
 
-#: admin/templates/states_panel.html:142 admin/templates/states_panel.html:177
+#: admin/templates/states_panel.html:141 admin/templates/states_panel.html:176
 msgid "Any changes in order will not be saved."
 msgstr "Qualsevol canvi en l'ordre no es desarà."
 
-#: admin/templates/states_panel.html:146
+#: admin/templates/states_panel.html:145
 msgid "Save Changes"
 msgstr "Desa els canvis"
 
-#: admin/templates/states_panel.html:162
+#: admin/templates/states_panel.html:161
 msgid "Delete State Definition"
 msgstr "Elimina la definició d'estat"
 
-#: admin/templates/states_panel.html:168
+#: admin/templates/states_panel.html:167
 msgid ""
 "Devices with a State of this description will not have their State altered"
 msgstr ""
 "Els dispositius amb un estat d'aquesta descripció no veuran alterat el seu "
 "estat."
 
-#: admin/views.py:34
-msgid "admin"
-msgstr "administrador"
+#: admin/views.py:34 admin/views.py:44 dashboard/templates/base.html:99
+msgid "Panel"
+msgstr "Panell"
 
-#: admin/views.py:43 dashboard/templates/base.html:97
+#: admin/views.py:43 admin/views.py:44 admin/views.py:57 admin/views.py:82
+#: admin/views.py:99 dashboard/templates/base.html:104
 msgid "Users"
 msgstr "Usuaris"
 
-#: admin/views.py:44
-msgid "admin / Users"
-msgstr "administrador / Usuaris"
-
-#: admin/views.py:56 device/templates/tabs/log.html:10 user/views.py:18
+#: admin/views.py:56 device/templates/tabs/log.html:11 user/views.py:18
 msgid "User"
 msgstr "Usuari"
 
-#: admin/views.py:57
-msgid "admin / User"
-msgstr "administrador / Usuari"
+#: admin/views.py:57 device/views.py:43 device/views.py:195 lot/views.py:20
+#: lot/views.py:175
+msgid "New"
+msgstr "Nou"
 
 #: admin/views.py:81
 msgid "Delete user"
@@ -260,50 +249,69 @@ msgstr "Elimina usuari"
 msgid "Edit user"
 msgstr "Edita usuari"
 
-#: admin/views.py:117 admin/views.py:119
+#: admin/views.py:117 admin/views.py:120
 msgid "Edit institution"
 msgstr "Edita institució"
 
-#: admin/views.py:141
+#: admin/views.py:133
+msgid "Full name of the institution."
+msgstr "Nom complet de la institució."
+
+#: admin/views.py:134
+msgid "URL to the institution's logo."
+msgstr "URL del logotip de la institució."
+
+#: admin/views.py:135
+msgid "The address or city of the institution."
+msgstr "L'adreça o ciutat de la institució."
+
+#: admin/views.py:136
+msgid "Name of the institution's responsable person."
+msgstr "Nom de la persona responsable de la institució."
+
+#: admin/views.py:137
+msgid "The supervisor's full name."
+msgstr "El nom complet del supervisor."
+
+#: admin/views.py:152
 msgid "State definitions are the custom finite states that a device can be in."
 msgstr ""
 "Les definicions d'estat són els estats personalitzats en què pot estar un "
 "dispositiu."
 
-#: admin/views.py:148
+#: admin/views.py:159
 msgid "States Panel"
 msgstr "Panell d'estats"
 
-#: admin/views.py:149
-msgid "admin / States Panel"
-msgstr "administrador / Panell d'estats"
+#: admin/views.py:160 dashboard/templates/base.html:109
+msgid "States"
+msgstr "Estats"
 
-#: admin/views.py:154
+#: admin/views.py:165
 msgid "New State Definition"
 msgstr "Nova definició d'estat"
 
-#: admin/views.py:165
+#: admin/views.py:176
 msgid "State definition successfully added."
 msgstr "Definició d'estat afegida correctament."
 
-#: admin/views.py:168
+#: admin/views.py:179 admin/views.py:245
 msgid "State is already defined."
 msgstr "L'estat ja està definit."
 
-#: admin/views.py:211
+#: admin/views.py:223
 msgid "Order changed succesfuly."
 msgstr "Ordre canviat correctament."
 
-#: admin/views.py:227
+#: admin/views.py:242
 msgid "State definition updated successfully."
 msgstr "Definició d'estat actualitzada correctament."
 
-#: api/tables.py:51
+#: api/tables.py:51 dashboard/templates/base.html:76
 msgid "Token"
 msgstr "Token"
 
-#: api/tables.py:52 evidence/forms.py:69 evidence/templates/ev_details.html:18
-#: evidence/templates/ev_eraseserver.html:18
+#: api/tables.py:52 evidence/forms.py:68 evidence/templates/ev_details.html:85
 msgid "Tag"
 msgstr "Etiqueta"
 
@@ -312,7 +320,6 @@ msgid "Previous"
 msgstr "Anterior"
 
 #: api/templates/custom_table.html:91 dashboard/templates/pagination.html:38
-#: login/templates/login.html:41
 msgid "Next"
 msgstr "Següent"
 
@@ -320,15 +327,15 @@ msgstr "Següent"
 msgid "Generate a new token"
 msgstr "Genera un nou token"
 
-#: api/views.py:147 api/views.py:181 api/views.py:199
+#: api/views.py:146 api/views.py:180 api/views.py:198
 msgid "Credential management"
 msgstr "Gestió de credencials"
 
-#: api/views.py:149
+#: api/views.py:148
 msgid "Managament Tokens"
 msgstr "Tokens de gestió"
 
-#: api/views.py:183 api/views.py:201
+#: api/views.py:182 api/views.py:200
 msgid "New Tokens"
 msgstr "Nous Tokens"
 
@@ -336,54 +343,54 @@ msgstr "Nous Tokens"
 msgid "Permission denied. User is not authenticated"
 msgstr "Permís denegat. L'usuari no està autenticat"
 
-#: dashboard/templates/base.html:92
-msgid "Panel"
-msgstr "Panell"
+#: dashboard/templates/base.html:75
+msgid "Profile"
+msgstr "Perfil"
 
-#: dashboard/templates/base.html:102
-msgid "States"
-msgstr "Estats"
+#: dashboard/templates/base.html:77 user/templates/panel.html:41
+msgid "Settings File"
+msgstr "Fitxer de Configuració"
 
-#: dashboard/templates/base.html:111 evidence/templates/ev_details.html:15
-#: evidence/templates/ev_eraseserver.html:15
-msgid "Devices"
-msgstr "Dispositius"
+#: dashboard/templates/base.html:79
+msgid "Logout"
+msgstr "Tancar Sessió"
 
-#: dashboard/templates/base.html:116
-#: dashboard/templates/inventory_dashboard.html:29
+#: dashboard/templates/base.html:123
+#: dashboard/templates/inventory_dashboard.html:29 dashboard/views.py:19
 msgid "Unassigned"
 msgstr "Sense assignar"
 
-#: dashboard/templates/base.html:124 device/templates/details.html:178
+#: dashboard/templates/base.html:131 device/templates/details.html:64
 msgid "Lots"
 msgstr "Lots"
 
-#: dashboard/templates/base.html:139 device/templates/details.html:184
-#: evidence/views.py:29 evidence/views.py:88 evidence/views.py:148
+#: dashboard/templates/base.html:146 device/templates/details.html:70
+#: evidence/views.py:29 evidence/views.py:96
 msgid "Evidences"
 msgstr "Evidències"
 
-#: dashboard/templates/base.html:144
+#: dashboard/templates/base.html:151 evidence/templates/upload.html:75
+#: evidence/views.py:46
 msgid "Upload"
 msgstr "Carrega"
 
-#: dashboard/templates/base.html:149
+#: dashboard/templates/base.html:156
 msgid "Old evidences"
 msgstr "Evidències antigues"
 
-#: dashboard/templates/base.html:157
+#: dashboard/templates/base.html:164
 msgid "Placeholders"
 msgstr "Marcadors de posició"
 
-#: dashboard/templates/base.html:162
+#: dashboard/templates/base.html:169
 msgid "Import from spreadsheet"
 msgstr "Importa des d'un full de càlcul"
 
-#: dashboard/templates/base.html:167
+#: dashboard/templates/base.html:174
 msgid "Add device"
 msgstr "Afegeix un dispositiu"
 
-#: dashboard/templates/base.html:198
+#: dashboard/templates/base.html:205
 msgid "Search your device"
 msgstr "Cerca el teu dispositiu"
 
@@ -411,43 +418,61 @@ msgstr "Reparació"
 msgid "Discarded"
 msgstr "Descartat"
 
-#: dashboard/templates/unassigned_devices.html:15
-#: device/templates/details.html:175 device/templates/tabs/documents.html:12
-#: lot/templates/documents.html:22
+#: dashboard/templates/unassigned_devices.html:10
+#: device/templates/tabs/documents.html:12
 msgid "Documents"
 msgstr "Documents"
 
-#: dashboard/templates/unassigned_devices.html:20
+#: dashboard/templates/unassigned_devices.html:16
+#: device/templates/details.html:61
+msgid "Properties"
+msgstr "Propietats"
+
+#: dashboard/templates/unassigned_devices.html:21
 msgid "Exports"
 msgstr "Exportacions"
 
-#: dashboard/templates/unassigned_devices.html:25
-msgid "properties"
-msgstr "propietats"
+#: dashboard/templates/unassigned_devices.html:30 dashboard/views.py:29
+#: lot/views.py:20 lot/views.py:41 lot/views.py:60 lot/views.py:86
+#: lot/views.py:115 lot/views.py:127 lot/views.py:152 lot/views.py:175
+#: lot/views.py:209
+msgid "Lot"
+msgstr "Lot"
 
-#: dashboard/templates/unassigned_devices.html:41
+#: dashboard/templates/unassigned_devices.html:40
+msgid "Unassign"
+msgstr "Sense assignar"
+
+#: dashboard/templates/unassigned_devices.html:44
+msgid "Assign to lot"
+msgstr "Afegeix a lot"
+
+#: dashboard/templates/unassigned_devices.html:55
 msgid "Short ID"
 msgstr "ID curt"
 
-#: dashboard/templates/unassigned_devices.html:44 device/forms.py:25
+#: dashboard/templates/unassigned_devices.html:58 device/forms.py:25
 #: device/templates/tabs/general_details.html:26
-#: evidence/templates/ev_details.html:38
 msgid "Type"
 msgstr "Tipus"
 
-#: dashboard/templates/unassigned_devices.html:47
+#: dashboard/templates/unassigned_devices.html:61
 #: device/templates/tabs/general_details.html:43
 msgid "Manufacturer"
 msgstr "Fabricant"
 
-#: dashboard/templates/unassigned_devices.html:50
+#: dashboard/templates/unassigned_devices.html:64
 #: device/templates/tabs/general_details.html:50
 msgid "Model"
 msgstr "Model"
 
-#: dashboard/templates/unassigned_devices.html:84
-msgid "Remove"
-msgstr "Elimina"
+#: dashboard/templates/unassigned_devices.html:67
+msgid "Current State"
+msgstr "Estat actual"
+
+#: dashboard/templates/unassigned_devices.html:70
+msgid "Evidence last updated"
+msgstr "Evidències"
 
 #: dashboard/views.py:18
 msgid "Unassigned Devices"
@@ -459,6 +484,10 @@ msgstr "Dispositius del lot"
 
 #: dashboard/views.py:52
 msgid "Search Devices"
+msgstr "Cerca dispositius"
+
+#: dashboard/views.py:53
+msgid "Search"
 msgstr "Cerca dispositius"
 
 #: device/forms.py:26
@@ -475,108 +504,60 @@ msgstr "Nom"
 
 #: device/forms.py:29 device/templates/tabs/documents.html:21
 #: device/templates/tabs/user_properties.html:19
-#: device/templates/tabs/user_properties.html:116
-#: lot/templates/annotations.html:27 lot/templates/documents.html:27
-#: lot/templates/properties.html:66
+#: device/templates/tabs/user_properties.html:98
+#: lot/templates/properties.html:24 lot/templates/properties.html:64
 msgid "Value"
 msgstr "Valor"
 
-#: device/templates/details.html:9
-msgid "View recent notes"
-msgstr "Veure notes recents"
-
-#: device/templates/details.html:11
-msgid "Journal"
-msgstr "Diari"
-
-#: device/templates/details.html:19
-msgid "Latest Notes"
-msgstr "Últimes notes"
-
-#: device/templates/details.html:28
-msgid "ago"
-msgstr "fa"
-
-#: device/templates/details.html:32
-msgid "Editable"
-msgstr "Editable"
-
-#: device/templates/details.html:39
-msgid "Click to edit this note"
-msgstr "Fes clic per editar aquesta nota"
-
-#: device/templates/details.html:70
-#: device/templates/tabs/user_properties.html:123
-#: lot/templates/properties.html:71
-msgid "Save changes"
-msgstr "Desa els canvis"
-
-#: device/templates/details.html:78
-msgid "Delete note"
-msgstr "Elimina la nota"
-
-#: device/templates/details.html:86
-msgid "Are you sure you want to delete this note?"
-msgstr "Estàs segur que vols eliminar aquesta nota?"
-
-#: device/templates/details.html:92
-msgid "Confirm delete"
-msgstr "Confirma l'eliminació"
-
-#: device/templates/details.html:102
-msgid "No notes available."
-msgstr "No hi ha notes disponibles."
-
-#: device/templates/details.html:119 device/templates/details.html:146
+#: device/templates/details.html:10 device/templates/details.html:37
 msgid "Change state"
 msgstr "Canvia l'estat"
 
-#: device/templates/details.html:123
+#: device/templates/details.html:14
 msgid "None"
 msgstr "Cap"
 
-#: device/templates/details.html:154
+#: device/templates/details.html:45
 msgid "Add a note"
 msgstr "Afegeix una nota"
 
-#: device/templates/details.html:166
+#: device/templates/details.html:58
 msgid "General details"
 msgstr "Detalls generals"
 
-#: device/templates/details.html:169
-msgid "Log"
-msgstr "Registre"
-
-#: device/templates/details.html:172
-#: device/templates/tabs/user_properties.html:13
-msgid "User properties"
-msgstr "Propietats de l'usuari"
-
-#: device/templates/details.html:181
+#: device/templates/details.html:67
 msgid "Components"
 msgstr "Components"
 
-#: device/templates/details.html:188
+#: device/templates/details.html:74
 msgid "Dpps"
 msgstr "Dpps"
 
-#: device/templates/details.html:218
+#: device/templates/details.html:81
+msgid "Log"
+msgstr ""
+
+#: device/templates/details.html:105
 msgid "Add a Note"
 msgstr "Afegeix una nota"
 
-#: device/templates/details.html:226
+#: device/templates/details.html:113
 msgid "Note"
 msgstr "Nota"
 
-#: device/templates/details.html:231
+#: device/templates/details.html:118
 msgid "Save Note"
 msgstr "Desa la nota"
 
-#: device/templates/new_device.html:60
+#: device/templates/details.html:127
+msgid "List of dpps"
+msgstr "Llista d'dpps"
+
+#: device/templates/new_device.html:57
 msgid "Component details"
 msgstr "Detalls del component"
 
-#: device/templates/new_device.html:65
+#: device/templates/new_device.html:62
 msgid "Add component"
 msgstr "Afegeix component"
 
@@ -584,21 +565,20 @@ msgstr "Afegeix component"
 msgid "Components last evidence"
 msgstr "Última evidència dels components"
 
-#: device/templates/tabs/documents.html:8 lot/templates/documents.html:17
+#: device/templates/tabs/documents.html:8
 msgid "Add new document"
 msgstr "Afegeix un nou document"
 
 #: device/templates/tabs/documents.html:18
 #: device/templates/tabs/user_properties.html:18
-#: device/templates/tabs/user_properties.html:111
-#: lot/templates/annotations.html:26 lot/templates/documents.html:26
-#: lot/templates/properties.html:62
+#: device/templates/tabs/user_properties.html:94
+#: lot/templates/properties.html:23 lot/templates/properties.html:60
 msgid "Key"
 msgstr "Clau"
 
 #: device/templates/tabs/documents.html:24
 #: device/templates/tabs/user_properties.html:20
-#: lot/templates/annotations.html:28
+#: lot/templates/properties.html:25
 msgid "Created on"
 msgstr "Creat el"
 
@@ -606,7 +586,13 @@ msgstr "Creat el"
 msgid "List of evidences"
 msgstr "Llista d'evidències"
 
-#: device/templates/tabs/general_details.html:6
+#: device/templates/tabs/evidences.html:12 device/templates/tabs/log.html:9
+#: evidence/templates/ev_details.html:105
+msgid "Date"
+msgstr "Data"
+
+#: device/templates/tabs/general_details.html:6 device/views.py:79
+#: evidence/views.py:97
 msgid "Details"
 msgstr "Detalls"
 
@@ -630,15 +616,11 @@ msgstr "Número de sèrie"
 msgid "Identifiers"
 msgstr "Identificadors"
 
-#: device/templates/tabs/log.html:8
-msgid "Date"
-msgstr "Data"
-
-#: device/templates/tabs/log.html:9
+#: device/templates/tabs/log.html:10
 msgid "Event"
 msgstr "Esdeveniment"
 
-#: device/templates/tabs/log.html:22
+#: device/templates/tabs/log.html:23
 msgid "No logs recorded."
 msgstr "No s'han registrat logs."
 
@@ -646,151 +628,194 @@ msgstr "No s'han registrat logs."
 msgid "New user property"
 msgstr "Nova propietat d'usuari"
 
-#: device/templates/tabs/user_properties.html:63
+#: device/templates/tabs/user_properties.html:12
+msgid "User properties"
+msgstr "Propietats de l'usuari"
+
+#: device/templates/tabs/user_properties.html:61
 msgid "Confirm Deletion"
 msgstr "Confirma l'eliminació"
 
-#: device/templates/tabs/user_properties.html:70
+#: device/templates/tabs/user_properties.html:65
 msgid "Key:"
 msgstr "Clau:"
 
-#: device/templates/tabs/user_properties.html:74
+#: device/templates/tabs/user_properties.html:66
 msgid "Value:"
 msgstr "Valor:"
 
-#: device/templates/tabs/user_properties.html:78
+#: device/templates/tabs/user_properties.html:67
 msgid "Created on:"
 msgstr "Creat el:"
 
-#: device/templates/tabs/user_properties.html:102
+#: device/templates/tabs/user_properties.html:87
 msgid "Edit User Property"
 msgstr "Edita la propietat d'usuari"
 
-#: device/views.py:29
+#: device/templates/tabs/user_properties.html:103
+#: lot/templates/properties.html:69
+msgid "Save changes"
+msgstr "Desa els canvis"
+
+#: device/views.py:42
 msgid "New Device"
 msgstr "Nou dispositiu"
 
-#: device/views.py:75
+#: device/views.py:43 device/views.py:60 device/views.py:78 device/views.py:79
+#: device/views.py:195 device/views.py:242
+#: evidence/templates/ev_details.html:82
+msgid "Device"
+msgstr "Dispositiu"
+
+#: device/views.py:59
 msgid "Update Device"
 msgstr "Actualitza el dispositiu"
 
-#: device/views.py:94
-msgid "Device"
-msgstr "Dispositiu"
+#: device/views.py:60 device/views.py:242 lot/views.py:209
+msgid "Update"
+msgstr "Actualitza"
 
 #: device/views.py:194
 msgid "New User Property"
 msgstr "Nova propietat d'usuari"
 
-#: device/views.py:205
+#: device/views.py:195 device/views.py:242 lot/views.py:152 lot/views.py:175
+#: lot/views.py:209
+msgid "Property"
+msgstr "Propietat"
+
+#: device/views.py:207 lot/views.py:187
+msgid "Property successfully added."
+msgstr "La propietat s'ha afegit correctament."
+
+#: device/views.py:208
 msgid "<Created> UserProperty: {}: {}"
 msgstr ""
 
-#: device/views.py:213
-msgid "User property successfully added."
-msgstr "Propietat d'usuari afegida correctament."
+#: device/views.py:216 device/views.py:271 lot/views.py:190 lot/views.py:236
+msgid "Property is already defined."
+msgstr "La propietat ja està definit."
 
-#: device/views.py:230
+#: device/views.py:241
 msgid "Update User Property"
 msgstr "Actualitza la propietat d'usuari"
 
-#: device/views.py:253
+#: device/views.py:260 lot/views.py:233
+msgid "Property updated successfully."
+msgstr "Propietat actualitzada correctament."
+
+#: device/views.py:261
 msgid "<Updated> UserProperty: {}: {} to {}: {}"
 msgstr ""
 
-#: device/views.py:261
-msgid "User property updated successfully."
-msgstr "Propietat d'usuari actualitzada correctament."
-
-#: device/views.py:279
+#: device/views.py:297
 msgid "<Deleted> User Property: {}:{}"
 msgstr ""
 
-#: device/views.py:287
+#: device/views.py:302
 msgid "User property deleted successfully."
 msgstr "Propietat d'usuari eliminada correctament."
-
-#: device/views.py:299 lot/views.py:147 lot/views.py:171
-msgid "New Document"
-msgstr "Nou document"
 
 #: evidence/forms.py:17
 msgid "File"
 msgstr "Fitxer"
 
-#: evidence/forms.py:41
+#: evidence/forms.py:40
 msgid "The snapshot already exists"
-msgstr "La instantània ja existeix"
+msgstr "El snapshot ja existeix"
 
-#: evidence/forms.py:48
+#: evidence/forms.py:47
 #, python-format
 msgid "Error on '%(file_name)s': %(error)s"
 msgstr "Error en '%(file_name)s': %(error)s"
 
-#: evidence/forms.py:109
+#: evidence/forms.py:108
 msgid "<Deleted> Evidence Tag. Old Value: '{}'"
 msgstr ""
 
-#: evidence/forms.py:120
+#: evidence/forms.py:119
 msgid "<Created> Evidence Tag. Value: '{}'"
 msgstr ""
 
-#: evidence/forms.py:139
+#: evidence/forms.py:136
 msgid "File to import"
 msgstr "Fitxer a importar"
 
-#: evidence/forms.py:157
+#: evidence/forms.py:154
 #, python-format
 msgid "Error on '%(file_name)s': Invalid File"
 msgstr "Error en '%(file_name)s': Fitxer invàlid"
 
-#: evidence/forms.py:166
+#: evidence/forms.py:163
 msgid "The file you try to import is empty!"
 msgstr "El fitxer que intentes importar està buit!"
 
-#: evidence/forms.py:202
+#: evidence/forms.py:199
 msgid "Is a Erase Server"
 msgstr "És un servidor d'esborrat"
 
-#: evidence/templates/ev_details.html:21
-#: evidence/templates/ev_eraseserver.html:21
-msgid "Erase Server"
-msgstr "Servidor d'esborrat"
-
-#: evidence/templates/ev_details.html:24
-#: evidence/templates/ev_eraseserver.html:24
+#: evidence/templates/ev_details.html:7
 msgid "Download File"
 msgstr "Descarrega fitxer"
 
-#: evidence/templates/ev_details.html:41
-msgid "Identificator"
-msgstr "Identificador"
+#: evidence/templates/ev_details.html:62
+msgid "It is an erase server"
+msgstr "És un servidor d'esborrat"
 
-#: evidence/templates/ev_details.html:44
-msgid "Data"
-msgstr "Dades"
+#: evidence/templates/ev_details.html:65
+msgid "It is not an erase server"
+msgstr "No és un servidor d'esborrat"
+
+#: evidence/templates/ev_details.html:99
+msgid "Algorithm"
+msgstr "algorisme"
+
+#: evidence/templates/ev_details.html:102
+msgid "Device ID"
+msgstr "Dispositiu ID"
+
+#: evidence/templates/upload.html:41
+msgid "Drag and drop here, or click to select manually"
+msgstr "Arrossegueu i deixeu anar aquí o feu clic per seleccionar manualment"
+
+#: evidence/views.py:30 evidence/views.py:46 evidence/views.py:73
+#: evidence/views.py:97
+msgid "Evidence"
+msgstr "Evidències"
+
+#: evidence/views.py:30
+msgid "All"
+msgstr "Tots"
 
 #: evidence/views.py:45
 msgid "Upload Evidence"
 msgstr "Carrega evidència"
 
-#: evidence/views.py:52
+#: evidence/views.py:54
+msgid "Upload the snapshots generated by Workbench."
+msgstr "Carregueu les instantànies generades per Workbench."
+
+#: evidence/views.py:60
 msgid "Evidence uploaded successfully."
 msgstr "Evidència carregada amb èxit."
 
-#: evidence/views.py:64
+#: evidence/views.py:72
 msgid "Import Evidence"
 msgstr "Importa evidència"
 
-#: evidence/views.py:76
+#: evidence/views.py:73
+msgid "Import"
+msgstr "Exportacions"
+
+#: evidence/views.py:84
 msgid "Evidence imported successfully."
 msgstr "Evidència importada amb èxit."
 
-#: evidence/views.py:200
+#: evidence/views.py:181
 msgid "<Deleted> Evidence Tag: {}"
 msgstr ""
 
-#: evidence/views.py:209
+#: evidence/views.py:190
 msgid "Evicende Tag deleted successfully."
 msgstr "Evidència carregada amb èxit."
 
@@ -883,6 +908,10 @@ msgstr "Activació d'usuari a %(site)s"
 
 #: login/templates/login.html:7
 msgid "Sign in"
+msgstr "Inicia sessió"
+
+#: login/templates/login.html:41 login/views.py:20
+msgid "Login"
 msgstr "Inicia sessió"
 
 #: login/templates/login.html:48
@@ -1001,87 +1030,103 @@ msgstr "Si us plau, aneu a la pàgina següent i trieu una nova contrasenya:"
 msgid "Password reset on %(site_name)s"
 msgstr "Restabliment de la contrasenya a %(site_name)s"
 
-#: login/views.py:20
-msgid "Login"
-msgstr "Inicia sessió"
-
 #: login/views.py:45
 msgid "Login error. Check credentials."
 msgstr "Error d'inici de sessió. comprovar les credencials"
 
-#: lot/templates/annotations.html:17
-msgid "Add new annotation"
-msgstr "Afegeix una nova anotació"
-
-#: lot/templates/annotations.html:22
-msgid "Annotations"
-msgstr "Anotacions"
-
-#: lot/templates/documents.html:28
-msgid " Created on"
-msgstr "Creat el"
-
-#: lot/templates/lots.html:12
-msgid "Hide closed lots"
-msgstr "Amaga lots tancats"
-
-#: lot/templates/lots.html:16
-msgid "Show closed lots"
-msgstr "Mostra lots tancats"
-
-#: lot/templates/lots.html:22
-msgid "Add new lot"
-msgstr "Afegeix un nou lot"
-
-#: lot/templates/properties.html:55
-msgid "Edit Property"
-msgstr "Edita la propietat"
-
-#: lot/templates/properties.html:83
-msgid "Delete Property"
-msgstr "Elimina la propietat"
-
-#: lot/templates/properties.html:87
-msgid "Are you sure you want to delete this property?"
-msgstr "Estàs segur que vols eliminar aquesta propietat?"
-
-#: lot/views.py:18
+#: lot/templates/lots.html:8 lot/views.py:19
 msgid "New lot"
 msgstr "Nou lot"
 
-#: lot/views.py:39
+#: lot/templates/lots.html:18
+msgid "Search lots..."
+msgstr "Cerca lots"
+
+#: lot/templates/lots.html:28
+msgid "Filter"
+msgstr "Filtre"
+
+#: lot/templates/lots.html:33
+msgid "Open Lots"
+msgstr "Lots oberts"
+
+#: lot/templates/lots.html:38
+msgid "Closed Lots"
+msgstr "Lots tancats"
+
+#: lot/templates/lots.html:41
+msgid "Clear Filters"
+msgstr "netejar els filtres"
+
+#: lot/templates/lots.html:52
+msgid "Lot Name"
+msgstr "Lot Nom"
+
+#: lot/templates/lots.html:53
+msgid "Description"
+msgstr "Descripció"
+
+#: lot/templates/lots.html:54
+msgid "Status"
+msgstr "Estat"
+
+#: lot/templates/lots.html:55
+msgid "Created On"
+msgstr "Creat el"
+
+#: lot/templates/lots.html:56
+msgid "Created By"
+msgstr "Creat el"
+
+#: lot/templates/properties.html:53
+msgid "Edit Property"
+msgstr "Edita la propietat"
+
+#: lot/templates/properties.html:81
+msgid "Delete Property"
+msgstr "Elimina la propietat"
+
+#: lot/templates/properties.html:85
+msgid "Are you sure you want to delete this property?"
+msgstr "Estàs segur que vols eliminar aquesta propietat?"
+
+#: lot/views.py:40
 msgid "Delete lot"
 msgstr "Elimina el lot"
 
-#: lot/views.py:58
+#: lot/views.py:59
 msgid "Edit lot"
 msgstr "Edita el lot"
 
-#: lot/views.py:84
+#: lot/views.py:85
 msgid "Add to lots"
 msgstr "Afegeix als lots"
 
-#: lot/views.py:112
+#: lot/views.py:86
+msgid "Assign Device"
+msgstr "Assignar dispositiu"
+
+#: lot/views.py:114
 msgid "Remove from lots"
 msgstr "Elimina dels lots"
 
-#: lot/views.py:124 lot/views.py:125
+#: lot/views.py:115
+msgid "Unassign Device"
+msgstr "Dispositius no assignats"
+
+#: lot/views.py:126
 msgid "lots"
 msgstr "lots"
 
-#: lot/views.py:194 lot/views.py:217
+#: lot/views.py:151 lot/views.py:174
 msgid "New Lot Property"
 msgstr "Nova propietat del lot"
 
-#: lot/views.py:241
+#: lot/views.py:208
 msgid "Update lot Property"
 msgstr "Actualitza la propietat del lot"
 
-#: lot/views.py:268
-msgid "Lot property updated successfully."
-msgstr "Propietat del lot actualitzada correctament."
-
-#: lot/views.py:291
+#: lot/views.py:256
 msgid "Lot property deleted successfully."
 msgstr "Propietat del lot eliminada correctament."
 
@@ -1121,23 +1166,109 @@ msgstr "Nom"
 msgid "Last name"
 msgstr "Cognom"
 
-#: user/templates/panel.html:17
-msgid "Admin your Tokens"
-msgstr "Administra els teus tokens"
+#: user/templates/panel.html:25
+msgid "Token Management"
+msgstr "Gestió de credencials"
 
-#: user/templates/panel.html:22
-msgid "Download a settings file"
-msgstr "Descarrega un fitxer de configuració"
+#: user/templates/panel.html:27
+msgid "Manage your personal tokens for using Devicehub."
+msgstr "Gestioneu les vostres fitxes personals per utilitzar Devicehub."
+
+#: user/templates/panel.html:30 user/templates/panel.html:46
+msgid "Go"
+msgstr "Anar"
+
+#: user/templates/panel.html:43
+msgid "Download a settings file for your Workbench."
+msgstr "Descarrega un fitxer de configuració per al vostre Workbench"
 
 #: user/views.py:25
 msgid "Download Settings"
 msgstr "Descarrega configuració"
 
-#~ msgid "User annotations"
-#~ msgstr "Annotations de l'usuari"
+#~ msgid "INBOX"
+#~ msgstr "SAFATA D'ENTRADA"
 
-#~ msgid "New annotation"
-#~ msgstr "Nova anotació"
+#~ msgid "VISUAL INSPECTION"
+#~ msgstr "INSPECCIÓ VISUAL"
 
-#~ msgid "New Annotation"
-#~ msgstr "Nova anotació"
+#~ msgid "REPAIR"
+#~ msgstr "REPARACIÓ"
+
+#~ msgid "INSTALL"
+#~ msgstr "INSTALLACIÓ"
+
+#~ msgid "TEST"
+#~ msgstr "PROVA"
+
+#~ msgid "PACKAGING"
+#~ msgstr "EMBALATGE"
+
+#~ msgid "DONATION"
+#~ msgstr "DONACIÓ"
+
+#~ msgid "DISMANTLE"
+#~ msgstr "DESMUNTATGE"
+
+#~ msgid "Add"
+#~ msgstr "Afegeix"
+
+#~ msgid "admin"
+#~ msgstr "administrador"
+
+#~ msgid "Remove"
+#~ msgstr "Elimina"
+
+#~ msgid "View recent notes"
+#~ msgstr "Veure notes recents"
+
+#~ msgid "Journal"
+#~ msgstr "Diari"
+
+#~ msgid "Latest Notes"
+#~ msgstr "Últimes notes"
+
+#~ msgid "ago"
+#~ msgstr "fa"
+
+#~ msgid "Editable"
+#~ msgstr "Editable"
+
+#~ msgid "Delete note"
+#~ msgstr "Elimina la nota"
+
+#~ msgid "Are you sure you want to delete this note?"
+#~ msgstr "Estàs segur que vols eliminar aquesta nota?"
+
+#~ msgid "Confirm delete"
+#~ msgstr "Confirma l'eliminació"
+
+#~ msgid "No notes available."
+#~ msgstr "No hi ha notes disponibles."
+
+#~ msgid "User property updated successfully."
+#~ msgstr "Propietat d'usuari actualitzada correctament."
+
+#~ msgid "New Document"
+#~ msgstr "Nou document"
+
+#~ msgid "Erase Server"
+#~ msgstr "Servidor d'esborrat"
+
+#~ msgid "Identificator"
+#~ msgstr "Identificador"
+
+#~ msgid "Data"
+#~ msgstr "Dades"
+
+#~ msgid " Created on"
+#~ msgstr "Creat el"
+
+#~ msgid "Show closed lots"
+#~ msgstr "Mostra lots tancats"
+
+#~ msgid "Add new lot"
+#~ msgstr "Afegeix un nou lot"
+
+#~ msgid "Admin your Tokens"
+#~ msgstr "Administra els teus tokens"
