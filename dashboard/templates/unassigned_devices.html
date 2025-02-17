@@ -5,7 +5,7 @@
 {% block actions %}
 
     {% if lot %}
-    <a href="{#% url 'lot:documents' object.id %#}" type="button" class="btn btn-green-admin btn-todo" data-bs-toggle="tooltip" title="NOT IMPLEMENTED. Menu for adding documents for the lot">
+    <a href="{#% url 'lot:documents' object.id %#}" type="button" class="btn btn-green-admin btn-todo" data-bs-toggle="tooltip" title="{% trans " NOT IMPLEMENTED. Menu for adding documents for the lot" %} ">
       <i class="bi bi-folder2"></i>
       {% trans 'Documents' %}
     </a>
@@ -16,7 +16,7 @@
       {% trans 'Properties' %}
     </a>
     {% endif %}
-      <a href="{# url 'dashboard:exports' object.id #}" type="button" class="btn btn-todo" data-bs-toggle="tooltip" title="NOT IMPLEMENTED. This action tries to emulate what devicehub-teal did, which was related to opening a dialog where you can select different options for export the devices as csv for all selected devices" >
+      <a href="{# url 'dashboard:exports' object.id #}" type="button" class="btn btn-todo" data-bs-toggle="tooltip" title=" {% trans "NOT IMPLEMENTED. This action tries to emulate what devicehub-teal did, which was related to opening a dialog where you can select different options for export the devices as csv for all selected devices" %}" >
       <i class="bi bi-reply"></i>
       {% trans 'Exports' %}
     </a>
