@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 1.0 \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-02-14 18:17-0300\n"
+"POT-Creation-Date: 2025-02-17 16:14-0300\n"
 "PO-Revision-Date: 2025-01-27 12:49-0300\n"
 "Last-Translator: NOMBRE COMPLETO <EMAIL@ADDRESS>\n"
 "Language-Team: \n"
@@ -97,16 +97,15 @@ msgid "No"
 msgstr "No"
 
 #: admin/templates/delete_user.html:16
-#, python-format
 msgid ""
 "\n"
-"Are you sure you want to remove the lot <strong>%(object.name)s</"
+"          Are you sure you want to remove the lot <strong>%(object.name)s</"
 "strong> with <strong>%(object.devices.count)s</strong> devices?\n"
 "        "
 msgstr ""
 "\n"
-"Seguro que quiere eliminar el lote <strong>%(object.name)s</"
-"strong> con <strong>%(object.devices.count)s</strong> dispositivo/s?\n"
+"Seguro que quiere eliminar el lote <strong>%(object.name)s</strong> con "
+"<strong>%(object.devices.count)s</strong> dispositivo/s?\n"
 "        "
 
 #: admin/templates/delete_user.html:38 admin/templates/institution.html:41
@@ -321,7 +320,6 @@ msgid "Previous"
 msgstr "Anterior"
 
 #: api/templates/custom_table.html:91 dashboard/templates/pagination.html:38
-#: login/templates/login.html:41
 msgid "Next"
 msgstr "Siguiente"
 
@@ -425,6 +423,10 @@ msgstr "Reparación"
 msgid "Discarded"
 msgstr "Descartado"
 
+#: dashboard/templates/unassigned_devices.html:8
+msgid " NOT IMPLEMENTED. Menu for adding documents for the lot"
+msgstr "NO IMPLEMENTADO. Menú para agregar documentos al lote"
+
 #: dashboard/templates/unassigned_devices.html:10
 #: device/templates/tabs/documents.html:12
 msgid "Documents"
@@ -434,6 +436,16 @@ msgstr "Documentos"
 #: device/templates/details.html:61
 msgid "Properties"
 msgstr "Propiedades"
+
+#: dashboard/templates/unassigned_devices.html:19
+msgid ""
+"NOT IMPLEMENTED. This action tries to emulate what devicehub-teal did, which "
+"was related to opening a dialog where you can select different options for "
+"export the devices as csv for all selected devices"
+msgstr ""
+"SIN IMPLEMENTAR. Esta acción trata de emular lo que hacía devicehub-teal, lo cual"
+"estaba relacionado a una ventana de dialógo donde se podía seleccionar diferentes opciones"
+"para exportar los dispositivos seleccionados"
 
 #: dashboard/templates/unassigned_devices.html:21
 msgid "Exports"
@@ -917,6 +929,10 @@ msgstr "Activación de usuario en %(site)s"
 msgid "Sign in"
 msgstr "Iniciar sesión"
 
+#: login/templates/login.html:41 login/views.py:20
+msgid "Login"
+msgstr "Iniciar sesión"
+
 #: login/templates/login.html:48
 msgid "Forgot your password?"
 msgstr "¿Olvidaste tu contraseña?"
@@ -1033,10 +1049,6 @@ msgstr "Por favor, ve a la siguiente página y elige una nueva contraseña:"
 #, python-format
 msgid "Password reset on %(site_name)s"
 msgstr "Restablecimiento de contraseña en %(site_name)s"
-
-#: login/views.py:20
-msgid "Login"
-msgstr "Iniciar sesión"
 
 #: login/views.py:45
 msgid "Login error. Check credentials."

@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 0.1 \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-02-14 19:03-0300\n"
+"POT-Creation-Date: 2025-02-17 16:14-0300\n"
 "PO-Revision-Date: 2025-01-29 17:02-0300\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -22,7 +22,7 @@ msgstr ""
 
 #: action/views.py:35
 msgid "State successfully changed from '{}' to '{}'"
-msgstr ""
+msgstr "L'estat ha canviat correctament de '{}' a '{}' "
 
 #: action/views.py:39 action/views.py:70
 msgid "There was an error with your submission."
@@ -62,7 +62,7 @@ msgstr "Institució"
 
 #: admin/templates/admin_panel.html:16
 msgid "Edit and manage the institution's details and settings."
-msgstr ""
+msgstr "Editeu i gestioneu els detalls i la configuració de la institució."
 
 #: admin/templates/admin_panel.html:20
 msgid "Edit Institution"
@@ -355,6 +355,13 @@ msgstr "Fitxer de Configuració"
 msgid "Logout"
 msgstr "Tancar Sessió"
 
+#: dashboard/templates/base.html:118 dashboard/views.py:19
+#: dashboard/views.py:29 dashboard/views.py:53
+#, fuzzy
+#| msgid "Device"
+msgid "Devices"
+msgstr "Dispositiu"
+
 #: dashboard/templates/base.html:123
 #: dashboard/templates/inventory_dashboard.html:29 dashboard/views.py:19
 msgid "Unassigned"
@@ -418,6 +425,10 @@ msgstr "Reparació"
 msgid "Discarded"
 msgstr "Descartat"
 
+#: dashboard/templates/unassigned_devices.html:8
+msgid " NOT IMPLEMENTED. Menu for adding documents for the lot"
+msgstr "NO IMPLEMENTAT. Menú per afegir documents per al lot"
+
 #: dashboard/templates/unassigned_devices.html:10
 #: device/templates/tabs/documents.html:12
 msgid "Documents"
@@ -427,6 +438,17 @@ msgstr "Documents"
 #: device/templates/details.html:61
 msgid "Properties"
 msgstr "Propietats"
+
+#: dashboard/templates/unassigned_devices.html:19
+msgid ""
+"NOT IMPLEMENTED. This action tries to emulate what devicehub-teal did, which "
+"was related to opening a dialog where you can select different options for "
+"export the devices as csv for all selected devices"
+msgstr ""
+"NO IMPLEMENTAT. Aquesta acció intenta emular el que va fer devicehub-teal, que estava "
+"relacionat amb l'obertura d'un diàleg on podeu seleccionar diferents opcions per exporteu "
+"els dispositius com a csv per a tots els dispositius seleccionats"
+
 
 #: dashboard/templates/unassigned_devices.html:21
 msgid "Exports"
