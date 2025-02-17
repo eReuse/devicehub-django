@@ -8,6 +8,7 @@ from django.views.generic.base import TemplateView
 from device.models import Device
 from evidence.models import SystemProperty
 from lot.models import LotTag
+from action.models import StateDefinition
 
 
 class Http403(PermissionDenied):
@@ -32,7 +33,12 @@ class DashboardView(LoginRequiredMixin):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        lot_tags = LotTag.objects.filter(
+            owner=self.request.user.institution,
+            inbox=False
+        )
         context.update({
+            "inbox": LotTag.objects.get(inbox=True).name,
             "commit_id": settings.COMMIT,
             'title': self.title,
             'subtitle': self.subtitle,
@@ -41,7 +47,7 @@ class DashboardView(LoginRequiredMixin):
             'section': self.section,
             'path': resolve(self.request.path).url_name,
             'user': self.request.user,
-            'lot_tags': LotTag.objects.filter(owner=self.request.user.institution)
+            'lot_tags': lot_tags
         })
         return context
 

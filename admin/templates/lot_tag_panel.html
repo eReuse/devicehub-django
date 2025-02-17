@@ -14,7 +14,7 @@
 </div>
 <div class="row mt-4">
   <div class="col">
-    {% if lot_tags %}
+    {% if lot_tags_edit %}
   <table class="table table-hover table-bordered align-middle">
   <thead class="table-light">
     <tr>
@@ -25,7 +25,7 @@
     </tr>
   </thead>
   <tbody id="sortable_list">
-    {% for tag in lot_tags %}
+    {% for tag in lot_tags_edit %}
       <tr>
         <td class="font-monospace">
           {{ tag.name }}
@@ -93,7 +93,7 @@
 </div>
 
 <!-- Edit Lot Tag Modals -->
-{% for tag in lot_tags %}
+{% for tag in lot_tags_edit %}
 <div class="modal fade" id="editLotTagModal{{ tag.id }}" tabindex="-1" aria-labelledby="editLotTagModalLabel{{ tag.id }}" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -125,7 +125,7 @@
 
 
 <!-- delete lot tag definition Modal -->
-{% for tag in lot_tags %}
+{% for tag in lot_tags_edit %}
 <div class="modal fade" id="deleteLotTagModal{{ tag.id }}" tabindex="-1" aria-labelledby="deleteLotTagModalLabel{{ tag.id }}" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">

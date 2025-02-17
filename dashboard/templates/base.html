@@ -131,7 +131,7 @@
                 <ul class="flex-column mb-2 ul_sidebar accordion-collapse {% if path == 'tags' or path == 'lot' or path in 'unassigned dashboard' %}expanded{% else %}collapse{% endif %}" id="ul_lots" data-bs-parent="#sidebarMenu">
 		  <li class="nav-item">
                     <a class="nav-link{% if path == 'unassigned' %} active2{% endif %}" href="{% url 'dashboard:unassigned' %}">
-                      {% trans 'Unassigned' %}
+		      {{ inbox }}
                     </a>
                   </li>
 

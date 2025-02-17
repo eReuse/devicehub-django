@@ -28,6 +28,14 @@ class NewLotView(DashboardView, CreateView):
         "closed",
     )
 
+    def get_form(self):
+        form = super().get_form()
+        form.fields["type"].queryset = LotTag.objects.filter(
+            owner=self.request.user.institution,
+            inbox=False
+        )
+        return form
+
     def form_valid(self, form):
         form.instance.owner = self.request.user.institution
         form.instance.user = self.request.user
