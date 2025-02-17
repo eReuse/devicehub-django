@@ -118,6 +118,14 @@ class LotTagPanelView(AdminView, TemplateView):
     title = _("Lot Tag Panel")
     breadcrumb = _("admin / Lot Tag Panel")
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        lot_tags = LotTag.objects.filter(
+            owner=self.request.user.institution
+        )
+        context.update({"lot_tags_edit": lot_tags})
+        return context
+
 
 class AddLotTagView(AdminView, CreateView):
     template_name = "lot_tag_panel.html"
@@ -130,6 +138,11 @@ class AddLotTagView(AdminView, CreateView):
     def form_valid(self, form):
         form.instance.owner = self.request.user.institution
         form.instance.user = self.request.user
+        name = form.instance.name
+        if LotTag.objects.filter(name=name).first():
+            msg = _(f"The name '{name}' exist.")
+            messages.error(self.request, msg)
+            return redirect(self.success_url)
 
         response = super().form_valid(form)
         messages.success(self.request, _("Lot Tag successfully added."))
@@ -153,6 +166,12 @@ class DeleteLotTagView(AdminView, DeleteView):
             messages.warning(self.request, msg)
             return redirect(reverse_lazy('admin:tag_panel'))
 
+        if self.object.inbox:
+            msg = f"The tag '{self.object.name}'"
+            msg += " is a inbox, you can redefine but not delete."
+            messages.error(self.request, msg)
+            return redirect(self.success_url)
+
         response = super().delete(request, *args, **kwargs)
         msg = _('Lot Tag has been deleted.')
         messages.success(self.request, msg)
@@ -175,6 +194,12 @@ class UpdateLotTagView(AdminView, UpdateView):
         return super().get_form_kwargs()
 
     def form_valid(self, form):
+        name = form.instance.name
+        if LotTag.objects.filter(name=name).first():
+            msg = _(f"The name '{name}' exist.")
+            messages.error(self.request, msg)
+            return redirect(self.success_url)
+
         response = super().form_valid(form)
         msg = _("Lot Tag updated successfully.")
         messages.success(self.request, msg)
@@ -249,14 +274,11 @@ class DeleteStateDefinitionView(AdminView, StateDefinitionContextMixin, SuccessM
     def get_success_message(self, cleaned_data):
         return f'State definition: {self.object.state}, has been deleted'
 
-    def delete(self, request, *args, **kwargs):
-        self.object = self.get_object()
-
-        #only an admin of current institution can delete
-        if not object.institution == self.request.user.institution:
+    def form_valid(self, form):
+        if not self.object.institution == self.request.user.institution:
             raise Http404
 
-        return super().delete(request, *args, **kwargs)
+        return super().form_valid(form)
 
 
 class UpdateStateOrderView(AdminView, TemplateView):
