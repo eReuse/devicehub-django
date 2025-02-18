@@ -149,13 +149,13 @@ class Device:
                         ORDER BY
                             CASE
                                 WHEN t1.key = 'CUSTOM_ID' THEN 1
-                                WHEN t1.key = 'ereuse24' THEN 2
-                                ELSE 3
+                                WHEN t1.key = '{algorithm}' THEN 2
                             END,
                             t1.created DESC
                     ) AS row_num
                 FROM evidence_systemproperty AS t1
                 WHERE t1.owner_id = {institution}
+                  AND t1.key IN ('CUSTOM_ID', '{algorithm}')
             )
             SELECT DISTINCT
                 value
@@ -165,6 +165,7 @@ class Device:
                 row_num = 1
         """.format(
             institution=institution.id,
+            algorithm=institution.algorithm,
         )
         if limit:
             sql += " limit {} offset {}".format(int(limit), int(offset))
@@ -193,14 +194,14 @@ class Device:
                         ORDER BY
                             CASE
                                 WHEN t1.key = 'CUSTOM_ID' THEN 1
-                                WHEN t1.key = 'ereuse24' THEN 2
-                                ELSE 3
+                                WHEN t1.key = '{algorithm}' THEN 2
                             END,
                             t1.created DESC
                     ) AS row_num
 
                 FROM evidence_systemproperty AS t1
                WHERE t1.owner_id = {institution}
+                  AND t1.key IN ('CUSTOM_ID', '{algorithm}')
             )
             SELECT
                 COUNT(DISTINCT value)
@@ -209,7 +210,8 @@ class Device:
             WHERE
                 row_num = 1
         """.format(
-            institution=institution.id
+            institution=institution.id,
+            algorithm=institution.algorithm
         )
         with connection.cursor() as cursor:
             cursor.execute(sql)
@@ -229,8 +231,7 @@ class Device:
                         ORDER BY
                             CASE
                                 WHEN t1.key = 'CUSTOM_ID' THEN 1
-                                WHEN t1.key = 'ereuse24' THEN 2
-                                ELSE 3
+                                WHEN t1.key = '{algorithm}' THEN 2
                             END,
                             t1.created DESC
                     ) AS row_num
@@ -238,6 +239,7 @@ class Device:
                 LEFT JOIN lot_devicelot AS t2 ON t1.value = t2.device_id
                 WHERE t2.device_id IS NULL
                   AND t1.owner_id = {institution}
+                  AND t1.key IN ('CUSTOM_ID', '{algorithm}')
             )
             SELECT DISTINCT
                 value
@@ -247,6 +249,7 @@ class Device:
                 row_num = 1
         """.format(
             institution=institution.id,
+            algorithm=institution.algorithm
         )
         if limit:
             sql += " limit {} offset {}".format(int(limit), int(offset))
@@ -275,8 +278,7 @@ class Device:
                         ORDER BY
                             CASE
                                 WHEN t1.key = 'CUSTOM_ID' THEN 1
-                                WHEN t1.key = 'ereuse24' THEN 2
-                                ELSE 3
+                                WHEN t1.key = '{algorithm}' THEN 2
                             END,
                             t1.created DESC
                     ) AS row_num
@@ -284,6 +286,7 @@ class Device:
                 LEFT JOIN lot_devicelot AS t2 ON t1.value = t2.device_id
                 WHERE t2.device_id IS NULL
                   AND t1.owner_id = {institution}
+                  AND t1.key IN ('CUSTOM_ID', '{algorithm}')
             )
             SELECT
                 COUNT(DISTINCT value)
@@ -293,6 +296,7 @@ class Device:
                 row_num = 1
         """.format(
             institution=institution.id,
+            algorithm=institution.algorithm
         )
         with connection.cursor() as cursor:
             cursor.execute(sql)
@@ -310,16 +314,14 @@ class Device:
                         ORDER BY
                             CASE
                                 WHEN t1.key = 'CUSTOM_ID' THEN 1
-                                WHEN t1.key = 'ereuse24' THEN 2
-                                ELSE 3
+                                WHEN t1.key = '{algorithm}' THEN 2
                             END,
                             t1.created DESC
                     ) AS row_num
                 FROM evidence_systemproperty AS t1
-                LEFT JOIN lot_devicelot AS t2 ON t1.value = t2.device_id
-                WHERE t2.device_id IS NULL
-                  AND t1.owner_id = {institution}
+                WHERE t1.owner_id = {institution}
                   AND t1.uuid = '{uuid}'
+                  AND t1.key IN ('CUSTOM_ID', '{algorithm}')
             )
             SELECT DISTINCT
                 value
@@ -330,6 +332,7 @@ class Device:
         """.format(
             uuid=uuid.replace("-", ""),
             institution=institution.id,
+            algorithm=institution.algorithm,
         )
 
         properties = []

@@ -218,7 +218,8 @@ class InstitutionView(AdminView, UpdateView):
         "logo",
         "location",
         "responsable_person",
-        "supervisor_person"
+        "supervisor_person",
+        "algorithm"
     )
 
     def get_form_kwargs(self):
