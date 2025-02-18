@@ -1,8 +1,10 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser
+from utils.constants import ALGOS
 
-# Create your models here.
+
+ALGORITHMS = [(x, x) for x in ALGOS.keys()]
 
 
 class Institution(models.Model):
@@ -27,6 +29,7 @@ class Institution(models.Model):
         blank=True,
         null=True
     )
+    algorithm = models.CharField(max_length=30, choices=ALGORITHMS, default='ereuse24')
 
 
 class UserManager(BaseUserManager):
