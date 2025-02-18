@@ -5,18 +5,6 @@ set -u
 # DEBUG
 set -x
 
-program_dir='/opt/devicehub-django'
-#source .env
-. "${program_dir}/.env"
-
-wait_for_postgres() {
-        # thanks https://testdriven.io/blog/dockerizing-django-with-postgres-gunicorn-and-nginx/
-        while ! nc -z "$DB_HOST" "$DB_PORT" ; do
-                sleep 0.5
-        done
-}
-
-
 # TODO there is a conflict between two shared vars
 #   1. from the original docker compose devicehub-teal
 #   2. from the new docker compose that integrates all dpp services
@@ -45,12 +33,6 @@ gen_env_vars() {
         INIT_PASSWD="${INIT_PASSWD:-1234}"
         ADMIN='True'
         PREDEFINED_TOKEN="${PREDEFINED_TOKEN:-}"
-
-        DB_NAME="${DB_NAME:-devicehub}"
-        DB_USER="${DB_USER:-ereuse}"
-        DB_PASSWORD="${DB_PASSWORD:-ereuse}"
-        DB_HOST="${DB_HOST:-localhost}"
-        DB_PORT="${DB_PORT:-5432}"
 
         # specific dpp env vars
         if [ "${DPP:-}" = 'true' ]; then
@@ -260,9 +242,10 @@ runserver() {
 }
 
 main() {
+
+        program_dir='/opt/devicehub-django'
         cd "${program_dir}"
         gen_env_vars
-        wait_for_postgres
         deploy
         runserver
 }

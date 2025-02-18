@@ -15,13 +15,21 @@ services:
       - DEMO_IDHUB_PREDEFINED_TOKEN=${IDHUB_PREDEFINED_TOKEN:-}
       - PREDEFINED_TOKEN=${PREDEFINED_TOKEN:-}
       - DPP=${DPP:-false}
+      - DB_PORT=${DB_PORT:-5432}
+      - DB_HOST=${DB_HOST:-devicehub-postgres}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
     # TODO manage volumes dev vs prod
     volumes:
       - .:/opt/devicehub-django
     ports:
       - ${DEVICEHUB_PORT:-8000}:${DEVICEHUB_PORT:-8000}
+     #https://docs.docker.com/compose/how-tos/startup-order/
     depends_on:
-      - devicehub-postgres
+      devicehub-postgres:
+          condition: service_healthy
+          restart: true
 
   devicehub-postgres:
     image: postgres:17
@@ -31,6 +39,13 @@ services:
       - POSTGRES_PASSWORD=${DB_PASSWORD}
     volumes:
       - pg_data:/var/lib/postgresql/data
+    healthcheck:
+    # https://docs.docker.com/compose/how-tos/startup-order/
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      start_period: 1s
+      interval: 1s
+      timeout: 10s
+      retries: 10
   #ports:
   #  - ${DB_PORT}:${DB_PORT}
 
