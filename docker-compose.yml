@@ -25,7 +25,6 @@ services:
       - .:/opt/devicehub-django
     ports:
       - ${DEVICEHUB_PORT:-8000}:${DEVICEHUB_PORT:-8000}
-     #https://docs.docker.com/compose/how-tos/startup-order/
     depends_on:
       devicehub-postgres:
           condition: service_healthy
