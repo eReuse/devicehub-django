@@ -12,7 +12,7 @@ from django.contrib.auth import get_user_model
 
 from utils.save_snapshots import move_json, save_in_disk
 from evidence.parse import Build
-from evidence.models import Annotation
+from evidence.models import SystemProperty
 from lot.models import Lot, LotTag, DeviceLot
 
 
@@ -85,9 +85,8 @@ def create_custom_id(dhid, uuid, user):
     if not uuid or not dhid:
         return
 
-    tag = Annotation.objects.filter(
+    tag = SystemProperty.objects.filter(
         uuid=uuid,
-        type=Annotation.Type.SYSTEM,
         key='CUSTOM_ID',
         owner=user.institution
     ).first()
@@ -95,9 +94,8 @@ def create_custom_id(dhid, uuid, user):
     if tag or not uuid or not dhid:
         return
 
-    Annotation.objects.create(
+    SystemProperty.objects.create(
         uuid=uuid,
-        type=Annotation.Type.SYSTEM,
         key='CUSTOM_ID',
         value=dhid,
         owner=user.institution,
@@ -137,7 +135,7 @@ def migrate_snapshots(row, user):
 ### migration lots ###
 def migrate_lots(row, user):
     tag = row.get("type", "Temporal")
-    name = row.get("name")
+    name = row.get("lot_name")
     ltag = LotTag.objects.filter(name=tag, owner=user.institution).first()
     if tag and not ltag:
         ltag = LotTag.objects.create(
@@ -146,7 +144,7 @@ def migrate_lots(row, user):
             user=user
         )
 
-    if Lot.objects.filter(name=tag, owner=user.institution).first():
+    if Lot.objects.filter(name=name, owner=user.institution).first():
         return
 
     Lot.objects.create(
@@ -164,8 +162,7 @@ def add_device_in_lot(row, user):
     if not lot_name or not dhid:
         return
 
-    dev = Annotation.objects.filter(
-        type=Annotation.Type.SYSTEM,
+    dev = SystemProperty.objects.filter(
         key='CUSTOM_ID',
         value=dhid,
         owner=user.institution,

@@ -3,7 +3,7 @@
 
 -- save dhids and uuids of snapshots
 copy(
-select d.devicehub_id as dhid, sp.uuid from usody.action_with_one_device as one
+select d.devicehub_id as dhid, sp.uuid as uuid from usody.action_with_one_device as one
   join usody.action as ac on ac.id=one.id
   join usody.device as d on d.id=one.device_id
   join usody.snapshot as sp on sp.id=one.id
@@ -16,7 +16,7 @@ with (format csv, header, delimiter ';', quote '"');
 
 -- save lots and types
 copy(
-select distinct l.name, 'Incoming' from usody.transfer as t
+select distinct l.name as lot_name, 'Incoming' as type from usody.transfer as t
   join usody.lot as l on l.id=t.lot_id
   join common.user as u on u.id=l.owner_id
 where u.email=:'email' and
@@ -26,7 +26,7 @@ where u.email=:'email' and
 with (format csv, header, delimiter ';', quote '"');
 
 copy(
-select distinct l.name, 'Outgoing' from usody.transfer as t
+select distinct l.name as lot_name, 'Outgoing' as type from usody.transfer as t
   join usody.lot as l on l.id=t.lot_id
   join common.user as u on u.id=l.owner_id
 where u.email=:'email' and
@@ -36,7 +36,7 @@ where u.email=:'email' and
 with (format csv, header, delimiter ';', quote '"');
 
 copy(
-select distinct l.name, 'Temporary' from usody.lot as l
+select distinct l.name as lot_name, 'Temporary' as type from usody.lot as l
   left join usody.transfer as t on t.lot_id=l.id
   join common.user as u on u.id=l.owner_id
 where u.email=:'email' and
