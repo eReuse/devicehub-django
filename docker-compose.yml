@@ -55,6 +55,9 @@ services:
     profiles: [idhub]
     init: true
     image: farga.pangea.org/ereuse/idhub/latest
+    build:
+      context: /path/to/your/idhub/directory
+      dockerfile: /path/to/your/idhub/dockerfile
     environment:
       - DOMAIN=${IDHUB_DOMAIN:-localhost}
       - ALLOWED_HOSTS=${IDHUB_ALLOWED_HOSTS:-$IDHUB_DOMAIN}
@@ -82,8 +85,29 @@ services:
       - SYNC_ORG_DEV=${IDHUB_SYNC_ORG_DEV}
     ports:
       - 9001:9001
+    depends_on:
+        idhub-postgres:
+          condition: service_healthy
+          restart: true
 
-  # TODO add database service for idhub, meanwhile sqlite
+  idhub-postgres:
+    profiles: [idhub]
+    image: postgres:17
+    environment:
+      - POSTGRES_DB=${IDHUB_DB_NAME}
+      - POSTGRES_USER=${IDHUB_DB_USER}
+      - POSTGRES_PASSWORD=${IDHUB_DB_PASSWORD}
+    volumes:
+      - idhub_pg_data:/var/lib/postgresql/data
+    healthcheck:
+    # https://docs.docker.com/compose/how-tos/startup-order/
+      test: ["CMD-SHELL", "pg_isready -U ${IDHUB_DB_USER} -d ${IDHUB_DB_NAME}"]
+      start_period: 1s
+      interval: 1s
+      timeout: 10s
+      retries: 10
+
 
 volumes:
   pg_data:
+  idhub_pg_data:
