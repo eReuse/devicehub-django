@@ -127,12 +127,12 @@ class NewSnapshotView(ApiMixing):
             logger.error("Error: No property  for uuid: %s", ev_uuid)
             return JsonResponse({'status': 'fail'}, status=500)
 
-        url_args = reverse_lazy("device:details", args=(property.value,))
+        url_args = reverse_lazy("device:details", args=(prop.value,))
         url = request.build_absolute_uri(url_args)
 
         response = {
             "status": "success",
-            "dhid": property.value[:6].upper(),
+            "dhid": prop.value[:6].upper(),
             "url": url,
             # TODO replace with public_url when available
             "public_url": url
