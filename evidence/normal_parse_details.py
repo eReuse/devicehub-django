@@ -298,13 +298,17 @@ class ParseSnapshot:
                 if get_inxi(n, "type") == "USB":
                     interface = "USB"
 
+            speed = get_inxi(iface, "speed")
+            if not speed:
+                speed = get_inxi(n, "speed")
+
             self.components.append(
                 {
                     "type": "NetworkAdapter",
                     "model": model,
                     "manufacturer": get_inxi(n, 'vendor'),
                     "serialNumber": get_inxi(iface, 'mac'),
-                    "speed": get_inxi(n, "speed"),
+                    "speed": speed,
                     "interface": interface,
                 }
             )
