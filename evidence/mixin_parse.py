@@ -27,7 +27,7 @@ class BuildMix:
         hid = ""
         for f in algorithm:
             if hasattr(self, f):
-                hid += getattr(self, f)
+                hid += getattr(self, f) or ''
         return hid
 
     def generate_chids(self):
