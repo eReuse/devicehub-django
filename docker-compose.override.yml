@@ -14,13 +14,13 @@ services:
     ports:
       - 5432:5432
 
-
   idhub:
+    image: farga.pangea.org/ereuse/idhub:latest
     build:
-      context: /home/rthomas/ereuse/IdHub
-      dockerfile: /home/rthomas/ereuse/IdHub/docker/idhub.Dockerfile
+      context: /path/to/idhub/directory
+      dockerfile: /path/to/idhub/dockerfile
     volumes:
-      - /home/rthomas/ereuse/IdHub:/opt/idhub
+      - /path/to/idhub/directory:/opt/idhub
     environment:
       - DEMO=true
       - DEBUG=true
