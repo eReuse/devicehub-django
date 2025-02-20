@@ -282,9 +282,8 @@ class ParseSnapshot:
 
     def get_networks(self):
         nets = get_inxi_key(self.inxi, "Network") or []
-        networks = [(nets[i], nets[i + 1]) for i in range(0, len(nets) - 1, 2)]
-
-        for n, iface in networks:
+        for i in range(0, len(nets)-1):
+            n = nets[i]
             model = get_inxi(n, "Device")
             if not model:
                 continue
@@ -298,20 +297,25 @@ class ParseSnapshot:
                 if get_inxi(n, "type") == "USB":
                     interface = "USB"
 
-            speed = get_inxi(iface, "speed")
-            if not speed:
-                speed = get_inxi(n, "speed")
+            manufacturer = get_inxi(n, "manufacturer")
+            speed = get_inxi(n, "speed")
+            mac = ""
 
-            self.components.append(
-                {
+            if len(nets) > i+1:
+                iface = nets[i+1]
+                mac = get_inxi(iface, 'mac')
+                if not speed:
+                    speed = get_inxi(iface, "speed")
+
+            self.components.append({
                     "type": "NetworkAdapter",
                     "model": model,
-                    "manufacturer": get_inxi(n, 'vendor'),
-                    "serialNumber": get_inxi(iface, 'mac'),
+                    "manufacturer": manufacturer,
+                    "serialNumber": mac,
                     "speed": speed,
                     "interface": interface,
-                }
-            )
+                })
+
 
     def get_sound_card(self):
         audio = get_inxi_key(self.inxi, "Audio") or []

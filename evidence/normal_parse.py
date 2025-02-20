@@ -10,9 +10,14 @@ logger = logging.getLogger('django')
 
 def get_mac(inxi):
     nets = get_inxi_key(inxi, "Network")
-    networks = [(nets[i], nets[i + 1]) for i in range(0, len(nets) - 1, 2)]
+    n_nets = len(nets) - 1
 
-    for n, iface in networks:
+    for i in range(0, n_nets):
+        if i + 1 > n_nets:
+            break
+
+        n = nets[i]
+        iface = nets[i + 1]
         if get_inxi(n, "port"):
             return get_inxi(iface, 'mac')
 
