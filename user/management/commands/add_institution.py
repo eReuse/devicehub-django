@@ -2,6 +2,7 @@ from django.core.management.base import BaseCommand
 from user.models import Institution
 from lot.models import LotTag
 
+
 class Command(BaseCommand):
     help = "Create a new Institution"
 
@@ -13,6 +14,11 @@ class Command(BaseCommand):
         self.create_lot_tags()
 
     def create_lot_tags(self):
+        LotTag.objects.create(
+            inbox=True,
+            name="Inbox",
+            owner=self.institution
+        )
         tags = [
             "Entrada",
             "Salida",
