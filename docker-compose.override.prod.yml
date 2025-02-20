@@ -1,0 +1,21 @@
+# usage: docker compose -f docker-compose.yml -f docker-compose.override.prod.yml up
+# https://docs.docker.com/compose/how-tos/multiple-compose-files/merge/
+
+services:
+  devicehub-django:
+    image: farga.pangea.org/ereuse/devicehub-django/latest
+    volumes:
+      - devicehub_data:/opt/devicehub-django
+    environment:
+      - DEBUG=false
+
+  idhub:
+    image: farga.pangea.org/ereuse/idhub:latest
+    volumes:
+      - idhub_data:/opt/idhub
+    environment:
+      - DEBUG=false
+
+volumes:
+  devicehub_data:
+  idhub_data:

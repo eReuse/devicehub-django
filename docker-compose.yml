@@ -1,12 +1,7 @@
 services:
   devicehub-django:
     init: true
-    image: farga.pangea.org/ereuse/devicehub-django/latest
-    build:
-      context: .
-      dockerfile: docker/devicehub-django.Dockerfile
     environment:
-      - DEBUG=${DEBUG:-false}
       - DOMAIN=${DEVICEHUB_DOMAIN:-localhost}
       - PORT=${DEVICEHUB_PORT:-8000}
       - ALLOWED_HOSTS=${DEVICEHUB_ALLOWED_HOSTS:-$DEVICEHUB_DOMAIN}
@@ -20,15 +15,12 @@ services:
       - DB_NAME=${DB_NAME}
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
-    # TODO manage volumes dev vs prod
-    volumes:
-      - .:/opt/devicehub-django
     ports:
       - ${DEVICEHUB_PORT:-8000}:${DEVICEHUB_PORT:-8000}
     depends_on:
       devicehub-postgres:
-          condition: service_healthy
-          restart: true
+        condition: service_healthy
+        restart: true
 
   devicehub-postgres:
     image: postgres:17
@@ -39,29 +31,19 @@ services:
     volumes:
       - pg_data:/var/lib/postgresql/data
     healthcheck:
-    # https://docs.docker.com/compose/how-tos/startup-order/
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
       start_period: 1s
       interval: 1s
       timeout: 10s
       retries: 10
-  #ports:
-  #  - ${DB_PORT}:${DB_PORT}
-
-  # TODO add database service for idhub, meanwhile sqlite
 
   idhub:
-    # https://docs.docker.com/compose/how-tos/profiles/
     profiles: [idhub]
     init: true
-    image: farga.pangea.org/ereuse/idhub/latest
-    build:
-      context: /path/to/your/idhub/directory
-      dockerfile: /path/to/your/idhub/dockerfile
     environment:
+      - TZ=America/Argentina/Buenos_Aires
       - DOMAIN=${IDHUB_DOMAIN:-localhost}
       - ALLOWED_HOSTS=${IDHUB_ALLOWED_HOSTS:-$IDHUB_DOMAIN}
-      - DEBUG=true
       - DEMO=${DEMO:-false}
       - INITIAL_ADMIN_EMAIL=${IDHUB_ADMIN_EMAIL}
       - INITIAL_ADMIN_PASSWORD=${IDHUB_ADMIN_PASSWD}
@@ -83,12 +65,18 @@ services:
       - EMAIL_BACKEND=${IDHUB_EMAIL_BACKEND}
       - SUPPORTED_CREDENTIALS=['Snapshot']
       - SYNC_ORG_DEV=${IDHUB_SYNC_ORG_DEV}
+      - TZ=UTC-3
+      - DB_PORT=${IDHUB_DB_PORT:-5432}
+      - DB_HOST=${IDHUB_DB_HOST:-devicehub-postgres}
+      - DB_NAME=${IDHUB_DB_NAME}
+      - DB_USER=${IDHUB_DB_USER}
+      - DB_PASSWORD=${IDHUB_DB_PASSWORD}
     ports:
       - 9001:9001
     depends_on:
-        idhub-postgres:
-          condition: service_healthy
-          restart: true
+      idhub-postgres:
+        condition: service_healthy
+        restart: true
 
   idhub-postgres:
     profiles: [idhub]
@@ -99,14 +87,13 @@ services:
       - POSTGRES_PASSWORD=${IDHUB_DB_PASSWORD}
     volumes:
       - idhub_pg_data:/var/lib/postgresql/data
-    healthcheck:
     # https://docs.docker.com/compose/how-tos/startup-order/
+    healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${IDHUB_DB_USER} -d ${IDHUB_DB_NAME}"]
       start_period: 1s
       interval: 1s
       timeout: 10s
       retries: 10
-
 
 volumes:
   pg_data:
