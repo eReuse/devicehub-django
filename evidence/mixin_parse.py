@@ -38,7 +38,6 @@ class BuildMix:
 
             self.algorithms[k] = self.get_hid(k)
 
-
     def get_doc(self):
         self._get_components()
 

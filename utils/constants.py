@@ -14,7 +14,7 @@ EREUSE24 = [
     "model",
     "chassis",
     "serial_number",
-    "sku"
+    "mac"
 ]
 
 # EREUSE22 is used for build the chid of DPP
