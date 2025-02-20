@@ -358,6 +358,12 @@ class Device:
         return self.last_evidence.get_manufacturer()
 
     @property
+    def updated(self):
+        """get timestamp from last evidence created"""
+        self.get_last_evidence()
+        return self.last_evidence.created
+
+    @property
     def serial_number(self):
         self.get_last_evidence()
         return self.last_evidence.get_serial_number()
