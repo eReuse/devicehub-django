@@ -41,7 +41,6 @@ services:
     profiles: [idhub]
     init: true
     environment:
-      - TZ=America/Argentina/Buenos_Aires
       - DOMAIN=${IDHUB_DOMAIN:-localhost}
       - ALLOWED_HOSTS=${IDHUB_ALLOWED_HOSTS:-$IDHUB_DOMAIN}
       - DEMO=${DEMO:-false}
@@ -65,7 +64,6 @@ services:
       - EMAIL_BACKEND=${IDHUB_EMAIL_BACKEND}
       - SUPPORTED_CREDENTIALS=['Snapshot']
       - SYNC_ORG_DEV=${IDHUB_SYNC_ORG_DEV}
-      - TZ=UTC-3
       - DB_PORT=${IDHUB_DB_PORT:-5432}
       - DB_HOST=${IDHUB_DB_HOST:-devicehub-postgres}
       - DB_NAME=${IDHUB_DB_NAME}

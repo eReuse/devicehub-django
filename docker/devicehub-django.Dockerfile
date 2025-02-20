@@ -4,7 +4,6 @@ FROM python:3.11.10-slim-bookworm
 RUN apt update && \
     apt-get install -y \
     python3-xapian \
-    netcat-traditional\
     git \
     curl \
     jq \

@@ -242,7 +242,6 @@ runserver() {
 }
 
 main() {
-
         program_dir='/opt/devicehub-django'
         cd "${program_dir}"
         gen_env_vars
