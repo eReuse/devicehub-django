@@ -360,7 +360,7 @@ class Device:
     def updated(self):
         """get timestamp from last evidence created"""
         self.get_last_evidence()
-        return self.last_evidence.created
+        return self.last_evidence.get_time_created()
 
     @property
     def serial_number(self):

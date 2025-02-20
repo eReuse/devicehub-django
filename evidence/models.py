@@ -135,9 +135,11 @@ class Evidence:
         if not self.doc:
             self.get_doc()
         self.created = self.doc.get("endTime")
-
         if not self.created:
-            self.created = self.properties.last().created
+            self.created = self.get_time_created()
+
+    def get_time_created(self):
+        return self.properties.last().created.isoformat()
 
     def get_components(self):
         if self.is_legacy():
