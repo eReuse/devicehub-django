@@ -18,7 +18,7 @@
   <table class="table table-hover table-bordered align-middle">
   <thead class="table-light">
     <tr>
-      <th scope="col">{% trans "Tag" %}
+      <th scope="col">{% trans "Lot Group Name" %}
       </th>
       <th scope="col" width="15%" class="text-center">{% trans "Actions" %}
       </th>
@@ -58,7 +58,7 @@
 
     {% else %}
       <div class="alert alert-primary text-center mt-5" role="alert">
-        {% trans "No Lot Tags found on current organization" %}
+        {% trans "No Lot Groups found on current organization" %}
       </div>
     {% endif %}
   </div>
@@ -69,7 +69,7 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="addLotTagModalLabel">{% trans "Add Lot Tag" %}</h5>
+        <h5 class="modal-title" id="addLotTagModalLabel">{% trans "Add Lot Group" %}</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
@@ -92,7 +92,7 @@
   </div>
 </div>
 
-<!-- Edit Lot Tag Modals -->
+<!-- Edit Lot Group Modals -->
 {% for tag in lot_tags_edit %}
 <div class="modal fade" id="editLotTagModal{{ tag.id }}" tabindex="-1" aria-labelledby="editLotTagModalLabel{{ tag.id }}" aria-hidden="true">
   <div class="modal-dialog">
@@ -101,7 +101,7 @@
         {% csrf_token %}
         <div class="modal-header">
           <h5 class="modal-title" id="editLotTagModalLabel{{ tag.id }}">
-            {% trans "Edit Lot Tag" %}
+            {% trans "Edit Lot Group" %}
           </h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
         </div>
@@ -131,14 +131,14 @@
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title fw-bold" id="deleteLotTagModalLabel{{ tag.id }}">
-          {% trans "Delete Lot Tag" %}
+          {% trans "Delete Lot Group" %}
         </h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
       </div>
       <div class="modal-body">
 	{% if tag.lot_set.first %}
         <div class="alert alert-warning text-center" role="alert">
-            {% trans "There are lots with this tag. Change the tag for this lots" %}
+            {% trans "Failed to remove Lot Group, it is not empty" %}
         </div>
 	{% endif %}
         <div class="d-flex align-items-center border rounded p-3 mt-3">
