@@ -144,6 +144,7 @@ class Device:
                 SELECT
                     t1.value,
                     t1.key,
+                    t1.created,
                     ROW_NUMBER() OVER (
                         PARTITION BY t1.uuid
                         ORDER BY
@@ -163,6 +164,7 @@ class Device:
                 RankedProperties
             WHERE
                 row_num = 1
+            ORDER BY created DESC
         """.format(
             institution=institution.id,
             algorithm=institution.algorithm,
@@ -189,6 +191,7 @@ class Device:
                 SELECT
                     t1.value,
                     t1.key,
+                    t1.created,
                     ROW_NUMBER() OVER (
                         PARTITION BY t1.uuid
                         ORDER BY
@@ -209,6 +212,7 @@ class Device:
                 RankedProperties
             WHERE
                 row_num = 1
+            ORDER BY created DESC
         """.format(
             institution=institution.id,
             algorithm=institution.algorithm
@@ -226,6 +230,7 @@ class Device:
                 SELECT
                     t1.value,
                     t1.key,
+                    t1.created,
                     ROW_NUMBER() OVER (
                         PARTITION BY t1.uuid
                         ORDER BY
@@ -247,6 +252,7 @@ class Device:
                 RankedProperties
             WHERE
                 row_num = 1
+            ORDER BY created DESC
         """.format(
             institution=institution.id,
             algorithm=institution.algorithm
@@ -273,6 +279,7 @@ class Device:
                 SELECT
                     t1.value,
                     t1.key,
+                    t1.created,
                     ROW_NUMBER() OVER (
                         PARTITION BY t1.uuid
                         ORDER BY
@@ -294,6 +301,7 @@ class Device:
                 RankedProperties
             WHERE
                 row_num = 1
+            ORDER BY created DESC
         """.format(
             institution=institution.id,
             algorithm=institution.algorithm
@@ -309,6 +317,7 @@ class Device:
                 SELECT
                     t1.value,
                     t1.key,
+                    t1.created,
                     ROW_NUMBER() OVER (
                         PARTITION BY t1.uuid
                         ORDER BY
@@ -329,6 +338,7 @@ class Device:
                 RankedProperties
             WHERE
                 row_num = 1;
+            ORDER BY created DESC
         """.format(
             uuid=uuid.replace("-", ""),
             institution=institution.id,
