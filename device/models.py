@@ -137,6 +137,87 @@ class Device:
             x.lot for x in DeviceLot.objects.filter(device_id=self.id)]
 
     @classmethod
+    def get_all(cls, institution, offset=0, limit=None):
+        sql = """
+            WITH RankedProperties AS (
+                SELECT
+                    t1.value,
+                    t1.key,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY t1.uuid
+                        ORDER BY
+                            CASE
+                                WHEN t1.key = 'CUSTOM_ID' THEN 1
+                                WHEN t1.key = '{algorithm}' THEN 2
+                            END,
+                            t1.created DESC
+                    ) AS row_num
+                FROM evidence_systemproperty AS t1
+                WHERE t1.owner_id = {institution}
+                  AND t1.key IN ('CUSTOM_ID', '{algorithm}')
+            )
+            SELECT DISTINCT
+                value
+            FROM
+                RankedProperties
+            WHERE
+                row_num = 1
+        """.format(
+            institution=institution.id,
+            algorithm=institution.algorithm,
+        )
+        if limit:
+            sql += " limit {} offset {}".format(int(limit), int(offset))
+
+        sql += ";"
+
+        annotations = []
+        with connection.cursor() as cursor:
+            cursor.execute(sql)
+            annotations = cursor.fetchall()
+
+        devices = [cls(id=x[0]) for x in annotations]
+        count = cls.get_all_count(institution)
+        return devices, count
+
+    @classmethod
+    def get_all_count(cls, institution):
+
+        sql = """
+            WITH RankedProperties AS (
+                SELECT
+                    t1.value,
+                    t1.key,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY t1.uuid
+                        ORDER BY
+                            CASE
+                                WHEN t1.key = 'CUSTOM_ID' THEN 1
+                                WHEN t1.key = '{algorithm}' THEN 2
+                            END,
+                            t1.created DESC
+                    ) AS row_num
+
+                FROM evidence_systemproperty AS t1
+               WHERE t1.owner_id = {institution}
+                  AND t1.key IN ('CUSTOM_ID', '{algorithm}')
+            )
+            SELECT
+                COUNT(DISTINCT value)
+            FROM
+                RankedProperties
+            WHERE
+                row_num = 1
+        """.format(
+            institution=institution.id,
+            algorithm=institution.algorithm
+        )
+        with connection.cursor() as cursor:
+            cursor.execute(sql)
+            return cursor.fetchall()[0][0]
+
+
+    @classmethod
     def get_unassigned(cls, institution, offset=0, limit=None):
 
         sql = """
@@ -149,8 +230,7 @@ class Device:
                         ORDER BY
                             CASE
                                 WHEN t1.key = 'CUSTOM_ID' THEN 1
-                                WHEN t1.key = 'ereuse24' THEN 2
-                                ELSE 3
+                                WHEN t1.key = '{algorithm}' THEN 2
                             END,
                             t1.created DESC
                     ) AS row_num
@@ -158,6 +238,7 @@ class Device:
                 LEFT JOIN lot_devicelot AS t2 ON t1.value = t2.device_id
                 WHERE t2.device_id IS NULL
                   AND t1.owner_id = {institution}
+                  AND t1.key IN ('CUSTOM_ID', '{algorithm}')
             )
             SELECT DISTINCT
                 value
@@ -167,6 +248,7 @@ class Device:
                 row_num = 1
         """.format(
             institution=institution.id,
+            algorithm=institution.algorithm
         )
         if limit:
             sql += " limit {} offset {}".format(int(limit), int(offset))
@@ -195,8 +277,7 @@ class Device:
                         ORDER BY
                             CASE
                                 WHEN t1.key = 'CUSTOM_ID' THEN 1
-                                WHEN t1.key = 'ereuse24' THEN 2
-                                ELSE 3
+                                WHEN t1.key = '{algorithm}' THEN 2
                             END,
                             t1.created DESC
                     ) AS row_num
@@ -204,6 +285,7 @@ class Device:
                 LEFT JOIN lot_devicelot AS t2 ON t1.value = t2.device_id
                 WHERE t2.device_id IS NULL
                   AND t1.owner_id = {institution}
+                  AND t1.key IN ('CUSTOM_ID', '{algorithm}')
             )
             SELECT
                 COUNT(DISTINCT value)
@@ -213,6 +295,7 @@ class Device:
                 row_num = 1
         """.format(
             institution=institution.id,
+            algorithm=institution.algorithm
         )
         with connection.cursor() as cursor:
             cursor.execute(sql)
@@ -230,16 +313,14 @@ class Device:
                         ORDER BY
                             CASE
                                 WHEN t1.key = 'CUSTOM_ID' THEN 1
-                                WHEN t1.key = 'ereuse24' THEN 2
-                                ELSE 3
+                                WHEN t1.key = '{algorithm}' THEN 2
                             END,
                             t1.created DESC
                     ) AS row_num
                 FROM evidence_systemproperty AS t1
-                LEFT JOIN lot_devicelot AS t2 ON t1.value = t2.device_id
-                WHERE t2.device_id IS NULL
-                  AND t1.owner_id = {institution}
+                WHERE t1.owner_id = {institution}
                   AND t1.uuid = '{uuid}'
+                  AND t1.key IN ('CUSTOM_ID', '{algorithm}')
             )
             SELECT DISTINCT
                 value
@@ -250,6 +331,7 @@ class Device:
         """.format(
             uuid=uuid.replace("-", ""),
             institution=institution.id,
+            algorithm=institution.algorithm,
         )
 
         properties = []
@@ -273,6 +355,12 @@ class Device:
     def manufacturer(self):
         self.get_last_evidence()
         return self.last_evidence.get_manufacturer()
+
+    @property
+    def updated(self):
+        """get timestamp from last evidence created"""
+        self.get_last_evidence()
+        return self.last_evidence.created
 
     @property
     def serial_number(self):

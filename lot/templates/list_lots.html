@@ -11,20 +11,26 @@
 <form method="post">
   {% csrf_token %}
 
-{% for tag in lot_tags %}
-<div class="row">
-  <div class="col-lg-3 col-md-4 label ">{{ tag }}</div>
-</div>
-
-{% for lot in lots %}
-{% if lot.type == tag %}
-<div class="row">
-  <div class="col-lg-3 col-md-4 label "><input type="checkbox" name="lots" value="{{ lot.id }}" /></div>
-  <div class="col-lg-3 col-md-4 label ">{{ lot.name }}</div>
-</div>
-{% endif %}
-{% endfor %}
-{% endfor %}
+<table class="table">
+  <thead>
+    <tr>
+      <th>Select</th>
+      <th>Lot Group / Lot</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for tag in lot_tags %}
+    {% for lot in lots %}
+    {% if lot.type == tag %}
+    <tr>
+      <td><input type="checkbox" name="lots" value="{{ lot.id }}" /></td>
+      <td>{{ tag }}/{{ lot.name }}</td>
+    </tr>
+    {% endif %}
+    {% endfor %}
+    {% endfor %}
+  </tbody>
+</table>
 
   <button class="btn btn-green-admin" type="submit">Save</button>
 </form>

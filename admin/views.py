@@ -18,6 +18,7 @@ from admin.forms import OrderingStateForm
 from user.models import User, Institution
 from admin.email import NotifyActivateUserByEmail
 from action.models import StateDefinition
+from lot.models import LotTag
 
 
 class AdminView(DashboardView):
@@ -112,6 +113,99 @@ class EditUserView(AdminView, UpdateView):
         return kwargs
 
 
+class LotTagPanelView(AdminView, TemplateView):
+    template_name = "lot_tag_panel.html"
+    title = _("Lot Groups Panel")
+    breadcrumb = _("admin / Lot Groups Panel")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        lot_tags = LotTag.objects.filter(
+            owner=self.request.user.institution
+        )
+        context.update({"lot_tags_edit": lot_tags})
+        return context
+
+
+class AddLotTagView(AdminView, CreateView):
+    template_name = "lot_tag_panel.html"
+    title = _("New lot group Definition")
+    breadcrumb = "Admin / New lot tag"
+    success_url = reverse_lazy('admin:tag_panel')
+    model = LotTag
+    fields = ('name',)
+
+    def form_valid(self, form):
+        form.instance.owner = self.request.user.institution
+        form.instance.user = self.request.user
+        name = form.instance.name
+        if LotTag.objects.filter(name=name).first():
+            msg = _(f"The name '{name}' exist.")
+            messages.error(self.request, msg)
+            return redirect(self.success_url)
+
+        response = super().form_valid(form)
+        messages.success(self.request, _("Lot Group successfully added."))
+        return response
+
+
+class DeleteLotTagView(AdminView, DeleteView):
+    model = LotTag
+    success_url = reverse_lazy('admin:tag_panel')
+
+    def post(self, request, *args, **kwargs):
+        pk = kwargs.get('pk')
+        self.object = get_object_or_404(
+            self.model,
+            owner=self.request.user.institution,
+            pk=pk
+        )
+
+        if self.object.lot_set.first():
+            msg = _('This group have lots. Impossible to delete.')
+            messages.warning(self.request, msg)
+            return redirect(reverse_lazy('admin:tag_panel'))
+
+        if self.object.inbox:
+            msg = f"The lot group '{self.object.name}'"
+            msg += " is INBOX, so it cannot be deleted, only renamed."
+            messages.error(self.request, msg)
+            return redirect(self.success_url)
+
+        response = super().delete(request, *args, **kwargs)
+        msg = _('Lot Group has been deleted.')
+        messages.success(self.request, msg)
+        return response
+
+
+class UpdateLotTagView(AdminView, UpdateView):
+    model = LotTag
+    template_name = 'lot_tag_panel.html'
+    fields = ['name']
+    success_url = reverse_lazy('admin:tag_panel')
+
+    def get_form_kwargs(self):
+        pk = self.kwargs.get('pk')
+        self.object = get_object_or_404(
+            self.model,
+            owner=self.request.user.institution,
+            pk=pk
+        )
+        return super().get_form_kwargs()
+
+    def form_valid(self, form):
+        name = form.instance.name
+        if LotTag.objects.filter(name=name).first():
+            msg = _(f"The name '{name}' exist.")
+            messages.error(self.request, msg)
+            return redirect(self.success_url)
+
+        response = super().form_valid(form)
+        msg = _("Lot Group updated successfully.")
+        messages.success(self.request, msg)
+        return response
+
+
 class InstitutionView(AdminView, UpdateView):
     template_name = "institution.html"
     title = _("Edit institution")
@@ -124,7 +218,8 @@ class InstitutionView(AdminView, UpdateView):
         "logo",
         "location",
         "responsable_person",
-        "supervisor_person"
+        "supervisor_person",
+        "algorithm"
     )
 
     def get_form_kwargs(self):
@@ -180,14 +275,11 @@ class DeleteStateDefinitionView(AdminView, StateDefinitionContextMixin, SuccessM
     def get_success_message(self, cleaned_data):
         return f'State definition: {self.object.state}, has been deleted'
 
-    def delete(self, request, *args, **kwargs):
-        self.object = self.get_object()
-
-        #only an admin of current institution can delete
-        if not object.institution == self.request.user.institution:
+    def form_valid(self, form):
+        if not self.object.institution == self.request.user.institution:
             raise Http404
 
-        return super().delete(request, *args, **kwargs)
+        return super().form_valid(form)
 
 
 class UpdateStateOrderView(AdminView, TemplateView):
