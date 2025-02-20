@@ -129,15 +129,14 @@
                   {% trans 'Lots' %}
                 </a>
                 <ul class="flex-column mb-2 ul_sidebar accordion-collapse {% if path == 'tags' or path == 'lot' or path in 'unassigned dashboard' %}expanded{% else %}collapse{% endif %}" id="ul_lots" data-bs-parent="#sidebarMenu">
-		  <li class="nav-item">
-                    <a class="nav-link{% if path == 'unassigned' %} active2{% endif %}" href="{% url 'dashboard:unassigned' %}">
-		      {{ inbox }}
-                    </a>
-                  </li>
 
                   {% for tag in lot_tags %}
                   <li class="nav-items">
+		  {% if tag.inbox %}
+                    <a class="nav-link{% if path == 'unassigned' %} active2{% endif %}" href="{% url 'dashboard:unassigned' %}">
+		  {% else %}
                     <a class="nav-link{% if path == 'tags' %} active2{% endif %}" href="{% url 'lot:tags' tag.id %}">
+		  {% endif %}
                       {{ tag.name }}
                     </a>
                   </li>

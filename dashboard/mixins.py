@@ -35,10 +35,8 @@ class DashboardView(LoginRequiredMixin):
         context = super().get_context_data(**kwargs)
         lot_tags = LotTag.objects.filter(
             owner=self.request.user.institution,
-            inbox=False
         )
         context.update({
-            "inbox": LotTag.objects.get(inbox=True).name,
             "commit_id": settings.COMMIT,
             'title': self.title,
             'subtitle': self.subtitle,
