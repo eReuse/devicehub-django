@@ -52,8 +52,18 @@ class LotDashboardView(InventaryMixin, DetailsMixin):
             "device_id", flat=True
         ).distinct()
 
-        chids_page = chids[offset:offset+limit]
-        return [Device(id=x) for x in chids_page], chids.count()
+        props = SystemProperty.objects.filter(
+            owner=self.request.user.institution,
+            value__in=chids
+        ).order_by("-created")
+
+        chids_ordered = []
+        for x in props:
+            if x.value not in chids_ordered:
+                chids_ordered.append(x.value)
+
+        chids_page = chids_ordered[offset:offset+limit]
+        return [Device(id=x) for x in chids_page], len(chids_ordered)
 
 
 class SearchView(InventaryMixin):
