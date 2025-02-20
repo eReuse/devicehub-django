@@ -15,4 +15,8 @@ urlpatterns = [
     path("states/delete/<int:pk>", views.DeleteStateDefinitionView.as_view(), name='delete_state_definition'),
     path("states/update_order/", views.UpdateStateOrderView.as_view(), name='update_state_order'),
     path("states/edit/<int:pk>/", views.UpdateStateDefinitionView.as_view(), name='edit_state_definition'),
+    path("lot/", views.LotTagPanelView.as_view(), name="tag_panel"),
+    path("lot/add", views.AddLotTagView.as_view(), name="add_lot_tag"),
+    path("lot/delete/<int:pk>", views.DeleteLotTagView.as_view(), name='delete_lot_tag'),
+    path("lot/edit/<int:pk>/", views.UpdateLotTagView.as_view(), name='edit_lot_tag'),
 ]

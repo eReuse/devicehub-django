@@ -18,7 +18,7 @@ class NewLotView(DashboardView, CreateView):
     template_name = "new_lot.html"
     title = _("New lot")
     breadcrumb = "lot / New lot"
-    success_url = reverse_lazy('dashboard:unassigned_devices')
+    success_url = reverse_lazy('dashboard:unassigned')
     model = Lot
     fields = (
         "type",
@@ -27,6 +27,14 @@ class NewLotView(DashboardView, CreateView):
         "description",
         "closed",
     )
+
+    def get_form(self):
+        form = super().get_form()
+        form.fields["type"].queryset = LotTag.objects.filter(
+            owner=self.request.user.institution,
+            inbox=False
+        )
+        return form
 
     def form_valid(self, form):
         form.instance.owner = self.request.user.institution
@@ -39,7 +47,7 @@ class DeleteLotView(DashboardView, DeleteView):
     template_name = "delete_lot.html"
     title = _("Delete lot")
     breadcrumb = "lot / Delete lot"
-    success_url = reverse_lazy('dashboard:unassigned_devices')
+    success_url = reverse_lazy('dashboard:unassigned')
     model = Lot
     fields = (
         "type",
@@ -58,7 +66,7 @@ class EditLotView(DashboardView, UpdateView):
     template_name = "new_lot.html"
     title = _("Edit lot")
     breadcrumb = "Lot / Edit lot"
-    success_url = reverse_lazy('dashboard:unassigned_devices')
+    success_url = reverse_lazy('dashboard:unassigned')
     model = Lot
     fields = (
         "type",
@@ -84,7 +92,7 @@ class AddToLotView(DashboardView, FormView):
     template_name = "list_lots.html"
     title = _("Add to lots")
     breadcrumb = "lot / add to lots"
-    success_url = reverse_lazy('dashboard:unassigned_devices')
+    success_url = reverse_lazy('dashboard:unassigned')
     form_class = LotsForm
 
     def get_context_data(self, **kwargs):
@@ -125,7 +133,7 @@ class LotsTagsView(DashboardView, TemplateView):
     template_name = "lots.html"
     title = _("lots")
     breadcrumb = _("lots") + " /"
-    success_url = reverse_lazy('dashboard:unassigned_devices')
+    success_url = reverse_lazy('dashboard:unassigned')
 
     def get_context_data(self, **kwargs):
         self.pk = kwargs.get('pk')

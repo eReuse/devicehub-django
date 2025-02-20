@@ -15,6 +15,7 @@ class LotTag(models.Model):
     name = models.CharField(max_length=STR_SIZE, blank=False, null=False)
     owner = models.ForeignKey(Institution, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    inbox = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name
@@ -45,7 +46,7 @@ class Lot(models.Model):
         for d in DeviceLot.objects.filter(lot=self, device_id=v):
             d.delete()
 
-class LotProperty (Property):
+class LotProperty(Property):
     lot  = models.ForeignKey(Lot, on_delete=models.CASCADE)
 
     class Type(models.IntegerChoices):
