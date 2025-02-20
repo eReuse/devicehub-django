@@ -2,19 +2,27 @@ services:
   devicehub-django:
     init: true
     environment:
+      # General
       - DOMAIN=${DEVICEHUB_DOMAIN:-localhost}
       - PORT=${DEVICEHUB_PORT:-8000}
       - ALLOWED_HOSTS=${DEVICEHUB_ALLOWED_HOSTS:-$DEVICEHUB_DOMAIN}
+
+      # Demo settings
       - DEMO=${DEMO:-false}
       - DEMO_IDHUB_DOMAIN=${DEMO_IDHUB_DOMAIN:-}
       - DEMO_IDHUB_PREDEFINED_TOKEN=${IDHUB_PREDEFINED_TOKEN:-}
+
+      # Auth & Security
       - PREDEFINED_TOKEN=${PREDEFINED_TOKEN:-}
       - DPP=${DPP:-false}
-      - DB_PORT=${DB_PORT:-5432}
+
+      # DB vars
       - DB_HOST=${DB_HOST:-devicehub-postgres}
+      - DB_PORT=${DB_PORT:-5432}
       - DB_NAME=${DB_NAME}
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
+
     ports:
       - ${DEVICEHUB_PORT:-8000}:${DEVICEHUB_PORT:-8000}
     depends_on:
@@ -41,20 +49,20 @@ services:
     profiles: [idhub]
     init: true
     environment:
+      # General
       - DOMAIN=${IDHUB_DOMAIN:-localhost}
       - ALLOWED_HOSTS=${IDHUB_ALLOWED_HOSTS:-$IDHUB_DOMAIN}
-      - DEMO=${DEMO:-false}
+      - DEBUG=true
+      - DEMO=${IDHUB_DEMO:-}
+
+      # Admin & User
       - INITIAL_ADMIN_EMAIL=${IDHUB_ADMIN_EMAIL}
       - INITIAL_ADMIN_PASSWORD=${IDHUB_ADMIN_PASSWD}
       - CREATE_TEST_USERS=true
-      - ENABLE_EMAIL=${IDHUB_ENABLE_EMAIL:-true}
-      - ENABLE_2FACTOR_AUTH=${IDHUB_ENABLE_2FACTOR_AUTH:-true}
+
+      # Email Configuration
+      - ENABLE_EMAIL=${IDHUB_ENABLE_EMAIL}
       - ENABLE_DOMAIN_CHECKER=${IDHUB_ENABLE_DOMAIN_CHECKER:-true}
-      - PREDEFINED_TOKEN=${IDHUB_PREDEFINED_TOKEN:-}
-      - SECRET_KEY=${IDHUB_SECRET_KEY:-publicsecretisnotsecureVtmKBfxpVV47PpBCF2Nzz2H6qnbd}
-      - STATIC_ROOT=${IDHUB_STATIC_ROOT:-/static/}
-      - MEDIA_ROOT=${IDHUB_MEDIA_ROOT:-/media/}
-      - PORT=${IDHUB_PORT:-9001}
       - DEFAULT_FROM_EMAIL=${IDHUB_DEFAULT_FROM_EMAIL}
       - EMAIL_HOST=${IDHUB_EMAIL_HOST}
       - EMAIL_HOST_USER=${IDHUB_EMAIL_HOST_USER}
@@ -62,13 +70,26 @@ services:
       - EMAIL_PORT=${IDHUB_EMAIL_PORT}
       - EMAIL_USE_TLS=${IDHUB_EMAIL_USE_TLS}
       - EMAIL_BACKEND=${IDHUB_EMAIL_BACKEND}
-      - SUPPORTED_CREDENTIALS=['Snapshot']
+
+      # Auth & Security
+      - SECRET_KEY=${IDHUB_SECRET_KEY:-publicsecretisnotsecureVtmKBfxpVV47PpBCF2Nzz2H6qnbd}
+      - PREDEFINED_TOKEN=${IDHUB_PREDEFINED_TOKEN:-}
+      - ENABLE_2FACTOR_AUTH=${IDHUB_ENABLE_2FACTOR_AUTH:-true}
+
+      # App
       - SYNC_ORG_DEV=${IDHUB_SYNC_ORG_DEV}
+      - STATIC_ROOT=${IDHUB_STATIC_ROOT:-/static/}
+      - MEDIA_ROOT=${IDHUB_MEDIA_ROOT:-/media/}
+      - PORT=${IDHUB_PORT:-9001}
+      - SUPPORTED_CREDENTIALS=${IDHUB_SUPPORTED_CREDENTIALS:-}
+
+      # DB vars
       - DB_PORT=${IDHUB_DB_PORT:-5432}
       - DB_HOST=${IDHUB_DB_HOST:-devicehub-postgres}
       - DB_NAME=${IDHUB_DB_NAME}
       - DB_USER=${IDHUB_DB_USER}
       - DB_PASSWORD=${IDHUB_DB_PASSWORD}
+
     ports:
       - 9001:9001
     depends_on:
