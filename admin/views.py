@@ -115,8 +115,8 @@ class EditUserView(AdminView, UpdateView):
 
 class LotTagPanelView(AdminView, TemplateView):
     template_name = "lot_tag_panel.html"
-    title = _("Lot Tag Panel")
-    breadcrumb = _("admin / Lot Tag Panel")
+    title = _("Lot Groups Panel")
+    breadcrumb = _("admin / Lot Groups Panel")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -129,7 +129,7 @@ class LotTagPanelView(AdminView, TemplateView):
 
 class AddLotTagView(AdminView, CreateView):
     template_name = "lot_tag_panel.html"
-    title = _("New lot tag Definition")
+    title = _("New lot group Definition")
     breadcrumb = "Admin / New lot tag"
     success_url = reverse_lazy('admin:tag_panel')
     model = LotTag
@@ -145,7 +145,7 @@ class AddLotTagView(AdminView, CreateView):
             return redirect(self.success_url)
 
         response = super().form_valid(form)
-        messages.success(self.request, _("Lot Tag successfully added."))
+        messages.success(self.request, _("Lot Group successfully added."))
         return response
 
 
@@ -162,18 +162,18 @@ class DeleteLotTagView(AdminView, DeleteView):
         )
 
         if self.object.lot_set.first():
-            msg = _('This tag have lots. Impossible deleted.')
+            msg = _('This group have lots. Impossible to delete.')
             messages.warning(self.request, msg)
             return redirect(reverse_lazy('admin:tag_panel'))
 
         if self.object.inbox:
-            msg = f"The tag '{self.object.name}'"
-            msg += " is a inbox, you can redefine but not delete."
+            msg = f"The lot group '{self.object.name}'"
+            msg += " is INBOX, so it cannot be deleted, only renamed."
             messages.error(self.request, msg)
             return redirect(self.success_url)
 
         response = super().delete(request, *args, **kwargs)
-        msg = _('Lot Tag has been deleted.')
+        msg = _('Lot Group has been deleted.')
         messages.success(self.request, msg)
         return response
 
@@ -201,7 +201,7 @@ class UpdateLotTagView(AdminView, UpdateView):
             return redirect(self.success_url)
 
         response = super().form_valid(form)
-        msg = _("Lot Tag updated successfully.")
+        msg = _("Lot Group updated successfully.")
         messages.success(self.request, msg)
         return response
 

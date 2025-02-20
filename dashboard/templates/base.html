@@ -104,7 +104,7 @@
                   </li>
 		  <li class="nav-item">
                     <a class="nav-link{% if path == 'tag_panel' %} active2{% endif %}" href="{% url 'admin:tag_panel' %}">
-                      {% trans 'Lot Tags' %}
+                      {% trans 'Lot Groups' %}
                     </a>
                   </li>
                 </ul>
@@ -112,7 +112,7 @@
 	      {% endif %}
               <li class="nav-item">
                 <a class="admin {% if path in 'all_device' %}active {% endif %}nav-link fw-bold" data-bs-toggle="collapse" data-bs-target="#ul_device" aria-expanded="false" aria-controls="ul_lots" href="javascript:void()">
-                  <i class="bi bi-database icon_sidebar"></i>
+                  <i class="bi bi-laptop icon_sidebar"></i>
                   {% trans 'Device' %}
                 </a>
                 <ul class="flex-column mb-2 ul_sidebar accordion-collapse {% if path in 'all_device' %}expanded{% else %}collapse{% endif %}" id="ul_device" data-bs-parent="#sidebarMenu">
