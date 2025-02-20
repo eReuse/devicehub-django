@@ -87,6 +87,14 @@ class EditLotView(DashboardView, UpdateView):
         kwargs = super().get_form_kwargs()
         return kwargs
 
+    def get_form(self):
+        form = super().get_form()
+        form.fields["type"].queryset = LotTag.objects.filter(
+            owner=self.request.user.institution,
+            inbox=False
+        )
+        return form
+
 
 class AddToLotView(DashboardView, FormView):
     template_name = "list_lots.html"
