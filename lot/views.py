@@ -172,13 +172,16 @@ class LotsTagsView(DashboardView, tables.SingleTableView):
     def get_queryset(self):
         self.pk = self.kwargs.get('pk')
         self.tag = get_object_or_404(LotTag, owner=self.request.user.institution, id=self.pk)
-        self.show_closed = self.request.GET.get('show_closed', 'false') == 'true'
+        self.show_open = self.request.GET.get('show_open', 'false') == 'true'
+        self.show_closed = self.request.GET.get('show_closed', 'false')
         self.search_query = self.request.GET.get('q', '').strip()
 
         queryset = Lot.objects.filter(owner=self.request.user.institution, type=self.tag)
 
-        if not self.show_closed:
+        if self.show_closed == 'true':
             queryset = queryset.filter(closed=True)
+        elif self.show_closed == 'false':
+            queryset = queryset.filter(closed=False)
 
         if self.search_query:
             queryset = queryset.filter(
@@ -200,7 +203,7 @@ class LotsTagsView(DashboardView, tables.SingleTableView):
             'title': self.title + " " + self.tag.name,
             'breadcrumb': self.breadcrumb + " " + self.tag.name,
             'show_closed': self.show_closed,
-            'search_query': self.search_query,  # Pass the search query to the template
+            'search_query': self.search_query,
         })
         return context
 

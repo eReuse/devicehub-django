@@ -28,33 +28,39 @@
     </form>
   </div>
 
-  <!-- Filter Dropdown -->
-  <div class="col-md-6 text-md-end">
-    <div class="dropdown">
-      <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-        <i class="bi bi-filter me-2"></i>
-        {% trans 'Filter' %}
-      </button>
-      <ul class="dropdown-menu" aria-labelledby="filterDropdown">
+<div class="col-md-6 text-md-end">
+  <div class="dropdown">
+    <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+      <i class="bi bi-filter me-2"></i>
+      {% trans 'Filter' %}
+    </button>
+    <ul class="dropdown-menu" aria-labelledby="filterDropdown">
 
-        <li>
-          <a class="dropdown-item {% if show_closed %}border border-info rounded{% endif %} " href="?show_closed={% if show_closed %}false{% else %}true{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}">
-            {% trans 'Closed Lots' %}
-            {% if show_closed %}<i class="bi bi-check"></i>{% endif %}
-          </a>
-        </li>
+      <li>
+        <a class="dropdown-item" href="?{% if search_query %}q={{ search_query }}&{% endif %}show_closed=false">
+          {% trans 'Open Lots' %}
+          {% if show_closed == 'false' %}<i class="bi bi-check"></i>{% endif %}
+        </a>
+      </li>
 
-        <li>
-          <a class="dropdown-item" href="?{% if search_query %}q={{ search_query }}{% endif %}">
-            {% trans 'Clear Filters' %}
-          </a>
-        </li>
-      </ul>
-    </div>
+      <li>
+        <a class="dropdown-item" href="?{% if search_query %}q={{ search_query }}&{% endif %}show_closed=true">
+          {% trans 'Closed Lots' %}
+          {% if show_closed == 'true' %}<i class="bi bi-check"></i>{% endif %}
+        </a>
+      </li>
+
+      <li>
+        <a class="dropdown-item" href="?{% if search_query %}q={{ search_query }}&{% endif %}show_closed=both">
+          {% trans 'All Lots' %}
+          {% if show_closed == 'both' %}<i class="bi bi-check"></i>{% endif %}
+        </a>
+      </li>
+
+     </ul>
   </div>
 </div>
 
-  <!-- Lots Table -->
 {% render_table table %}
 <div class="mt-5 d-flex align-items-center justify-content-center">
   {% if table.page and table.paginator.num_pages > 1 %}
