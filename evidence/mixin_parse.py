@@ -24,6 +24,7 @@ class BuildMix:
         if not self.uuid:
             logger.error("snapshot without UUID. Software {}".format(self.json.get("software")))
             return
+
         self.get_details()
         self.generate_chids()
 
