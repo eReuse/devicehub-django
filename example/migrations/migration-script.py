@@ -56,26 +56,14 @@ def open_csv(csv):
 
 
 ### read snapshot ###
-def search_snapshot_from_uuid(uuid):
-    # search snapshot from uuid
-    for root, _, files in os.walk(PATH_SNAPTHOPS):
-        for f in files:
-            if uuid in f:
-                return os.path.join(root, f)
-
-
-def open_snapshot(uuid):
-    snapshot_path = search_snapshot_from_uuid(uuid)
-    if not snapshot_path:
-        return None, None
-
+def open_snapshot(snapshot_path):
     with open(snapshot_path) as f:
         try:
             snap = json.loads(f.read())
         except Exception as err:
-            logger.error("uuid: {}, error: {}".format(uuid, err))
+            logger.error("{}, error: {}".format(snapshot_path, err))
             return None, None
-    return snap, snapshot_path
+    return snap
 ### end read snapshot ###
 
 
@@ -103,14 +91,10 @@ def create_custom_id(dhid, uuid, user):
     )
 
 
-def migrate_snapshots(row, user):
-    if not row or not user:
-        return
-
-    dhid = row.get("dhid")
-    uuid = row.get("uuid")
-    snapshot, snapshot_path = open_snapshot(uuid)
-    if not snapshot or not snapshot_path:
+def migrate_snapshots(dhids, snapshot_path, user):
+    snapshot = open_snapshot(snapshot_path)
+    uuid = snapshot.get("uuid")
+    if not snapshot or not uuid or snapshot.get("software") == "Web":
         return
 
     logger.info(snapshot.get("version"))
@@ -123,6 +107,7 @@ def migrate_snapshots(row, user):
     move_json(path_name, user.institution.name)
 
     # insert dhid
+    dhid = dhids.get(uuid)
     try:
         create_custom_id(dhid, uuid, user)
     except Exception as err:
@@ -244,10 +229,22 @@ def main():
         global PATH_SNAPTHOPS
         PATH_SNAPTHOPS = args.snapshots
 
-    if args.csv_dhid:
     # migration snapthots
+    if args.csv_dhid and args.snapshots:
+        dhids = {}
         for row in open_csv(args.csv_dhid):
-            migrate_snapshots(row, user)
+            dhid = row.get("dhid")
+            uuid = row.get("uuid")
+            if not dhid or not uuid:
+                continue
+            dhids[uuid] = dhid
+
+        for root, _, files in os.walk(PATH_SNAPTHOPS):
+            for f in files:
+                if f[-4:] != "json":
+                    continue
+                snapshot_path = os.path.join(root, f)
+                migrate_snapshots(dhids, snapshot_path, user)
 
     # migration lots
     if args.lots:
@@ -258,5 +255,7 @@ def main():
     if args.csv_lots_dhid:
         for row in open_csv(args.csv_lots_dhid):
             add_device_in_lot(row, user)
+
+
 if __name__ == '__main__':
     main()
