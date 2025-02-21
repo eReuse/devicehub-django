@@ -3,13 +3,14 @@
 
 -- save dhids and uuids of snapshots
 copy(
-select d.devicehub_id as dhid, sp.uuid as uuid from usody.action_with_one_device as one
-  join usody.action as ac on ac.id=one.id
-  join usody.device as d on d.id=one.device_id
+select d.devicehub_id as dhid, sp.uuid as uuid from usody.placeholder as p
+  join common.user as u on u.id=owner_id
+  join usody.computer as c on c.id=p.binding_id
+  join usody.device as d on d.id=p.device_id
+  join usody.action_with_one_device as one on p.binding_id=one.device_id
   join usody.snapshot as sp on sp.id=one.id
-  join common.user as u on u.id=ac.author_id
 where u.email=:'email'
-  and not sp.uuid is null and not d.devicehub_id is null
+  and not p.binding_id is null
 ) to '/var/lib/postgresql/dhids.csv'
 with (format csv, header, delimiter ';', quote '"');
 
@@ -51,6 +52,8 @@ select l.name as lot_name, d.devicehub_id as dhid from usody.lot_device as ld
   join usody.lot as l on l.id=ld.lot_id
   join usody.device as d on d.id=ld.device_id
   join common.user as u on u.id=ld.author_id
+  join usody.placeholder as p on p.device_id=d.id
 where u.email=:'email'
+  and not p.binding_id is null
 ) to '/var/lib/postgresql/devices-lots.csv'
 with (format csv, header, delimiter ';', quote '"');
