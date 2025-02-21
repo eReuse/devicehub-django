@@ -4,12 +4,14 @@ from django.shortcuts import get_object_or_404, redirect, Http404
 from django.contrib import messages
 from django.utils.translation import gettext_lazy as _
 from django.views.generic.base import TemplateView
+from django.db.models import Q
 from django.views.generic.edit import (
     CreateView,
     DeleteView,
     UpdateView,
     FormView,
 )
+import django_tables2 as tables
 from dashboard.mixins import DashboardView
 from lot.models import Lot, LotTag, LotProperty
 from lot.forms import LotsForm
@@ -137,30 +139,70 @@ class DelToLotView(AddToLotView):
         return response
 
 
-class LotsTagsView(DashboardView, TemplateView):
+class LotTable(tables.Table):
+    name = tables.Column(linkify=("dashboard:lot", {"pk": tables.A("id")}), verbose_name=_("Lot Name"))
+    description = tables.Column(verbose_name=_("Description"), default="No description")
+    closed = tables.Column(verbose_name=_("Status"))
+    created = tables.DateColumn(format="Y-m-d", verbose_name=_("Created On"))
+    user = tables.Column(verbose_name=_("Created By"), default="Unknown")
+    actions = tables.TemplateColumn(
+        template_name="lot_actions.html",
+        verbose_name=_("Actions"),
+        orderable=False,
+        attrs={"td": {"class": "text-end"}}
+    )
+
+    class Meta:
+        model = Lot
+        fields = ("name", "description", "closed", "created", "user", "actions")
+        attrs = {
+            "class": "table table-hover align-middle",
+            "thead": {"class": "table-light"}
+        }
+
+
+class LotsTagsView(DashboardView, tables.SingleTableView):
     template_name = "lots.html"
     title = _("lots")
     breadcrumb = _("lots") + " /"
     success_url = reverse_lazy('dashboard:unassigned')
+    model = Lot
+    table_class = LotTable
+
+    def get_queryset(self):
+        self.pk = self.kwargs.get('pk')
+        self.tag = get_object_or_404(LotTag, owner=self.request.user.institution, id=self.pk)
+        self.show_closed = self.request.GET.get('show_closed', 'false') == 'true'
+        self.search_query = self.request.GET.get('q', '').strip()
+
+        queryset = Lot.objects.filter(owner=self.request.user.institution, type=self.tag)
+
+        if not self.show_closed:
+            queryset = queryset.filter(closed=True)
+
+        if self.search_query:
+            queryset = queryset.filter(
+                Q(name__icontains=self.search_query) |
+                Q(description__icontains=self.search_query) |
+                Q(code__icontains=self.search_query)
+            )
+
+        sort = self.request.GET.get('sort')
+        if sort:
+            queryset = queryset.order_by(sort)
+
+        return queryset
+
 
     def get_context_data(self, **kwargs):
-        self.pk = kwargs.get('pk')
         context = super().get_context_data(**kwargs)
-        tag = get_object_or_404(LotTag, owner=self.request.user.institution, id=self.pk)
-        self.title += " {}".format(tag.name)
-        self.breadcrumb += " {}".format(tag.name)
-        show_closed = self.request.GET.get('show_closed', 'false') == 'true'
-        lots = Lot.objects.filter(owner=self.request.user.institution).filter(
-            type=tag, closed=show_closed
-        )
         context.update({
-            'lots': lots,
-            'title': self.title,
-            'breadcrumb': self.breadcrumb,
-            'show_closed': show_closed
+            'title': self.title + " " + self.tag.name,
+            'breadcrumb': self.breadcrumb + " " + self.tag.name,
+            'show_closed': self.show_closed,
+            'search_query': self.search_query,  # Pass the search query to the template
         })
         return context
-
 
 class LotPropertiesView(DashboardView, TemplateView):
     template_name = "properties.html"
