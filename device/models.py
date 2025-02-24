@@ -336,7 +336,7 @@ class Device:
             FROM
                 RankedProperties
             WHERE
-                row_num = 1;
+                row_num = 1
             ORDER BY created DESC
         """.format(
             uuid=uuid.replace("-", ""),
