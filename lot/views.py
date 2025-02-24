@@ -39,9 +39,16 @@ class NewLotView(DashboardView, CreateView):
         return form
 
     def form_valid(self, form):
-        form.instance.owner = self.request.user.institution
-        form.instance.user = self.request.user
-        response = super().form_valid(form)
+        try:
+            form.instance.owner = self.request.user.institution
+            form.instance.user = self.request.user
+            response = super().form_valid(form)
+            return response
+
+        except IntegrityError:
+            messages.error(self.request, _("Lot name is already defined."))
+            return self.form_invalid(form)
+
         return response
 
 
