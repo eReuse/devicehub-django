@@ -19,6 +19,11 @@ class BuildMix:
         self.mac = ""
         self.type = ""
         self.version = ""
+        self.default = ""
+        self.algorithms = {}
+        if not self.uuid:
+            logger.error("snapshot without UUID. Software {}".format(self.json.get("software")))
+            return
         self.get_details()
         self.generate_chids()
 

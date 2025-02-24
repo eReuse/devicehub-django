@@ -72,9 +72,20 @@ class SearchView(InventaryMixin):
     title = _("Search Devices")
     breadcrumb = "Devices / Search Devices"
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        search_params = self.request.GET.urlencode(),
+        search =  self.request.GET.get("search")
+        if search:
+            context.update({
+                'search_params': search_params,
+                'search': search
+            })
+
+        return context
+
     def get_devices(self, user, offset, limit):
-        post = dict(self.request.POST)
-        query = post.get("search")
+        query = dict(self.request.GET).get("search")
 
         if not query:
             return [], 0
@@ -85,6 +96,12 @@ class SearchView(InventaryMixin):
             offset,
             limit
         )
+        count = search(
+            self.request.user.institution,
+            query[0],
+            0,
+            9999
+        ).size()
 
         if not matches or not matches.size():
             return self.search_hids(query, offset, limit)
@@ -99,7 +116,6 @@ class SearchView(InventaryMixin):
                 devices.append(dev)
                 dev_id.append(dev.id)
 
-        count = matches.size()
         # TODO fix of pagination, the count is not correct
         return devices, count
 
