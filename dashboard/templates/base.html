@@ -137,7 +137,7 @@
 		  {% else %}
                     <a class="nav-link{% if path == 'tags' %} active2{% endif %}" href="{% url 'lot:tags' tag.id %}">
 		  {% endif %}
-                      {{ tag.name }}
+                    {{ tag.name|truncatechars:17}}
                     </a>
                   </li>
                   {% endfor %}
