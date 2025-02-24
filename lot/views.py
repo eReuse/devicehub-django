@@ -16,11 +16,28 @@ from dashboard.mixins import DashboardView
 from lot.models import Lot, LotTag, LotProperty
 from lot.forms import LotsForm
 
-class NewLotView(DashboardView, CreateView):
+
+class LotSuccessUrlMixin():
+
+    success_url = reverse_lazy('dashboard:unassigned') #default_url
+
+    def get_success_url(self):
+        lot_group_id = LotTag.objects.only('id').get(
+            owner=self.object.owner,
+            name=self.object.type
+        ).id
+
+        #null checking just in case
+        if not lot_group_id:
+            return self.success_url
+
+        return reverse_lazy('lot:tags', args=[lot_group_id])
+
+
+class NewLotView(LotSuccessUrlMixin ,DashboardView, CreateView):
     template_name = "new_lot.html"
     title = _("New lot")
     breadcrumb = "lot / New lot"
-    success_url = reverse_lazy('dashboard:unassigned')
     model = Lot
     fields = (
         "type",
@@ -43,6 +60,8 @@ class NewLotView(DashboardView, CreateView):
             form.instance.owner = self.request.user.institution
             form.instance.user = self.request.user
             response = super().form_valid(form)
+
+            messages.success(self.request, _("Lot created successfully."))
             return response
 
         except IntegrityError:
@@ -51,12 +70,10 @@ class NewLotView(DashboardView, CreateView):
 
         return response
 
-
-class DeleteLotView(DashboardView, DeleteView):
+class DeleteLotView(LotSuccessUrlMixin, DashboardView, DeleteView):
     template_name = "delete_lot.html"
     title = _("Delete lot")
     breadcrumb = "lot / Delete lot"
-    success_url = reverse_lazy('dashboard:unassigned')
     model = Lot
     fields = (
         "type",
@@ -68,14 +85,20 @@ class DeleteLotView(DashboardView, DeleteView):
 
     def form_valid(self, form):
         response = super().form_valid(form)
+        messages.warning(self.request, _("Lot '{}' was successfully deleted.").format(self.object.name))
+        return response
+
+    def form_invalid(self, form):
+        response = super().form_invalid(form)
+        messages.error(self.request, _("Error deleting the lot."))
         return response
 
 
-class EditLotView(DashboardView, UpdateView):
+class EditLotView(LotSuccessUrlMixin, DashboardView, UpdateView):
     template_name = "new_lot.html"
     title = _("Edit lot")
     breadcrumb = "Lot / Edit lot"
-    success_url = reverse_lazy('dashboard:unassigned')
+
     model = Lot
     fields = (
         "type",
@@ -103,6 +126,16 @@ class EditLotView(DashboardView, UpdateView):
             inbox=False
         )
         return form
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.warning(self.request, _("Lot '{}' was successfully edited.").format(self.object.name))
+        return response
+
+    def form_invalid(self, form):
+        response = super().form_invalid(form)
+        messages.error(self.request, _("Error editing the lot."))
+        return response
 
 
 class AddToLotView(DashboardView, FormView):

@@ -37,6 +37,12 @@ class Lot(models.Model):
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     type = models.ForeignKey(LotTag, on_delete=models.CASCADE)
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['owner', 'name'], name='unique_institution_and_name')
+        ]
+
+
     def add(self, v):
         if DeviceLot.objects.filter(lot=self, device_id=v).exists():
             return
