@@ -3,6 +3,7 @@ from django.urls import reverse_lazy
 from django.shortcuts import get_object_or_404, redirect, Http404
 from django.contrib import messages
 from django.utils.translation import gettext_lazy as _
+from django.utils.safestring import mark_safe
 from django.views.generic.base import TemplateView
 from django.db.models import Q
 from django.views.generic.edit import (
@@ -180,25 +181,30 @@ class DelToLotView(AddToLotView):
 
 
 class LotTable(tables.Table):
-    name = tables.Column(linkify=("dashboard:lot", {"pk": tables.A("id")}), verbose_name=_("Lot Name"))
-    description = tables.Column(verbose_name=_("Description"), default="No description")
+    name = tables.Column(linkify=("dashboard:lot", {"pk": tables.A("id")}), verbose_name=_("Lot Name"), attrs={"td": {"class": "fw-bold"}})
+    description = tables.Column(verbose_name=_("Description"), default=_("No description"),attrs={"td": {"class": "text-muted"}} )
     closed = tables.Column(verbose_name=_("Status"))
     created = tables.DateColumn(format="Y-m-d", verbose_name=_("Created On"))
-    user = tables.Column(verbose_name=_("Created By"), default="Unknown")
+    user = tables.Column(verbose_name=("Created By"), default=_("Unknown"), attrs={"td": {"class": "text-muted"}} )
     actions = tables.TemplateColumn(
         template_name="lot_actions.html",
-        verbose_name=_("Actions"),
-        orderable=False,
+        verbose_name=_(""),
         attrs={"td": {"class": "text-end"}}
     )
 
+    def render_closed(self, value):
+        if value:
+            return mark_safe('<span class="badge bg-danger">Closed</span>')
+        return mark_safe('<span class="badge bg-success">Open</span>')
+
     class Meta:
         model = Lot
-        fields = ("name", "description", "closed", "created", "user", "actions")
+        fields = ("closed", "name", "description", "created", "user", "actions")
         attrs = {
             "class": "table table-hover align-middle",
             "thead": {"class": "table-light"}
         }
+        order_by = ("-created",)
 
 
 class LotsTagsView(DashboardView, tables.SingleTableView):

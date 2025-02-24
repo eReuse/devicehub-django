@@ -5,7 +5,7 @@
 
 {% block content %}
 
-<a href="{% url 'lot:add' %}" type="button" class="btn btn-green-admin">
+<a href="{% url 'lot:add' %}" type="button" class="btn btn-green-admin mb-3">
     <i class="bi bi-plus"></i>
     {% trans 'Add new lot' %}
 </a>
@@ -14,13 +14,13 @@
 <!-- Search and Filter Section -->
 <div class="row mb-4">
   <!-- Search Input -->
-  <div class="col-md-6">
+  <div class="col-md-6 mb-3">
     <form method="get" class="d-flex">
       <input
         type="text"
         name="q"
         class="form-control me-2"
-        placeholder="{% trans 'Search lots...' %}"
+        placeholder="{% trans 'Search by name or description...' %}"
         value="{{ search_query }}">
       <button type="submit" class="btn btn-outline-secondary">
         <i class="bi bi-search"></i>
@@ -61,9 +61,12 @@
   </div>
 </div>
 
+<!-- Lots list -->
 {% render_table table %}
 <div class="mt-5 d-flex align-items-center justify-content-center">
   {% if table.page and table.paginator.num_pages > 1 %}
     {% include "django_tables2/pagination.html" %}
   {% endif %}
-</div>{% endblock %}
+</div>
+
+{% endblock %}
