@@ -55,6 +55,9 @@ class Build:
         if check:
             return
 
+        if not self.build.uuid:
+            return
+
         self.index()
         self.create_annotations()
         if settings.DPP:

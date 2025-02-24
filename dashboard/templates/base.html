@@ -194,10 +194,10 @@
             {% endif %}
             </h1>
 
-	          <form method="post" action="{% url 'dashboard:search' %}">
+	          <form method="get" action="{% url 'dashboard:search' %}">
               {% csrf_token %}
               <div class="input-group rounded">
-                <input type="search" name="search" class="form-control rounded" placeholder="Search your device..." aria-label="Search" aria-describedby="search-addon" />
+                <input type="search" name="search" class="form-control rounded" {% if search %}value="{{ search }}" {% endif %}placeholder="Search your device..." aria-label="Search" aria-describedby="search-addon" />
         	<span class="input-group-text border-0" id="search-addon">
         	  <i class="fas fa-search"></i>
         	</span>
