@@ -69,14 +69,10 @@ export PYTHONPATH="${PYTHONPATH}:/usr/lib/python3/dist-packages"
 
 #### Environment Variables
 
-Now, configure the environment variables. For this, we will expand a `.env` file. You can use the following content as an example:
+Now, configure the environment variables. For this, we will expand a `.env` file. For a quickstart with localhost, you can use the default values in the `.env.example` file:
 
-```source
-STATIC_ROOT=/tmp/static/
-MEDIA_ROOT=/tmp/media/
-ALLOWED_HOSTS=localhost,localhost:8000,127.0.0.1,
-DOMAIN=localhost
-DEBUG=True
+```bash
+cp .env.example .env
 ```
 
 Now, expand the environment variables:
