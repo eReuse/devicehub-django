@@ -7,13 +7,13 @@
     <h3>{{ subtitle }}</h3>
   </div>
   <div class="col text-center">
-    {% if show_closed %}
-      <a href="?show_closed=false" class="btn btn-green-admin">
-        {% trans 'Hide closed lots' %}
+    {% if show_archived %}
+      <a href="?show_archived=false" class="btn btn-green-admin">
+        {% trans 'Hide archived lots' %}
       </a>
     {% else %}
-      <a href="?show_closed=true" class="btn btn-green-admin">
-        {% trans 'Show closed lots' %}
+      <a href="?show_archived=true" class="btn btn-green-admin">
+        {% trans 'Show archived lots' %}
       </a>
     {% endif %}
 
