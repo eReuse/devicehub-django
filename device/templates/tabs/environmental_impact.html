@@ -1,0 +1,20 @@
+{% load i18n %}
+
+<div class="tab-pane fade show active" id="environmental_impact">
+  <h5 class="card-title">{% trans 'Environmental Impact Details' %}</h5>
+  <hr />
+
+  <div class="row mb-3">
+    <div class="col-sm-4 text-muted fw-bold">
+      {% trans 'Carbon Saved' %}
+    </div>
+    <div class="col-sm-8">{{ impact.carbon_saved|default:'0.0' }} kg</div>
+  </div>
+
+  <div class="row mb-3">
+    <div class="col-sm-4 text-muted fw-bold">
+      {% trans 'CO2 Emissions' %}
+    </div>
+    <div class="col-sm-8">{{ impact.co2_emissions|default:'0.0' }} kg</div>
+  </div>
+</div>
