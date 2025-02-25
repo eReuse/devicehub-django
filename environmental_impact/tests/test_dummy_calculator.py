@@ -3,7 +3,7 @@ import uuid
 from django.test import TestCase
 from device.models import Device
 from environmental_impact.models import EnvironmentalImpact
-from environmental_impact.algorithms.dummy_calculator import DummyEnvironmentalImpactAlgorithm
+from environmental_impact.algorithms.dummy_algo.dummy_calculator import DummyEnvironmentalImpactAlgorithm
 from evidence.models import Evidence
 
 

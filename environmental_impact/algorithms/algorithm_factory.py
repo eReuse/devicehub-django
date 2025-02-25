@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
-from .dummy_calculator import DummyEnvironmentalImpactAlgorithm
+from .dummy_algo.dummy_calculator import DummyEnvironmentalImpactAlgorithm
 
 if TYPE_CHECKING:
     from .algorithm_interface import EnvironmentImpactAlgorithm

@@ -1,6 +1,6 @@
 from environmental_impact.algorithms.algorithm_factory import FactoryEnvironmentImpactAlgorithm
 from django.test import TestCase
-from environmental_impact.algorithms.dummy_calculator import DummyEnvironmentalImpactAlgorithm
+from environmental_impact.algorithms.dummy_algo.dummy_calculator import DummyEnvironmentalImpactAlgorithm
 
 
 class FactoryEnvironmentImpactAlgorithmTests(TestCase):
