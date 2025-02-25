@@ -37,6 +37,7 @@ class DeviceLogMixin(DashboardView):
             institution=self.request.user.institution
         )
 
+
 class NewDeviceView(DashboardView, FormView):
     template_name = "new_device.html"
     title = _("New Device")
@@ -99,24 +100,26 @@ class DetailsView(DashboardView, TemplateView):
                 uuid__in=self.object.uuids,
                 type=PROOF_TYPE["IssueDPP"]
             )
+            for x in _dpps:
+                dpp = "{}:{}".format(self.pk, x.signature)
+                dpps.append((dpp, x.signature[:10], x))
+        # TODO Specify algorithm via dropdown, if not specified, use default.
         enviromental_impact_algorithm = FactoryEnvironmentImpactAlgorithm.run_environmental_impact_calculation(
             "dummy_calc"
         )
         enviromental_impact = enviromental_impact_algorithm.get_device_environmental_impact(
             self.object)
-            for x in _dpps:
-                dpp = "{}:{}".format(self.pk, x.signature)
-                dpps.append((dpp, x.signature[:10], x))
-
         last_evidence = self.object.get_last_evidence()
         uuids = self.object.uuids
         state_definitions = StateDefinition.objects.filter(
             institution=self.request.user.institution
         ).order_by('order')
-        device_states = State.objects.filter(snapshot_uuid__in=uuids).order_by('-date')
+        device_states = State.objects.filter(
+            snapshot_uuid__in=uuids).order_by('-date')
         device_logs = DeviceLog.objects.filter(
             snapshot_uuid__in=uuids).order_by('-date')
-        device_notes = Note.objects.filter(snapshot_uuid__in=uuids).order_by('-date')
+        device_notes = Note.objects.filter(
+            snapshot_uuid__in=uuids).order_by('-date')
         context.update({
             'object': self.object,
             'snapshot': last_evidence,
@@ -284,7 +287,7 @@ class DeleteUserPropertyView(DeviceLogMixin, DeleteView):
     def get_queryset(self):
         return UserProperty.objects.filter(owner=self.request.user.institution)
 
-    #using post() method because delete() method from DeleteView has some issues
+    # using post() method because delete() method from DeleteView has some issues
     # with messages framework
     def post(self, request, *args, **kwargs):
         pk = self.kwargs.get('pk')
