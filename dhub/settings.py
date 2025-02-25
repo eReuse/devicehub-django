@@ -32,11 +32,11 @@ SECRET_KEY = "django-insecure-1p8rs@qf$$l^!vsbetagojw23kw@1ez(qi8^(s0t&#7!wyh!l3
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
 
-DOMAIN = config("DOMAIN")
-assert DOMAIN not in [None, ''], "DOMAIN var is MANDATORY"
+DEVICEHUB_DOMAIN = config("DEVICEHUB_DOMAIN")
+assert DEVICEHUB_DOMAIN not in [None, ''], "DEVICEHUB_DOMAIN var is MANDATORY"
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default=DOMAIN, cast=Csv())
-assert DOMAIN in ALLOWED_HOSTS, f"DOMAIN {DOMAIN} is not in ALLOWED_HOSTS {ALLOWED_HOSTS}"
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default=DEVICEHUB_DOMAIN, cast=Csv())
+assert DEVICEHUB_DOMAIN in ALLOWED_HOSTS, f"DEVICEHUB_DOMAIN {DEVICEHUB_DOMAIN} is not in ALLOWED_HOSTS {ALLOWED_HOSTS}"
 
 CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default=f'https://{DOMAIN}', cast=Csv())
 
