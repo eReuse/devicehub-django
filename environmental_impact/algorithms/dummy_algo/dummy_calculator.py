@@ -1,6 +1,8 @@
+import os
 from device.models import Device
 from ..algorithm_interface import EnvironmentImpactAlgorithm
 from environmental_impact.models import EnvironmentalImpact
+from ..docs_renderer import render_docs
 
 
 class DummyEnvironmentalImpactAlgorithm(EnvironmentImpactAlgorithm):
@@ -12,7 +14,10 @@ class DummyEnvironmentalImpactAlgorithm(EnvironmentImpactAlgorithm):
         power_on_hours = self.get_power_on_hours_from(device)
         energy_kwh = (power_on_hours * avg_watts) / 1000
         co2_emissions = energy_kwh * co2_per_kwh
-        return EnvironmentalImpact(co2_emissions=co2_emissions)
+        current_dir = os.path.dirname(__file__)
+        docs_path = os.path.join(current_dir, 'docs.md')
+        docs = render_docs(docs_path)
+        return EnvironmentalImpact(co2_emissions=co2_emissions, docs=docs)
 
     def get_power_on_hours_from(self, device: Device) -> int:
         # TODO how do I check if the device is a legacy workbench? Is there a better way?
@@ -22,7 +27,8 @@ class DummyEnvironmentalImpactAlgorithm(EnvironmentImpactAlgorithm):
             str_time = storage_components.get('time of used', -1)
         else:
             str_time = ""
-        uptime_in_hours = self.convert_str_time_to_hours(str_time, is_legacy_workbench)
+        uptime_in_hours = self.convert_str_time_to_hours(
+            str_time, is_legacy_workbench)
         return uptime_in_hours
 
     def convert_str_time_to_hours(self, time_str: str, is_legacy_workbench: bool) -> int:
