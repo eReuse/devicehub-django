@@ -1,5 +1,5 @@
 from device.models import Device
-from .algorithm_interface import EnvironmentImpactAlgorithm
+from ..algorithm_interface import EnvironmentImpactAlgorithm
 from environmental_impact.models import EnvironmentalImpact
 
 
