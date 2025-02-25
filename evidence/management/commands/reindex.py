@@ -5,7 +5,7 @@ import logging
 from django.core.management.base import BaseCommand
 from django.conf import settings
 
-from utils.device import create_annotation, create_doc, create_index
+from utils.device import create_property, create_doc, create_index
 from user.models import Institution
 from evidence.parse import Build
 
@@ -70,7 +70,7 @@ class Command(BaseCommand):
     def build_placeholder(self, s, user, f_path):
             try:
                 create_index(s, user)
-                create_annotation(s, user, commit=True)
+                create_property(s, user, commit=True)
             except Exception as err:
                 txt = "In placeholder %s \n%s"
                 logger.warning(txt, f_path, err)

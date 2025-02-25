@@ -19,12 +19,24 @@ main() {
                 cp -v .env.example .env
                 echo "WARNING: .env was not there, .env.example was copied, this only happens once"
         fi
+
+        # load vars
+        . ./.env
+
+        if [ "${IDHUB_ENABLED:-}" = 'true' ]; then
+                export COMPOSE_PROFILES='idhub'
+        fi
         # remove old database
         rm -vfr ./db/*
         # deactivate configured flag
         rm -vfr ./already_configured
         docker compose down -v
-        docker compose build
+        if [ "${DEV_DOCKER_ALWAYS_BUILD:-}" = 'true' ]; then
+                docker compose pull --ignore-buildable
+                docker compose build
+        else
+                docker compose pull
+        fi
         docker compose up ${detach_arg:-}
 }
 

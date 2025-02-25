@@ -6,8 +6,9 @@ from django.core.exceptions import PermissionDenied
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic.base import TemplateView
 from device.models import Device
-from evidence.models import Annotation
+from evidence.models import SystemProperty
 from lot.models import LotTag
+from action.models import StateDefinition
 
 
 class Http403(PermissionDenied):
@@ -32,6 +33,9 @@ class DashboardView(LoginRequiredMixin):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        lot_tags = LotTag.objects.filter(
+            owner=self.request.user.institution,
+        )
         context.update({
             "commit_id": settings.COMMIT,
             'title': self.title,
@@ -41,7 +45,7 @@ class DashboardView(LoginRequiredMixin):
             'section': self.section,
             'path': resolve(self.request.path).url_name,
             'user': self.request.user,
-            'lot_tags': LotTag.objects.filter(owner=self.request.user.institution)
+            'lot_tags': lot_tags
         })
         return context
 
@@ -49,7 +53,7 @@ class DashboardView(LoginRequiredMixin):
         dev_ids = self.request.session.pop("devices", [])
 
         self._devices = []
-        for x in Annotation.objects.filter(value__in=dev_ids).filter(
+        for x in SystemProperty.objects.filter(value__in=dev_ids).filter(
                 owner=self.request.user.institution
         ).distinct():
             self._devices.append(Device(id=x.value))

@@ -1,16 +1,24 @@
+import logging
 from smtplib import SMTPException
+from django.contrib import messages
 from django.urls import reverse_lazy
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect, Http404
 from django.utils.translation import gettext_lazy as _
-from django.views.generic.base import TemplateView
+from django.contrib.messages.views import SuccessMessageMixin
+from django.views.generic.base import TemplateView, ContextMixin
 from django.views.generic.edit import (
     CreateView,
     UpdateView,
     DeleteView,
 )
+from django.core.exceptions import ValidationError
+from django.db import IntegrityError,   transaction
 from dashboard.mixins import DashboardView, Http403
+from admin.forms import OrderingStateForm
 from user.models import User, Institution
 from admin.email import NotifyActivateUserByEmail
+from action.models import StateDefinition
+from lot.models import LotTag
 
 
 class AdminView(DashboardView):
@@ -18,7 +26,7 @@ class AdminView(DashboardView):
         response = super().get(*args, **kwargs)
         if not self.request.user.is_admin:
             raise Http403
-        
+
         return response
 
 class PanelView(AdminView, TemplateView):
@@ -104,7 +112,100 @@ class EditUserView(AdminView, UpdateView):
         kwargs = super().get_form_kwargs()
         return kwargs
 
-    
+
+class LotTagPanelView(AdminView, TemplateView):
+    template_name = "lot_tag_panel.html"
+    title = _("Lot Groups Panel")
+    breadcrumb = _("admin / Lot Groups Panel")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        lot_tags = LotTag.objects.filter(
+            owner=self.request.user.institution
+        )
+        context.update({"lot_tags_edit": lot_tags})
+        return context
+
+
+class AddLotTagView(AdminView, CreateView):
+    template_name = "lot_tag_panel.html"
+    title = _("New lot group Definition")
+    breadcrumb = "Admin / New lot tag"
+    success_url = reverse_lazy('admin:tag_panel')
+    model = LotTag
+    fields = ('name',)
+
+    def form_valid(self, form):
+        form.instance.owner = self.request.user.institution
+        form.instance.user = self.request.user
+        name = form.instance.name
+        if LotTag.objects.filter(name=name).first():
+            msg = _(f"The name '{name}' exist.")
+            messages.error(self.request, msg)
+            return redirect(self.success_url)
+
+        response = super().form_valid(form)
+        messages.success(self.request, _("Lot Group successfully added."))
+        return response
+
+
+class DeleteLotTagView(AdminView, DeleteView):
+    model = LotTag
+    success_url = reverse_lazy('admin:tag_panel')
+
+    def post(self, request, *args, **kwargs):
+        pk = kwargs.get('pk')
+        self.object = get_object_or_404(
+            self.model,
+            owner=self.request.user.institution,
+            pk=pk
+        )
+
+        if self.object.lot_set.first():
+            msg = _('This group have lots. Impossible to delete.')
+            messages.warning(self.request, msg)
+            return redirect(reverse_lazy('admin:tag_panel'))
+
+        if self.object.inbox:
+            msg = f"The lot group '{self.object.name}'"
+            msg += " is INBOX, so it cannot be deleted, only renamed."
+            messages.error(self.request, msg)
+            return redirect(self.success_url)
+
+        response = super().delete(request, *args, **kwargs)
+        msg = _('Lot Group has been deleted.')
+        messages.success(self.request, msg)
+        return response
+
+
+class UpdateLotTagView(AdminView, UpdateView):
+    model = LotTag
+    template_name = 'lot_tag_panel.html'
+    fields = ['name']
+    success_url = reverse_lazy('admin:tag_panel')
+
+    def get_form_kwargs(self):
+        pk = self.kwargs.get('pk')
+        self.object = get_object_or_404(
+            self.model,
+            owner=self.request.user.institution,
+            pk=pk
+        )
+        return super().get_form_kwargs()
+
+    def form_valid(self, form):
+        name = form.instance.name
+        if LotTag.objects.filter(name=name).first():
+            msg = _(f"The name '{name}' exist.")
+            messages.error(self.request, msg)
+            return redirect(self.success_url)
+
+        response = super().form_valid(form)
+        msg = _("Lot Group updated successfully.")
+        messages.success(self.request, msg)
+        return response
+
+
 class InstitutionView(AdminView, UpdateView):
     template_name = "institution.html"
     title = _("Edit institution")
@@ -117,10 +218,114 @@ class InstitutionView(AdminView, UpdateView):
         "logo",
         "location",
         "responsable_person",
-        "supervisor_person"
+        "supervisor_person",
+        "algorithm"
     )
 
     def get_form_kwargs(self):
         self.object = self.request.user.institution
         kwargs = super().get_form_kwargs()
         return kwargs
+
+
+class StateDefinitionContextMixin(ContextMixin):
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({
+            "state_definitions": StateDefinition.objects.filter(institution=self.request.user.institution).order_by('order'),
+            "help_text": _('State definitions are the custom finite states that a device can be in.'),
+        })
+        return context
+
+
+class StatesPanelView(AdminView, StateDefinitionContextMixin, TemplateView):
+    template_name = "states_panel.html"
+    title = _("States Panel")
+    breadcrumb = _("admin / States Panel") + " /"
+
+
+class AddStateDefinitionView(AdminView, StateDefinitionContextMixin, CreateView):
+    template_name = "states_panel.html"
+    title = _("New State Definition")
+    breadcrumb = "Admin / New state"
+    success_url = reverse_lazy('admin:states_panel')
+    model = StateDefinition
+    fields = ('state',)
+
+    def form_valid(self, form):
+        form.instance.institution = self.request.user.institution
+        form.instance.user = self.request.user
+        try:
+            response = super().form_valid(form)
+            messages.success(self.request, _("State definition successfully added."))
+            return response
+        except IntegrityError:
+            messages.error(self.request, _("State is already defined."))
+            return self.form_invalid(form)
+
+    def form_invalid(self, form):
+        super().form_invalid(form)
+        return redirect(self.success_url)
+
+
+class DeleteStateDefinitionView(AdminView, StateDefinitionContextMixin, SuccessMessageMixin, DeleteView):
+    model = StateDefinition
+    success_url = reverse_lazy('admin:states_panel')
+
+    def get_success_message(self, cleaned_data):
+        return f'State definition: {self.object.state}, has been deleted'
+
+    def form_valid(self, form):
+        if not self.object.institution == self.request.user.institution:
+            raise Http404
+
+        return super().form_valid(form)
+
+
+class UpdateStateOrderView(AdminView, TemplateView):
+    success_url = reverse_lazy('admin:states_panel')
+
+    def post(self, request, *args, **kwargs):
+        form = OrderingStateForm(request.POST)
+
+        if form.is_valid():
+            ordered_ids = form.cleaned_data["ordering"].split(',')
+
+            with transaction.atomic():
+                current_order = 1
+                _log = []
+                for lookup_id in ordered_ids:
+                    state_definition = StateDefinition.objects.get(id=lookup_id)
+                    state_definition.order = current_order
+                    state_definition.save()
+                    _log.append(f"{state_definition.state} (ID: {lookup_id} -> Order: {current_order})")
+                    current_order += 1
+
+            messages.success(self.request, _("Order changed succesfuly."))
+            return redirect(self.success_url)
+        else:
+            return Http404
+
+
+class UpdateStateDefinitionView(AdminView, UpdateView):
+    model = StateDefinition
+    template_name = 'states_panel.html'
+    fields = ['state']
+    success_url = reverse_lazy('admin:states_panel')
+    pk_url_kwarg = 'pk'
+
+    def get_queryset(self):
+        return StateDefinition.objects.filter(institution=self.request.user.institution)
+
+    def form_valid(self, form):
+        try:
+            response = super().form_valid(form)
+            messages.success(self.request, _("State definition updated successfully."))
+            return response
+        except IntegrityError:
+            messages.error(self.request, _("State is already defined."))
+            return self.form_invalid(form)
+
+    def form_invalid(self, form):
+        super().form_invalid(form)
+        return redirect(self.get_success_url())

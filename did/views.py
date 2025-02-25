@@ -106,10 +106,10 @@ class PublicDeviceWebView(TemplateView):
             'device': {},
         }
         dev = Build(self.object.last_evidence.doc, None, check=True)
-        doc = dev.get_phid()
+        doc = dev.build.get_doc()
         data['document'] = json.dumps(doc)
-        data['device'] = dev.device
-        data['components'] = dev.components
+        data['device'] = dev.build.device
+        data['components'] = dev.build.components
 
         self.object.get_evidences()
         last_dpp = Proof.objects.filter(
@@ -118,7 +118,7 @@ class PublicDeviceWebView(TemplateView):
 
         key = self.pk
         if last_dpp:
-            key = last_dpp.signature
+            key += ":"+last_dpp.signature
 
         url = "https://{}/did/{}".format(
             self.request.get_host(),
@@ -135,17 +135,17 @@ class PublicDeviceWebView(TemplateView):
         for d in self.object.evidences:
             d.get_doc()
             dev = Build(d.doc, None, check=True)
-            doc = dev.get_phid()
+            doc = dev.build.get_doc()
             ev = json.dumps(doc)
-            phid = dev.get_signature(doc)
+            phid = dev.sign(ev)
             dpp = "{}:{}".format(self.pk, phid)
             rr = {
                 'dpp': dpp,
                 'document': ev,
                 'algorithm': ALGORITHM,
                 'manufacturer DPP': '',
-                'device': dev.device,
-                'components': dev.components
+                'device': dev.build.device,
+                'components': dev.build.components
             }
 
             tmpl = dpp_tmpl.copy()

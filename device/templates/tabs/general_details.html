@@ -1,0 +1,81 @@
+
+{% load i18n %}
+
+<!-- Device Details -->
+    <div class="tab-pane fade show active" id="details">
+          <h5 class="card-title">{% trans 'Details' %}
+          </h5>
+          <hr>
+          <div class="row mb-3">
+            <div class="col-sm-4 text-muted fw-bold">{% trans 'Phid' %}
+            </div>
+            <div class="col-sm-8">{{ object.id }}
+            </div>
+          </div>
+
+          {% if object.is_eraseserver %}
+          <div class="row mb-3">
+            <div class="col-sm-4 text-muted fw-bold">{% trans 'Is an erase server' %}
+            </div>
+            <div class="col-sm-8">{% trans 'Yes' %}
+            </div>
+          </div>
+          {% endif %}
+
+          <div class="row mb-3">
+            <div class="col-sm-4 text-muted fw-bold">{% trans 'Type' %}
+            </div>
+            <div class="col-sm-8">{{ object.type }}
+            </div>
+          </div>
+
+          {% if object.is_websnapshot and object.last_user_evidence %}
+            {% for k, v in object.last_user_evidence.items %}
+            <div class="row mb-3">
+              <div class="col-sm-4 text-muted fw-bold">{{ k }}
+              </div>
+              <div class="col-sm-8">{{ v|default:'' }}
+              </div>
+            </div>
+            {% endfor %}
+          {% else %}
+          <div class="row mb-3">
+            <div class="col-sm-4 text-muted fw-bold">{% trans 'Manufacturer' %}
+            </div>
+            <div class="col-sm-8">{{ object.manufacturer|default:'' }}
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-sm-4 text-muted fw-bold">{% trans 'Model' %}
+            </div>
+            <div class="col-sm-8">{{ object.model|default:'' }}
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-sm-4 text-muted fw-bold">
+              {% trans 'Version' %}
+            </div>
+            <div class="col-sm-8">{{ object.version|default:'' }}</div>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-sm-4 text-muted fw-bold">{% trans 'Serial Number' %}
+            </div>
+            <div class="col-sm-8">{{ object.serial_number|default:'' }}
+            </div>
+          </div>
+          {% endif %}
+
+          <div class="row mb-3">
+            <div class="col-sm-4 text-muted fw-bold">{% trans 'Identifiers' %}
+            </div>
+            <div class="col-sm-8">
+              {% for chid in object.hids %}
+                <div>{{ chid|default:'' }}
+                </div>
+              {% endfor %}
+            </div>
+        </div>
+      </div>

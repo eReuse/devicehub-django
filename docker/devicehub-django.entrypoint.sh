@@ -42,19 +42,6 @@ gen_env_vars() {
                 export API_RESOLVER='http://id_index_api:3012'
                 # TODO hardcoded
                 export ID_FEDERATED='DH1'
-                # propagate to .env
-                dpp_env_vars="$(cat <<END
-API_DLT=${API_DLT}
-API_DLT_TOKEN=${API_DLT_TOKEN}
-API_RESOLVER=${API_RESOLVER}
-ID_FEDERATED=${ID_FEDERATED}
-END
-)"
-        # generate config using env vars from docker
-        # TODO rethink if this is needed because now this is django, not flask
-        cat > .env <<END
-${dpp_env_vars:-}
-END
         fi
 }
 
@@ -118,8 +105,53 @@ END
         ./manage.py dlt_register_user "${DATASET_FILE}"
 }
 
+# wait until idhub api is prepared to received requests
+wait_idhub() {
+        echo "Start waiting idhub API"
+        while true; do
+                result="$(curl -s "${url}" \
+                               | jq -r .error \
+                               || echo "Reported errors, idhub API is still not ready")"
+
+                if [ "${result}" = "Invalid request method" ]; then
+                        break
+                        sleep 2
+                else
+                        echo "Waiting idhub API"
+                        sleep 3
+                fi
+        done
+}
+
+demo__send_to_sign_credential() {
+        filepath="${1}"
+        # hashlib.sha3_256 of PREDEFINED_TOKEN for idhub
+        DEMO_IDHUB_PREDEFINED_TOKEN="${DEMO_IDHUB_PREDEFINED_TOKEN:-}"
+        auth_header="Authorization: Bearer ${DEMO_IDHUB_PREDEFINED_TOKEN}"
+        json_header='Content-Type: application/json'
+        curl -s -X POST \
+             -H "${json_header}" \
+             -H "${auth_header}" \
+             -d @"${filepath}" \
+             "${url}" \
+                | jq -r .data
+}
+
+run_demo() {
+        if [ "${DEMO_IDHUB_DOMAIN:-}" ]; then
+                DEMO_IDHUB_DOMAIN="${DEMO_IDHUB_DOMAIN:-}"
+                # this demo only works with FQDN domain (with no ports)
+                url="https://${DEMO_IDHUB_DOMAIN}/webhook/sign/"
+                wait_idhub
+                demo__send_to_sign_credential \
+                        'example/demo-snapshots-vc/snapshot_pre-verifiable-credential.json' \
+                        > 'example/snapshots/snapshot_workbench-script_verifiable-credential.json'
+        fi
+        /usr/bin/time ./manage.py up_snapshots example/snapshots/ "${INIT_USER}"
+}
+
 config_phase() {
-	# TODO review this flag file
+        # TODO review this flag file
         init_flagfile="${program_dir}/already_configured"
         if [ ! -f "${init_flagfile}" ]; then
 
@@ -132,7 +164,7 @@ config_phase() {
                         # 12, 13, 14
                         config_dpp_part1
 
-                        # cleanup other spnapshots and copy dlt/dpp snapshots
+                        # cleanup other snapshots and copy dlt/dpp snapshots
                         # TODO make this better
                         rm example/snapshots/*
                         cp example/dpp-snapshots/*.json example/snapshots/
@@ -140,7 +172,7 @@ config_phase() {
 
                 # # 15. Add inventory snapshots for user "${INIT_USER}".
                 if [ "${DEMO:-}" = 'true' ]; then
-                        /usr/bin/time ./manage.py up_snapshots example/snapshots/ "${INIT_USER}"
+                        run_demo
                 fi
 
                 # remain next command as the last operation for this if conditional
@@ -155,9 +187,11 @@ check_app_is_there() {
 }
 
 deploy() {
-        # TODO this is weird, find better workaround
-        git config --global --add safe.directory "${program_dir}"
-        export COMMIT=$(git log --format="%H %ad" --date=iso -n 1)
+        if [ -d /opt/devicehub-django/.git ]; then
+                # TODO this is weird, find better workaround
+                git config --global --add safe.directory "${program_dir}"
+                export COMMIT=$(git log --format="%H %ad" --date=iso -n 1)
+        fi
 
         if [ "${DEBUG:-}" = 'true' ]; then
                 ./manage.py print_settings
@@ -173,6 +207,9 @@ deploy() {
                 # move the migrate thing in docker entrypoint
                 #   inspired by https://medium.com/analytics-vidhya/django-with-docker-and-docker-compose-python-part-2-8415976470cc
                 echo "INFO detected NEW deployment"
+                if [ ! -d "${program_dir}/db/" ]; then
+                        mkdir -p "${program_dir}/db/"
+                fi
                 ./manage.py migrate
                 config_phase
         fi

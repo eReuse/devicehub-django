@@ -6,7 +6,7 @@ from django.shortcuts import Http404
 from django.db.models import Q
 
 from dashboard.mixins import InventaryMixin, DetailsMixin
-from evidence.models import Annotation
+from evidence.models import SystemProperty
 from evidence.xapian import search
 from device.models import Device
 from lot.models import Lot
@@ -20,6 +20,16 @@ class UnassignedDevicesView(InventaryMixin):
 
     def get_devices(self, user, offset, limit):
         return Device.get_unassigned(self.request.user.institution, offset, limit)
+
+
+class AllDevicesView(InventaryMixin):
+    template_name = "unassigned_devices.html"
+    section = "All"
+    title = _("All Devices")
+    breadcrumb = "Devices / All Devices"
+
+    def get_devices(self, user, offset, limit):
+        return Device.get_all(self.request.user.institution, offset, limit)
 
 
 class LotDashboardView(InventaryMixin, DetailsMixin):
@@ -42,8 +52,18 @@ class LotDashboardView(InventaryMixin, DetailsMixin):
             "device_id", flat=True
         ).distinct()
 
-        chids_page = chids[offset:offset+limit]
-        return [Device(id=x) for x in chids_page], chids.count()
+        props = SystemProperty.objects.filter(
+            owner=self.request.user.institution,
+            value__in=chids
+        ).order_by("-created")
+
+        chids_ordered = []
+        for x in props:
+            if x.value not in chids_ordered:
+                chids_ordered.append(x.value)
+
+        chids_page = chids_ordered[offset:offset+limit]
+        return [Device(id=x) for x in chids_page], len(chids_ordered)
 
 
 class SearchView(InventaryMixin):
@@ -52,9 +72,20 @@ class SearchView(InventaryMixin):
     title = _("Search Devices")
     breadcrumb = "Devices / Search Devices"
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        search_params = self.request.GET.urlencode(),
+        search =  self.request.GET.get("search")
+        if search:
+            context.update({
+                'search_params': search_params,
+                'search': search
+            })
+
+        return context
+
     def get_devices(self, user, offset, limit):
-        post = dict(self.request.POST)
-        query = post.get("search")
+        query = dict(self.request.GET).get("search")
 
         if not query:
             return [], 0
@@ -65,6 +96,12 @@ class SearchView(InventaryMixin):
             offset,
             limit
         )
+        count = search(
+            self.request.user.institution,
+            query[0],
+            0,
+            9999
+        ).size()
 
         if not matches or not matches.size():
             return self.search_hids(query, offset, limit)
@@ -74,22 +111,22 @@ class SearchView(InventaryMixin):
 
         for x in matches:
             # devices.append(self.get_annotations(x))
-            dev = self.get_annotations(x)
+            dev = self.get_properties(x)
             if dev.id not in dev_id:
                 devices.append(dev)
                 dev_id.append(dev.id)
 
-        count = matches.size()
         # TODO fix of pagination, the count is not correct
         return devices, count
 
-    def get_annotations(self, xp):
+    def get_properties(self, xp):
         snap = json.loads(xp.document.get_data())
         if snap.get("credentialSubject"):
             uuid = snap["credentialSubject"]["uuid"]
         else:
             uuid = snap["uuid"]
-        return Device.get_annotation_from_uuid(uuid, self.request.user.institution)
+
+        return Device.get_properties_from_uuid(uuid, self.request.user.institution)
 
     def search_hids(self, query, offset, limit):
         qry = Q()
@@ -98,8 +135,7 @@ class SearchView(InventaryMixin):
             if i:
                 qry |= Q(value__startswith=i)
 
-        chids = Annotation.objects.filter(
-            type=Annotation.Type.SYSTEM,
+        chids = SystemProperty.objects.filter(
             owner=self.request.user.institution
         ).filter(
             qry

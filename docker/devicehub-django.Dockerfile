@@ -6,6 +6,7 @@ RUN apt update && \
     python3-xapian \
     git \
     sqlite3 \
+    curl \
     jq \
     time \
     vim \
@@ -37,6 +38,7 @@ RUN pip install -i https://test.pypi.org/simple/ ereuseapitest==0.0.14
 #   Set PYTHONPATH to include the directory with the xapian module
 ENV PYTHONPATH="${PYTHONPATH}:/usr/lib/python3/dist-packages"
 
+COPY . .
 COPY docker/devicehub-django.entrypoint.sh /
 
 RUN chown -R app:app /opt/devicehub-django
