@@ -25,7 +25,7 @@ class NewLotView(DashboardView, CreateView):
         "name",
         "code",
         "description",
-        "closed",
+        "archived",
     )
 
     def get_form(self):
@@ -54,7 +54,7 @@ class DeleteLotView(DashboardView, DeleteView):
         "name",
         "code",
         "description",
-        "closed",
+        "archived",
     )
 
     def form_valid(self, form):
@@ -73,7 +73,7 @@ class EditLotView(DashboardView, UpdateView):
         "name",
         "code",
         "description",
-        "closed",
+        "archived",
     )
 
     def get_form_kwargs(self):
@@ -149,15 +149,15 @@ class LotsTagsView(DashboardView, TemplateView):
         tag = get_object_or_404(LotTag, owner=self.request.user.institution, id=self.pk)
         self.title += " {}".format(tag.name)
         self.breadcrumb += " {}".format(tag.name)
-        show_closed = self.request.GET.get('show_closed', 'false') == 'true'
+        show_archived = self.request.GET.get('show_archived', 'false') == 'true'
         lots = Lot.objects.filter(owner=self.request.user.institution).filter(
-            type=tag, closed=show_closed
+            type=tag, archived=show_archived
         )
         context.update({
             'lots': lots,
             'title': self.title,
             'breadcrumb': self.breadcrumb,
-            'show_closed': show_closed
+            'show_archived': show_archived
         })
         return context
 
