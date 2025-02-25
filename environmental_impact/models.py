@@ -6,3 +6,4 @@ from django.db import models
 class EnvironmentalImpact:
     carbon_saved: float = 0.0
     co2_emissions: float = 0.0
+    docs: str = ""
