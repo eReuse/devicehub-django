@@ -147,6 +147,7 @@ run_demo() {
                         'example/demo-snapshots-vc/snapshot_pre-verifiable-credential.json' \
                         > 'example/snapshots/snapshot_workbench-script_verifiable-credential.json'
         fi
+        ./manage.py create_default_states "${INIT_ORG}"
         /usr/bin/time ./manage.py up_snapshots example/snapshots/ "${INIT_USER}"
 }
 
