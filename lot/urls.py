@@ -4,6 +4,8 @@ from lot import views
 app_name = 'lot'
 
 urlpatterns = [
+    path("unasigned", views.UnassignedDevicesView.as_view(), name="unassigned"),
+    path("<int:pk>/", views.LotView.as_view(), name="lot"),
     path("add/", views.NewLotView.as_view(), name="add"),
     path("delete/<int:pk>/", views.DeleteLotView.as_view(), name="delete"),
     path("edit/<int:pk>/", views.EditLotView.as_view(), name="edit"),

@@ -2,6 +2,7 @@ from django.db import IntegrityError
 from django.urls import reverse_lazy
 from django.shortcuts import get_object_or_404, redirect, Http404
 from django.contrib import messages
+from dashboard.mixins import InventaryMixin, DetailsMixin
 from django.utils.translation import gettext_lazy as _
 from django.utils.safestring import mark_safe
 from django.views.generic.base import TemplateView
@@ -14,13 +15,14 @@ from django.views.generic.edit import (
 )
 import django_tables2 as tables
 from dashboard.mixins import DashboardView
+from evidence.models import SystemProperty
+from device.models import Device
 from lot.models import Lot, LotTag, LotProperty
 from lot.forms import LotsForm
 
 
 class LotSuccessUrlMixin():
-
-    success_url = reverse_lazy('dashboard:unassigned') #default_url
+    success_url = reverse_lazy('lot:unassigned') #default_url
 
     def get_success_url(self):
         lot_group_id = LotTag.objects.only('id').get(
@@ -143,7 +145,7 @@ class AddToLotView(DashboardView, FormView):
     template_name = "list_lots.html"
     title = _("Add to lots")
     breadcrumb = "lot / add to lots"
-    success_url = reverse_lazy('dashboard:unassigned')
+    success_url = reverse_lazy('lot:unassigned')
     form_class = LotsForm
 
     def get_context_data(self, **kwargs):
@@ -181,7 +183,7 @@ class DelToLotView(AddToLotView):
 
 
 class LotTable(tables.Table):
-    name = tables.Column(linkify=("dashboard:lot", {"pk": tables.A("id")}), verbose_name=_("Lot Name"), attrs={"td": {"class": "fw-bold"}})
+    name = tables.Column(linkify=("lot:lot", {"pk": tables.A("id")}), verbose_name=_("Lot Name"), attrs={"td": {"class": "fw-bold"}})
     description = tables.Column(verbose_name=_("Description"), default=_("No description"),attrs={"td": {"class": "text-muted"}} )
     closed = tables.Column(verbose_name=_("Status"))
     created = tables.DateColumn(format="Y-m-d", verbose_name=_("Created On"))
@@ -209,9 +211,9 @@ class LotTable(tables.Table):
 
 class LotsTagsView(DashboardView, tables.SingleTableView):
     template_name = "lots.html"
-    title = _("lots")
+    title = _("Lot group")
     breadcrumb = _("lots") + " /"
-    success_url = reverse_lazy('dashboard:unassigned')
+    success_url = reverse_lazy('lot:unassigned')
     model = Lot
     table_class = LotTable
 
@@ -280,7 +282,7 @@ class AddLotPropertyView(DashboardView, CreateView):
     template_name = "new_property.html"
     title = _("New Lot Property")
     breadcrumb = "Device / New property"
-    success_url = reverse_lazy('dashboard:unassigned_devices')
+    success_url = reverse_lazy('lot:unassigned_devices')
     model = LotProperty
     fields = ("key", "value")
 
@@ -365,3 +367,46 @@ class DeleteLotPropertyView(DashboardView, DeleteView):
 
         # Redirect back to the original URL
         return redirect(self.success_url)
+
+
+class UnassignedDevicesView(InventaryMixin):
+    template_name = "unassigned_devices.html"
+    section = "Unassigned"
+    title = _("Unassigned Devices")
+    breadcrumb = "Devices / Unassigned Devices"
+
+    def get_devices(self, user, offset, limit):
+        return Device.get_unassigned(self.request.user.institution, offset, limit)
+
+class LotView(InventaryMixin, DetailsMixin):
+    template_name = "unassigned_devices.html"
+    section = "dashboard_lot"
+    breadcrumb = "Lot / Devices"
+    model = Lot
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        lot = context.get('object')
+        context.update({
+            'lot': lot,
+            'title': _("Lot {}".format(lot.name))
+        })
+        return context
+
+    def get_devices(self, user, offset, limit):
+        chids = self.object.devicelot_set.all().values_list(
+            "device_id", flat=True
+        ).distinct()
+
+        props = SystemProperty.objects.filter(
+            owner=self.request.user.institution,
+            value__in=chids
+        ).order_by("-created")
+
+        chids_ordered = []
+        for x in props:
+            if x.value not in chids_ordered:
+                chids_ordered.append(x.value)
+
+        chids_page = chids_ordered[offset:offset+limit]
+        return [Device(id=x) for x in chids_page], len(chids_ordered)

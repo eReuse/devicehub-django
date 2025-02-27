@@ -12,16 +12,6 @@ from device.models import Device
 from lot.models import Lot
 
 
-class UnassignedDevicesView(InventaryMixin):
-    template_name = "unassigned_devices.html"
-    section = "Unassigned"
-    title = _("Unassigned Devices")
-    breadcrumb = "Devices / Unassigned Devices"
-
-    def get_devices(self, user, offset, limit):
-        return Device.get_unassigned(self.request.user.institution, offset, limit)
-
-
 class AllDevicesView(InventaryMixin):
     template_name = "unassigned_devices.html"
     section = "All"
@@ -30,40 +20,6 @@ class AllDevicesView(InventaryMixin):
 
     def get_devices(self, user, offset, limit):
         return Device.get_all(self.request.user.institution, offset, limit)
-
-
-class LotDashboardView(InventaryMixin, DetailsMixin):
-    template_name = "unassigned_devices.html"
-    section = "dashboard_lot"
-    title = _("Lot Devices")
-    breadcrumb = "Lot / Devices"
-    model = Lot
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        lot = context.get('object')
-        context.update({
-            'lot': lot,
-        })
-        return context
-
-    def get_devices(self, user, offset, limit):
-        chids = self.object.devicelot_set.all().values_list(
-            "device_id", flat=True
-        ).distinct()
-
-        props = SystemProperty.objects.filter(
-            owner=self.request.user.institution,
-            value__in=chids
-        ).order_by("-created")
-
-        chids_ordered = []
-        for x in props:
-            if x.value not in chids_ordered:
-                chids_ordered.append(x.value)
-
-        chids_page = chids_ordered[offset:offset+limit]
-        return [Device(id=x) for x in chids_page], len(chids_ordered)
 
 
 class SearchView(InventaryMixin):
