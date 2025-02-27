@@ -17,17 +17,17 @@ class LoginView(auth_views.LoginView):
     template_name = 'login.html'
     extra_context = {
         'title': _('Login'),
-        'success_url': reverse_lazy('dashboard:unassigned'),
+        'success_url': reverse_lazy('lot:unassigned'),
         'commit_id': settings.COMMIT,
     }
 
     def get(self, request, *args, **kwargs):
         self.extra_context['success_url'] = request.GET.get(
             'next',
-            reverse_lazy('dashboard:unassigned')
+            reverse_lazy('lot:unassigned')
         )
         if not self.request.user.is_anonymous:
-            return redirect(reverse_lazy('dashboard:unassigned'))
+            return redirect(reverse_lazy('lot:unassigned'))
 
         return super().get(request, *args, **kwargs)
 

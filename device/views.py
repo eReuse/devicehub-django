@@ -40,7 +40,7 @@ class NewDeviceView(DashboardView, FormView):
     template_name = "new_device.html"
     title = _("New Device")
     breadcrumb = "Device / New Device"
-    success_url = reverse_lazy('dashboard:unassigned')
+    success_url = reverse_lazy('lot:unassigned')
     form_class = DeviceFormSet
 
     def form_valid(self, form):
@@ -57,7 +57,7 @@ class EditDeviceView(DashboardView, UpdateView):
     template_name = "new_device.html"
     title = _("Update Device")
     breadcrumb = "Device / Update Device"
-    success_url = reverse_lazy('dashboard:unassigned_devices')
+    success_url = reverse_lazy('lot:unassigned_devices')
     model = SystemProperty
 
     def get_form_kwargs(self):
@@ -74,7 +74,6 @@ class EditDeviceView(DashboardView, UpdateView):
 
 class DetailsView(DashboardView, TemplateView):
     template_name = "details.html"
-    title = _("Device")
     breadcrumb = "Device / Details"
     model = SystemProperty
 
@@ -113,6 +112,7 @@ class DetailsView(DashboardView, TemplateView):
         device_notes = Note.objects.filter(snapshot_uuid__in=uuids).order_by('-date')
         context.update({
             'object': self.object,
+            'title': _("Device {}".format(self.object.shortid)),
             'snapshot': last_evidence,
             'lot_tags': lot_tags,
             'dpps': dpps,
