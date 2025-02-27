@@ -11,7 +11,7 @@
 
 <div class="row mb-3">
   <div class="col">
-    <div class="card {% if object.devices.count > 0 %}border border-danger{% else %}border border-light{% endif %}">
+    <div class="card border{% if object.devices.count > 0 %}border-danger{% endif %}">
       <div class="card-body">
         <h5 class="card-title">{% trans "Delete Lot" %}</h5>
         <div class="card-text mt-4">
