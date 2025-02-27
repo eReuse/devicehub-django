@@ -26,7 +26,7 @@
   </thead>
   <tbody id="sortable_list">
     {% for tag in lot_tags_edit %}
-      <tr>
+      <tr {% if tag.id == 1 %} class="bg-light" {% endif %}>
         <td class="font-monospace">
           {{ tag.name }}
         </td>
@@ -44,7 +44,8 @@
             <button
               type="button" class="btn btn-sm btn-outline-danger d-flex align-items-center"
               data-bs-toggle="modal"
-              data-bs-target="#deleteLotTagModal{{ tag.id }}" >
+              data-bs-target="#deleteLotTagModal{{ tag.id }}"
+              {% if tag.id == 1 %} disabled {% endif %}>
               <i class="bi bi-trash me-1"></i>
               {% trans 'Delete' %}
             </button>
@@ -110,6 +111,9 @@
             <label for="editLotTagInput{{ tag.id }}" class="form-label">{% trans "Tag" %}</label>
             <input type="text" class="form-control" id="editLotTagInput{{ tag.id }}" name="name" maxlength="50" value="{{ tag.name }}" required>
             <div class="form-text">{% trans "Maximum 50 characters." %}</div>
+            {% if tag.id == 1 %}
+              <p class="text-muted text-end mt-3">{% trans "INBOX can only be edited, not deleted." %}</p>
+            {% endif %}
           </div>
 
         </div>
@@ -136,16 +140,28 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
       </div>
       <div class="modal-body">
-	{% if tag.lot_set.first %}
+
+        {% if tag.lot_set.first %}
         <div class="alert alert-warning text-center" role="alert">
-            {% trans "Failed to remove Lot Group, it is not empty" %}
+            <strong class="text-bold mb-0"> {% trans "This lot group has" %} {{tag.lot_set.count}} {% trans "lot/s." %}</strong>
+
         </div>
-	{% endif %}
+	      {% else %}
+            <p class="mb-0 text-muted mt-2">{% trans "Are you sure you want to delete this lot group?" %}</p>
+        {% endif %}
+
         <div class="d-flex align-items-center border rounded p-3 mt-3">
           <div>
             <p class="mb-0 fw-bold">{{ tag.name }}</p>
           </div>
         </div>
+        {% if tag.lot_set.first %}
+          <p class="mb-0 text-muted text-end mt-3">
+            {% trans "This lot group is not empty and therefore cannot be deleted." %}
+          </p>
+        {% endif %}
+
+
       </div>
 
       <div class="modal-footer">
@@ -155,7 +171,7 @@
             {% trans "Cancel" %}
           </button>
 	  {% if tag.lot_set.first %}
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" disabled>
             {% trans "Delete" %}
           </button>
   	  {% else %}
