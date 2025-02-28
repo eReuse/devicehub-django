@@ -206,6 +206,30 @@ class UpdateLotTagView(AdminView, UpdateView):
         return response
 
 
+class UpdateLotTagOrderView(AdminView, TemplateView):
+    success_url = reverse_lazy('admin:tag_panel')
+
+    def post(self, request, *args, **kwargs):
+        form = OrderingStateForm(request.POST)
+
+        if form.is_valid():
+            ordered_ids = form.cleaned_data["ordering"].split(',')
+
+            with transaction.atomic():
+                #TODO: log on institution wide logging - if implemented -
+                current_order = 2
+                for lookup_id in ordered_ids:
+                    lot_tag = LotTag.objects.get(id=lookup_id)
+                    lot_tag.order = current_order
+                    lot_tag.save()
+                    current_order += 1
+
+            messages.success(self.request, _("Order changed succesfuly."))
+            return redirect(self.success_url)
+        else:
+            return Http404
+
+
 class InstitutionView(AdminView, UpdateView):
     template_name = "institution.html"
     title = _("Edit institution")
