@@ -25,7 +25,7 @@
 {% bootstrap_form form %}
 <div class="form-actions-no-box">
   <a class="btn btn-grey" href="{% url 'dashboard:lot' lot.id %}">{% translate "Cancel" %}</a>
-  <input class="btn btn-green-admin" type="submit" name="submit" value="{% translate 'Save' %}" />
+  <input class="btn btn-green-admin" type="submit" name="submit" value="{{ action }}" />
 </div>
 
 </form>
