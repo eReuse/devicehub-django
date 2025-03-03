@@ -2,37 +2,163 @@
 {% load i18n %}
 
 {% block content %}
-<div class="row">
-  <div class="col">
-    <h3>{{ subtitle }}</h3>
+
+  <style>
+   .lot-item {
+     margin-bottom: 10px;
+     padding: 15px;
+     border: 1px solid #ddd;
+     border-radius: 8px;
+     background-color: #fff;
+     transition: background-color 0.3s ease;
+   }
+   .lot-item:hover {
+     background-color: #f9f9f9;
+   }
+   .lot-item.selected {
+     background-color: #e2f0ff;
+   }
+  </style>
+
+  <div class="row">
+    <div class="col">
+      <h3>{{ subtitle }}</h3>
+    </div>
   </div>
-</div>
-
-<form method="post">
-  {% csrf_token %}
-
-<table class="table">
-  <thead>
-    <tr>
-      <th>Select</th>
-      <th>Lot Group / Lot</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for tag in lot_tags %}
-    {% for lot in lots %}
-    {% if lot.type == tag %}
-    <tr>
-      <td><input type="checkbox" name="lots" value="{{ lot.id }}" /></td>
-      <td>{{ tag }}/{{ lot.name }}</td>
-    </tr>
-    {% endif %}
+  <div class="col-md-3 offset-md-9 mb-3">
+    <input type="text" id="searchFilter" class="form-control" placeholder="Search by name or description...">
+  </div>
+  <form method="post">
+    {% csrf_token %}
+    {% for group_name, lots in form.grouped_lots.items %}
+      <div class="card mb-1">
+        <div class="card-header d-flex justify-content-between align-items-center" data-bs-toggle="collapse" data-bs-target="#collapse{{ forloop.counter }}" aria-expanded="false" aria-controls="collapse{{ forloop.counter }}" style="cursor: pointer;">
+          <h5 class="mb-0">{{ group_name }} <small class="text-muted">({{ lots|length }} {% trans "Lot/s"  %})</small>
+            <span class="badge bg-primary ms-2" id="selectedCount{{ forloop.counter }}">0 {% trans "selected" %}</span>
+          </h5>
+          <i class="bi bi-chevron-down"></i>
+        </div>
+        <div id="collapse{{ forloop.counter }}" class="collapse">
+          <div class="card-body">
+            {% for lot in lots %}
+              <div class="form-check lot-item" data-name="{{ lot.name }}" data-code="{{ lot.code }}">
+                <input class="form-check-input mt-2" type="checkbox" name="lots" value="{{ lot.id }}" id="lot{{ lot.id }}">
+                <label class="form-check-label w-100" for="lot{{ lot.id }}">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <div class="ps-2">
+                      <strong>{{ lot.name }}</strong>
+                      <div class="text-muted small">{{ lot.description }}</div>
+                    </div>
+                    <div class="text-end text-muted small">
+                      <div><i class="bi bi-calendar"></i> {{ lot.created|date:"M d, Y" }}</div>
+                      <div><i class="bi bi-person"></i> {{ lot.user.username|default:"N/A" }}</div>
+                    </div>
+                  </div>
+                </label>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
     {% endfor %}
-    {% endfor %}
-  </tbody>
-</table>
+    <button type="submit" id="assignButton" class="btn btn-green-user mt-3" disabled>{% trans "Assign" %}</button>
+  </form>
 
-  <button class="btn btn-green-admin" type="submit">Save</button>
-</form>
+  <script>
+   // event listener for the filter (search) function
+   document.getElementById('searchFilter').addEventListener('input', function () {
+     const searchTerm = this.value.toLowerCase();
+     const lotItems = document.querySelectorAll('.lot-item');
+     const groups = document.querySelectorAll('.card');
 
+     let hasMatches = false;
+
+     groups.forEach(function (group) {
+       const groupLots = group.querySelectorAll('.lot-item');
+       let groupHasMatches = false;
+
+       groupLots.forEach(function (item) {
+         const lotName = item.getAttribute('data-name').toLowerCase();
+         const lotCode = item.getAttribute('data-code').toLowerCase();
+         const isVisible = lotName.includes(searchTerm) || lotCode.includes(searchTerm);
+
+         item.style.display = isVisible ? 'block' : 'none';
+
+         if (isVisible) {
+           groupHasMatches = true;
+           hasMatches = true;
+         }
+       });
+
+       // Expand or collapse the group based on whether it has matching lots
+       const collapseId = group.querySelector('.collapse').id;
+       const collapseElement = document.getElementById(collapseId);
+       const collapseInstance = bootstrap.Collapse.getInstance(collapseElement) || new bootstrap.Collapse(collapseElement, { toggle: false });
+
+       if (groupHasMatches) {
+         collapseInstance.show();
+       } else {
+         collapseInstance.hide();
+       }
+     });
+
+     // If no search term, collapse all groups
+     if (!searchTerm) {
+       document.querySelectorAll('.collapse').forEach(function (collapse) {
+         new bootstrap.Collapse(collapse, { toggle: false }).hide();
+       });
+     }
+   });
+
+   function applySelectionState() {
+     document.querySelectorAll('.form-check-input').forEach(function (checkbox) {
+       const lotItem = checkbox.closest('.lot-item');
+       if (checkbox.checked) {
+         lotItem.classList.add('selected');
+       } else {
+         lotItem.classList.remove('selected');
+       }
+     });
+   }
+
+   document.querySelectorAll('.form-check-input').forEach(function (checkbox) {
+     checkbox.addEventListener('change', function () {
+       const lotItem = this.closest('.lot-item');
+       if (this.checked) {
+         lotItem.classList.add('selected');
+       } else {
+         lotItem.classList.remove('selected');
+       }
+
+       const groupIndex = this.closest('.collapse').id.replace('collapse', '');
+       updateSelectedCount(groupIndex);
+       updateAssignButton();
+     });
+   });
+
+    // update selection state (bg color) on dom reload, so that it properly displays when f5
+   document.addEventListener('DOMContentLoaded', function () {
+     applySelectionState();
+     updateAssignButton();
+
+     // also update count for selected
+     document.querySelectorAll('.card').forEach(function (card, index) {
+       updateSelectedCount(index + 1);
+     });
+   });
+
+   function updateSelectedCount(groupIndex) {
+     const group = document.querySelector(`#collapse${groupIndex}`);
+     const checkboxes = group.querySelectorAll('.form-check-input:checked');
+     const selectedCount = document.querySelector(`#selectedCount${groupIndex}`);
+     selectedCount.textContent = `${checkboxes.length} {% trans "selected" %}`;
+   }
+
+   // Enable assign button only if at least one lot is selected
+   function updateAssignButton() {
+     const assignButton = document.getElementById('assignButton');
+     const anyChecked = document.querySelectorAll('.form-check-input:checked').length > 0;
+     assignButton.disabled = !anyChecked;
+   }
+  </script>
 {% endblock %}
