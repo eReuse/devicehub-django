@@ -21,7 +21,7 @@ from lot.tables import LotTable
 from device.models import Device
 from evidence.models import SystemProperty
 from lot.models import Lot, LotTag, LotProperty, LotSubscription
-from lot.forms import LotsForm
+from lot.forms import LotsForm, LotSubscriptionForm
 
 
 logger = logging.getLogger(__name__)
@@ -400,12 +400,13 @@ class DeleteLotPropertyView(DashboardView, DeleteView):
         # Redirect back to the original URL
         return redirect(self.success_url)
 
-class SubscriptLotView(DashboardView, CreateView):
+
+class SubscriptLotMixing(DashboardView, FormView):
     template_name = "subscription.html"
     title = _("Subscription")
     breadcrumb = "Lot / Subscription"
-    model = LotSubscription
-    fields = ("user",)
+    form_class = LotSubscriptionForm
+
 
     def get_context_data(self, **kwargs):
         self.pk = self.kwargs.get('pk')
@@ -416,54 +417,36 @@ class SubscriptLotView(DashboardView, CreateView):
         )
         context.update({
             'lot': self.lot,
+            "action": _("Subscribe")
         })
         return context
-
-    def get_form(self):
-
-        form = super().get_form()
-        users_subscript = self.model.objects.filter(
-            lot=self.lot).values_list('user', flat=True)
-
-        queryset = form.fields["user"].queryset
-        form.fields["user"].queryset = queryset.filter(
-            institutions__institution=self.request.user.institution,
-        ).exclude(id__in=users_subscript)
-
-        return form
-
-    def form_valid(self, form):
-        # form.instance.user = self.request.user
-        form.instance.lot = self.lot
-        form.instance.type = LotAnnotation.Type.USER
-        response = super().form_valid(form)
-        return response
 
     def get_form_kwargs(self):
         self.pk = self.kwargs.get('pk')
         self.success_url = reverse_lazy('dashboard:lot', args=[self.pk])
         kwargs = super().get_form_kwargs()
+        kwargs["institution"] = self.request.user.institution
         return kwargs
 
 
-class UnsubscriptLotView(DashboardView, CreateView):
-    template_name = "subscription.html"
-    title = _("Subscription")
-    breadcrumb = "Lot / Subscription"
-    model = LotSubscription
-    fields = ("key", "value")
+class SubscriptLotView(SubscriptLotMixing):
 
     def form_valid(self, form):
-        form.instance.user = self.request.user
-        form.instance.lot = self.lot
-        self.success_url = reverse_lazy('lot', args=[self.lot.pk])
+        form.save()
         response = super().form_valid(form)
         return response
 
-    def get_form_kwargs(self):
-        pk = self.kwargs.get('pk')
-        self.subscription = get_object_or_404(self.model, pk=pk, user=self.request.user)
-        self.lot = self.subscription.lot
-        self.success_url = reverse_lazy('lot:suscription', args=[pk])
-        kwargs = super().get_form_kwargs()
-        return kwargs
+
+class UnsubscriptLotView(SubscriptLotMixing):
+    title = _("Unsubscription")
+    breadcrumb = "Lot / Unsubscription"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["action"] = _("Unsubscribe")
+        return context
+
+    def form_valid(self, form):
+        form.remove()
+        response = super().form_valid(form)
+        return response
