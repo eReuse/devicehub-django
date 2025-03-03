@@ -1,0 +1,10 @@
+{% load i18n %}
+
+<a href="{% url 'lot:edit' record.id %}" class="btn btn-sm btn-outline-primary me-2">
+  <i class="bi bi-pen"></i>
+  {% trans 'Edit' %}
+</a>
+<a href="{% url 'lot:delete' record.id %}" class="btn btn-sm btn-outline-danger">
+  <i class="bi bi-trash"></i>
+  {% trans 'Delete' %}
+</a>
