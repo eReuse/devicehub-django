@@ -2,38 +2,71 @@
 {% load i18n %}
 
 {% block content %}
-<div class="row">
-  <div class="col">
-    <h3>{{ subtitle }}</h3>
+
+  <style>
+   .lot-item {
+     margin-bottom: 10px;
+     padding: 15px;
+     border: 1px solid #ddd;
+     border-radius: 8px;
+     background-color: #fff;
+     transition: background-color 0.3s ease;
+   }
+   .lot-item:hover {
+     background-color: #f9f9f9;
+   }
+   .lot-item.selected {
+     background-color: #e2f0ff;
+   }
+
+   .lot-grid {
+     display: grid;
+     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+     gap: 15px;
+     padding: 15px;
+   }
+  </style>
+
+  <div class="row">
+    <div class="col">
+      <h3>{{ subtitle }}</h3>
+    </div>
   </div>
-</div>
-
-<form method="post">
-  {% csrf_token %}
-<input type="hidden" name="devices" value="{{ devices }}">
-
-<table class="table">
-  <thead>
-    <tr>
-      <th>Select</th>
-      <th>Lot Group / Lot</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for tag in lot_tags %}
-    {% for lot in lots %}
-    {% if lot.type == tag %}
-    <tr>
-      <td><input type="checkbox" name="lots" value="{{ lot.id }}" /></td>
-      <td>{{ tag }}/{{ lot.name }}</td>
-    </tr>
-    {% endif %}
+  <form method="post">
+    {% csrf_token %}
+    {% for group_name, lots in form.grouped_lots.items %}
+      <div class="card mb-1">
+        <div class="card-header d-flex justify-content-between align-items-center" data-bs-toggle="collapse" data-bs-target="#collapse{{ forloop.counter }}" aria-expanded="false" aria-controls="collapse{{ forloop.counter }}" style="cursor: pointer;">
+          <h5 class="mb-0">{{ group_name }} <small class="text-muted">({{ lots|length }} {% trans "open Lot/s"  %})</small>
+          </h5>
+          <i class="bi bi-chevron-down"></i>
+        </div>
+        <div id="collapse{{ forloop.counter }}" class="collapse">
+          <div class="card-body">
+            <div class="lot-grid">
+              {% for lot in lots %}
+                <div class="form-check lot-item ms-2">
+                  <input class="form-check-input mt-2" type="checkbox" name="lots" value="{{ lot.id }}" id="lot{{ lot.id }}">
+                  <label class="form-check-label w-100" for="lot{{ lot.id }}">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <div class="ps-2">
+                        <strong>{{ lot.name }}</strong>
+                        <div class="text-muted small">{{ lot.description|default:"" }}</div>
+                      </div>
+                      <div class="text-end text-muted small">
+                        <div><i class="bi bi-calendar"></i> {{ lot.created|date:"M d, Y" }}</div>
+                        <div><i class="bi bi-person"></i> {{ lot.user.username|default:"System" }}</div>
+                      </div>
+                    </div>
+                  </label>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
     {% endfor %}
-    {% endfor %}
-  </tbody>
-</table>
-
-  <button class="btn btn-green-admin" type="submit">Save</button>
-</form>
+    <button type="submit" id="assignButton" class="btn btn-green-user mt-3">{% if path == "add_devices" %}{% trans "Assign" %} {% else %} {% trans "Deassign" %} {% endif %}</button>
+  </form>
 
 {% endblock %}
