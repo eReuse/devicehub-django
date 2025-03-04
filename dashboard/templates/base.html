@@ -113,7 +113,7 @@
               <li class="nav-item">
                 <a class="admin {% if path in 'all_device' %}active {% endif %}nav-link fw-bold" data-bs-toggle="collapse" data-bs-target="#ul_device" aria-expanded="false" aria-controls="ul_lots" href="javascript:void()">
                   <i class="bi bi-laptop icon_sidebar"></i>
-                  {% trans 'Device' %}
+                  {% trans 'Devices' %}
                 </a>
                 <ul class="flex-column mb-2 ul_sidebar accordion-collapse {% if path in 'all_device' %}expanded{% else %}collapse{% endif %}" id="ul_device" data-bs-parent="#sidebarMenu">
 		  <li class="nav-item">
@@ -124,7 +124,7 @@
                 </ul>
               </li>
               <li class="nav-item">
-                <a class="admin {% if path == 'tags' or path == 'lot' or path in 'unassigned dashboard' %}active {% endif %}nav-link fw-bold" data-bs-toggle="collapse" data-bs-target="#ul_lots" aria-expanded="false" aria-controls="ul_lots" href="javascript:void()">
+                <a class="admin {% if path == 'tags' or path == 'lot' or path  in 'unassigned dashboard' %}active {% endif %}nav-link fw-bold" data-bs-toggle="collapse" data-bs-target="#ul_lots" aria-expanded="false" aria-controls="ul_lots" href="javascript:void()">
                   <i class="bi bi-database icon_sidebar"></i>
                   {% trans 'Lots' %}
                 </a>
@@ -133,11 +133,14 @@
                   {% for tag in lot_tags %}
                   <li class="nav-items">
 		  {% if tag.inbox %}
-                    <a class="nav-link{% if path == 'unassigned' %} active2{% endif %}" href="{% url 'dashboard:unassigned' %}">
+                    <a class="nav-link{% if path == 'inbox' %} active2{% endif %}" href="{% url 'dashboard:unassigned' %}">
+                      <i>
+                        {{ tag.name }}
+                      </i>
 		  {% else %}
                     <a class="nav-link{% if path == 'tags' %} active2{% endif %}" href="{% url 'lot:tags' tag.id %}">
-		  {% endif %}
                       {{ tag.name }}
+		  {% endif %}
                     </a>
                   </li>
                   {% endfor %}
@@ -156,17 +159,17 @@
                   </li>
                   <li class="nav-item">
                     <a class="nav-link{% if path == 'upload' %} active2{% endif %}" href="{% url 'evidence:upload' %}">
-                      {% trans 'Upload with JSON file' %}
+                      {% trans 'Upload JSON file' %}
                     </a>
                   </li>
                   <li class="nav-item">
                     <a class="nav-link{% if path == 'import' %} active2{% endif %}" href="{% url 'evidence:import' %}">
-                      {% trans 'Upload with Spreadsheet' %}
+                      {% trans 'Upload Spreadsheet' %}
                     </a>
                   </li>
                   <li class="nav-item">
                     <a class="nav-link{% if path == 'add' %} active2{% endif %}" href="{% url 'device:add' %}">
-                      {% trans 'Upload with Web Form' %}
+                      {% trans 'Upload Web Form' %}
                     </a>
                   </li>
                 </ul>
