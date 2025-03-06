@@ -37,6 +37,11 @@ class Lot(models.Model):
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     type = models.ForeignKey(LotTag, on_delete=models.CASCADE)
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['owner', 'name', 'type'], name='unique_institution_and_name')
+        ]
+
     def add(self, v):
         if DeviceLot.objects.filter(lot=self, device_id=v).exists():
             return
@@ -45,6 +50,14 @@ class Lot(models.Model):
     def remove(self, v):
         for d in DeviceLot.objects.filter(lot=self, device_id=v):
             d.delete()
+
+    @property
+    def devices(self):
+        return DeviceLot.objects.filter(lot=self)
+
+    def device_count(self):
+        return self.devices.count()
+
 
 class LotProperty(Property):
     lot  = models.ForeignKey(Lot, on_delete=models.CASCADE)
