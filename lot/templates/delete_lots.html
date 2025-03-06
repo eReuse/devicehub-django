@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load django_bootstrap5 %}
+
+{% block content %}
+
+  <div class="col-md-8 mb-3">
+    <div class="card border-0">
+      <div class="card-body text-start">
+        <p class="lead mb-4">
+          {% trans "Are you sure you want to delete the following lot/s?" %}
+        </p>
+
+        <ul class="list-group list-group-flush mb-5">
+          {% for lot in lots %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <span class="fw-bold">{{ lot.name }}</span>
+              <span class="badge {% if lot.devices.count > 0 %} bg-warning {% else %} bg-secondary {% endif %} rounded-pill">
+                  {{ lot.devices.count }} {% trans "device/s" %}
+              </span>
+            </li>
+          {% endfor %}
+        </ul>
+
+        {% if lots_with_devices %}
+          <div class="alert alert-danger d-flex align-items-center" role="alert">
+            <i class="bi bi-exclamation-circle-fill me-2"></i>
+            {% trans "All associated devices will be deassigned." %}
+          </div>
+        {% else %}
+          <div class="alert alert-info d-flex align-items-center" role="alert">
+            <i class="bi bi-info-circle-fill me-2"></i>
+            {% trans "No devices are associated with these lots." %}
+          </div>
+        {% endif %}
+
+      </div>
+    </div>
+
+    <form role="form" method="post" action="{% url 'lot:delete' %}" class="mt-4">
+      {% csrf_token %}
+      {% for selected_id in selected_ids %}
+        <input type="hidden" name="selected_ids" value="{{ selected_id }}">
+      {% endfor %}
+
+      <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+        <a class="btn btn-outline-secondary me-md-2" href="{{ request.META.HTTP_REFERER }}">
+          <i class="bi bi-x-circle me-1"></i>
+          {% translate "Cancel" %}
+        </a>
+        <button type="submit" class="btn btn-danger">
+          <i class="bi bi-trash me-1"></i>
+          {% translate "Delete" %}
+        </button>
+      </div>
+    </form>
+  </div>
+{% endblock %}
