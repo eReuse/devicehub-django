@@ -22,11 +22,17 @@
   </div>
 </div>
 {% endif %}
-{% bootstrap_form form %}
-<div class="form-actions-no-box">
-  <a class="btn btn-grey" href="{% url 'dashboard:unassigned' %}">{% translate "Cancel" %}</a>
-  <input class="btn btn-green-admin" type="submit" name="submit" value="{% translate 'Save' %}" />
-</div>
+{% bootstrap_form form layout="floating" %}
 
+<div class="d-flex justify-content-start gap-3 mt-4">
+  <a class="btn btn-outline-secondary" href="{{ request.META.HTTP_REFERER }}">
+    <i class="bi bi-x-circle me-2"></i>
+    {% translate "Cancel" %}
+  </a>
+  <button type="submit" class="btn btn-green-user">
+    <i class="bi bi-save me-2"></i>
+    {% translate "Save" %}
+  </button>
+</div>
 </form>
 {% endblock %}
