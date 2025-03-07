@@ -16,4 +16,6 @@ urlpatterns = [
     path("<int:pk>/property/delete", views.DeleteLotPropertyView.as_view(), name="delete_property"),
     path("<int:pk>/subscription/", views.SubscriptLotView.as_view(), name="subscription"),
     path("<int:pk>/unsubscription/", views.UnsubscriptLotView.as_view(), name="unsubscription"),
+    path("<int:pk>/donor/add", views.AddDonorView.as_view(), name="add_donor"),
+    path("<int:pk>/donor/del", views.DelDonorView.as_view(), name="del_donor"),
 ]
