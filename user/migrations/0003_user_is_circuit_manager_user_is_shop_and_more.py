@@ -11,16 +11,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(
-            model_name='user',
-            name='is_circuit_manager',
-            field=models.BooleanField(default=False, verbose_name='is circuit manager'),
-        ),
-        migrations.AddField(
-            model_name='user',
-            name='is_shop',
-            field=models.BooleanField(default=False, verbose_name='is shop'),
-        ),
         migrations.AlterField(
             model_name='user',
             name='institution',

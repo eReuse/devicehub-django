@@ -2,7 +2,7 @@ from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import ValidationError
 from django import forms
 from user.models import User
-from lot.models import Lot
+from lot.models import Lot, LotSubscription
 
 
 class LotsForm(forms.Form):
@@ -54,14 +54,15 @@ class LotSubscriptionForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         self.institution = kwargs.pop("institution")
+        self.lot_pk = kwargs.pop("lot_pk")
         super().__init__(*args, **kwargs)
 
     def clean(self):
-        self._user = self.cleaned_data.get("user")
+        self.form_user = self.cleaned_data.get("user")
         self._type = self.cleaned_data.get("type")
 
-        self.user = User.objects.filter(email=self._user).first()
-        if self.user and self.user.institution != self.institution:
+        self._user = User.objects.filter(email=self.form_user).first()
+        if self._user and self._user.institution != self.institution:
             txt = _("This user is from another institution")
             raise ValidationError(txt)
         return
@@ -70,33 +71,96 @@ class LotSubscriptionForm(forms.Form):
         if not commit:
             return
 
-        if not self.user:
-            self.user = User.objects.create_user(
-                self._user,
+        if not self._user:
+            self._user = User.objects.create_user(
+                self.form_user,
                 self.institution,
-                commit=False
             )
             # TODO
             # self.send_email()
 
         if self._type == "circuit_manager":
-            self.user.is_circuit_manager = True
+            slot = LotSubscription.objects.filter(
+                    user=self._user,
+                    lot_id=self.lot_pk,
+                    is_circuit_manager=True
+            )
+            if slot:
+                return
+
+            LotSubscription.objects.create(
+                user=self._user,
+                lot_id=self.lot_pk,
+                is_circuit_manager=True
+            )
 
         if self._type == "shop":
-            self.user.is_shop = True
+            slot = LotSubscription.objects.filter(
+                    user=self._user,
+                    lot_id=self.lot_pk,
+                    is_shop=True
+            )
+            if slot:
+                return
 
-        self.user.save()
+            LotSubscription.objects.create(
+                user=self._user,
+                lot_id=self.lot_pk,
+                is_shop=True
+            )
 
     def remove(self):
-        if not self.user:
+        if not self._user:
             return
 
         if self._type == "circuit_manager":
-            self.user.is_circuit_manager = False
+            lot_subscription = LotSubscription.objects.filter(
+                user=self._user,
+                lot_id=self.lot_pk,
+                is_circuit_manager=True
+            )
 
-        if self._type == "shop":
-            self.user.is_shop = False
+        elif self._type == "shop":
+            lot_subscription = LotSubscription.objects.filter(
+                user=self._user,
+                lot_id=self.lot_pk,
+                is_circuit_manager=True
+            )
 
-        self.user.save()
+        else:
+            lot_subscription = None
+
+        if lot_subscription:
+            for l in lot_subscription:
+                l.delete()
+
+        return
+
+
+class AddDonorForm(forms.Form):
+    user = forms.CharField()
+
+    def __init__(self, *args, **kwargs):
+        self.institution = kwargs.pop("institution")
+        self.lot = kwargs.pop("lot")
+        super().__init__(*args, **kwargs)
+
+    def clean(self):
+        self._user = self.cleaned_data.get("user")
+        return
+
+    def save(self, commit=True):
+        if not commit:
+            return
+
+        self.lot.donor = self._user
+        self.lot.save()
+        # TODO
+        # if self._user:
+        #     self.send_email()
+
+    def remove(self):
+        self.lot.donor = ""
+        self.lot.save()
 
         return
