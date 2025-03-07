@@ -94,6 +94,7 @@ DPP = config("DPP", default=False, cast=bool)
 if DPP:
     INSTALLED_APPS.extend(["dpp", "did"])
 
+DJANGO_TABLES2_TEMPLATE = "django_tables2/bootstrap5.html"
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
