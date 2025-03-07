@@ -1,7 +1,6 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from utils.constants import (
-    STR_SM_SIZE,
     STR_SIZE,
     STR_EXTEND_SIZE,
 )
@@ -36,6 +35,7 @@ class Lot(models.Model):
     owner = models.ForeignKey(Institution, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     type = models.ForeignKey(LotTag, on_delete=models.CASCADE)
+    donor = models.CharField(max_length=STR_SIZE, blank=True, null=True)
 
     def add(self, v):
         if DeviceLot.objects.filter(lot=self, device_id=v).exists():
@@ -65,6 +65,8 @@ class LotProperty(Property):
 class LotSubscription(models.Model):
     lot = models.ForeignKey(Lot, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=False, blank=False)
+    is_circuit_manager = models.BooleanField(_("is circuit manager"), default=False)
+    is_shop = models.BooleanField(_("is shop"), default=False)
 
     class Meta:
         constraints = [

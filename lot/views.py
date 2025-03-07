@@ -12,7 +12,7 @@ from django.views.generic.edit import (
 )
 from dashboard.mixins import DashboardView
 from lot.models import Lot, LotTag, LotProperty, LotSubscription
-from lot.forms import LotsForm, LotSubscriptionForm
+from lot.forms import LotsForm, LotSubscriptionForm, AddDonorForm
 
 class NewLotView(DashboardView, CreateView):
     template_name = "new_lot.html"
@@ -281,15 +281,13 @@ class SubscriptLotMixing(DashboardView, FormView):
     title = _("Subscription")
     breadcrumb = "Lot / Subscription"
     form_class = LotSubscriptionForm
+    lot = None
 
 
     def get_context_data(self, **kwargs):
         self.pk = self.kwargs.get('pk')
         context = super().get_context_data(**kwargs)
-        self.lot = get_object_or_404(
-            Lot, owner=self.request.user.institution,
-            id=self.pk
-        )
+        self.get_lot()
         context.update({
             'lot': self.lot,
             "action": _("Subscribe")
@@ -301,7 +299,15 @@ class SubscriptLotMixing(DashboardView, FormView):
         self.success_url = reverse_lazy('dashboard:lot', args=[self.pk])
         kwargs = super().get_form_kwargs()
         kwargs["institution"] = self.request.user.institution
+        kwargs["lot_pk"] = self.pk
         return kwargs
+
+    def get_lot(self):
+        self.lot = get_object_or_404(
+            Lot,
+            owner=self.request.user.institution,
+            id=self.pk
+        )
 
 
 class SubscriptLotView(SubscriptLotMixing):
@@ -325,3 +331,67 @@ class UnsubscriptLotView(SubscriptLotMixing):
         form.remove()
         response = super().form_valid(form)
         return response
+
+
+class AddDonorView(DashboardView, FormView):
+    template_name = "subscription.html"
+    title = _("Add Donor")
+    breadcrumb = "Lot / {}".format(title)
+    form_class = AddDonorForm
+    lot = None
+
+    def get_context_data(self, **kwargs):
+        self.pk = self.kwargs.get('pk')
+        context = super().get_context_data(**kwargs)
+        if not self.lot:
+            self.get_lot()
+
+        context.update({
+            'lot': self.lot,
+            "action": _("Add")
+        })
+        return context
+
+    def form_valid(self, form):
+        form.save()
+        response = super().form_valid(form)
+        return response
+
+    def get_form_kwargs(self):
+        self.pk = self.kwargs.get('pk')
+        self.success_url = reverse_lazy('dashboard:lot', args=[self.pk])
+        self.get_lot()
+        kwargs = super().get_form_kwargs()
+        kwargs["institution"] = self.request.user.institution
+        kwargs["lot"] = self.lot
+        donor = self.lot.donor or ""
+        kwargs["initial"] = {"user": donor}
+        return kwargs
+
+    def get_lot(self):
+        self.lot = get_object_or_404(
+            Lot,
+            owner=self.request.user.institution,
+            id=self.pk
+        )
+
+
+class DelDonorView(AddDonorView):
+    title = _("Remove Donor")
+    breadcrumb = "Lot / {}".format(title)
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        form.remove()
+        return response
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        donor = kwargs["lot"].donor
+        kwargs["initial"] = {"user": donor}
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["action"] = _("Remove")
+        return context
