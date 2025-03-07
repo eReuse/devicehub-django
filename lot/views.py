@@ -150,8 +150,6 @@ class EditLotView(LotSuccessUrlMixin, DashboardView, UpdateView):
         return response
 
 
-
-
 class AddToLotView(DashboardView, FormView):
     template_name = "list_lots.html"
     title = _("Add to lots")
@@ -287,6 +285,7 @@ class LotsTagsView(DashboardView, tables.SingleTableView):
     success_url = reverse_lazy('dashboard:unassigned')
     model = Lot
     table_class = LotTable
+    paginate_by = 10
 
     def get_queryset(self):
         self.pk = self.kwargs.get('pk')
@@ -315,7 +314,6 @@ class LotsTagsView(DashboardView, tables.SingleTableView):
             queryset = queryset.order_by(sort)
 
         return queryset
-
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
