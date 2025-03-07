@@ -425,6 +425,9 @@ class SubscriptLotView(DashboardView, FormView):
             id=self.pk
         )
 
+
+class SubscriptLotView(SubscriptLotMixing):
+
     def form_valid(self, form):
         form.save()
         response = super().form_valid(form)
