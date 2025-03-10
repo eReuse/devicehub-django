@@ -37,7 +37,6 @@ class Lot(models.Model):
     owner = models.ForeignKey(Institution, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     type = models.ForeignKey(LotTag, on_delete=models.CASCADE)
-    donor = models.CharField(max_length=STR_SIZE, blank=True, null=True)
 
     class Meta:
         constraints = [
