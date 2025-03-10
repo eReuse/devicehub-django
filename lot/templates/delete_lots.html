@@ -10,8 +10,8 @@
       </p>
 
       {% for lot in lots %}
-        <div class="card shadow-sm mb-3">
-          <span class="badge {% if lot.devices.count > 0 %} bg-danger {% else %} bg-secondary {% endif %} rounded-pill">
+        <div class="card shadow-sm mb-3 border-top-0">
+          <span class="badge fs-6 {% if lot.devices.count > 0 %} bg-danger {% else %} bg-secondary {% endif %} border-bottom-0">
             {{ lot.devices.count }} {% trans "device/s" %}
           </span>
 
@@ -22,7 +22,7 @@
                 {% if lot.archived %}{% trans "Archived" %}{% else %}{% trans "Open" %}{% endif %}
               </span>
 
-              <h5 class="card-title mb-0 me-2">{{ lot.name }}</h5>
+              <h5 class="card-title mb-0 me-2 text-capitalize">{{ lot.name }}</h5>
             </div>
             <button class="btn btn-link p-0" type="button" data-bs-toggle="collapse" data-bs-target="#lotDetails{{ forloop.counter }}" aria-expanded="false" aria-controls="lotDetails{{ forloop.counter }}">
               <i class="bi bi-chevron-down"></i>
