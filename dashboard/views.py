@@ -9,7 +9,7 @@ from dashboard.mixins import InventaryMixin, DetailsMixin
 from evidence.models import SystemProperty
 from evidence.xapian import search
 from device.models import Device
-from lot.models import Lot
+from lot.models import Lot, Donor
 
 
 class UnassignedDevicesView(InventaryMixin):
@@ -41,6 +41,13 @@ class LotDashboardView(InventaryMixin, DetailsMixin):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         lot = context.get('object')
+        donor = Donor.objects.filter(
+            lot=lot,
+        ).first()
+
+        if donor:
+            context["donor"] = donor
+
         context.update({
             'lot': lot,
         })

@@ -28,7 +28,7 @@
       <i class="bi bi-tag"></i>
       {% trans 'Unsubscription' %}
     </a>
-    {% if lot.donor %}
+    {% if donor %}
     <a href="{% url 'lot:del_donor' object.id %}" type="button" class="btn btn-green-admin">
       <i class="bi bi-tag"></i>
       {% trans 'Donor' %}
