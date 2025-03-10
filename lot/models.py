@@ -1,3 +1,5 @@
+import uuid
+
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from utils.constants import (
@@ -35,7 +37,6 @@ class Lot(models.Model):
     owner = models.ForeignKey(Institution, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     type = models.ForeignKey(LotTag, on_delete=models.CASCADE)
-    donor = models.CharField(max_length=STR_SIZE, blank=True, null=True)
 
     def add(self, v):
         if DeviceLot.objects.filter(lot=self, device_id=v).exists():
@@ -73,3 +74,13 @@ class LotSubscription(models.Model):
             models.UniqueConstraint(
                 fields=["lot", "user"], name="unique_lot_user")
         ]
+
+
+class Donor(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    reconciliation = models.BooleanField(_("Reconciliation"), default=False)
+    lot = models.ForeignKey(Lot, on_delete=models.CASCADE)
+    email = models.EmailField(
+        _('Email address'),
+        max_length=255,
+    )

@@ -2,7 +2,7 @@ from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import ValidationError
 from django import forms
 from user.models import User
-from lot.models import Lot, LotSubscription
+from lot.models import Lot, LotSubscription, Donor
 
 
 class LotsForm(forms.Form):
@@ -132,6 +132,7 @@ class AddDonorForm(forms.Form):
     def __init__(self, *args, **kwargs):
         self.institution = kwargs.pop("institution")
         self.lot = kwargs.pop("lot")
+        self.donor = kwargs.pop("donor", None)
         super().__init__(*args, **kwargs)
 
     def clean(self):
@@ -142,14 +143,20 @@ class AddDonorForm(forms.Form):
         if not commit:
             return
 
-        self.lot.donor = self._user
-        self.lot.save()
+        if self.donor:
+            self.donor.email = self._user
+            self.donor.save()
+        else:
+            self.donor = Donor.objects.create(
+                lot=self.lot,
+                email=self._user
+            )
         # TODO
         # if self._user:
         #     self.send_email()
 
     def remove(self):
-        self.lot.donor = ""
-        self.lot.save()
+        if self.donor:
+            self.donor.delete()
 
         return

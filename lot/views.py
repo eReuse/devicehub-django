@@ -11,7 +11,9 @@ from django.views.generic.edit import (
     FormView,
 )
 from dashboard.mixins import DashboardView
-from lot.models import Lot, LotTag, LotProperty, LotSubscription
+from evidence.models import SystemProperty
+from device.models import Device
+from lot.models import Lot, LotTag, LotProperty, LotSubscription, Donor
 from lot.forms import LotsForm, LotSubscriptionForm, AddDonorForm
 
 class NewLotView(DashboardView, CreateView):
@@ -333,39 +335,47 @@ class UnsubscriptLotView(SubscriptLotMixing):
         return response
 
 
-class AddDonorView(DashboardView, FormView):
-    template_name = "subscription.html"
-    title = _("Add Donor")
-    breadcrumb = "Lot / {}".format(title)
+class DonorMixing(DashboardView, FormView):
+    template_name = "donor.html"
     form_class = AddDonorForm
     lot = None
+    donor = None
 
     def get_context_data(self, **kwargs):
         self.pk = self.kwargs.get('pk')
         context = super().get_context_data(**kwargs)
         if not self.lot:
             self.get_lot()
+        if not self.donor:
+            self.get_donor()
 
         context.update({
             'lot': self.lot,
-            "action": _("Add")
+            'donor': self.donor,
         })
         return context
 
-    def form_valid(self, form):
-        form.save()
-        response = super().form_valid(form)
-        return response
-
     def get_form_kwargs(self):
+
         self.pk = self.kwargs.get('pk')
         self.success_url = reverse_lazy('dashboard:lot', args=[self.pk])
         self.get_lot()
+        self.get_donor()
+        cmanager = LotSubscription.objects.filter(
+            lot=self.lot,
+            is_circuit_manager=True,
+            user=self.request.user
+        ).first()
+
+        if not self.request.user.is_admin and not cmanager:
+            raise Http404
+
         kwargs = super().get_form_kwargs()
         kwargs["institution"] = self.request.user.institution
         kwargs["lot"] = self.lot
-        donor = self.lot.donor or ""
-        kwargs["initial"] = {"user": donor}
+        if self.donor:
+            kwargs["initial"] = {"user": self.donor.email}
+            kwargs["donor"] = self.donor
         return kwargs
 
     def get_lot(self):
@@ -375,23 +385,83 @@ class AddDonorView(DashboardView, FormView):
             id=self.pk
         )
 
+    def get_donor(self):
+        if not self.lot:
+            self.get_lot()
 
-class DelDonorView(AddDonorView):
+        self.donor = Donor.objects.filter(
+            lot=self.lot,
+        ).first()
+
+class AddDonorView(DonorMixing):
+    title = _("Add Donor")
+    breadcrumb = "Lot / {}".format(title)
+
+    def form_valid(self, form):
+        form.save()
+        response = super().form_valid(form)
+        return response
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["action"] = _("Add")
+        return context
+
+
+class DelDonorView(DonorMixing):
     title = _("Remove Donor")
     breadcrumb = "Lot / {}".format(title)
 
     def form_valid(self, form):
-        response = super().form_valid(form)
         form.remove()
+        response = super().form_valid(form)
         return response
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        donor = kwargs["lot"].donor
-        kwargs["initial"] = {"user": donor}
-        return kwargs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["action"] = _("Remove")
         return context
+
+
+class DonorView(TemplateView, UpdateView):
+    template_name = "donor_web.html"
+    model = Donor
+    fields = ("reconciliation",)
+
+    def get_form_kwargs(self):
+        pk = self.kwargs.get('pk')
+        id = self.kwargs.get('id')
+
+        self.object = get_object_or_404(
+            Donor,
+            id=id,
+            lot_id=pk
+        )
+
+        self.success_url = reverse_lazy('lot:web_donor', args=[pk, id])
+        kwargs = super().get_form_kwargs()
+        kwargs['instance'] = self.object
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["donor"] = self.object
+        context["devices"] = self.get_devices()
+        return context
+
+    def get_devices(self):
+        chids = self.object.lot.devicelot_set.all().values_list(
+            "device_id", flat=True
+        ).distinct()
+
+        props = SystemProperty.objects.filter(
+            owner=self.request.user.institution,
+            value__in=chids
+        ).order_by("-created")
+
+        chids_ordered = []
+        for x in props:
+            if x.value not in chids_ordered:
+                chids_ordered.append(Device(id=x.value))
+
+        return chids_ordered
