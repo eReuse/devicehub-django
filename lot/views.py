@@ -521,12 +521,10 @@ class DelDonorView(DonorMixing):
         return context
 
 
-class DonorView(TemplateView, UpdateView):
+class DonorView(TemplateView):
     template_name = "donor_web.html"
-    model = Donor
-    fields = ("reconciliation",)
 
-    def get_form_kwargs(self):
+    def get_context_data(self, **kwargs):
         pk = self.kwargs.get('pk')
         id = self.kwargs.get('id')
 
@@ -535,13 +533,6 @@ class DonorView(TemplateView, UpdateView):
             id=id,
             lot_id=pk
         )
-
-        self.success_url = reverse_lazy('lot:web_donor', args=[pk, id])
-        kwargs = super().get_form_kwargs()
-        kwargs['instance'] = self.object
-        return kwargs
-
-    def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["donor"] = self.object
         context["devices"] = self.get_devices()
@@ -563,3 +554,25 @@ class DonorView(TemplateView, UpdateView):
                 chids_ordered.append(Device(id=x.value))
 
         return chids_ordered
+
+
+class AcceptDonorView(TemplateView):
+    template_name = "donor_web.html"
+
+    def get(self, *args, **kwargs):
+        super().get(*args, **kwargs)
+        self.success_url = reverse_lazy('lot:web_donor', args=[pk, id])
+        pk = self.kwargs.get('pk')
+        id = self.kwargs.get('id')
+
+        self.object = get_object_or_404(
+            Donor,
+            id=id,
+            lot_id=pk
+        )
+        self.object.reconciliation = True
+        self.object.save()
+        # TODO
+        # self.send_email()
+
+        return redirect(self.success_url)
