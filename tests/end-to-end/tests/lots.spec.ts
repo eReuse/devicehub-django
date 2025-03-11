@@ -97,6 +97,52 @@ test('Sort by different columns', async ({ page }) => {
 
 });
 
+test('Lot already exists', async ({ page }) => {
+    await login(page);
+    //await page.pause();
+
+    // Create Lot
+    await page.getByRole('link', { name: 'Entrada' }).click();
+    await page.getByRole('link', { name: 'New lot' }).click();
+    await page.getByLabel('Type').selectOption('2');
+    await page.getByPlaceholder('Name').fill('Duplicated lot');
+    await page.getByPlaceholder('Code').click();
+    await page.getByPlaceholder('Code').fill('Codigo');
+    await page.getByPlaceholder('Description').fill('Descripcion muy extensa de una organizacion muy extensa');
+    await page.getByRole('button', { name: ' Save' }).click();
+
+    await page.getByRole('link', { name: 'New lot' }).click();
+    await page.getByLabel('Type').selectOption('2');
+    await page.getByPlaceholder('Name').fill('Duplicated lot');
+    await page.getByPlaceholder('Code').click();
+    await page.getByPlaceholder('Code').fill('Codigo');
+    await page.getByPlaceholder('Description').fill('Descripcion muy extensa de una organizacion muy extensa');
+    await page.getByRole('button', { name: ' Save' }).click();
+
+    await expect(page.getByText('Lot name is already defined.')).toBeVisible();
+
+    await page.close();
+});
+
+test('Archive lot', async ({ page }) => {
+    await login(page);
+    await page.pause();
+
+    // Create Lot
+    await page.getByRole('link', { name: 'Entrada' }).click();
+    await page.getByRole('link', { name: 'New lot' }).click();
+    await page.getByLabel('Type').selectOption('2');
+    await page.getByPlaceholder('Name').fill('Lot-to be archived');
+    await page.getByRole('button', { name: ' Save' }).click();
+
+    await page.getByRole('link', { name: ' Edit' }).first().click();
+    await page.getByLabel('Archived').check();
+    await page.getByRole('button', { name: ' Save' }).click();
+    await page.getByText('Archived (1)').click();
+    await page.getByRole('link', { name: 'Lot-to be archived' }).click();
+    await page.close();
+});
+
 test('Select all and delete all', async ({ page }) => {
     await login(page);
     // await page.pause();
