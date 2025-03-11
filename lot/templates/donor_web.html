@@ -1,4 +1,5 @@
 {% load i18n %}
+{% load django_bootstrap5 %}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -117,10 +118,28 @@
 	  </table>
         </div>
       </div>
+
+      {% if not donor.reconciliation %}
+      <div class="row mt-4">
+        <div class="col">
+          <div class="form-actions-no-box">
+            <a class="btn btn-secondary" href="{% url 'lot:accept_donor' donor.lot.id donor.id %}">{% trans 'Accept' %}</a>
+          </div>
+        </div>
+      </div>
+      {% else %}
+      <div class="row mt-4">
+        <div class="col">
+          <div class="form-actions-no-box">
+            <a class="btn btn-secondary" href="{# url 'lot:impact_doc_donor' donor.lot.id donor.id #}">{% trans 'Impact Inform' %}</a>
+          </div>
+        </div>
+      </div>
+      {% endif %}
     </div>
     <footer>
       <p>
-        &copy;{% now 'Y' %}eReuse. All rights reserved.
+        &copy;{% now 'Y' %} eReuse. All rights reserved.
       </p>
     </footer>
 
