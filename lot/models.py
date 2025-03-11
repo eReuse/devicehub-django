@@ -93,16 +93,27 @@ class LotProperty(Property):
 
 
 class LotSubscription(models.Model):
+    class Type(models.IntegerChoices):
+        CIRCUIT_MANAGER = 0, _("Circuit Manager")
+        SHOP = 1, _("Shop")
+
     lot = models.ForeignKey(Lot, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=False, blank=False)
-    is_circuit_manager = models.BooleanField(_("is circuit manager"), default=False)
-    is_shop = models.BooleanField(_("is shop"), default=False)
+    type = models.SmallIntegerField(choices=Type.choices)
 
     class Meta:
         constraints = [
             models.UniqueConstraint(
                 fields=["lot", "user"], name="unique_lot_user")
         ]
+
+    @property
+    def is_circuit_manager(self):
+        return self.type == self.Type.CIRCUIT_MANAGER
+
+    @property
+    def is_shop(self):
+        return self.type == self.Type.SHOP
 
 
 class Donor(models.Model):
