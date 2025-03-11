@@ -54,6 +54,14 @@ class LotSubscriptionForm(forms.Form):
         if self._user and self._user.institution != self.institution:
             txt = _("This user is from another institution")
             raise ValidationError(txt)
+        slot = LotSubscription.objects.filter(
+                user=self._user,
+                lot_id=self.lot_pk,
+        )
+        if slot:
+            txt = _("This user is already subscripted")
+            raise ValidationError(txt)
+
         return
 
     def save(self, commit=True):
@@ -72,7 +80,8 @@ class LotSubscriptionForm(forms.Form):
             slot = LotSubscription.objects.filter(
                     user=self._user,
                     lot_id=self.lot_pk,
-                    is_circuit_manager=True
+                    type=LotSubscription.Type.CIRCUIT_MANAGER
+
             )
             if slot:
                 return
@@ -80,14 +89,14 @@ class LotSubscriptionForm(forms.Form):
             LotSubscription.objects.create(
                 user=self._user,
                 lot_id=self.lot_pk,
-                is_circuit_manager=True
+                type=LotSubscription.Type.CIRCUIT_MANAGER
             )
 
         if self._type == "shop":
             slot = LotSubscription.objects.filter(
                     user=self._user,
                     lot_id=self.lot_pk,
-                    is_shop=True
+                    type=LotSubscription.Type.SHOP
             )
             if slot:
                 return
@@ -95,7 +104,7 @@ class LotSubscriptionForm(forms.Form):
             LotSubscription.objects.create(
                 user=self._user,
                 lot_id=self.lot_pk,
-                is_shop=True
+                type=LotSubscription.Type.SHOP
             )
 
     def remove(self):
@@ -106,14 +115,14 @@ class LotSubscriptionForm(forms.Form):
             lot_subscription = LotSubscription.objects.filter(
                 user=self._user,
                 lot_id=self.lot_pk,
-                is_circuit_manager=True
+                type=LotSubscription.Type.CIRCUIT_MANAGER
             )
 
         elif self._type == "shop":
             lot_subscription = LotSubscription.objects.filter(
                 user=self._user,
                 lot_id=self.lot_pk,
-                is_circuit_manager=True
+                type=LotSubscription.Type.SHOP
             )
 
         else:

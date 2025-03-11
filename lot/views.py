@@ -278,20 +278,24 @@ class DeleteLotPropertyView(DashboardView, DeleteView):
         return redirect(self.success_url)
 
 
-class SubscriptLotMixing(DashboardView, FormView):
+class SubscriptLotView(DashboardView, FormView):
     template_name = "subscription.html"
     title = _("Subscription")
     breadcrumb = "Lot / Subscription"
     form_class = LotSubscriptionForm
     lot = None
 
-
     def get_context_data(self, **kwargs):
         self.pk = self.kwargs.get('pk')
         context = super().get_context_data(**kwargs)
         self.get_lot()
+        subscriptors = []
+        if self.request.user.is_admin:
+            subscriptors = LotSubscription.objects.filter(lot=self.lot)
+
         context.update({
             'lot': self.lot,
+            'subscriptors': subscriptors,
             "action": _("Subscribe")
         })
         return context
@@ -311,28 +315,32 @@ class SubscriptLotMixing(DashboardView, FormView):
             id=self.pk
         )
 
-
-class SubscriptLotView(SubscriptLotMixing):
-
     def form_valid(self, form):
         form.save()
         response = super().form_valid(form)
         return response
 
 
-class UnsubscriptLotView(SubscriptLotMixing):
-    title = _("Unsubscription")
-    breadcrumb = "Lot / Unsubscription"
+class UnsubscriptLotView(DashboardView, TemplateView):
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["action"] = _("Unsubscribe")
-        return context
+    def get(self, *args, **kwargs):
+        super().get(*args, **kwargs)
+        pk = self.kwargs.get('pk')
+        id = self.kwargs.get('id')
+        self.success_url = reverse_lazy('lot:subscription', args=[pk])
 
-    def form_valid(self, form):
-        form.remove()
-        response = super().form_valid(form)
-        return response
+        self.object = get_object_or_404(
+            LotSubscription,
+            lot_id=pk,
+            id=id
+        )
+
+        if self.object.user == self.request.user or self.request.user.is_admin:
+            self.object.delete()
+            # TODO
+            # self.send_email()
+
+        return redirect(self.success_url)
 
 
 class DonorMixing(DashboardView, FormView):
@@ -363,7 +371,7 @@ class DonorMixing(DashboardView, FormView):
         self.get_donor()
         cmanager = LotSubscription.objects.filter(
             lot=self.lot,
-            is_circuit_manager=True,
+            type=LotSubscription.Type.CIRCUIT_MANAGER,
             user=self.request.user
         ).first()
 
@@ -463,9 +471,9 @@ class AcceptDonorView(TemplateView):
 
     def get(self, *args, **kwargs):
         super().get(*args, **kwargs)
-        self.success_url = reverse_lazy('lot:web_donor', args=[pk, id])
         pk = self.kwargs.get('pk')
         id = self.kwargs.get('id')
+        self.success_url = reverse_lazy('lot:web_donor', args=[pk, id])
 
         self.object = get_object_or_404(
             Donor,
