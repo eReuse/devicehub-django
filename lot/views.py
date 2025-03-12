@@ -7,7 +7,6 @@ from django.shortcuts import get_object_or_404, redirect, Http404, render
 from django.contrib import messages
 from django.core.cache import cache
 from django.utils.translation import gettext_lazy as _
-from django.utils.safestring import mark_safe
 from django.db.models import Q, Count, Case, When, IntegerField
 from django.views.generic.base import TemplateView, View
 from django.views.generic.edit import (
@@ -21,6 +20,7 @@ from dashboard.mixins import DashboardView
 from lot.tables import LotTable
 from device.models import Device
 from evidence.models import SystemProperty
+from lot.tables import LotTable
 from lot.forms import LotsForm, LotSubscriptionForm, AddDonorForm, BeneficiaryForm
 from lot.models import (
     Lot,
