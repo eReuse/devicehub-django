@@ -26,28 +26,29 @@
   <form method="post">
   {% csrf_token %}
 
-  Lot actions: <button class="btn btn-green-admin" type="submit" name="url" value="{% url 'lot:add_devices' %}">Add</button> <button class="btn btn-green-admin" type="submit" value="{% url 'lot:del_devices' %}" name="url">Remove</button>
+
+ {% trans "Lot Actions"  %}: <button class="btn btn-green-admin" type="submit" name="url" value="{% url 'lot:add_devices' %}">{% trans " Add" %}</button> <button class="btn btn-green-admin" type="submit" value="{% url 'lot:del_devices' %}" name="url">{% trans "Remove" %}</button>
 
   <table class="table">
     <thead>
       <tr>
         <th scope="col" data-sortable="">
-          select
+          {% trans "select" %}
         </th>
         <th scope="col" data-sortable="">
-          shortid
+          {% trans "shortid" %}
         </th>
         <th scope="col" data-sortable="">
-          type
+          {% trans "type" %}
         </th>
         <th scope="col" data-sortable="">
-          manufacturer
+          {% trans "manufacturer" %}
         </th>
         <th scope="col" data-sortable="">
-          model
+          {% trans "model" %}
         </th>
         <th scope="col" data-sortable="">
-          updated
+          {% trans "updated" %}
         </th>
       </tr>
     </thead>
