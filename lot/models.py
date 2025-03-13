@@ -95,3 +95,19 @@ class Donor(models.Model):
         _('Email address'),
         max_length=255,
     )
+
+
+class Beneficiary(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    sign_conditions = models.BooleanField(_("Conditions"), default=False)
+    lot = models.ForeignKey(Lot, on_delete=models.CASCADE)
+    shop = models.ForeignKey(LotSubscription, on_delete=models.CASCADE)
+    email = models.EmailField(
+        _('Email address'),
+        max_length=255,
+    )
+
+
+class DeviceBeneficiary(models.Model):
+    beneficiary = models.ForeignKey("Beneficiary", on_delete=models.CASCADE)
+    device_id = models.CharField(max_length=STR_EXTEND_SIZE, blank=False, null=False)

@@ -2,7 +2,12 @@ from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import ValidationError
 from django import forms
 from user.models import User
-from lot.models import Lot, LotSubscription, Donor
+from lot.models import (
+    Lot,
+    LotSubscription,
+    Beneficiary,
+    Donor,
+)
 
 
 class LotsForm(forms.Form):
@@ -28,6 +33,41 @@ class LotsForm(forms.Form):
         for dev in self.devices:
             for lot in self._lots:
                 lot.remove(dev.id)
+        return
+
+
+class BeneficiaryForm(forms.Form):
+    beneficiary = forms.CharField()
+
+    def __init__(self, *args, **kwargs):
+        self.shop = kwargs.pop("shop")
+        self.lot_pk = kwargs.pop("lot_pk")
+        self.devices = kwargs.pop("devices", [])
+        super().__init__(*args, **kwargs)
+
+    def clean(self):
+        self._beneficiary = self.cleaned_data.get("beneficiary")
+        return self._beneficiary
+
+    def save(self, commit=True):
+        if not commit:
+            return
+
+        Beneficiary.objects.create(
+            email=self._beneficiary,
+            lot_id=self.lot_pk,
+            shop=self.shop
+        )
+
+        for dev in self.devices:
+            for ben in self._beneficiary:
+                ben.add(dev.id)
+        return
+
+    def remove(self):
+        for dev in self.devices:
+            for ben in self._beneficiary:
+                ben.remove(dev.id)
         return
 
 

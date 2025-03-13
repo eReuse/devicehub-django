@@ -13,8 +13,16 @@ from django.views.generic.edit import (
 from dashboard.mixins import DashboardView
 from evidence.models import SystemProperty
 from device.models import Device
-from lot.models import Lot, LotTag, LotProperty, LotSubscription, Donor
-from lot.forms import LotsForm, LotSubscriptionForm, AddDonorForm
+from lot.forms import LotsForm, LotSubscriptionForm, AddDonorForm, BeneficiaryForm
+from lot.models import (
+    Lot,
+    LotTag,
+    LotProperty,
+    LotSubscription,
+    Beneficiary,
+    Donor
+)
+
 
 class NewLotView(DashboardView, CreateView):
     template_name = "new_lot.html"
@@ -289,9 +297,11 @@ class SubscriptLotView(DashboardView, FormView):
         self.pk = self.kwargs.get('pk')
         context = super().get_context_data(**kwargs)
         self.get_lot()
-        subscriptors = []
-        if self.request.user.is_admin:
-            subscriptors = LotSubscription.objects.filter(lot=self.lot)
+        subscriptors = LotSubscription.objects.filter(lot=self.lot)
+        user_subscripted = subscriptors.filter(user=self.request.user).first()
+
+        if not self.request.user.is_admin and not user_subscripted:
+            subscriptors = []
 
         context.update({
             'lot': self.lot,
@@ -486,3 +496,59 @@ class AcceptDonorView(TemplateView):
         # self.send_email()
 
         return redirect(self.success_url)
+
+
+class BeneficiaryView(DashboardView, FormView):
+    template_name = "beneficiaries.html"
+    title = _("Beneficiaries")
+    breadcrumb = "Lot / Beneficiary"
+    form_class = BeneficiaryForm
+    lot = None
+
+    def get_context_data(self, **kwargs):
+        self.pk = self.kwargs.get('pk')
+        context = super().get_context_data(**kwargs)
+        self.get_lot()
+
+        self.is_shop = LotSubscription.objects.filter(
+            lot=self.lot,
+            user=self.request.user,
+            type=LotSubscription.Type.SHOP
+        ).first()
+
+        beneficiaries = []
+        if self.request.user.is_admin or self.is_shop:
+            beneficiaries = Beneficiary.objects.filter(lot=self.lot)
+
+        context.update({
+            'lot': self.lot,
+            'beneficiaries': beneficiaries,
+            "action": _("Add")
+        })
+        return context
+
+    def get_form_kwargs(self):
+        self.pk = self.kwargs.get('pk')
+        self.success_url = reverse_lazy('dashboard:lot', args=[self.pk])
+        self.is_shop = LotSubscription.objects.filter(
+            lot_id=self.pk,
+            user=self.request.user,
+            type=LotSubscription.Type.SHOP
+        ).first()
+
+        kwargs = super().get_form_kwargs()
+        kwargs["shop"] = self.is_shop
+        kwargs["lot_pk"] = self.pk
+        return kwargs
+
+    def get_lot(self):
+        self.lot = get_object_or_404(
+            Lot,
+            owner=self.request.user.institution,
+            id=self.pk
+        )
+
+    def form_valid(self, form):
+        form.save()
+        response = super().form_valid(form)
+        return response

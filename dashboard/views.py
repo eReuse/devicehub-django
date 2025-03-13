@@ -1,15 +1,13 @@
 import json
 
 from django.utils.translation import gettext_lazy as _
-from django.views.generic.edit import FormView
-from django.shortcuts import Http404
 from django.db.models import Q
 
 from dashboard.mixins import InventaryMixin, DetailsMixin
 from evidence.models import SystemProperty
 from evidence.xapian import search
 from device.models import Device
-from lot.models import Lot, Donor
+from lot.models import Lot, LotSubscription, Donor
 
 
 class UnassignedDevicesView(InventaryMixin):
@@ -42,15 +40,23 @@ class LotDashboardView(InventaryMixin, DetailsMixin):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         lot = context.get('object')
-        donor = Donor.objects.filter(
+        subscriptions = LotSubscription.objects.filter(
             lot=lot,
+            user=self.request.user
+        )
+        is_shop = subscriptions.filter(type=LotSubscription.Type.SHOP).first()
+        is_circuit_manager = subscriptions.filter(
+            type=LotSubscription.Type.CIRCUIT_MANAGER
         ).first()
 
-        if donor:
-            context["donor"] = donor
+        donor = Donor.objects.filter(lot=lot).first()
 
         context.update({
             'lot': lot,
+            'subscripted': subscriptions.first(),
+            'is_circuit_manager': is_circuit_manager,
+            'is_shop': is_shop,
+            'donor': donor,
         })
         return context
 

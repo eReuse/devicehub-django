@@ -18,12 +18,13 @@
       <i class="bi bi-tag"></i>
       {% trans 'properties' %}
     </a>
-    {% if user %}
+    {% if subscripted or user.is_admin %}
     <a href="{% url 'lot:subscription' object.id %}" type="button" class="btn btn-green-admin">
       <i class="bi bi-tag"></i>
       {% trans 'Subscription' %}
     </a>
     {% endif %}
+    {% if is_circuit_manager %}
     {% if donor %}
     <a href="{% url 'lot:del_donor' object.id %}" type="button" class="btn btn-green-admin">
       <i class="bi bi-tag"></i>
@@ -33,6 +34,13 @@
     <a href="{% url 'lot:add_donor' object.id %}" type="button" class="btn btn-green-admin">
       <i class="bi bi-tag"></i>
       {% trans 'Donor' %}
+    </a>
+    {% endif %}
+    {% endif %}
+    {% if is_shop %}
+    <a href="{% url 'lot:beneficiary' object.id %}" type="button" class="btn btn-green-admin">
+      <i class="bi bi-tag"></i>
+      {% trans 'Beneficiary' %}
     </a>
     {% endif %}
     {% endif %}
