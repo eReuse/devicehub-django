@@ -20,7 +20,7 @@ from dashboard.mixins import InventaryMixin, DetailsMixin, DeviceTableMixin
 from evidence.models import SystemProperty
 from evidence.xapian import search
 from device.models import Device
-from lot.models import Lot, Donor
+from lot.models import Lot, LotSubscription, Donor
 
 
 class UnassignedDevicesView(DeviceTableMixin, InventaryMixin):
@@ -61,12 +61,16 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         lot = context.get('object')
-        donor = Donor.objects.filter(
+        subscriptions = LotSubscription.objects.filter(
             lot=lot,
+            user=self.request.user
+        )
+        is_shop = subscriptions.filter(type=LotSubscription.Type.SHOP).first()
+        is_circuit_manager = subscriptions.filter(
+            type=LotSubscription.Type.CIRCUIT_MANAGER
         ).first()
 
-        if donor:
-            context["donor"] = donor
+        donor = Donor.objects.filter(lot=lot).first()
 
         context.update({
             'lot': lot,
@@ -78,6 +82,10 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
             'breadcrumb' : _("Lot / {} / Devices").format(
                 lot.name),
             'title' : lot.name
+            'subscripted': subscriptions.first(),
+            'is_circuit_manager': is_circuit_manager,
+            'is_shop': is_shop,
+            'donor': donor,
         })
         return context
 
