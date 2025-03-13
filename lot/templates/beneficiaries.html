@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+<div class="row">
+  <div class="col">
+    <h3>{{ subtitle }}</h3>
+  </div>
+</div>
+
+{% if beneficiaries %}
+<div class="row">
+  <div class="col">
+    <table class="table table-hover table-bordered align-middel">
+      <thead class="table-light">
+        <tr>
+          <th scope="col">{% trans 'Beneficiary' %}</th>
+          <th scope="col">{% trans 'Shop' %}</th>
+          <th scope="col">{% trans 'Sign conditions' %}</th>
+          <th scope="col"></th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for s in beneficiaries %}
+        <tr>
+          <td class="font-monospace">{{ s.email }}</td>
+          <td class="font-monospace">{{ s.shop.user.email }}</td>
+          <td class="font-monospace">{{ s.sign_conditions }}</td>
+          <td class="font-monospace">
+	    <a href="{# url 'lot:unsubscription' lot.id s.id #}">
+	       {% trans 'Delete' %}
+	    </a>
+	  </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<div class="mt-4">
+  <button class="btn btn-green-admin" type="button" data-bs-toggle="collapse" data-bs-target="#add_beneficiarie">
+    {% trans 'Add Beneficiarie' %}
+  </button>
+
+  <div class="collapse mt-3" id="add_beneficiarie">
+    <div class="card card-body">
+       {% trans 'Add an email of beneficiary' %}.
+    </div>
+    {% load django_bootstrap5 %}
+    <form role="form" method="post">
+      {% csrf_token %}
+      {% if form.errors %}
+      <div class="alert alert-danger alert-icon alert-icon-border alert-dismissible" role="alert">
+        <div class="icon"><span class="mdi mdi-close-circle-o"></span></div>
+        <div class="message">
+          {% for field, error in form.errors.items %}
+            {{ error }}<br />
+          {% endfor %}
+          <button class="btn-close" type="button" data-dismiss="alert" aria-label="Close"></button>
+        </div>
+      </div>
+      {% endif %}
+      {% bootstrap_form form %}
+      <div class="form-actions-no-box">
+        <a class="btn btn-grey" href="{% url 'dashboard:lot' lot.id %}">{% translate "Cancel" %}</a>
+        <input class="btn btn-green-admin" type="submit" name="submit" value="{{ action }}" />
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
