@@ -103,6 +103,7 @@ class EvidenceView(DashboardView, FormView):
         context = super().get_context_data(**kwargs)
         context.update({
             'object': self.object,
+            'form2': EraseServerForm(**self.get_form_kwargs(), data=self.request.POST or None),
         })
         return context
 
