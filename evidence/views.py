@@ -144,7 +144,7 @@ class DownloadEvidenceView(DashboardView, TemplateView):
 
 
 class EraseServerView(DashboardView, FormView):
-    template_name = "ev_eraseserver.html"
+    template_name = "ev_details.html"
     section = "evidences"
     title = _("Evidences")
     breadcrumb = "Evidences / Details"
