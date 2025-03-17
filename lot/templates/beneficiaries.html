@@ -17,6 +17,7 @@
           <th scope="col">{% trans 'Beneficiary' %}</th>
           <th scope="col">{% trans 'Shop' %}</th>
           <th scope="col">{% trans 'Sign conditions' %}</th>
+          <th scope="col">{% trans 'Devices' %}</th>
           <th scope="col"></th>
         </tr>
       </thead>
@@ -27,7 +28,12 @@
           <td class="font-monospace">{{ s.shop.user.email }}</td>
           <td class="font-monospace">{{ s.sign_conditions }}</td>
           <td class="font-monospace">
-	    <a href="{# url 'lot:unsubscription' lot.id s.id #}">
+	    <a href="{% url 'lot:devices_beneficiary' lot.id s.id %}">
+	       {% trans 'Devices' %}
+	    </a>
+	  </td>
+          <td class="font-monospace">
+	    <a href="{% url 'lot:del_beneficiary' lot.id s.id %}">
 	       {% trans 'Delete' %}
 	    </a>
 	  </td>

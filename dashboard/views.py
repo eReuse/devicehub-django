@@ -76,7 +76,7 @@ class LotDashboardView(InventaryMixin, DetailsMixin):
                 chids_ordered.append(x.value)
 
         chids_page = chids_ordered[offset:offset+limit]
-        return [Device(id=x) for x in chids_page], len(chids_ordered)
+        return [Device(id=x, lot=self.object) for x in chids_page], len(chids_ordered)
 
 
 class SearchView(InventaryMixin):

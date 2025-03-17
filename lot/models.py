@@ -107,7 +107,33 @@ class Beneficiary(models.Model):
         max_length=255,
     )
 
+    def add(self, v):
+        exist = DeviceBeneficiary.objects.filter(
+            beneficiary__lot=self.lot, device_id=v
+        ).exists()
+
+        if exist:
+            return
+
+        DeviceBeneficiary.objects.create(
+            beneficiary=self,
+            device_id=v,
+            status=DeviceBeneficiary.Status.INTEREST
+        )
+
+    def remove(self, v):
+        for d in DeviceBeneficiary.objects.filter(beneficiary=self, device_id=v):
+            d.delete()
+
 
 class DeviceBeneficiary(models.Model):
+    class Status(models.IntegerChoices):
+        AVAILABLE = 0, _("Available")
+        INTEREST = 1, _("Interest")
+        CONFIRMED = 2, _("Confirmed")
+        DELIVERED = 3, _("Delivered")
+        RETURNED = 4, _("Returned")
+
     beneficiary = models.ForeignKey("Beneficiary", on_delete=models.CASCADE)
     device_id = models.CharField(max_length=STR_EXTEND_SIZE, blank=False, null=False)
+    status = models.SmallIntegerField(choices=Status.choices, default=Status.AVAILABLE)

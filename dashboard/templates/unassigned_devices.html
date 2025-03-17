@@ -4,6 +4,8 @@
 
 
 {% block content %}
+<form method="post">
+{% csrf_token %}
 <div class="row">
   <div class="col-3">
     <h3>{{ subtitle }}</h3>
@@ -38,18 +40,16 @@
     {% endif %}
     {% endif %}
     {% if is_shop %}
-    <a href="{% url 'lot:beneficiary' object.id %}" type="button" class="btn btn-green-admin">
+    <button class="btn btn-green-admin" type="submit" name="url" value="{% url 'lot:beneficiary' lot.id %}">
       <i class="bi bi-tag"></i>
       {% trans 'Beneficiary' %}
-    </a>
+    </button>
     {% endif %}
     {% endif %}
   </div>
 </div>
 
 <div class="dataTable-container">
-  <form method="post">
-  {% csrf_token %}
 
   Lot actions: <button class="btn btn-green-admin" type="submit" name="url" value="{% url 'lot:add_devices' %}">Add</button> <button class="btn btn-green-admin" type="submit" value="{% url 'lot:del_devices' %}" name="url">Remove</button>
 
@@ -71,6 +71,11 @@
         <th scope="col" data-sortable="">
           model
         </th>
+        {% if subscripted %}
+        <th scope="col" data-sortable="">
+          Status
+        </th>
+	{% endif %}
         <th scope="col" data-sortable="">
           updated
         </th>
@@ -100,6 +105,11 @@
             {{ dev.model }}
 	  {% endif %}
         </td>
+        {% if subscripted %}
+        <td>
+            {{ dev.status_beneficiary }}
+        </td>
+	{% endif %}
         <td>
             {{ dev.updated }}
         </td>
@@ -107,11 +117,11 @@
     </tbody>
     {% endfor %}
   </table>
-  </form>
 </div>
 <div class="row mt-3">
   <div class="col">
     {% render_pagination page total_pages limit search %}
   </div>
 </div>
+</form>
 {% endblock %}

@@ -2,7 +2,7 @@ from django.db import models, connection
 
 from utils.constants import ALGOS
 from evidence.models import SystemProperty, UserProperty, Evidence
-from lot.models import DeviceLot
+from lot.models import DeviceLot, DeviceBeneficiary
 from action.models import State
 
 
@@ -27,6 +27,7 @@ class Device:
         # the id is the chid of the device
         self.id = kwargs["id"]
         self.uuid = kwargs.get("uuid")
+        self.lot = kwargs.get("lot")
         self.pk = self.id
         self.shortid = self.pk[:6].upper()
         self.algorithm = None
@@ -404,3 +405,19 @@ class Device:
     def did_document(self):
         self.get_last_evidence()
         return self.last_evidence.get_did_document()
+
+    @property
+    def status_beneficiary(self):
+        if not self.lot:
+            return ''
+
+        dev = DeviceBeneficiary.objects.filter(
+            device_id=self.id,
+            beneficiary__lot=self.lot
+        ).first()
+
+        status = DeviceBeneficiary.Status.AVAILABLE.label
+        if dev:
+            status = DeviceBeneficiary.Status(dev.status).label
+
+        return status
