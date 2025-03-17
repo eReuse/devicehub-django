@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+<div class="row">
+  <div class="col">
+    <h3>{{ beneficiary.email }}</h3>
+  </div>
+</div>
+
+{% if devices %}
+<div class="row">
+  <div class="col">
+    <table class="table table-hover table-bordered align-middel">
+      <thead class="table-light">
+        <tr>
+          <th scope="col">{% trans 'ShortId' %}</th>
+          <th scope="col">{% trans 'Manufacturer' %}</th>
+          <th scope="col">{% trans 'Model' %}</th>
+          <th scope="col">{% trans 'Serial Number' %}</th>
+          <th scope="col"></th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for s in devices %}
+        <tr>
+          <td class="font-monospace">{{ s.shortid }}</td>
+          <td class="font-monospace">{{ s.manufacturer }}</td>
+          <td class="font-monospace">{{ s.model }}</td>
+          <td class="font-monospace">{{ s.serial_number }}</td>
+          <td class="font-monospace">
+	    <a href="{% url 'lot:del_device_beneficiary' lot.id beneficiary.id s.id %}">
+	       {% trans 'Delete' %}
+	    </a>
+	  </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<div class="mt-4">
+  <a class="btn btn-green-admin" type="button" href="{% url 'lot:add_device_beneficiary' lot.id beneficiary.id %}">
+    {% trans 'Add Devices' %}
+  </a>
+</div>
+{% endblock %}
