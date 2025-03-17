@@ -2,42 +2,44 @@
 {% load i18n static language_code %}
 
 {% block login_content %}
+
+<div class="pt-2 pb-3">
+  <h5 class="card-title text-center pb-0 fs-4 help"> {% trans "Sign in" %}</h5>  
+</div>
+
 <form action="{% url 'login:login' %}" method="post" class="row g-3 needs-validation" novalidate>
   {% csrf_token %}
-  <div class="col-12">
+  <div class="col-12 mb-">
     <input type="email" name="username" maxlength="100" autocapitalize="off"
-        autocorrect="off" class="form-control textinput textInput" id="yourEmail" required
+        autocorrect="off" class="form-control textinput textInput {% if form.username.errors %}is-invalid{% endif %}" id="yourEmail" required
         autofocus placeholder="{{ form.username.label }}"
         {% if form.username.value %}value="{{ form.username.value }}" {% endif %}>
-    <div class="invalid-feedback">Please enter your email.</div>
     {% if form.username.errors %}
-    <p class="text-error">
-        {{ form.username.errors|striptags }}
-    </p>
+    <div class="invalid-feedback d-block">
+      {{ form.username.errors|striptags }}
+  </div>
     {% endif %}
   </div>
 
-  <div class="col-12">
+  <div class="col-12 mb-3">
     <div class="input-group">
-    <input type="password" name="password" maxlength="100" autocapitalize="off"
-        autocorrect="off" class="form-control textinput textInput" id="id_password"
-        placeholder="{{ form.password.label }}" required>
+      <input type="password" name="password" maxlength="100" autocapitalize="off"
+          autocorrect="off" class="form-control textinput textInput {% if form.password.errors %}is-invalid{% endif %}" id="id_password"
+          placeholder="{{ form.password.label }}" required>
+      <i class="input-group-text bi bi-eye" id="togglePassword" style="cursor: pointer"></i>
+    </div>  
     {% if form.password.errors %}
-    <p class="text-error">
-        {{ form.password.errors|striptags }}
-    </p>
-    {% endif %}
-    <i class="input-group-text bi bi-eye" id="togglePassword" style="cursor: pointer">
-    </i>
+    <div class="invalid-feedback d-block">
+      {{ form.password.errors|striptags }}
     </div>
-    <div class="invalid-feedback">Please enter your password!</div>
+    {% endif %}
   </div>
 
   <input name="next" type="hidden" value="{{ success_url }}">
 
-  <div class="col-12">
-    <button class="btn btn-primary w-100" type="submit">Next</button>
-  </div>
+  <div class="col-12 mb-3">
+    <button class="btn btn-green-user w-100" type="submit">{% trans "Login" %}</button>
+  </div>                      
 </form>
 <div id="login-footer" class="d-flex justify-content-between align-items-center mt-4">
   <a href="{% url 'login:password_reset' %}" data-toggle="modal" data-target="#forgotPasswordModal">{% trans "Forgot your password?" %}</a>
