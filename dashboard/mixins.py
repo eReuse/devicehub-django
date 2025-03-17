@@ -91,7 +91,7 @@ class InventaryMixin(DashboardView, TemplateView):
 
             try:
                 resource = resolve(url[0])
-                if resource and dev_ids:
+                if resource:
                     return redirect(url[0])
             except Exception:
                 pass

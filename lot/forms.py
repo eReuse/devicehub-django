@@ -47,27 +47,31 @@ class BeneficiaryForm(forms.Form):
 
     def clean(self):
         self._beneficiary = self.cleaned_data.get("beneficiary")
+        self.ben = Beneficiary.objects.filter(
+            lot_id=self.lot_pk,
+            email=self._beneficiary
+        ).first()
+
         return self._beneficiary
 
     def save(self, commit=True):
         if not commit:
             return
 
-        Beneficiary.objects.create(
-            email=self._beneficiary,
-            lot_id=self.lot_pk,
-            shop=self.shop
-        )
+        if not self.ben:
+            self.ben = Beneficiary.objects.create(
+                email=self._beneficiary,
+                lot_id=self.lot_pk,
+                shop=self.shop
+            )
 
         for dev in self.devices:
-            for ben in self._beneficiary:
-                ben.add(dev.id)
+            self.ben.add(dev.id)
         return
 
     def remove(self):
         for dev in self.devices:
-            for ben in self._beneficiary:
-                ben.remove(dev.id)
+            self.ben.remove(dev.id)
         return
 
 

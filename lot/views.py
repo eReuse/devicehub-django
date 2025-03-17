@@ -24,7 +24,8 @@ from lot.models import (
     LotProperty,
     LotSubscription,
     Beneficiary,
-    Donor
+    Donor,
+    DeviceBeneficiary
 )
 
 
@@ -627,7 +628,8 @@ class BeneficiaryView(DashboardView, FormView):
 
     def get_form_kwargs(self):
         self.pk = self.kwargs.get('pk')
-        self.success_url = reverse_lazy('dashboard:lot', args=[self.pk])
+        self.success_url = reverse_lazy('lot:beneficiary', args=[self.pk])
+
         self.is_shop = LotSubscription.objects.filter(
             lot_id=self.pk,
             user=self.request.user,
@@ -647,6 +649,136 @@ class BeneficiaryView(DashboardView, FormView):
         )
 
     def form_valid(self, form):
+        form.devices = self.get_session_devices()
         form.save()
         response = super().form_valid(form)
         return response
+
+
+class DeleteBeneficiaryView(DashboardView, TemplateView):
+
+    def get(self, *args, **kwargs):
+        super().get(*args, **kwargs)
+        pk = self.kwargs.get('pk')
+        id = self.kwargs.get('id')
+        self.success_url = reverse_lazy('lot:beneficiary', args=[pk])
+
+        self.object = get_object_or_404(
+            Beneficiary,
+            lot_id=pk,
+            id=id
+        )
+
+        subscriptor = LotSubscription.objects.filter(
+            type=LotSubscription.Type.SHOP,
+            lot_id=pk,
+            user=self.request.user
+        ).first()
+
+        if subscriptor or self.request.user.is_admin:
+            self.object.delete()
+            # TODO
+            # self.send_email()
+
+        return redirect(self.success_url)
+
+
+class ListDevicesBeneficiaryView(DashboardView, TemplateView):
+    template_name = "beneficiaries_devices.html"
+    title = _("Beneficiaries")
+    breadcrumb = "Lot / Beneficiary / Devices"
+
+    def get_context_data(self, **kwargs):
+        self.pk = self.kwargs.get('pk')
+        self.id = self.kwargs.get('id')
+        self.get_lot()
+        context = super().get_context_data(**kwargs)
+        self.is_shop = LotSubscription.objects.filter(
+            lot=self.lot,
+            user=self.request.user,
+            type=LotSubscription.Type.SHOP
+        ).first()
+
+        if not self.request.user.is_admin and not self.is_shop:
+            raise Http404
+
+        beneficiary = get_object_or_404(
+            Beneficiary,
+            lot_id=self.pk,
+            id=self.id
+        )
+
+        devices = [Device(id=x.device_id) for x in beneficiary.devicebeneficiary_set.all()]
+
+        context.update({
+            'lot': self.lot,
+            'beneficiary': beneficiary,
+            'devices': devices,
+        })
+        return context
+
+    def get_lot(self):
+        self.lot = get_object_or_404(
+            Lot,
+            owner=self.request.user.institution,
+            id=self.pk
+        )
+
+
+class DelDeviceBeneficiaryView(DashboardView, TemplateView):
+
+    def get(self, *args, **kwargs):
+        super().get(*args, **kwargs)
+        pk = self.kwargs.get('pk')
+        id = self.kwargs.get('id')
+        dev_id = self.kwargs.get('dev_id')
+        self.success_url = reverse_lazy('lot:devices_beneficiary', args=[pk, id])
+
+        subscriptor = LotSubscription.objects.filter(
+            type=LotSubscription.Type.SHOP,
+            lot_id=pk,
+            user=self.request.user
+        ).first()
+
+        device = DeviceBeneficiary.objects.filter(
+            beneficiary_id=id,
+            device_id=dev_id
+        ).first()
+
+        if subscriptor or self.request.user.is_admin:
+            if device:
+                device.delete()
+            # TODO
+            # self.send_email()
+
+        return redirect(self.success_url)
+
+
+class AddDevicesBeneficiaryView(DashboardView, TemplateView):
+
+    def get(self, *args, **kwargs):
+        super().get(*args, **kwargs)
+        pk = self.kwargs.get('pk')
+        id = self.kwargs.get('id')
+        self.success_url = reverse_lazy('lot:devices_beneficiary', args=[pk, id])
+
+        subscriptor = LotSubscription.objects.filter(
+            type=LotSubscription.Type.SHOP,
+            lot_id=pk,
+            user=self.request.user
+        ).first()
+
+        beneficiary = get_object_or_404(
+            Beneficiary,
+            lot_id=pk,
+            id=id
+        )
+
+        if subscriptor or self.request.user.is_admin:
+            for dev in self.get_session_devices():
+                beneficiary.add(dev.id)
+
+            # TODO
+            # self.send_email()
+
+        return redirect(self.success_url)
