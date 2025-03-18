@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import Max
 from django.utils.translation import gettext_lazy as _
 from utils.constants import (
     STR_SM_SIZE,
@@ -16,9 +17,24 @@ class LotTag(models.Model):
     owner = models.ForeignKey(Institution, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     inbox = models.BooleanField(default=False)
+    order = models.PositiveIntegerField(default=0)
 
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        if not self.pk:
+            # set the order to be last
+            max_order = LotTag.objects.filter(owner=self.owner).aggregate(Max('order'))['order__max']
+            self.order = (max_order or 1) + 1
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        institution = self.owner
+        order = self.order
+        super().delete(*args, **kwargs)
+        # Adjust the order of other instances
+        LotTag.objects.filter(owner=institution, order__gt=order).update(order=models.F('order') - 1)
 
 
 class DeviceLot(models.Model):
