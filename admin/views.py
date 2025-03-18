@@ -122,7 +122,7 @@ class LotTagPanelView(AdminView, TemplateView):
         context = super().get_context_data(**kwargs)
         lot_tags = LotTag.objects.filter(
             owner=self.request.user.institution
-        )
+        ).order_by('order')
         context.update({"lot_tags_edit": lot_tags})
         return context
 
@@ -204,6 +204,30 @@ class UpdateLotTagView(AdminView, UpdateView):
         msg = _("Lot Group updated successfully.")
         messages.success(self.request, msg)
         return response
+
+
+class UpdateLotTagOrderView(AdminView, TemplateView):
+    success_url = reverse_lazy('admin:tag_panel')
+
+    def post(self, request, *args, **kwargs):
+        form = OrderingStateForm(request.POST)
+
+        if form.is_valid():
+            ordered_ids = form.cleaned_data["ordering"].split(',')
+
+            with transaction.atomic():
+                current_order = 2
+                for lookup_id in ordered_ids:
+                    if lookup_id != '1':  # skip the inbox lot
+                        lot_tag = LotTag.objects.get(id=lookup_id)
+                        lot_tag.order = current_order
+                        lot_tag.save()
+                        current_order += 1
+
+            messages.success(self.request, _("Order changed successfully."))
+            return redirect(self.success_url)
+        else:
+            return Http404
 
 
 class InstitutionView(AdminView, UpdateView):
