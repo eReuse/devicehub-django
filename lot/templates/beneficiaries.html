@@ -19,6 +19,7 @@
           <th scope="col">{% trans 'Sign conditions' %}</th>
           <th scope="col">{% trans 'Devices' %}</th>
           <th scope="col"></th>
+          <th scope="col"></th>
         </tr>
       </thead>
       <tbody>
@@ -30,6 +31,11 @@
           <td class="font-monospace">
 	    <a href="{% url 'lot:devices_beneficiary' lot.id s.id %}">
 	       {% trans 'Devices' %}
+	    </a>
+	  </td>
+          <td class="font-monospace">
+	    <a href="{% url 'lot:web_beneficiary' lot.id s.id %}">
+	       {% trans 'web' %}
 	    </a>
 	  </td>
           <td class="font-monospace">

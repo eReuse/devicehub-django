@@ -25,4 +25,5 @@ urlpatterns = [
     path("<int:pk>/beneficiary/<uuid:id>/devices", views.ListDevicesBeneficiaryView.as_view(), name="devices_beneficiary"),
     path("<int:pk>/beneficiary/<uuid:id>/devices/<str:dev_id>/del", views.DelDeviceBeneficiaryView.as_view(), name="del_device_beneficiary"),
     path("<int:pk>/beneficiary/<uuid:id>/devices/add", views.AddDevicesBeneficiaryView.as_view(), name="add_device_beneficiary"),
+    path("<int:pk>/beneficiary/<uuid:id>/", views.WebBeneficiaryView.as_view(), name="web_beneficiary"),
 ]
