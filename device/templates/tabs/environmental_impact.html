@@ -1,0 +1,47 @@
+{% load i18n %}
+
+<div class="tab-pane fade" id="environmental_impact">
+  <h5 class="card-title">{% trans 'Environmental Impact Details' %}</h5>
+  <hr />
+
+  <h6 class="mt-3 text-primary">{% trans 'While device is being used' %}</h6>
+
+  <div class="row mb-3">
+    <div class="col-sm-4 text-muted fw-bold">
+      {% trans 'CO2 Emissions' %}
+    </div>
+    <div class="col-sm-8">{{ impact.co2_emissions|default:'0.0' }} kg</div>
+  </div>
+
+  <div class="row mb-3">
+    <div class="col-sm-12 d-flex justify-content-end">
+      <div class="border p-2 rounded d-flex align-items-center">
+        <label for="algorithmSelect" class="text-muted fw-bold me-2">{% trans 'Algorithm Selector' %}</label>
+        <select class="form-select form-select-sm w-auto border-0 shadow-none" id="algorithmSelect" onchange="changeAlgorithm()">
+          <option value="dummy" selected>
+            {% trans 'Dummy Algorithm' %}
+          </option>
+          <option value="advanced">
+            {% trans 'Advanced Algorithm' %}
+          </option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-4">
+    <button class="btn btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#docsCollapse" aria-expanded="false" aria-controls="docsCollapse">{% trans 'Read about the algorithm insights' %}</button>
+
+    <div class="collapse mt-3" id="docsCollapse">
+      <div class="card card-body">
+        <div class="markdown-content">{{ impact.docs|safe }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function changeAlgorithm() {
+    var selectedAlgorithm = document.getElementById('algorithmSelect').value
+  }
+</script>
