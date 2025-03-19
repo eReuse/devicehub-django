@@ -14,4 +14,4 @@ json-repair==0.30.0
 setuptools==65.5.1
 requests==2.32.3
 wheel==0.45.1
-
+markdown==3.7
