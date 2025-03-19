@@ -29,19 +29,60 @@
     </div>
   </div>
 
-  <div class="mt-4">
-    <button class="btn btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#docsCollapse" aria-expanded="false" aria-controls="docsCollapse">{% trans 'Read about the algorithm insights' %}</button>
+  <div class="row mt-4">
+    <div class="col-sm-6">
+      <div style="max-width: 700px;">
+        <canvas id="impactChart" width="300" height="150"></canvas>
+      </div>
+    </div>
+    <div class="col-sm-6 d-flex flex-column justify-content-start">
+      <button class="btn btn-outline-primary mb-3" type="button" data-bs-toggle="collapse" data-bs-target="#docsCollapse" aria-expanded="false" aria-controls="docsCollapse">{% trans 'Read about the algorithm insights' %}</button>
 
-    <div class="collapse mt-3" id="docsCollapse">
-      <div class="card card-body">
-        <div class="markdown-content">{{ impact.docs|safe }}</div>
+      <div class="collapse" id="docsCollapse">
+        <div class="card card-body">
+          <div class="markdown-content">{{ impact.docs|safe }}</div>
+        </div>
       </div>
     </div>
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <script>
   function changeAlgorithm() {
-    var selectedAlgorithm = document.getElementById('algorithmSelect').value
+    var selectedAlgorithm = document.getElementById('algorithmSelect').value;
+    // TODO Add logic to update chart based on selected algorithm
   }
+
+  function drawChart() {
+    var ctx = document.getElementById('impactChart').getContext('2d');
+    var impactChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['Raw material acquisition (A)', 'Production (B)', 'Use (C)', 'EoLT (D)'],
+        datasets: [{
+          data: [10, 20, {{ impact.co2_emissions }}, 5],
+          backgroundColor: ['red', 'yellow', 'blue', 'green']
+        }]
+      },
+      options: {
+        scales: {
+          y: {
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: 'kg CO2e/year'
+            }
+          }
+        },
+        plugins: {
+          legend: {
+            display: false
+          }
+        }
+      }
+    });
+  }
+  window.onload = drawChart;
 </script>
