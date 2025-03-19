@@ -75,16 +75,19 @@
         <li class="nav-item">
           <a href="#evidences" class="nav-link" data-bs-toggle="tab" data-bs-target="#evidences">{% trans 'Evidences' %}</a>
         </li>
-	{% if dpps %}
+    {% if dpps %}
         <li class="nav-item">
           <a href="#dpps" class="nav-link" data-bs-toggle="tab" data-bs-target="#dpps">{% trans 'Dpps' %}</a>
         </li>
-	{% endif %}
+    {% endif %}
         <li class="nav-item">
           <a class="nav-link" href="{% url 'device:device_web' object.id %}" target="_blank">Web</a>
         </li>
         <li class="nav-item">
           <a href="#log" class="nav-link" data-bs-toggle="tab" data-bs-target="#log">{% trans 'Log' %}</a>
+        </li>
+        <li class="nav-item">
+          <a href="#environmental_impact" class="nav-link" data-bs-toggle="tab" data-bs-target="#environmental_impact">{% trans 'Environmental impact' %}</a>
         </li>
       </ul>
     </div>
@@ -104,6 +107,8 @@
   {% include 'tabs/evidences.html' %}
 
   {% include 'tabs/dpps.html' %}
+
+  {% include 'tabs/environmental_impact.html' %}
 
   <!-- Add a note popup -->
   <div class="modal fade" id="addNoteModal" tabindex="-1" aria-labelledby="addNoteModalLabel" aria-hidden="true">
