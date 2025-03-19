@@ -540,15 +540,14 @@ class DelDonorView(DonorMixing):
         return context
 
 
-class DonorView(TemplateView):
-    template_name = "donor_web.html"
+class WebMixing(TemplateView):
 
     def get_context_data(self, **kwargs):
         pk = self.kwargs.get('pk')
         id = self.kwargs.get('id')
 
         self.object = get_object_or_404(
-            Donor,
+            self.model,
             id=id,
             lot_id=pk
         )
@@ -558,9 +557,7 @@ class DonorView(TemplateView):
         return context
 
     def get_devices(self):
-        chids = self.object.lot.devicelot_set.all().values_list(
-            "device_id", flat=True
-        ).distinct()
+        chids = self.get_chids()
 
         props = SystemProperty.objects.filter(
             owner=self.request.user.institution,
@@ -573,6 +570,16 @@ class DonorView(TemplateView):
                 chids_ordered.append(Device(id=x.value))
 
         return chids_ordered
+
+
+class DonorView(WebMixing):
+    template_name = "donor_web.html"
+    model = Donor
+
+    def get_chids(self):
+        return self.object.lot.devicelot_set.all().values_list(
+            "device_id", flat=True
+        ).distinct()
 
 
 class AcceptDonorView(TemplateView):
@@ -782,3 +789,13 @@ class AddDevicesBeneficiaryView(DashboardView, TemplateView):
             # self.send_email()
 
         return redirect(self.success_url)
+
+
+class WebBeneficiaryView(WebMixing):
+    template_name = "beneficiary_web.html"
+    model = Beneficiary
+
+    def get_chids(self):
+        return self.object.devicebeneficiary_set.all().values_list(
+            "device_id", flat=True
+        ).distinct()
