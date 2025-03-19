@@ -204,7 +204,7 @@ msgid "Failed to remove Lot Group, it is not empty"
 msgstr "No se pudo eliminar el grupo de lotes, no está vacío"
 
 #: admin/templates/states_panel.html:20
-msgid "Move and drag state definitions to reorder
+msgid "Move and drag state definitions to reorder"
 msgstr "Mueva y arrastre las definiciones de estados para reordenar"
 
 #: admin/templates/states_panel.html:28
@@ -362,7 +362,7 @@ msgstr "Definición de estado actualizada correctamente."
 
 #: api/tables.py:51
 msgid "Token"
-msgstr "Testimonio"
+msgstr "Token"
 
 #: api/templates/custom_table.html:65 dashboard/templates/pagination.html:13
 msgid "Previous"
@@ -374,7 +374,7 @@ msgstr "Siguiente"
 
 #: api/templates/token.html:13
 msgid "Generate a new token"
-msgstr "Generar un nuevo testimonio"
+msgstr "Generar un nuevo token"
 
 #: api/views.py:147 api/views.py:181 api/views.py:199
 msgid "Credential management"
@@ -382,11 +382,11 @@ msgstr "Gestión de credenciales"
 
 #: api/views.py:149
 msgid "Managament Tokens"
-msgstr "Testimonios de gestión"
+msgstr "Gestion de Tokens"
 
 #: api/views.py:183 api/views.py:201
 msgid "New Tokens"
-msgstr "Nuevos testimonios"
+msgstr "Nuevos Tokens"
 
 #: dashboard/mixins.py:16
 msgid "Permission denied. User is not authenticated"
@@ -1128,7 +1128,7 @@ msgstr "Apellido"
 
 #: user/templates/panel.html:17
 msgid "Admin your Tokens"
-msgstr "Administra tus testimonios"
+msgstr "Administra tus tokens"
 
 #: user/templates/panel.html:22
 msgid "Download a settings file"
