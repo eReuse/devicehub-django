@@ -17,6 +17,7 @@ from django.views.generic.edit import (
 from django.views.generic.base import TemplateView
 from action.models import StateDefinition, State, DeviceLog, Note
 from dashboard.mixins import DashboardView, Http403
+from environmental_impact.algorithms.algorithm_factory import FactoryEnvironmentImpactAlgorithm
 from evidence.models import UserProperty, SystemProperty
 from lot.models import LotTag
 from device.models import Device
@@ -101,7 +102,12 @@ class DetailsView(DashboardView, TemplateView):
             for x in _dpps:
                 dpp = "{}:{}".format(self.pk, x.signature)
                 dpps.append((dpp, x.signature[:10], x))
-
+        # TODO Specify algorithm via dropdown, if not specified, use default.
+        enviromental_impact_algorithm = FactoryEnvironmentImpactAlgorithm.run_environmental_impact_calculation(
+            "dummy_calc"
+        )
+        enviromental_impact = enviromental_impact_algorithm.get_device_environmental_impact(
+            self.object)
         last_evidence = self.object.get_last_evidence()
         uuids = self.object.uuids
         state_definitions = StateDefinition.objects.filter(
@@ -116,6 +122,7 @@ class DetailsView(DashboardView, TemplateView):
             'snapshot': last_evidence,
             'lot_tags': lot_tags,
             'dpps': dpps,
+            'impact': enviromental_impact,
             "state_definitions": state_definitions,
             "device_states": device_states,
             "device_logs": device_logs,
