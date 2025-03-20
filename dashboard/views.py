@@ -14,13 +14,12 @@ from lot.models import Lot
 
 class UnassignedDevicesView(InventaryMixin):
     template_name = "unassigned_devices.html"
-    section = "Unassigned"
-    title = _("Unassigned Devices")
-    breadcrumb = "Devices / Unassigned Devices"
+    section = "Inbox"
+    title = _("Inbox")
+    breadcrumb = "Lot / Inbox"
 
     def get_devices(self, user, offset, limit):
         return Device.get_unassigned(self.request.user.institution, offset, limit)
-
 
 class AllDevicesView(InventaryMixin):
     template_name = "unassigned_devices.html"
