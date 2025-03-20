@@ -450,9 +450,6 @@ class SubscriptLotView(DashboardView, FormView):
             id=self.pk
         )
 
-
-class SubscriptLotView(SubscriptLotMixing):
-
     def form_valid(self, form):
         form.save()
         response = super().form_valid(form)
@@ -596,9 +593,9 @@ class WebMixing(TemplateView):
         chids_ordered = []
         for x in props:
             if x.value not in chids_ordered:
-                chids_ordered.append(Device(id=x.value))
+                chids_ordered.append(x.value)
 
-        return chids_ordered
+        return [Device(id=x) for x in chids_ordered]
 
 
 class DonorView(WebMixing):
