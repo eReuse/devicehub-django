@@ -218,11 +218,16 @@ class UpdateLotTagOrderView(AdminView, TemplateView):
             with transaction.atomic():
                 current_order = 2
                 for lookup_id in ordered_ids:
+                    lot_tag = LotTag.objects.get(id=lookup_id)
+
                     if lookup_id != '1':  # skip the inbox lot
-                        lot_tag = LotTag.objects.get(id=lookup_id)
                         lot_tag.order = current_order
-                        lot_tag.save()
                         current_order += 1
+                    else:
+                        #just make sure order is one
+                        lot_tag.order = 1
+
+                    lot_tag.save()
 
             messages.success(self.request, _("Order changed successfully."))
             return redirect(self.success_url)
