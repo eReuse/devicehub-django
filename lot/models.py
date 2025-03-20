@@ -26,7 +26,7 @@ class LotTag(models.Model):
         if not self.pk:
             # set the order to be last
             max_order = LotTag.objects.filter(owner=self.owner).aggregate(Max('order'))['order__max']
-            self.order = (max_order or 1) + 1
+            self.order = (max_order or 0) + 1
         super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
