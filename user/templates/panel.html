@@ -1,27 +1,70 @@
 {% extends "base.html" %}
-{% load i18n %}
+{% load i18n get_language_code %}
 
 {% block content %}
-<div class="row mb-3">
-  <div class="col">
-    <h3>{{ subtitle }}</h3>
-  </div>
-  <div class="col text-center">
-    {{ user.email }}
-  </div>
-</div>
 
-<div class="row">
-  <div class="col">
-    <a class="nav-link fw-bold" href="{% url 'api:tokens' %}">
-      {% translate 'Admin your Tokens' %}
-    </a>
+  <div class="col d-flex align-items-center mb-4">
+    <div class="d-flex align-items-center">
+      <i class="bi bi-person-circle fs-2 me-3"></i>
+      <h3 class="mb-0">{{ user.email }}</h3>
+      {% if user.is_admin %}
+        <span class="ms-3 badge rounded-pill bg-info">{% trans "admin" %}</span>
+      {% else %}
+        <span class="ms-3 badge rounded-pill bg-secondary">{% trans "user" %}</span>
+      {% endif %}
+    </div>
   </div>
-  <div class="col">
-    <a class="nav-link fw-bold" href="{% url 'user:settings' %}">
-      {% translate 'Download a settings file' %}
-    </a>
+
+  <div class="row mb-4">
+    <div class="col-md-6">
+      <div class="card h-100 shadow-sm border-0">
+        <div class="card-body d-flex flex-column">
+          <h5 class="card-title mb-3">
+            <i class="bi bi-key me-2"></i> {% translate 'Token Management' %}
+          </h5>
+          <p class="card-text flex-grow-1">{% translate 'Manage your personal tokens for using Devicehub.' %}</p>
+          <div class="text-end">
+            <a href="{% url 'api:tokens' %}" class="btn btn-outline-dark btn-sm d-inline-flex align-items-center">
+              <span class="me-2">{% translate 'Go' %}</span>
+              <i class="bi bi-arrow-right"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="card h-100 shadow-sm border-0">
+        <div class="card-body d-flex flex-column">
+          <h5 class="card-title mb-3">
+            <i class="bi bi-gear me-2"></i> {% translate 'Settings File' %}
+          </h5>
+          <p class="card-text flex-grow-1">{% translate 'Download a settings file for your Workbench.' %}</p>
+          <div class="text-end">
+            <a href="{% url 'user:settings' %}" class="btn btn-outline-dark btn-sm d-inline-flex align-items-center">
+              <span class="me-2">{% translate 'Go' %}</span>
+              <i class="bi bi-arrow-right"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
-</div>
+
+  <div class="row mb-4">
+    <div class="col-md-6">
+      <div class="card h-100 shadow-sm border-0">
+        <div class="card-body d-flex flex-column">
+          <h5 class="card-title mb-3">
+            <i class="bi bi-translate me-2"></i> {% translate 'Language' %}
+          </h5>
+          <p class="card-text flex-grow-1">{% translate 'Click below to select your preferred language.' %}</p>
+          <div class="text-end">
+            {% include "language_picker.html" %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
 {% endblock %}
