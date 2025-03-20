@@ -1,8 +1,10 @@
 from django.db import IntegrityError
 from django.urls import reverse_lazy
-from django.shortcuts import get_object_or_404, redirect, Http404
+from django.shortcuts import get_object_or_404, redirect, Http404, render
 from django.contrib import messages
+from django.core.cache import cache
 from django.utils.translation import gettext_lazy as _
+from django.db.models import Q, Count, Case, When, IntegerField
 from django.views.generic.base import TemplateView
 from django.views.generic.edit import (
     CreateView,
@@ -10,15 +12,37 @@ from django.views.generic.edit import (
     UpdateView,
     FormView,
 )
+from django_tables2 import SingleTableView
 from dashboard.mixins import DashboardView
+from lot.tables import LotTable
 from lot.models import Lot, LotTag, LotProperty
 from lot.forms import LotsForm
 
-class NewLotView(DashboardView, CreateView):
+class LotSuccessUrlMixin():
+    success_url = reverse_lazy('dashboard:unassigned')
+
+    def get_success_url(self, lot_tag=None):
+        try:
+            if lot_tag:
+                lot_group = LotTag.objects.only('id').get(
+                    owner=self.request.user.institution,
+                    name=lot_tag
+                )
+            else:
+                lot_group = LotTag.objects.only('id').get(
+                    owner=self.object.owner,
+                    name=self.object.type
+                )
+            return reverse_lazy('lot:tags', args=[lot_group.id])
+
+        except LotTag.DoesNotExist:
+            return self.success_url
+
+
+class NewLotView(LotSuccessUrlMixin, DashboardView, CreateView):
     template_name = "new_lot.html"
     title = _("New lot")
     breadcrumb = "lot / New lot"
-    success_url = reverse_lazy('dashboard:unassigned')
     model = Lot
     fields = (
         "type",
@@ -37,36 +61,63 @@ class NewLotView(DashboardView, CreateView):
         return form
 
     def form_valid(self, form):
-        form.instance.owner = self.request.user.institution
-        form.instance.user = self.request.user
-        response = super().form_valid(form)
-        return response
+        try:
+            form.instance.owner = self.request.user.institution
+            form.instance.user = self.request.user
+            response = super().form_valid(form)
+            messages.success(self.request, _("Lot created successfully."))
+            return response
+
+        except IntegrityError:
+            messages.error(self.request, _("Lot name is already defined."))
+            return self.form_invalid(form)
 
 
-class DeleteLotView(DashboardView, DeleteView):
-    template_name = "delete_lot.html"
-    title = _("Delete lot")
-    breadcrumb = "lot / Delete lot"
-    success_url = reverse_lazy('dashboard:unassigned')
-    model = Lot
-    fields = (
-        "type",
-        "name",
-        "code",
-        "description",
-        "archived",
-    )
+class DeleteLotsView(LotSuccessUrlMixin, DashboardView, TemplateView ):
+    template_name = "delete_lots.html"
+    title = _("Delete lot/s")
+    breadcrumb = "lots / Delete"
 
-    def form_valid(self, form):
-        response = super().form_valid(form)
-        return response
+    def get(self, request, *args, **kwargs):
+        selected_ids = request.GET.getlist('select')
+        if not selected_ids:
+            messages.error(request, _("No lots selected for deletion."))
+            return redirect(self.success_url)
+        # check ownership
+        lots_to_delete = Lot.objects.filter(
+            id__in=selected_ids,
+            owner=request.user.institution
+        )
+        context = {
+            'lots': lots_to_delete,
+            'lots_with_devices': any(lot.devices.exists() for lot in lots_to_delete),
+            'selected_ids': selected_ids,
+            'breadcrumb': self.breadcrumb,
+            'title': self.title,
+        }
+        return render(request, self.template_name, context)
+
+    def post(self, request, *args, **kwargs):
+        selected_ids = request.POST.getlist('selected_ids')
+        if not selected_ids:
+            messages.error(request, _("No lots selected for deletion."))
+            return redirect(self.success_url)
+
+        lots_to_delete = Lot.objects.filter(
+            id__in=selected_ids,
+            owner=request.user.institution
+        )
+
+        lot_tag = lots_to_delete.first().type
+        deleted_count = lots_to_delete.delete()
+        messages.success(request, _("Lots succesfully deleted"))
+        return redirect(self.get_success_url(lot_tag=lot_tag))
 
 
-class EditLotView(DashboardView, UpdateView):
+class EditLotView(LotSuccessUrlMixin, DashboardView, UpdateView):
     template_name = "new_lot.html"
     title = _("Edit lot")
     breadcrumb = "Lot / Edit lot"
-    success_url = reverse_lazy('dashboard:unassigned')
     model = Lot
     fields = (
         "type",
@@ -83,7 +134,6 @@ class EditLotView(DashboardView, UpdateView):
             owner=self.request.user.institution,
             pk=pk,
         )
-        # self.success_url = reverse_lazy('dashbiard:lot', args=[pk])
         kwargs = super().get_form_kwargs()
         return kwargs
 
@@ -94,6 +144,11 @@ class EditLotView(DashboardView, UpdateView):
             inbox=False
         )
         return form
+
+    def form_valid(self, form):
+        messages.success(self.request, _("Lot edited succesfully."))
+        response = super().form_valid(form)
+        return response
 
 
 class AddToLotView(DashboardView, FormView):
@@ -137,29 +192,72 @@ class DelToLotView(AddToLotView):
         return response
 
 
-class LotsTagsView(DashboardView, TemplateView):
+class LotsTagsView(DashboardView, SingleTableView):
     template_name = "lots.html"
-    title = _("lots")
+    title = _("Lot group")
     breadcrumb = _("lots") + " /"
     success_url = reverse_lazy('dashboard:unassigned')
+    model = Lot
+    table_class = LotTable
+    paginate_by = 10
+
+    def get_queryset(self):
+        self.pk = self.kwargs.get('pk')
+        self.tag = get_object_or_404(LotTag, owner=self.request.user.institution, id=self.pk)
+        self.show_archived = self.request.GET.get('show_archived', 'false')
+        self.search_query = self.request.GET.get('q', '').strip()
+
+        queryset = Lot.objects.filter(owner=self.request.user.institution, type=self.tag).annotate(
+            device_count=Count('devicelot')
+        )
+
+        if self.show_archived == 'true':
+            queryset = queryset.filter(archived=True)
+        elif self.show_archived == 'false':
+            queryset = queryset.filter(archived=False)
+
+        if self.search_query:
+            queryset = queryset.filter(
+                Q(name__icontains=self.search_query) |
+                Q(description__icontains=self.search_query) |
+                Q(code__icontains=self.search_query)
+            )
+
+        sort = self.request.GET.get('sort')
+        if sort:
+            queryset = queryset.order_by(sort)
+
+        return queryset
 
     def get_context_data(self, **kwargs):
-        self.pk = kwargs.get('pk')
         context = super().get_context_data(**kwargs)
-        tag = get_object_or_404(LotTag, owner=self.request.user.institution, id=self.pk)
-        self.title += " {}".format(tag.name)
-        self.breadcrumb += " {}".format(tag.name)
-        show_archived = self.request.GET.get('show_archived', 'false') == 'true'
-        lots = Lot.objects.filter(owner=self.request.user.institution).filter(
-            type=tag, archived=show_archived
-        )
+        counts = self.get_counts()
+
         context.update({
-            'lots': lots,
-            'title': self.title,
-            'breadcrumb': self.breadcrumb,
-            'show_archived': show_archived
+            'title': _("Lot Group") + " - " + self.tag.name,
+            'breadcrumb': _("Lots") + " / " + self.tag.name,
+            'show_archived': self.show_archived,
+            'search_query': self.search_query,
+            'archived_count': counts['archived_count'],
+            'active_count': counts['active_count'],
+            'total_count': counts['total_count'],
         })
         return context
+
+    def get_counts(self):
+        cache_key = f"lot_counts_{self.request.user.institution.id}_{self.tag.id}"
+        counts = cache.get(cache_key)
+
+        if not counts:
+            # calculate archived, open, and total count on a single query
+            counts = Lot.objects.filter(owner=self.request.user.institution, type=self.tag).aggregate(
+                archived_count=Count(Case(When(archived=True, then=1), output_field=IntegerField())),
+                active_count=Count(Case(When(archived=False, then=1), output_field=IntegerField())),
+                total_count=Count('id')
+            )
+            cache.set(cache_key, counts, timeout=250)
+
+        return counts
 
 
 class LotPropertiesView(DashboardView, TemplateView):
@@ -209,7 +307,7 @@ class AddLotPropertyView(DashboardView, CreateView):
     def get_form_kwargs(self):
         pk = self.kwargs.get('pk')
         self.lot = get_object_or_404(Lot, pk=pk, owner=self.request.user.institution)
-        self.success_url = reverse_lazy('lot:properties', args=[pk])
+        self.success_url = reverse_lazy('dashboard:properties', args=[pk])
         kwargs = super().get_form_kwargs()
         return kwargs
 

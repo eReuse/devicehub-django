@@ -1,43 +1,110 @@
 {% extends "base.html" %}
 {% load i18n %}
+{% load render_table from django_tables2 %}
 
 {% block content %}
-<div class="row mb-3">
-  <div class="col">
-    <h3>{{ subtitle }}</h3>
-  </div>
-  <div class="col text-center">
-    {% if show_archived %}
-      <a href="?show_archived=false" class="btn btn-green-admin">
-        {% trans 'Show active lots' %}
-      </a>
-    {% else %}
-      <a href="?show_archived=true" class="btn btn-green-admin">
-        {% trans 'Show archived lots' %}
-      </a>
-    {% endif %}
 
-    <a href="{% url 'lot:add' %}" type="button" class="btn btn-green-admin">
-      <i class="bi bi-plus"></i>
-      {% trans 'Add new lot' %}
+  <!-- Search and new lot button -->
+  <div class="d-flex justify-content-end align-items-stretch mb-4">
+    <form method="get" class="input-group w-100 me-3">
+      <input
+        type="text"
+        name="q"
+        class="form-control"
+        placeholder="{% trans 'Search by name or description...' %}"
+        value="{{ search_query }}">
+      <div class="input-group-append">
+        <button type="submit" class="btn btn-outline-secondary h-100" style="border-radius: 0 4px 4px 0;">
+          <i class="bi bi-search"></i>
+        </button>
+      </div>
+    </form>
+
+    <a href="{% url 'lot:add' %}" class="btn btn-success d-flex align-items-center" style="white-space: nowrap;">
+      <span>{% trans 'New lot' %}</span>
     </a>
   </div>
-</div>
 
-<div class="row">
-  <table class= "table table-striped table-sm">
-  {% for lot in lots %}
-    <tr>
-      <td><a href="{% url 'dashboard:lot' lot.id %}">{{ lot.name }}</a></td>
-      <td>
-        <a href="{% url 'lot:edit' lot.id %}"><i class="bi bi-pen"></i></a>
-      </td>
-      <td>
-        <a href="{% url 'lot:delete' lot.id %}"><i class="bi bi-trash text-danger"></i></a>
-      </td>
-    </tr>
-  {% endfor %}
-  </table>
-</div>
+  <!-- Delete and filter buttons -->
+  <form method="get" action="{% url 'lot:delete' %}" id="bulk-action-form">
+    {% csrf_token %}
+    <div class="d-flex justify-content-end align-items-center mb-4">
+
+      <button type="submit" class="btn btn-outline-danger d-none me-3" id="delete-selected">
+        <i class="bi bi-trash"></i>
+        {% trans 'Delete Selected' %}
+      </button>
+
+      <div class="btn-group" role="group" aria-label="Filter Options">
+        <input
+          type="radio"
+          class="btn-check"
+          name="filterOptions"
+          id="filterActive"
+          autocomplete="off"
+          onclick="window.location.href='?{% if search_query %}q={{ search_query }}&{% endif %}show_archived=false'"
+          {% if show_archived == 'false' %}checked{% endif %}>
+        <label class="btn btn-outline-secondary d-flex align-items-center h-100" for="filterActive">
+          <i class="bi bi-filter me-2"></i>
+          {% trans 'Active' %} ({{ active_count }})
+        </label>
+
+        <input
+          type="radio"
+          class="btn-check"
+          name="filterOptions"
+          id="filterArchived"
+          autocomplete="off"
+          onclick="window.location.href='?{% if search_query %}q={{ search_query }}&{% endif %}show_archived=true'"
+          {% if show_archived == 'true' %}checked{% endif %}>
+        <label class="btn btn-outline-secondary d-flex align-items-center h-100" for="filterArchived">
+          <i class="bi bi-filter me-2"></i>
+          {% trans 'Archived' %} ({{ archived_count }})
+        </label>
+
+        <input
+          type="radio"
+          class="btn-check"
+          name="filterOptions"
+          id="filterAll"
+          autocomplete="off"
+          onclick="window.location.href='?{% if search_query %}q={{ search_query }}&{% endif %}show_archived=both'"
+          {% if show_archived == 'both' %}checked{% endif %}>
+        <label class="btn btn-outline-secondary d-flex align-items-center h-100" for="filterAll">
+          <i class="bi bi-filter me-2"></i>
+          {% trans 'All Lots' %} ({{ total_count }})
+        </label>
+      </div>
+  </div>
+
+  {% render_table table %}
+  </form>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const checkboxes = document.querySelectorAll('.select-checkbox');
+    const selectAll = document.querySelector('#select-all');
+    const deleteBtn = document.querySelector('#delete-selected');
+
+    function updateDeleteButton() {
+        const checked = document.querySelectorAll('.select-checkbox:checked').length > 0;
+        deleteBtn.classList.toggle('d-none', !checked);
+    }
+
+    if (selectAll) {
+        selectAll.addEventListener('change', (e) => {
+            checkboxes.forEach(checkbox => checkbox.checked = e.target.checked);
+            updateDeleteButton();
+        });
+    }
+
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', updateDeleteButton);
+    });
+
+   // on DOM reload (f5) check for checkboxes too and update show/hide btn
+    updateDeleteButton();
+});
+</script>
 
 {% endblock %}
