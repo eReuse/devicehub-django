@@ -16,6 +16,8 @@ Including another URLconf
 """
 from django.conf import settings
 from django.urls import path, include
+from django.conf.urls.i18n import i18n_patterns
+from django.views.i18n import set_language
 
 urlpatterns = [
     # path('api/', include('snapshot.urls')),
@@ -29,6 +31,10 @@ urlpatterns = [
     path("lot/", include("lot.urls")),
     path('api/', include('api.urls')),
 ]
+
+urlpatterns += i18n_patterns(
+    path("language/", set_language, name='set_language'),
+)
 
 if settings.DPP:
     urlpatterns.extend([

@@ -68,6 +68,11 @@ EVIDENCES_DIR = config("EVIDENCES_DIR", default=os.path.join(BASE_DIR, "db"))
 
 # Application definition
 
+
+LOCALE_PATHS = [
+    os.path.join(BASE_DIR, 'locale'),
+]
+
 INSTALLED_APPS = [
     # "django.contrib.admin",
     "django.contrib.auth",
@@ -119,7 +124,13 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "django.template.context_processors.i18n",
             ],
+
+            'libraries':{
+                'get_language_code': 'dashboard.templatetags.language_code',
+            }
+
         },
     },
 ]
@@ -172,8 +183,9 @@ if TIME_ZONE == "UTC":
 
 USE_L10N = True
 LANGUAGES = [
-    ('es', 'Spanish'),
-    ('en', 'English'),
+    ('es', 'español'),
+    ('en', 'english'),
+    ('ca', 'català'),
 ]
 
 # Static files (CSS, JavaScript, Images)
