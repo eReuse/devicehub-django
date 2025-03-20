@@ -1,4 +1,4 @@
-{% load i18n static %}
+{% load i18n static language_code %}
 
 <!doctype html>
 <html lang="en">
@@ -197,7 +197,7 @@
 	          <form method="get" action="{% url 'dashboard:search' %}">
               {% csrf_token %}
               <div class="input-group rounded">
-                <input type="search" name="search" class="form-control rounded" {% if search %}value="{{ search }}" {% endif %}placeholder="Search your device..." aria-label="Search" aria-describedby="search-addon" />
+                <input type="search" name="search" class="form-control rounded" {% if search %}value="{{ search }}" {% endif %}placeholder="{% trans "Search your device" %}" aria-label="Search" aria-describedby="search-addon" />
         	<span class="input-group-text border-0" id="search-addon">
         	  <i class="fas fa-search"></i>
         	</span>
@@ -222,11 +222,14 @@
     </div>
 
     <!-- Footer -->
-  <footer class="footer text-center mt-auto py-3">
-    <div class="container">
-      <span class="text-muted">{{ commit_id }}</span>
-    </div>
-  </footer>
+    <footer class="footer mt-auto py-3" style="width: 100%;">
+      <div class="container-fluid">
+        <div class="d-flex justify-content-between align-items-center">
+          <span class="text-muted mx-auto">{{ commit_id }}</span>
+          {% include "language_picker.html" %}
+        </div>
+      </div>
+    </footer>
 
     {% block script %}
     <script src="{% static "js/jquery-3.3.1.slim.min.js" %}"></script>

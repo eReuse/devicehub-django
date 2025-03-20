@@ -1,0 +1,1139 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-03-13 11:53-0300\n"
+"PO-Revision-Date: 2025-03-13 12:02-0300\n"
+"Last-Translator: Leandro Navarro <leandro@ac.upc.edu>\n"
+"Language-Team: \n"
+"Language: es\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 3.5\n"
+
+#: action/management/commands/create_default_states.py:17
+msgid "INBOX"
+msgstr "BANDEJA DE ENTRADA"
+
+#: action/management/commands/create_default_states.py:18
+msgid "VISUAL INSPECTION"
+msgstr "PARA INSPECCIÓN VISUAL"
+
+#: action/management/commands/create_default_states.py:19
+msgid "REPAIR"
+msgstr "PARA REPARAR"
+
+#: action/management/commands/create_default_states.py:20
+msgid "INSTALL"
+msgstr "PARA INSTALAR"
+
+#: action/management/commands/create_default_states.py:21
+msgid "TEST"
+msgstr "PARA PRUEBA"
+
+#: action/management/commands/create_default_states.py:22
+msgid "PACKAGING"
+msgstr "PARA EMPAQUETADO"
+
+#: action/management/commands/create_default_states.py:23
+msgid "DONATION"
+msgstr "PARA DONACIÓN"
+
+#: action/management/commands/create_default_states.py:24
+msgid "DISMANTLE"
+msgstr "DESMANTELAR"
+
+#: action/views.py:28
+msgid "<Created> State '{}'. Previous State: '{}'"
+msgstr "<Created>Estado '{}'. Estado anterior: '{}'"
+
+#: action/views.py:35
+msgid "State successfully changed from '{}' to '{}'"
+msgstr "El estado se cambió correctamente de '{}' a '{}'"
+
+#: action/views.py:39 action/views.py:70
+msgid "There was an error with your submission."
+msgstr "Hubo un error con tu envío."
+
+#: action/views.py:59
+msgid "<Created> Note: '{}'"
+msgstr "<Created>Nota: '{}'"
+
+#: action/views.py:66
+msgid "Note has been added"
+msgstr "Se ha añadido una nota"
+
+#: action/views.py:88
+msgid "<Updated> Note. Old Description: '{}'. New Description: '{}'"
+msgstr "<Updated>Nota. Descripción anterior: '{}'. Nueva descripción: '{}'"
+
+#: action/views.py:101
+msgid "Note cannot be empty."
+msgstr "La nota no puede estar vacía."
+
+#: action/views.py:127
+msgid "You do not have permission to delete this note."
+msgstr "No tienes permiso para eliminar esta nota."
+
+#: action/views.py:130
+msgid "<Deleted> Note. Description: '{}'. "
+msgstr "<Deleted>Nota. Descripción: '{}'. "
+
+#: action/views.py:137
+msgid "Note '{}' deleted successfully."
+msgstr "Nota '{}' eliminada correctamente."
+
+#: admin/templates/admin_panel.html:14
+msgid "Institution"
+msgstr "Institución"
+
+#: admin/templates/admin_users.html:10
+msgid "Add new user"
+msgstr "Añadir nuevo usuario"
+
+#: admin/templates/delete_user.html:33 admin/templates/institution.html:27
+#: admin/templates/lot_tag_panel.html:117
+#: admin/templates/lot_tag_panel.html:155 admin/templates/states_panel.html:145
+#: admin/templates/states_panel.html:185 admin/templates/user.html:27
+#: api/templates/new_token.html:27 device/templates/details.html:125
+#: device/templates/new_device.html:81
+#: device/templates/new_user_property.html:39
+#: device/templates/tabs/user_properties.html:83
+#: device/templates/tabs/user_properties.html:121
+#: evidence/templates/ev_details.html:90
+#: evidence/templates/ev_eraseserver.html:52 evidence/templates/upload.html:25
+#: lot/templates/delete_lot.html:33 lot/templates/new_lot.html:27
+#: lot/templates/new_property.html:39 lot/templates/properties.html:71
+#: lot/templates/properties.html:91 user/templates/settings.html:27
+msgid "Cancel"
+msgstr "Cancelar"
+
+#: admin/templates/delete_user.html:34 admin/templates/lot_tag_panel.html:49
+#: admin/templates/lot_tag_panel.html:159
+#: admin/templates/lot_tag_panel.html:163 admin/templates/states_panel.html:67
+#: admin/templates/states_panel.html:188 api/tables.py:29
+#: device/templates/tabs/user_properties.html:47
+#: device/templates/tabs/user_properties.html:87
+#: evidence/templates/ev_details.html:95 lot/templates/delete_lot.html:34
+#: lot/templates/properties.html:46 lot/templates/properties.html:94
+msgid "Delete"
+msgstr "Eliminar"
+
+#: admin/templates/institution.html:28 admin/templates/user.html:28
+#: api/templates/new_token.html:28 device/templates/new_device.html:82
+#: device/templates/new_user_property.html:40
+#: evidence/templates/ev_details.html:91
+#: evidence/templates/ev_eraseserver.html:53 evidence/templates/upload.html:26
+#: lot/templates/new_lot.html:28 lot/templates/new_property.html:40
+#: user/templates/settings.html:28
+msgid "Save"
+msgstr "Guardar"
+
+#: admin/templates/lot_tag_panel.html:11 admin/templates/states_panel.html:11
+msgid "Add"
+msgstr "Agregar"
+
+#: admin/templates/lot_tag_panel.html:21
+msgid "Lot Group Name"
+msgstr "Nombre del grupo de lotes"
+
+#: admin/templates/lot_tag_panel.html:23 admin/templates/states_panel.html:30
+#: device/templates/tabs/user_properties.html:21
+msgid "Actions"
+msgstr "Acciones"
+
+#: admin/templates/lot_tag_panel.html:42 admin/templates/states_panel.html:60
+#: device/templates/tabs/user_properties.html:40
+#: lot/templates/properties.html:42
+msgid "Edit"
+msgstr "Editar"
+
+#: admin/templates/lot_tag_panel.html:61
+msgid "No Lot Groups found on current organization"
+msgstr "No se encontraron grupos de lotes en la organización actual"
+
+#: admin/templates/lot_tag_panel.html:72
+msgid "Add Lot Group"
+msgstr "Agregar grupo de lotes"
+
+#: admin/templates/lot_tag_panel.html:80 admin/templates/lot_tag_panel.html:110
+#: api/tables.py:52 evidence/forms.py:68 evidence/templates/ev_details.html:18
+#: evidence/templates/ev_eraseserver.html:18
+msgid "Tag"
+msgstr "Etiqueta"
+
+#: admin/templates/lot_tag_panel.html:82 admin/templates/lot_tag_panel.html:112
+#: admin/templates/states_panel.html:106 admin/templates/states_panel.html:139
+msgid "Maximum 50 characters."
+msgstr "Máximo 50 caracteres."
+
+#: admin/templates/lot_tag_panel.html:85 admin/templates/lot_tag_panel.html:106
+#: admin/templates/lot_tag_panel.html:136 admin/templates/states_panel.html:109
+#: admin/templates/states_panel.html:130 admin/templates/states_panel.html:164
+#: device/templates/details.html:114 lot/templates/properties.html:57
+#: lot/templates/properties.html:85
+msgid "Close"
+msgstr "Cerrar"
+
+#: admin/templates/lot_tag_panel.html:86
+msgid "Add Lot tag"
+msgstr "Agregar etiqueta de lote"
+
+#: admin/templates/lot_tag_panel.html:104
+msgid "Edit Lot Group"
+msgstr "Editar grupo de lotes"
+
+#: admin/templates/lot_tag_panel.html:118 admin/templates/states_panel.html:146
+msgid "Save Changes"
+msgstr "Guardar cambios"
+
+#: admin/templates/lot_tag_panel.html:134
+msgid "Delete Lot Group"
+msgstr "Eliminar grupo de lotes"
+
+#: admin/templates/lot_tag_panel.html:141
+msgid "Failed to remove Lot Group, it is not empty"
+msgstr "No se pudo eliminar el grupo de lotes, no está vacío"
+
+#: admin/templates/states_panel.html:20
+msgid "Move and drag state definitions to reorder"
+msgstr "Mueva y arrastre las definiciones de estados para reordenar"
+
+#: admin/templates/states_panel.html:28
+msgid "State Definition"
+msgstr "Definición de estado"
+
+#: admin/templates/states_panel.html:79
+msgid "Update Order"
+msgstr "Actualizar orden"
+
+#: admin/templates/states_panel.html:85
+msgid "No states found on current organization"
+msgstr "No se encontraron estados en la organización actual"
+
+#: admin/templates/states_panel.html:96
+msgid "Add State Definition"
+msgstr "Agregar definición de estado"
+
+#: admin/templates/states_panel.html:104 admin/templates/states_panel.html:137
+msgid "State"
+msgstr "Estado"
+
+#: admin/templates/states_panel.html:110
+msgid "Add state definition"
+msgstr "Agregar definición de estado"
+
+#: admin/templates/states_panel.html:128
+msgid "Edit State Definition"
+msgstr "Editar definición de estado"
+
+#: admin/templates/states_panel.html:134
+msgid ""
+"Existing devices with this state will not have their state names changed."
+msgstr ""
+"Los dispositivos existentes con este estado no cambiarán sus nombres de "
+"estado."
+
+#: admin/templates/states_panel.html:142 admin/templates/states_panel.html:177
+msgid "Any changes in order will not be saved."
+msgstr "Cualquier cambio en el pedido no se guardará."
+
+#: admin/templates/states_panel.html:162
+msgid "Delete State Definition"
+msgstr "Eliminar definición de estado"
+
+#: admin/templates/states_panel.html:168
+msgid ""
+"Devices with a State of this description will not have their State altered"
+msgstr ""
+"Los dispositivos con un estado de esta descripción no verán alterado su "
+"estado"
+
+#: admin/views.py:34 dashboard/templates/base.html:87
+msgid "Admin"
+msgstr "Admin"
+
+#: admin/views.py:35
+msgid "admin"
+msgstr "admin"
+
+#: admin/views.py:44 dashboard/templates/base.html:97
+msgid "Users"
+msgstr "Usuarios"
+
+#: admin/views.py:45
+msgid "admin / Users"
+msgstr "admin / Usuarios"
+
+#: admin/views.py:57 device/templates/tabs/log.html:10 user/views.py:18
+msgid "User"
+msgstr "Usuario"
+
+#: admin/views.py:58
+msgid "admin / User"
+msgstr "admin / Usuario"
+
+#: admin/views.py:82
+msgid "Delete user"
+msgstr "Borrar usuario"
+
+#: admin/views.py:99
+msgid "Edit user"
+msgstr "Editar usuario"
+
+#: admin/views.py:118
+msgid "Lot Groups Panel"
+msgstr "Panel de grupos de lotes"
+
+#: admin/views.py:119
+msgid "admin / Lot Groups Panel"
+msgstr "admin /grupos de lotes"
+
+#: admin/views.py:132
+msgid "New lot group Definition"
+msgstr "Definición de nuevo grupo de lotes"
+
+#: admin/views.py:143 admin/views.py:199
+#, python-brace-format
+msgid "The name '{name}' exist."
+msgstr "El nombre '{name}' existe."
+
+#: admin/views.py:148
+msgid "Lot Group successfully added."
+msgstr "Grupo de lotes agregado correctamente."
+
+#: admin/views.py:165
+msgid "This group have lots. Impossible to delete."
+msgstr "Este grupo tiene muchos. Imposible eliminarlo."
+
+#: admin/views.py:176
+msgid "Lot Group has been deleted."
+msgstr "El grupo de lotes ha sido eliminado."
+
+#: admin/views.py:204
+msgid "Lot Group updated successfully."
+msgstr "Grupo de lotes actualizado correctamente."
+
+#: admin/views.py:211 admin/views.py:213
+msgid "Edit institution"
+msgstr "Editar institución"
+
+#: admin/views.py:236
+msgid "State definitions are the custom finite states that a device can be in."
+msgstr ""
+"Las definiciones de estado son los estados finitos personalizados en los que "
+"puede estar un dispositivo."
+
+#: admin/views.py:243
+msgid "States Panel"
+msgstr "Panel de Estados"
+
+#: admin/views.py:244
+msgid "admin / States Panel"
+msgstr "admin / Panel de Estados"
+
+#: admin/views.py:249
+msgid "New State Definition"
+msgstr "Nueva definición de estado"
+
+#: admin/views.py:260
+msgid "State definition successfully added."
+msgstr "Definición de estado agregada correctamente."
+
+#: admin/views.py:263 admin/views.py:326
+msgid "State is already defined."
+msgstr "El estado ya está definido."
+
+#: admin/views.py:304
+msgid "Order changed succesfuly."
+msgstr "Pedido cambiado correctamente."
+
+#: admin/views.py:323
+msgid "State definition updated successfully."
+msgstr "Definición de estado actualizada correctamente."
+
+#: api/tables.py:51
+msgid "Token"
+msgstr "Token"
+
+#: api/templates/custom_table.html:65 dashboard/templates/pagination.html:13
+msgid "Previous"
+msgstr "Anterior"
+
+#: api/templates/custom_table.html:91 dashboard/templates/pagination.html:38
+msgid "Next"
+msgstr "Siguiente"
+
+#: api/templates/token.html:13
+msgid "Generate a new token"
+msgstr "Generar un nuevo token"
+
+#: api/views.py:147 api/views.py:181 api/views.py:199
+msgid "Credential management"
+msgstr "Gestión de credenciales"
+
+#: api/views.py:149
+msgid "Managament Tokens"
+msgstr "Gestion de Tokens"
+
+#: api/views.py:183 api/views.py:201
+msgid "New Tokens"
+msgstr "Nuevos Tokens"
+
+#: dashboard/mixins.py:16
+msgid "Permission denied. User is not authenticated"
+msgstr "Permiso denegado. El usuario no está autenticado"
+
+#: dashboard/templates/base.html:92
+msgid "Panel"
+msgstr "Panel"
+
+#: dashboard/templates/base.html:102
+msgid "States"
+msgstr "Estados"
+
+#: dashboard/templates/base.html:107
+msgid "Lot Groups"
+msgstr "Grupos de lotes"
+
+#: dashboard/templates/base.html:116 device/views.py:77
+msgid "Device"
+msgstr "Dispositivo"
+
+#: dashboard/templates/base.html:121
+msgid "All"
+msgstr "Todos"
+
+#: dashboard/templates/base.html:129 device/templates/details.html:70
+msgid "Lots"
+msgstr "Lotes"
+
+#: dashboard/templates/base.html:149 device/templates/details.html:76
+#: evidence/views.py:29 evidence/views.py:88 evidence/views.py:148
+msgid "Evidences"
+msgstr "Evidencias"
+
+#: dashboard/templates/base.html:154 device/templates/tabs/evidences.html:5
+msgid "List of evidences"
+msgstr "Lista de evidencias"
+
+#: dashboard/templates/base.html:159
+msgid "Upload with JSON file"
+msgstr "Subir con archivo JSON"
+
+#: dashboard/templates/base.html:164
+msgid "Upload with Spreadsheet"
+msgstr "Subir con hoja de cálculo"
+
+#: dashboard/templates/base.html:169
+msgid "Upload with Web Form"
+msgstr "Subir con formulario web"
+
+#: dashboard/templates/base.html:200
+msgid "Search your device"
+msgstr "Buscar dispositivos"
+
+#: dashboard/templates/inventory_dashboard.html:13
+msgid "Total Devices"
+msgstr "Total de dispositivos"
+
+#: dashboard/templates/inventory_dashboard.html:21
+msgid "Assigned"
+msgstr "Asignado"
+
+#: dashboard/templates/inventory_dashboard.html:29
+msgid "Unassigned"
+msgstr "Sin asignar"
+
+#: dashboard/templates/inventory_dashboard.html:38
+msgid "States Distribution"
+msgstr "Distribución de estados"
+
+#: dashboard/templates/inventory_dashboard.html:40
+msgid "Active"
+msgstr "Activo"
+
+#: dashboard/templates/inventory_dashboard.html:41
+msgid "Repair"
+msgstr "Reparar"
+
+#: dashboard/templates/inventory_dashboard.html:42
+msgid "Discarded"
+msgstr "Descartado"
+
+#: dashboard/templates/unassigned_devices.html:14
+msgid "Exports"
+msgstr "Exportar"
+
+#: dashboard/templates/unassigned_devices.html:19
+msgid "properties"
+msgstr "propiedades"
+
+#: dashboard/templates/unassigned_devices.html:30
+msgid "Lot Actions"
+msgstr "Acciones de lote"
+
+#: dashboard/templates/unassigned_devices.html:30
+msgid " Add"
+msgstr "Agregar"
+
+#: dashboard/templates/unassigned_devices.html:30
+msgid "Remove"
+msgstr "Eliminar"
+
+#: dashboard/templates/unassigned_devices.html:36
+msgid "select"
+msgstr "Seleccionar"
+
+#: dashboard/templates/unassigned_devices.html:39
+msgid "shortid"
+msgstr "ID"
+
+#: dashboard/templates/unassigned_devices.html:42
+msgid "type"
+msgstr "Tipo"
+
+#: dashboard/templates/unassigned_devices.html:45
+msgid "manufacturer"
+msgstr "Fabricante"
+
+#: dashboard/templates/unassigned_devices.html:48
+msgid "model"
+msgstr "Modelo"
+
+#: dashboard/templates/unassigned_devices.html:51
+msgid "updated"
+msgstr "Actualizado"
+
+#: dashboard/views.py:18
+msgid "Unassigned Devices"
+msgstr "Dispositivos no asignados"
+
+#: dashboard/views.py:28
+msgid "All Devices"
+msgstr "Todos los dispositivos"
+
+#: dashboard/views.py:38
+msgid "Lot Devices"
+msgstr "Lote de dispositivos"
+
+#: dashboard/views.py:72
+msgid "Search Devices"
+msgstr "Buscar dispositivos"
+
+#: device/templates/details.html:17 device/templates/details.html:44
+msgid "Change state"
+msgstr "Cambiar estado"
+
+#: device/templates/details.html:21
+msgid "None"
+msgstr "Ninguno"
+
+#: device/templates/details.html:52
+msgid "Add a note"
+msgstr "Añadir una nota"
+
+#: device/templates/details.html:64
+msgid "General details"
+msgstr "Detalles generales"
+
+#: device/templates/details.html:67
+msgid "Properties"
+msgstr "Propiedades"
+
+#: device/templates/details.html:73
+msgid "Components"
+msgstr "Componentes"
+
+#: device/templates/details.html:80
+msgid "Dpps"
+msgstr "PDPs"
+
+#: device/templates/details.html:87
+msgid "Log"
+msgstr "Registro"
+
+#: device/templates/details.html:113
+msgid "Add a Note"
+msgstr "Añadir una Nota"
+
+#: device/templates/details.html:121
+msgid "Note"
+msgstr "Nota"
+
+#: device/templates/details.html:126
+msgid "Save Note"
+msgstr "Guardar Nota"
+
+#: device/templates/new_device.html:60
+msgid "Component details"
+msgstr "Detalles del componente"
+
+#: device/templates/new_device.html:65
+msgid "Add component"
+msgstr "Añadir componente"
+
+#: device/templates/tabs/components.html:5
+msgid "Components last evidence"
+msgstr "Última evidencia de componentes"
+
+#: device/templates/tabs/dpps.html:4
+msgid "List of dpps"
+msgstr "Lista de PDPs"
+
+#: device/templates/tabs/evidences.html:12 device/templates/tabs/log.html:8
+msgid "Date"
+msgstr "Fecha"
+
+#: device/templates/tabs/general_details.html:6
+msgid "Details"
+msgstr "Detalles"
+
+#: device/templates/tabs/general_details.html:10
+msgid "Phid"
+msgstr "Phid"
+
+#: device/templates/tabs/general_details.html:18
+msgid "Is an erase server"
+msgstr "Es un servidor de borrado"
+
+#: device/templates/tabs/general_details.html:20
+msgid "Yes"
+msgstr "Sí"
+
+#: device/templates/tabs/general_details.html:26
+#: evidence/templates/ev_details.html:38
+msgid "Type"
+msgstr "Tipo"
+
+#: device/templates/tabs/general_details.html:43
+msgid "Manufacturer"
+msgstr "Fabricante"
+
+#: device/templates/tabs/general_details.html:50
+msgid "Model"
+msgstr "Modelo"
+
+#: device/templates/tabs/general_details.html:58
+msgid "Version"
+msgstr "Versión"
+
+#: device/templates/tabs/general_details.html:64
+msgid "Serial Number"
+msgstr "Número de serie"
+
+#: device/templates/tabs/general_details.html:72
+msgid "Identifiers"
+msgstr "Identificadores"
+
+#: device/templates/tabs/log.html:9
+msgid "Event"
+msgstr "Evento"
+
+#: device/templates/tabs/log.html:22
+msgid "No logs recorded."
+msgstr "No se registraron registros."
+
+#: device/templates/tabs/user_properties.html:9
+msgid "New user property"
+msgstr "Nueva propiedad de usuario"
+
+#: device/templates/tabs/user_properties.html:13
+msgid "User properties"
+msgstr "Propiedades del usuario"
+
+#: device/templates/tabs/user_properties.html:18
+#: device/templates/tabs/user_properties.html:111
+#: lot/templates/properties.html:26 lot/templates/properties.html:63
+msgid "Key"
+msgstr "Clave"
+
+#: device/templates/tabs/user_properties.html:19
+#: device/templates/tabs/user_properties.html:116
+#: lot/templates/properties.html:27 lot/templates/properties.html:67
+msgid "Value"
+msgstr "Valor"
+
+#: device/templates/tabs/user_properties.html:20
+#: lot/templates/properties.html:28
+msgid "Created on"
+msgstr "Creado el"
+
+#: device/templates/tabs/user_properties.html:63
+msgid "Confirm Deletion"
+msgstr "Confirmar la eliminación"
+
+#: device/templates/tabs/user_properties.html:70
+msgid "Key:"
+msgstr "Clave:"
+
+#: device/templates/tabs/user_properties.html:74
+msgid "Value:"
+msgstr "Valor:"
+
+#: device/templates/tabs/user_properties.html:78
+msgid "Created on:"
+msgstr "Creado el:"
+
+#: device/templates/tabs/user_properties.html:102
+msgid "Edit User Property"
+msgstr "Editar propiedad de usuario"
+
+#: device/templates/tabs/user_properties.html:123
+#: lot/templates/properties.html:72
+msgid "Save changes"
+msgstr "Guardar cambios"
+
+#: device/views.py:41
+msgid "New Device"
+msgstr "Nuevo dispositivo"
+
+#: device/views.py:58
+msgid "Update Device"
+msgstr "Actualizar dispositivo"
+
+#: device/views.py:185
+msgid "New User Property"
+msgstr "Nueva propiedad de usuario"
+
+#: device/views.py:198 lot/views.py:203
+msgid "Property successfully added."
+msgstr "Propiedad agregada correctamente."
+
+#: device/views.py:199
+msgid "<Created> UserProperty: {}: {}"
+msgstr "<Created>Propiedad del usuario: {}: {}"
+
+#: device/views.py:207 device/views.py:262 lot/views.py:206 lot/views.py:252
+msgid "Property is already defined."
+msgstr "La propiedad ya está definida."
+
+#: device/views.py:232
+msgid "Update User Property"
+msgstr "Actualizar propiedad del usuario"
+
+#: device/views.py:251 lot/views.py:249
+msgid "Property updated successfully."
+msgstr "Propiedad actualizada correctamente."
+
+#: device/views.py:252
+msgid "<Updated> UserProperty: {}: {} to {}: {}"
+msgstr "<Updated>Propiedad del usuario: {}: {} a {}: {}"
+
+#: device/views.py:288
+msgid "<Deleted> User Property: {}:{}"
+msgstr "<Deleted>Propiedad del usuario: {}:{}"
+
+#: device/views.py:293
+msgid "User property deleted successfully."
+msgstr "Propiedad del usuario eliminada correctamente."
+
+#: evidence/forms.py:17
+msgid "File"
+msgstr "﻿Archivo"
+
+#: evidence/forms.py:40
+msgid "The snapshot already exists"
+msgstr "La evidencia ya existe"
+
+#: evidence/forms.py:47
+#, python-format
+msgid "Error on '%(file_name)s': %(error)s"
+msgstr "Error en '%(file_name)s': %(error)s"
+
+#: evidence/forms.py:106
+msgid "<Deleted> Evidence Tag. Old Value: '{}'"
+msgstr "<Deleted>Etiqueta de evidencia. Valor anterior: '{}'"
+
+#: evidence/forms.py:112
+msgid "<Updated> Evidence Tag. Old Value: '{}'. New Value: '{}'"
+msgstr ""
+"<Updated>Etiqueta de evidencia. Valor anterior: '{}'. Nuevo valor: '{}'"
+
+#: evidence/forms.py:114
+msgid "<Created> Evidence Tag. Value: '{}'"
+msgstr "<Created>Etiqueta de evidencia. Valor: '{}'"
+
+#: evidence/forms.py:132
+msgid "File to import"
+msgstr "Archivo a importar"
+
+#: evidence/forms.py:150
+#, python-format
+msgid "Error on '%(file_name)s': Invalid File"
+msgstr "Error en '%(file_name)s': Archivo no válido"
+
+#: evidence/forms.py:159
+msgid "The file you try to import is empty!"
+msgstr "¡El archivo que intentas importar está vacío!"
+
+#: evidence/forms.py:195
+msgid "Is a Erase Server"
+msgstr "Es un servidor de borrado"
+
+#: evidence/templates/ev_details.html:15
+#: evidence/templates/ev_eraseserver.html:15
+msgid "Devices"
+msgstr "Dispositivos"
+
+#: evidence/templates/ev_details.html:21
+#: evidence/templates/ev_eraseserver.html:21
+msgid "Erase Server"
+msgstr "Servidor de borrado"
+
+#: evidence/templates/ev_details.html:24
+#: evidence/templates/ev_eraseserver.html:24
+msgid "Download File"
+msgstr "Descargar archivo"
+
+#: evidence/templates/ev_details.html:41
+msgid "Identificator"
+msgstr "Identificador"
+
+#: evidence/templates/ev_details.html:44
+msgid "Data"
+msgstr "Datos"
+
+#: evidence/views.py:45
+msgid "Upload Evidence"
+msgstr "Adjuntar evidencia"
+
+#: evidence/views.py:52
+msgid "Evidence uploaded successfully."
+msgstr "Evidencia cargada correctamente."
+
+#: evidence/views.py:64
+msgid "Import Evidence"
+msgstr "Importar evidencia"
+
+#: evidence/views.py:76
+msgid "Evidence imported successfully."
+msgstr "Evidencia importada correctamente."
+
+#: evidence/views.py:200
+msgid "<Deleted> Evidence Tag: {}"
+msgstr "<Deleted>Etiqueta de evidencia: {}"
+
+#: evidence/views.py:209
+msgid "Evicende Tag deleted successfully."
+msgstr "Etiqueta de evidencia eliminada correctamente."
+
+#: login/templates/2fadmin.html:8
+msgid "Two-factor Authentication"
+msgstr "Autenticación de doble factor"
+
+#: login/templates/2fadmin.html:15
+msgid "We have sent you an email with a link that you have to click to log in."
+msgstr ""
+"Le hemos enviado un correo electrónico con un enlace que debe hacer clic "
+"para iniciar sesión."
+
+#: login/templates/2fadmin_email.html:3 login/templates/2fadmin_email.txt:2
+#, python-format
+msgid "You're receiving this email because you tried to access %(site_name)s."
+msgstr ""
+"Ha recibido este correo electrónico porque ha intentado acceder a "
+"%(site_name)s."
+
+#: login/templates/2fadmin_email.html:7 login/templates/2fadmin_email.txt:4
+msgid "Please go to the following page"
+msgstr "Por favor vaya a la siguiente página"
+
+#: login/templates/2fadmin_email.html:19 login/templates/2fadmin_email.txt:10
+#: login/templates/activate_user_email.html:24
+#: login/templates/activate_user_email.txt:15
+#: login/templates/password_reset_email.html:23
+#: login/templates/password_reset_email.txt:10
+msgid "Thanks for using our site!"
+msgstr "¡Gracias por utilizar nuestro sitio!"
+
+#: login/templates/2fadmin_email.html:23 login/templates/2fadmin_email.txt:12
+#: login/templates/password_reset_email.html:27
+#: login/templates/password_reset_email.txt:12
+#, python-format
+msgid "The %(site_name)s team"
+msgstr "El equipo de %(site_name)s"
+
+#: login/templates/2fadmin_email.txt:8
+#: login/templates/password_reset_email.html:19
+#: login/templates/password_reset_email.txt:8
+msgid "Your username, in case you've forgotten:"
+msgstr "Su nombre de usuario, en caso de que lo haya olvidado:"
+
+#: login/templates/2fadmin_email_subject.txt:2
+#, python-format
+msgid "Authentication in %(site_name)s"
+msgstr "Autenticación en %(site_name)s"
+
+#: login/templates/activate_user_email.html:2
+#: login/templates/activate_user_email.txt:3
+msgid "DeviceHub"
+msgstr "DeviceHub"
+
+#: login/templates/activate_user_email.html:4
+#: login/templates/activate_user_email.txt:5
+#, python-format
+msgid ""
+"You're receiving this email because your user account at %(site)s has been "
+"activated."
+msgstr ""
+"Estás recibiendo este correo electrónico porque su cuenta de usuario en "
+"%(site)s se ha activado."
+
+#: login/templates/activate_user_email.html:8
+#: login/templates/activate_user_email.txt:7
+msgid "Your username is:"
+msgstr "Tu nombre de usuario es:"
+
+#: login/templates/activate_user_email.html:12
+#: login/templates/activate_user_email.txt:9
+msgid "Please go to the following page and choose a password:"
+msgstr "Por favor, vaya a la siguiente página y elija una contraseña:"
+
+#: login/templates/activate_user_email.html:28
+#: login/templates/activate_user_email.txt:17
+#, python-format
+msgid "The %(site)s team"
+msgstr "El equipo %(site)s"
+
+#: login/templates/activate_user_subject.txt:2
+msgid "IdHub"
+msgstr "IdHub"
+
+#: login/templates/activate_user_subject.txt:3
+#, python-format
+msgid "User activation on %(site)s"
+msgstr "Activación de usuario en %(site)s"
+
+#: login/templates/login.html:43
+msgid "Forgot your password?"
+msgstr "¿Olvido su contraseña?"
+
+#: login/templates/login2.html:45
+msgid "Log in"
+msgstr "Iniciar sesión"
+
+#: login/templates/login2.html:50
+msgid "Forgot your password? Click here to recover"
+msgstr "¿Olvidó su contraseña? Haga clic aquí para recuperarla"
+
+#: login/templates/password_reset.html:8
+msgid "Password reset"
+msgstr "Restablecer contraseña"
+
+#: login/templates/password_reset.html:9
+msgid ""
+"Forgotten your password? Enter your email address below, and we'll email "
+"instructions for setting a new one."
+msgstr ""
+"Si ha olvidado su contraseña, introduzca su dirección de correo electrónico "
+"y le enviaremos instrucciones para restablecer su contraseña."
+
+#: login/templates/password_reset.html:21
+msgid "Reset my password"
+msgstr "Restablecer mi contraseña"
+
+#: login/templates/password_reset_complete.html:9
+msgid "Password reset complete"
+msgstr "Cambio de contraseña correcto"
+
+#: login/templates/password_reset_complete.html:10
+msgid "Your password has been set. You may go ahead and log in now."
+msgstr "Su contraseña ha sido establecida. Puede iniciar sesión ahora."
+
+#: login/templates/password_reset_complete.html:11 login/views.py:19
+msgid "Login"
+msgstr "Iniciar sesión"
+
+#: login/templates/password_reset_confirm.html:9
+msgid "Enter new password"
+msgstr "Introduzca nueva contraseña"
+
+#: login/templates/password_reset_confirm.html:10
+msgid ""
+"Please enter your new password twice so we can verify you typed it in "
+"correctly."
+msgstr ""
+"Por favor, introduzca su nueva contraseña dos veces para poder verificar que "
+"la ha escrito correctamente."
+
+#: login/templates/password_reset_confirm.html:21
+msgid "Change my password"
+msgstr "Cambiar mi contraseña"
+
+#: login/templates/password_reset_confirm.html:29
+msgid "Password reset unsuccessful"
+msgstr "El restablecimiento de contraseña no fue exitoso"
+
+#: login/templates/password_reset_confirm.html:30
+msgid ""
+"The password reset link was invalid, possibly because it has already been "
+"used."
+msgstr ""
+"El enlace para restablecer la contraseña no era válido, posiblemente porque "
+"ya se había utilizado."
+
+#: login/templates/password_reset_confirm.html:31
+msgid "Please request a new password reset."
+msgstr "Solicite un nuevo restablecimiento de contraseña."
+
+#: login/templates/password_reset_done.html:7
+msgid "Password reset sent"
+msgstr "Restablecimiento de contraseña enviado"
+
+#: login/templates/password_reset_done.html:9
+msgid ""
+"We've emailed you instructions for setting your password, if an account "
+"exists with the email you entered. You should receive them shortly."
+msgstr ""
+"Hemos enviado instrucciones para restablecer su contraseña a la dirección de "
+"correo electrónico introducida. Debería recibirla en breve."
+
+#: login/templates/password_reset_done.html:11
+msgid ""
+"If you don't receive an email, please make sure you've entered the address "
+"you registered with, and check your spam folder."
+msgstr ""
+"Si no recibe ningún correo, por favor asegúrese de haber ingresado la "
+"dirección de correo con la que se registró, y compruebe en su carpeta de "
+"correo basura."
+
+#: login/templates/password_reset_email.html:3
+#: login/templates/password_reset_email.txt:2
+#, python-format
+msgid ""
+"You're receiving this email because you requested a password reset for your "
+"user account at %(site_name)s."
+msgstr ""
+"Está recibiendo este mensaje porque has solicitado restablecer la contraseña "
+"de tu cuenta en %(site_name)s."
+
+#: login/templates/password_reset_email.html:7
+#: login/templates/password_reset_email.txt:4
+msgid "Please go to the following page and choose a new password:"
+msgstr "Vaya a la siguiente página y elija una nueva contraseña:"
+
+#: login/templates/password_reset_subject.txt:2
+#, python-format
+msgid "Password reset on %(site_name)s"
+msgstr "Restablecimiento de contraseña en %(site_name)s"
+
+#: lot/templates/lots.html:12
+msgid "Show active lots"
+msgstr "Mostrar lotes activos"
+
+#: lot/templates/lots.html:16
+msgid "Show archived lots"
+msgstr "Mostrar lotes archivados"
+
+#: lot/templates/lots.html:22
+msgid "Add new lot"
+msgstr "Añadir nuevo lote"
+
+#: lot/templates/properties.html:56
+msgid "Edit Property"
+msgstr "Editar propiedad"
+
+#: lot/templates/properties.html:84
+msgid "Delete Property"
+msgstr "Eliminar propiedad"
+
+#: lot/templates/properties.html:88
+msgid "Are you sure you want to delete this property?"
+msgstr "¿Confirma que desea eliminar esta propiedad?"
+
+#: lot/views.py:19
+msgid "New lot"
+msgstr "Nuevo lote"
+
+#: lot/views.py:48
+msgid "Delete lot"
+msgstr "Borrar lote"
+
+#: lot/views.py:67
+msgid "Edit lot"
+msgstr "Editar lote"
+
+#: lot/views.py:101
+msgid "Add to lots"
+msgstr "Añadir a los lotes"
+
+#: lot/views.py:130
+msgid "Remove from lots"
+msgstr "Retirar de los lotes"
+
+#: lot/views.py:142 lot/views.py:143
+msgid "lots"
+msgstr "lotes"
+
+#: lot/views.py:167 lot/views.py:190
+msgid "New Lot Property"
+msgstr "Propiedad de lote nuevo"
+
+#: lot/views.py:224
+msgid "Update lot Property"
+msgstr "Actualizar propiedad de lote"
+
+#: lot/views.py:272
+msgid "Lot property deleted successfully."
+msgstr "Propiedad de lote eliminada correctamente."
+
+#: user/models.py:12
+msgid "Name"
+msgstr "Nombre"
+
+#: user/models.py:18
+msgid "Logo"
+msgstr "Logotipo"
+
+#: user/models.py:19
+msgid "Location"
+msgstr "Ubicación"
+
+#: user/models.py:21
+msgid "Responsable"
+msgstr "Responsable"
+
+#: user/models.py:27
+msgid "Supervisor"
+msgstr "Supervisor"
+
+#: user/models.py:70
+msgid "Email address"
+msgstr "Dirección de correo electrónico"
+
+#: user/models.py:74
+msgid "is active"
+msgstr "es activo"
+
+#: user/models.py:75
+msgid "is admin"
+msgstr "es admin"
+
+#: user/models.py:76
+msgid "First name"
+msgstr "Nombre"
+
+#: user/models.py:77
+msgid "Last name"
+msgstr "Apellido"
+
+#: user/templates/panel.html:17
+msgid "Admin your Tokens"
+msgstr "Administra tus tokens"
+
+#: user/templates/panel.html:22
+msgid "Download a settings file"
+msgstr "Descargar un archivo de configuración"
+
+#: user/views.py:25
+msgid "Download Settings"
+msgstr "Descargar preferencias"
