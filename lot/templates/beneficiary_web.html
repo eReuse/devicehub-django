@@ -6,7 +6,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{{ donor.email }}</title>
+    <title>{{ object.email }}</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
     <style>
@@ -91,7 +91,7 @@
   </head>
   <body>
     <div class="container custom-container">
-      <h1 class="text-center mb-4" style="color: #545f71;">{{ beneficiary.email }}</h1>
+      <h1 class="text-center mb-4" style="color: #545f71;">{{ object.email }}</h1>
 
       <div class="row mt-4">
         <div class="col">
@@ -119,11 +119,11 @@
         </div>
       </div>
 
-      {% if not beneficiary.sign_conditions %}
+      {% if not object.sign_conditions %}
       <div class="row mt-4">
         <div class="col">
           <div class="form-actions-no-box">
-            <a class="btn btn-secondary" href="{# url 'lot:accept_donor' donor.lot.id donor.id #}">{% trans 'Accept' %}</a>
+            <a class="btn btn-secondary" href="{% url 'lot:agreement_beneficiary' object.lot.id object.id %}">{% trans 'Agreement' %}</a>
           </div>
         </div>
       </div>

@@ -6,7 +6,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{{ object.email }}</title>
+    <title>{{ object.email }} {% trans 'Agreement' %}</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
     <style>
@@ -91,47 +91,19 @@
   </head>
   <body>
     <div class="container custom-container">
-      <h1 class="text-center mb-4" style="color: #545f71;">{{ object.email }}</h1>
+      <h1 class="text-center mb-4" style="color: #545f71;">{% trans 'Agreement' %}</h1>
 
       <div class="row mt-4">
         <div class="col">
-	  <table class="table table-hover table-bordered align-middel">
-	    <thead class="table-light">
-              <tr>
-                <th scope="col">ID</th>
-                <th scope="col" width="15%" class="text-center">{% trans "Manufacturer" %}
-                <th scope="col" width="15%" class="text-center">{% trans "Model" %}
-                <th scope="col" width="15%" class="text-center">{% trans "Serial Number" %}
-                </th>
-              </tr>
-	    </thead>
-	    <tbody>
-	      {% for dev in devices %}
-	      <tr>
-		<td class="font-monospace">{{ dev.shortid }}</td>
-		<td class="font-monospace">{{ dev.manufacturer }}</td>
-		<td class="font-monospace">{{ dev.model }}</td>
-		<td class="font-monospace">{{ dev.serial_number }}</td>
-	      </tr>
-	      {% endfor %}
-	    </tbody>
-	  </table>
-        </div>
+	  Convenio
+	</div>
       </div>
 
-      {% if not object.reconciliation %}
+      {% if not object.sign_conditions %}
       <div class="row mt-4">
         <div class="col">
           <div class="form-actions-no-box">
-            <a class="btn btn-secondary" href="{% url 'lot:accept_donor' object.lot.id object.id %}">{% trans 'Accept' %}</a>
-          </div>
-        </div>
-      </div>
-      {% else %}
-      <div class="row mt-4">
-        <div class="col">
-          <div class="form-actions-no-box">
-            <a class="btn btn-secondary" href="{# url 'lot:impact_doc_donor' object.lot.id object.id #}">{% trans 'Impact Inform' %}</a>
+            <a class="btn btn-secondary" href="{% url 'lot:accept_beneficiary' object.lot.id object.id %}">{% trans 'Accept' %}</a>
           </div>
         </div>
       </div>
