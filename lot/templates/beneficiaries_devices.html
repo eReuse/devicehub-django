@@ -18,16 +18,18 @@
           <th scope="col">{% trans 'Manufacturer' %}</th>
           <th scope="col">{% trans 'Model' %}</th>
           <th scope="col">{% trans 'Serial Number' %}</th>
+          <th scope="col">{% trans 'Confirmed' %}</th>
           <th scope="col"></th>
         </tr>
       </thead>
       <tbody>
-      {% for s in devices %}
+      {% for s, status in devices %}
         <tr>
           <td class="font-monospace">{{ s.shortid }}</td>
           <td class="font-monospace">{{ s.manufacturer }}</td>
           <td class="font-monospace">{{ s.model }}</td>
           <td class="font-monospace">{{ s.serial_number }}</td>
+	  <td class="font-monospace">{{ status }}</td>
           <td class="font-monospace">
 	    <a href="{% url 'lot:del_device_beneficiary' lot.id beneficiary.id s.id %}">
 	       {% trans 'Delete' %}

@@ -578,7 +578,7 @@ class WebMixing(TemplateView):
             lot_id=pk
         )
         context = super().get_context_data(**kwargs)
-        context["donor"] = self.object
+        context["object"] = self.object
         context["devices"] = self.get_devices()
         return context
 
@@ -650,7 +650,10 @@ class BeneficiaryView(DashboardView, FormView):
 
         beneficiaries = []
         if self.request.user.is_admin or self.is_shop:
-            beneficiaries = Beneficiary.objects.filter(lot=self.lot)
+            if self.is_shop:
+                beneficiaries = self.is_shop.beneficiary_set.filter(lot=self.lot)
+            else:
+                beneficiaries = Beneficiary.objects.filter(lot=self.lot)
 
         context.update({
             'lot': self.lot,
@@ -741,7 +744,10 @@ class ListDevicesBeneficiaryView(DashboardView, TemplateView):
             id=self.id
         )
 
-        devices = [Device(id=x.device_id) for x in beneficiary.devicebeneficiary_set.all()]
+        if not self.request.user.is_admin and beneficiary.shop != self.is_shop:
+            raise Http404
+
+        devices = [(Device(id=x.device_id), x.get_status_display()) for x in beneficiary.devicebeneficiary_set.all()]
 
         context.update({
             'lot': self.lot,
@@ -825,3 +831,45 @@ class WebBeneficiaryView(WebMixing):
         return self.object.devicebeneficiary_set.all().values_list(
             "device_id", flat=True
         ).distinct()
+
+
+class AgreementBeneficiaryView(TemplateView):
+    template_name = "beneficiary_agreement.html"
+
+    def get_context_data(self, **kwargs):
+        self.pk = self.kwargs.get('pk')
+        self.id = self.kwargs.get('id')
+        context = super().get_context_data(**kwargs)
+
+        beneficiary = get_object_or_404(
+            Beneficiary,
+            lot_id=self.pk,
+            id=self.id
+        )
+
+        context.update({
+            'object': beneficiary,
+        })
+        return context
+
+
+class AcceptBeneficiaryView(TemplateView):
+    template_name = "beneficiary_agreement.html"
+
+    def get(self, *args, **kwargs):
+        super().get(*args, **kwargs)
+        pk = self.kwargs.get('pk')
+        id = self.kwargs.get('id')
+        self.success_url = reverse_lazy('lot:web_beneficiary', args=[pk, id])
+
+        self.object = get_object_or_404(
+            Beneficiary,
+            id=id,
+            lot_id=pk
+        )
+        self.object.sign_conditions = True
+        self.object.save()
+        # TODO
+        # self.send_email()
+
+        return redirect(self.success_url)
