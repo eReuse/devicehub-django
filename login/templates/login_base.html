@@ -45,7 +45,7 @@
 
   <div class="container">
 
-    <section class="section register min-vh-100 d-flex flex-column align-items-center justify-content-center py-4">
+    <section class="section register min-vh-100 d-flex flex-column align-items-center justify-content-center">
       <div class="container">
         <div class="row justify-content-center">
           <div class="col-lg-4 col-md-6 d-flex flex-column align-items-center justify-content-center">
@@ -57,51 +57,37 @@
               </a>
             </div><!-- End Logo -->
 
-            <div class="card mb-3 shadow p-3 mb-5 bg-body rounded">
+            <div class="card shadow bg-body rounded p-3">
 
               <div class="card-body">
-
-                <div class="pt-2 pb-3">
-                  <h5 class="card-title text-center pb-0 fs-4 help">Sign in</h5>
-                  
-                </div>
-
                 {% block login_content %}
+
                 {% endblock login_content %}
 
               </div>
             </div>
-
+            {% if messages %}
+            <div class="col-12 mt-3">
+              {% for message in messages %}
+                <div class="alert alert-danger show text-center" role="alert">
+                  {{message}}
+                </div>
+              {% endfor %}
+              </div>
+            {% endif %}
             <div class="credits">
             </div>
 
           </div>
-        </div>
+        </div>    
       </div>
 
     </section>
 
   </div>
 
-    <div class="container-fluid">
-      <div class="row">
-        <main class="col-md-12 bt-5">
-          {% block messages %}
-            {% for message in messages %}
-              <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
-                {{ message }}
-                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                  <span aria-hidden="true">&times;</span>
-                </button>
-              </div>
-            {% endfor %}
-          {% endblock messages %}
-        </main>
-      </div>
-    </div>
-
     <!-- Footer -->
-  <footer class="footer text-center">
+    <footer class="footer text-center fixed-bottom bg-light py-3">
     <div class="container">
       <span class="text-muted">{{ commit_id }}</span>
     </div>
