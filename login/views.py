@@ -8,7 +8,7 @@ from django.contrib.auth import logout as auth_logout
 from django.utils.translation import gettext_lazy as _
 from django.shortcuts import redirect
 from django.http import HttpResponseRedirect
-
+from django.contrib import messages
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +39,10 @@ class LoginView(auth_views.LoginView):
             return redirect(reverse_lazy("login:login"))
 
         return redirect(self.extra_context['success_url'])
+
+    def form_invalid(self, form):
+        messages.error(self.request, _("Login error. Check credentials."))
+        return self.render_to_response(self.get_context_data(form=form), status=401)
 
 
 def LogoutView(request):

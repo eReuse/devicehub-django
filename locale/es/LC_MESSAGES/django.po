@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-13 11:53-0300\n"
+"POT-Creation-Date: 2025-03-20 12:56-0300\n"
 "PO-Revision-Date: 2025-03-13 12:02-0300\n"
 "Last-Translator: Leandro Navarro <leandro@ac.upc.edu>\n"
 "Language-Team: \n"
@@ -103,14 +103,13 @@ msgstr "Añadir nuevo usuario"
 #: admin/templates/lot_tag_panel.html:117
 #: admin/templates/lot_tag_panel.html:155 admin/templates/states_panel.html:145
 #: admin/templates/states_panel.html:185 admin/templates/user.html:27
-#: api/templates/new_token.html:27 device/templates/details.html:125
+#: api/templates/new_token.html:27 device/templates/details.html:130
 #: device/templates/new_device.html:81
 #: device/templates/new_user_property.html:39
 #: device/templates/tabs/user_properties.html:83
 #: device/templates/tabs/user_properties.html:121
-#: evidence/templates/ev_details.html:90
-#: evidence/templates/ev_eraseserver.html:52 evidence/templates/upload.html:25
-#: lot/templates/delete_lot.html:33 lot/templates/new_lot.html:27
+#: evidence/templates/ev_details.html:110 evidence/templates/upload.html:25
+#: lot/templates/delete_lots.html:95 lot/templates/new_lot.html:30
 #: lot/templates/new_property.html:39 lot/templates/properties.html:71
 #: lot/templates/properties.html:91 user/templates/settings.html:27
 msgid "Cancel"
@@ -122,7 +121,7 @@ msgstr "Cancelar"
 #: admin/templates/states_panel.html:188 api/tables.py:29
 #: device/templates/tabs/user_properties.html:47
 #: device/templates/tabs/user_properties.html:87
-#: evidence/templates/ev_details.html:95 lot/templates/delete_lot.html:34
+#: evidence/templates/ev_details.html:115 lot/templates/delete_lots.html:99
 #: lot/templates/properties.html:46 lot/templates/properties.html:94
 msgid "Delete"
 msgstr "Eliminar"
@@ -130,9 +129,8 @@ msgstr "Eliminar"
 #: admin/templates/institution.html:28 admin/templates/user.html:28
 #: api/templates/new_token.html:28 device/templates/new_device.html:82
 #: device/templates/new_user_property.html:40
-#: evidence/templates/ev_details.html:91
-#: evidence/templates/ev_eraseserver.html:53 evidence/templates/upload.html:26
-#: lot/templates/new_lot.html:28 lot/templates/new_property.html:40
+#: evidence/templates/ev_details.html:111 evidence/templates/upload.html:26
+#: lot/templates/new_lot.html:34 lot/templates/new_property.html:40
 #: user/templates/settings.html:28
 msgid "Save"
 msgstr "Guardar"
@@ -152,7 +150,7 @@ msgstr "Acciones"
 
 #: admin/templates/lot_tag_panel.html:42 admin/templates/states_panel.html:60
 #: device/templates/tabs/user_properties.html:40
-#: lot/templates/properties.html:42
+#: lot/templates/lot_actions.html:5 lot/templates/properties.html:42
 msgid "Edit"
 msgstr "Editar"
 
@@ -165,8 +163,7 @@ msgid "Add Lot Group"
 msgstr "Agregar grupo de lotes"
 
 #: admin/templates/lot_tag_panel.html:80 admin/templates/lot_tag_panel.html:110
-#: api/tables.py:52 evidence/forms.py:68 evidence/templates/ev_details.html:18
-#: evidence/templates/ev_eraseserver.html:18
+#: api/tables.py:52 evidence/forms.py:68 evidence/templates/ev_details.html:53
 msgid "Tag"
 msgstr "Etiqueta"
 
@@ -178,7 +175,7 @@ msgstr "Máximo 50 caracteres."
 #: admin/templates/lot_tag_panel.html:85 admin/templates/lot_tag_panel.html:106
 #: admin/templates/lot_tag_panel.html:136 admin/templates/states_panel.html:109
 #: admin/templates/states_panel.html:130 admin/templates/states_panel.html:164
-#: device/templates/details.html:114 lot/templates/properties.html:57
+#: device/templates/details.html:119 lot/templates/properties.html:57
 #: lot/templates/properties.html:85
 msgid "Close"
 msgstr "Cerrar"
@@ -404,40 +401,41 @@ msgstr "Estados"
 msgid "Lot Groups"
 msgstr "Grupos de lotes"
 
-#: dashboard/templates/base.html:116 device/views.py:77
-msgid "Device"
-msgstr "Dispositivo"
+#: dashboard/templates/base.html:116 lot/tables.py:46
+msgid "Devices"
+msgstr "Dispositivos"
 
 #: dashboard/templates/base.html:121
 msgid "All"
 msgstr "Todos"
 
 #: dashboard/templates/base.html:129 device/templates/details.html:70
+#: lot/views.py:238
 msgid "Lots"
 msgstr "Lotes"
 
-#: dashboard/templates/base.html:149 device/templates/details.html:76
-#: evidence/views.py:29 evidence/views.py:88 evidence/views.py:148
+#: dashboard/templates/base.html:152 device/templates/details.html:76
+#: evidence/views.py:29 evidence/views.py:88 evidence/views.py:149
 msgid "Evidences"
 msgstr "Evidencias"
 
-#: dashboard/templates/base.html:154 device/templates/tabs/evidences.html:5
+#: dashboard/templates/base.html:157 device/templates/tabs/evidences.html:5
 msgid "List of evidences"
 msgstr "Lista de evidencias"
 
-#: dashboard/templates/base.html:159
-msgid "Upload with JSON file"
-msgstr "Subir con archivo JSON"
+#: dashboard/templates/base.html:162
+msgid "Upload JSON file"
+msgstr "Subir archivo JSON"
 
-#: dashboard/templates/base.html:164
-msgid "Upload with Spreadsheet"
-msgstr "Subir con hoja de cálculo"
+#: dashboard/templates/base.html:167
+msgid "Upload Spreadsheet"
+msgstr "Subir hoja de cálculo"
 
-#: dashboard/templates/base.html:169
-msgid "Upload with Web Form"
-msgstr "Subir con formulario web"
+#: dashboard/templates/base.html:172
+msgid "Upload Web Form"
+msgstr "Subir formulario web"
 
-#: dashboard/templates/base.html:200
+#: dashboard/templates/base.html:203
 msgid "Search your device"
 msgstr "Buscar dispositivos"
 
@@ -457,7 +455,7 @@ msgstr "Sin asignar"
 msgid "States Distribution"
 msgstr "Distribución de estados"
 
-#: dashboard/templates/inventory_dashboard.html:40
+#: dashboard/templates/inventory_dashboard.html:40 lot/templates/lots.html:49
 msgid "Active"
 msgstr "Activo"
 
@@ -514,18 +512,18 @@ msgid "updated"
 msgstr "Actualizado"
 
 #: dashboard/views.py:18
-msgid "Unassigned Devices"
-msgstr "Dispositivos no asignados"
+msgid "Inbox"
+msgstr ""
 
-#: dashboard/views.py:28
+#: dashboard/views.py:27
 msgid "All Devices"
 msgstr "Todos los dispositivos"
 
-#: dashboard/views.py:38
+#: dashboard/views.py:37
 msgid "Lot Devices"
 msgstr "Lote de dispositivos"
 
-#: dashboard/views.py:72
+#: dashboard/views.py:71
 msgid "Search Devices"
 msgstr "Buscar dispositivos"
 
@@ -561,15 +559,19 @@ msgstr "PDPs"
 msgid "Log"
 msgstr "Registro"
 
-#: device/templates/details.html:113
+#: device/templates/details.html:90
+msgid "Environmental impact"
+msgstr "Impacto Ambiental"
+
+#: device/templates/details.html:118
 msgid "Add a Note"
 msgstr "Añadir una Nota"
 
-#: device/templates/details.html:121
+#: device/templates/details.html:126
 msgid "Note"
 msgstr "Nota"
 
-#: device/templates/details.html:126
+#: device/templates/details.html:131
 msgid "Save Note"
 msgstr "Guardar Nota"
 
@@ -589,7 +591,36 @@ msgstr "Última evidencia de componentes"
 msgid "List of dpps"
 msgstr "Lista de PDPs"
 
+#: device/templates/tabs/environmental_impact.html:4
+msgid "Environmental Impact Details"
+msgstr "Detalles del impacto ambiental"
+
+#: device/templates/tabs/environmental_impact.html:7
+msgid "While device is being used"
+msgstr "Mientras el dispositivo está en uso"
+
+#: device/templates/tabs/environmental_impact.html:11
+msgid "CO2 Emissions"
+msgstr "Emisiones CO2"
+
+#: device/templates/tabs/environmental_impact.html:19
+msgid "Algorithm Selector"
+msgstr "Seleccionador de algoritmo"
+
+#: device/templates/tabs/environmental_impact.html:22
+msgid "Dummy Algorithm"
+msgstr "Algoritmo simple"
+
+#: device/templates/tabs/environmental_impact.html:25
+msgid "Advanced Algorithm"
+msgstr "Algoritmo avanzado"
+
+#: device/templates/tabs/environmental_impact.html:33
+msgid "Read about the algorithm insights"
+msgstr "Lee más acerca del algoritmo "
+
 #: device/templates/tabs/evidences.html:12 device/templates/tabs/log.html:8
+#: evidence/templates/ev_details.html:68
 msgid "Date"
 msgstr "Fecha"
 
@@ -610,7 +641,6 @@ msgid "Yes"
 msgstr "Sí"
 
 #: device/templates/tabs/general_details.html:26
-#: evidence/templates/ev_details.html:38
 msgid "Type"
 msgstr "Tipo"
 
@@ -692,47 +722,51 @@ msgstr "Editar propiedad de usuario"
 msgid "Save changes"
 msgstr "Guardar cambios"
 
-#: device/views.py:41
+#: device/views.py:42
 msgid "New Device"
 msgstr "Nuevo dispositivo"
 
-#: device/views.py:58
+#: device/views.py:59
 msgid "Update Device"
 msgstr "Actualizar dispositivo"
 
-#: device/views.py:185
+#: device/views.py:78 evidence/templates/ev_details.html:50
+msgid "Device"
+msgstr "Dispositivo"
+
+#: device/views.py:192
 msgid "New User Property"
 msgstr "Nueva propiedad de usuario"
 
-#: device/views.py:198 lot/views.py:203
+#: device/views.py:205 lot/views.py:301
 msgid "Property successfully added."
 msgstr "Propiedad agregada correctamente."
 
-#: device/views.py:199
+#: device/views.py:206
 msgid "<Created> UserProperty: {}: {}"
 msgstr "<Created>Propiedad del usuario: {}: {}"
 
-#: device/views.py:207 device/views.py:262 lot/views.py:206 lot/views.py:252
+#: device/views.py:214 device/views.py:269 lot/views.py:304 lot/views.py:350
 msgid "Property is already defined."
 msgstr "La propiedad ya está definida."
 
-#: device/views.py:232
+#: device/views.py:239
 msgid "Update User Property"
 msgstr "Actualizar propiedad del usuario"
 
-#: device/views.py:251 lot/views.py:249
+#: device/views.py:258 lot/views.py:347
 msgid "Property updated successfully."
 msgstr "Propiedad actualizada correctamente."
 
-#: device/views.py:252
+#: device/views.py:259
 msgid "<Updated> UserProperty: {}: {} to {}: {}"
 msgstr "<Updated>Propiedad del usuario: {}: {} a {}: {}"
 
-#: device/views.py:288
+#: device/views.py:295
 msgid "<Deleted> User Property: {}:{}"
 msgstr "<Deleted>Propiedad del usuario: {}:{}"
 
-#: device/views.py:293
+#: device/views.py:300
 msgid "User property deleted successfully."
 msgstr "Propiedad del usuario eliminada correctamente."
 
@@ -779,28 +813,29 @@ msgstr "¡El archivo que intentas importar está vacío!"
 msgid "Is a Erase Server"
 msgstr "Es un servidor de borrado"
 
-#: evidence/templates/ev_details.html:15
-#: evidence/templates/ev_eraseserver.html:15
-msgid "Devices"
-msgstr "Dispositivos"
-
-#: evidence/templates/ev_details.html:21
-#: evidence/templates/ev_eraseserver.html:21
-msgid "Erase Server"
-msgstr "Servidor de borrado"
-
-#: evidence/templates/ev_details.html:24
-#: evidence/templates/ev_eraseserver.html:24
+#: evidence/templates/ev_details.html:8
 msgid "Download File"
 msgstr "Descargar archivo"
 
-#: evidence/templates/ev_details.html:41
-msgid "Identificator"
-msgstr "Identificador"
+#: evidence/templates/ev_details.html:24
+msgid "Erase Server"
+msgstr "Servidor de borrado"
 
-#: evidence/templates/ev_details.html:44
-msgid "Data"
-msgstr "Datos"
+#: evidence/templates/ev_details.html:36
+msgid "It is an erase server"
+msgstr "Es un servidor de borrado"
+
+#: evidence/templates/ev_details.html:38
+msgid "It is not an erase server"
+msgstr "No es un servidor de borrado"
+
+#: evidence/templates/ev_details.html:66
+msgid "Algorithm"
+msgstr "Algoritmo"
+
+#: evidence/templates/ev_details.html:67
+msgid "Device ID"
+msgstr "ID del Dispositivo"
 
 #: evidence/views.py:45
 msgid "Upload Evidence"
@@ -818,11 +853,11 @@ msgstr "Importar evidencia"
 msgid "Evidence imported successfully."
 msgstr "Evidencia importada correctamente."
 
-#: evidence/views.py:200
+#: evidence/views.py:201
 msgid "<Deleted> Evidence Tag: {}"
 msgstr "<Deleted>Etiqueta de evidencia: {}"
 
-#: evidence/views.py:209
+#: evidence/views.py:210
 msgid "Evicende Tag deleted successfully."
 msgstr "Etiqueta de evidencia eliminada correctamente."
 
@@ -913,7 +948,16 @@ msgstr "IdHub"
 msgid "User activation on %(site)s"
 msgstr "Activación de usuario en %(site)s"
 
-#: login/templates/login.html:43
+#: login/templates/login.html:7
+msgid "Sign in"
+msgstr "Iniciar sesión"
+
+#: login/templates/login.html:41
+#: login/templates/password_reset_complete.html:11 login/views.py:19
+msgid "Login"
+msgstr "Iniciar sesión"
+
+#: login/templates/login.html:45
 msgid "Forgot your password?"
 msgstr "¿Olvido su contraseña?"
 
@@ -925,21 +969,26 @@ msgstr "Iniciar sesión"
 msgid "Forgot your password? Click here to recover"
 msgstr "¿Olvidó su contraseña? Haga clic aquí para recuperarla"
 
-#: login/templates/password_reset.html:8
-msgid "Password reset"
+#: login/templates/password_reset.html:6
+msgid "Password Reset"
 msgstr "Restablecer contraseña"
 
-#: login/templates/password_reset.html:9
+#: login/templates/password_reset.html:7
 msgid ""
-"Forgotten your password? Enter your email address below, and we'll email "
-"instructions for setting a new one."
+"Enter your email address below, and we'll email instructions for setting a "
+"new one."
 msgstr ""
 "Si ha olvidado su contraseña, introduzca su dirección de correo electrónico "
 "y le enviaremos instrucciones para restablecer su contraseña."
 
-#: login/templates/password_reset.html:21
-msgid "Reset my password"
-msgstr "Restablecer mi contraseña"
+#: login/templates/password_reset.html:14
+msgid "Reset Password"
+msgstr "Restablecer contraseña"
+
+#: login/templates/password_reset.html:19
+#: login/templates/password_reset_done.html:14
+msgid "Back to login"
+msgstr "Volver a iniciar sesión"
 
 #: login/templates/password_reset_complete.html:9
 msgid "Password reset complete"
@@ -948,10 +997,6 @@ msgstr "Cambio de contraseña correcto"
 #: login/templates/password_reset_complete.html:10
 msgid "Your password has been set. You may go ahead and log in now."
 msgstr "Su contraseña ha sido establecida. Puede iniciar sesión ahora."
-
-#: login/templates/password_reset_complete.html:11 login/views.py:19
-msgid "Login"
-msgstr "Iniciar sesión"
 
 #: login/templates/password_reset_confirm.html:9
 msgid "Enter new password"
@@ -989,18 +1034,18 @@ msgstr "Solicite un nuevo restablecimiento de contraseña."
 msgid "Password reset sent"
 msgstr "Restablecimiento de contraseña enviado"
 
-#: login/templates/password_reset_done.html:9
+#: login/templates/password_reset_done.html:8
 msgid ""
-"We've emailed you instructions for setting your password, if an account "
-"exists with the email you entered. You should receive them shortly."
+"We've sent you an email with instructions to reset your password. If an "
+"account with the provided email exists, you should receive it shortly."
 msgstr ""
 "Hemos enviado instrucciones para restablecer su contraseña a la dirección de "
 "correo electrónico introducida. Debería recibirla en breve."
 
-#: login/templates/password_reset_done.html:11
+#: login/templates/password_reset_done.html:9
 msgid ""
-"If you don't receive an email, please make sure you've entered the address "
-"you registered with, and check your spam folder."
+"If you don't receive an email, please check the email address you entered "
+"and look in your spam folder."
 msgstr ""
 "Si no recibe ningún correo, por favor asegúrese de haber ingresado la "
 "dirección de correo con la que se registró, y compruebe en su carpeta de "
@@ -1026,17 +1071,101 @@ msgstr "Vaya a la siguiente página y elija una nueva contraseña:"
 msgid "Password reset on %(site_name)s"
 msgstr "Restablecimiento de contraseña en %(site_name)s"
 
-#: lot/templates/lots.html:12
-msgid "Show active lots"
-msgstr "Mostrar lotes activos"
+#: login/views.py:44
+msgid "Login error. Check credentials."
+msgstr "Error al iniciar sesión. Verifique sus credenciales."
 
-#: lot/templates/lots.html:16
-msgid "Show archived lots"
-msgstr "Mostrar lotes archivados"
+#: lot/tables.py:24
+msgid "Lot Name"
+msgstr "Nombre del grupo de lotes"
 
-#: lot/templates/lots.html:22
-msgid "Add new lot"
-msgstr "Añadir nuevo lote"
+#: lot/tables.py:31 lot/templates/delete_lots.html:42
+msgid "Description"
+msgstr "Descripción"
+
+#: lot/tables.py:32
+msgid "No description"
+msgstr "No hay descripción"
+
+#: lot/tables.py:39
+msgid "Status"
+msgstr "Estado"
+
+#: lot/tables.py:55
+msgid "Created On"
+msgstr "Creado el"
+
+#: lot/tables.py:62
+msgid "Created By"
+msgstr "Creado por"
+
+#: lot/tables.py:63
+msgid "Unknown"
+msgstr "N/A"
+
+#: lot/templates/delete_lots.html:9
+msgid "Are you sure you want to delete the following lot/s?"
+msgstr "¿Confirma que desea eliminar estos lot/es?"
+
+#: lot/templates/delete_lots.html:15
+msgid "device/s"
+msgstr "dispositivo/s"
+
+#: lot/templates/delete_lots.html:22 lot/templates/lots.html:62
+msgid "Archived"
+msgstr "Archivado"
+
+#: lot/templates/delete_lots.html:22
+msgid "Open"
+msgstr "Abierto"
+
+#: lot/templates/delete_lots.html:39
+msgid "Code"
+msgstr "Código"
+
+#: lot/templates/delete_lots.html:45
+msgid "Owner"
+msgstr "Dueño"
+
+#: lot/templates/delete_lots.html:48
+msgid "Created by"
+msgstr "Creado por"
+
+#: lot/templates/delete_lots.html:56 lot/views.py:237
+msgid "Lot Group"
+msgstr "Grupo de lotes"
+
+#: lot/templates/delete_lots.html:59
+msgid "Created"
+msgstr "Creado el"
+
+#: lot/templates/delete_lots.html:63
+msgid "Last Updated"
+msgstr "Apellido"
+
+#: lot/templates/delete_lots.html:77
+msgid "All associated devices will be deassigned."
+msgstr "Todos los dispositivos asociados serán deasignados."
+
+#: lot/templates/delete_lots.html:82
+msgid "No devices are associated with these lots."
+msgstr "No hay dispositivos asociados a estos lotes."
+
+#: lot/templates/lots.html:14
+msgid "Search by name or description..."
+msgstr "Buscar por nombre o descripción"
+
+#: lot/templates/lots.html:24 lot/views.py:44
+msgid "New lot"
+msgstr "Nuevo lote"
+
+#: lot/templates/lots.html:35
+msgid "Delete Selected"
+msgstr "Borrar seleccionado"
+
+#: lot/templates/lots.html:75
+msgid "All Lots"
+msgstr "Todos"
 
 #: lot/templates/properties.html:56
 msgid "Edit Property"
@@ -1050,39 +1179,59 @@ msgstr "Eliminar propiedad"
 msgid "Are you sure you want to delete this property?"
 msgstr "¿Confirma que desea eliminar esta propiedad?"
 
-#: lot/views.py:19
-msgid "New lot"
-msgstr "Nuevo lote"
+#: lot/views.py:68
+msgid "Lot created successfully."
+msgstr "Grupo de lotes actualizado correctamente."
 
-#: lot/views.py:48
-msgid "Delete lot"
-msgstr "Borrar lote"
+#: lot/views.py:72
+msgid "Lot name is already defined."
+msgstr "El nombre del lote ya está definido."
 
-#: lot/views.py:67
+#: lot/views.py:78
+msgid "Delete lot/s"
+msgstr "Borrar lote/s"
+
+#: lot/views.py:84 lot/views.py:103
+msgid "No lots selected for deletion."
+msgstr "No existen lotes seleccionados para eliminar."
+
+#: lot/views.py:113
+msgid "Lots succesfully deleted"
+msgstr "Lotes eliminados correctamente."
+
+#: lot/views.py:119
 msgid "Edit lot"
 msgstr "Editar lote"
 
-#: lot/views.py:101
+#: lot/views.py:149
+msgid "Lot edited succesfully."
+msgstr "Grupo de lotes actualizado correctamente."
+
+#: lot/views.py:156
 msgid "Add to lots"
 msgstr "Añadir a los lotes"
 
-#: lot/views.py:130
+#: lot/views.py:185
 msgid "Remove from lots"
 msgstr "Retirar de los lotes"
 
-#: lot/views.py:142 lot/views.py:143
+#: lot/views.py:197
+msgid "Lot group"
+msgstr "Grupos de lotes"
+
+#: lot/views.py:198
 msgid "lots"
 msgstr "lotes"
 
-#: lot/views.py:167 lot/views.py:190
+#: lot/views.py:265 lot/views.py:288
 msgid "New Lot Property"
 msgstr "Propiedad de lote nuevo"
 
-#: lot/views.py:224
+#: lot/views.py:322
 msgid "Update lot Property"
 msgstr "Actualizar propiedad de lote"
 
-#: lot/views.py:272
+#: lot/views.py:370
 msgid "Lot property deleted successfully."
 msgstr "Propiedad de lote eliminada correctamente."
 
@@ -1137,3 +1286,21 @@ msgstr "Descargar un archivo de configuración"
 #: user/views.py:25
 msgid "Download Settings"
 msgstr "Descargar preferencias"
+
+#~ msgid "Unassigned Devices"
+#~ msgstr "Dispositivos no asignados"
+
+#~ msgid "Identificator"
+#~ msgstr "Identificador"
+
+#~ msgid "Data"
+#~ msgstr "Datos"
+
+#~ msgid "Show active lots"
+#~ msgstr "Mostrar lotes activos"
+
+#~ msgid "Show archived lots"
+#~ msgstr "Mostrar lotes archivados"
+
+#~ msgid "Add new lot"
+#~ msgstr "Añadir nuevo lote"
