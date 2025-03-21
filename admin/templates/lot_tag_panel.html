@@ -16,8 +16,15 @@
   <div class="col">
     {% if lot_tags_edit %}
   <table class="table table-hover table-bordered align-middle">
+    <caption class="text-muted small">
+      {% trans 'Inbox order CANNOT be changed' %}
+    </caption>
   <thead class="table-light">
     <tr>
+      <th scope="col" width="1%" class="text-start">
+      </th>
+      <th scope="col" width="5%" class="text-center">
+      #</th>
       <th scope="col">{% trans "Lot Group Name" %}
       </th>
       <th scope="col" width="15%" class="text-center">{% trans "Actions" %}
@@ -26,7 +33,16 @@
   </thead>
   <tbody id="sortable_list">
     {% for tag in lot_tags_edit %}
-      <tr>
+      <tr {% if tag.id == 1 %} class="bg-light no-sort"{% endif %}
+                               data-lookup="{{ tag.id }}"
+                               style="cursor: grab;" >
+
+        <td>
+          <i class="bi bi-grip-vertical" aria-hidden="true" ></i>
+        </td>
+        <td class="text-center">
+          <strong>{{ tag.order }} </strong>
+        </td>
         <td class="font-monospace">
           {{ tag.name }}
         </td>
@@ -44,7 +60,8 @@
             <button
               type="button" class="btn btn-sm btn-outline-danger d-flex align-items-center"
               data-bs-toggle="modal"
-              data-bs-target="#deleteLotTagModal{{ tag.id }}" >
+              data-bs-target="#deleteLotTagModal{{ tag.id }}"
+              {% if tag.id == 1 %} disabled {% endif %}>
               <i class="bi bi-trash me-1"></i>
               {% trans 'Delete' %}
             </button>
@@ -55,6 +72,11 @@
   </tbody>
   </table>
 
+  <form id="orderingForm" method="post" action="{% url 'admin:update_lot_tag_order' %}">
+        {% csrf_token %}
+        <input type="hidden" id="orderingInput" name="ordering">
+         <button id="saveOrderBtn" class="btn btn-success mt-5 float-start collapse" >{% trans "Update Order" %}</button>
+    </form>
 
     {% else %}
       <div class="alert alert-primary text-center mt-5" role="alert">
@@ -110,6 +132,9 @@
             <label for="editLotTagInput{{ tag.id }}" class="form-label">{% trans "Tag" %}</label>
             <input type="text" class="form-control" id="editLotTagInput{{ tag.id }}" name="name" maxlength="50" value="{{ tag.name }}" required>
             <div class="form-text">{% trans "Maximum 50 characters." %}</div>
+            {% if tag.id == 1 %}
+              <p class="text-muted text-end mt-3">{% trans "INBOX can only be edited, not deleted." %}</p>
+            {% endif %}
           </div>
 
         </div>
@@ -136,16 +161,28 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
       </div>
       <div class="modal-body">
-	{% if tag.lot_set.first %}
+
+        {% if tag.lot_set.first %}
         <div class="alert alert-warning text-center" role="alert">
-            {% trans "Failed to remove Lot Group, it is not empty" %}
+            <strong class="text-bold mb-0"> {% trans "This lot group has" %} {{tag.lot_set.count}} {% trans "lot/s." %}</strong>
+
         </div>
-	{% endif %}
+	      {% else %}
+            <p class="mb-0 text-muted mt-2">{% trans "Are you sure you want to delete this lot group?" %}</p>
+        {% endif %}
+
         <div class="d-flex align-items-center border rounded p-3 mt-3">
           <div>
             <p class="mb-0 fw-bold">{{ tag.name }}</p>
           </div>
         </div>
+        {% if tag.lot_set.first %}
+          <p class="mb-0 text-muted text-end mt-3">
+            {% trans "This lot group is not empty and therefore cannot be deleted." %}
+          </p>
+        {% endif %}
+
+
       </div>
 
       <div class="modal-footer">
@@ -155,7 +192,7 @@
             {% trans "Cancel" %}
           </button>
 	  {% if tag.lot_set.first %}
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" disabled>
             {% trans "Delete" %}
           </button>
   	  {% else %}
@@ -170,4 +207,40 @@
 </div>
 
 {% endfor %}
+
+<script>
+  //following https://dev.to/nemecek_f/django-how-to-let-user-re-order-sort-table-of-content-with-drag-and-drop-3nlp
+  const saveOrderingButton = document.getElementById('saveOrderBtn');
+  const orderingForm = document.getElementById('orderingForm');
+  const formInput = orderingForm.querySelector('#orderingInput');
+  const sortable_table = document.getElementById('sortable_list');
+  const inbox_row = document.getElementById('inbox');
+
+  const sortable = new Sortable(sortable_table, {
+      animation: 150,
+      swapThreshold: 0.10,
+      filter: '.no-sort',
+      onChange: () => {
+        //TODO: change hide/show animation to a nicer one
+        const collapse = new bootstrap.Collapse(saveOrderingButton, {
+          toggle: false
+        });
+        collapse.show();
+      }
+    });
+
+ function saveOrdering() {
+    const rows = sortable_table.querySelectorAll('tr');
+    let ids = [];
+    for (let row of rows) {
+        ids.push(row.dataset.lookup);
+    }
+    formInput.value = ids.join(',');
+    orderingForm.submit();
+ }
+
+ saveOrderingButton.addEventListener('click', saveOrdering);
+
+</script>
+
 {% endblock %}
