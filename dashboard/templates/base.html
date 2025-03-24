@@ -50,6 +50,12 @@
       footer {
         width: 100%;
       }
+
+     .bg-hover:hover {
+       border-radius: 5px;
+       background-color: rgba(255, 255, 255, 0.2);
+       transition: background-color 0.2s ease;
+     }
     </style>
 
 
@@ -62,19 +68,61 @@
     <header class="navbar navbar-dark sticky-top admin bg-green flex-md-nowrap p-0 shadow">
       <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3" href="#">DEVICEHUB</a>
       <div class="navbar-nav navbar-sub-brand">
-         {{ user.institution.name|upper }}
+        {{ user.institution.name|upper }}
       </div>
-      <div class="navbar-nav">
-        <div class="nav-item text-nowrap">
-            <i id="user-avatar" class="bi bi-person-circle"></i>
-            <a class="navbar-sub-brand px-3" href="{% url 'user:panel' %}">{{ user.email }}</a>
-            <a class="logout" href="{% url 'login:logout' %}">
-              <i class="fa-solid fa-arrow-right-from-bracket"></i>
+      <div class="dropdown">
+        <a class="navbar-sub-brand nav-link dropdown-toggle d-flex align-items-center text-white text-decoration-none bg-hover py-1 mx-1 " href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+          <i class="bi bi-person me-2"></i>
+          <span class="me-2">{{ user.email }}</span>
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end shadow">
+          <li>
+            <a class="dropdown-item" href="{% url 'user:panel' %}">
+              <i class="bi bi-person me-2"></i>{% trans 'Profile' %}
             </a>
-        </div>
-      </div>
-    </header>
+          </li>
+          <li>
+            <a class="dropdown-item" href="{% url 'api:tokens' %}">
+              <i class="bi bi-key me-2"></i>{% trans 'My Tokens' %}
+            </a>
+          </li>
+          <li>
+            <a class="dropdown-item" href="{% url 'user:settings' %}">
+              <i class="bi bi-gear me-2"></i>{% trans 'Settings File' %}
+            </a>
+          </li>
 
+          {% if user.is_admin %}
+            <!-- Secret Admin Options -->
+            <li><hr class="dropdown-divider"></li>
+            <li>
+              <a class="dropdown-item" href="{% url 'admin:panel' %}">
+                <i class="bi bi-shield-lock me-2"></i>{% trans 'Admin Panel' %}
+              </a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="{% url 'admin:users' %}">
+                <i class="bi bi-people me-2"></i>{% trans 'Manage Users' %}
+              </a>
+            </li>
+          {% endif %}
+
+          <li><hr class="dropdown-divider"></li>
+
+            <li>
+              <a class="dropdown-item" href="https://docs.ereuse.org/help">
+               <i class="bi bi-question-circle me-2"></i>{% trans 'Help' %}
+              </a>
+            </li>
+          <li>
+            <a class="dropdown-item text-danger" href="{% url 'login:logout' %}">
+              <i class="fa fa-arrow-right-from-bracket me-2"></i>{% trans 'Logout' %}
+            </a>
+          </li>
+        </ul>
+      </div>
+      </nav>
+    </header>
     <div class="container-fluid">
       <div class="row">
         <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
