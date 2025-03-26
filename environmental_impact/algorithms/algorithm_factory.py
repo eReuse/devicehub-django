@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
-from .dummy_algo.dummy_calculator import DummyEnvironmentalImpactAlgorithm
+from .sample_algo.sample_calculator import SampleEnvironmentalImpactAlgorithm
 
 if TYPE_CHECKING:
     from .algorithm_interface import EnvironmentImpactAlgorithm
@@ -12,10 +12,10 @@ class AlgorithmNames():
     Enum class for the different types of algorithms.
     """
 
-    DUMMY_CALC = "dummy_calc"
+    SAMPLE_CALC = "sample_calc"
 
     algorithm_names = {
-        DUMMY_CALC: DummyEnvironmentalImpactAlgorithm()
+        SAMPLE_CALC: SampleEnvironmentalImpactAlgorithm()
     }
 
 

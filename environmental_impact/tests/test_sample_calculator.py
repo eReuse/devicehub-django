@@ -1,16 +1,16 @@
 import unittest
 from unittest.mock import Mock, patch
-from environmental_impact.algorithms.dummy_algo.dummy_calculator import (
-    DummyEnvironmentalImpactAlgorithm,
+from environmental_impact.algorithms.sample_algo.sample_calculator import (
+    SampleEnvironmentalImpactAlgorithm,
 )
 from device.models import Device
 from environmental_impact.models import EnvironmentalImpact
 
 
-class DummyEnvironmentalImpactAlgorithmTests(unittest.TestCase):
+class SampleEnvironmentalImpactAlgorithmTests(unittest.TestCase):
 
     def setUp(self):
-        self.algorithm = DummyEnvironmentalImpactAlgorithm()
+        self.algorithm = SampleEnvironmentalImpactAlgorithm()
         self.device = Mock(spec=Device)
         self.device.last_evidence = Mock()
         self.device.last_evidence.inxi = True
@@ -129,8 +129,8 @@ class DummyEnvironmentalImpactAlgorithmTests(unittest.TestCase):
         )
 
     @patch(
-        "environmental_impact.algorithms.dummy_algo.dummy_calculator.render_docs",
-        return_value="Dummy Docs",
+        "environmental_impact.algorithms.sample_algo.sample_calculator.render_docs",
+        return_value="Sample Docs",
     )
     def test_environmental_impact_calculation(self, mock_render_docs):
         impact = self.algorithm.get_device_environmental_impact(self.device)
@@ -146,4 +146,4 @@ class DummyEnvironmentalImpactAlgorithmTests(unittest.TestCase):
             2,
             "CO2 emissions calculation should be accurate",
         )
-        self.assertEqual(impact.docs, "Dummy Docs", "Docs should be rendered correctly")
+        self.assertEqual(impact.docs, "Sample Docs", "Docs should be rendered correctly")
