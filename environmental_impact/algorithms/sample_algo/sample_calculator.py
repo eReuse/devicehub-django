@@ -5,7 +5,7 @@ from environmental_impact.models import EnvironmentalImpact
 from ..docs_renderer import render_docs
 
 
-class DummyEnvironmentalImpactAlgorithm(EnvironmentImpactAlgorithm):
+class SampleEnvironmentalImpactAlgorithm(EnvironmentImpactAlgorithm):
 
     def get_device_environmental_impact(self, device: Device) -> EnvironmentalImpact:
         # TODO Make a constants file / class

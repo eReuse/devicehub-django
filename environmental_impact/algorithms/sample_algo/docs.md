@@ -1,4 +1,4 @@
-## _Dummy_ Algorithm Docs
+## _Sample_ Algorithm Docs
 
 This function calculates the **carbon footprint** of a device based on its power consumption and usage time.
 

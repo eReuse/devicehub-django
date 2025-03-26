@@ -23,7 +23,7 @@ Assuming a host with debian stable
 
 ### Quickstart
 
-For a quick start with dummy data in localhost, DeviceHub can be run directly with docker. To do so, from the root of the project run:
+For a quick start with sample data in localhost, DeviceHub can be run directly with docker. To do so, from the root of the project run:
 
 ```bash
 ./docker-reset.sh
@@ -94,7 +94,7 @@ python manage.py makemigrations
 python manage.py migrate
 ```
 
-Also, we can add some dummy data into the database to play along:
+Also, we can add some sample data into the database to play along:
 
 ```bash
 python manage.py add_institution Pangea
