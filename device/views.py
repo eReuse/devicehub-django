@@ -103,9 +103,7 @@ class DetailsView(DashboardView, TemplateView):
                 dpp = "{}:{}".format(self.pk, x.signature)
                 dpps.append((dpp, x.signature[:10], x))
         # TODO Specify algorithm via dropdown, if not specified, use default.
-        enviromental_impact_algorithm = FactoryEnvironmentImpactAlgorithm.run_environmental_impact_calculation(
-            "sample_calc"
-        )
+        enviromental_impact_algorithm = FactoryEnvironmentImpactAlgorithm.run_environmental_impact_calculation()
         enviromental_impact = enviromental_impact_algorithm.get_device_environmental_impact(
             self.object)
         last_evidence = self.object.get_last_evidence()
