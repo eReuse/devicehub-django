@@ -7,24 +7,26 @@ if TYPE_CHECKING:
     from .algorithm_interface import EnvironmentImpactAlgorithm
 
 
-class AlgorithmNames():
+class AlgorithmNames:
     """
     Enum class for the different types of algorithms.
     """
 
     SAMPLE_CALC = "sample_calc"
 
-    algorithm_names = {
-        SAMPLE_CALC: SampleEnvironmentalImpactAlgorithm()
-    }
+    algorithm_names = {SAMPLE_CALC: SampleEnvironmentalImpactAlgorithm()}
 
 
-class FactoryEnvironmentImpactAlgorithm():
+class FactoryEnvironmentImpactAlgorithm:
 
     @staticmethod
-    def run_environmental_impact_calculation(algorithm_name: str) -> EnvironmentImpactAlgorithm:
+    def run_environmental_impact_calculation(
+        algorithm_name: str = "sample_calc",
+    ) -> EnvironmentImpactAlgorithm:
         try:
             return AlgorithmNames.algorithm_names[algorithm_name]
         except KeyError:
-            raise ValueError("Invalid algorithm name. Valid options are: " +
-                             ", ".join(AlgorithmNames.algorithm_names.keys()))
+            raise ValueError(
+                "Invalid algorithm name. Valid options are: "
+                + ", ".join(AlgorithmNames.algorithm_names.keys())
+            )
