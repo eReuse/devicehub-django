@@ -7,34 +7,50 @@ from ..docs_renderer import render_docs
 
 class SampleEnvironmentalImpactAlgorithm(EnvironmentImpactAlgorithm):
 
-    def get_device_environmental_impact(self, device: Device) -> EnvironmentalImpact:
-        # TODO Make a constants file / class
-        avg_watts = 40  # Arbitrary laptop average consumption
-        co2_per_kwh = 0.475
-        power_on_hours = self.get_power_on_hours_from(device)
+    algorithm_constants = {
+        "AVG_WATTS": 100,
+        "CO2_PER_KWH": 0.233,
+    }
 
-        energy_kwh = (power_on_hours * avg_watts) / 1000
-        co2_emissions = energy_kwh * co2_per_kwh
+    def get_device_environmental_impact(self, device: Device) -> EnvironmentalImpact:
+
+        env_impact = EnvironmentalImpact()
+        env_impact.constants = self.algorithm_constants
+        co2_emissions_in_use = self.compute_co2_emissions_while_in_use(device)
+        env_impact.co2_emissions.update(co2_emissions_in_use)
+        env_impact.docs = self.render_docs_from("docs.md")
+        env_impact.relevant_input_data = {
+            "power_on_hours": self.get_power_on_hours_from(device)
+        }
+        return env_impact
+
+    def compute_co2_emissions_while_in_use(self, device: Device) -> dict:
+        power_on_hours = self.get_power_on_hours_from(device)
+        energy_kwh = self.compute_energy_consumption_in_kwh(power_on_hours)
+        co2_consumption_in_use = energy_kwh * self.algorithm_constants["CO2_PER_KWH"]
+        return {"in_use": co2_consumption_in_use}
+
+    def render_docs_from(self, docs_path: str = "docs.md") -> str:
         current_dir = os.path.dirname(__file__)
-        docs_path = os.path.join(current_dir, 'docs.md')
+        docs_path = os.path.join(current_dir, "docs.md")
         docs = render_docs(docs_path)
-        return EnvironmentalImpact(co2_emissions=co2_emissions, docs=docs)
+        return docs
 
     def get_power_on_hours_from(self, device: Device) -> int:
-        # TODO how do I check if the device is a legacy workbench? Is there a better way?
         is_legacy_workbench = False if device.last_evidence.inxi else True
-        if not is_legacy_workbench:
-            storage_components = next((comp for comp in device.components if comp['type'] == 'Storage'), None)
-            str_time = storage_components.get('time of used', "")
+        if is_legacy_workbench:
+            return -1
         else:
-            str_time = ""
-        uptime_in_hours = self.convert_str_time_to_hours(
-            str_time, is_legacy_workbench)
+            storage_components = next(
+                (comp for comp in device.components if comp["type"] == "Storage"), None
+            )
+            str_time = storage_components.get("time of used", "")
+            uptime_in_hours = self.convert_str_time_to_hours(str_time)
         return uptime_in_hours
 
-    def convert_str_time_to_hours(self, time_str: str, is_legacy_workbench: bool) -> int:
-        if is_legacy_workbench:
-            return -1  # TODO  Power on hours not available in legacy workbench
-        else:
-            multipliers = {'y': 365 * 24, 'd': 24, 'h': 1}
-            return sum(int(part[:-1]) * multipliers[part[-1]] for part in time_str.split())
+    def convert_str_time_to_hours(self, time_str: str) -> int:
+        multipliers = {"y": 365 * 24, "d": 24, "h": 1}
+        return sum(int(part[:-1]) * multipliers[part[-1]] for part in time_str.split())
+
+    def compute_energy_consumption_in_kwh(self, power_on_hours: int) -> float:
+        return power_on_hours * self.algorithm_constants["AVG_WATTS"] / 1000
