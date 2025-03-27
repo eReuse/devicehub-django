@@ -22,7 +22,9 @@
           <th scope="col">{% trans 'Model' %}</th>
           <th scope="col">{% trans 'Serial Number' %}</th>
           <th scope="col">{% trans 'Status' %}</th>
+	  {% if returned %}
           <th scope="col">{% trans 'Returned' %}</th>
+	  {% endif %}
           <th scope="col"></th>
         </tr>
       </thead>
@@ -34,7 +36,9 @@
           <td class="font-monospace">{{ f.device.model }}</td>
           <td class="font-monospace">{{ f.device.serial_number }}</td>
 	  <td class="font-monospace">{{ f }}</td>
-          <td class="font-monospace">{{ f.instance.returned_place }}</td>
+	  {% if returned %}
+          <td class="font-monospace">{{ f.instance.returned_place|default:"" }}</td>
+	  {% endif %}
           <td class="font-monospace">
 	    <a href="{% url 'lot:del_device_beneficiary' lot.id beneficiary.id f.device.id %}">
 	       {% trans 'Delete' %}
