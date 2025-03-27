@@ -796,12 +796,16 @@ class ListDevicesBeneficiaryView(DashboardView, FormView):
 
         new_devices = self.request.session.get("devices")
         devices = len(context.get("form", []))
+        returned = self.beneficiary.devicebeneficiary_set.filter(
+            status=DeviceBeneficiary.Status.RETURNED
+        ).first()
 
         context.update({
             'lot': self.lot,
             'beneficiary': self.beneficiary,
             'new_devices': new_devices,
             'devices': devices,
+            'returned': returned
         })
 
         return context
@@ -916,8 +920,8 @@ class WebBeneficiaryView(WebMixing, FormView):
             for dev in context.get("devices", []):
                 if f.initial.get("device_id") == dev.id:
                     dev.form = f
-                else:
-                    dev.form = ""
+                    break
+
 
         context["formset"] = formset
         context["count_returned"] = len(formset)
