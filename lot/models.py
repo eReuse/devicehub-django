@@ -166,3 +166,4 @@ class DeviceBeneficiary(models.Model):
     beneficiary = models.ForeignKey("Beneficiary", on_delete=models.CASCADE)
     device_id = models.CharField(max_length=STR_EXTEND_SIZE, blank=False, null=False)
     status = models.SmallIntegerField(choices=Status.choices, default=Status.AVAILABLE)
+    returned_place = models.CharField(max_length=500, blank=True, null=True)

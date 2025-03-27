@@ -1,11 +1,13 @@
 from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import ValidationError
+from django.forms import formset_factory
 from django import forms
 from user.models import User
 from lot.models import (
     Lot,
     LotSubscription,
     Beneficiary,
+    DeviceBeneficiary,
     Donor,
 )
 
@@ -213,3 +215,20 @@ class AddDonorForm(forms.Form):
             self.donor.delete()
 
         return
+
+
+class PlaceReturnDeviceForm(forms.Form):
+    place = forms.CharField(
+        label=_("Place to returned"),
+        max_length=500,
+        widget=forms.Textarea(attrs={"rows": 3, "cols": 40})
+    )
+
+
+class SelectReturnDeviceForm(forms.Form):
+    returned = forms.BooleanField(label="", required=False)
+    device_id = forms.CharField(widget=forms.HiddenInput())
+    id = forms.IntegerField(widget=forms.HiddenInput())
+
+
+SelectFormSet = formset_factory(SelectReturnDeviceForm, extra=0)

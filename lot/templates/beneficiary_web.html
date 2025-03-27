@@ -93,16 +93,20 @@
     <div class="container custom-container">
       <h1 class="text-center mb-4" style="color: #545f71;">{{ object.email }}</h1>
 
+      <form method="post">
+      {% csrf_token %}
+      {{ formset.management_form }}
       <div class="row mt-4">
         <div class="col">
 	  <table class="table table-hover table-bordered align-middel">
 	    <thead class="table-light">
               <tr>
                 <th scope="col">ID</th>
-                <th scope="col" width="15%" class="text-center">{% trans "Manufacturer" %}
-                <th scope="col" width="15%" class="text-center">{% trans "Model" %}
-                <th scope="col" width="15%" class="text-center">{% trans "Serial Number" %}
-                </th>
+                <th scope="col" width="15%" class="text-center">{% trans "Manufacturer" %}</th>
+                <th scope="col" width="15%" class="text-center">{% trans "Model" %}</th>
+                <th scope="col" width="15%" class="text-center">{% trans "Serial Number" %}</th>
+                <th scope="col" width="15%" class="text-center">{% trans "Status" %}</th>
+                <th scope="col" width="5%" class="text-center">{% trans "Returned" %}</th>
               </tr>
 	    </thead>
 	    <tbody>
@@ -112,6 +116,8 @@
 		<td class="font-monospace">{{ dev.manufacturer }}</td>
 		<td class="font-monospace">{{ dev.model }}</td>
 		<td class="font-monospace">{{ dev.serial_number }}</td>
+		<td class="font-monospace">{{ dev.status_beneficiary }}</td>
+		<td class="font-monospace">{{ dev.form }}</td>
 	      </tr>
 	      {% endfor %}
 	    </tbody>
@@ -131,11 +137,26 @@
       <div class="row mt-4">
         <div class="col">
           <div class="form-actions-no-box">
-            <a class="btn btn-secondary" href="{# url 'lot:impact_doc_donor' donor.lot.id donor.id #}">{% trans 'Impact Inform' %}</a>
           </div>
         </div>
       </div>
       {% endif %}
+
+      {% if count_returned %}
+      <div class="row mt-4">
+        <div class="col">
+          <div class="form-actions-no-box">
+	    {% bootstrap_form form %}
+          </div>
+        </div>
+      </div>
+      <div class="row mt-4">
+        <div class="col">
+          <button class="btn btn-green-user" type="submit">{% trans 'Save' %}</button>
+        </div>
+      </div>
+      {% endif %}
+      </form>
     </div>
     <footer>
       <p>

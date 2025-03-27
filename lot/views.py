@@ -6,6 +6,7 @@ from django.core.cache import cache
 from django.utils.translation import gettext_lazy as _
 from django.db.models import Q, Count, Case, When, IntegerField
 from django.views.generic.base import TemplateView
+from django.forms import modelformset_factory, Select
 from django.views.generic.edit import (
     CreateView,
     DeleteView,
@@ -18,7 +19,14 @@ from lot.tables import LotTable
 from evidence.models import SystemProperty
 from device.models import Device
 from lot.tables import LotTable
-from lot.forms import LotsForm, LotSubscriptionForm, AddDonorForm, BeneficiaryForm
+from lot.forms import (
+    LotsForm,
+    LotSubscriptionForm,
+    AddDonorForm,
+    BeneficiaryForm,
+    PlaceReturnDeviceForm,
+    SelectFormSet
+)
 from lot.models import (
     Lot,
     LotTag,
@@ -542,8 +550,12 @@ class DelDonorView(DonorMixing):
 
 
 class WebMixing(TemplateView):
+    object = None
 
-    def get_context_data(self, **kwargs):
+    def get_object(self):
+        if self.object:
+            return
+
         pk = self.kwargs.get('pk')
         id = self.kwargs.get('id')
 
@@ -552,6 +564,9 @@ class WebMixing(TemplateView):
             id=id,
             lot_id=pk
         )
+
+    def get_context_data(self, **kwargs):
+        self.get_object()
         context = super().get_context_data(**kwargs)
         context["object"] = self.object
         context["devices"] = self.get_devices()
@@ -570,7 +585,7 @@ class WebMixing(TemplateView):
             if x.value not in chids_ordered:
                 chids_ordered.append(x.value)
 
-        return [Device(id=x) for x in chids_ordered]
+        return [Device(id=x, lot=self.object.lot) for x in chids_ordered]
 
 
 class DonorView(WebMixing):
@@ -694,15 +709,53 @@ class DeleteBeneficiaryView(DashboardView, TemplateView):
         return redirect(self.success_url)
 
 
-class ListDevicesBeneficiaryView(DashboardView, TemplateView):
+class ListDevicesBeneficiaryView(DashboardView, FormView):
     template_name = "beneficiaries_devices.html"
     title = _("Beneficiaries")
     breadcrumb = "Lot / Beneficiary / Devices"
+
+    def get_form_class(self):
+        return modelformset_factory(
+            DeviceBeneficiary,
+            fields=["status"],
+            widgets={"status": Select(attrs={"class": "form-select"})},
+            labels={"status": ""},
+            extra=0
+        )
+
+    def get_form(self):
+        form_class = self.get_form_class()
+        formset = form_class(**self.get_form_kwargs())
+
+        for f in formset:
+            f.device = Device(id=f.instance.device_id)
+
+        return formset
+
+    def get_form_kwargs(self):
+        self.pk = self.kwargs.get('pk')
+        self.id = self.kwargs.get('id')
+        kwargs = super().get_form_kwargs()
+
+        self.success_url = reverse_lazy(
+            'lot:devices_beneficiary',
+            args=[self.pk, self.id]
+        )
+
+        self.beneficiary = get_object_or_404(
+            Beneficiary,
+            lot_id=self.pk,
+            id=self.id
+        )
+
+        kwargs["queryset"] = self.beneficiary.devicebeneficiary_set.filter()
+        return kwargs
 
     def get_context_data(self, **kwargs):
         self.pk = self.kwargs.get('pk')
         self.id = self.kwargs.get('id')
         self.get_lot()
+
         context = super().get_context_data(**kwargs)
         self.is_shop = LotSubscription.objects.filter(
             lot=self.lot,
@@ -713,22 +766,19 @@ class ListDevicesBeneficiaryView(DashboardView, TemplateView):
         if not self.request.user.is_admin and not self.is_shop:
             raise Http404
 
-        beneficiary = get_object_or_404(
-            Beneficiary,
-            lot_id=self.pk,
-            id=self.id
-        )
-
-        if not self.request.user.is_admin and beneficiary.shop != self.is_shop:
+        if not self.request.user.is_admin and self.beneficiary.shop != self.is_shop:
             raise Http404
 
-        devices = [(Device(id=x.device_id), x.get_status_display()) for x in beneficiary.devicebeneficiary_set.all()]
+        new_devices = self.request.session.get("devices")
+        devices = len(context.get("form", []))
 
         context.update({
             'lot': self.lot,
-            'beneficiary': beneficiary,
+            'beneficiary': self.beneficiary,
+            'new_devices': new_devices,
             'devices': devices,
         })
+
         return context
 
     def get_lot(self):
@@ -737,6 +787,13 @@ class ListDevicesBeneficiaryView(DashboardView, TemplateView):
             owner=self.request.user.institution,
             id=self.pk
         )
+
+    def form_valid(self, form):
+        form.save()
+        response = super().form_valid(form)
+        # TODO
+        # self.send_email()
+        return response
 
 
 class DelDeviceBeneficiaryView(DashboardView, TemplateView):
@@ -798,14 +855,70 @@ class AddDevicesBeneficiaryView(DashboardView, TemplateView):
         return redirect(self.success_url)
 
 
-class WebBeneficiaryView(WebMixing):
+class WebBeneficiaryView(WebMixing, FormView):
     template_name = "beneficiary_web.html"
     model = Beneficiary
+    form_class = PlaceReturnDeviceForm
 
     def get_chids(self):
         return self.object.devicebeneficiary_set.all().values_list(
             "device_id", flat=True
         ).distinct()
+
+    def get_formset(self):
+        self.get_object()
+        self.pk = self.kwargs.get('pk')
+        self.id = self.kwargs.get('id')
+        self.success_url = reverse_lazy(
+            'lot:web_beneficiary',
+            args=[self.pk, self.id]
+        )
+        devices = self.object.devicebeneficiary_set.filter(
+            status=DeviceBeneficiary.Status.DELIVERED
+        )
+        initial_data = []
+        for dev in devices:
+            initial_data.append(
+                {'id': dev.id, 'device_id': dev.device_id, 'returned': False}
+            )
+        return SelectFormSet(self.request.POST or None, initial=initial_data)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        formset = self.get_formset()
+
+        for f in formset:
+            for dev in context.get("devices", []):
+                if f.initial.get("device_id") == dev.id:
+                    dev.form = f
+                else:
+                    dev.form = ""
+
+        context["formset"] = formset
+        context["count_returned"] = len(formset)
+        return context
+
+    def form_valid(self, form):
+        formset = self.get_formset()
+
+        if formset.is_valid():
+            place = form.cleaned_data["place"]
+            devices_returned = []
+            for f in formset:
+                if f.cleaned_data["returned"]:
+                    devices_returned.append(f.cleaned_data["id"])
+
+            for dev in self.object.devicebeneficiary_set.filter(id__in=devices_returned):
+                dev.returned_place = place
+                dev.status = DeviceBeneficiary.Status.RETURNED
+                dev.save()
+
+            # TODO
+            # self.send_email()
+
+            return super().form_valid(form)
+
+        return self.render_to_response(self.get_context_data(form=form))
 
 
 class AgreementBeneficiaryView(TemplateView):
