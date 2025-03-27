@@ -106,7 +106,9 @@
                 <th scope="col" width="15%" class="text-center">{% trans "Model" %}</th>
                 <th scope="col" width="15%" class="text-center">{% trans "Serial Number" %}</th>
                 <th scope="col" width="15%" class="text-center">{% trans "Status" %}</th>
+		{% if count_returned %}
                 <th scope="col" width="5%" class="text-center">{% trans "Returned" %}</th>
+                {% endif %}
               </tr>
 	    </thead>
 	    <tbody>
@@ -117,7 +119,9 @@
 		<td class="font-monospace">{{ dev.model }}</td>
 		<td class="font-monospace">{{ dev.serial_number }}</td>
 		<td class="font-monospace">{{ dev.status_beneficiary }}</td>
+		{% if count_returned %}
 		<td class="font-monospace">{{ dev.form }}</td>
+                {% endif %}
 	      </tr>
 	      {% endfor %}
 	    </tbody>
