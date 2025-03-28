@@ -5,33 +5,42 @@ from django.views.generic.edit import FormView
 from django.shortcuts import Http404
 from django.db.models import Q
 
-from dashboard.mixins import InventaryMixin, DetailsMixin
+from dashboard.mixins import InventaryMixin, DetailsMixin, DeviceTableMixin
 from evidence.models import SystemProperty
 from evidence.xapian import search
 from device.models import Device
 from lot.models import Lot
 
 
-class UnassignedDevicesView(InventaryMixin):
+class UnassignedDevicesView(DeviceTableMixin, InventaryMixin):
     template_name = "unassigned_devices.html"
     section = "Inbox"
     title = _("Inbox")
     breadcrumb = "Lot / Inbox"
 
-    def get_devices(self, user, offset, limit):
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return self.configure_table(context)
+
+    def get_devices(self, user, offset=0, limit=None):
         return Device.get_unassigned(self.request.user.institution, offset, limit)
 
-class AllDevicesView(InventaryMixin):
+
+class AllDevicesView(DeviceTableMixin, InventaryMixin):
     template_name = "unassigned_devices.html"
     section = "All"
     title = _("All Devices")
     breadcrumb = "Devices / All Devices"
 
-    def get_devices(self, user, offset, limit):
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return self.configure_table(context)
+
+    def get_devices(self, user, offset=0, limit=None):
         return Device.get_all(self.request.user.institution, offset, limit)
 
 
-class LotDashboardView(InventaryMixin, DetailsMixin):
+class LotDashboardView(DeviceTableMixin, DetailsMixin):
     template_name = "unassigned_devices.html"
     section = "dashboard_lot"
     title = _("Lot Devices")
@@ -41,12 +50,11 @@ class LotDashboardView(InventaryMixin, DetailsMixin):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         lot = context.get('object')
-        context.update({
-            'lot': lot,
-        })
-        return context
+        context.update({'lot': lot})
+        return self.configure_table(context)
 
-    def get_devices(self, user, offset, limit):
+    def get_devices(self, user, offset=0, limit=None):
+        search_query = self.request.GET.get('q', '').lower()
         chids = self.object.devicelot_set.all().values_list(
             "device_id", flat=True
         ).distinct()
@@ -56,16 +64,41 @@ class LotDashboardView(InventaryMixin, DetailsMixin):
             value__in=chids
         ).order_by("-created")
 
-        chids_ordered = []
-        for x in props:
-            if x.value not in chids_ordered:
-                chids_ordered.append(x.value)
+        # Get all devices first to enable search filtering
+        all_devices = []
+        device_details = {}  # Store device details for searching
+        for prop in props:
+            if prop.value not in device_details:
+                device = Device(id=prop.value)
+                all_devices.append(device)
+                # Store relevant searchable fields
+                device_details[prop.value] = {
+                    'manufacturer': device.manufacturer.lower() if device.manufacturer else '',
+                    'model': device.model.lower() if device.model else '',
+                    'state': device.get_current_state().state.lower() if device.get_current_state() else '',
+                    'shortid': device.shortid.lower() if device.shortid else ''
+                }
 
-        chids_page = chids_ordered[offset:offset+limit]
-        return [Device(id=x) for x in chids_page], len(chids_ordered)
+        # Apply search filter if query exists
+        if search_query:
+            filtered_devices = []
+            for device in all_devices:
+                details = device_details[device.id]
+                if (search_query in details['manufacturer'] or
+                    search_query in details['model'] or
+                    search_query in details['state'] or
+                    search_query in details['shortid']):
+                    filtered_devices.append(device)
+            all_devices = filtered_devices
+
+        # Apply pagination
+        total_count = len(all_devices)
+        paginated_devices = all_devices[offset:offset+limit] if limit else all_devices
+
+        return paginated_devices, total_count
 
 
-class SearchView(InventaryMixin):
+class SearchView(DeviceTableMixin, InventaryMixin):
     template_name = "unassigned_devices.html"
     section = "Search"
     title = _("Search Devices")
@@ -81,7 +114,7 @@ class SearchView(InventaryMixin):
                 'search': search
             })
 
-        return context
+        return self.configure_table(context)
 
     def get_devices(self, user, offset, limit):
         query = dict(self.request.GET).get("search")

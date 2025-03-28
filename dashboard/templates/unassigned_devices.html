@@ -1,93 +1,164 @@
 {% extends "base.html" %}
 {% load i18n %}
 {% load paginacion %}
-
+{% load render_table from django_tables2 %}
 
 {% block content %}
-<div class="row">
-  <div class="col">
-    <h3>{{ subtitle }}</h3>
-  </div>
-  <div class="col text-center">
-    <a href="{# url 'dashboard:exports' object.id #}" type="button" class="btn btn-green-admin">
-      <i class="bi bi-reply"></i>
-      {% trans 'Exports' %}
-    </a>
-    {% if lot %}
-    <a href="{% url 'lot:properties' object.id %}" type="button" class="btn btn-green-admin">
-      <i class="bi bi-tag"></i>
-      {% trans 'properties' %}
-    </a>
+    {% if path == "lot" %}
+        <div class="d-flex justify-content-end align-items-stretch mb-2">
+            <form method="get" class="input-group w-100 me-3">
+                <input
+                    type="text"
+                    name="q"
+                    class="form-control"
+                    placeholder="{% trans 'Search by manufacturer, state, or model within lot...' %}"
+                    value="{{ search_query }}">
+                <div class="input-group-append">
+                    <button type="submit" class="btn btn-outline-secondary h-100" style="border-radius: 0 4px 4px 0;">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
     {% endif %}
-  </div>
-</div>
 
-<div class="dataTable-container">
-  <form method="post">
-  {% csrf_token %}
+  <div class="container-fluid px-0">
+    <div class="mb-4">
+      <div class="mt-4 d-flex align-items-center justify-content-end">
 
+        <!-- Action Buttons -->
+        <div class="btn-group" role="group">
+          {% if lot %}
+            <a href="{% url 'lot:properties' object.id %}" class="btn btn-outline-primary">
+              <i class="bi bi-tag"></i> {% trans 'Properties' %}
+            </a>
+            <a href="{#% url 'lot:documents' object.id %#}" class="btn btn-outline-secondary" data-bs-toggle="tooltip"
+               title="{% trans "NOT IMPLEMENTED. Document management" %}">
+              {% trans 'Documents' %}
+            </a>
+          {% endif %}
 
- {% trans "Lot Actions"  %}: <button class="btn btn-green-admin" type="submit" name="url" value="{% url 'lot:add_devices' %}">{% trans " Add" %}</button> <button class="btn btn-green-admin" type="submit" value="{% url 'lot:del_devices' %}" name="url">{% trans "Remove" %}</button>
-
-  <table class="table">
-    <thead>
-      <tr>
-        <th scope="col" data-sortable="">
-          {% trans "select" %}
-        </th>
-        <th scope="col" data-sortable="">
-          {% trans "shortid" %}
-        </th>
-        <th scope="col" data-sortable="">
-          {% trans "type" %}
-        </th>
-        <th scope="col" data-sortable="">
-          {% trans "manufacturer" %}
-        </th>
-        <th scope="col" data-sortable="">
-          {% trans "model" %}
-        </th>
-        <th scope="col" data-sortable="">
-          {% trans "updated" %}
-        </th>
-      </tr>
-    </thead>
-    {% for dev in devices %}
-    <tbody>
-      <tr>
-        <td>
-          <input type="checkbox" name="devices" value="{{ dev.id }}" />
-        </td>
-        <td>
-          <a href="{% url 'device:details' dev.id %}">
-            {{ dev.shortid }}
+          <a href="{# url 'dashboard:exports' object.id #}" class="btn btn-outline-secondary" data-bs-toggle="tooltip"
+             title="{% trans "NOT IMPLEMENTED. Export to csv." %}">
+            {% trans 'Exports' %}
           </a>
-        </td>
-        <td>
-            {{ dev.type }}
-        </td>
-        <td>
-            {{ dev.manufacturer }}
-        </td>
-        <td>
-	  {% if dev.version %}
-            {{dev.version}} {{ dev.model }}
-	  {% else %}
-            {{ dev.model }}
-	  {% endif %}
-        </td>
-        <td>
-            {{ dev.updated }}
-        </td>
-      </tr>
-    </tbody>
-    {% endfor %}
-  </table>
-  </form>
-</div>
-<div class="row mt-3">
-  <div class="col">
-    {% render_pagination page total_pages limit search %}
+        </div>
+
+        <!-- device limit per page picker -->
+        <form method="get" class="ms-3">
+          <div class="input-group input-group-sm">
+            <label class="input-group-text" for="limit">{% trans "Show" %}</label>
+            <select name="limit" id="limit" class="form-select" onchange="this.form.submit()">
+                {% for choice in paginate_choices %}
+                    {% if choice != 0 %}
+                        <option value="{{ choice }}" {% if limit == choice %}selected{% endif %}>
+                            {{ choice }}
+                        </option>
+                    {% elif lot.name %}
+                        <option value="{{ choice }}" {% if limit == choice %}selected{% endif %}>
+                        {% trans "All" %}
+                        </option>
+                    {% endif %}
+                {% endfor %}
+            </select>
+            <label class="input-group-text" for="limit">{% trans "devices" %}</label>
+          </div>
+
+          {% for key, value in request.GET.items %}
+            {% if key != 'limit' %}
+              <input type="hidden" name="{{ key }}" value="{{ value }}">
+            {% endif %}
+          {% endfor %}
+        </form>
+      </div>
+    </div>
+
+    <!-- Main Table Section -->
+    <div class="card mb-4">
+        <form method="post" id="devices-form">
+          {% csrf_token %}
+          <!-- Table Actions -->
+          <div class="d-flex justify-content-between align-items-center p-3 bg-light border-bottom">
+              <h5 class="mb-0">
+                  {% if lot.name %}
+                      <i class="bi bi-folder2"></i>
+                      {{lot.name}}
+                  {% else %}
+                      {% trans "Device Management" %}
+                  {% endif %}
+                  <span id="selected-counter" class="badge bg-primary ms-2" style="display: none;">
+                      0 selected
+                  </span>
+              </h5>
+              <div>
+                  {% if lot.name %}
+                      <button id="remove-button" class="btn btn-danger me-1" type="submit"
+                              value="{% url 'lot:del_devices' lot.id %}" name="url">
+                          <i class="bi bi-folder-minus"></i> {% trans 'Unassign' %}
+                      </button>
+                  {% endif %}
+                  <button id="add-button" class="btn btn-success me-2" type="submit"
+                          value="{% url 'lot:add_devices' %}" name="url" disabled>
+                      <i class="bi bi-folder-symlink"></i> {% trans 'Assign to Lot' %}
+                  </button>
+              </div>
+          </div>
+
+          <!-- Table and pagination -->
+          <div class="table-responsive">
+              {% render_table table %}
+              <div class="d-flex justify-content-center">
+                  {% render_pagination page total_pages limit %}
+              </div>
+
+          </div>
+        </form>
+    </div>
+
   </div>
-</div>
-{% endblock %}
+
+ <script>
+  document.addEventListener('DOMContentLoaded', () => {
+
+      const selectAll = document.querySelector('#select-all');
+      const checkboxes = document.querySelectorAll('input[name="devices"]');
+      const addButton = document.getElementById('add-button');
+      const removeButton = document.getElementById('remove-button');
+
+      const form = document.getElementById("devices-form");
+      const buttons = document.querySelectorAll("#remove-button, #add-button");
+
+
+      function updateButtons() {
+          // Check if at least one checkbox is selected
+          const checked = document.querySelectorAll('.select-checkbox:checked').length > 0;
+          // Enable/disable buttons based on selection
+          addButton.disabled = !checked;
+          // Show/hide remove button (only if it exists)
+          if (removeButton) {
+              removeButton.style.visibility = checked ? 'visible' : 'hidden';
+          }
+      }
+
+      selectAll.addEventListener('change', (e) => {
+          checkboxes.forEach(checkbox => checkbox.checked = e.target.checked);
+          updateButtons();
+      });
+
+      // Add event listeners to all checkboxes
+      checkboxes.forEach(checkbox => {
+          checkbox.addEventListener('change', updateButtons);
+      });
+
+      // Initialize button states on reload
+      updateButtons();
+
+      // Sets the form action to the button value (URL) so that it properly works on lots view
+      buttons.forEach(button => {
+          button.addEventListener("click", function () {
+              form.action = this.value;
+          });
+      });
+
+});
+</script>{% endblock %}

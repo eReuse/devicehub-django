@@ -9,6 +9,9 @@ from device.models import Device
 from evidence.models import SystemProperty
 from lot.models import LotTag
 from action.models import StateDefinition
+from dashboard.tables import DeviceTable
+from django_tables2 import RequestConfig, SingleTableView
+from django.utils.dateparse import parse_datetime
 
 
 class Http403(PermissionDenied):
@@ -123,5 +126,58 @@ class InventaryMixin(DashboardView, TemplateView):
             "offset": offset,
             "page": page,
             "total_pages": total_pages,
+        })
+        return context
+
+
+class DeviceTableMixin():
+    """Mixin to handle django-tables2 dict-based tables for Devices"""
+    paginate_by = 10
+    paginate_choices = [10, 20, 50, 100, 0]
+
+    def get_table_data(self, devices):
+        table_data = []
+        for device in devices:
+            device.initial()
+            table_data.append({
+                'id': device.pk,
+                'shortid': device.shortid,
+                'type': device.type,
+                'manufacturer': getattr(device, 'manufacturer', ''),
+                'model': getattr(device, 'model', ''),
+                'version': getattr(device, 'version', ''),
+                'current_state': device.get_current_state().state if device.get_current_state() else '--',
+                'last_updated': parse_datetime(device.updated) if device.updated else "--"
+            })
+        return table_data
+
+    def configure_table(self, context):
+        """Configure and add table to context"""
+        limit = int(self.request.GET.get('limit', self.paginate_by))
+        page = int(self.request.GET.get('page', 1))
+
+        # If select all then get all devices (#TODO check if significant performance issue for all devices submenu)
+        if limit == 0:  # show all
+            devices, count = self.get_devices(self.request.user)
+            total_pages = 1
+            paginate_config = False
+        else:
+            devices, count = self.get_devices(self.request.user, (page-1)*limit, limit)
+            total_pages = (count + limit - 1) // limit
+            paginate_config = {'page': page, 'per_page': limit}
+
+        table_data = self.get_table_data(devices)
+        table = DeviceTable(table_data)
+
+        if paginate_config:
+            RequestConfig(self.request, paginate=paginate_config).configure(table)
+
+        context.update({
+            'table': table,
+            'count': count,
+            'limit': limit,
+            'page': page,
+            'total_pages': total_pages,
+            'paginate_choices': self.paginate_choices
         })
         return context
