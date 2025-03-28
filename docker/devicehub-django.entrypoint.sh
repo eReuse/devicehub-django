@@ -189,8 +189,8 @@ check_app_is_there() {
 
 deploy() {
 
-        if [ -w . ]; then
-                echo "ERROR: Permission Denied for docker user 1000. This docker container was designed to be setup with user 1000, which correspond to default linux user. Hence not root user, or any other specific linux user. Sorry. We would like to fix this better and soon."
+        if [ ! -w . ]; then
+                echo "ERROR: Permission denied for docker user 1000. This docker container was designed to be setup with user 1000, which correspond to default linux user. Hence not root user, or any other specific linux user. Sorry. We would like to fix this better and soon."
                 id -u
                 stat .
                 exit 1
