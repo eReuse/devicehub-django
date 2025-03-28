@@ -189,9 +189,11 @@ check_app_is_there() {
 
 deploy() {
 
-        if [ ! "$(id -u)" = "1000" ]; then
-	echo "ERROR: You are user $(id -u), but docker needs user 1000, and  which might corresponent to linux default user; not root, not other specific linux user. Sorry. We would like to fix this soon"
-	exit 1
+        if [ -w . ]; then
+                echo "ERROR: Permission Denied for docker user 1000. This docker container was designed to be setup with user 1000, which correspond to default linux user. Hence not root user, or any other specific linux user. Sorry. We would like to fix this better and soon."
+                id -u
+                stat .
+                exit 1
         fi
 
         if [ -d /opt/devicehub-django/.git ]; then
