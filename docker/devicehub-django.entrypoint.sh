@@ -188,6 +188,12 @@ check_app_is_there() {
 }
 
 deploy() {
+
+        if [ ! "$(id-u)" = "1000" ]; then
+	echo 'ERROR: docker needs user 1000, which might corresponent to linux default user; not root, not other specific linux user. Sorry. We would like to fix this soon'
+	exit 1
+        fi
+
         if [ -d /opt/devicehub-django/.git ]; then
                 # TODO this is weird, find better workaround
                 git config --global --add safe.directory "${program_dir}"
