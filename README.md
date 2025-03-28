@@ -37,9 +37,9 @@ For production needs, review and change .env file properly
 
 ### Production-ready Setup
 
-:::warning "Beware!"
-    DeviceHub is not ready for production yet. The following are work in progress instructions.
-:::
+> **Warning**
+> DeviceHub is not ready for production yet. The following are work in progress instructions.
+
 
 The recommended way to run DeviceHub in production is using Docker. This allows for easy deployment and management of the application and its dependencies.
 
