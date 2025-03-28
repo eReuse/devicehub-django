@@ -2,6 +2,11 @@
 {% load i18n %}
 
 {% block content %}
+  <div class="row">
+    <div class="col">
+      <h3>{{ object.uuid }}</h3>
+    </div>
+  </div>
 
   <span class="d-flex justify-content-end mb-4">
     <a href="{% url 'evidence:download' object.uuid %}" class="btn btn-green-user d-flex">
@@ -26,7 +31,6 @@
           <i class="bi bi-eraser-fill"></i>
         {% endif %}
       </form>
-      <p class="text-muted mb-0" id="uuid">{{ object.uuid }}</p>
     </div>
 
     <!-- Card Body -->
