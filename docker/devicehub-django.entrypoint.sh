@@ -189,8 +189,8 @@ check_app_is_there() {
 
 deploy() {
 
-        if [ ! "$(id-u)" = "1000" ]; then
-	echo 'ERROR: docker needs user 1000, which might corresponent to linux default user; not root, not other specific linux user. Sorry. We would like to fix this soon'
+        if [ ! "$(id -u)" = "1000" ]; then
+	echo "ERROR: You are user $(id -u), but docker needs user 1000, and  which might corresponent to linux default user; not root, not other specific linux user. Sorry. We would like to fix this soon"
 	exit 1
         fi
 
