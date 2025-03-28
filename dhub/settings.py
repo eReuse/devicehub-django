@@ -32,13 +32,13 @@ SECRET_KEY = "django-insecure-1p8rs@qf$$l^!vsbetagojw23kw@1ez(qi8^(s0t&#7!wyh!l3
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
 
-DEVICEHUB_DOMAIN = config("DEVICEHUB_DOMAIN")
-assert DEVICEHUB_DOMAIN not in [None, ''], "DEVICEHUB_DOMAIN var is MANDATORY"
+DEVICEHUB_HOST = config("DEVICEHUB_HOST")
+assert DEVICEHUB_HOST not in [None, ''], "DEVICEHUB_HOST var is MANDATORY"
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default=DEVICEHUB_DOMAIN, cast=Csv())
-assert DEVICEHUB_DOMAIN in ALLOWED_HOSTS, f"DEVICEHUB_DOMAIN {DEVICEHUB_DOMAIN} is not in ALLOWED_HOSTS {ALLOWED_HOSTS}"
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default=DEVICEHUB_HOST, cast=Csv())
+assert DEVICEHUB_HOST in ALLOWED_HOSTS, f"DEVICEHUB_HOST {DEVICEHUB_HOST} is not in ALLOWED_HOSTS {ALLOWED_HOSTS}"
 
-CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default=f'https://{DEVICEHUB_DOMAIN}', cast=Csv())
+CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default=f'https://{DEVICEHUB_HOST}', cast=Csv())
 
 
 INITIAL_ADMIN_EMAIL = config("INITIAL_ADMIN_EMAIL", default='admin@example.org')

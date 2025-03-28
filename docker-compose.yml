@@ -7,9 +7,9 @@ services:
       dockerfile: docker/devicehub-django.Dockerfile
     environment:
       - DEBUG=${DEBUG:-false}
-      - DEVICEHUB_DOMAIN=${DEVICEHUB_DOMAIN:-localhost}
+      - DEVICEHUB_HOST=${DEVICEHUB_HOST:-localhost}
       - PORT=${DEVICEHUB_PORT:-8000}
-      - ALLOWED_HOSTS=${DEVICEHUB_ALLOWED_HOSTS:-$DEVICEHUB_DOMAIN}
+      - ALLOWED_HOSTS=${DEVICEHUB_ALLOWED_HOSTS:-$DEVICEHUB_HOST}
       - DEMO=${DEMO:-false}
       - DEMO_IDHUB_DOMAIN=${DEMO_IDHUB_DOMAIN:-}
       - DEMO_IDHUB_PREDEFINED_TOKEN=${IDHUB_PREDEFINED_TOKEN:-}
