@@ -15,6 +15,7 @@ services:
       - DEMO_IDHUB_PREDEFINED_TOKEN=${IDHUB_PREDEFINED_TOKEN:-}
       - PREDEFINED_TOKEN=${PREDEFINED_TOKEN:-}
       - DPP=${DPP:-false}
+      - TIME_ZONE=${TIME_ZONE:-UTC}
     # TODO manage volumes dev vs prod
     volumes:
       - .:/opt/devicehub-django
@@ -53,6 +54,7 @@ services:
       - EMAIL_BACKEND=${IDHUB_EMAIL_BACKEND}
       - SUPPORTED_CREDENTIALS=['Snapshot']
       - SYNC_ORG_DEV=${IDHUB_SYNC_ORG_DEV}
+      - TIME_ZONE=${TIME_ZONE:-UTC}
     ports:
       - 9001:9001
 
