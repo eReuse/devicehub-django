@@ -188,6 +188,14 @@ check_app_is_there() {
 }
 
 deploy() {
+
+        if [ ! -w . ]; then
+                echo "ERROR: Permission denied for docker user 1000. This docker container was designed to be setup with user 1000, which correspond to default linux user. Hence not root user, or any other specific linux user. Sorry. We would like to fix this better and soon."
+                echo "  detail: docker user is 1000, but directory permissions are:"
+                echo "    $(stat . | grep Uid)"
+                exit 1
+        fi
+
         if [ -d /opt/devicehub-django/.git ]; then
                 # TODO this is weird, find better workaround
                 git config --global --add safe.directory "${program_dir}"

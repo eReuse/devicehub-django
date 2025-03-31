@@ -7,14 +7,15 @@ services:
       dockerfile: docker/devicehub-django.Dockerfile
     environment:
       - DEBUG=${DEBUG:-false}
-      - DOMAIN=${DEVICEHUB_DOMAIN:-localhost}
+      - DEVICEHUB_HOST=${DEVICEHUB_HOST:-localhost}
       - PORT=${DEVICEHUB_PORT:-8000}
-      - ALLOWED_HOSTS=${DEVICEHUB_ALLOWED_HOSTS:-$DEVICEHUB_DOMAIN}
+      - ALLOWED_HOSTS=${DEVICEHUB_ALLOWED_HOSTS:-$DEVICEHUB_HOST}
       - DEMO=${DEMO:-false}
       - DEMO_IDHUB_DOMAIN=${DEMO_IDHUB_DOMAIN:-}
       - DEMO_IDHUB_PREDEFINED_TOKEN=${IDHUB_PREDEFINED_TOKEN:-}
       - PREDEFINED_TOKEN=${PREDEFINED_TOKEN:-}
       - DPP=${DPP:-false}
+      - TIME_ZONE=${TIME_ZONE:-UTC}
     # TODO manage volumes dev vs prod
     volumes:
       - .:/opt/devicehub-django
@@ -53,6 +54,7 @@ services:
       - EMAIL_BACKEND=${IDHUB_EMAIL_BACKEND}
       - SUPPORTED_CREDENTIALS=['Snapshot']
       - SYNC_ORG_DEV=${IDHUB_SYNC_ORG_DEV}
+      - TIME_ZONE=${TIME_ZONE:-UTC}
     ports:
       - 9001:9001
 
