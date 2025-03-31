@@ -36,7 +36,7 @@ from lot.models import (
     Donor,
     DeviceBeneficiary
 )
-
+from dhemail.views import SubscriptionEmail
 
 class LotSuccessUrlMixin():
     success_url = reverse_lazy('dashboard:unassigned')
@@ -394,7 +394,7 @@ class DeleteLotPropertyView(DashboardView, DeleteView):
         return redirect(self.success_url)
 
 
-class SubscriptLotView(DashboardView, FormView):
+class SubscriptLotView(DashboardView, SubscriptionEmail, FormView):
     template_name = "subscription.html"
     title = _("Subscription")
     breadcrumb = "Lot / Subscription"
@@ -435,6 +435,8 @@ class SubscriptLotView(DashboardView, FormView):
 
     def form_valid(self, form):
         form.save()
+        self.template_subscriptor(form)
+        self.send_email(form._user)
         response = super().form_valid(form)
         return response
 
@@ -525,6 +527,7 @@ class AddDonorView(DonorMixing):
 
     def form_valid(self, form):
         form.save()
+        self.send_email(form._user)
         response = super().form_valid(form)
         return response
 
