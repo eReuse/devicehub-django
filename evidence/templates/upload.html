@@ -8,23 +8,98 @@
   </div>
 </div>
 
-<!-- override invalid-feedback class -->
 <style>
-  .invalid-feedback {
-    color: #670000;
-    font-size: 1rem;
+  .drop-area {
+    width: 320px;
+    padding: 1.5rem;
+    background: white;
+    border: 2px dashed #ccc;
+    border-radius: 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+  }
+
+  .drop-area:hover, .drop-area.dragover {
+    border-color: #007bff;
+    background: #f8f9fa;
+  }
+
+  .drop-area.dragover {
+    transform: scale(1.05);
   }
   </style>
 
+
 {% load django_bootstrap5 %}
-<form role="form" method="post" enctype="multipart/form-data">
-{% csrf_token %}
+<form role="form" method="post" enctype="multipart/form-data" class="row d-flex justify-content-center ">
+  {% csrf_token %}
 
-{% bootstrap_form form alert_error_type="none" error_css_class="alert alert-danger alert-icon alert-icon-border" %}
-      <div class="form-actions-no-box">
-  <a class="btn btn-grey"       href="{% url 'dashboard:unassigned' %}">{% translate "Cancel" %}</a>
-  <input class="btn btn-green-admin" type="submit" name="submit" value="{% translate 'Save' %}" />
-</div>
+  <!-- Drag n drop -->
+  <div id="drop-zone" class="drop-area rounded p-5 text-center">
+    <i class="bi bi-upload fs-1 mb-3"></i>
+    <p class="text-muted mb-0">{% translate "Drag and drop here, or click to select manually" %}</p>
 
+    {# support for both evidence file and spreadsheet forms #}
+    {% if form.evidence_file %}
+      {% bootstrap_form form exclude="evidence_file" alert_error_type="none" error_css_class="alert alert-danger" %}
+      <input type="file" id="file-input" name="{{ form.evidence_file.html_name }}" class="visually-hidden" {% if form.evidence_file.field.widget.attrs.multiple %}multiple required{% endif %}>
+    {% elif form.file_import %}
+      {% bootstrap_form form exclude="file_import" alert_error_type="none" error_css_class="alert alert-danger" %}
+      <input type="file" id="file-input" name="{{ form.file_import.html_name }}" class="visually-hidden">
+    {% endif %}
+
+  </div>
+    <!-- File Preview -->
+    <div id="file-preview" class="mt-3 text-center ">
+    <ul id="file-list" class="list-unstyled"></ul>
+
+  {% if form.evidence_file.errors or form.file_import.errors %}
+    <div class="text-center mt-2">
+      <ul class="list-unstyled text-danger mb-0">
+        {% for error in form.evidence_file.errors %}
+          <li class="font-weight-bold" >{{ error }}</li>
+        {% endfor %}
+        {% for error in form.file_import.errors %}
+          <li>{{ error }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+
+  </div>
+
+  <div class="d-flex justify-content-center gap-3 mt-4">
+    <a class="btn btn-outline-secondary" href="{% url 'dashboard:unassigned' %}">{% translate "Cancel" %}</a>
+    <button type="submit" class="btn btn-success">
+      {% translate "Upload" %}
+    </button>
+  </div>
 </form>
+
+<script>
+  const dropZone = document.getElementById("drop-zone");
+  const fileInput = document.getElementById("file-input");
+  const fileList = document.getElementById("file-list");
+
+  dropZone.onclick = () => fileInput.click();
+  fileInput.onchange = (e) => showFiles(e.target.files);
+
+  ['dragover', 'dragleave', 'drop'].forEach(event => {
+    dropZone.addEventListener(event, (e) => {
+      e.preventDefault();
+      dropZone.classList.toggle('highlight', event !== 'dragleave');
+      if (event === 'drop') showFiles(e.dataTransfer.files);
+    });
+  });
+
+  function showFiles(files) {
+    fileList.innerHTML = '';
+    if (files.length) {
+      Array.from(files).forEach(file => {
+        fileList.innerHTML += `<li>${file.name}</li>`;
+      });
+    }
+  }
+</script>
 {% endblock %}
