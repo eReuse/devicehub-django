@@ -23,9 +23,14 @@ Assuming a host with debian stable
 
 ### Quickstart
 
+> **Note**
+> This docker container was designed to be setup with user `1000`, which correspond to default linux user. Hence not root user, or any other specific linux user. Sorry. We would like to fix this better and soon.
+
 For a quick start with pre-generated sample data, DeviceHub can be run directly with docker. To do so, from the root of the project run:
 
 ```bash
+git clone https://farga.pangea.org/ereuse/devicehub-django
+cd devicehub-django
 ./docker-reset.sh
 ```
 
@@ -40,7 +45,6 @@ For production needs, review and change .env file properly
 > **Warning**
 > DeviceHub is not ready for production yet. The following are work in progress instructions.
 
-
 The recommended way to run DeviceHub in production is using Docker. This allows for easy deployment and management of the application and its dependencies.
 
 #### Prerequisites
@@ -52,6 +56,7 @@ Devicehub must be ran with UID 1000, so is recommended to create a user with thi
 ```bash
 sudo useradd -u 1000 -m devicehub
 sudo adduser devicehub docker
+su - devicehub
 ```
 
 Clone the repository:
