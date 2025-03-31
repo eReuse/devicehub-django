@@ -23,9 +23,14 @@ Assuming a host with debian stable
 
 ### Quickstart
 
-For a quick start with dummy data in localhost, DeviceHub can be run directly with docker. To do so, from the root of the project run:
+> **Note**
+> This docker container was designed to be setup with user `1000`, which correspond to default linux user. Hence not root user, or any other specific linux user. Sorry. We would like to fix this better and soon.
+
+For a quick start with pre-generated sample data, DeviceHub can be run directly with docker. To do so, from the root of the project run:
 
 ```bash
+git clone https://farga.pangea.org/ereuse/devicehub-django
+cd devicehub-django
 ./docker-reset.sh
 ```
 
@@ -35,11 +40,94 @@ Also there is a demo running in http://demo.ereuse.org/. The token for accessing
 
 For production needs, review and change .env file properly
 
+### Production-ready Setup
+
+> **Warning**
+> DeviceHub is not ready for production yet. The following are work in progress instructions.
+
+The recommended way to run DeviceHub in production is using Docker. This allows for easy deployment and management of the application and its dependencies.
+
+#### Prerequisites
+
+Devicehub can run comfortably in a server with 2GB of RAM and 2 CPU cores. The recommended way to run DeviceHub in production is using Docker. This allows for easy deployment and management of the application and its dependencies.
+
+Devicehub must be ran with UID 1000, so is recommended to create a user with this UID. This can be done by running the following command:
+
+```bash
+sudo useradd -u 1000 -m devicehub
+sudo adduser devicehub docker
+su - devicehub
+```
+
+Clone the repository:
+
+```bash
+git clone https://farga.pangea.org/ereuse/devicehub-django
+cd devicehub-django
+cp .env.example .env
+```
+
+Now, just run the following command to start the application:
+
+```bash
+docker-compose up -d
+```
+
+#### Running Devicehub with HTTPS
+
+The recommended way to run DeviceHub with HTTPS is using a reverse proxy. The following example uses Nginx, but you can use any other reverse proxy. Here there is an example of how to run DeviceHub with HTTPS using Nginx:
+
+```nginx
+server {
+  root /var/www/html;
+  index index.html index.htm;
+
+  listen 443;
+  server_name YOUR_FQDN;
+
+#  include tls_params;
+  client_max_body_size 10G;
+  client_body_buffer_size 400M;
+
+  location / {
+    proxy_pass http://INTERNAL_DEVICEHUB_IP:8001;
+    include proxy_params;
+  }
+
+    ssl_certificate /etc/letsencrypt/live/YOUR_FQDN/fullchain.pem; # managed by Certbot
+    ssl_certificate_key /etc/letsencrypt/live/YOUR_FQDN/privkey.pem; # managed by Certbot
+}
+
+server {
+    if ($host = YOUR_FQDN) {
+        return 301 https://$host$request_uri;
+    } # managed by Certbot
+
+  listen 80;
+  server_name YOUR_FQDN;
+  return 404; # managed by Certbot
+}
+```
+
+Note that `proxy_params` contains:
+
+```nginx
+proxy_set_header Host $http_host;
+proxy_set_header X-Real-IP $remote_addr;
+proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+proxy_set_header X-Forwarded-Proto $scheme;
+proxy_set_header X-Robots-Tag "noindex, nofollow, nosnippet, noarchive";
+proxy_set_header X-Permitted-Cross-Domain-Policies "none";
+proxy_connect_timeout 600;
+proxy_send_timeout 600;
+proxy_read_timeout 600;
+```
+
 ## Running from baremetal
 
-### Prerequisites
+### Baremetal Prerequisites
 
-- Python 3.10
+- Python 3.11
 - pip
 - virtualenv
 
@@ -69,14 +157,10 @@ export PYTHONPATH="${PYTHONPATH}:/usr/lib/python3/dist-packages"
 
 #### Environment Variables
 
-Now, configure the environment variables. For this, we will expand a `.env` file. You can use the following content as an example:
+Now, configure the environment variables. For this, we will expand a `.env` file. For a quickstart with localhost, you can use the default values in the `.env.example` file:
 
-```source
-STATIC_ROOT=/tmp/static/
-MEDIA_ROOT=/tmp/media/
-ALLOWED_HOSTS=localhost,localhost:8000,127.0.0.1,
-DOMAIN=localhost
-DEBUG=True
+```bash
+cp .env.example .env
 ```
 
 Now, expand the environment variables:
