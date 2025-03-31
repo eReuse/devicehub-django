@@ -1,3 +1,5 @@
+// TODO move this tests to different files according to the feature they cover
+
 import { test, expect } from '@playwright/test';
 
 const TEST_SITE = process.env.TEST_SITE || 'http://127.0.0.1:8001'
@@ -37,7 +39,7 @@ test('Property: create key-value, edit key, edit value, delete property property
     await page.locator('table a').first().click();
 
     // new property; key: init1, value: 1
-    await page.getByRole('link', { name: 'User properties' }).click();
+    await page.getByRole('link', { name: 'Properties' }).click();
     await page.getByRole('link', { name: ' New user property' }).click();
     await page.getByPlaceholder('Key').click();
     await page.getByPlaceholder('Key').fill('init1');
@@ -50,32 +52,32 @@ test('Property: create key-value, edit key, edit value, delete property property
     await expect(page.locator(last_log)).toContainText('<Created> UserProperty: init1: 1');
 
     // edit property; key: init2, value: 1
-    await page.getByRole('link', { name: 'User properties' }).click();
+    await page.getByRole('link', { name: 'Properties' }).click();
     await page.getByRole('button', { name: ' Edit' }).first().click();
     await page.getByLabel('Key').click();
     await page.getByLabel('Key').fill('init2');
     await page.getByRole('button', { name: 'Save changes' }).click();
     // TODO uncomment
-    //await expect(page.getByRole('alert')).toContainText('User property init2 has been updated.');
+    //await expect(page.getByRole('alert')).toContainText('Property init2 has been updated.');
     await page.getByRole('link', { name: 'Log' }).click();
     await expect(page.locator(last_log)).toContainText('<Updated> UserProperty: init1: 1 to init2: 1');
 
     // edit property; key: init2, value: 2
-    await page.getByRole('link', { name: 'User properties' }).click();
+    await page.getByRole('link', { name: 'Properties' }).click();
     await page.getByRole('button', { name: ' Edit' }).first().click();
     await page.getByLabel('Value').fill('2');
     await page.getByRole('button', { name: 'Save changes' }).click();
     // TODO uncomment
-    //await expect(page.getByRole('alert')).toContainText('User property init2 has been updated.');
+    //await expect(page.getByRole('alert')).toContainText('Property init2 has been updated.');
     await page.getByRole('link', { name: 'Log' }).click();
     await expect(page.locator(last_log)).toContainText('<Updated> UserProperty: init2: 1 to init2: 2');
 
     // delete property; key: init2, value: 2
-    await page.getByRole('link', { name: 'User properties' }).click();
+    await page.getByRole('link', { name: 'Properties' }).click();
     await page.getByRole('button', { name: ' Delete' }).click();
     await page.getByRole('button', { name: 'Delete', exact: true }).click();
     // TODO uncomment
-    //await expect(page.getByRole('alert')).toContainText('User property init2 has been updated.');
+    //await expect(page.getByRole('alert')).toContainText('Property init2 has been updated.');
     await page.getByRole('link', { name: 'Log' }).click();
     await expect(page.locator(last_log)).toContainText('<Deleted> User Property: init2:2');
 });
@@ -86,7 +88,7 @@ test('Property: duplication tests', async ({ page }) => {
     await page.locator('table a').first().click();
 
     // new property; key: uniq1, value: 1
-    await page.getByRole('link', { name: 'User properties' }).click();
+    await page.getByRole('link', { name: 'Properties' }).click();
     await page.getByRole('link', { name: ' New user property' }).click();
     await page.getByPlaceholder('Key').click();
     await page.getByPlaceholder('Key').fill('uniq1');
@@ -94,10 +96,10 @@ test('Property: duplication tests', async ({ page }) => {
     await page.getByPlaceholder('Value').fill('1');
     await page.getByRole('button', { name: 'Save' }).click();
     // TODO uncomment
-    //await expect(page.getByRole('alert')).toContainText('User property uniq1 has been added.');
+    //await expect(page.getByRole('alert')).toContainText('Property uniq1 has been added.');
 
     // new property (duplicate); key: uniq1, value: 1
-    await page.getByRole('link', { name: 'User properties' }).click();
+    await page.getByRole('link', { name: 'Properties' }).click();
     await page.getByRole('link', { name: ' New user property' }).click();
     await page.getByPlaceholder('Key').click();
     await page.getByPlaceholder('Key').fill('uniq1');
@@ -105,13 +107,13 @@ test('Property: duplication tests', async ({ page }) => {
     await page.getByPlaceholder('Value').fill('1');
     await page.getByRole('button', { name: 'Save' }).click();
     // TODO uncomment
-    //await expect(page.getByRole('alert')).toContainText('User property uniq1 already exists.');
+    //await expect(page.getByRole('alert')).toContainText('Property uniq1 already exists.');
 
     // delete property; key: uniq1, value: 1
-    await page.getByRole('link', { name: 'User properties' }).click();
+    await page.getByRole('link', { name: 'Properties' }).click();
     await page.getByRole('button', { name: ' Delete' }).first().click();
     // TODO uncomment
-    //await expect(page.getByRole('alert')).toContainText('User property uniq1 deleted has been.');
+    //await expect(page.getByRole('alert')).toContainText('Property uniq1 deleted has been.');
 });
 
 
