@@ -67,8 +67,6 @@ cd devicehub-django
 cp .env.example .env
 ```
 
-TODO Revisar https://gitea.pangea.org/ereuse/devicehub-django/pulls/58
-
 Now, just run the following command to start the application:
 
 ```bash
@@ -127,9 +125,9 @@ proxy_read_timeout 600;
 
 ## Running from baremetal
 
-### Prerequisites
+### Baremetal Prerequisites
 
-- Python 3.10
+- Python 3.11
 - pip
 - virtualenv
 
