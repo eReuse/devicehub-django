@@ -100,34 +100,35 @@ class InventaryMixin(DashboardView, TemplateView):
                 pass
         return super().get(request, *args, **kwargs)
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        limit = self.request.GET.get("limit")
-        page = self.request.GET.get("page")
-        try:
-            limit = int(limit)
-            page = int(page)
-            if page < 1:
-                page = 1
-            if limit < 1:
-                limit = 10
-        except:
-            limit = 10
-            page = 1
+#    def get_context_data(self, **kwargs):
+#         #TODO: pagination for devices table is done on DeviceTableMixin
+#         context = super().get_context_data(**kwargs)
+#         limit = self.request.GET.get("limit")
+#         page = self.request.GET.get("page")
+#         try:
+#             limit = int(limit)
+#             page = int(page)
+#             if page < 1:
+#                 page = 1
+#             if limit < 1:
+#                 limit = 10
+#         except:
+#             limit = 10
+#             page = 1
 
-        offset = (page - 1) * limit
-        devices, count = self.get_devices(self.request.user, offset, limit)
-        total_pages = (count + limit - 1) // limit
+#         offset = (page - 1) * limit
+#         devices, count = self.get_devices(self.request.user, offset, limit)
+#         total_pages = (count + limit - 1) // limit
 
-        context.update({
-            'devices': devices,
-            'count': count,
-            "limit": limit,
-            "offset": offset,
-            "page": page,
-            "total_pages": total_pages,
-        })
-        return context
+#         context.update({
+#             'devices': devices,
+#             'count': count,
+#             "limit": limit,
+#             "offset": offset,
+#             "page": page,
+#             "total_pages": total_pages,
+#         })
+#         return context
 
 
 class DeviceTableMixin():
@@ -172,12 +173,17 @@ class DeviceTableMixin():
         if paginate_config:
             RequestConfig(self.request, paginate=paginate_config).configure(table)
 
+        state_definitions = StateDefinition.objects.filter(
+            institution=self.request.user.institution
+        ).order_by('order')
+
         context.update({
             'table': table,
             'count': count,
             'limit': limit,
             'page': page,
             'total_pages': total_pages,
-            'paginate_choices': self.paginate_choices
+            'paginate_choices': self.paginate_choices,
+            "state_definitions": state_definitions
         })
         return context
