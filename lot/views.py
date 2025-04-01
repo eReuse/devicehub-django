@@ -6,7 +6,7 @@ from django.contrib import messages
 from django.core.cache import cache
 from django.utils.translation import gettext_lazy as _
 from django.db.models import Q, Count, Case, When, IntegerField
-from django.views.generic.base import TemplateView
+from django.views.generic.base import TemplateView, View
 from django.views.generic.edit import (
     CreateView,
     DeleteView,
@@ -165,12 +165,9 @@ class AddToLotView(DashboardView, FormView):
         context = super().get_context_data(**kwargs)
         lots = Lot.objects.filter(owner=self.request.user.institution)
         lot_tags = LotTag.objects.filter(owner=self.request.user.institution)
-
-        selected_devices = self.request.POST.getlist('devices')
         context.update({
             'lots': lots,
             'lot_tags':lot_tags,
-            'devices':selected_devices
         })
         return context
 
@@ -181,39 +178,33 @@ class AddToLotView(DashboardView, FormView):
         return form
 
     def form_valid(self, form):
-        #convert back to list
-        dev_ids = ast.literal_eval(self.request.POST.get('devices'))
-        _devices = []
-        for x in SystemProperty.objects.filter(value__in=dev_ids).filter(
-                owner=self.request.user.institution
-        ).distinct():
-            _devices.append(Device(id=x.value))
-        form.devices = _devices
-
+        form.devices = self.get_session_devices()
         form.save()
-        messages.success(self.request, _("Devices assigned to Lot."))
         response = super().form_valid(form)
+        messages.success(self.request, _("Devices assigned to Lot."))
         return response
 
+    def get_success_url(self):
+        return reverse_lazy('dashboard:lot', args=[self.request.POST.getlist('lots')[0]])
 
-class DelToLotView(TemplateView):
-    def post(self, request, *args, **kwargs):
+
+class DelToLotView(DashboardView, View):
+    #DashboardView will redirect to a GET method
+    def get(self, request, *args, **kwargs):
         lot_id = self.kwargs.get('pk')
-        selected_devices = request.POST.getlist('devices', [])
+        selected_devices = self.get_session_devices()
 
         if not selected_devices:
             messages.error(request, _("No devices selected"))
             return redirect(reverse_lazy('dashboard:lot', kwargs={'pk': lot_id}))
-
         try:
             lot = Lot.objects.filter(
                 id=lot_id,
             ).first()
 
             for dev in selected_devices:
-                    lot.remove(dev)
-
-            messages.success(request,_("Successfully unassigned %d devices from the lot") % len(selected_devices))
+                    lot.remove(dev.id)
+            messages.success(request,_("Successfully unassigned %d devices from the lot ") % len(selected_devices))
 
         except Exception as e:
             messages.error(
