@@ -40,7 +40,7 @@ class AllDevicesView(DeviceTableMixin, InventaryMixin):
         return Device.get_all(self.request.user.institution, offset, limit)
 
 
-class LotDashboardView(DeviceTableMixin, DetailsMixin):
+class LotDashboardView(DeviceTableMixin, InventaryMixin, DetailsMixin):
     template_name = "unassigned_devices.html"
     section = "dashboard_lot"
     title = _("Lot Devices")
