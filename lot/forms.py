@@ -202,7 +202,8 @@ class AddDonorForm(forms.Form):
         super().__init__(*args, **kwargs)
 
     def clean(self):
-        self._user = self.cleaned_data.get("user")
+        self.form_user = self.cleaned_data.get("user")
+        self._user = User(email=self.form_user)
         return
 
     def save(self, commit=True):
@@ -210,16 +211,13 @@ class AddDonorForm(forms.Form):
             return
 
         if self.donor:
-            self.donor.email = self._user
+            self.donor.email = self._user.email
             self.donor.save()
         else:
             self.donor = Donor.objects.create(
                 lot=self.lot,
-                email=self._user
+                email=self._user.email
             )
-        # TODO
-        # if self._user:
-        #     self.send_email()
 
     def remove(self):
         if self.donor:

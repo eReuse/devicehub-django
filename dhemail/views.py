@@ -2,6 +2,7 @@ import logging
 
 from django.conf import settings
 from django.template import loader
+from django.urls import reverse_lazy
 from django.core.mail import EmailMultiAlternatives
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.shortcuts import get_current_site
@@ -106,8 +107,10 @@ class DonorEmail(NotifyEmail):
         if not self.lot:
             self.get_lot()
 
+        protocol = context.get("protocol", "")
+        domain = context.get("domain", "")
         path = reverse_lazy("lot:web_donor", args=[self.lot.id, user.id])
         web_donor = f"{protocol}://{domain}/{path}"
-        context['web_donor'] = token
+        context['web_donor'] = web_donor
 
         return context
