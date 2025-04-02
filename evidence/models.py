@@ -160,7 +160,10 @@ class Evidence:
         if self.inxi:
             return self.device_manufacturer
 
-        return self.dmi.manufacturer().strip()
+        try:
+            return self.dmi.manufacturer().strip()
+        except Exception:
+            return ''
 
     def get_model(self):
         if self.is_web_snapshot():
@@ -175,7 +178,10 @@ class Evidence:
         if self.inxi:
             return self.device_model
 
-        return self.dmi.model().strip()
+        try:
+            return self.dmi.model().strip()
+        except Exception:
+            return ''
 
     def get_chassis(self):
         if self.is_legacy():
@@ -184,7 +190,11 @@ class Evidence:
         if self.inxi:
             return self.device_chassis
 
-        chassis = self.dmi.get("Chassis")[0].get("Type", '_virtual')
+        dmi_chassis = self.dmi.get("Chassis")
+        if not dmi_chassis:
+            return ""
+
+        chassis = dmi_chassis[0].get("Type", '_virtual')
         lower_type = chassis.lower()
 
         for k, v in CHASSIS_DH.items():
@@ -199,7 +209,10 @@ class Evidence:
         if self.inxi:
             return self.device_serial_number
 
-        return self.dmi.serial_number().strip()
+        try:
+            return self.dmi.serial_number().strip()
+        except Exception:
+            return ''
 
     def get_version(self):
         if self.inxi:
