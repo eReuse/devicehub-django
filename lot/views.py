@@ -36,7 +36,7 @@ from lot.models import (
     Donor,
     DeviceBeneficiary
 )
-from dhemail.views import SubscriptionEmail
+from dhemail.views import SubscriptionEmail, DonorEmail
 
 class LotSuccessUrlMixin():
     success_url = reverse_lazy('dashboard:unassigned')
@@ -521,13 +521,14 @@ class DonorMixing(DashboardView, FormView):
             lot=self.lot,
         ).first()
 
-class AddDonorView(DonorMixing):
+
+class AddDonorView(DonorMixing, DonorEmail):
     title = _("Add Donor")
     breadcrumb = "Lot / {}".format(title)
 
     def form_valid(self, form):
         form.save()
-        #self.send_email(form._user)
+        self.send_email(form._user)
         response = super().form_valid(form)
         return response
 
