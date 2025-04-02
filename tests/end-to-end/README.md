@@ -1,3 +1,6 @@
+> **Info**
+> As of 2025-04-02, from the 20 end-to-end tests, 4 are failing, we hope to fix it soon
+
 ## Quickstart
 
 This section runs [end-to-end tests](https://en.wikipedia.org/wiki/System_testing) using [playwright](https://playwright.dev)
