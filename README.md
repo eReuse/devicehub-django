@@ -178,7 +178,7 @@ python manage.py makemigrations
 python manage.py migrate
 ```
 
-Also, we can add some dummy data into the database to play along:
+Also, we can add some sample data into the database to play along:
 
 ```bash
 python manage.py add_institution Pangea

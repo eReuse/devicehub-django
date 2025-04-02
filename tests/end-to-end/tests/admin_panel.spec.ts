@@ -1,6 +1,5 @@
 import { test, expect } from '@playwright/test';
 
-// TODO after the tests, put again demo.ereuse.org as default
 const TEST_SITE = process.env.TEST_SITE || 'http://127.0.0.1:8001'
 const TEST_USER = process.env.TEST_USER || 'user@example.org'
 const TEST_PASSWD = process.env.TEST_PASSWD || '1234'
@@ -13,15 +12,7 @@ async function login(page, date, time) {
     await page.getByPlaceholder('Password').press('Enter');
 }
 
-// when introducing a new test, use only temporarily to just enable that test
-//
-//test.only('NEW example', async ({ page }) => {
-//    await login(page);
-//    test.setTimeout(0)
-//    await page.pause();
-//});
-
-test.only('Lot GROUP-CRUD', async ({ page }) => {
+test('Lot GROUP-CRUD', async ({ page }) => {
   await login(page);
   //await page.pause();
 
