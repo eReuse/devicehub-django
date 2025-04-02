@@ -57,6 +57,8 @@ class BulkStateChangeView(DashboardView, View):
             return self.get_success_url()
         try:
             for dev in selected_devices:
+
+                message = _("<Created> State '{}'. Previous State: '{}'").format(new_state, dev.get_current_state().state)
                 State.objects.create(
                     snapshot_uuid=dev.last_uuid(),
                     state=new_state,
@@ -64,7 +66,6 @@ class BulkStateChangeView(DashboardView, View):
                     institution=self.request.user.institution,
                 )
 
-                message = _("<Created> State '{}'. Previous State: '{}'").format(new_state, dev.get_current_state())
                 DeviceLog.objects.create(
                     snapshot_uuid=dev.last_uuid(),
                     event=message,
