@@ -1,30 +1,32 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
-from .dummy_algo.dummy_calculator import DummyEnvironmentalImpactAlgorithm
+from .sample_algo.sample_calculator import SampleEnvironmentalImpactAlgorithm
 
 if TYPE_CHECKING:
     from .algorithm_interface import EnvironmentImpactAlgorithm
 
 
-class AlgorithmNames():
+class AlgorithmNames:
     """
     Enum class for the different types of algorithms.
     """
 
-    DUMMY_CALC = "dummy_calc"
+    SAMPLE_CALC = "sample_calc"
 
-    algorithm_names = {
-        DUMMY_CALC: DummyEnvironmentalImpactAlgorithm()
-    }
+    algorithm_names = {SAMPLE_CALC: SampleEnvironmentalImpactAlgorithm()}
 
 
-class FactoryEnvironmentImpactAlgorithm():
+class FactoryEnvironmentImpactAlgorithm:
 
     @staticmethod
-    def run_environmental_impact_calculation(algorithm_name: str) -> EnvironmentImpactAlgorithm:
+    def run_environmental_impact_calculation(
+        algorithm_name: str = "sample_calc",
+    ) -> EnvironmentImpactAlgorithm:
         try:
             return AlgorithmNames.algorithm_names[algorithm_name]
         except KeyError:
-            raise ValueError("Invalid algorithm name. Valid options are: " +
-                             ", ".join(AlgorithmNames.algorithm_names.keys()))
+            raise ValueError(
+                "Invalid algorithm name. Valid options are: "
+                + ", ".join(AlgorithmNames.algorithm_names.keys())
+            )

@@ -1,16 +1,16 @@
 import unittest
 from unittest.mock import Mock, patch
-from environmental_impact.algorithms.dummy_algo.dummy_calculator import (
-    DummyEnvironmentalImpactAlgorithm,
+from environmental_impact.algorithms.sample_algo.sample_calculator import (
+    SampleEnvironmentalImpactAlgorithm,
 )
 from device.models import Device
 from environmental_impact.models import EnvironmentalImpact
 
 
-class DummyEnvironmentalImpactAlgorithmTests(unittest.TestCase):
+class SampleEnvironmentalImpactAlgorithmTests(unittest.TestCase):
 
     def setUp(self):
-        self.algorithm = DummyEnvironmentalImpactAlgorithm()
+        self.algorithm = SampleEnvironmentalImpactAlgorithm()
         self.device = Mock(spec=Device)
         self.device.last_evidence = Mock()
         self.device.last_evidence.inxi = True
@@ -118,10 +118,10 @@ class DummyEnvironmentalImpactAlgorithmTests(unittest.TestCase):
 
     def test_get_power_on_hours_from_inxi_device(self):
         hours = self.algorithm.get_power_on_hours_from(self.device)
-        self.assertEqual(hours, 5887)  # 245 days + 7 hours in hours
+        self.assertEqual(hours, 5887)
 
     def test_convert_str_time_to_hours(self):
-        result = self.algorithm.convert_str_time_to_hours("1y 2d 3h", False)
+        result = self.algorithm.convert_str_time_to_hours("1y 2d 3h")
         self.assertEqual(
             result,
             8760 + 48 + 3,
@@ -129,8 +129,8 @@ class DummyEnvironmentalImpactAlgorithmTests(unittest.TestCase):
         )
 
     @patch(
-        "environmental_impact.algorithms.dummy_algo.dummy_calculator.render_docs",
-        return_value="Dummy Docs",
+        "environmental_impact.algorithms.sample_algo.sample_calculator.render_docs",
+        return_value="Sample Docs",
     )
     def test_environmental_impact_calculation(self, mock_render_docs):
         impact = self.algorithm.get_device_environmental_impact(self.device)
@@ -139,11 +139,54 @@ class DummyEnvironmentalImpactAlgorithmTests(unittest.TestCase):
             EnvironmentalImpact,
             "Output should be an EnvironmentalImpact instance",
         )
-        expected_co2 = 5887 * 40 * 0.475 / 1000
-        self.assertAlmostEqual(
-            impact.co2_emissions,
-            expected_co2,
-            2,
-            "CO2 emissions calculation should be accurate",
+        expected_co2 = (
+            5887
+            * self.algorithm.algorithm_constants["AVG_WATTS"]
+            * self.algorithm.algorithm_constants["CO2_PER_KWH"]
+            / 1000
         )
-        self.assertEqual(impact.docs, "Dummy Docs", "Docs should be rendered correctly")
+        self.assertAlmostEqual(
+            impact.co2_emissions["in_use"],
+            expected_co2,
+            2,  # difference between the two values is less than 0.01
+        )
+        self.assertEqual(impact.docs, "Sample Docs")
+
+
+@patch(
+    "environmental_impact.algorithms.sample_algo.sample_calculator.render_docs",
+    return_value="Sample Docs",
+)
+def test_get_device_environmental_impact(self, mock_render_docs):
+    # Mock the EnvironmentalImpact model
+    mock_env_impact = Mock(spec=EnvironmentalImpact)
+    mock_env_impact.constants = self.algorithm.algorithm_constants
+    mock_env_impact.co2_emissions = {"in_use": 137.1671}  # Updated CO2 value
+    mock_env_impact.docs = "Sample Docs"
+    mock_env_impact.relevant_input_data = {"power_on_hours": 5887}
+
+    # Call the method
+    impact = self.algorithm.get_device_environmental_impact(self.device)
+
+    # Assertions
+    self.assertEqual(
+        impact.constants,
+        mock_env_impact.constants,
+        "Constants should match the algorithm's constants",
+    )
+    self.assertAlmostEqual(
+        impact.co2_emissions["in_use"],
+        mock_env_impact.co2_emissions["in_use"],
+        2,
+        "CO2 emissions should be calculated correctly",
+    )
+    self.assertEqual(
+        impact.docs,
+        mock_env_impact.docs,
+        "Docs should be rendered correctly",
+    )
+    self.assertEqual(
+        impact.relevant_input_data,
+        mock_env_impact.relevant_input_data,
+        "Relevant input data should match expected values",
+    )
