@@ -552,7 +552,7 @@ class AddDonorView(DonorMixing):
 
     def form_valid(self, form):
         form.save()
-        self.send_email(form._user)
+        #self.send_email(form._user)
         response = super().form_valid(form)
         return response
 
@@ -565,10 +565,6 @@ class AddDonorView(DonorMixing):
 class DelDonorView(DonorMixing):
     title = _("Remove Donor")
     breadcrumb = "Lot / {}".format(title)
-
-    def form_valid(self, form):
-        form.remove()
-        response = super().form_valid(form)
         return response
 
     def get_context_data(self, **kwargs):

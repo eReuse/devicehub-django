@@ -103,9 +103,11 @@ class DonorEmail(NotifyEmail):
 
     def get_email_context(self, user, token):
         context = super().get_email_context(user)
-        if not token:
-            token = default_token_generator.make_token(user)
+        if not self.lot:
+            self.get_lot()
 
-        context['token'] = token
+        path = reverse_lazy("lot:web_donor", args=[self.lot.id, user.id])
+        web_donor = f"{protocol}://{domain}/{path}"
+        context['web_donor'] = token
 
         return context
