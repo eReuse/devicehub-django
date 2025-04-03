@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-03-20 12:57-0300\n"
-"PO-Revision-Date: 2025-03-12 23:09+0100\n"
+"PO-Revision-Date: 2025-04-03 10:22+0200\n"
 "Last-Translator: Leandro Navarro <leandro@ac.upc.edu>\n"
 "Language-Team: \n"
 "Language: ca\n"
@@ -481,7 +481,7 @@ msgstr "Accions"
 
 #: dashboard/templates/unassigned_devices.html:30
 msgid " Add"
-msgstr "Afegir"
+msgstr " Afegeix"
 
 #: dashboard/templates/unassigned_devices.html:30
 msgid "Remove"
@@ -489,31 +489,31 @@ msgstr "Eliminar"
 
 #: dashboard/templates/unassigned_devices.html:36
 msgid "select"
-msgstr "Seleccionar"
+msgstr "selecciona"
 
 #: dashboard/templates/unassigned_devices.html:39
 msgid "shortid"
-msgstr "Id curta"
+msgstr "idcurt"
 
 #: dashboard/templates/unassigned_devices.html:42
 msgid "type"
-msgstr "Tipus"
+msgstr "tipus"
 
 #: dashboard/templates/unassigned_devices.html:45
 msgid "manufacturer"
-msgstr "Fabricant"
+msgstr "fabricant"
 
 #: dashboard/templates/unassigned_devices.html:48
 msgid "model"
-msgstr "Model"
+msgstr "model"
 
 #: dashboard/templates/unassigned_devices.html:51
 msgid "updated"
-msgstr "Actualitzat"
+msgstr "actualitzat"
 
 #: dashboard/views.py:18
 msgid "Inbox"
-msgstr ""
+msgstr "Safata d'entrada"
 
 #: dashboard/views.py:27
 msgid "All Devices"
@@ -830,7 +830,7 @@ msgstr "No és un servidor d'esborrat"
 
 #: evidence/templates/ev_details.html:66
 msgid "Algorithm"
-msgstr "algorisme"
+msgstr "Algorisme"
 
 #: evidence/templates/ev_details.html:67
 msgid "Device ID"
@@ -949,7 +949,7 @@ msgstr "Activació d'usuari a %(site)s"
 
 #: login/templates/login.html:7
 msgid "Sign in"
-msgstr ""
+msgstr "Inicia una sessió"
 
 #: login/templates/login.html:41
 #: login/templates/password_reset_complete.html:11 login/views.py:19
@@ -969,23 +969,16 @@ msgid "Forgot your password? Click here to recover"
 msgstr "Has oblidat la teva contrasenya? Feu clic aquí per recuperar-la"
 
 #: login/templates/password_reset.html:6
-#, fuzzy
-#| msgid "Password reset"
 msgid "Password Reset"
-msgstr "Restableix contrasenya"
+msgstr "Restablir contrasenya"
 
 #: login/templates/password_reset.html:7
-#, fuzzy
-#| msgid ""
-#| "Forgotten your password? Enter your email address below, and we'll email "
-#| "instructions for setting a new one."
 msgid ""
 "Enter your email address below, and we'll email instructions for setting a "
 "new one."
 msgstr ""
-"Has oblidat la teva contrasenya? Introduïu la vostra adreça de correu "
-"electrònic a continuació i us enviarem les instruccions per configurar-ne "
-"una de nova."
+"Introduïu la vostra adreça de correu electrònic a continuació i us enviarem "
+"les instruccions per configurar-ne una de nova."
 
 #: login/templates/password_reset.html:14
 msgid "Reset Password"
@@ -1203,7 +1196,7 @@ msgstr "No s'ha seleccionat cap lot per eliminar."
 
 #: lot/views.py:113
 msgid "Lots succesfully deleted"
-msgstr "Lots eliminats correctament."
+msgstr "Lots esborrats correctament"
 
 #: lot/views.py:119
 msgid "Edit lot"
@@ -1287,7 +1280,7 @@ msgstr "Administra els teus testimonis"
 
 #: user/templates/panel.html:22
 msgid "Download a settings file"
-msgstr "Baixeu un fitxer de configuració"
+msgstr "Baixa un fitxer de configuració"
 
 #: user/views.py:25
 msgid "Download Settings"

@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-03-20 12:56-0300\n"
-"PO-Revision-Date: 2025-03-13 12:02-0300\n"
+"PO-Revision-Date: 2025-04-03 10:18+0200\n"
 "Last-Translator: Leandro Navarro <leandro@ac.upc.edu>\n"
 "Language-Team: \n"
 "Language: es\n"
@@ -481,7 +481,7 @@ msgstr "Acciones de lote"
 
 #: dashboard/templates/unassigned_devices.html:30
 msgid " Add"
-msgstr "Agregar"
+msgstr " Agregar"
 
 #: dashboard/templates/unassigned_devices.html:30
 msgid "Remove"
@@ -489,31 +489,31 @@ msgstr "Eliminar"
 
 #: dashboard/templates/unassigned_devices.html:36
 msgid "select"
-msgstr "Seleccionar"
+msgstr "seleccionar"
 
 #: dashboard/templates/unassigned_devices.html:39
 msgid "shortid"
-msgstr "ID"
+msgstr "idcorto"
 
 #: dashboard/templates/unassigned_devices.html:42
 msgid "type"
-msgstr "Tipo"
+msgstr "tipo"
 
 #: dashboard/templates/unassigned_devices.html:45
 msgid "manufacturer"
-msgstr "Fabricante"
+msgstr "fabricante"
 
 #: dashboard/templates/unassigned_devices.html:48
 msgid "model"
-msgstr "Modelo"
+msgstr "modelo"
 
 #: dashboard/templates/unassigned_devices.html:51
 msgid "updated"
-msgstr "Actualizado"
+msgstr "actualizado"
 
 #: dashboard/views.py:18
 msgid "Inbox"
-msgstr ""
+msgstr "Bandeja de entrada"
 
 #: dashboard/views.py:27
 msgid "All Devices"
@@ -617,7 +617,7 @@ msgstr "Algoritmo avanzado"
 
 #: device/templates/tabs/environmental_impact.html:33
 msgid "Read about the algorithm insights"
-msgstr "Lee más acerca del algoritmo "
+msgstr "Lee más acerca del algoritmo"
 
 #: device/templates/tabs/evidences.html:12 device/templates/tabs/log.html:8
 #: evidence/templates/ev_details.html:68
@@ -1153,7 +1153,7 @@ msgstr "No hay dispositivos asociados a estos lotes."
 
 #: lot/templates/lots.html:14
 msgid "Search by name or description..."
-msgstr "Buscar por nombre o descripción"
+msgstr "Búsqueda por nombre o descripción..."
 
 #: lot/templates/lots.html:24 lot/views.py:44
 msgid "New lot"
@@ -1197,7 +1197,7 @@ msgstr "No existen lotes seleccionados para eliminar."
 
 #: lot/views.py:113
 msgid "Lots succesfully deleted"
-msgstr "Lotes eliminados correctamente."
+msgstr "Lotes eliminados correctamente"
 
 #: lot/views.py:119
 msgid "Edit lot"
