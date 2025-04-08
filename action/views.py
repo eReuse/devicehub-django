@@ -58,7 +58,7 @@ class BulkStateChangeView(DashboardView, View):
         try:
             for dev in selected_devices:
 
-                message = _("<Created> State '{}'. Previous State: '{}'").format(new_state, dev.get_current_state().state)
+                message = _("<Created> State '{}'. Previous State: '{}'").format(new_state, dev.get_current_state().state if dev.get_current_state() else _("None") )
                 State.objects.create(
                     snapshot_uuid=dev.last_uuid(),
                     state=new_state,
