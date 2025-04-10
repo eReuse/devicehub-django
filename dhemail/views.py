@@ -31,11 +31,11 @@ class NotifyEmail:
         }
         return context
 
-    def send_email(self, user, token=None):
+    def send_email(self, user):
         """
         Send a email when a user is activated.
         """
-        context = self.get_email_context(user, token)
+        context = self.get_email_context(user)
         subject = loader.render_to_string(self.email_template_subject, context)
         # Email subject *must not* contain newlines
         subject = ''.join(subject.splitlines())
@@ -65,19 +65,19 @@ class NotifyActivateUserByEmail(NotifyEmail):
     email_template = 'registration/activate_user_email.txt'
     email_template_html = 'registration/activate_user_email.html'
 
-    def get_email_context(self, user, token):
+    def get_email_context(self, user):
         context = super().get_email_context(user)
-        if not token:
-            token = default_token_generator.make_token(user)
+        # if not token:
+        #     token = default_token_generator.make_token(user)
 
-        context['token'] = token
+        # context['token'] = token
 
         return context
 
 
 class SubscriptionEmail(NotifyEmail):
 
-    def get_email_context(self, user, token):
+    def get_email_context(self, user):
         context = super().get_email_context(user)
         if not self.lot:
             self.get_lot()
@@ -102,7 +102,7 @@ class DonorEmail(NotifyEmail):
     email_template = 'donor/email.txt'
     email_template_html = 'donor/email.html'
 
-    def get_email_context(self, user, token):
+    def get_email_context(self, user):
         context = super().get_email_context(user)
         if not self.lot:
             self.get_lot()
@@ -114,3 +114,43 @@ class DonorEmail(NotifyEmail):
         context['web_donor'] = web_donor
 
         return context
+
+
+class BeneficiaryEmail(NotifyEmail):
+
+    def get_email_context(self, user):
+        context = super().get_email_context(user)
+        if not self.lot:
+            self.get_lot()
+
+        protocol = context.get("protocol", "")
+        domain = context.get("domain", "")
+        path = reverse_lazy("lot:web_beneficiary", args=[self.lot.id, user.id])
+        web_beneficiary = f"{protocol}://{domain}/{path}"
+        context['web_beneficiary'] = web_beneficiary
+
+        return context
+
+
+class BeneficiaryAgreementEmail(BeneficiaryEmail):
+    email_template_subject = 'beneficiary/agreement/subject.txt'
+    email_template = 'beneficiary/agreement/email.txt'
+    email_template_html = 'beneficiary/agreement/email.html'
+
+
+class BeneficiaryConfirmEmail(BeneficiaryEmail):
+    email_template_subject = 'beneficiary/confirm/subject.txt'
+    email_template = 'beneficiary/confirm/email.txt'
+    email_template_html = 'beneficiary/confirm/email.html'
+
+
+class BeneficiaryDeliveryEmail(BeneficiaryEmail):
+    email_template_subject = 'beneficiary/delivery/subject.txt'
+    email_template = 'beneficiary/delivery/email.txt'
+    email_template_html = 'beneficiary/delivery/email.html'
+
+
+class BeneficiaryReturnEmail(BeneficiaryEmail):
+    email_template_subject = 'beneficiary/return/subject.txt'
+    email_template = 'beneficiary/return/email.txt'
+    email_template_html = 'beneficiary/return/email.html'

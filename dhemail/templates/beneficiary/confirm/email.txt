@@ -1,0 +1,6 @@
+La cesión del equipo del {{ site_name }} ha sido confirmada procederemos al envio del mismo.
+
+Puedes ver el estado de tus equipos en:
+{{ web_beneficiary }}
+
+Un cordial saludo
