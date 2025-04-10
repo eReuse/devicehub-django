@@ -36,7 +36,12 @@ from lot.models import (
     Donor,
     DeviceBeneficiary
 )
-from dhemail.views import SubscriptionEmail, DonorEmail
+from dhemail.views import (
+    SubscriptionEmail,
+    DonorEmail,
+    BeneficiaryAgreementEmail,
+    BeneficiaryEmail,
+)
 
 class LotSuccessUrlMixin():
     success_url = reverse_lazy('dashboard:unassigned')
@@ -624,7 +629,7 @@ class AcceptDonorView(TemplateView):
         return redirect(self.success_url)
 
 
-class BeneficiaryView(DashboardView, FormView):
+class BeneficiaryView(DashboardView, BeneficiaryAgreementEmail, FormView):
     template_name = "beneficiaries.html"
     title = _("Beneficiaries")
     breadcrumb = "Lot / Beneficiary"
@@ -681,6 +686,7 @@ class BeneficiaryView(DashboardView, FormView):
     def form_valid(self, form):
         form.devices = self.get_session_devices()
         form.save()
+        self.send_email(form.ben)
         response = super().form_valid(form)
         return response
 
@@ -713,10 +719,11 @@ class DeleteBeneficiaryView(DashboardView, TemplateView):
         return redirect(self.success_url)
 
 
-class ListDevicesBeneficiaryView(DashboardView, FormView):
+class ListDevicesBeneficiaryView(DashboardView, BeneficiaryEmail, FormView):
     template_name = "beneficiaries_devices.html"
     title = _("Beneficiaries")
     breadcrumb = "Lot / Beneficiary / Devices"
+    lot = None
 
     def get_form_class(self):
         return modelformset_factory(
@@ -799,8 +806,34 @@ class ListDevicesBeneficiaryView(DashboardView, FormView):
     def form_valid(self, form):
         form.save()
         response = super().form_valid(form)
-        # TODO
-        # self.send_email()
+
+        if form.changed_objects:
+            devs_confirmed = []
+            devs_delivered = []
+            for ff in form.changed_objects:
+                f = ff[0]
+                if f.status == f.Status.CONFIRMED:
+                    devs_confirmed.append(f.device_id)
+                if f.status == f.Status.DELIVERED:
+                    devs_delivered.append(f.device_id)
+
+            if devs_confirmed:
+                self.email_template_subject = 'beneficiary/confirm/subject.txt'
+                self.email_template = 'beneficiary/confirm/email.txt'
+                self.email_template_html = 'beneficiary/confirm/email.html'
+                self.send_email(self.beneficiary)
+
+            if devs_delivered:
+                self.email_template_subject = 'beneficiary/delivery/subject.txt'
+                self.email_template = 'beneficiary/delivery/email.txt'
+                self.email_template_html = 'beneficiary/delivery/email.html'
+                self.send_email(self.beneficiary)
+
+                self.email_template_subject = 'beneficiary/return/subject.txt'
+                self.email_template = 'beneficiary/return/email.txt'
+                self.email_template_html = 'beneficiary/return/email.html'
+                self.send_email(self.beneficiary)
+
         return response
 
 
@@ -859,6 +892,7 @@ class AddDevicesBeneficiaryView(DashboardView, TemplateView):
 
             # TODO
             # self.send_email()
+
 
         return redirect(self.success_url)
 

@@ -7,7 +7,6 @@ from lot.models import (
     Lot,
     LotSubscription,
     Beneficiary,
-    DeviceBeneficiary,
     Donor,
 )
 
@@ -53,22 +52,24 @@ class BeneficiaryForm(forms.Form):
             lot_id=self.lot_pk,
             email=self._beneficiary
         ).first()
-
         return self._beneficiary
 
     def save(self, commit=True):
         if not commit:
             return
 
-        if not self.ben:
+        if self.ben:
+            self.ben.email = self._beneficiary
+            self.ben.save()
+        else:
             self.ben = Beneficiary.objects.create(
                 email=self._beneficiary,
                 lot_id=self.lot_pk,
                 shop=self.shop
             )
 
-        for dev in self.devices:
-            self.ben.add(dev.id)
+            for dev in self.devices:
+                self.ben.add(dev.id)
         return
 
     def remove(self):

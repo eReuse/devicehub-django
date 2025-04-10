@@ -1,0 +1,5 @@
+Te enviamos este email porque has mostrado interes por unos equipos en {{ site_name }}.
+Para proceder es necesario que firmes un convenio de traspaso.
+Para ello tienes que acceder a la siguiente pagina {{ web_beneficiary }}
+
+Un cordial saludo
