@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load i18n %}
 {% load paginacion %}
-{% load render_table from django_tables2 %}
+{% load render_table export_url from django_tables2 %}
 
 {% block content %}
     {% if path == "lot" %}
@@ -36,12 +36,12 @@
                title="{% trans "NOT IMPLEMENTED. Document management" %}">
               {% trans 'Documents' %}
             </a>
-          {% endif %}
+            <a href="{% export_url "csv" %}" class="btn btn-outline-primary" data-bs-toggle="tooltip"
+               title="{% trans "Export simplified (.csv)" %}">
+              {% trans "Export Lot (csv)" %}
+            </a>
 
-          <a href="{# url 'dashboard:exports' object.id #}" class="btn btn-outline-secondary" data-bs-toggle="tooltip"
-             title="{% trans "NOT IMPLEMENTED. Export to csv." %}">
-            {% trans 'Exports' %}
-          </a>
+          {% endif %}
         </div>
 
         <!-- device limit per page picker -->

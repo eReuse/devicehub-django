@@ -3,6 +3,15 @@ import json
 from django.utils.translation import gettext_lazy as _
 from django.views.generic.edit import FormView
 from django.shortcuts import Http404
+from django.utils.dateparse import parse_datetime
+from dashboard.tables import DeviceTable
+
+from django_tables2 import RequestConfig
+from django_tables2.views import SingleTableMixin
+from django_tables2.export.views import ExportMixin
+from django_tables2.export.export import TableExport
+
+from action.models import StateDefinition
 from django.db.models import Q
 
 from dashboard.mixins import InventaryMixin, DetailsMixin, DeviceTableMixin
@@ -40,62 +49,111 @@ class AllDevicesView(DeviceTableMixin, InventaryMixin):
         return Device.get_all(self.request.user.institution, offset, limit)
 
 
-class LotDashboardView(DeviceTableMixin, InventaryMixin, DetailsMixin):
+class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMixin):
     template_name = "unassigned_devices.html"
     section = "dashboard_lot"
     title = _("Lot Devices")
     breadcrumb = "Lot / Devices"
+    paginate_by = 10
+    paginate_choices = [10, 20, 50, 100, 0]
+    table_class = DeviceTable
     model = Lot
+    export_formats = ['csv']
+    export_name = 'lot_devices_export'
+    table_pagination = {
+        'per_page': paginate_by,
+        'page': 1
+    }
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         lot = context.get('object')
-        context.update({'lot': lot})
-        return self.configure_table(context)
+        self.object = lot
 
-    def get_devices(self, user, offset=0, limit=None):
+        context.update({
+            'lot': lot,
+            'count': len(self.get_queryset()),
+            'paginate_choices': self.paginate_choices,
+            'state_definitions': self._get_state_definitions(),
+            'limit': int(self.request.GET.get('limit', self.paginate_by)),
+        })
+        return context
+
+    def get_queryset(self):
         search_query = self.request.GET.get('q', '').lower()
-        chids = self.object.devicelot_set.all().values_list(
+        device_ids = self._get_device_ids()
+        device_details = self._get_device_details(device_ids)
+        devices = list(device_details.keys())
+
+        if search_query:
+            devices = self._filter_devices(devices, device_details, search_query)
+
+        return devices
+
+    def get_table_data(self):
+        table_data = []
+        for device in super().get_table_data():
+            device.initial()
+            current_state = device.get_current_state()
+            table_data.append({
+                'id': device.pk,
+                'shortid': device.shortid,
+                'type': device.type,
+                'manufacturer': getattr(device, 'manufacturer', ''),
+                'model': getattr(device, 'model', ''),
+                'version': getattr(device, 'version', ''),
+                'current_state': current_state.state if current_state else '--',
+                'last_updated': parse_datetime(device.updated) if device.updated else "--"
+            })
+        return table_data
+
+    def get_table_kwargs(self):
+        kwargs = super().get_table_kwargs()
+        limit = int(self.request.GET.get('limit', self.paginate_by))
+        page = int(self.request.GET.get('page', 1))
+
+        self.table_pagination = {
+            'per_page': limit,
+            'page': page
+        } if limit != 0 else False
+
+        return kwargs
+
+    def _get_state_definitions(self):
+        return StateDefinition.objects.filter(
+            institution=self.request.user.institution
+        ).order_by('order')
+
+    def _get_device_ids(self):
+        return self.object.devicelot_set.values_list(
             "device_id", flat=True
         ).distinct()
 
+    def _get_device_details(self, device_ids):
         props = SystemProperty.objects.filter(
             owner=self.request.user.institution,
-            value__in=chids
+            value__in=device_ids
         ).order_by("-created")
 
-        # Get all devices first to enable search filtering
-        all_devices = []
-        device_details = {}  # Store device details for searching
+        device_map = {}
         for prop in props:
-            if prop.value not in device_details:
-                device = Device(id=prop.value)
-                all_devices.append(device)
-                # Store relevant searchable fields
-                device_details[prop.value] = {
-                    'manufacturer': device.manufacturer.lower() if device.manufacturer else '',
-                    'model': device.model.lower() if device.model else '',
-                    'state': device.get_current_state().state.lower() if device.get_current_state() else '',
-                    'shortid': device.shortid.lower() if device.shortid else ''
+            device_id = prop.value
+            if device_id not in device_map:
+                device = Device(id=device_id)
+                current_state = device.get_current_state()
+                device_map[device] = {
+                    'manufacturer': (device.manufacturer or '').lower(),
+                    'model': (device.model or '').lower(),
+                    'state': (current_state.state if current_state else '').lower(),
+                    'shortid': (device.shortid or '').lower()
                 }
+        return device_map
 
-        # Apply search filter if query exists
-        if search_query:
-            filtered_devices = []
-            for device in all_devices:
-                details = device_details[device.id]
-                if (search_query in details['manufacturer'] or
-                    search_query in details['model'] or
-                    search_query in details['state'] or
-                    search_query in details['shortid']):
-                    filtered_devices.append(device)
-            all_devices = filtered_devices
-
-        # Apply pagination
-        total_count = len(all_devices)
-        paginated_devices = all_devices[offset:offset+limit] if limit else all_devices
-
-        return paginated_devices, total_count
+    def _filter_devices(self, devices, details, query):
+        return [
+            device for device in devices
+            if any(query in details[device][field] for field in ['manufacturer', 'model', 'state', 'shortid'])
+        ]
 
 
 class SearchView(DeviceTableMixin, InventaryMixin):
