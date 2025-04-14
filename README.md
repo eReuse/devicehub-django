@@ -130,6 +130,7 @@ proxy_read_timeout 600;
 - Python 3.11
 - pip
 - virtualenv
+- gettext
 
 Specially when developing, is quite convenient to run DeviceHub from a virtual environment. To start with this deployment, create a virtual environment to isolate our project dependencies:
 
@@ -184,6 +185,7 @@ Also, we can add some sample data into the database to play along:
 python manage.py add_institution Pangea
 python manage.py add_user Pangea user@example.org 1234
 python manage.py up_snapshots example/snapshots/ user@example.org
+python manage.py compilemessages
 ```
 
 ### Run DeviceHub

@@ -222,6 +222,9 @@ deploy() {
                 ./manage.py migrate
                 config_phase
         fi
+
+        #compile .po files into .mo
+        ./manage.py compilemessages
 }
 
 runserver() {
