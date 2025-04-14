@@ -223,8 +223,8 @@ deploy() {
                 config_phase
         fi
 
-        #compile .po files into .mo
-        ./manage.py compilemessages
+        #compile .po files into .mo (output too large for all languages)
+        ./manage.py compilemessages > /dev/null
 }
 
 runserver() {
