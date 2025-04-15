@@ -125,8 +125,11 @@ class BeneficiaryEmail(NotifyEmail):
 
         protocol = context.get("protocol", "")
         domain = context.get("domain", "")
-        path = reverse_lazy("lot:web_beneficiary", args=[self.lot.id, user.id])
-        web_beneficiary = f"{protocol}://{domain}/{path}"
+        path = ""
+        if type(user.id) is not int:
+            path = reverse_lazy("lot:web_beneficiary", args=[self.lot.id, user.id])
+
+        web_beneficiary = f"{protocol}://{domain}{path}"
         context['web_beneficiary'] = web_beneficiary
 
         return context
