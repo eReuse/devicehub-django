@@ -15,6 +15,7 @@ class NotifyEmail:
     email_template_subject = ''
     email_template = ''
     email_template_html = ''
+    lot = None
 
     def get_email_context(self, user):
         protocol = 'https' if self.request.is_secure() else 'http'
@@ -28,6 +29,7 @@ class NotifyEmail:
             'site_name': site_name,
             'user': user,
             'protocol': protocol,
+            'lot': self.lot,
         }
         return context
 
@@ -125,12 +127,15 @@ class BeneficiaryEmail(NotifyEmail):
 
         protocol = context.get("protocol", "")
         domain = context.get("domain", "")
-        path = ""
-        if type(user.id) is not int:
-            path = reverse_lazy("lot:web_beneficiary", args=[self.lot.id, user.id])
+        path = reverse_lazy(
+            "lot:web_beneficiary",
+            args=[self.lot.id, self.beneficiary.id]
+        )
 
         web_beneficiary = f"{protocol}://{domain}{path}"
         context['web_beneficiary'] = web_beneficiary
+        context["beneficiary"] = self.beneficiary
+        context["lot"] = self.lot
 
         return context
 
