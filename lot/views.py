@@ -37,6 +37,7 @@ from lot.models import (
     DeviceBeneficiary
 )
 from dhemail.views import (
+    NotifyEmail,
     SubscriptionEmail,
     DonorEmail,
     BeneficiaryAgreementEmail,
@@ -533,7 +534,7 @@ class AddDonorView(DonorMixing, DonorEmail):
 
     def form_valid(self, form):
         form.save()
-        self.send_email(form._user)
+        self.send_email(form.donor)
         response = super().form_valid(form)
         return response
 
@@ -607,7 +608,7 @@ class DonorView(WebMixing):
         ).distinct()
 
 
-class AcceptDonorView(TemplateView):
+class AcceptDonorView(TemplateView, NotifyEmail):
     template_name = "donor_web.html"
 
     def get(self, *args, **kwargs):
@@ -623,10 +624,19 @@ class AcceptDonorView(TemplateView):
         )
         self.object.reconciliation = True
         self.object.save()
-        # TODO
-        # self.send_email()
+        self.get_templates_email()
+        subscriptors = LotSubscription.objects.filter(
+            lot_id=pk,
+        )
+        for s in subscriptors:
+            self.send_email(s.email)
 
         return redirect(self.success_url)
+
+    def get_templates_email(self):
+        self.email_template_html = 'subscription/incoming_lot_ready_email.html'
+        self.email_template = 'subscription/incoming_lot_ready_email.txt'
+        self.email_template_subject = 'subscription/incoming_lot_ready_subject.txt'
 
 
 class BeneficiaryView(DashboardView, BeneficiaryAgreementEmail, FormView):
@@ -653,6 +663,7 @@ class BeneficiaryView(DashboardView, BeneficiaryAgreementEmail, FormView):
                 beneficiaries = self.is_shop.beneficiary_set.filter(lot=self.lot)
             else:
                 beneficiaries = Beneficiary.objects.filter(lot=self.lot)
+
 
         context.update({
             'lot': self.lot,
