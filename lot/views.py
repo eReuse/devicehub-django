@@ -699,6 +699,7 @@ class BeneficiaryView(DashboardView, BeneficiaryAgreementEmail, FormView):
     def form_valid(self, form):
         form.devices = self.get_session_devices()
         form.save()
+        self.beneficiary = form.ben
         self.send_email(form.ben)
         self.send_email_subscriptors()
 
@@ -979,6 +980,7 @@ class WebBeneficiaryView(WebMixing, FormView):
         devices = self.object.devicebeneficiary_set.filter(
             status=DeviceBeneficiary.Status.DELIVERED
         )
+        self.beneficiary = self.object
         initial_data = []
         for dev in devices:
             initial_data.append(
@@ -1044,8 +1046,11 @@ class AgreementBeneficiaryView(TemplateView):
         return context
 
 
-class AcceptBeneficiaryView(TemplateView):
+class AcceptBeneficiaryView(TemplateView, NotifyEmail):
     template_name = "beneficiary_agreement.html"
+    email_template_html = 'subscription/accept_conditions_beneficiary_email.html'
+    email_template = 'subscription/accept_conditions_beneficiary_email.txt'
+    email_template_subject = 'subscription/accept_conditions_beneficiary_subject.txt'
 
     def get(self, *args, **kwargs):
         super().get(*args, **kwargs)
@@ -1060,7 +1065,21 @@ class AcceptBeneficiaryView(TemplateView):
         )
         self.object.sign_conditions = True
         self.object.save()
-        # TODO
-        # self.send_email()
+        self.beneficiary = self.object
+        self.send_email_subscriptors()
 
         return redirect(self.success_url)
+
+    def send_email_subscriptors(self):
+
+        subscriptors = LotSubscription.objects.filter(
+            lot=self.beneficiary.lot,
+        )
+
+        for c in subscriptors:
+            self.send_email(c.user)
+
+    def get_email_context(self, user):
+        context = super().get_email_context(user)
+        context['beneficiary'] = self.beneficiary
+        return context
