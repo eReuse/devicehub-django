@@ -110,7 +110,7 @@ class DonorEmail(NotifyEmail):
         protocol = context.get("protocol", "")
         domain = context.get("domain", "")
         path = reverse_lazy("lot:web_donor", args=[self.lot.id, user.id])
-        web_donor = f"{protocol}://{domain}/{path}"
+        web_donor = f"{protocol}://{domain}{path}"
         context['web_donor'] = web_donor
 
         return context
