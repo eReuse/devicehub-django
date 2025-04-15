@@ -204,7 +204,6 @@ class AddDonorForm(forms.Form):
 
     def clean(self):
         self.form_user = self.cleaned_data.get("user")
-        self._user = User(email=self.form_user)
         return
 
     def save(self, commit=True):
@@ -212,12 +211,12 @@ class AddDonorForm(forms.Form):
             return
 
         if self.donor:
-            self.donor.email = self._user.email
+            self.donor.email = self.form_user
             self.donor.save()
         else:
             self.donor = Donor.objects.create(
                 lot=self.lot,
-                email=self._user.email
+                email=self.form_user
             )
 
     def remove(self):
