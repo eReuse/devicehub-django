@@ -654,7 +654,7 @@ class AcceptDonorView(TemplateView, NotifyEmail):
             lot_id=pk,
         )
         for s in subscriptors:
-            self.send_email(s.email)
+            self.send_email(s.user)
 
         return redirect(self.success_url)
 
