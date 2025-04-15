@@ -689,7 +689,6 @@ class BeneficiaryView(DashboardView, BeneficiaryAgreementEmail, FormView):
             else:
                 beneficiaries = Beneficiary.objects.filter(lot=self.lot)
 
-
         context.update({
             'lot': self.lot,
             'beneficiaries': beneficiaries,
@@ -713,6 +712,9 @@ class BeneficiaryView(DashboardView, BeneficiaryAgreementEmail, FormView):
         return kwargs
 
     def get_lot(self):
+        if self.lot:
+            return
+
         self.lot = get_object_or_404(
             Lot,
             owner=self.request.user.institution,
@@ -723,8 +725,18 @@ class BeneficiaryView(DashboardView, BeneficiaryAgreementEmail, FormView):
         form.devices = self.get_session_devices()
         form.save()
         self.send_email(form.ben)
+        self.send_email_subscriptors()
+
         response = super().form_valid(form)
         return response
+
+    def send_email_subscriptors(self):
+        self.email_template_html = 'subscription/interest_beneficiary_email.html'
+        self.email_template = 'subscription/interest_beneficiary_email.txt'
+        self.email_template_subject = 'subscription/interest_beneficiary_subject.txt'
+        self.get_lot()
+        for c in self.lot.lotsubscription_set.filter():
+            self.send_email(c.user)
 
 
 class DeleteBeneficiaryView(DashboardView, TemplateView):
@@ -839,6 +851,11 @@ class ListDevicesBeneficiaryView(DashboardView, BeneficiaryEmail, FormView):
             id=self.pk
         )
 
+    def get_subscriptors(self):
+        return LotSubscription.objects.filter(
+            lot=self.lot,
+        )
+
     def form_valid(self, form):
         form.save()
         response = super().form_valid(form)
@@ -859,6 +876,13 @@ class ListDevicesBeneficiaryView(DashboardView, BeneficiaryEmail, FormView):
                 self.email_template_html = 'beneficiary/confirm/email.html'
                 self.send_email(self.beneficiary)
 
+                self.email_template_html = 'subscription/confirm_beneficiary_email.html'
+                self.email_template = 'subscription/confirm_beneficiary_email.txt'
+                self.email_template_subject = 'subscription/confirm_beneficiary_subject.txt'
+
+                for c in self.get_subscriptors():
+                    self.send_email(c.user)
+
             if devs_delivered:
                 self.email_template_subject = 'beneficiary/delivery/subject.txt'
                 self.email_template = 'beneficiary/delivery/email.txt'
@@ -869,6 +893,13 @@ class ListDevicesBeneficiaryView(DashboardView, BeneficiaryEmail, FormView):
                 self.email_template = 'beneficiary/return/email.txt'
                 self.email_template_html = 'beneficiary/return/email.html'
                 self.send_email(self.beneficiary)
+
+                self.email_template_html = 'subscription/delivery_beneficiary_email.html'
+                self.email_template = 'subscription/delivery_beneficiary_email.txt'
+                self.email_template_subject = 'subscription/delivery_beneficiary_subject.txt'
+
+                for c in self.get_subscriptors():
+                    self.send_email(c.user)
 
         return response
 
@@ -902,7 +933,7 @@ class DelDeviceBeneficiaryView(DashboardView, TemplateView):
         return redirect(self.success_url)
 
 
-class AddDevicesBeneficiaryView(DashboardView, TemplateView):
+class AddDevicesBeneficiaryView(DashboardView, NotifyEmail, TemplateView):
 
     def get(self, *args, **kwargs):
         super().get(*args, **kwargs)
@@ -916,7 +947,7 @@ class AddDevicesBeneficiaryView(DashboardView, TemplateView):
             user=self.request.user
         ).first()
 
-        beneficiary = get_object_or_404(
+        self.beneficiary = get_object_or_404(
             Beneficiary,
             lot_id=pk,
             id=id
@@ -924,13 +955,32 @@ class AddDevicesBeneficiaryView(DashboardView, TemplateView):
 
         if subscriptor or self.request.user.is_admin:
             for dev in self.get_session_devices():
-                beneficiary.add(dev.id)
+                self.beneficiary.add(dev.id)
 
-            # TODO
-            # self.send_email()
+            self.send_email_subscriptors()
 
 
         return redirect(self.success_url)
+
+    def send_email_subscriptors(self):
+        self.email_template_html = 'subscription/interest_beneficiary_email.html'
+        self.email_template = 'subscription/interest_beneficiary_email.txt'
+        self.email_template_subject = 'subscription/interest_beneficiary_subject.txt'
+        pk = self.kwargs.get('pk')
+        if not pk:
+            return
+
+        subscriptors = LotSubscription.objects.filter(
+            lot=self.beneficiary.lot,
+        )
+
+        for c in subscriptors:
+            self.send_email(c.user)
+
+    def get_email_context(self, user):
+        context = super().get_email_context(user)
+        context['beneficiary'] = self.beneficiary
+        return context
 
 
 class WebBeneficiaryView(WebMixing, FormView):
