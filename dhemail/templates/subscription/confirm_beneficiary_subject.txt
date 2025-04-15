@@ -1,0 +1,1 @@
+New confirmation for devices in lot {{ lot.name }}
