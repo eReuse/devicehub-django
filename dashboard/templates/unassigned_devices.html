@@ -38,7 +38,11 @@
             </a>
             <a href="{% export_url "csv" %}" class="btn btn-outline-primary" data-bs-toggle="tooltip"
                title="{% trans "Export simplified (.csv)" %}">
+              {% if search_query %}
+              {% trans "Export Results (csv)" %}
+                {% else %}
               {% trans "Export Lot (csv)" %}
+                {% endif %}
             </a>
 
           {% endif %}

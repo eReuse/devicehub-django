@@ -22,6 +22,7 @@ class DeviceTable(tables.Table):
             'td': {'class': 'text-center'}
         },
         orderable=False,
+        exclude_from_export=True
     )
     shortid = tables.Column(
         linkify=("device:details", {"pk": tables.A("id")}),
@@ -53,6 +54,45 @@ class DeviceTable(tables.Table):
             'td': {'class': 'text-center'}
         }
     )
+    cpu = tables.Column(
+        verbose_name=_("Cpu"),
+        attrs={
+            'th': {'class': 'text-center'},
+            'td': {'class': 'text-center'}
+        }
+    )
+    total_ram = tables.Column(
+        verbose_name=_("RAM"),
+        attrs={
+            'th': {'class': 'text-center'},
+            'td': {'class': 'text-center'}
+        }
+    )
+
+    ram_type = tables.Column(
+        verbose_name=_("SDRAM"),
+        attrs={
+            'th': {'class': 'text-center'},
+            'td': {'class': 'text-center'}
+        }
+    )
+
+
+    hdd_type = tables.Column(
+        verbose_name=_("HDD/SSD"),
+        attrs={
+            'th': {'class': 'text-center'},
+            'td': {'class': 'text-center'}
+        }
+    )
+    hdd_size = tables.Column(
+        verbose_name=_("Disk Size"),
+        attrs={
+            'th': {'class': 'text-center'},
+            'td': {'class': 'text-center'}
+        }
+    )
+
     current_state = tables.Column(
         accessor='current_state',
         verbose_name=_("Current State"),
@@ -100,6 +140,13 @@ class DeviceTable(tables.Table):
         return format_html(
             '<i class="bi {}"></i> {}',
             escape(icon_class),
+            safe_value
+        )
+
+    def value_type(self, value, record):
+
+        safe_value = escape(value)
+        return format_html(
             safe_value
         )
 

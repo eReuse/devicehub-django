@@ -76,6 +76,7 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
             'paginate_choices': self.paginate_choices,
             'state_definitions': self._get_state_definitions(),
             'limit': int(self.request.GET.get('limit', self.paginate_by)),
+            'search_query': self.request.GET.get('q', ''),
         })
         return context
 
@@ -95,6 +96,46 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
         for device in super().get_table_data():
             device.initial()
             current_state = device.get_current_state()
+
+            cpu_model = ""
+            hdd_size = ""
+            hdd_type = ""
+            ram_type = ""
+            total_ram_gb = 0
+
+
+            if hasattr(device, 'components'):
+                for component in device.components:
+
+                    #TODO: do switch/case statement
+                    if component.get('type') == 'Processor':
+                        cpu_model = component.get('model', '')
+
+                    elif component.get('type') == 'Storage':
+                        interface = component.get('interface', '').upper()
+                        if 'HDD' in interface:
+                            hdd_type = 'HDD'
+                        elif 'SSD' in interface:
+                            hdd_type = 'SSD'
+                        hdd_size = component.get('size', '')
+
+                    elif component.get('type') == 'RamModule':
+                        ram_type = component.get('interface', '')
+
+                        size = component.get('size')
+                        if size:
+                            if isinstance(size, (int, float)):
+                                total_ram_gb += float(size)
+                            elif isinstance(size, str):
+                                try:
+                                    size_num = float(''.join(filter(lambda x: x.isdigit() or x == '.', size)))
+                                    if 'GB' in size.upper() or 'GIB' in size.upper():
+                                        total_ram_gb += size_num * 1024
+                                    elif 'MB' in size.upper() or 'MIB' in size.upper():
+                                        total_ram_gb += size_num
+                                except (ValueError, AttributeError):
+                                    pass
+
             table_data.append({
                 'id': device.pk,
                 'shortid': device.shortid,
@@ -102,6 +143,11 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
                 'manufacturer': getattr(device, 'manufacturer', ''),
                 'model': getattr(device, 'model', ''),
                 'version': getattr(device, 'version', ''),
+                'cpu': cpu_model,
+                'hdd_size': hdd_size,
+                'hdd_type': hdd_type,
+                'ram_type': ram_type,
+                'total_ram': f"{total_ram_gb:.1f} MB" if total_ram_gb else "",
                 'current_state': current_state.state if current_state else '--',
                 'last_updated': parse_datetime(device.updated) if device.updated else "--"
             })
@@ -145,7 +191,7 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
                     'manufacturer': (device.manufacturer or '').lower(),
                     'model': (device.model or '').lower(),
                     'state': (current_state.state if current_state else '').lower(),
-                    'shortid': (device.shortid or '').lower()
+                    'shortid': (device.shortid or '').lower(),
                 }
         return device_map
 
