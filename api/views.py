@@ -112,7 +112,7 @@ class NewSnapshotView(ApiMixing):
             snapshot_id = ev_uuid
             txt = "It is not possible to parse snapshot: %s."
             logger.error(txt, snapshot_id)
-            text = "fail: It is not possible to parse snapshot"
+            text = "fail: It is not possible to parse snapshot. {}".format(err)
             return JsonResponse({'status': text}, status=500)
 
         prop = SystemProperty.objects.filter(
