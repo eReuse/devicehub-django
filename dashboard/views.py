@@ -68,7 +68,6 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         lot = context.get('object')
-        self.object = lot
 
         context.update({
             'lot': lot,
@@ -81,60 +80,24 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
         return context
 
     def get_queryset(self):
+        chids = self.object.devicelot_set.all().values_list(
+            "device_id", flat=True
+        ).distinct()
         search_query = self.request.GET.get('q', '').lower()
-        device_ids = self._get_device_ids()
-        device_details = self._get_device_details(device_ids)
-        devices = list(device_details.keys())
 
         if search_query:
-            devices = self._filter_devices(devices, device_details, search_query)
+            return [
+                Device(id=x) for x in chids
+                if Device(id=x).matches_query(search_query)
+            ]
 
-        return devices
+        return [Device(id=x) for x in chids]
 
     def get_table_data(self):
         table_data = []
         for device in super().get_table_data():
-            device.initial()
+
             current_state = device.get_current_state()
-
-            cpu_model = ""
-            hdd_size = ""
-            hdd_type = ""
-            ram_type = ""
-            total_ram_gb = 0
-
-
-            if hasattr(device, 'components'):
-                for component in device.components:
-
-                    #TODO: do switch/case statement
-                    if component.get('type') == 'Processor':
-                        cpu_model = component.get('model', '')
-
-                    elif component.get('type') == 'Storage':
-                        interface = component.get('interface', '').upper()
-                        if 'HDD' in interface:
-                            hdd_type = 'HDD'
-                        elif 'SSD' in interface:
-                            hdd_type = 'SSD'
-                        hdd_size = component.get('size', '')
-
-                    elif component.get('type') == 'RamModule':
-                        ram_type = component.get('interface', '')
-
-                        size = component.get('size')
-                        if size:
-                            if isinstance(size, (int, float)):
-                                total_ram_gb += float(size)
-                            elif isinstance(size, str):
-                                try:
-                                    size_num = float(''.join(filter(lambda x: x.isdigit() or x == '.', size)))
-                                    if 'GB' in size.upper() or 'GIB' in size.upper():
-                                        total_ram_gb += size_num * 1024
-                                    elif 'MB' in size.upper() or 'MIB' in size.upper():
-                                        total_ram_gb += size_num
-                                except (ValueError, AttributeError):
-                                    pass
 
             table_data.append({
                 'id': device.pk,
@@ -143,11 +106,7 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
                 'manufacturer': getattr(device, 'manufacturer', ''),
                 'model': getattr(device, 'model', ''),
                 'version': getattr(device, 'version', ''),
-                'cpu': cpu_model,
-                'hdd_size': hdd_size,
-                'hdd_type': hdd_type,
-                'ram_type': ram_type,
-                'total_ram': f"{total_ram_gb:.1f} MB" if total_ram_gb else "",
+                'cpu': getattr(device, 'cpu', ''),
                 'current_state': current_state.state if current_state else '--',
                 'last_updated': parse_datetime(device.updated) if device.updated else "--"
             })
@@ -158,10 +117,13 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
         limit = int(self.request.GET.get('limit', self.paginate_by))
         page = int(self.request.GET.get('page', 1))
 
-        self.table_pagination = {
-            'per_page': limit,
-            'page': page
-        } if limit != 0 else False
+        if limit != 0:
+            self.table_pagination = {
+                'per_page': limit,
+                'page': page
+            }
+        else:
+            self.table_pagination = False
 
         return kwargs
 
@@ -170,36 +132,62 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
             institution=self.request.user.institution
         ).order_by('order')
 
-    def _get_device_ids(self):
-        return self.object.devicelot_set.values_list(
-            "device_id", flat=True
-        ).distinct()
+    def create_export(self, export_format):
+        exporter = TableExport(
+            export_format=export_format,
+            table=self.get_table(),
+            exclude_columns=('selection', 'actions'),  # Exclude any action columns
+        )
 
-    def _get_device_details(self, device_ids):
-        props = SystemProperty.objects.filter(
-            owner=self.request.user.institution,
-            value__in=device_ids
-        ).order_by("-created")
-
-        device_map = {}
-        for prop in props:
-            device_id = prop.value
-            if device_id not in device_map:
-                device = Device(id=device_id)
+        # For CSV/Excel exports, enhance with components and user properties
+        if export_format in ['csv', 'xlsx']:
+            data = []
+            for device in self.get_queryset():
+                device.initial()
                 current_state = device.get_current_state()
-                device_map[device] = {
-                    'manufacturer': (device.manufacturer or '').lower(),
-                    'model': (device.model or '').lower(),
-                    'state': (current_state.state if current_state else '').lower(),
-                    'shortid': (device.shortid or '').lower(),
-                }
-        return device_map
 
-    def _filter_devices(self, devices, details, query):
-        return [
-            device for device in devices
-            if any(query in details[device][field] for field in ['manufacturer', 'model', 'state', 'shortid'])
-        ]
+                # Base device info
+                row = {
+                    'ID': device.id,
+                    'Short ID': device.shortid,
+                    'Type': device.type,
+                    'Manufacturer': getattr(device, 'manufacturer', ''),
+                    'Model': getattr(device, 'model', ''),
+                    'Version': getattr(device, 'version', ''),
+                    'Current State': current_state.state if current_state else '--',
+                    'Last Updated': parse_datetime(device.updated) if device.updated else "--",
+                }
+
+                # Add components
+                if hasattr(device, 'components'):
+                    for i, component in enumerate(device.components, 1):
+                        row.update({
+                            f'Component {i} Type': component.get('type', ''),
+                            f'Component {i} Model': component.get('model', ''),
+                            f'Component {i} Size': component.get('size', ''),
+                            f'Component {i} Interface': component.get('interface', ''),
+                        })
+
+                # Add user properties
+                user_props = device.get_user_properties()
+                for i, prop in enumerate(user_props, 1):
+                    row.update({
+                        f'User Property {i} Key': prop.key,
+                        f'User Property {i} Value': prop.value,
+                    })
+
+                data.append(row)
+
+            # Create new exporter with enhanced data
+            exporter = TableExport(
+                export_format=export_format,
+                table=self.get_table(),
+                data=data,
+                exclude_columns=('selection', 'actions'),
+            )
+
+        return exporter.response(filename=self.get_export_filename(export_format))
+
 
 
 class SearchView(DeviceTableMixin, InventaryMixin):

@@ -33,6 +33,15 @@ class DeviceTable(tables.Table):
         },
         orderable=True,
     )
+    current_state = tables.Column(
+        accessor='current_state',
+        verbose_name=_("Current State"),
+        attrs={
+            'th': {'class': 'text-center'},
+            'td': {'class': 'text-muted text-center'}
+        },
+        default="N/A"
+    )
     type = tables.Column(
         verbose_name=_("Type"),
         attrs={
@@ -61,47 +70,7 @@ class DeviceTable(tables.Table):
             'td': {'class': 'text-center'}
         }
     )
-    total_ram = tables.Column(
-        verbose_name=_("RAM"),
-        attrs={
-            'th': {'class': 'text-center'},
-            'td': {'class': 'text-center'}
-        }
-    )
 
-    ram_type = tables.Column(
-        verbose_name=_("SDRAM"),
-        attrs={
-            'th': {'class': 'text-center'},
-            'td': {'class': 'text-center'}
-        }
-    )
-
-
-    hdd_type = tables.Column(
-        verbose_name=_("HDD/SSD"),
-        attrs={
-            'th': {'class': 'text-center'},
-            'td': {'class': 'text-center'}
-        }
-    )
-    hdd_size = tables.Column(
-        verbose_name=_("Disk Size"),
-        attrs={
-            'th': {'class': 'text-center'},
-            'td': {'class': 'text-center'}
-        }
-    )
-
-    current_state = tables.Column(
-        accessor='current_state',
-        verbose_name=_("Current State"),
-        attrs={
-            'th': {'class': 'text-center'},
-            'td': {'class': 'text-muted text-center'}
-        },
-        default="N/A"
-    )
     last_updated = tables.DateTimeColumn(
         format="Y-m-d H:i",
         accessor='last_updated',
@@ -109,7 +78,7 @@ class DeviceTable(tables.Table):
         attrs={
             'td': {'class': 'text-center'},
             'th': {
-                'class': 'text-center',
+                'class': 'text-center text-muted',
                 'data-type': 'date',
                 'data-format': 'YYYY-MM-DD HH:mm'
             }
