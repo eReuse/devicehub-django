@@ -11,7 +11,7 @@
                     type="text"
                     name="q"
                     class="form-control"
-                    placeholder="{% trans 'Search by manufacturer, state, or model within lot...' %}"
+                    placeholder="{% trans 'Search by id, manufacturer, state, model, cpu or user property.' %}"
                     value="{{ search_query }}">
                 <div class="input-group-append">
                     <button type="submit" class="btn btn-outline-secondary h-100" style="border-radius: 0 4px 4px 0;">
@@ -128,7 +128,8 @@
         <!-- Table and pagination -->
         <div class="table-responsive">
           {% render_table table %}
-          <div class="d-flex justify-content-center">
+          <div class="d-flex justify-content-center text-muted">
+              <i class="bi bi-laptop pe-2"></i> {{count}} {% trans "Device/s" %}
             {% render_pagination page total_pages limit %}
           </div>
         </div>
