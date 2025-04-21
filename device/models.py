@@ -138,6 +138,38 @@ class Device:
         self.lots = [
             x.lot for x in DeviceLot.objects.filter(device_id=self.id)]
 
+    def matches_query(self, query):
+        if not query:
+            return True
+
+        query = query.lower().strip()
+
+        current_state = self.get_current_state()
+        details = {
+            'id': str(self.id).lower(),
+            'shortid': str(self.shortid).lower(),
+            'type': str(getattr(self, 'type', '')).lower(),
+            'manufacturer': str(getattr(self, 'manufacturer', '')).lower(),
+            'model': str(getattr(self, 'model', '')).lower(),
+            'version': str(getattr(self, 'version', '')).lower(),
+            'state': str(self.get_current_state()).lower() if self.get_current_state() else '',
+            'serial_number': str(getattr(self, 'serial_number', '')).lower(),
+        }
+
+        details['cpu'] = self.cpu
+
+        if any(query in details[field] for field in [
+            'id', 'shortid', 'type', 'manufacturer',
+            'model', 'version', 'state', 'cpu', 'serial_number'
+        ]):
+            return True
+
+        for prop in self.get_user_properties():
+            if query in str(prop.key).lower():
+                return True
+
+        return False
+
     @classmethod
     def get_all(cls, institution, offset=0, limit=None):
         sql = """
@@ -391,6 +423,15 @@ class Device:
     def model(self):
         self.get_last_evidence()
         return self.last_evidence.get_model()
+
+    @property
+    def cpu(self):
+        cpu_component = next(
+            (c for c in self.components if c.get('type') == 'Processor'),
+            None
+        )
+        cpu_model = cpu_component.get('model', '') if cpu_component else ""
+        return cpu_model
 
     @property
     def version(self):
