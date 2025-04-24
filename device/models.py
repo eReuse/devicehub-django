@@ -2,6 +2,7 @@ from django.db import models, connection
 
 from utils.constants import ALGOS
 from evidence.models import SystemProperty, UserProperty, Evidence
+from django.utils.dateparse import parse_datetime
 from lot.models import DeviceLot
 from action.models import State
 
@@ -447,3 +448,68 @@ class Device:
     def did_document(self):
         self.get_last_evidence()
         return self.last_evidence.get_did_document()
+
+    def components_export(self):
+        self.get_last_evidence()
+
+        hardware_info = {
+            'ID': self.shortid or 'nil',
+            'manufacturer': self.manufacturer or 'nil',
+            'model': self.model or 'nil',
+            'serial': 'nil',
+            'cpu_model': self.cpu or 'nill',
+            'cpu_cores': 'nil',
+            'ram_total': 'nil',
+            'ram_type': 'nil',
+            'drive': 'nil',
+            'gpu_model': 'nil',
+            'type': self.type,
+            'current_state': self.get_current_state().state if self.get_current_state() else 'nil',
+            'last_updated': parse_datetime(self.updated) or "nil"
+        }
+
+        if not self.last_evidence.is_legacy or not self.last_evidence:
+            return hardware_info
+
+        storage_devices = []
+        ram_total = 0
+        ram_types = set()
+        gpu_models = []
+
+        for c in self.components:
+            match c.get("type"):
+                case "Motherboard":
+                    hardware_info.update({
+                        'manufacturer': c.get("manufacturer", ""),
+                        'model': c.get("model", ""),
+                        'serial': c.get("serialNumber", "")
+                    })
+                case "Processor":
+                    hardware_info.update({
+                        #'cpu_model': c.get("model", ""),
+                        'cpu_cores': c.get("cores", "")
+                    })
+                case "RamModule":
+                    #TODO: fix total ram size on machine
+                    if ram_type := c.get("interface", ""):
+                        ram_types.add(ram_type)
+                case "Storage":
+                    if size := c.get("size", ""):
+                        storage_devices.append({
+                            'model': c.get("model", ""),
+                            'size': size,
+                            'type': c.get("interface", "")
+                        })
+                case "GraphicCard":
+                    if model := c.get("model", ""):
+                        gpu_models.append(model)
+
+        if ram_types:
+            hardware_info['ram_type'] = ", ".join(ram_types)
+        if storage_devices:
+            hardware_info['drive'] = ", ".join([f" {d['type']} {d['model']} ({d['size']} )"
+                                            for d in storage_devices])
+        if gpu_models:
+            hardware_info['gpu_model'] = ", ".join(gpu_models)
+
+        return hardware_info

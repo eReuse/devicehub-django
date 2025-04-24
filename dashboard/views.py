@@ -1,15 +1,17 @@
 import json
+from tablib import Dataset
 
 from django.utils.translation import gettext_lazy as _
 from django.views.generic.edit import FormView
 from django.shortcuts import Http404
 from django.utils.dateparse import parse_datetime
+from django.http import HttpResponse
 from dashboard.tables import DeviceTable
 
 from django_tables2 import RequestConfig
 from django_tables2.views import SingleTableMixin
-from django_tables2.export.views import ExportMixin
 from django_tables2.export.export import TableExport
+from django_tables2.export.views import ExportMixin
 
 from action.models import StateDefinition
 from django.db.models import Q
@@ -133,62 +135,42 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
         ).order_by('order')
 
     def create_export(self, export_format):
-        exporter = TableExport(
-            export_format=export_format,
-            table=self.get_table(),
-            exclude_columns=('selection', 'actions'),  # Exclude any action columns
-        )
+        if export_format == 'csv':
+            devices = self.get_queryset()
 
-        # For CSV/Excel exports, enhance with components and user properties
-        if export_format in ['csv', 'xlsx']:
-            data = []
-            for device in self.get_queryset():
-                device.initial()
-                current_state = device.get_current_state()
+            headers = [
+                'ID', 'type', 'manufacturer', 'model', 'cpu_model', 'cpu_cores', 'current_state',
+                'ram_total', 'ram_type', 'drive', 'gpu_model', 'serial', 'last_updated',
+            ]
+            data = Dataset(headers=headers)
 
-                # Base device info
-                row = {
-                    'ID': device.id,
-                    'Short ID': device.shortid,
-                    'Type': device.type,
-                    'Manufacturer': getattr(device, 'manufacturer', ''),
-                    'Model': getattr(device, 'model', ''),
-                    'Version': getattr(device, 'version', ''),
-                    'Current State': current_state.state if current_state else '--',
-                    'Last Updated': parse_datetime(device.updated) if device.updated else "--",
-                }
+            for device in devices:
+                row_data = device.components_export()
+                row_values = [
+                    row_data['ID'],
+                    row_data['type'],
+                    row_data['manufacturer'],
+                    row_data['model'],
+                    row_data['cpu_model'],
+                    row_data['cpu_cores'],
+                    row_data['current_state'],
+                    row_data['ram_total'],
+                    row_data['ram_type'],
+                    row_data['drive'],
+                    row_data['gpu_model'],
+                    row_data['serial'],
+                    row_data['last_updated']
+                ]
+                data.append(row_values)
 
-                # Add components
-                if hasattr(device, 'components'):
-                    for i, component in enumerate(device.components, 1):
-                        row.update({
-                            f'Component {i} Type': component.get('type', ''),
-                            f'Component {i} Model': component.get('model', ''),
-                            f'Component {i} Size': component.get('size', ''),
-                            f'Component {i} Interface': component.get('interface', ''),
-                        })
-
-                # Add user properties
-                user_props = device.get_user_properties()
-                for i, prop in enumerate(user_props, 1):
-                    row.update({
-                        f'User Property {i} Key': prop.key,
-                        f'User Property {i} Value': prop.value,
-                    })
-
-                data.append(row)
-
-            # Create new exporter with enhanced data
-            exporter = TableExport(
-                export_format=export_format,
-                table=self.get_table(),
-                data=data,
-                exclude_columns=('selection', 'actions'),
+            response = HttpResponse(
+                data.export('csv'),
+                content_type='text/csv',
             )
+            response['Content-Disposition'] = f'attachment; filename="{self.get_export_filename("csv")}"'
+            return response
 
-        return exporter.response(filename=self.get_export_filename(export_format))
-
-
+        return super().create_export(export_format)
 
 class SearchView(DeviceTableMixin, InventaryMixin):
     template_name = "unassigned_devices.html"
