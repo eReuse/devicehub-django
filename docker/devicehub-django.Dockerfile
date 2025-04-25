@@ -41,7 +41,8 @@ ENV PYTHONPATH="${PYTHONPATH}:/usr/lib/python3/dist-packages"
 COPY . .
 COPY docker/devicehub-django.entrypoint.sh /
 
-RUN chown -R app:app /opt/devicehub-django
+# run this manually if needed (it was slowing down some deployments)
+# RUN chown -R app:app /opt/devicehub-django
 
 USER app
 ENTRYPOINT sh /devicehub-django.entrypoint.sh
