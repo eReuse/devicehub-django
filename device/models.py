@@ -486,13 +486,13 @@ class Device:
                     })
                 case "Processor":
                     hardware_info.update({
-                        #'cpu_model': c.get("model", ""),
                         'cpu_cores': c.get("cores", "")
                     })
                 case "RamModule":
-                    #TODO: fix total ram size on machine
-                    if ram_type := c.get("interface", ""):
-                        ram_types.add(ram_type)
+                    hardware_info.update({
+                        'ram_total': c.get("total_ram", ""),
+                        'ram_type': c.get("interface", "")
+                    })
                 case "Storage":
                     if size := c.get("size", ""):
                         storage_devices.append({
