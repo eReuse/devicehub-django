@@ -300,12 +300,27 @@ class LotPropertiesView(DashboardView, TemplateView):
             owner=self.request.user.institution,
             type=LotProperty.Type.USER,
         )
+        subscriptions = LotSubscription.objects.filter(
+            lot=lot,
+            user=self.request.user
+        )
+        is_shop = subscriptions.filter(type=LotSubscription.Type.SHOP).first()
+        is_circuit_manager = subscriptions.filter(
+            type=LotSubscription.Type.CIRCUIT_MANAGER
+        ).first()
+
+        donor = Donor.objects.filter(lot=lot).first()
         context.update({
             'lot': lot,
             'properties': properties,
-            'title': self.title,
-            'breadcrumb': self.breadcrumb
+            'breadcrumb': self.breadcrumb,
+            "title": "{} - {}".format(lot.name, self.title),
+            'subscripted': subscriptions.first(),
+            'is_circuit_manager': is_circuit_manager,
+            'is_shop': is_shop,
+            'donor': donor,
         })
+
         return context
 
 
@@ -340,7 +355,11 @@ class AddLotPropertyView(DashboardView, CreateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['lot_id'] = self.lot.id
+        context["title"] = "{} - {}".format(self.title, self.lot.name)
         return context
+
+    def get_success_url(self):
+        return reverse_lazy("lot:properties", args=[self.lot.id])
 
 
 class UpdateLotPropertyView(DashboardView, UpdateView):

@@ -4,7 +4,36 @@
 {% block content %}
 <div class="row">
   <div class="col">
-    <h3>Lot {{ lot.name }}</h3>
+    <ul class="nav nav-tabs nav-tabs-bordered">
+      <li class="nav-item">
+        <a href="{% url 'dashboard:lot' lot.id %}" class="nav-link">{% trans 'Devices' %}</a>
+      </li>
+      <li class="nav-item">
+        <a href="{% url 'lot:properties' lot.id %}" class="nav-link active">{% trans 'Properties' %}</a>
+      </li>
+      <li class="nav-item">
+        <a href="{% url 'lot:subscription' lot.id %}" class="nav-link">{% trans 'Subscriptions' %}</a>
+      </li>
+      {% if is_circuit_manager %}
+      {% if donor %}
+      <li class="nav-item">
+        <a href="{% url 'lot:add_donor' lot.id %}" class="nav-link">{% trans 'Donor' %}</a>
+      </li>
+      {% else %}
+      <li class="nav-item">
+        <a href="{% url 'lot:del_donor' lot.id %}" class="nav-link">{% trans 'Donor' %}</a>
+      </li>
+      {% endif %}
+      {% endif %}
+      {% if is_shop %}
+      <li class="nav-item">
+        <a href="{% url 'lot:beneficiary' lot.id %}" class="nav-link">{% trans 'Beneficiary' %}</a>
+      </li>
+      {% endif %}
+      <li class="nav-item">
+        <a href="" class="nav-link">{% trans 'Participants' %}</a>
+      </li>
+    </ul>
   </div>
 </div>
 
