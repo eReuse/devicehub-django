@@ -611,7 +611,6 @@ class WebMixing(TemplateView):
         chids = self.get_chids()
 
         props = SystemProperty.objects.filter(
-            owner=self.request.user.institution,
             value__in=chids
         ).order_by("-created")
 
