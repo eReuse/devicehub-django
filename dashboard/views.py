@@ -29,10 +29,6 @@ class UnassignedDevicesView(DeviceTableMixin, InventaryMixin):
     title = _("Inbox")
     breadcrumb = "Lot / Inbox"
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        return self.configure_table(context)
-
     def get_devices(self, user, offset=0, limit=None):
         return Device.get_unassigned(self.request.user.institution, offset, limit)
 
@@ -42,10 +38,6 @@ class AllDevicesView(DeviceTableMixin, InventaryMixin):
     section = "All"
     title = _("All Devices")
     breadcrumb = "Devices / All Devices"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        return self.configure_table(context)
 
     def get_devices(self, user, offset=0, limit=None):
         return Device.get_all(self.request.user.institution, offset, limit)
@@ -167,7 +159,7 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
                 data.export('csv'),
                 content_type='text/csv',
             )
-            response['Content-Disposition'] = f'attachment; filename="{self.get_export_filename("csv")}"'
+            response['Content-Disposition'] = f'attachment; filename="{self.object.name}_lot.csv"'
             return response
 
         return super().create_export(export_format)
@@ -196,12 +188,6 @@ class SearchView(DeviceTableMixin, InventaryMixin):
         if not query:
             return [], 0
 
-        matches = search(
-            self.request.user.institution,
-            query[0],
-            offset,
-            limit
-        )
         count = search(
             self.request.user.institution,
             query[0],
@@ -209,21 +195,28 @@ class SearchView(DeviceTableMixin, InventaryMixin):
             9999
         ).size()
 
-        if not matches or not matches.size():
-            return self.search_hids(query, offset, limit)
+        if count > 0:
+            matches = search(
+                self.request.user.institution,
+                query[0],
+                offset,
+                limit
+            )
 
-        devices = []
-        dev_id = []
+            devices = []
+            dev_id = set()
 
-        for x in matches:
-            # devices.append(self.get_annotations(x))
-            dev = self.get_properties(x)
-            if dev.id not in dev_id:
-                devices.append(dev)
-                dev_id.append(dev.id)
+            for x in matches:
+                # devices.append(self.get_annotations(x))
+                dev = self.get_properties(x)
+                if dev.id not in dev_id:
+                    devices.append(dev)
+                    dev_id.add(dev.id)
 
-        # TODO fix of pagination, the count is not correct
-        return devices, count
+            # TODO fix of pagination, the count is not correct
+            return devices, len(dev_id)
+
+        return self.search_hids(query, offset, limit)
 
     def get_properties(self, xp):
         snap = json.loads(xp.document.get_data())
