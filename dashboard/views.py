@@ -51,6 +51,7 @@ class LotDashboardView(InventaryMixin, DetailsMixin):
         donor = Donor.objects.filter(lot=lot).first()
 
         context.update({
+            'title': "{} {}".format(_("Lot"), lot.name),
             'lot': lot,
             'subscripted': subscriptions.first(),
             'is_circuit_manager': is_circuit_manager,

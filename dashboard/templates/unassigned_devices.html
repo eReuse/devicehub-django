@@ -10,46 +10,43 @@
   <div class="col-3">
     <h3>{{ subtitle }}</h3>
   </div>
-  <div class="col text-center">
-    <a href="{# url 'dashboard:exports' object.id #}" type="button" class="btn btn-green-admin">
-      <i class="bi bi-reply"></i>
-      {% trans 'Exports' %}
-    </a>
-    {% if lot %}
-    <a href="{% url 'lot:properties' object.id %}" type="button" class="btn btn-green-admin">
-      <i class="bi bi-tag"></i>
-      {% trans 'properties' %}
-    </a>
-    {% if subscripted or user.is_admin %}
-    <a href="{% url 'lot:subscription' object.id %}" type="button" class="btn btn-green-admin">
-      <i class="bi bi-tag"></i>
-      {% trans 'Subscription' %}
-    </a>
-    {% endif %}
-    {% if is_circuit_manager %}
-    {% if donor %}
-    <a href="{% url 'lot:del_donor' object.id %}" type="button" class="btn btn-green-admin">
-      <i class="bi bi-tag"></i>
-      {% trans 'Donor' %}
-    </a>
-    {% else %}
-    <a href="{% url 'lot:add_donor' object.id %}" type="button" class="btn btn-green-admin">
-      <i class="bi bi-tag"></i>
-      {% trans 'Donor' %}
-    </a>
-    {% endif %}
-    {% endif %}
-    {% if is_shop %}
-    <button class="btn btn-green-admin" type="submit" name="url" value="{% url 'lot:beneficiary' lot.id %}">
-      <i class="bi bi-tag"></i>
-      {% trans 'Beneficiary' %}
-    </button>
-    {% endif %}
-    {% endif %}
+</div>
+<div class="row">
+  <div class="col">
+    <ul class="nav nav-tabs nav-tabs-bordered">
+      <li class="nav-item">
+        <a href="#details" class="nav-link active" data-bs-toggle="tab" data-bs-target="#details">{% trans 'Devices' %}</a>
+      </li>
+      <li class="nav-item">
+        <a href="{% url 'lot:properties' object.id %}" class="nav-link">{% trans 'Properties' %}</a>
+      </li>
+      <li class="nav-item">
+        <a href="{% url 'lot:subscription' object.id %}" class="nav-link">{% trans 'Subscriptions' %}</a>
+      </li>
+      {% if is_circuit_manager %}
+      {% if donor %}
+      <li class="nav-item">
+        <a href="{% url 'lot:add_donor' object.id %}" class="nav-link">{% trans 'Donor' %}</a>
+      </li>
+      {% else %}
+      <li class="nav-item">
+        <a href="{% url 'lot:del_donor' object.id %}" class="nav-link">{% trans 'Donor' %}</a>
+      </li>
+      {% endif %}
+      {% endif %}
+      {% if is_shop %}
+      <li class="nav-item">
+        <a href="{% url 'lot:beneficiary' lot.id %}" class="nav-link">{% trans 'Beneficiary' %}</a>
+      </li>
+      {% endif %}
+      <li class="nav-item">
+        <a href="" class="nav-link">{% trans 'Participants' %}</a>
+      </li>
+    </ul>
   </div>
 </div>
 
-<div class="dataTable-container">
+<div class="dataTable-container mt-3">
 
 
  {% trans "Lot Actions"  %}: <button class="btn btn-green-admin" type="submit" name="url" value="{% url 'lot:add_devices' %}">{% trans " Add" %}</button> <button class="btn btn-green-admin" type="submit" value="{% url 'lot:del_devices' %}" name="url">{% trans "Remove" %}</button>
