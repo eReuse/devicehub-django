@@ -73,6 +73,7 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
         donor = Donor.objects.filter(lot=lot).first()
 
         context.update({
+            'title': "{} {}".format(_("Lot"), lot.name),
             'lot': lot,
             'count': len(self.get_queryset()),
             'paginate_choices': self.paginate_choices,
