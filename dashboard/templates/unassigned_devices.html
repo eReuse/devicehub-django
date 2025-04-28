@@ -129,7 +129,10 @@
         <div class="table-responsive">
           {% render_table table %}
           <div class="d-flex justify-content-center text-muted">
-              <i class="bi bi-laptop pe-2"></i> {{count}} {% trans "Device/s" %}
+            <i class="bi bi-laptop pe-2 pb-2"></i> {% if not lot.name %} {% trans "Showing" %} {% endif %} {{count}} {% trans "Device/s" %}
+          </div>
+          <div class="d-flex justify-content-center text-muted">
+
             {% render_pagination page total_pages limit %}
           </div>
         </div>
