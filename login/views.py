@@ -9,6 +9,7 @@ from django.utils.translation import gettext_lazy as _
 from django.shortcuts import redirect
 from django.http import HttpResponseRedirect
 from django.contrib import messages
+from login.forms import PasswordResetForm
 
 logger = logging.getLogger(__name__)
 
@@ -68,6 +69,7 @@ class PasswordResetView(auth_views.PasswordResetView):
     html_email_template_name = 'password_reset_email.html'
     subject_template_name = 'password_reset_subject.txt'
     success_url = reverse_lazy('login:password_reset_done')
+    form_class = PasswordResetForm
 
     def form_valid(self, form):
         try:
