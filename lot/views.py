@@ -311,39 +311,67 @@ class LotsTagsView(DashboardView, SingleTableView):
         return counts
 
 
-class LotPropertiesView(DashboardView, TemplateView):
+class DashboardLotMixing(DashboardView):
+    lot = None
+
+    def get_context_data(self, **kwargs):
+        self.pk = kwargs.get('pk')
+        context = super().get_context_data(**kwargs)
+        self.get_lot()
+
+        self.subscriptions = LotSubscription.objects.filter(
+            lot=self.lot,
+        )
+
+        if not self.request.user.is_admin:
+            self.subscriptions = self.subscriptors.filter(user=self.request.user)
+
+        self.is_shop = self.subscriptions.filter(type=LotSubscription.Type.SHOP).first()
+        self.is_circuit_manager = self.subscriptions.filter(
+            type=LotSubscription.Type.CIRCUIT_MANAGER
+        ).first()
+
+        beneficiaries = Beneficiary.objects.filter(lot=self.lot)
+        donor = Donor.objects.filter(lot=self.lot).first()
+        context.update({
+            'lot': self.lot,
+            'breadcrumb': self.breadcrumb,
+            "title": "{} - {}".format(self.lot.name, self.title),
+            'subscripted': self.subscriptions.first(),
+            'is_circuit_manager': self.is_circuit_manager,
+            'is_shop': self.is_shop,
+            'donor': donor,
+            'beneficiaries': beneficiaries,
+            'subscriptions': self.subscriptions,
+        })
+
+        return context
+
+    def get_lot(self):
+        if self.lot:
+            return
+
+        self.lot = get_object_or_404(
+            Lot,
+            owner=self.request.user.institution,
+            id=self.pk
+        )
+
+
+class LotPropertiesView(DashboardLotMixing, TemplateView):
     template_name = "properties.html"
     title = _("New Lot Property")
     breadcrumb = "Lot / New property"
 
     def get_context_data(self, **kwargs):
-        self.pk = kwargs.get('pk')
         context = super().get_context_data(**kwargs)
-        lot = get_object_or_404(Lot, owner=self.request.user.institution, id=self.pk)
         properties = LotProperty.objects.filter(
-            lot=lot,
+            lot=self.lot,
             owner=self.request.user.institution,
             type=LotProperty.Type.USER,
         )
-        subscriptions = LotSubscription.objects.filter(
-            lot=lot,
-            user=self.request.user
-        )
-        is_shop = subscriptions.filter(type=LotSubscription.Type.SHOP).first()
-        is_circuit_manager = subscriptions.filter(
-            type=LotSubscription.Type.CIRCUIT_MANAGER
-        ).first()
-
-        donor = Donor.objects.filter(lot=lot).first()
         context.update({
-            'lot': lot,
             'properties': properties,
-            'breadcrumb': self.breadcrumb,
-            "title": "{} - {}".format(lot.name, self.title),
-            'subscripted': subscriptions.first(),
-            'is_circuit_manager': is_circuit_manager,
-            'is_shop': is_shop,
-            'donor': donor,
         })
 
         return context
@@ -444,7 +472,7 @@ class DeleteLotPropertyView(DashboardView, DeleteView):
         return redirect(self.success_url)
 
 
-class SubscriptLotView(DashboardView, SubscriptionEmail, FormView):
+class SubscriptLotView(DashboardLotMixing, SubscriptionEmail, FormView):
     template_name = "subscription.html"
     title = _("Subscription")
     breadcrumb = "Lot / Subscription"
@@ -452,18 +480,14 @@ class SubscriptLotView(DashboardView, SubscriptionEmail, FormView):
     lot = None
 
     def get_context_data(self, **kwargs):
-        self.pk = self.kwargs.get('pk')
         context = super().get_context_data(**kwargs)
-        self.get_lot()
-        subscriptors = LotSubscription.objects.filter(lot=self.lot)
-        user_subscripted = subscriptors.filter(user=self.request.user).first()
-
-        if not self.request.user.is_admin and not user_subscripted:
-            subscriptors = []
+        subscriptor = self.is_shop or self.is_circuit_manager
+        if not self.request.user.is_admin and not subscriptor:
+            self.subscriptions = []
 
         context.update({
             'lot': self.lot,
-            'subscriptors': subscriptors,
+            'subscriptors': self.subscriptions,
             "action": _("Subscribe")
         })
         return context
@@ -490,6 +514,9 @@ class SubscriptLotView(DashboardView, SubscriptionEmail, FormView):
         response = super().form_valid(form)
         return response
 
+    def get_success_url(self):
+        return reverse_lazy("lot:subscription", args=[self.lot.id])
+
 
 class UnsubscriptLotView(DashboardView, TemplateView):
 
@@ -513,28 +540,19 @@ class UnsubscriptLotView(DashboardView, TemplateView):
         return redirect(self.success_url)
 
 
-class DonorMixing(DashboardView, FormView):
+class ParticipantsView(DashboardLotMixing, TemplateView):
+    template_name = "participants.html"
+    title = _("Participants un this lot")
+    breadcrumb = "Lot / Participants"
+
+
+class DonorMixing(DashboardLotMixing, FormView):
     template_name = "donor.html"
     form_class = AddDonorForm
     lot = None
     donor = None
 
-    def get_context_data(self, **kwargs):
-        self.pk = self.kwargs.get('pk')
-        context = super().get_context_data(**kwargs)
-        if not self.lot:
-            self.get_lot()
-        if not self.donor:
-            self.get_donor()
-
-        context.update({
-            'lot': self.lot,
-            'donor': self.donor,
-        })
-        return context
-
     def get_form_kwargs(self):
-
         self.pk = self.kwargs.get('pk')
         self.success_url = reverse_lazy('dashboard:lot', args=[self.pk])
         self.get_lot()
@@ -556,12 +574,7 @@ class DonorMixing(DashboardView, FormView):
             kwargs["donor"] = self.donor
         return kwargs
 
-    def get_lot(self):
-        self.lot = get_object_or_404(
-            Lot,
-            owner=self.request.user.institution,
-            id=self.pk
-        )
+
 
     def get_donor(self):
         if not self.lot:
@@ -682,7 +695,7 @@ class AcceptDonorView(TemplateView, NotifyEmail):
         self.email_template_subject = 'subscription/incoming_lot_ready_subject.txt'
 
 
-class BeneficiaryView(DashboardView, BeneficiaryAgreementEmail, FormView):
+class BeneficiaryView(DashboardLotMixing, BeneficiaryAgreementEmail, FormView):
     template_name = "beneficiaries.html"
     title = _("Beneficiaries")
     breadcrumb = "Lot / Beneficiary"
@@ -786,7 +799,7 @@ class DeleteBeneficiaryView(DashboardView, TemplateView):
         return redirect(self.success_url)
 
 
-class ListDevicesBeneficiaryView(DashboardView, BeneficiaryEmail, FormView):
+class ListDevicesBeneficiaryView(DashboardLotMixing, BeneficiaryEmail, FormView):
     template_name = "beneficiaries_devices.html"
     title = _("Beneficiaries")
     breadcrumb = "Lot / Beneficiary / Devices"
