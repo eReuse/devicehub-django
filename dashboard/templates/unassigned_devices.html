@@ -11,40 +11,44 @@
     <h3>{{ subtitle }}</h3>
   </div>
 </div>
+{% if lot %}
 <div class="row">
   <div class="col">
     <ul class="nav nav-tabs nav-tabs-bordered">
       <li class="nav-item">
-        <a href="#details" class="nav-link active" data-bs-toggle="tab" data-bs-target="#details">{% trans 'Devices' %}</a>
+        <a href="{% url 'dashboard:lot' lot.id %}" class="nav-link active">{% trans 'Devices' %}</a>
       </li>
       <li class="nav-item">
-        <a href="{% url 'lot:properties' object.id %}" class="nav-link">{% trans 'Properties' %}</a>
+        <a href="{% url 'lot:properties' lot.id %}" class="nav-link">{% trans 'Properties' %}</a>
       </li>
       <li class="nav-item">
-        <a href="{% url 'lot:subscription' object.id %}" class="nav-link">{% trans 'Subscriptions' %}</a>
+        <a href="{% url 'lot:subscription' lot.id %}" class="nav-link">{% trans 'Subscriptions' %}</a>
       </li>
       {% if is_circuit_manager %}
       {% if donor %}
       <li class="nav-item">
-        <a href="{% url 'lot:add_donor' object.id %}" class="nav-link">{% trans 'Donor' %}</a>
+        <a href="{% url 'lot:del_donor' lot.id %}" class="nav-link">{% trans 'Donor' %}</a>
       </li>
       {% else %}
       <li class="nav-item">
-        <a href="{% url 'lot:del_donor' object.id %}" class="nav-link">{% trans 'Donor' %}</a>
+        <a href="{% url 'lot:add_donor' lot.id %}" class="nav-link">{% trans 'Donor' %}</a>
       </li>
       {% endif %}
       {% endif %}
       {% if is_shop %}
       <li class="nav-item">
-        <a href="{% url 'lot:beneficiary' lot.id %}" class="nav-link">{% trans 'Beneficiary' %}</a>
+        <button name="url" value="{% url 'lot:beneficiary' lot.id %}" class="nav-link">{% trans 'Beneficiary' %}</button>
       </li>
       {% endif %}
       <li class="nav-item">
-        <a href="" class="nav-link">{% trans 'Participants' %}</a>
+        <a href="{% url 'lot:participants' lot.id %}" class="nav-link">
+	  {% trans 'Participants' %}
+	</a>
       </li>
     </ul>
   </div>
 </div>
+{% endif %}
 
 <div class="dataTable-container mt-3">
 

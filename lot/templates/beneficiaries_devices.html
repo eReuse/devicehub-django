@@ -2,17 +2,13 @@
 {% load i18n %}
 
 {% block content %}
-<div class="row">
-  <div class="col">
-    <h3>{{ beneficiary.email }}</h3>
-  </div>
-</div>
+{% include 'tabs.html' %}
 
 <form method="post">
     {% csrf_token %}
 
     {{ form.management_form }}
-<div class="row">
+<div class="row mt-3">
   <div class="col">
     <table class="table table-hover table-bordered align-middel">
       <thead class="table-light">

@@ -2,19 +2,15 @@
 {% load i18n %}
 
 {% block content %}
-<div class="row">
-  <div class="col">
-    <h3>{{ subtitle }}</h3>
-  </div>
-</div>
+{% include 'tabs.html' %}
 
 {% load django_bootstrap5 %}
 {% if donor %}
-<div class="row mb-4">
-  <div class="col">
-    <a class="btn btn-green-admin" href="{% url 'lot:web_donor' lot.id donor.id %}">{% trans "Donor web" %}</a>
-  </div>
-</div>
+    <div class="d-flex justify-content-end mt-1">
+      <a href="{% url 'lot:web_donor' lot.id donor.id %}" class="btn btn-green-admin d-flex align-items-center">
+	{% trans "Donor web" %}
+      </a>
+    </div>
 {% endif %}
 
 <form role="form" method="post">
