@@ -16,7 +16,7 @@ def get_inxi_key(inxi, component):
 
 def get_inxi(n, name):
     for k, v in n.items():
-        if f"#{name}" in k:
+        if name == k.split("#")[-1]:
             return v
 
     return ""
