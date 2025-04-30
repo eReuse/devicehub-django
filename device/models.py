@@ -461,6 +461,8 @@ class Device:
             'cpu_cores': 'nil',
             'ram_total': 'nil',
             'ram_type': 'nil',
+            'ram_slots': 'nil',
+            'slots_used': 'nil',
             'drive': 'nil',
             'gpu_model': 'nil',
             'type': self.type,
@@ -472,27 +474,29 @@ class Device:
             return hardware_info
 
         storage_devices = []
-        ram_total = 0
-        ram_types = set()
         gpu_models = []
+        slots_used = slots_total = 0
 
         for c in self.components:
             match c.get("type"):
                 case "Motherboard":
                     hardware_info.update({
                         'manufacturer': c.get("manufacturer", ""),
-                        'model': c.get("model", ""),
-                        'serial': c.get("serialNumber", "")
+                        'serial': c.get("serialNumber", ""),
                     })
                 case "Processor":
                     hardware_info.update({
                         'cpu_cores': c.get("cores", "")
                     })
                 case "RamModule":
-                    hardware_info.update({
-                        'ram_total': c.get("total_ram", ""),
-                        'ram_type': c.get("interface", "")
-                    })
+                    slots_total += 1
+                    if slots_used == 0:
+                        hardware_info.update({
+                            'ram_total': c.get("total_ram", ""),
+                            'ram_type': c.get("interface", "")
+                        })
+                    if c.get("interface", "") != "no module installed":
+                        slots_used += 1
                 case "Storage":
                     if size := c.get("size", ""):
                         storage_devices.append({
@@ -504,12 +508,15 @@ class Device:
                     if model := c.get("model", ""):
                         gpu_models.append(model)
 
-        if ram_types:
-            hardware_info['ram_type'] = ", ".join(ram_types)
         if storage_devices:
             hardware_info['drive'] = ", ".join([f" {d['type']} {d['model']} ({d['size']} )"
                                             for d in storage_devices])
         if gpu_models:
             hardware_info['gpu_model'] = ", ".join(gpu_models)
+
+        hardware_info.update({
+            'slots_used': slots_used,
+            'ram_slots': slots_total,
+        })
 
         return hardware_info

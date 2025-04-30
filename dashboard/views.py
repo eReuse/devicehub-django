@@ -132,7 +132,7 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
 
             headers = [
                 'ID', 'type', 'manufacturer', 'model', 'cpu_model', 'cpu_cores', 'current_state',
-                'ram_total', 'ram_type', 'drive', 'gpu_model', 'serial', 'last_updated',
+                'ram_total', 'ram_type', 'ram_slots', 'slots_used', 'drive', 'gpu_model', 'serial', 'last_updated',
             ]
             data = Dataset(headers=headers)
 
@@ -148,6 +148,8 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
                     row_data['current_state'],
                     row_data['ram_total'],
                     row_data['ram_type'],
+                    row_data['ram_slots'],
+                    row_data['slots_used'],
                     row_data['drive'],
                     row_data['gpu_model'],
                     row_data['serial'],
