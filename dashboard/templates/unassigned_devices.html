@@ -45,6 +45,15 @@
                 {% endif %}
             </a>
 
+            <a href="{% export_url "xlsx" %}" class="btn btn-outline-primary" data-bs-toggle="tooltip"
+               title="{% trans "Export simplified (.xlsx)" %}">
+              {% if search_query %}
+              {% trans "Export Results (xlsx)" %}
+                {% else %}
+              {% trans "Export Lot (xlsx)" %}
+                {% endif %}
+            </a>
+
           {% endif %}
         </div>
 

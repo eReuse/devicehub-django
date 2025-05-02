@@ -127,7 +127,8 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
         ).order_by('order')
 
     def create_export(self, export_format):
-        if export_format == 'csv':
+        if export_format in ('csv', 'xlsx'):
+
             devices = self.get_queryset()
 
             headers = [
@@ -157,11 +158,17 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
                 ]
                 data.append(row_values)
 
+            content_types = {
+                'csv': 'text/csv',
+                'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            }
             response = HttpResponse(
-                data.export('csv'),
-                content_type='text/csv',
+                content=data.export(export_format),
+                content_type=content_types[export_format],
+                headers={
+                    'Content-Disposition': f'attachment; filename="{self.object.name}_lot.{export_format}"'
+                }
             )
-            response['Content-Disposition'] = f'attachment; filename="{self.object.name}_lot.csv"'
             return response
 
         return super().create_export(export_format)
