@@ -143,23 +143,32 @@ class Device:
         if not query:
             return True
 
-        query = query.lower().strip()
-
-        current_state = self.get_current_state()
+        #thanks ai for usage of lambda for lazy compute
         details = {
-            'id': str(self.id),
-            'shortid': str(self.shortid),
-            'type': str(getattr(self, 'type', '')),
-            'manufacturer': str(getattr(self, 'manufacturer', '')),
-            'model': str(getattr(self, 'model', '')),
-            'version': str(getattr(self, 'version', '')),
-            'state': str(self.get_current_state()) if self.get_current_state() else '',
-            'serial_number': str(getattr(self, 'serial_number', '')),
-            'cpu': str(self.cpu) if hasattr(self, 'cpu') else ''
+            'shortid': lambda d: str(d.shortid),
+            'type': lambda d: str(getattr(d, 'type', '')),
+            'manufacturer': lambda d: str(getattr(d, 'manufacturer', '')),
+            'model': lambda d: str(getattr(d, 'model', '')),
+            'current_state': lambda d: str(d.get_current_state()) if d.get_current_state() else '',
+            'serial': lambda d: str(getattr(d, 'serial_number', '')),
+            'cpu': lambda d: str(getattr(d, 'cpu', ''))
         }
 
+        #if query ends with :some_field, only search on this field
+        if ':' in query:
+            search_part, field_part = query.rsplit(':', 1)
+            search_part = search_part.strip().lower()
+            field_part = field_part.strip().lower()
+
+            if field_part in details:
+                field_value = details[field_part](self).lower()
+                return search_part in field_value
+            return False
+
+        query = query.lower().strip()
+
         for value in details.values():
-            if query in value.lower():
+            if query in value(self).lower():
                 return True
 
         for prop in self.get_user_properties():
