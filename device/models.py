@@ -147,26 +147,25 @@ class Device:
 
         current_state = self.get_current_state()
         details = {
-            'id': str(self.id).lower(),
-            'shortid': str(self.shortid).lower(),
-            'type': str(getattr(self, 'type', '')).lower(),
-            'manufacturer': str(getattr(self, 'manufacturer', '')).lower(),
-            'model': str(getattr(self, 'model', '')).lower(),
-            'version': str(getattr(self, 'version', '')).lower(),
-            'state': str(self.get_current_state()).lower() if self.get_current_state() else '',
-            'serial_number': str(getattr(self, 'serial_number', '')).lower(),
+            'id': str(self.id),
+            'shortid': str(self.shortid),
+            'type': str(getattr(self, 'type', '')),
+            'manufacturer': str(getattr(self, 'manufacturer', '')),
+            'model': str(getattr(self, 'model', '')),
+            'version': str(getattr(self, 'version', '')),
+            'state': str(self.get_current_state()) if self.get_current_state() else '',
+            'serial_number': str(getattr(self, 'serial_number', '')),
+            'cpu': str(self.cpu) if hasattr(self, 'cpu') else ''
         }
 
-        details['cpu'] = self.cpu
-
-        if any(query in details[field] for field in [
-            'id', 'shortid', 'type', 'manufacturer',
-            'model', 'version', 'state', 'cpu', 'serial_number'
-        ]):
-            return True
+        for value in details.values():
+            if query in value.lower():
+                return True
 
         for prop in self.get_user_properties():
             if query in str(prop.key).lower():
+                return True
+            if query in str(prop.value).lower():
                 return True
 
         return False
