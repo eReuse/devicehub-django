@@ -11,7 +11,7 @@
                     type="text"
                     name="q"
                     class="form-control"
-                    placeholder="{% trans 'Search by id, manufacturer, state, model, cpu or user property.' %}"
+                    placeholder="{% trans "Search by all, or append :shortid, :cpu, :model, :current_state, etc" %}"
                     value="{{ search_query }}">
                 <div class="input-group-append">
                     <button type="submit" class="btn btn-outline-secondary h-100" style="border-radius: 0 4px 4px 0;">
@@ -32,29 +32,29 @@
             <a href="{% url 'lot:properties' object.id %}" class="btn btn-outline-primary">
               <i class="bi bi-tag"></i> {% trans 'Properties' %}
             </a>
-            <a href="{#% url 'lot:documents' object.id %#}" class="btn btn-outline-secondary" data-bs-toggle="tooltip"
+            <a href="{#% url 'lot:documents' object.id %#}" class="btn btn-outline-secondary me-2" data-bs-toggle="tooltip"
                title="{% trans "NOT IMPLEMENTED. Document management" %}">
               {% trans 'Documents' %}
             </a>
-            <a href="{% export_url "csv" %}" class="btn btn-outline-primary" data-bs-toggle="tooltip"
-               title="{% trans "Export simplified (.csv)" %}">
-              {% if search_query %}
-              {% trans "Export Results (csv)" %}
-                {% else %}
-              {% trans "Export Lot (csv)" %}
-                {% endif %}
-            </a>
-
-            <a href="{% export_url "xlsx" %}" class="btn btn-outline-primary" data-bs-toggle="tooltip"
-               title="{% trans "Export simplified (.xlsx)" %}">
-              {% if search_query %}
-              {% trans "Export Results (xlsx)" %}
-                {% else %}
-              {% trans "Export Lot (xlsx)" %}
-                {% endif %}
-            </a>
-
-          {% endif %}
+          <a href="{% export_url 'csv' %}" class="btn btn-outline-success" data-bs-toggle="tooltip"
+            title="{% trans 'Export main components (.csv)' %}">
+            <i class="bi bi-filetype-csv"></i>
+            {% if search_query %}
+              {% trans 'Export Results' %}
+            {% else %}
+              {% trans 'Export CSV' %}
+            {% endif %}
+          </a>
+          <a href="{% export_url 'xlsx' %}" class="btn btn-outline-success" data-bs-toggle="tooltip"
+            title="{% trans 'Export main components (.xlsx)' %}">
+            <i class="bi bi-filetype-xlsx"></i>
+            {% if search_query %}
+              {% trans 'Export Results' %}
+            {% else %}
+              {% trans 'Export XLSX' %}
+            {% endif %}
+          </a>
+        {% endif %}
         </div>
 
         <!-- device limit per page picker -->
