@@ -73,7 +73,7 @@ class BulkStateChangeView(DashboardView, View):
                     institution=self.request.user.institution,
                 )
 
-            messages.success(request,_("Successfully changed %d devices from the lot ") % len(selected_devices))
+            messages.success(request,_("State changed Successfully"))
 
         except Exception as e:
             messages.error(
