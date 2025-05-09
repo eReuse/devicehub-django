@@ -22,7 +22,7 @@ async function login(page, date, time) {
 //});
 
 
-test.only('Devices assign/deassign to lot', async ({ page }) => {
+test('Devices assign/deassign to lot', async ({ page }) => {
     await login(page);
     //await page.pause();
 
@@ -46,9 +46,9 @@ test.only('Devices assign/deassign to lot', async ({ page }) => {
 });
 
 
-test('Export devices', async ({ page }) => {
+test.only('Export devices', async ({ page }) => {
     await login(page);
-    //await page.pause();
+    await page.pause();
 
     //assign all paginated devices to lot donante-orgB
     await page.getByRole('link', { name: ' Devices' }).click();
@@ -62,12 +62,11 @@ test('Export devices', async ({ page }) => {
     await expect(page.locator('h5')).toContainText('donante-orgB');
 
     const downloadPromise = page.waitForEvent('download');
-    await page.getByRole('link', { name: ' Export XLSX' }).click();
+    await page.getByRole('link', { name: ' Export all (.csv)' }).click();
     const download = await downloadPromise;
     const download1Promise = page.waitForEvent('download');
-    await page.getByRole('link', { name: ' Export CSV' }).click();
+    await page.getByRole('link', { name: ' Export all (.xlsx)' }).click();
     const download1 = await download1Promise;
-
 });
 
 test('Bulk changed state', async ({ page }) => {

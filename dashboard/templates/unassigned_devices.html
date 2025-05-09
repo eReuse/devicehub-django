@@ -40,18 +40,18 @@
             title="{% trans 'Export main components (.csv)' %}">
             <i class="bi bi-filetype-csv"></i>
             {% if search_query %}
-              {% trans 'Export Results' %}
+              {% trans 'Export filtered(.csv)' %}
             {% else %}
-              {% trans 'Export CSV' %}
+              {% trans 'Export all (.csv)' %}
             {% endif %}
           </a>
           <a href="{% export_url 'xlsx' %}" class="btn btn-outline-success" data-bs-toggle="tooltip"
             title="{% trans 'Export main components (.xlsx)' %}">
             <i class="bi bi-filetype-xlsx"></i>
             {% if search_query %}
-              {% trans 'Export Results' %}
+              {% trans 'Export filtered (.xlsx)' %}
             {% else %}
-              {% trans 'Export XLSX' %}
+              {% trans 'Export all (.xlsx)' %}
             {% endif %}
           </a>
         {% endif %}
@@ -94,13 +94,18 @@
         <div class="d-flex justify-content-between align-items-center p-3 bg-light border-bottom">
           <h5 class="mb-0">
             {% if lot.name %}
-              <i class="bi bi-folder2"></i>
-              {{lot.name}}
+              {% if lot.archived %}
+                <i class="bi bi-archive text-warning small"></i> {{ lot.name }}
+                <small class="text-muted ps-1"> {% trans "archived" %}</small>
+              {% else %}
+                <i class="bi bi-folder2-open small"></i> {{ lot.name }}
+
+                <small class="text-muted ps-1"> {% trans "open" %}</small>
+              {% endif %}
             {% else %}
-              {% trans "Device Management" %}
+              <i class="bi bi-devices"></i> {% trans "Device Management" %}
             {% endif %}
           </h5>
-
           <div class="d-flex align-items-center gap-2">
             {% if lot.name %}
               <button id="remove-button" class="btn btn-outline-danger" type="submit"
@@ -138,7 +143,7 @@
         <div class="table-responsive">
           {% render_table table %}
           <div class="d-flex justify-content-center text-muted">
-            <i class="bi bi-laptop pe-2 pb-2"></i> {{count}} {% trans "Device/s" %}
+            <i class="bi bi-laptop pe-2 pb-2"></i> {% if not lot.name %} {% trans "Showing" %} {% endif %} {{count}} {% trans "Device/s" %}
           </div>
           <div class="d-flex justify-content-center text-muted">
 
