@@ -107,7 +107,8 @@
             {% endif %}
           </h5>
           <div class="d-flex align-items-center gap-2">
-            {% if lot.name %}
+            {# If a lot is archived, then dont render the unassign button  #}
+            {% if lot.name and not lot.archived %}
               <button id="remove-button" class="btn btn-outline-danger" type="submit"
                       value="{% url 'lot:del_devices' lot.id %}" name="url">
                 <i class="bi bi-folder-minus"></i> {% trans 'Unassign' %}
