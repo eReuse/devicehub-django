@@ -460,22 +460,27 @@ class Device:
     def components_export(self):
         self.get_last_evidence()
 
+        user_properties = ""
+        for x in self.get_user_properties():
+            user_properties += "({}:{}) ".format(x.key, x.value)
+
         hardware_info = {
-            'ID': self.shortid or 'nil',
-            'manufacturer': self.manufacturer or 'nil',
-            'model': self.model or 'nil',
-            'serial': 'nil',
-            'cpu_model': self.cpu or 'nill',
-            'cpu_cores': 'nil',
-            'ram_total': 'nil',
-            'ram_type': 'nil',
-            'ram_slots': 'nil',
-            'slots_used': 'nil',
-            'drive': 'nil',
-            'gpu_model': 'nil',
+            'ID': self.shortid or '',
+            'manufacturer': self.manufacturer or '',
+            'model': self.model or '',
+            'serial': '',
+            'cpu_model': self.cpu or '',
+            'cpu_cores': '',
+            'ram_total': '',
+            'ram_type': '',
+            'ram_slots': '',
+            'slots_used': '',
+            'drive': '',
+            'gpu_model': '',
             'type': self.type,
-            'current_state': self.get_current_state().state if self.get_current_state() else 'nil',
-            'last_updated': parse_datetime(self.updated) or "nil"
+            'user_properties': user_properties,
+            'current_state': self.get_current_state().state if self.get_current_state() else '',
+            'last_updated': parse_datetime(self.updated) or ""
         }
 
         if not self.last_evidence.is_legacy or not self.last_evidence:
