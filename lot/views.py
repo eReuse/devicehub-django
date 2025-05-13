@@ -299,7 +299,7 @@ class DashboardLotMixing(DashboardView):
         )
 
         if not self.request.user.is_admin:
-            self.subscriptions = self.subscriptors.filter(user=self.request.user)
+            self.subscriptions = self.subscriptions.filter(user=self.request.user)
 
         self.is_shop = self.subscriptions.filter(type=LotSubscription.Type.SHOP).first()
         self.is_circuit_manager = self.subscriptions.filter(
