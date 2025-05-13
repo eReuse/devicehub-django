@@ -11,12 +11,29 @@
                     type="text"
                     name="q"
                     class="form-control"
-                    placeholder="{% trans "Search by all, or append :shortid, :cpu, :model, :current_state, etc" %}"
+                    placeholder="{% trans "Search devices within lot (append :field for filters)" %}"
                     value="{{ search_query }}">
                 <div class="input-group-append">
                     <button type="submit" class="btn btn-outline-secondary h-100" style="border-radius: 0 4px 4px 0;">
                         <i class="bi bi-search"></i>
                     </button>
+                    <span class="ms-3"
+                           data-bs-toggle="tooltip"
+                           data-bs-html="true"
+                           title="
+                               <strong>{% trans 'Available filters:' %}</strong>
+                               <ul class='mb-0 ps-3'>
+                                   <li>:shortid</li>
+                                   <li>:type</li>
+                                   <li>:manufacturer</li>
+                                   <li>:cpu</li>
+                                   <li>:total_ram (in GiB)</li>
+                                   <li>:current_state</li>
+                                   {% trans 'for example i5:cpu ' %}
+                               </ul>
+                                 ">
+                        <i class="h5 bi bi-info-circle text-muted"></i>
+                    </span>
                 </div>
             </form>
         </div>

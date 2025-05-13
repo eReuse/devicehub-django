@@ -151,7 +151,8 @@ class Device:
             'model': lambda d: str(getattr(d, 'model', '')),
             'current_state': lambda d: str(d.get_current_state()) if d.get_current_state() else '',
             'serial': lambda d: str(getattr(d, 'serial_number', '')),
-            'cpu': lambda d: str(getattr(d, 'cpu', ''))
+            'cpu': lambda d: str(getattr(d, 'cpu', '')),
+            'total_ram': lambda d: str(getattr(d, 'total_ram', ''))
         }
 
         #if query ends with :some_field, only search on this field
@@ -443,6 +444,14 @@ class Device:
         return cpu_model
 
     @property
+    def total_ram(self):
+        ram_component = next(
+            (c for c in self.components if c.get('type') == 'RamModule'),
+            None
+        )
+        return ram_component.get('total_ram', '') if ram_component else ""
+
+    @property
     def version(self):
         self.get_last_evidence()
         return self.last_evidence.get_version()
@@ -469,7 +478,7 @@ class Device:
             'manufacturer': self.manufacturer or '',
             'model': self.model or '',
             'serial': '',
-            'cpu_model': self.cpu or '',
+            'cpu_model': '',
             'cpu_cores': '',
             'ram_total': '',
             'ram_type': '',
@@ -499,7 +508,8 @@ class Device:
                     })
                 case "Processor":
                     hardware_info.update({
-                        'cpu_cores': c.get("cores", "")
+                        'cpu_cores': c.get("cores", ""),
+                        'cpu': c.get("model", "")
                     })
                 case "RamModule":
                     slots_total += 1
