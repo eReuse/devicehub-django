@@ -25,9 +25,9 @@ from lot.models import Lot
 
 class UnassignedDevicesView(DeviceTableMixin, InventaryMixin):
     template_name = "unassigned_devices.html"
-    section = "Inbox"
+    section = _("Inbox")
     title = _("Inbox")
-    breadcrumb = "Lot / Inbox"
+    breadcrumb = f"{_('Devices')} / {_('Inbox')}"
 
     def get_devices(self, user, offset=0, limit=None):
         return Device.get_unassigned(self.request.user.institution, offset, limit)
@@ -35,9 +35,9 @@ class UnassignedDevicesView(DeviceTableMixin, InventaryMixin):
 
 class AllDevicesView(DeviceTableMixin, InventaryMixin):
     template_name = "unassigned_devices.html"
-    section = "All"
+    section = _("All")
     title = _("All Devices")
-    breadcrumb = "Devices / All Devices"
+    breadcrumb = f"{_('Devices')} / {_('All')}"
 
     def get_devices(self, user, offset=0, limit=None):
         return Device.get_all(self.request.user.institution, offset, limit)
@@ -46,8 +46,7 @@ class AllDevicesView(DeviceTableMixin, InventaryMixin):
 class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMixin):
     template_name = "unassigned_devices.html"
     section = "dashboard_lot"
-    title = _("Lot Devices")
-    breadcrumb = "Lot / Devices"
+    breadcrumb = f"{_('Lot')} / {_('Devices')}"
     paginate_by = 10
     paginate_choices = [10, 20, 50, 100, 0]
     table_class = DeviceTable
@@ -70,6 +69,9 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
             'state_definitions': self._get_state_definitions(),
             'limit': int(self.request.GET.get('limit', self.paginate_by)),
             'search_query': self.request.GET.get('q', ''),
+            'breadcrumb' : _("Lot / {} / Devices").format(
+                lot.name),
+            'title' : lot.name
         })
         return context
 
@@ -176,9 +178,9 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
 
 class SearchView(DeviceTableMixin, InventaryMixin):
     template_name = "unassigned_devices.html"
-    section = "Search"
+    section = _("Search")
     title = _("Search Devices")
-    breadcrumb = "Devices / Search Devices"
+    breadcrumb = f"{_('All Devices')} / {_('Search')}"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
