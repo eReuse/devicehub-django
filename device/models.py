@@ -509,7 +509,7 @@ class Device:
                 case "Processor":
                     hardware_info.update({
                         'cpu_cores': c.get("cores", ""),
-                        'cpu': c.get("model", "")
+                        'cpu_model': c.get("model", "")
                     })
                 case "RamModule":
                     slots_total += 1
