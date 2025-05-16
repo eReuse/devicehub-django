@@ -301,9 +301,14 @@ class DashboardLotMixing(DashboardView):
         if not self.request.user.is_admin:
             self.subscriptions = self.subscriptions.filter(user=self.request.user)
 
-        self.is_shop = self.subscriptions.filter(type=LotSubscription.Type.SHOP).first()
+        self.is_shop = self.subscriptions.filter(
+            type=LotSubscription.Type.SHOP,
+            user=self.request.user
+        ).first()
+
         self.is_circuit_manager = self.subscriptions.filter(
-            type=LotSubscription.Type.CIRCUIT_MANAGER
+            type=LotSubscription.Type.CIRCUIT_MANAGER,
+            user=self.request.user
         ).first()
 
         beneficiaries = Beneficiary.objects.filter(lot=self.lot)
