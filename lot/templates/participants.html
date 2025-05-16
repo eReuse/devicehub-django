@@ -28,6 +28,7 @@
           <td class="font-monospace">{{ donor.email }}</td>
           <td class="font-monospace text-center">
 	    {% if donor.reconciliation %}
+	    {{ donor.reconciliation }}
 	    <i class="bi bi-shield-check text-primary"></i>
 	    {% else %}
 	    <i class="bi bi-shield-slash text-danger"></i>
@@ -42,6 +43,7 @@
           <td class="font-monospace">{{ beneficiary.email }}</td>
           <td class="font-monospace">
 	    {% if beneficiary.sign_conditions %}
+	    {{ beneficiary.sign_conditions }}
 	    <i class="bi bi-shield-check text-primary"></i>
 	    {% else %}
 	    <i class="bi bi-shield-slash text-danger"></i>

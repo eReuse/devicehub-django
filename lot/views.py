@@ -1,3 +1,5 @@
+import datetime
+
 from django.db import IntegrityError
 from django.urls import reverse_lazy
 from django.shortcuts import get_object_or_404, redirect, Http404, render
@@ -658,7 +660,7 @@ class AcceptDonorView(TemplateView, NotifyEmail):
             id=id,
             lot_id=pk
         )
-        self.object.reconciliation = True
+        self.object.reconciliation = datetime.datetime.now()
         self.object.save()
         self.get_templates_email()
         subscriptors = LotSubscription.objects.filter(
@@ -1099,7 +1101,7 @@ class AcceptBeneficiaryView(TemplateView, NotifyEmail):
             id=id,
             lot_id=pk
         )
-        self.object.sign_conditions = True
+        self.object.sign_conditions = datetime.datetime.now()
         self.object.save()
         self.beneficiary = self.object
         self.send_email_subscriptors()
