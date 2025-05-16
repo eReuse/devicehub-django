@@ -118,7 +118,7 @@ class LotSubscription(models.Model):
 
 class Donor(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    reconciliation = models.BooleanField(_("Reconciliation"), default=False)
+    reconciliation = models.DateTimeField(_("Reconciliation"), null=True, blank=True)
     lot = models.ForeignKey(Lot, on_delete=models.CASCADE)
     email = models.EmailField(
         _('Email address'),
@@ -128,7 +128,7 @@ class Donor(models.Model):
 
 class Beneficiary(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    sign_conditions = models.BooleanField(_("Conditions"), default=False)
+    sign_conditions = models.DateTimeField(_("Conditions"), null=True, blank=True)
     lot = models.ForeignKey(Lot, on_delete=models.CASCADE)
     shop = models.ForeignKey(LotSubscription, on_delete=models.CASCADE)
     email = models.EmailField(
