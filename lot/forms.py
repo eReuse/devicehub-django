@@ -201,6 +201,8 @@ class AddDonorForm(forms.Form):
         self.lot = kwargs.pop("lot")
         self.donor = kwargs.pop("donor", None)
         super().__init__(*args, **kwargs)
+        if self.donor:
+            self.fields['user'].widget.attrs['readonly'] = True
 
     def clean(self):
         self.form_user = self.cleaned_data.get("user")
