@@ -505,6 +505,7 @@ class Device:
                     hardware_info.update({
                         'manufacturer': c.get("manufacturer", ""),
                         'serial': c.get("serialNumber", ""),
+                        'ram_total': c.get("installedRam", ""),
                     })
                 case "Processor":
                     hardware_info.update({
@@ -515,7 +516,6 @@ class Device:
                     slots_total += 1
                     if slots_used == 0:
                         hardware_info.update({
-                            'ram_total': c.get("total_ram", ""),
                             'ram_type': c.get("interface", "")
                         })
                     if c.get("interface", "") != "no module installed":

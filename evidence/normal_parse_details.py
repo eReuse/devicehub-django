@@ -108,13 +108,19 @@ class ParseSnapshot:
 
     def get_ram_slots(self, mb):
         memory = get_inxi_key(self.inxi, 'Memory') or []
+
+        total_ram = ""
         for m in memory:
+            if not total_ram:
+                total_ram = get_inxi(m, "total")
+
             slots = get_inxi(m, "slots")
             if not slots:
                 continue
             mb["slots"] = slots
             mb["ramSlots"] = get_inxi(m, "modules")
             mb["ramMaxSize"] = get_inxi(m, "capacity")
+        mb["installedRam"] = total_ram
 
 
     def get_cpu(self):
@@ -168,9 +174,6 @@ class ParseSnapshot:
         ram_modules = []
 
         for m in memory:
-            if not total_ram:
-                total_ram = get_inxi(m, "total")
-
             if get_inxi(m, "Device"):
                 module = {
                     "type": "RamModule",
@@ -181,7 +184,6 @@ class ParseSnapshot:
                     "speed": get_inxi(m, "speed"),
                     "interface": get_inxi(m, "type"),
                     "bits": get_inxi(m, "data"),
-                    "total_ram": total_ram
                 }
                 if any(module.values()):
                     ram_modules.append(module)
