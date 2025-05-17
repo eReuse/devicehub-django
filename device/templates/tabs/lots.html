@@ -1,19 +1,43 @@
-
 {% load i18n %}
 
 <div class="tab-pane fade" id="lots">
-      {% for tag in lot_tags %}
-          <h5 class="card-title">{{ tag }}
-          </h5>
-        {% for lot in object.lots %}
-          {% if lot.type == tag %}
-            <div class="row mb-3">
-              <div class="col">
-                  <a href="{% url 'dashboard:lot' lot.id %}">{{ lot.name }}
-                  </a>
+  {# https://docs.djangoproject.com/en/5.2/ref/templates/builtins/#regroup #}
+  {% regroup object.lots by type as grouped_lots %}
+
+  {% for group in grouped_lots %}
+    <div class="card mb-3 shadow-sm">
+      <div class="card-header bg-light-subtle">
+        <h5 class="mb-0">{{ group.grouper.name }}</h5>
+      </div>
+
+      <ul class="list-group list-group-flush">
+        {% for lot in group.list %}
+          <a href="{% url 'dashboard:lot' lot.id %}" class="list-group-item list-group-item-action py-2">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <strong class="h6">{{ lot.name }}</strong>
+                {% if lot.code %}<span class="text-muted ms-2">({{ lot.code }})</span>{% endif %}
+                {% if lot.description %}<div class="text-muted small">{{ lot.description }}</div>{% endif %}
+              </div>
+              <div class="d-flex align-items-center">
+                 <span class="badge rounded-pill {% if lot.archived %}bg-warning{% else %}bg-success{% endif %}">
+                  {% if lot.archived %}{% trans "archived" %}{% else %}{% trans "open" %}{% endif %}
+                </span>
+
+                <div class="text-end ms-3">
+                    <i class="far fa-calendar-alt text-muted me-1 small"></i>
+                    <span class="text-muted small">{% trans "Created" %}</span>
+                  <div class="small text-muted">{{ lot.created|date:"Y-m-d" }}</div>
+                </div>
               </div>
             </div>
-          {% endif %}
+          </a>
         {% endfor %}
-      {% endfor %}
+      </ul>
     </div>
+  {% empty %}
+    <div class="alert alert-info mb-0">
+      {% trans "This device is not assigned to any lots" %}
+    </div>
+  {% endfor %}
+</div>
