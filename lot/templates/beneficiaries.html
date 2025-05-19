@@ -4,6 +4,14 @@
 {% block content %}
 {% include 'tabs.html' %}
 
+<div class="row">
+  <div class="col mt-2">
+    {% for d in new_devices %}
+    <span class="btn btn-yellow"><small class="text-body-secondary">{{ d|slice:":6"|upper }}</small></span>
+    {% endfor %}
+  </div>
+</div>
+
 {% if beneficiaries %}
 <div class="row mt-3">
   <div class="col">
@@ -16,6 +24,7 @@
           <th scope="col">{% trans 'Devices' %}</th>
           <th scope="col"></th>
           <th scope="col"></th>
+          <th scope="col"></th>
         </tr>
       </thead>
       <tbody>
@@ -23,7 +32,16 @@
         <tr>
           <td class="font-monospace">{{ s.email }}</td>
           <td class="font-monospace">{{ s.shop.user.email }}</td>
-          <td class="font-monospace">{{ s.sign_conditions }}</td>
+          <td class="font-monospace">
+	    {% if s.sign_conditions %}
+	    {{ s.sign_conditions }}
+	    <i class="bi bi-shield-check text-primary"></i>
+	    {% else %}
+	    <i class="bi bi-shield-slash text-danger"></i>
+	    {% endif %}
+	  </td>
+
+
           <td class="font-monospace">
 	    <a href="{% url 'lot:devices_beneficiary' lot.id s.id %}">
 	       {% trans 'Devices' %}
@@ -33,6 +51,12 @@
 	    <a href="{% url 'lot:web_beneficiary' lot.id s.id %}">
 	       {% trans 'web' %}
 	    </a>
+	  </td>
+          <td class="font-monospace">
+            <a href="{% url 'lot:add_device_beneficiary' lot.id s.id %}" type="button" class="btn btn-sm btn-outline-primary d-flex align-items-center">
+              <i class="bi bi-plus-circle me-1"></i>
+              {% trans 'Assign' %}
+            </a>
 	  </td>
           <td class="font-monospace">
             <button type="button" class="btn btn-sm btn-outline-danger d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#deleteModal{{ s.id }}">
