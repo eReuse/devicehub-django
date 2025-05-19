@@ -702,10 +702,12 @@ class BeneficiaryView(DashboardLotMixing, BeneficiaryAgreementEmail, FormView):
             else:
                 beneficiaries = Beneficiary.objects.filter(lot=self.lot)
 
+        new_devices = self.request.session.get("devices")
         context.update({
             'lot': self.lot,
             'beneficiaries': beneficiaries,
-            "action": _("Add")
+            "action": _("Add"),
+            "new_devices": new_devices
         })
         return context
 
@@ -968,9 +970,17 @@ class AddDevicesBeneficiaryView(DashboardView, NotifyEmail, TemplateView):
         )
 
         if subscriptor or self.request.user.is_admin:
-            for dev in self.get_session_devices():
-                self.beneficiary.add(dev.id)
+            devices = self.request.session.get("devices", [])
+            for dev in devices:
+                exist = DeviceBeneficiary.objects.filter(device_id=dev).first()
+                if exist:
+                    messages.error(self.request, _("Device {} was already assigned").format(
+                        dev[:6].upper()
+                    ))
+                else:
+                    self.beneficiary.add(dev)
 
+            self.request.session["devices"] = []
             self.send_email_subscriptors()
 
 
