@@ -1,3 +1,4 @@
+{% load i18n %}
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -92,15 +93,15 @@
 
       <div class="row">
         <div class="col-lg-6">
-          <h2 class="section-title">Details</h2>
+          <h2 class="section-title"> {% trans "Details" %}</h2>
           <div class="info-row row">
-            <div class="col-md-4 info-label">Phid</div>
+            <div class="col-md-4 info-label">{% trans "Phid" %}</div>
             <div class="col-md-8 info-value">
               <div class="hash-value">{{ object.id }}</div>
             </div>
           </div>
           <div class="info-row row">
-            <div class="col-md-4 info-label">Type</div>
+            <div class="col-md-4 info-label">{% trans "Type" %}</div>
             <div class="col-md-8 info-value">{{ object.type }}</div>
           </div>
 
@@ -113,16 +114,16 @@
             {% endfor %}
           {% else %}
             <div class="info-row row">
-              <div class="col-md-4 info-label">Manufacturer</div>
+              <div class="col-md-4 info-label">{% trans "Manufacturer" %}</div>
               <div class="col-md-8 info-value">{{ object.manufacturer|default:'' }}</div>
             </div>
             <div class="info-row row">
-              <div class="col-md-4 info-label">Model</div>
+              <div class="col-md-4 info-label">{% trans "Model" %}</div>
               <div class="col-md-8 info-value">{{ object.model|default:'' }}</div>
             </div>
             {% if user.is_authenticated %}
               <div class="info-row row">
-                <div class="col-md-4 info-label">Serial Number</div>
+                <div class="col-md-4 info-label">{% trans "Serial Number" %}</div>
                 <div class="col-md-8 info-value">{{ object.serial_number|default:'' }}</div>
               </div>
             {% endif %}
@@ -130,7 +131,7 @@
         </div>
 
         <div class="col-lg-6">
-          <h2 class="section-title">Identifiers</h2>
+          <h2 class="section-title">{% trans "Identifiers" %}</h2>
           {% for chid in object.hids %}
             <div class="info-row">
               <div class="hash-value">{{ chid|default:'' }}</div>
@@ -138,7 +139,7 @@
           {% endfor %}
         </div>
       </div>
-      <h2 class="section-title mt-5">Components</h2>
+      <h2 class="section-title mt-5">{% trans "Components" %}</h2>
       <div class="row">
         {% for component in object.components %}
           <div class="col-md-6 mb-3">
@@ -162,7 +163,7 @@
     </div>
     <footer>
       <p>
-        &copy;{% now 'Y' %}eReuse. All rights reserved.
+        &copy;{% now 'Y' %} eReuse. {% trans "All rights reserved."  %}
       </p>
     </footer>
 
