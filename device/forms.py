@@ -1,4 +1,5 @@
 from django import forms
+from django.utils.translation import gettext_lazy as _
 from utils.device import create_property, create_doc, create_index
 from utils.save_snapshots import move_json, save_in_disk
 
@@ -22,11 +23,11 @@ DEVICE_TYPES = [
 
 
 class DeviceForm(forms.Form):
-    type = forms.ChoiceField(choices = DEVICE_TYPES, required=False)
-    amount = forms.IntegerField(required=False, initial=1)
-    custom_id = forms.CharField(required=False)
-    name = forms.CharField(required=False)
-    value = forms.CharField(required=False)
+    type = forms.ChoiceField(choices = DEVICE_TYPES, required=False, label=_("Type"))
+    amount = forms.IntegerField(required=False, initial=1, label=_("Amount"))
+    custom_id = forms.CharField(required=False, label=_("Custom id"))
+    name = forms.CharField(required=False, label=_("Name"))
+    value = forms.CharField(required=False, label=_("Value"))
 
 
 class BaseDeviceFormSet(forms.BaseFormSet):

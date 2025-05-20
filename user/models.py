@@ -29,7 +29,7 @@ class Institution(models.Model):
         blank=True,
         null=True
     )
-    algorithm = models.CharField(max_length=30, choices=ALGORITHMS, default='ereuse24')
+    algorithm = models.CharField(_("Algorithm"), max_length=30, choices=ALGORITHMS, default='ereuse24')
 
 
 class UserManager(BaseUserManager):
