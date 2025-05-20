@@ -23,9 +23,28 @@
   </div>
 </div>
 
-<div class="card-body p-0">
-  <div class="table-responsive">
-    {% render_table table %}
+<div class="row">
+  <div class="col">
+    <table class="table">
+      <thead>
+	<tr>
+	  <th scope="col">{% trans "Email" %}</th>
+	  <th>{% trans "is admin?" %}</th>
+	  <th></th>
+	  <th></th>
+	</tr>
+      </thead>
+      <tbody>
+	<tr>
+        {% for u in users %}
+          <td>{{ u.email }}</td>
+          <td>{{ u.is_admin }}</td>
+          <td><a href="{% url 'admin:edit_user' u.pk %}"><i class="bi bi-eye"></i></td>
+          <td><a href="{% url 'admin:delete_user' u.pk %}" class="text-danger" title="Remove"><i class="bi bi-trash"></i></td>
+	</tr>
+	{% endfor %}
+      </tbody>
+    </table>
   </div>
 </div>
 
