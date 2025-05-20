@@ -5,6 +5,7 @@ from dmidecode import DMIParse
 from django.db import models
 
 
+from django.utils.translation import gettext_lazy as _
 from django.db.models import Q
 from utils.constants import STR_EXTEND_SIZE, CHASSIS_DH
 from evidence.xapian import search
@@ -18,8 +19,8 @@ class Property(models.Model):
     owner = models.ForeignKey(Institution, on_delete=models.CASCADE)
     user = models.ForeignKey(
         User, on_delete=models.SET_NULL, null=True, blank=True)
-    key = models.CharField(max_length=STR_EXTEND_SIZE)
-    value = models.CharField(max_length=STR_EXTEND_SIZE)
+    key = models.CharField(max_length=STR_EXTEND_SIZE, verbose_name=_('key'))
+    value = models.CharField(max_length=STR_EXTEND_SIZE, verbose_name=_('value'))
 
     class Meta:
         #Only for shared behaviour, it is not a table

@@ -14,11 +14,11 @@ from evidence.models import Property
 
 
 class LotTag(models.Model):
-    name = models.CharField(max_length=STR_SIZE, blank=False, null=False)
-    owner = models.ForeignKey(Institution, on_delete=models.CASCADE)
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
-    inbox = models.BooleanField(default=False)
-    order = models.PositiveIntegerField(default=0)
+    name = models.CharField(max_length=STR_SIZE, blank=False, null=False, verbose_name=_('name'))
+    owner = models.ForeignKey(Institution, on_delete=models.CASCADE, verbose_name=_('owner'))
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_('user'))
+    inbox = models.BooleanField(default=False, verbose_name=_('inbox'))
+    order = models.PositiveIntegerField(default=0, verbose_name=_('order'))
 
     def __str__(self):
         return self.name
@@ -44,15 +44,15 @@ class DeviceLot(models.Model):
 
 
 class Lot(models.Model):
-    created = models.DateTimeField(auto_now_add=True)
-    updated = models.DateTimeField(auto_now=True)
-    name = models.CharField(max_length=STR_SIZE, blank=True, null=True)
-    code = models.CharField(max_length=STR_SIZE, blank=True, null=True)
-    description = models.CharField(max_length=STR_SIZE, blank=True, null=True)
-    archived = models.BooleanField(default=False)
-    owner = models.ForeignKey(Institution, on_delete=models.CASCADE)
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
-    type = models.ForeignKey(LotTag, on_delete=models.CASCADE)
+    created = models.DateTimeField(auto_now_add=True, verbose_name=_('created'))
+    updated = models.DateTimeField(auto_now=True, verbose_name=_('updated'))
+    name = models.CharField(max_length=STR_SIZE, blank=True, null=True, verbose_name=_('name'))
+    code = models.CharField(max_length=STR_SIZE, blank=True, null=True, verbose_name=_('code'))
+    description = models.CharField(max_length=STR_SIZE, blank=True, null=True, verbose_name=_('description'))
+    archived = models.BooleanField(default=False, verbose_name=_('archived'))
+    owner = models.ForeignKey(Institution, on_delete=models.CASCADE, verbose_name=_('owner'))
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_('user'))
+    type = models.ForeignKey(LotTag, on_delete=models.CASCADE, verbose_name=_('lot group'))
 
     class Meta:
         constraints = [
