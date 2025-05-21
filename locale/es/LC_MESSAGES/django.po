@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-20 12:56-0300\n"
+"POT-Creation-Date: 2025-05-20 19:22-0300\n"
 "PO-Revision-Date: 2025-03-13 12:02-0300\n"
 "Last-Translator: Leandro Navarro <leandro@ac.upc.edu>\n"
 "Language-Team: \n"
@@ -18,38 +18,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Poedit 3.5\n"
-
-#: action/management/commands/create_default_states.py:17
-msgid "INBOX"
-msgstr "BANDEJA DE ENTRADA"
-
-#: action/management/commands/create_default_states.py:18
-msgid "VISUAL INSPECTION"
-msgstr "PARA INSPECCIÓN VISUAL"
-
-#: action/management/commands/create_default_states.py:19
-msgid "REPAIR"
-msgstr "PARA REPARAR"
-
-#: action/management/commands/create_default_states.py:20
-msgid "INSTALL"
-msgstr "PARA INSTALAR"
-
-#: action/management/commands/create_default_states.py:21
-msgid "TEST"
-msgstr "PARA PRUEBA"
-
-#: action/management/commands/create_default_states.py:22
-msgid "PACKAGING"
-msgstr "PARA EMPAQUETADO"
-
-#: action/management/commands/create_default_states.py:23
-msgid "DONATION"
-msgstr "PARA DONACIÓN"
-
-#: action/management/commands/create_default_states.py:24
-msgid "DISMANTLE"
-msgstr "DESMANTELAR"
 
 #: action/views.py:28
 msgid "<Created> State '{}'. Previous State: '{}'"
@@ -99,29 +67,37 @@ msgstr "Institución"
 msgid "Add new user"
 msgstr "Añadir nuevo usuario"
 
+#: admin/templates/admin_users.html:19
+msgid "Email"
+msgstr "Correo electrónico"
+
+#: admin/templates/admin_users.html:20
+msgid "is admin?"
+msgstr "es admin"
+
 #: admin/templates/delete_user.html:33 admin/templates/institution.html:27
-#: admin/templates/lot_tag_panel.html:117
-#: admin/templates/lot_tag_panel.html:155 admin/templates/states_panel.html:145
+#: admin/templates/lot_tag_panel.html:142
+#: admin/templates/lot_tag_panel.html:192 admin/templates/states_panel.html:145
 #: admin/templates/states_panel.html:185 admin/templates/user.html:27
 #: api/templates/new_token.html:27 device/templates/details.html:130
 #: device/templates/new_device.html:81
 #: device/templates/new_user_property.html:39
 #: device/templates/tabs/user_properties.html:83
 #: device/templates/tabs/user_properties.html:121
-#: evidence/templates/ev_details.html:110 evidence/templates/upload.html:25
+#: evidence/templates/ev_details.html:114 evidence/templates/upload.html:25
 #: lot/templates/delete_lots.html:95 lot/templates/new_lot.html:30
 #: lot/templates/new_property.html:39 lot/templates/properties.html:71
 #: lot/templates/properties.html:91 user/templates/settings.html:27
 msgid "Cancel"
 msgstr "Cancelar"
 
-#: admin/templates/delete_user.html:34 admin/templates/lot_tag_panel.html:49
-#: admin/templates/lot_tag_panel.html:159
-#: admin/templates/lot_tag_panel.html:163 admin/templates/states_panel.html:67
+#: admin/templates/delete_user.html:34 admin/templates/lot_tag_panel.html:66
+#: admin/templates/lot_tag_panel.html:196
+#: admin/templates/lot_tag_panel.html:200 admin/templates/states_panel.html:67
 #: admin/templates/states_panel.html:188 api/tables.py:29
 #: device/templates/tabs/user_properties.html:47
 #: device/templates/tabs/user_properties.html:87
-#: evidence/templates/ev_details.html:115 lot/templates/delete_lots.html:99
+#: evidence/templates/ev_details.html:119 lot/templates/delete_lots.html:99
 #: lot/templates/properties.html:46 lot/templates/properties.html:94
 msgid "Delete"
 msgstr "Eliminar"
@@ -129,7 +105,7 @@ msgstr "Eliminar"
 #: admin/templates/institution.html:28 admin/templates/user.html:28
 #: api/templates/new_token.html:28 device/templates/new_device.html:82
 #: device/templates/new_user_property.html:40
-#: evidence/templates/ev_details.html:111 evidence/templates/upload.html:26
+#: evidence/templates/ev_details.html:115 evidence/templates/upload.html:26
 #: lot/templates/new_lot.html:34 lot/templates/new_property.html:40
 #: user/templates/settings.html:28
 msgid "Save"
@@ -139,66 +115,93 @@ msgstr "Guardar"
 msgid "Add"
 msgstr "Agregar"
 
-#: admin/templates/lot_tag_panel.html:21
+#: admin/templates/lot_tag_panel.html:20
+msgid "Inbox order CANNOT be changed"
+msgstr "El orden del lote de entrada NO puede ser alterado"
+
+#: admin/templates/lot_tag_panel.html:28
 msgid "Lot Group Name"
 msgstr "Nombre del grupo de lotes"
 
-#: admin/templates/lot_tag_panel.html:23 admin/templates/states_panel.html:30
+#: admin/templates/lot_tag_panel.html:30 admin/templates/states_panel.html:30
 #: device/templates/tabs/user_properties.html:21
 msgid "Actions"
 msgstr "Acciones"
 
-#: admin/templates/lot_tag_panel.html:42 admin/templates/states_panel.html:60
+#: admin/templates/lot_tag_panel.html:58 admin/templates/states_panel.html:60
 #: device/templates/tabs/user_properties.html:40
 #: lot/templates/lot_actions.html:5 lot/templates/properties.html:42
 msgid "Edit"
 msgstr "Editar"
 
-#: admin/templates/lot_tag_panel.html:61
+#: admin/templates/lot_tag_panel.html:78 admin/templates/states_panel.html:79
+msgid "Update Order"
+msgstr "Actualizar orden"
+
+#: admin/templates/lot_tag_panel.html:83
 msgid "No Lot Groups found on current organization"
 msgstr "No se encontraron grupos de lotes en la organización actual"
 
-#: admin/templates/lot_tag_panel.html:72
+#: admin/templates/lot_tag_panel.html:94
 msgid "Add Lot Group"
 msgstr "Agregar grupo de lotes"
 
-#: admin/templates/lot_tag_panel.html:80 admin/templates/lot_tag_panel.html:110
-#: api/tables.py:52 evidence/forms.py:68 evidence/templates/ev_details.html:53
+#: admin/templates/lot_tag_panel.html:102
+#: admin/templates/lot_tag_panel.html:132 api/tables.py:52 evidence/forms.py:68
+#: evidence/templates/ev_details.html:57
 msgid "Tag"
 msgstr "Etiqueta"
 
-#: admin/templates/lot_tag_panel.html:82 admin/templates/lot_tag_panel.html:112
-#: admin/templates/states_panel.html:106 admin/templates/states_panel.html:139
+#: admin/templates/lot_tag_panel.html:104
+#: admin/templates/lot_tag_panel.html:134 admin/templates/states_panel.html:106
+#: admin/templates/states_panel.html:139
 msgid "Maximum 50 characters."
 msgstr "Máximo 50 caracteres."
 
-#: admin/templates/lot_tag_panel.html:85 admin/templates/lot_tag_panel.html:106
-#: admin/templates/lot_tag_panel.html:136 admin/templates/states_panel.html:109
+#: admin/templates/lot_tag_panel.html:107
+#: admin/templates/lot_tag_panel.html:128
+#: admin/templates/lot_tag_panel.html:161 admin/templates/states_panel.html:109
 #: admin/templates/states_panel.html:130 admin/templates/states_panel.html:164
 #: device/templates/details.html:119 lot/templates/properties.html:57
 #: lot/templates/properties.html:85
 msgid "Close"
 msgstr "Cerrar"
 
-#: admin/templates/lot_tag_panel.html:86
+#: admin/templates/lot_tag_panel.html:108
 msgid "Add Lot tag"
-msgstr "Agregar etiqueta de lote"
+msgstr "Agregar grupo de de lote"
 
-#: admin/templates/lot_tag_panel.html:104
+#: admin/templates/lot_tag_panel.html:126
 msgid "Edit Lot Group"
 msgstr "Editar grupo de lotes"
 
-#: admin/templates/lot_tag_panel.html:118 admin/templates/states_panel.html:146
+#: admin/templates/lot_tag_panel.html:136
+msgid "INBOX can only be edited, not deleted."
+msgstr "El lote de entrada sólo puede ser editado, no eliminado"
+
+#: admin/templates/lot_tag_panel.html:143 admin/templates/states_panel.html:146
 msgid "Save Changes"
 msgstr "Guardar cambios"
 
-#: admin/templates/lot_tag_panel.html:134
+#: admin/templates/lot_tag_panel.html:159
 msgid "Delete Lot Group"
 msgstr "Eliminar grupo de lotes"
 
-#: admin/templates/lot_tag_panel.html:141
-msgid "Failed to remove Lot Group, it is not empty"
-msgstr "No se pudo eliminar el grupo de lotes, no está vacío"
+#: admin/templates/lot_tag_panel.html:167
+msgid "This lot group has"
+msgstr "Este lote de grupo tiene"
+
+#: admin/templates/lot_tag_panel.html:167
+msgid "lot/s."
+msgstr "lote/s."
+
+#: admin/templates/lot_tag_panel.html:171
+msgid "Are you sure you want to delete this lot group?"
+msgstr "¿Confirma que desea eliminar este grupo de lotes??"
+
+#: admin/templates/lot_tag_panel.html:181
+msgid "This lot group is not empty and therefore cannot be deleted."
+msgstr "Este lote de grupo NO está vacío y por ende no puede ser eliminado."
 
 #: admin/templates/states_panel.html:20
 msgid "Move and drag state definitions to reorder"
@@ -207,10 +210,6 @@ msgstr "Mueva y arrastre las definiciones de estados para reordenar"
 #: admin/templates/states_panel.html:28
 msgid "State Definition"
 msgstr "Definición de estado"
-
-#: admin/templates/states_panel.html:79
-msgid "Update Order"
-msgstr "Actualizar orden"
 
 #: admin/templates/states_panel.html:85
 msgid "No states found on current organization"
@@ -241,7 +240,7 @@ msgstr ""
 
 #: admin/templates/states_panel.html:142 admin/templates/states_panel.html:177
 msgid "Any changes in order will not be saved."
-msgstr "Cualquier cambio en el pedido no se guardará."
+msgstr "Cualquier cambio en el orden no se guardará."
 
 #: admin/templates/states_panel.html:162
 msgid "Delete State Definition"
@@ -298,11 +297,6 @@ msgstr "admin /grupos de lotes"
 msgid "New lot group Definition"
 msgstr "Definición de nuevo grupo de lotes"
 
-#: admin/views.py:143 admin/views.py:199
-#, python-brace-format
-msgid "The name '{name}' exist."
-msgstr "El nombre '{name}' existe."
-
 #: admin/views.py:148
 msgid "Lot Group successfully added."
 msgstr "Grupo de lotes agregado correctamente."
@@ -319,41 +313,45 @@ msgstr "El grupo de lotes ha sido eliminado."
 msgid "Lot Group updated successfully."
 msgstr "Grupo de lotes actualizado correctamente."
 
-#: admin/views.py:211 admin/views.py:213
+#: admin/views.py:232
+msgid "Order changed successfully."
+msgstr "Orden cambiado correctamente."
+
+#: admin/views.py:240 admin/views.py:242
 msgid "Edit institution"
 msgstr "Editar institución"
 
-#: admin/views.py:236
+#: admin/views.py:265
 msgid "State definitions are the custom finite states that a device can be in."
 msgstr ""
 "Las definiciones de estado son los estados finitos personalizados en los que "
 "puede estar un dispositivo."
 
-#: admin/views.py:243
+#: admin/views.py:272
 msgid "States Panel"
 msgstr "Panel de Estados"
 
-#: admin/views.py:244
+#: admin/views.py:273
 msgid "admin / States Panel"
 msgstr "admin / Panel de Estados"
 
-#: admin/views.py:249
+#: admin/views.py:278
 msgid "New State Definition"
 msgstr "Nueva definición de estado"
 
-#: admin/views.py:260
+#: admin/views.py:289
 msgid "State definition successfully added."
 msgstr "Definición de estado agregada correctamente."
 
-#: admin/views.py:263 admin/views.py:326
+#: admin/views.py:292 admin/views.py:355
 msgid "State is already defined."
 msgstr "El estado ya está definido."
 
-#: admin/views.py:304
+#: admin/views.py:333
 msgid "Order changed succesfuly."
-msgstr "Pedido cambiado correctamente."
+msgstr "Orden cambiado correctamente."
 
-#: admin/views.py:323
+#: admin/views.py:352
 msgid "State definition updated successfully."
 msgstr "Definición de estado actualizada correctamente."
 
@@ -439,34 +437,6 @@ msgstr "Subir formulario web"
 msgid "Search your device"
 msgstr "Buscar dispositivos"
 
-#: dashboard/templates/inventory_dashboard.html:13
-msgid "Total Devices"
-msgstr "Total de dispositivos"
-
-#: dashboard/templates/inventory_dashboard.html:21
-msgid "Assigned"
-msgstr "Asignado"
-
-#: dashboard/templates/inventory_dashboard.html:29
-msgid "Unassigned"
-msgstr "Sin asignar"
-
-#: dashboard/templates/inventory_dashboard.html:38
-msgid "States Distribution"
-msgstr "Distribución de estados"
-
-#: dashboard/templates/inventory_dashboard.html:40 lot/templates/lots.html:49
-msgid "Active"
-msgstr "Activo"
-
-#: dashboard/templates/inventory_dashboard.html:41
-msgid "Repair"
-msgstr "Reparar"
-
-#: dashboard/templates/inventory_dashboard.html:42
-msgid "Discarded"
-msgstr "Descartado"
-
 #: dashboard/templates/unassigned_devices.html:14
 msgid "Exports"
 msgstr "Exportar"
@@ -507,7 +477,7 @@ msgstr "Fabricante"
 msgid "model"
 msgstr "Modelo"
 
-#: dashboard/templates/unassigned_devices.html:51
+#: dashboard/templates/unassigned_devices.html:51 lot/models.py:47
 msgid "updated"
 msgstr "Actualizado"
 
@@ -526,6 +496,30 @@ msgstr "Lote de dispositivos"
 #: dashboard/views.py:71
 msgid "Search Devices"
 msgstr "Buscar dispositivos"
+
+#: device/forms.py:26 device/templates/device_web.html:104
+#: device/templates/tabs/general_details.html:26
+msgid "Type"
+msgstr "Tipo"
+
+#: device/forms.py:27
+msgid "Amount"
+msgstr "Cantidad"
+
+#: device/forms.py:28
+msgid "Custom id"
+msgstr "ID Custom"
+
+#: device/forms.py:29 user/models.py:12
+msgid "Name"
+msgstr "Nombre"
+
+#: device/forms.py:30 device/templates/tabs/environmental_impact.html:14
+#: device/templates/tabs/user_properties.html:19
+#: device/templates/tabs/user_properties.html:116
+#: lot/templates/properties.html:27 lot/templates/properties.html:67
+msgid "Value"
+msgstr "Valor"
 
 #: device/templates/details.html:17 device/templates/details.html:44
 msgid "Change state"
@@ -547,7 +541,7 @@ msgstr "Detalles generales"
 msgid "Properties"
 msgstr "Propiedades"
 
-#: device/templates/details.html:73
+#: device/templates/details.html:73 device/templates/device_web.html:142
 msgid "Components"
 msgstr "Componentes"
 
@@ -575,6 +569,40 @@ msgstr "Nota"
 msgid "Save Note"
 msgstr "Guardar Nota"
 
+#: device/templates/device_web.html:96
+#: device/templates/tabs/general_details.html:6
+msgid "Details"
+msgstr "Detalles"
+
+#: device/templates/device_web.html:98
+#: device/templates/tabs/general_details.html:10
+msgid "Phid"
+msgstr "Phid"
+
+#: device/templates/device_web.html:117
+#: device/templates/tabs/general_details.html:43
+msgid "Manufacturer"
+msgstr "Fabricante"
+
+#: device/templates/device_web.html:121
+#: device/templates/tabs/general_details.html:50
+msgid "Model"
+msgstr "Modelo"
+
+#: device/templates/device_web.html:126
+#: device/templates/tabs/general_details.html:64
+msgid "Serial Number"
+msgstr "Número de serie"
+
+#: device/templates/device_web.html:134
+#: device/templates/tabs/general_details.html:72
+msgid "Identifiers"
+msgstr "Identificadores"
+
+#: device/templates/device_web.html:166
+msgid "All rights reserved."
+msgstr "Todos los derechos reservados"
+
 #: device/templates/new_device.html:60
 msgid "Component details"
 msgstr "Detalles del componente"
@@ -596,41 +624,29 @@ msgid "Environmental Impact Details"
 msgstr "Detalles del impacto ambiental"
 
 #: device/templates/tabs/environmental_impact.html:7
-msgid "While device is being used"
-msgstr "Mientras el dispositivo está en uso"
+msgid "Relevant Input Data"
+msgstr "Datos de entrada relevantes"
 
-#: device/templates/tabs/environmental_impact.html:11
-msgid "CO2 Emissions"
-msgstr "Emisiones CO2"
-
-#: device/templates/tabs/environmental_impact.html:19
-msgid "Algorithm Selector"
-msgstr "Seleccionador de algoritmo"
-
-#: device/templates/tabs/environmental_impact.html:22
-msgid "Dummy Algorithm"
-msgstr "Algoritmo simple"
+#: device/templates/tabs/environmental_impact.html:13
+msgid "Input Parameter"
+msgstr "Parámetros de entrada"
 
 #: device/templates/tabs/environmental_impact.html:25
-msgid "Advanced Algorithm"
-msgstr "Algoritmo avanzado"
+msgid "No relevant input data available"
+msgstr "No hay información relevante disponible"
 
-#: device/templates/tabs/environmental_impact.html:33
+#: device/templates/tabs/environmental_impact.html:40
 msgid "Read about the algorithm insights"
 msgstr "Lee más acerca del algoritmo "
 
+#: device/templates/tabs/evidences.html:11
+msgid "DID Document"
+msgstr "Documento DID"
+
 #: device/templates/tabs/evidences.html:12 device/templates/tabs/log.html:8
-#: evidence/templates/ev_details.html:68
+#: evidence/templates/ev_details.html:72
 msgid "Date"
 msgstr "Fecha"
-
-#: device/templates/tabs/general_details.html:6
-msgid "Details"
-msgstr "Detalles"
-
-#: device/templates/tabs/general_details.html:10
-msgid "Phid"
-msgstr "Phid"
 
 #: device/templates/tabs/general_details.html:18
 msgid "Is an erase server"
@@ -640,29 +656,9 @@ msgstr "Es un servidor de borrado"
 msgid "Yes"
 msgstr "Sí"
 
-#: device/templates/tabs/general_details.html:26
-msgid "Type"
-msgstr "Tipo"
-
-#: device/templates/tabs/general_details.html:43
-msgid "Manufacturer"
-msgstr "Fabricante"
-
-#: device/templates/tabs/general_details.html:50
-msgid "Model"
-msgstr "Modelo"
-
 #: device/templates/tabs/general_details.html:58
 msgid "Version"
 msgstr "Versión"
-
-#: device/templates/tabs/general_details.html:64
-msgid "Serial Number"
-msgstr "Número de serie"
-
-#: device/templates/tabs/general_details.html:72
-msgid "Identifiers"
-msgstr "Identificadores"
 
 #: device/templates/tabs/log.html:9
 msgid "Event"
@@ -685,12 +681,6 @@ msgstr "Propiedades del usuario"
 #: lot/templates/properties.html:26 lot/templates/properties.html:63
 msgid "Key"
 msgstr "Clave"
-
-#: device/templates/tabs/user_properties.html:19
-#: device/templates/tabs/user_properties.html:116
-#: lot/templates/properties.html:27 lot/templates/properties.html:67
-msgid "Value"
-msgstr "Valor"
 
 #: device/templates/tabs/user_properties.html:20
 #: lot/templates/properties.html:28
@@ -730,43 +720,43 @@ msgstr "Nuevo dispositivo"
 msgid "Update Device"
 msgstr "Actualizar dispositivo"
 
-#: device/views.py:78 evidence/templates/ev_details.html:50
+#: device/views.py:78 evidence/templates/ev_details.html:54
 msgid "Device"
 msgstr "Dispositivo"
 
-#: device/views.py:192
+#: device/views.py:190
 msgid "New User Property"
 msgstr "Nueva propiedad de usuario"
 
-#: device/views.py:205 lot/views.py:301
+#: device/views.py:203 lot/views.py:301
 msgid "Property successfully added."
 msgstr "Propiedad agregada correctamente."
 
-#: device/views.py:206
+#: device/views.py:204
 msgid "<Created> UserProperty: {}: {}"
 msgstr "<Created>Propiedad del usuario: {}: {}"
 
-#: device/views.py:214 device/views.py:269 lot/views.py:304 lot/views.py:350
+#: device/views.py:212 device/views.py:267 lot/views.py:304 lot/views.py:350
 msgid "Property is already defined."
 msgstr "La propiedad ya está definida."
 
-#: device/views.py:239
+#: device/views.py:237
 msgid "Update User Property"
 msgstr "Actualizar propiedad del usuario"
 
-#: device/views.py:258 lot/views.py:347
+#: device/views.py:256 lot/views.py:347
 msgid "Property updated successfully."
 msgstr "Propiedad actualizada correctamente."
 
-#: device/views.py:259
+#: device/views.py:257
 msgid "<Updated> UserProperty: {}: {} to {}: {}"
 msgstr "<Updated>Propiedad del usuario: {}: {} a {}: {}"
 
-#: device/views.py:295
+#: device/views.py:293
 msgid "<Deleted> User Property: {}:{}"
 msgstr "<Deleted>Propiedad del usuario: {}:{}"
 
-#: device/views.py:300
+#: device/views.py:298
 msgid "User property deleted successfully."
 msgstr "Propiedad del usuario eliminada correctamente."
 
@@ -813,27 +803,35 @@ msgstr "¡El archivo que intentas importar está vacío!"
 msgid "Is a Erase Server"
 msgstr "Es un servidor de borrado"
 
-#: evidence/templates/ev_details.html:8
+#: evidence/models.py:22
+msgid "key"
+msgstr "clave"
+
+#: evidence/models.py:23
+msgid "value"
+msgstr "valor"
+
+#: evidence/templates/ev_details.html:13
 msgid "Download File"
 msgstr "Descargar archivo"
 
-#: evidence/templates/ev_details.html:24
+#: evidence/templates/ev_details.html:29
 msgid "Erase Server"
 msgstr "Servidor de borrado"
 
-#: evidence/templates/ev_details.html:36
+#: evidence/templates/ev_details.html:40
 msgid "It is an erase server"
 msgstr "Es un servidor de borrado"
 
-#: evidence/templates/ev_details.html:38
+#: evidence/templates/ev_details.html:42
 msgid "It is not an erase server"
 msgstr "No es un servidor de borrado"
 
-#: evidence/templates/ev_details.html:66
+#: evidence/templates/ev_details.html:70 user/models.py:32
 msgid "Algorithm"
 msgstr "Algoritmo"
 
-#: evidence/templates/ev_details.html:67
+#: evidence/templates/ev_details.html:71
 msgid "Device ID"
 msgstr "ID del Dispositivo"
 
@@ -1075,6 +1073,46 @@ msgstr "Restablecimiento de contraseña en %(site_name)s"
 msgid "Login error. Check credentials."
 msgstr "Error al iniciar sesión. Verifique sus credenciales."
 
+#: lot/models.py:16 lot/models.py:48
+msgid "name"
+msgstr "nombre"
+
+#: lot/models.py:17 lot/models.py:52
+msgid "owner"
+msgstr "dueño"
+
+#: lot/models.py:18 lot/models.py:53
+msgid "user"
+msgstr "usuario"
+
+#: lot/models.py:19
+msgid "inbox"
+msgstr "lote de entrada"
+
+#: lot/models.py:20
+msgid "order"
+msgstr "orden"
+
+#: lot/models.py:46
+msgid "created"
+msgstr "Creado el"
+
+#: lot/models.py:49
+msgid "code"
+msgstr "código"
+
+#: lot/models.py:50
+msgid "description"
+msgstr "descripción"
+
+#: lot/models.py:51
+msgid "archived"
+msgstr "archivado"
+
+#: lot/models.py:54
+msgid "lot group"
+msgstr "grupo de lotes"
+
 #: lot/tables.py:24
 msgid "Lot Name"
 msgstr "Nombre del grupo de lotes"
@@ -1163,6 +1201,10 @@ msgstr "Nuevo lote"
 msgid "Delete Selected"
 msgstr "Borrar seleccionado"
 
+#: lot/templates/lots.html:49
+msgid "Active"
+msgstr "Activo"
+
 #: lot/templates/lots.html:75
 msgid "All Lots"
 msgstr "Todos"
@@ -1235,9 +1277,29 @@ msgstr "Actualizar propiedad de lote"
 msgid "Lot property deleted successfully."
 msgstr "Propiedad de lote eliminada correctamente."
 
-#: user/models.py:12
-msgid "Name"
-msgstr "Nombre"
+#: user/forms.py:9
+msgid "Not erasure"
+msgstr "Sin borrado"
+
+#: user/forms.py:10
+msgid "Erasure Basic"
+msgstr "Borrado básico"
+
+#: user/forms.py:11
+msgid "Erasure Baseline"
+msgstr "Borrado base"
+
+#: user/forms.py:12
+msgid "Erasure Enhanced"
+msgstr "Borrado mejorado"
+
+#: user/management/commands/add_institution.py:11
+msgid "Institution name"
+msgstr "nombre de la institución"
+
+#: user/management/commands/add_institution.py:17
+msgid "Language code for default tags (en/es/ca)"
+msgstr "Código del idioma para los tags (en/es/ca)"
 
 #: user/models.py:18
 msgid "Logo"
@@ -1286,6 +1348,70 @@ msgstr "Descargar un archivo de configuración"
 #: user/views.py:25
 msgid "Download Settings"
 msgstr "Descargar preferencias"
+
+#~ msgid "INBOX"
+#~ msgstr "BANDEJA DE ENTRADA"
+
+#~ msgid "VISUAL INSPECTION"
+#~ msgstr "PARA INSPECCIÓN VISUAL"
+
+#~ msgid "REPAIR"
+#~ msgstr "PARA REPARAR"
+
+#~ msgid "INSTALL"
+#~ msgstr "PARA INSTALAR"
+
+#~ msgid "TEST"
+#~ msgstr "PARA PRUEBA"
+
+#~ msgid "PACKAGING"
+#~ msgstr "PARA EMPAQUETADO"
+
+#~ msgid "DONATION"
+#~ msgstr "PARA DONACIÓN"
+
+#~ msgid "DISMANTLE"
+#~ msgstr "DESMANTELAR"
+
+#~ msgid "Failed to remove Lot Group, it is not empty"
+#~ msgstr "No se pudo eliminar el grupo de lotes, no está vacío"
+
+#, python-brace-format
+#~ msgid "The name '{name}' exist."
+#~ msgstr "El nombre '{name}' existe."
+
+#~ msgid "Total Devices"
+#~ msgstr "Total de dispositivos"
+
+#~ msgid "Assigned"
+#~ msgstr "Asignado"
+
+#~ msgid "Unassigned"
+#~ msgstr "Sin asignar"
+
+#~ msgid "States Distribution"
+#~ msgstr "Distribución de estados"
+
+#~ msgid "Repair"
+#~ msgstr "Reparar"
+
+#~ msgid "Discarded"
+#~ msgstr "Descartado"
+
+#~ msgid "While device is being used"
+#~ msgstr "Mientras el dispositivo está en uso"
+
+#~ msgid "CO2 Emissions"
+#~ msgstr "Emisiones CO2"
+
+#~ msgid "Algorithm Selector"
+#~ msgstr "Seleccionador de algoritmo"
+
+#~ msgid "Dummy Algorithm"
+#~ msgstr "Algoritmo simple"
+
+#~ msgid "Advanced Algorithm"
+#~ msgstr "Algoritmo avanzado"
 
 #~ msgid "Unassigned Devices"
 #~ msgstr "Dispositivos no asignados"
