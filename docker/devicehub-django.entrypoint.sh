@@ -31,6 +31,7 @@ wait_for_dpp_shared() {
 # TODO cargar via shared
 gen_env_vars() {
         INIT_ORG="${INIT_ORG:-example-org}"
+        LANG_DEFAULT_DATA="${LANG_DEFAULT_DATA:-en}"
         INIT_USER="${INIT_USER:-user@example.org}"
         INIT_PASSWD="${INIT_PASSWD:-1234}"
         ADMIN='True'
@@ -157,9 +158,10 @@ run_demo() {
                         echo 'ERROR: Credential not signed'
                 fi
         fi
-        ./manage.py create_default_states "${INIT_ORG}"
+        ./manage.py create_default_states "${INIT_ORG}" --language "${LANG_DEFAULT_DATA}"
         # create demo data to play with users for B2B B2C interactions
         ./manage.py load_demo_data
+
         /usr/bin/time ./manage.py up_snapshots example/snapshots/ "${INIT_USER}"
 }
 
@@ -169,7 +171,7 @@ config_phase() {
         if [ ! -f "${init_flagfile}" ]; then
 
                 # non DL user (only for the inventory)
-                ./manage.py add_institution "${INIT_ORG}"
+                ./manage.py add_institution "${INIT_ORG}" --language "${LANG_DEFAULT_DATA}"
                 # TODO: one error on add_user, and you don't add user anymore
                 ./manage.py add_user "${INIT_ORG}" "${INIT_USER}" "${INIT_PASSWD}" "${ADMIN}" "${DEMO_PREDEFINED_TOKEN}"
 

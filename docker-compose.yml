@@ -16,6 +16,7 @@ services:
       - DEMO_PREDEFINED_TOKEN=${DEMO_PREDEFINED_TOKEN:-}
       - DPP=${DPP:-false}
       - TIME_ZONE=${TIME_ZONE:-UTC}
+      - LANG_DEFAULT_DATA=${LANG_DEFAULT_DATA:-en}
     # TODO manage volumes dev vs prod
     volumes:
       - .:/opt/devicehub-django
