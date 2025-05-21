@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-20 12:57-0300\n"
+"POT-Creation-Date: 2025-05-20 19:22-0300\n"
 "PO-Revision-Date: 2025-03-12 23:09+0100\n"
 "Last-Translator: Leandro Navarro <leandro@ac.upc.edu>\n"
 "Language-Team: \n"
@@ -18,38 +18,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Poedit 3.5\n"
-
-#: action/management/commands/create_default_states.py:17
-msgid "INBOX"
-msgstr "SAFATA D'ENTRADA"
-
-#: action/management/commands/create_default_states.py:18
-msgid "VISUAL INSPECTION"
-msgstr "PER INSPECCIÓ VISUAL"
-
-#: action/management/commands/create_default_states.py:19
-msgid "REPAIR"
-msgstr "PER REPARACIÓ"
-
-#: action/management/commands/create_default_states.py:20
-msgid "INSTALL"
-msgstr "PER INSTAL·LAR"
-
-#: action/management/commands/create_default_states.py:21
-msgid "TEST"
-msgstr "PER PROVA"
-
-#: action/management/commands/create_default_states.py:22
-msgid "PACKAGING"
-msgstr "PER EMPAQUETAMENT"
-
-#: action/management/commands/create_default_states.py:23
-msgid "DONATION"
-msgstr "PER DONACIÓ"
-
-#: action/management/commands/create_default_states.py:24
-msgid "DISMANTLE"
-msgstr "PER DESMANTELLAR"
 
 #: action/views.py:28
 msgid "<Created> State '{}'. Previous State: '{}'"
@@ -99,29 +67,37 @@ msgstr "Institució"
 msgid "Add new user"
 msgstr "Afegeix un usuari nou"
 
+#: admin/templates/admin_users.html:19
+msgid "Email"
+msgstr "Correu electrònic"
+
+#: admin/templates/admin_users.html:20
+msgid "is admin?"
+msgstr "és admin?"
+
 #: admin/templates/delete_user.html:33 admin/templates/institution.html:27
-#: admin/templates/lot_tag_panel.html:117
-#: admin/templates/lot_tag_panel.html:155 admin/templates/states_panel.html:145
+#: admin/templates/lot_tag_panel.html:142
+#: admin/templates/lot_tag_panel.html:192 admin/templates/states_panel.html:145
 #: admin/templates/states_panel.html:185 admin/templates/user.html:27
 #: api/templates/new_token.html:27 device/templates/details.html:130
 #: device/templates/new_device.html:81
 #: device/templates/new_user_property.html:39
 #: device/templates/tabs/user_properties.html:83
 #: device/templates/tabs/user_properties.html:121
-#: evidence/templates/ev_details.html:110 evidence/templates/upload.html:25
+#: evidence/templates/ev_details.html:114 evidence/templates/upload.html:25
 #: lot/templates/delete_lots.html:95 lot/templates/new_lot.html:30
 #: lot/templates/new_property.html:39 lot/templates/properties.html:71
 #: lot/templates/properties.html:91 user/templates/settings.html:27
 msgid "Cancel"
 msgstr "Cancel·la"
 
-#: admin/templates/delete_user.html:34 admin/templates/lot_tag_panel.html:49
-#: admin/templates/lot_tag_panel.html:159
-#: admin/templates/lot_tag_panel.html:163 admin/templates/states_panel.html:67
+#: admin/templates/delete_user.html:34 admin/templates/lot_tag_panel.html:66
+#: admin/templates/lot_tag_panel.html:196
+#: admin/templates/lot_tag_panel.html:200 admin/templates/states_panel.html:67
 #: admin/templates/states_panel.html:188 api/tables.py:29
 #: device/templates/tabs/user_properties.html:47
 #: device/templates/tabs/user_properties.html:87
-#: evidence/templates/ev_details.html:115 lot/templates/delete_lots.html:99
+#: evidence/templates/ev_details.html:119 lot/templates/delete_lots.html:99
 #: lot/templates/properties.html:46 lot/templates/properties.html:94
 msgid "Delete"
 msgstr "Suprimeix"
@@ -129,7 +105,7 @@ msgstr "Suprimeix"
 #: admin/templates/institution.html:28 admin/templates/user.html:28
 #: api/templates/new_token.html:28 device/templates/new_device.html:82
 #: device/templates/new_user_property.html:40
-#: evidence/templates/ev_details.html:111 evidence/templates/upload.html:26
+#: evidence/templates/ev_details.html:115 evidence/templates/upload.html:26
 #: lot/templates/new_lot.html:34 lot/templates/new_property.html:40
 #: user/templates/settings.html:28
 msgid "Save"
@@ -139,66 +115,93 @@ msgstr "Desa"
 msgid "Add"
 msgstr "Afegeix"
 
-#: admin/templates/lot_tag_panel.html:21
+#: admin/templates/lot_tag_panel.html:20
+msgid "Inbox order CANNOT be changed"
+msgstr "L'ordre del lot d'entrada no es pot canviar."
+
+#: admin/templates/lot_tag_panel.html:28
 msgid "Lot Group Name"
 msgstr "Nom del grup de lots"
 
-#: admin/templates/lot_tag_panel.html:23 admin/templates/states_panel.html:30
+#: admin/templates/lot_tag_panel.html:30 admin/templates/states_panel.html:30
 #: device/templates/tabs/user_properties.html:21
 msgid "Actions"
 msgstr "Accions"
 
-#: admin/templates/lot_tag_panel.html:42 admin/templates/states_panel.html:60
+#: admin/templates/lot_tag_panel.html:58 admin/templates/states_panel.html:60
 #: device/templates/tabs/user_properties.html:40
 #: lot/templates/lot_actions.html:5 lot/templates/properties.html:42
 msgid "Edit"
 msgstr "Edita"
 
-#: admin/templates/lot_tag_panel.html:61
+#: admin/templates/lot_tag_panel.html:78 admin/templates/states_panel.html:79
+msgid "Update Order"
+msgstr "Actualitza l'ordre"
+
+#: admin/templates/lot_tag_panel.html:83
 msgid "No Lot Groups found on current organization"
 msgstr "No s'han trobat grups de lots a l'organització actual"
 
-#: admin/templates/lot_tag_panel.html:72
+#: admin/templates/lot_tag_panel.html:94
 msgid "Add Lot Group"
 msgstr "Afegeix un grup de lots"
 
-#: admin/templates/lot_tag_panel.html:80 admin/templates/lot_tag_panel.html:110
-#: api/tables.py:52 evidence/forms.py:68 evidence/templates/ev_details.html:53
+#: admin/templates/lot_tag_panel.html:102
+#: admin/templates/lot_tag_panel.html:132 api/tables.py:52 evidence/forms.py:68
+#: evidence/templates/ev_details.html:57
 msgid "Tag"
 msgstr "Etiqueta"
 
-#: admin/templates/lot_tag_panel.html:82 admin/templates/lot_tag_panel.html:112
-#: admin/templates/states_panel.html:106 admin/templates/states_panel.html:139
+#: admin/templates/lot_tag_panel.html:104
+#: admin/templates/lot_tag_panel.html:134 admin/templates/states_panel.html:106
+#: admin/templates/states_panel.html:139
 msgid "Maximum 50 characters."
 msgstr "Màxim 50 caràcters."
 
-#: admin/templates/lot_tag_panel.html:85 admin/templates/lot_tag_panel.html:106
-#: admin/templates/lot_tag_panel.html:136 admin/templates/states_panel.html:109
+#: admin/templates/lot_tag_panel.html:107
+#: admin/templates/lot_tag_panel.html:128
+#: admin/templates/lot_tag_panel.html:161 admin/templates/states_panel.html:109
 #: admin/templates/states_panel.html:130 admin/templates/states_panel.html:164
 #: device/templates/details.html:119 lot/templates/properties.html:57
 #: lot/templates/properties.html:85
 msgid "Close"
 msgstr "Tanca"
 
-#: admin/templates/lot_tag_panel.html:86
+#: admin/templates/lot_tag_panel.html:108
 msgid "Add Lot tag"
 msgstr "Afegeix l'etiqueta de lot"
 
-#: admin/templates/lot_tag_panel.html:104
+#: admin/templates/lot_tag_panel.html:126
 msgid "Edit Lot Group"
 msgstr "Edita el grup de lots"
 
-#: admin/templates/lot_tag_panel.html:118 admin/templates/states_panel.html:146
+#: admin/templates/lot_tag_panel.html:136
+msgid "INBOX can only be edited, not deleted."
+msgstr "Lot dentrada només pot ser editat, no eliminat"
+
+#: admin/templates/lot_tag_panel.html:143 admin/templates/states_panel.html:146
 msgid "Save Changes"
 msgstr "Desa els canvis"
 
-#: admin/templates/lot_tag_panel.html:134
+#: admin/templates/lot_tag_panel.html:159
 msgid "Delete Lot Group"
 msgstr "Suprimeix el grup de lots"
 
-#: admin/templates/lot_tag_panel.html:141
-msgid "Failed to remove Lot Group, it is not empty"
-msgstr "No s'ha pogut eliminar el grup de lots, no està buit"
+#: admin/templates/lot_tag_panel.html:167
+msgid "This lot group has"
+msgstr "Aquest grup de lots té"
+
+#: admin/templates/lot_tag_panel.html:167
+msgid "lot/s."
+msgstr "lot/s"
+
+#: admin/templates/lot_tag_panel.html:171
+msgid "Are you sure you want to delete this lot group?"
+msgstr "Esteu segur que voleu suprimir aquest grup de lots?"
+
+#: admin/templates/lot_tag_panel.html:181
+msgid "This lot group is not empty and therefore cannot be deleted."
+msgstr "Aquest grup de lots no està buit i, per tant, no es pot suprimir."
 
 #: admin/templates/states_panel.html:20
 msgid "Move and drag state definitions to reorder"
@@ -207,10 +210,6 @@ msgstr "Mou i arrossega les definicions d'estat per reordenar-les"
 #: admin/templates/states_panel.html:28
 msgid "State Definition"
 msgstr "Definició d'estat"
-
-#: admin/templates/states_panel.html:79
-msgid "Update Order"
-msgstr "Actualitza l'ordre"
 
 #: admin/templates/states_panel.html:85
 msgid "No states found on current organization"
@@ -298,11 +297,6 @@ msgstr "admin / Panell de grups de lots"
 msgid "New lot group Definition"
 msgstr "Nova definició de grup de lots"
 
-#: admin/views.py:143 admin/views.py:199
-#, python-brace-format
-msgid "The name '{name}' exist."
-msgstr "El nom \"{name}\" existeix."
-
 #: admin/views.py:148
 msgid "Lot Group successfully added."
 msgstr "Grup de lots afegit correctament."
@@ -319,41 +313,45 @@ msgstr "El grup de lots s'ha suprimit."
 msgid "Lot Group updated successfully."
 msgstr "Grup de lots actualitzat correctament."
 
-#: admin/views.py:211 admin/views.py:213
+#: admin/views.py:232
+msgid "Order changed successfully."
+msgstr "L'ordre s'ha canviat correctament."
+
+#: admin/views.py:240 admin/views.py:242
 msgid "Edit institution"
 msgstr "Edita la institució"
 
-#: admin/views.py:236
+#: admin/views.py:265
 msgid "State definitions are the custom finite states that a device can be in."
 msgstr ""
 "Les definicions d'estat són els estats finits personalitzats en què pot "
 "estar un dispositiu."
 
-#: admin/views.py:243
+#: admin/views.py:272
 msgid "States Panel"
 msgstr "Panell d’estats"
 
-#: admin/views.py:244
+#: admin/views.py:273
 msgid "admin / States Panel"
 msgstr "admin / panell d'estats"
 
-#: admin/views.py:249
+#: admin/views.py:278
 msgid "New State Definition"
 msgstr "Nova definició d'estat"
 
-#: admin/views.py:260
+#: admin/views.py:289
 msgid "State definition successfully added."
 msgstr "S'ha afegit correctament la definició d'estat."
 
-#: admin/views.py:263 admin/views.py:326
+#: admin/views.py:292 admin/views.py:355
 msgid "State is already defined."
 msgstr "L'estat ja està definit."
 
-#: admin/views.py:304
+#: admin/views.py:333
 msgid "Order changed succesfuly."
 msgstr "L'ordre s'ha canviat correctament."
 
-#: admin/views.py:323
+#: admin/views.py:352
 msgid "State definition updated successfully."
 msgstr "La definició d'estat s'ha actualitzat correctament."
 
@@ -439,34 +437,6 @@ msgstr "Puja formulari web"
 msgid "Search your device"
 msgstr "Cerca de dispositius"
 
-#: dashboard/templates/inventory_dashboard.html:13
-msgid "Total Devices"
-msgstr "Total de dispositius"
-
-#: dashboard/templates/inventory_dashboard.html:21
-msgid "Assigned"
-msgstr "Assignat"
-
-#: dashboard/templates/inventory_dashboard.html:29
-msgid "Unassigned"
-msgstr "Sense assignar"
-
-#: dashboard/templates/inventory_dashboard.html:38
-msgid "States Distribution"
-msgstr "Distribució dels estats"
-
-#: dashboard/templates/inventory_dashboard.html:40 lot/templates/lots.html:49
-msgid "Active"
-msgstr "Actiu"
-
-#: dashboard/templates/inventory_dashboard.html:41
-msgid "Repair"
-msgstr "Reparació"
-
-#: dashboard/templates/inventory_dashboard.html:42
-msgid "Discarded"
-msgstr "Descartat"
-
 #: dashboard/templates/unassigned_devices.html:14
 msgid "Exports"
 msgstr "Exporta"
@@ -507,7 +477,7 @@ msgstr "Fabricant"
 msgid "model"
 msgstr "Model"
 
-#: dashboard/templates/unassigned_devices.html:51
+#: dashboard/templates/unassigned_devices.html:51 lot/models.py:47
 msgid "updated"
 msgstr "Actualitzat"
 
@@ -526,6 +496,30 @@ msgstr "Lot de dispositius"
 #: dashboard/views.py:71
 msgid "Search Devices"
 msgstr "Cerca de dispositius"
+
+#: device/forms.py:26 device/templates/device_web.html:104
+#: device/templates/tabs/general_details.html:26
+msgid "Type"
+msgstr "Tipus"
+
+#: device/forms.py:27
+msgid "Amount"
+msgstr "quantitat"
+
+#: device/forms.py:28
+msgid "Custom id"
+msgstr "identificador personalitzat"
+
+#: device/forms.py:29 user/models.py:12
+msgid "Name"
+msgstr "Nom"
+
+#: device/forms.py:30 device/templates/tabs/environmental_impact.html:14
+#: device/templates/tabs/user_properties.html:19
+#: device/templates/tabs/user_properties.html:116
+#: lot/templates/properties.html:27 lot/templates/properties.html:67
+msgid "Value"
+msgstr "Valor"
 
 #: device/templates/details.html:17 device/templates/details.html:44
 msgid "Change state"
@@ -547,7 +541,7 @@ msgstr "Detalls generals"
 msgid "Properties"
 msgstr "Propietats"
 
-#: device/templates/details.html:73
+#: device/templates/details.html:73 device/templates/device_web.html:142
 msgid "Components"
 msgstr "Components"
 
@@ -575,6 +569,40 @@ msgstr "Nota"
 msgid "Save Note"
 msgstr "Desa la nota"
 
+#: device/templates/device_web.html:96
+#: device/templates/tabs/general_details.html:6
+msgid "Details"
+msgstr "Detalls"
+
+#: device/templates/device_web.html:98
+#: device/templates/tabs/general_details.html:10
+msgid "Phid"
+msgstr "Phid"
+
+#: device/templates/device_web.html:117
+#: device/templates/tabs/general_details.html:43
+msgid "Manufacturer"
+msgstr "Fabricant"
+
+#: device/templates/device_web.html:121
+#: device/templates/tabs/general_details.html:50
+msgid "Model"
+msgstr "Model"
+
+#: device/templates/device_web.html:126
+#: device/templates/tabs/general_details.html:64
+msgid "Serial Number"
+msgstr "Número de sèrie"
+
+#: device/templates/device_web.html:134
+#: device/templates/tabs/general_details.html:72
+msgid "Identifiers"
+msgstr "Identificadors"
+
+#: device/templates/device_web.html:166
+msgid "All rights reserved."
+msgstr ""
+
 #: device/templates/new_device.html:60
 msgid "Component details"
 msgstr "Detalls dels components"
@@ -596,41 +624,29 @@ msgid "Environmental Impact Details"
 msgstr "Detalls d'impacte ambiental"
 
 #: device/templates/tabs/environmental_impact.html:7
-msgid "While device is being used"
-msgstr "Mentre s'utilitza el dispositiu"
+msgid "Relevant Input Data"
+msgstr "Dades d'entrada rellevants"
 
-#: device/templates/tabs/environmental_impact.html:11
-msgid "CO2 Emissions"
-msgstr "Emissions de CO2"
-
-#: device/templates/tabs/environmental_impact.html:19
-msgid "Algorithm Selector"
-msgstr "Selector d'algoritmes"
-
-#: device/templates/tabs/environmental_impact.html:22
-msgid "Dummy Algorithm"
-msgstr "Algoritme simulat"
+#: device/templates/tabs/environmental_impact.html:13
+msgid "Input Parameter"
+msgstr "Paràmetre d'entrada"
 
 #: device/templates/tabs/environmental_impact.html:25
-msgid "Advanced Algorithm"
-msgstr "Algorisme avançat"
+msgid "No relevant input data available"
+msgstr "No hi ha dades d'entrada rellevants disponibles"
 
-#: device/templates/tabs/environmental_impact.html:33
+#: device/templates/tabs/environmental_impact.html:40
 msgid "Read about the algorithm insights"
 msgstr "Llegiu sobre les estadístiques de l'algoritme"
 
+#: device/templates/tabs/evidences.html:11
+msgid "DID Document"
+msgstr "Document DID"
+
 #: device/templates/tabs/evidences.html:12 device/templates/tabs/log.html:8
-#: evidence/templates/ev_details.html:68
+#: evidence/templates/ev_details.html:72
 msgid "Date"
 msgstr "Data"
-
-#: device/templates/tabs/general_details.html:6
-msgid "Details"
-msgstr "Detalls"
-
-#: device/templates/tabs/general_details.html:10
-msgid "Phid"
-msgstr "Phid"
 
 #: device/templates/tabs/general_details.html:18
 msgid "Is an erase server"
@@ -640,29 +656,9 @@ msgstr "És un servidor d'esborrat"
 msgid "Yes"
 msgstr "Sí"
 
-#: device/templates/tabs/general_details.html:26
-msgid "Type"
-msgstr "Tipus"
-
-#: device/templates/tabs/general_details.html:43
-msgid "Manufacturer"
-msgstr "Fabricant"
-
-#: device/templates/tabs/general_details.html:50
-msgid "Model"
-msgstr "Model"
-
 #: device/templates/tabs/general_details.html:58
 msgid "Version"
 msgstr "Versió"
-
-#: device/templates/tabs/general_details.html:64
-msgid "Serial Number"
-msgstr "Número de sèrie"
-
-#: device/templates/tabs/general_details.html:72
-msgid "Identifiers"
-msgstr "Identificadors"
 
 #: device/templates/tabs/log.html:9
 msgid "Event"
@@ -685,12 +681,6 @@ msgstr "Propietats d'usuari"
 #: lot/templates/properties.html:26 lot/templates/properties.html:63
 msgid "Key"
 msgstr "Tecla"
-
-#: device/templates/tabs/user_properties.html:19
-#: device/templates/tabs/user_properties.html:116
-#: lot/templates/properties.html:27 lot/templates/properties.html:67
-msgid "Value"
-msgstr "Valor"
 
 #: device/templates/tabs/user_properties.html:20
 #: lot/templates/properties.html:28
@@ -730,43 +720,43 @@ msgstr "Nou dispositiu"
 msgid "Update Device"
 msgstr "Actualitza el dispositiu"
 
-#: device/views.py:78 evidence/templates/ev_details.html:50
+#: device/views.py:78 evidence/templates/ev_details.html:54
 msgid "Device"
 msgstr "Dispositiu"
 
-#: device/views.py:192
+#: device/views.py:190
 msgid "New User Property"
 msgstr "Nova propietat d'usuari"
 
-#: device/views.py:205 lot/views.py:301
+#: device/views.py:203 lot/views.py:301
 msgid "Property successfully added."
 msgstr "Propietat afegida correctament."
 
-#: device/views.py:206
+#: device/views.py:204
 msgid "<Created> UserProperty: {}: {}"
 msgstr "<Created>UserProperty: {}: {}"
 
-#: device/views.py:214 device/views.py:269 lot/views.py:304 lot/views.py:350
+#: device/views.py:212 device/views.py:267 lot/views.py:304 lot/views.py:350
 msgid "Property is already defined."
 msgstr "La propietat ja està definida."
 
-#: device/views.py:239
+#: device/views.py:237
 msgid "Update User Property"
 msgstr "Actualitza la propietat de l'usuari"
 
-#: device/views.py:258 lot/views.py:347
+#: device/views.py:256 lot/views.py:347
 msgid "Property updated successfully."
 msgstr "La propietat s'ha actualitzat correctament."
 
-#: device/views.py:259
+#: device/views.py:257
 msgid "<Updated> UserProperty: {}: {} to {}: {}"
 msgstr "<Updated>UserProperty: {}: {} a {}: {}"
 
-#: device/views.py:295
+#: device/views.py:293
 msgid "<Deleted> User Property: {}:{}"
 msgstr "<Deleted>Propietat d'usuari: {}:{}"
 
-#: device/views.py:300
+#: device/views.py:298
 msgid "User property deleted successfully."
 msgstr "La propietat de l'usuari s'ha suprimit correctament."
 
@@ -812,27 +802,35 @@ msgstr "El fitxer que intenteu importar està buit!"
 msgid "Is a Erase Server"
 msgstr "És un servidor d'esborrat"
 
-#: evidence/templates/ev_details.html:8
+#: evidence/models.py:22
+msgid "key"
+msgstr "Tecla"
+
+#: evidence/models.py:23
+msgid "value"
+msgstr "Valor"
+
+#: evidence/templates/ev_details.html:13
 msgid "Download File"
 msgstr "Baixa fitxer"
 
-#: evidence/templates/ev_details.html:24
+#: evidence/templates/ev_details.html:29
 msgid "Erase Server"
 msgstr "Servidor d’esborrat"
 
-#: evidence/templates/ev_details.html:36
+#: evidence/templates/ev_details.html:40
 msgid "It is an erase server"
 msgstr "És un servidor d'esborrat"
 
-#: evidence/templates/ev_details.html:38
+#: evidence/templates/ev_details.html:42
 msgid "It is not an erase server"
 msgstr "No és un servidor d'esborrat"
 
-#: evidence/templates/ev_details.html:66
+#: evidence/templates/ev_details.html:70 user/models.py:32
 msgid "Algorithm"
 msgstr "algorisme"
 
-#: evidence/templates/ev_details.html:67
+#: evidence/templates/ev_details.html:71
 msgid "Device ID"
 msgstr "ID Dispositiu"
 
@@ -949,7 +947,7 @@ msgstr "Activació d'usuari a %(site)s"
 
 #: login/templates/login.html:7
 msgid "Sign in"
-msgstr ""
+msgstr "Inicia sessió"
 
 #: login/templates/login.html:41
 #: login/templates/password_reset_complete.html:11 login/views.py:19
@@ -969,14 +967,10 @@ msgid "Forgot your password? Click here to recover"
 msgstr "Has oblidat la teva contrasenya? Feu clic aquí per recuperar-la"
 
 #: login/templates/password_reset.html:6
-#, fuzzy
-#| msgid "Password reset"
 msgid "Password Reset"
 msgstr "Restableix contrasenya"
 
 #: login/templates/password_reset.html:7
-#, fuzzy
-#| msgid ""
 #| "Forgotten your password? Enter your email address below, and we'll email "
 #| "instructions for setting a new one."
 msgid ""
@@ -1081,6 +1075,46 @@ msgstr "Restabliment de la contrasenya a %(site_name)s"
 msgid "Login error. Check credentials."
 msgstr "Error d'inici de sessió. Reviseu les credencials."
 
+#: lot/models.py:16 lot/models.py:48
+msgid "name"
+msgstr "nom"
+
+#: lot/models.py:17 lot/models.py:52
+msgid "owner"
+msgstr "propietari"
+
+#: lot/models.py:18 lot/models.py:53
+msgid "user"
+msgstr "usuari"
+
+#: lot/models.py:19
+msgid "inbox"
+msgstr "lot d'entrada"
+
+#: lot/models.py:20
+msgid "order"
+msgstr "ordre"
+
+#: lot/models.py:46
+msgid "created"
+msgstr "Creat"
+
+#: lot/models.py:49
+msgid "code"
+msgstr "codi"
+
+#: lot/models.py:50
+msgid "description"
+msgstr "Descripció"
+
+#: lot/models.py:51
+msgid "archived"
+msgstr "Arxivat"
+
+#: lot/models.py:54
+msgid "lot group"
+msgstr "Grup de lots"
+
 #: lot/tables.py:24
 msgid "Lot Name"
 msgstr "Nom del lot"
@@ -1169,6 +1203,10 @@ msgstr "Lot nou"
 msgid "Delete Selected"
 msgstr "Elimina els seleccionats"
 
+#: lot/templates/lots.html:49
+msgid "Active"
+msgstr "Actiu"
+
 #: lot/templates/lots.html:75
 msgid "All Lots"
 msgstr "Tots els lots"
@@ -1241,9 +1279,29 @@ msgstr "Actualitza la propietat del lot"
 msgid "Lot property deleted successfully."
 msgstr "La propietat del lot s'ha suprimit correctament."
 
-#: user/models.py:12
-msgid "Name"
-msgstr "Nom"
+#: user/forms.py:9
+msgid "Not erasure"
+msgstr "No esborrat"
+
+#: user/forms.py:10
+msgid "Erasure Basic"
+msgstr "Esborrat bàsic"
+
+#: user/forms.py:11
+msgid "Erasure Baseline"
+msgstr "Esborrar la línia de base"
+
+#: user/forms.py:12
+msgid "Erasure Enhanced"
+msgstr "Esborrat millorat"
+
+#: user/management/commands/add_institution.py:11
+msgid "Institution name"
+msgstr "nom de la institució"
+
+#: user/management/commands/add_institution.py:17
+msgid "Language code for default tags (en/es/ca)"
+msgstr "Codi d'idioma per a les etiquetes predeterminades (en/es/ca)"
 
 #: user/models.py:18
 msgid "Logo"
@@ -1292,6 +1350,70 @@ msgstr "Baixeu un fitxer de configuració"
 #: user/views.py:25
 msgid "Download Settings"
 msgstr "Baixa la configuració"
+
+#~ msgid "INBOX"
+#~ msgstr "SAFATA D'ENTRADA"
+
+#~ msgid "VISUAL INSPECTION"
+#~ msgstr "PER INSPECCIÓ VISUAL"
+
+#~ msgid "REPAIR"
+#~ msgstr "PER REPARACIÓ"
+
+#~ msgid "INSTALL"
+#~ msgstr "PER INSTAL·LAR"
+
+#~ msgid "TEST"
+#~ msgstr "PER PROVA"
+
+#~ msgid "PACKAGING"
+#~ msgstr "PER EMPAQUETAMENT"
+
+#~ msgid "DONATION"
+#~ msgstr "PER DONACIÓ"
+
+#~ msgid "DISMANTLE"
+#~ msgstr "PER DESMANTELLAR"
+
+#~ msgid "Failed to remove Lot Group, it is not empty"
+#~ msgstr "No s'ha pogut eliminar el grup de lots, no està buit"
+
+#, python-brace-format
+#~ msgid "The name '{name}' exist."
+#~ msgstr "El nom \"{name}\" existeix."
+
+#~ msgid "Total Devices"
+#~ msgstr "Total de dispositius"
+
+#~ msgid "Assigned"
+#~ msgstr "Assignat"
+
+#~ msgid "Unassigned"
+#~ msgstr "Sense assignar"
+
+#~ msgid "States Distribution"
+#~ msgstr "Distribució dels estats"
+
+#~ msgid "Repair"
+#~ msgstr "Reparació"
+
+#~ msgid "Discarded"
+#~ msgstr "Descartat"
+
+#~ msgid "While device is being used"
+#~ msgstr "Mentre s'utilitza el dispositiu"
+
+#~ msgid "CO2 Emissions"
+#~ msgstr "Emissions de CO2"
+
+#~ msgid "Algorithm Selector"
+#~ msgstr "Selector d'algoritmes"
+
+#~ msgid "Dummy Algorithm"
+#~ msgstr "Algoritme simulat"
+
+#~ msgid "Advanced Algorithm"
+#~ msgstr "Algorisme avançat"
 
 #~ msgid "Unassigned Devices"
 #~ msgstr "Dispositius no assignats"
