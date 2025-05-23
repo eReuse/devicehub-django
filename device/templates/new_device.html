@@ -42,17 +42,17 @@
   <div class="container" id="formset-container">
     <div class="row mb-2">
       <div class="col">
-        {% bootstrap_field form.0.type %}
+        {% bootstrap_field form.0.type layout="floating" %}
       </div>
     </div>
     <div class="row mb-2">
       <div class="col">
-        {% bootstrap_field form.0.amount %}
+        {% bootstrap_field form.0.amount layout="floating" %}
       </div>
     </div>
     <div class="row mb-2">
       <div class="col">
-        {% bootstrap_field form.0.custom_id %}
+        {% bootstrap_field form.0.custom_id layout="floating" %}
       </div>
     </div>
     <div class="row mb-2">
@@ -69,10 +69,10 @@
     {% for f in form %}
       <div class="row mb-2">
         <div class="col">
-          {% bootstrap_field f.name %}
+          {% bootstrap_field f.name layout="floating" %}
         </div>
         <div class="col">
-          {% bootstrap_field f.value %}
+          {% bootstrap_field f.value layout="floating" %}
         </div>
       </div>
     {% endfor %}
