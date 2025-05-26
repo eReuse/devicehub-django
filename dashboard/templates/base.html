@@ -183,11 +183,11 @@
 		  {% if tag.inbox %}
                     <a class="nav-link{% if path == 'inbox' %} active2{% endif %}" href="{% url 'dashboard:unassigned' %}">
                       <i>
-                        {{ tag.name }}
+                        {{ tag.name|truncatechars:15 }}
                       </i>
 		  {% else %}
                     <a class="nav-link{% if path == 'tags' %} active2{% endif %}" href="{% url 'lot:tags' tag.id %}">
-                      {{ tag.name }}
+                        {{ tag.name|truncatechars:15 }}
 		  {% endif %}
                     </a>
                   </li>
