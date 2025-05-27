@@ -51,7 +51,14 @@
       <button class="btn btn-yellow ms-2" type="button" data-bs-toggle="modal" data-bs-target="#addNoteModal">
         <i class="bi bi-sticky"></i> {% trans "Add a note" %}
       </button>
-
+      <form method="post" action="{% url 'lot:add_devices' %}" class="ms-2" >
+        {% csrf_token %}
+        <input type="hidden" name="devices" value="{{ object.id }}">
+        <button id="add-button" class="btn btn-green-user" type="submit">
+          <i class="bi bi-folder-symlink"></i>
+          {% trans 'Assign to lot' %}
+        </button>
+      </form>
     </div>
   </div>
 </div>
