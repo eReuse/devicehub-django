@@ -95,6 +95,16 @@ class DetailsView(DashboardView, TemplateView ):
 
         return super().get(request, *args, **kwargs)
 
+    #redirect to url and pop id on session without using DetailsMixin
+    def post(self, request, *args, **kwargs):
+        url = request.POST.get('url')
+        device_id = request.POST.get('devices')
+        if url and device_id:
+            request.session['devices'] = [device_id]
+            return redirect(url)
+
+        return self.get(request, *args, **kwargs)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         self.object.initial()
