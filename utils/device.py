@@ -76,7 +76,7 @@ def create_property(doc, user, commit=False):
         'uuid': doc['uuid'],
         'owner': user.institution,
         'user': user,
-        'key': 'CUSTOMER_ID',
+        'key': 'CUSTOM_ID',
         'value': doc['CUSTOMER_ID'],
     }
     if commit:
