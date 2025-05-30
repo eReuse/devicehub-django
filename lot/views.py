@@ -822,7 +822,6 @@ class ListDevicesBeneficiaryView(DashboardLotMixing, BeneficiaryEmail, FormView)
 
     def get(self, *args, **kwargs):
         res = super().get(*args, **kwargs)
-        # import pdb; pdb.set_trace()
         if not self.beneficiary.devicebeneficiary_set.first():
             url = reverse_lazy("dashboard:lot", args=[self.beneficiary.lot.id])
             return redirect(url)
@@ -1016,8 +1015,8 @@ class AddDevicesBeneficiaryView(DashboardView, NotifyEmail, TemplateView):
             for dev in devices:
                 exist = DeviceBeneficiary.objects.filter(device_id=dev).first()
                 if exist:
-                    messages.error(self.request, _("Device {} was already assigned").format(
-                        dev[:6].upper()
+                    messages.error(self.request, _("Device {} was already assigned to {}").format(
+                        dev[:6].upper(), exist.beneficiary.email
                     ))
                 else:
                     self.beneficiary.add(dev)
