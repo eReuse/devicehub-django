@@ -15,28 +15,53 @@ services:
       - DEMO_IDHUB_PREDEFINED_TOKEN=${IDHUB_PREDEFINED_TOKEN:-}
       - PREDEFINED_TOKEN=${PREDEFINED_TOKEN:-}
       - DPP=${DPP:-false}
+      - DB_TYPE=${DEVICEHUB_DB_TYPE:-postgres}
       - TIME_ZONE=${TIME_ZONE:-UTC}
+      - DB_HOST=${DB_HOST:-devicehub-postgres}
+      - DB_PORT=${DB_PORT:-5432}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
     # TODO manage volumes dev vs prod
     volumes:
       - .:/opt/devicehub-django
     ports:
       - ${DEVICEHUB_PORT:-8000}:${DEVICEHUB_PORT:-8000}
+    depends_on:
+      devicehub-postgres:
+        condition: service_healthy
+        restart: true
 
-  # TODO add database service for idhub, meanwhile sqlite
+  devicehub-postgres:
+      image: postgres:17
+      environment:
+        - POSTGRES_DB=${DB_NAME}
+        - POSTGRES_USER=${DB_USER}
+        - POSTGRES_PASSWORD=${DB_PASSWORD}
+      volumes:
+        - DEVICEHUB_POSTGRES_DATA:/var/lib/postgresql/data
+      healthcheck:
+        test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+        start_period: 1s
+        interval: 1s
+        timeout: 10s
+        retries: 10
+
 
   idhub:
     # https://docs.docker.com/compose/how-tos/profiles/
-    profiles: [idhub]
     init: true
-    image: farga.pangea.org/ereuse/idhub:latest
+    profiles: [idhub]
+    image: farga.pangea.org/ereuse/idhub:stable
     environment:
       - DOMAIN=${IDHUB_DOMAIN:-localhost}
       - ALLOWED_HOSTS=${IDHUB_ALLOWED_HOSTS:-$IDHUB_DOMAIN}
-      - DEBUG=true
-      - DEMO=${DEMO:-false}
+      - DEBUG=${IDHUB_DEBUG:-true}
+      - DEMO=${IDHUB_DEMO:-true}
+      - IDHUB_DB_TYPE=${IDHUB_DB_TYPE:-postgres}
       - INITIAL_ADMIN_EMAIL=${IDHUB_ADMIN_EMAIL}
       - INITIAL_ADMIN_PASSWORD=${IDHUB_ADMIN_PASSWD}
-      - CREATE_TEST_USERS=true
+      - CREATE_TEST_USERS=${IDHUB_CREATE_TEST_USERS:-true}
       - ENABLE_EMAIL=${IDHUB_ENABLE_EMAIL:-true}
       - ENABLE_2FACTOR_AUTH=${IDHUB_ENABLE_2FACTOR_AUTH:-true}
       - ENABLE_DOMAIN_CHECKER=${IDHUB_ENABLE_DOMAIN_CHECKER:-true}
@@ -52,10 +77,43 @@ services:
       - EMAIL_PORT=${IDHUB_EMAIL_PORT}
       - EMAIL_USE_TLS=${IDHUB_EMAIL_USE_TLS}
       - EMAIL_BACKEND=${IDHUB_EMAIL_BACKEND}
-      - SUPPORTED_CREDENTIALS=['Snapshot']
+      - SUPPORTED_CREDENTIALS=${IDHUB_SUPPORTED_CREDENTIALS:-}
       - SYNC_ORG_DEV=${IDHUB_SYNC_ORG_DEV}
-      - TIME_ZONE=${TIME_ZONE:-UTC}
+      - DB_PORT=${IDHUB_POSTGRES_PORT:-5432}
+      - DB_HOST=${IDHUB_POSTGRES_HOST:-idhub-postgres}
+      - DB_NAME=${IDHUB_POSTGRES_NAME}
+      - DB_USER=${IDHUB_POSTGRES_USER}
+      - DB_PASSWORD=${IDHUB_POSTGRES_PASSWORD}
     ports:
-      - 9001:9001
+      - ${IDHUB_PORT:-9001}:${IDHUB_PORT:-9001}
+    volumes:
+      - ${IDHUB_VOLUME:-.:/opt/idhub}
+    depends_on:
+      idhub-postgres:
+        condition: service_healthy
+        restart: true
 
-  # TODO add database service for idhub, meanwhile sqlite
+  idhub-postgres:
+    profiles: [idhub]
+    image: postgres:17
+    environment:
+      - POSTGRES_DB=${IDHUB_POSTGRES_NAME}
+      - POSTGRES_USER=${IDHUB_POSTGRES_USER}
+      - POSTGRES_PASSWORD=${IDHUB_POSTGRES_PASSWORD}
+      # TODO probablemente no hace falta, si no afecta borrar 'ports'
+      #ports:
+      #  - 5432:5432
+    volumes:
+      - IDHUB_POSTGRES_DATA:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${IDHUB_POSTGRES_USER} -d ${IDHUB_POSTGRES_NAME}"]
+      start_period: 1s
+      interval: 1s
+      timeout: 10s
+      retries: 10
+
+volumes:
+  IDHUB_DATA:
+  IDHUB_POSTGRES_DATA:
+  DEVICEHUB_DATA:
+  DEVICEHUB_POSTGRES_DATA:
