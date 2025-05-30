@@ -201,8 +201,9 @@ class Device:
                 WHERE t1.owner_id = {institution}
                   AND t1.key IN ('CUSTOM_ID', '{algorithm}')
             )
-            SELECT DISTINCT
+            SELECT DISTINCT ON (value)
                 value
+                created
             FROM
                 RankedProperties
             WHERE
@@ -255,7 +256,6 @@ class Device:
                 RankedProperties
             WHERE
                 row_num = 1
-            ORDER BY created DESC
         """.format(
             institution=institution.id,
             algorithm=institution.algorithm
@@ -289,8 +289,9 @@ class Device:
                   AND t1.owner_id = {institution}
                   AND t1.key IN ('CUSTOM_ID', '{algorithm}')
             )
-            SELECT DISTINCT
+            SELECT DISTINCT ON (value)
                 value
+                created
             FROM
                 RankedProperties
             WHERE
@@ -344,7 +345,6 @@ class Device:
                 RankedProperties
             WHERE
                 row_num = 1
-            ORDER BY created DESC
         """.format(
             institution=institution.id,
             algorithm=institution.algorithm
@@ -375,8 +375,9 @@ class Device:
                   AND t1.uuid = '{uuid}'
                   AND t1.key IN ('CUSTOM_ID', '{algorithm}')
             )
-            SELECT DISTINCT
+            SELECT DISTINCT ON (value)
                 value
+                created
             FROM
                 RankedProperties
             WHERE
