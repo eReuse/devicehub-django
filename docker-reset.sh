@@ -26,8 +26,9 @@ main() {
         if [ "${IDHUB_ENABLED:-}" = 'true' ]; then
                 export COMPOSE_PROFILES='idhub'
         fi
-        # remove old database
+        # remove old databases
         rm -vfr ./db/*
+        docker volume rm DEVICEHUB_POSTGRES_DATA > /dev/null 2>&1 || true
         # deactivate configured flag
         rm -vfr ./already_configured
         docker compose down -v

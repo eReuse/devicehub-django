@@ -208,20 +208,21 @@ deploy() {
                 echo "DOMAIN: ${DOMAIN}"
         fi
 
-        # detect if existing deployment (TODO only works with sqlite)
-        if [ -f "${program_dir}/db/db.sqlite3" ]; then
-                echo "INFO: detected EXISTING deployment"
-                ./manage.py migrate
+
+        # Checks for migrations to see if db is initialized
+        if manage.py showmigrations >/dev/null 2>&1; then
+                    echo "INFO: detected EXISTING deployment"
+                    ./manage.py migrate
         else
-                # move the migrate thing in docker entrypoint
-                #   inspired by https://medium.com/analytics-vidhya/django-with-docker-and-docker-compose-python-part-2-8415976470cc
+
                 echo "INFO detected NEW deployment"
-                if [ ! -d "${program_dir}/db/" ]; then
-                        mkdir -p "${program_dir}/db/"
+                if [ "${DB_TYPE:-sqlite}" = "sqlite" ]; then
+                            mkdir -p "${program_dir}/db/"
                 fi
                 ./manage.py migrate
                 config_phase
         fi
+
 }
 
 runserver() {
