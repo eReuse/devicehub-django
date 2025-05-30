@@ -4,13 +4,30 @@
 {% block content %}
 {% include 'tabs.html' %}
 
+{% if new_devices %}
 <div class="row">
   <div class="col mt-2">
-    {% for d in new_devices %}
-    <span class="btn btn-yellow"><small class="text-body-secondary">{{ d|slice:":6"|upper }}</small></span>
-    {% endfor %}
+    <table class="table table-hover table-bordered align-middel">
+      <thead class="table-light">
+        <tr>
+          <th scope="col">{% trans 'shortId' %}</th>
+          <th scope="col">{% trans 'Beneficiary' %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for d in new_devices %}
+        <tr{% if d.1 %} class="btn-yellow"{% endif %}>
+          <td class="font-monospace">
+	    {{ d.0|slice:":6"|upper }}
+	  </td>
+          <td class="font-monospace">{{ d.1 }}</td>
+	</tr>
+	{% endfor %}
+      </tbody>
+    </table>
   </div>
 </div>
+{% endif %}
 
 {% if beneficiaries %}
 <div class="row mt-3">

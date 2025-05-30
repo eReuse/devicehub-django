@@ -726,12 +726,19 @@ class BeneficiaryView(DashboardLotMixing, BeneficiaryAgreementEmail, FormView):
             else:
                 beneficiaries = Beneficiary.objects.filter(lot=self.lot)
 
-        new_devices = self.request.session.get("devices")
+        new_devices = {}
+        for d in self.request.session.get("devices"):
+            d_ben = DeviceBeneficiary.objects.filter(
+                device_id=d,
+                beneficiary__lot=self.lot
+            ).first()
+            new_devices[d] = d_ben.beneficiary.email if d_ben else ''
+
         context.update({
             'lot': self.lot,
             'beneficiaries': beneficiaries,
             "action": _("Add"),
-            "new_devices": new_devices
+            "new_devices": new_devices.items()
         })
         return context
 
@@ -813,6 +820,15 @@ class ListDevicesBeneficiaryView(DashboardLotMixing, BeneficiaryEmail, FormView)
     breadcrumb = "Lot / Beneficiary / Devices"
     lot = None
 
+    def get(self, *args, **kwargs):
+        res = super().get(*args, **kwargs)
+        # import pdb; pdb.set_trace()
+        if not self.beneficiary.devicebeneficiary_set.first():
+            url = reverse_lazy("dashboard:lot", args=[self.beneficiary.lot.id])
+            return redirect(url)
+
+        return res
+
     def get_form_class(self):
         return modelformset_factory(
             DeviceBeneficiary,
@@ -828,6 +844,8 @@ class ListDevicesBeneficiaryView(DashboardLotMixing, BeneficiaryEmail, FormView)
 
         for f in formset:
             f.device = Device(id=f.instance.device_id)
+            choices = f.fields['status'].choices
+            f.fields['status'].choices = choices[1:]
 
         return formset
 
@@ -1035,6 +1053,15 @@ class WebBeneficiaryView(WebMixing, FormView):
     template_name = "beneficiary_web.html"
     model = Beneficiary
     form_class = PlaceReturnDeviceForm
+
+    def get(self, *args, **kwargs):
+        res = super().get(*args, **kwargs)
+        if not self.object.sign_conditions:
+            url = reverse_lazy("lot:agreement_beneficiary", args=[
+                self.object.lot.id, self.object.id])
+            return redirect(url)
+
+        return res
 
     def get_chids(self):
         return self.object.devicebeneficiary_set.all().values_list(
