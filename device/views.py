@@ -27,6 +27,9 @@ if settings.DPP:
     from dpp.api_dlt import PROOF_TYPE
 
 
+logger = logging.getLogger(__name__)
+
+
 class DeviceLogMixin(DashboardView):
 
     def log_registry(self, _uuid, msg):
@@ -103,9 +106,13 @@ class DetailsView(DashboardView, TemplateView):
                 dpp = "{}:{}".format(self.pk, x.signature)
                 dpps.append((dpp, x.signature[:10], x))
         # TODO Specify algorithm via dropdown, if not specified, use default.
-        enviromental_impact_algorithm = FactoryEnvironmentImpactAlgorithm.run_environmental_impact_calculation()
-        enviromental_impact = enviromental_impact_algorithm.get_device_environmental_impact(
+        try:
+            enviromental_impact_algorithm = FactoryEnvironmentImpactAlgorithm.run_environmental_impact_calculation()
+            enviromental_impact = enviromental_impact_algorithm.get_device_environmental_impact(
             self.object)
+        except Exception as err:
+            logger.error(err)
+            enviromental_impact = None
         last_evidence = self.object.get_last_evidence()
         uuids = self.object.uuids
         state_definitions = StateDefinition.objects.filter(
