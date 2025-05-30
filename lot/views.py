@@ -727,7 +727,7 @@ class BeneficiaryView(DashboardLotMixing, BeneficiaryAgreementEmail, FormView):
                 beneficiaries = Beneficiary.objects.filter(lot=self.lot)
 
         new_devices = {}
-        for d in self.request.session.get("devices"):
+        for d in self.request.session.get("devices", []):
             d_ben = DeviceBeneficiary.objects.filter(
                 device_id=d,
                 beneficiary__lot=self.lot
