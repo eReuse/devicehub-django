@@ -21,9 +21,33 @@ class BuildMix:
         self.version = ""
         self.default = ""
         self.algorithms = {}
+        data = self.json.get("data", {})
         if not self.uuid:
-            logger.error("snapshot without UUID. Software {}".format(self.json.get("software")))
-            return
+            vc_uuid = self.json.get("credentialSubject", {}).get("uuid")
+            if not vc_uuid:
+                txt = "snapshot without UUID. Software {}".format(
+                    self.json.get("software")
+                )
+                logger.error(txt)
+                raise Exception(txt)
+            else:
+                evidence = self.json.get("evidence", [])
+                if len(evidence) < 3:
+                    txt = "snapshot without dmidecode and inxi datas"
+                    logger.error(txt)
+                    raise Exception(txt)
+
+                data["dmidecode"] = evidence[0]
+                data["inxi"] = evidence[2]
+
+        dmidecode_raw = data.get("dmidecode")
+        inxi_raw = data.get("inxi")
+        device = self.json.get("device")
+        if not dmidecode_raw and not inxi_raw and not device:
+            txt = "snapshot without dmidecode and inxi datas"
+            logger.error(txt)
+            raise Exception(txt)
+
         self.get_details()
         self.generate_chids()
 
