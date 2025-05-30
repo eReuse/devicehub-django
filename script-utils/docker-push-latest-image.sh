@@ -7,13 +7,24 @@ set -u
 # DEBUG
 set -x
 
+# detect inconsistency between tag and branch
+#   (it should be the same)
 _check_tag() {
-        if [ ! "${tag}" = "${DEVICEHUB_DOCKER_TAG}" ]; then
+        local var_name="${1}"
+        local branch_tag="${2}"
+        eval local env_tag=\$$var_name
+
+        # exception, stable tag is for main branch
+        if [ "${env_tag}" = "stable" ]; then
+                env_tag=main
+        fi
+
+        if [ "${branch_tag}" != "${env_tag}" ]; then
                 set +x
                 printf "ERROR: ABORTED: mismatch between:\n"
                 printf "%-20s %-25s %s\n" "var" "value" "location"
-                printf "%-20s %-25s %s\n" "tag" "issue_261__dpp_v3" "retrieved from git branch"
-                printf "%-20s %-25s %s\n" "IDHUB_DOCKER_TAG" "issue_261__dpp_v3AA" "retrieved from .env env vars file"
+                printf "%-20s %-25s %s\n" "branch tag" "${branch_tag}" "retrieved from git branch"
+                printf "%-20s %-25s %s\n" "${var_name}" "${env_tag}" "retrieved from .env env vars file"
                 set -x
                 exit 1
         fi
@@ -21,17 +32,19 @@ _check_tag() {
 
 _proc() {
         name="${1}"
-        #registry_url="farga.pangea.org/ereuse/${name}:${tag}"
 
         . ./.env
-        _check_tag
+        _check_tag 'DEVICEHUB_DOCKER_TAG' "${branch}"
 
         registry_url="ghcr.io/ereuse/${name}:${tag}"
-        docker compose build ${name} 
+        docker compose build ${name}
         docker push "${registry_url}"
 }
 
 main() {
+        cd "$(dirname "${0}")"
+        cd ..
+
         branch="$(git branch --show-current)"
         tag="${tag:-$branch}"
 
@@ -49,4 +62,3 @@ main "${@:-}"
 
 # written in emacs
 # -*- mode: shell-script; -*-
-

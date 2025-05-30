@@ -30,20 +30,27 @@ wait_for_dpp_shared() {
 # 3. Generate an environment .env file.
 # TODO cargar via shared
 gen_env_vars() {
-        INIT_ORG="${INIT_ORG:-example-org}"
-        INIT_USER="${INIT_USER:-user@example.org}"
-        INIT_PASSWD="${INIT_PASSWD:-1234}"
-        ADMIN='True'
-        DEMO_PREDEFINED_TOKEN="${DEMO_PREDEFINED_TOKEN:-}"
+        INIT_ORG="${DEVICEHUB_INIT_ORG:-example-org}"
+        INIT_USER="${DEVICEHUB_INIT_ADMIN_EMAIL:-user@example.org}"
+        INIT_PASSWD="${DEVICEHUB_INIT_ADMIN_PASSWORD:-1234}"
+        IS_ADMIN='True'
+        DEMO_PREDEFINED_TOKEN="${DEVICEHUB_DEMO_PREDEFINED_TOKEN:-}"
+
+        detect_app_version
+
+        if [ "${DEVICEHUB_DEBUG:-}" = 'true' ]; then
+                ${_RUN} ./manage.py print_settings
+        fi
+
         # specific dpp env vars
-        if [ "${DPP:-}" = 'true' ]; then
+        if [ "${DEVICEHUB_DPP:-}" = 'true' ]; then
                 # fill env vars in this docker entrypoint
                 wait_for_dpp_shared
-                export API_DLT='http://api_connector:3010'
-                export API_DLT_TOKEN="$(cat "/shared/${OPERATOR_TOKEN_FILE}")"
-                export API_RESOLVER='http://id_index_api:3012'
+                export DEVICEHUB_API_DLT='http://api_connector:3010'
+                export DEVICEHUB_API_DLT_TOKEN="$(cat "/shared/${OPERATOR_TOKEN_FILE}")"
+                export DEVICEHUB_API_RESOLVER='http://id_index_api:3012'
                 # TODO hardcoded
-                export ID_FEDERATED='DH1'
+                export DEVICEHUB_ID_FEDERATED='DH1'
         fi
 }
 
@@ -89,11 +96,11 @@ config_dpp_part1() {
                 # TODO when this runs more than one time per service, this is a problem, but for the docker-reset.sh workflow, that's fine
                 # TODO put this in already_configured
                 # TODO hardcoded http proto and port
-                ./manage.py dlt_insert_members "http://${DEVICEHUB_HOST}:8000"
+                ${_RUN} ./manage.py dlt_insert_members "http://${DEVICEHUB_HOST}:8000"
         fi
 
         # 13. Do a rsync api resolve
-        ./manage.py dlt_rsync_members
+        ${_RUN} ./manage.py dlt_rsync_members
 
         # 14. Register a new user to the DLT
         DATASET_FILE='/tmp/dataset.json'
@@ -104,7 +111,7 @@ config_dpp_part1() {
   "api_token": "${API_DLT_TOKEN}"
 }
 END
-        ./manage.py dlt_register_user "${DATASET_FILE}"
+        ${_RUN} ./manage.py dlt_register_user "${DATASET_FILE}"
 }
 
 # wait until idhub api is prepared to received requests
@@ -157,39 +164,37 @@ run_demo() {
                         echo 'ERROR: Credential not signed'
                 fi
         fi
-        ./manage.py create_default_states "${INIT_ORG}"
+        ${_RUN} ./manage.py create_default_states "${INIT_ORG}"
         # create demo data to play with users for B2B B2C interactions
-        ./manage.py load_demo_data
-        /usr/bin/time ./manage.py up_snapshots example/snapshots/ "${INIT_USER}"
+        ${_RUN} ./manage.py load_demo_data
+        ${_RUN} /usr/bin/time ./manage.py up_snapshots example/snapshots/ "${INIT_USER}"
 }
 
-config_phase() {
-        # TODO review this flag file
-        init_flagfile="${program_dir}/already_configured"
-        if [ ! -f "${init_flagfile}" ]; then
+init_db() {
+        echo "INFO: INIT DEVICEHUB DATABASE"
 
-                # non DL user (only for the inventory)
-                ./manage.py add_institution "${INIT_ORG}"
-                # TODO: one error on add_user, and you don't add user anymore
-                ./manage.py add_user "${INIT_ORG}" "${INIT_USER}" "${INIT_PASSWD}" "${ADMIN}" "${DEMO_PREDEFINED_TOKEN}"
+        # move the migrate thing in docker entrypoint
+        #   inspired by https://medium.com/analytics-vidhya/django-with-docker-and-docker-compose-python-part-2-8415976470cc
+        ${_RUN} ./manage.py migrate
 
-                if [ "${DPP:-}" = 'true' ]; then
-                        # 12, 13, 14
-                        config_dpp_part1
+        # non DL user (only for the inventory)
+        ${_RUN} ./manage.py add_institution "${INIT_ORG}"
+        # TODO: one error on add_user, and you don't add user anymore
+        ${_RUN} ./manage.py add_user "${INIT_ORG}" "${INIT_USER}" "${INIT_PASSWD}" "${IS_ADMIN}" "${DEMO_PREDEFINED_TOKEN}"
 
-                        # cleanup other snapshots and copy dlt/dpp snapshots
-                        # TODO make this better
-                        rm example/snapshots/*
-                        cp example/dpp-snapshots/*.json example/snapshots/
-                fi
+        if [ "${DPP:-}" = 'true' ]; then
+                # 12, 13, 14
+                config_dpp_part1
 
-                # # 15. Add inventory snapshots for user "${INIT_USER}".
-                if [ "${DEMO:-}" = 'true' ]; then
-                        run_demo
-                fi
+                # cleanup other snapshots and copy dlt/dpp snapshots
+                # TODO make this better
+                rm example/snapshots/*
+                cp example/dpp-snapshots/*.json example/snapshots/
+        fi
 
-                # remain next command as the last operation for this if conditional
-                touch "${init_flagfile}"
+        # # 15. Add inventory snapshots for user "${INIT_USER}".
+        if [ "${DEVICEHUB_DEMO:-}" = 'true' ]; then
+                run_demo
         fi
 }
 
@@ -199,69 +204,113 @@ check_app_is_there() {
         fi
 }
 
-deploy() {
-
-        if [ ! -w . ]; then
-                echo "ERROR: Permission denied for docker user 1000. This docker container was designed to be setup with user 1000, which correspond to default linux user. Hence not root user, or any other specific linux user. Sorry. We would like to fix this better and soon."
-                echo "  detail: docker user is 1000, but directory permissions are:"
-                echo "    $(stat . | grep Uid)"
+usage() {
+                cat <<END
+ERROR: I don't have access to app source code (particularly, ${APP_DIR}/manage.py), review docker volumes, users and permissions
+END
                 exit 1
-        fi
+}
 
-        if [ -d /opt/devicehub-django/.git ]; then
-                # TODO this is weird, find better workaround
-                git config --global --add safe.directory "${program_dir}"
-                export COMMIT=$(git log --format="%H %ad" --date=iso -n 1)
-        fi
-
-        if [ "${DEBUG:-}" = 'true' ]; then
-                ./manage.py print_settings
+detect_app_version() {
+        if [ -d "${APP_DIR}/.git" ]; then
+                export DEVICEHUB_COMMIT="$(${_RUN} git log --format="%H %ad" --date=iso -n 1)"
         else
-                echo "DEVICEHUB_HOST: ${DEVICEHUB_HOST}"
-        fi
-
-        # detect if existing deployment (TODO only works with sqlite)
-        if [ -f "${program_dir}/db/db.sqlite3" ]; then
-                echo "INFO: detected EXISTING deployment"
-                ./manage.py migrate
-        else
-                # move the migrate thing in docker entrypoint
-                #   inspired by https://medium.com/analytics-vidhya/django-with-docker-and-docker-compose-python-part-2-8415976470cc
-                echo "INFO detected NEW deployment"
-                if [ ! -d "${program_dir}/db/" ]; then
-                        mkdir -p "${program_dir}/db/"
-                fi
-                ./manage.py migrate
-                config_phase
+                # TODO if software is packaged in setup.py and/or pyproject.toml we can get from there the version
+                #   then we might want to distinguish prod version (stable version) vs development (commit/branch)
+                export DEVICEHUB_COMMIT="version: unknown (reason: git undetected)"
         fi
 }
 
-runserver() {
-        PORT="${PORT:-8000}"
-        if [ "${DEBUG:-}" = 'true' ]; then
-                ./manage.py runserver 0.0.0.0:${PORT}
+manage_db() {
+        if [ "${DEVICEHUB_DB_TYPE:-}" = "postgres" ]; then
+                echo "INFO: WAITING DATABASE CONNECTIVITY"
+                set +x
+                #   https://github.com/docker-library/postgres/issues/146#issuecomment-213545864
+                #   https://github.com/docker-library/postgres/issues/146#issuecomment-2905869196
+                while ! pg_isready -h "${DEVICEHUB_POSTGRES_HOST}"; do
+                        sleep 1
+                done
+                set -x
+                echo "INFO: DATABASE CONNECTIVITY OK"
+        fi
+
+        if [ "${DEVICEHUB_REMOVE_DATA}" = "true" ]; then
+                echo "INFO: REMOVE DEVICEHUB DATABASE (reason: DEVICEHUB_REMOVE_DATA is equal to true)"
+                # https://django-extensions.readthedocs.io/en/latest/reset_db.html
+                # https://github.com/django-cms/django-cms/issues/5921#issuecomment-343658455
+                ${_RUN} ./manage.py reset_db --close-sessions --noinput
         else
-                # TODO
-                #./manage.py collectstatic
-                true
-                if [ "${EXPERIMENTAL:-}" ]; then
-                        # TODO
-                        # reloading on source code changing is a debugging future, maybe better then use debug
-                        #   src https://stackoverflow.com/questions/12773763/gunicorn-autoreload-on-source-change/24893069#24893069
-                        # gunicorn with 1 worker, with more than 1 worker this is not expected to work
-                        #gunicorn --access-logfile - --error-logfile - -b :${PORT} trustchain_idhub.wsgi:application
-                        true
-                else
-                        ./manage.py runserver 0.0.0.0:${PORT}
+                echo "INFO: PRESERVE DEVICEHUB DATABASE"
+        fi
+
+        # detect if is an existing deployment
+        if ${_RUN} ./manage.py showmigrations --plan \
+                        | grep -F -q '[X]  user.0001_initial'; then
+                echo "INFO: detected EXISTING deployment"
+                ${_RUN} ./manage.py migrate
+        else
+                echo "INFO detected NEW deployment"
+                init_db
+        fi
+}
+
+_detect_proper_user() {
+        # src https://denibertovic.com/posts/handling-permissions-with-docker-volumes/
+        #   via https://github.com/moby/moby/issues/22258#issuecomment-293664282
+        #   related https://github.com/moby/moby/issues/2259
+
+        # user of current dir
+        USER_ID="$(stat -c "%u" .)"
+        if [ "${USER_ID}" = "0" ]; then
+                APP_USER="root"
+        else
+                APP_USER="${APP}"
+                if ! id -u "${APP_USER}" >/dev/null 2>&1; then
+                        useradd --shell /bin/bash -u ${USER_ID} -o -c "" -m ${APP_USER}
                 fi
+        fi
+        printf "${APP_USER}" > /app_user
+        _RUN="gosu ${APP_USER}"
+}
+
+_prepare() {
+        APP=devicehub-django
+        _detect_proper_user
+        # docker create root owned volumes, it is our job to map it to
+        #   the right user
+        chown -R ${APP_USER}: "${DEVICEHUB_MEDIA_ROOT}"
+        chown -R ${APP_USER}: "${DEVICEHUB_STATIC_ROOT}"
+        chown -R ${APP_USER}: "${DEVICEHUB_EVIDENCES_DIR}"
+        chown -R ${APP_USER}: "${DEVICEHUB_BACKUPS_DIR}"
+        APP_DIR="/opt/${APP}"
+        cd "${APP_DIR}"
+}
+
+runserver() {
+        PORT="${DEVICEHUB_PORT:-8000}"
+
+        # this check might be nice, but not on every execution
+        #${_RUN} ./manage.py check --deploy
+
+        if [ "${DEVICEHUB_DEBUG:-}" = "false" ]; then
+                ${_RUN} ./manage.py collectstatic --noinput
+                # reloading on source code changing is a debugging future, maybe better then use debug
+                #   src https://stackoverflow.com/questions/12773763/gunicorn-autoreload-on-source-change/24893069#24893069
+                gunicorn --access-logfile - --error-logfile - -b :${PORT} dhub.wsgi:application
+        else
+                ${_RUN} ./manage.py runserver 0.0.0.0:${PORT}
         fi
 }
 
 main() {
-        program_dir='/opt/devicehub-django'
-        cd "${program_dir}"
+        _prepare
+
+        check_app_is_there
+
         gen_env_vars
-        deploy
+
+        manage_db
+
         runserver
 }
 
