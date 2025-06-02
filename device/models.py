@@ -157,13 +157,10 @@ class Device:
                 WHERE t1.owner_id = {institution}
                   AND t1.key IN ('CUSTOM_ID', '{algorithm}')
             )
-            SELECT DISTINCT ON (value)
-                value
-                created
-            FROM
-                RankedProperties
-            WHERE
-                row_num = 1
+            SELECT value, MAX(created) as created
+            FROM RankedProperties
+            WHERE row_num = 1
+            GROUP BY value
             ORDER BY created DESC
         """.format(
             institution=institution.id,
@@ -245,13 +242,10 @@ class Device:
                   AND t1.owner_id = {institution}
                   AND t1.key IN ('CUSTOM_ID', '{algorithm}')
             )
-            SELECT DISTINCT ON (value)
-                value
-                created
-            FROM
-                RankedProperties
-            WHERE
-                row_num = 1
+            SELECT value, MAX(created) as created
+            FROM RankedProperties
+            WHERE row_num = 1
+            GROUP BY value
             ORDER BY created DESC
         """.format(
             institution=institution.id,
@@ -331,13 +325,10 @@ class Device:
                   AND t1.uuid = '{uuid}'
                   AND t1.key IN ('CUSTOM_ID', '{algorithm}')
             )
-            SELECT DISTINCT ON (value)
-                value
-                created
-            FROM
-                RankedProperties
-            WHERE
-                row_num = 1
+            SELECT value, MAX(created) as created
+            FROM RankedProperties
+            WHERE row_num = 1
+            GROUP BY value
             ORDER BY created DESC
         """.format(
             uuid=uuid.replace("-", ""),
