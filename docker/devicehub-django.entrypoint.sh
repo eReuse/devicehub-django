@@ -210,11 +210,10 @@ deploy() {
 
 
         # Checks for migrations to see if db is initialized
-        if manage.py showmigrations >/dev/null 2>&1; then
-                    echo "INFO: detected EXISTING deployment"
-                    ./manage.py migrate
+        if ./manage.py check_populated_db >/dev/null 2>&1; then
+            echo "INFO: detected EXISTING deployment"
+            ./manage.py migrate
         else
-
                 echo "INFO detected NEW deployment"
                 if [ "${DB_TYPE:-sqlite}" = "sqlite" ]; then
                             mkdir -p "${program_dir}/db/"
