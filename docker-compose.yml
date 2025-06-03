@@ -24,7 +24,7 @@ services:
       - DB_PASSWORD=${DB_PASSWORD}
     # TODO manage volumes dev vs prod
     volumes:
-      - .:/opt/devicehub-django
+      - ${DEVICEHUB_VOLUME:-.:/opt/devicehub}
     ports:
       - ${DEVICEHUB_PORT:-8000}:${DEVICEHUB_PORT:-8000}
     depends_on:

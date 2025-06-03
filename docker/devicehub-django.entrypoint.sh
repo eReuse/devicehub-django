@@ -153,6 +153,7 @@ run_demo() {
 
 config_phase() {
         # TODO review this flag file
+        # check_populated_db command should work on all db backends
         init_flagfile="${program_dir}/already_configured"
         if [ ! -f "${init_flagfile}" ]; then
 
