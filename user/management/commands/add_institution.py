@@ -16,12 +16,20 @@ class Command(BaseCommand):
             choices={'en', 'es', 'ca'},
             help=_('Language code for default tags (en/es/ca)'),
         )
+        parser.add_argument(
+            '--demo', '-d',
+            action='store_true',
+            default=False,
+            help=_('Load initial demo lots'),
+        )
 
     def handle(self, *args, **kwargs):
         self.institution = Institution.objects.create(name=kwargs['name'])
         lang_code = kwargs['language']
         self.create_lot_tags(lang_code)
-        self.create_lots()
+
+        if kwargs['demo']:
+            self.create_lots()
 
     def create_lot_tags(self, lang_code):
         _tags = {

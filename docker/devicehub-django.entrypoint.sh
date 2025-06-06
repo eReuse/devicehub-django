@@ -171,7 +171,14 @@ config_phase() {
         if [ ! -f "${init_flagfile}" ]; then
 
                 # non DL user (only for the inventory)
-                ./manage.py add_institution "${INIT_ORG}" --language "${LANG_DEFAULT_DATA}"
+
+                 if [ "$DEMO" = "true" ]; then
+
+                 ./manage.py add_institution "${INIT_ORG}" --language "${LANG_DEFAULT_DATA}" --demo
+                 else
+                         ./manage.py add_institution "${INIT_ORG}" --language "${LANG_DEFAULT_DATA}"
+                 fi
+
                 # TODO: one error on add_user, and you don't add user anymore
                 ./manage.py add_user "${INIT_ORG}" "${INIT_USER}" "${INIT_PASSWD}" "${ADMIN}" "${DEMO_PREDEFINED_TOKEN}"
 
