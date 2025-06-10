@@ -87,7 +87,7 @@ config_dpp_part1() {
                 # TODO when this runs more than one time per service, this is a problem, but for the docker-reset.sh workflow, that's fine
                 # TODO put this in already_configured
                 # TODO hardcoded http proto and port
-                ./manage.py dlt_insert_members "http://${DOMAIN}:8000"
+                ./manage.py dlt_insert_members "http://${DEVICEHUB_HOST}:8000"
         fi
 
         # 13. Do a rsync api resolve
@@ -205,7 +205,7 @@ deploy() {
         if [ "${DEBUG:-}" = 'true' ]; then
                 ./manage.py print_settings
         else
-                echo "DOMAIN: ${DOMAIN}"
+                echo "DEVICEHUB_HOST: ${DEVICEHUB_HOST}"
         fi
 
         # detect if existing deployment (TODO only works with sqlite)
