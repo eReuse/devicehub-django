@@ -234,6 +234,14 @@ class UpdateLotTagOrderView(AdminView, TemplateView):
         else:
             return Http404
 
+class RegistryView(AdminView, TemplateView):
+    template_name = "admin_registry.html"
+    title = _("Registry")
+    breadcrumb = _("admin / Registry") + " /"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
 
 class InstitutionView(AdminView, UpdateView):
     template_name = "institution.html"

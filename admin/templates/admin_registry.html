@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+<div class="row">
+  <div class="col">
+    <h3>{{ subtitle }}</h3>
+  </div>
+</div>
+
+<p>Check user roles: NOT IMPLEMENTED</p>
+
+<div class="row">
+  <div class="col">
+    <a href="http://example.org" target="_blank" class="btn btn-green-admin">
+      {% translate "Connect" %}
+    </a>
+  </div>
+</div>
+
+{% endblock %}

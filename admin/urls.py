@@ -20,4 +20,5 @@ urlpatterns = [
     path("lot/delete/<int:pk>", views.DeleteLotTagView.as_view(), name='delete_lot_tag'),
     path("lot/edit/<int:pk>/", views.UpdateLotTagView.as_view(), name='edit_lot_tag'),
     path("lot/update_order/", views.UpdateLotTagOrderView.as_view(), name='update_lot_tag_order'),
+    path("registry/", views.RegistryView.as_view(), name="registry"),
 ]
