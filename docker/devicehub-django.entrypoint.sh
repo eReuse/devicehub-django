@@ -152,34 +152,27 @@ run_demo() {
 }
 
 config_phase() {
-        # TODO review this flag file
-        # check_populated_db command should work on all db backends
-        init_flagfile="${program_dir}/already_configured"
-        if [ ! -f "${init_flagfile}" ]; then
 
-                # non DL user (only for the inventory)
-                ./manage.py add_institution "${INIT_ORG}"
-                # TODO: one error on add_user, and you don't add user anymore
-                ./manage.py add_user "${INIT_ORG}" "${INIT_USER}" "${INIT_PASSWD}" "${ADMIN}" "${PREDEFINED_TOKEN}"
+        # non DL user (only for the inventory)
+        ./manage.py add_institution "${INIT_ORG}"
+        # TODO: one error on add_user, and you don't add user anymore
+        ./manage.py add_user "${INIT_ORG}" "${INIT_USER}" "${INIT_PASSWD}" "${ADMIN}" "${PREDEFINED_TOKEN}"
 
-                if [ "${DPP:-}" = 'true' ]; then
-                        # 12, 13, 14
-                        config_dpp_part1
+        if [ "${DPP:-}" = 'true' ]; then
+                # 12, 13, 14
+                config_dpp_part1
 
-                        # cleanup other snapshots and copy dlt/dpp snapshots
-                        # TODO make this better
-                        rm example/snapshots/*
-                        cp example/dpp-snapshots/*.json example/snapshots/
-                fi
-
-                # # 15. Add inventory snapshots for user "${INIT_USER}".
-                if [ "${DEMO:-}" = 'true' ]; then
-                        run_demo
-                fi
-
-                # remain next command as the last operation for this if conditional
-                touch "${init_flagfile}"
+                # cleanup other snapshots and copy dlt/dpp snapshots
+                # TODO make this better
+                rm example/snapshots/*
+                cp example/dpp-snapshots/*.json example/snapshots/
         fi
+
+        # # 15. Add inventory snapshots for user "${INIT_USER}".
+        if [ "${DEMO:-}" = 'true' ]; then
+                run_demo
+        fi
+
 }
 
 check_app_is_there() {
