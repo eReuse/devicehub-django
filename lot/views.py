@@ -1,3 +1,6 @@
+import ast
+import logging
+
 from django.db import IntegrityError
 from django.urls import reverse_lazy
 from django.shortcuts import get_object_or_404, redirect, Http404, render
@@ -5,7 +8,7 @@ from django.contrib import messages
 from django.core.cache import cache
 from django.utils.translation import gettext_lazy as _
 from django.db.models import Q, Count, Case, When, IntegerField
-from django.views.generic.base import TemplateView
+from django.views.generic.base import TemplateView, View
 from django.views.generic.edit import (
     CreateView,
     DeleteView,
@@ -15,8 +18,14 @@ from django.views.generic.edit import (
 from django_tables2 import SingleTableView
 from dashboard.mixins import DashboardView
 from lot.tables import LotTable
+from device.models import Device
+from evidence.models import SystemProperty
 from lot.models import Lot, LotTag, LotProperty
 from lot.forms import LotsForm
+
+
+logger = logging.getLogger(__name__)
+
 
 class LotSuccessUrlMixin():
     success_url = reverse_lazy('dashboard:unassigned')
@@ -178,18 +187,38 @@ class AddToLotView(DashboardView, FormView):
         form.devices = self.get_session_devices()
         form.save()
         response = super().form_valid(form)
+        messages.success(self.request, _("Devices assigned to Lot."))
         return response
 
+    def get_success_url(self):
+        return reverse_lazy('dashboard:lot', args=[self.request.POST.getlist('lots')[0]])
 
-class DelToLotView(AddToLotView):
-    title = _("Remove from lots")
-    breadcrumb = "lot / remove from lots"
 
-    def form_valid(self, form):
-        form.devices = self.get_session_devices()
-        form.remove()
-        response = super().form_valid(form)
-        return response
+class DelToLotView(DashboardView, View):
+    #DashboardView will redirect to a GET method
+    def get(self, request, *args, **kwargs):
+        lot_id = self.kwargs.get('pk')
+        selected_devices = self.get_session_devices()
+
+        if not selected_devices:
+            messages.error(request, _("No devices selected"))
+            return redirect(reverse_lazy('dashboard:lot', kwargs={'pk': lot_id}))
+        try:
+            lot = Lot.objects.filter(
+                id=lot_id,
+            ).first()
+
+            for dev in selected_devices:
+                    lot.remove(dev.id)
+            msg = _("Successfully unassigned %d devices from the lot")
+            messages.success(request, msg % len(selected_devices))
+
+        except Exception as e:
+            messages.error(
+                request,
+                _("Error unassigning devices: %s") % str(e))
+
+        return redirect(reverse_lazy('dashboard:lot', kwargs={'pk': lot_id}))
 
 
 class LotsTagsView(DashboardView, SingleTableView):
@@ -307,7 +336,7 @@ class AddLotPropertyView(DashboardView, CreateView):
     def get_form_kwargs(self):
         pk = self.kwargs.get('pk')
         self.lot = get_object_or_404(Lot, pk=pk, owner=self.request.user.institution)
-        self.success_url = reverse_lazy('dashboard:properties', args=[pk])
+        self.success_url = reverse_lazy('lot:properties', args=[pk])
         kwargs = super().get_form_kwargs()
         return kwargs
 

@@ -2,6 +2,7 @@ from django.db import models, connection
 
 from utils.constants import ALGOS
 from evidence.models import SystemProperty, UserProperty, Evidence
+from django.utils.dateparse import parse_datetime
 from lot.models import DeviceLot
 from action.models import State
 
@@ -125,16 +126,59 @@ class Device:
     def last_uuid(self):
         if self.uuid:
             return self.uuid
+        else:
+            self.get_uuids()
+
         return self.uuids[0]
 
     def get_current_state(self):
-        uuid = self.last_uuid
-
+        uuid = self.last_uuid()
         return State.objects.filter(snapshot_uuid=uuid).order_by('-date').first()
 
     def get_lots(self):
         self.lots = [
             x.lot for x in DeviceLot.objects.filter(device_id=self.id)]
+
+    def matches_query(self, query):
+        if not query:
+            return True
+
+        #thanks ai for usage of lambda for lazy compute
+        details = {
+            'shortid': lambda d: str(d.shortid),
+            'type': lambda d: str(getattr(d, 'type', '')),
+            'manufacturer': lambda d: str(getattr(d, 'manufacturer', '')),
+            'model': lambda d: str(getattr(d, 'model', '')),
+            'current_state': lambda d: str(d.get_current_state()) if d.get_current_state() else '',
+            'serial': lambda d: str(getattr(d, 'serial_number', '')),
+            'cpu': lambda d: str(getattr(d, 'cpu', '')),
+            'total_ram': lambda d: str(getattr(d, 'total_ram', ''))
+        }
+
+        #if query ends with :some_field, only search on this field
+        if ':' in query:
+            search_part, field_part = query.rsplit(':', 1)
+            search_part = search_part.strip().lower()
+            field_part = field_part.strip().lower()
+
+            if field_part in details:
+                field_value = details[field_part](self).lower()
+                return search_part in field_value
+            return False
+
+        query = query.lower().strip()
+
+        for value in details.values():
+            if query in value(self).lower():
+                return True
+
+        for prop in self.get_user_properties():
+            if query in str(prop.key).lower():
+                return True
+            if query in str(prop.value).lower():
+                return True
+
+        return False
 
     @classmethod
     def get_all(cls, institution, offset=0, limit=None):
@@ -391,6 +435,23 @@ class Device:
         return self.last_evidence.get_model()
 
     @property
+    def cpu(self):
+        cpu_component = next(
+            (c for c in self.components if c.get('type') == 'Processor'),
+            None
+        )
+        cpu_model = cpu_component.get('model', '') if cpu_component else ""
+        return cpu_model
+
+    @property
+    def total_ram(self):
+        ram_component = next(
+            (c for c in self.components if c.get('type') == 'RamModule'),
+            None
+        )
+        return ram_component.get('total_ram', '') if ram_component else ""
+
+    @property
     def version(self):
         self.get_last_evidence()
         return self.last_evidence.get_version()
@@ -404,3 +465,81 @@ class Device:
     def did_document(self):
         self.get_last_evidence()
         return self.last_evidence.get_did_document()
+
+    def components_export(self):
+        self.get_last_evidence()
+
+        user_properties = ""
+        for x in self.get_user_properties():
+            user_properties += "({}:{}) ".format(x.key, x.value)
+
+        hardware_info = {
+            'ID': self.shortid or '',
+            'manufacturer': self.manufacturer or '',
+            'model': self.model or '',
+            'serial': '',
+            'cpu_model': '',
+            'cpu_cores': '',
+            'ram_total': '',
+            'ram_type': '',
+            'ram_slots': '',
+            'slots_used': '',
+            'drive': '',
+            'gpu_model': '',
+            'type': self.type,
+            'user_properties': user_properties,
+            'current_state': self.get_current_state().state if self.get_current_state() else '',
+            'last_updated': parse_datetime(self.updated) or ""
+        }
+
+        if not self.last_evidence.is_legacy or not self.last_evidence:
+            return hardware_info
+
+        storage_devices = []
+        gpu_models = []
+        slots_used = slots_total = 0
+
+        for c in self.components:
+            match c.get("type"):
+                case "Motherboard":
+                    hardware_info.update({
+                        'manufacturer': c.get("manufacturer", ""),
+                        'serial': c.get("serialNumber", ""),
+                        'ram_total': c.get("installedRam", ""),
+                    })
+                case "Processor":
+                    hardware_info.update({
+                        'cpu_cores': c.get("cores", ""),
+                        'cpu_model': c.get("model", "")
+                    })
+                case "RamModule":
+                    slots_total += 1
+                    if slots_used == 0:
+                        hardware_info.update({
+                            'ram_type': c.get("interface", "")
+                        })
+                    if c.get("interface", "") != "no module installed":
+                        slots_used += 1
+                case "Storage":
+                    if size := c.get("size", ""):
+                        storage_devices.append({
+                            'model': c.get("model", ""),
+                            'size': size,
+                            'type': c.get("interface", "")
+                        })
+                case "GraphicCard":
+                    if model := c.get("model", ""):
+                        gpu_models.append(model)
+
+        if storage_devices:
+            hardware_info['drive'] = ", ".join([f" {d['type']} {d['model']} ({d['size']} )"
+                                            for d in storage_devices])
+        if gpu_models:
+            hardware_info['gpu_model'] = ", ".join(gpu_models)
+
+        hardware_info.update({
+            'slots_used': slots_used,
+            'ram_slots': slots_total,
+        })
+
+        return hardware_info

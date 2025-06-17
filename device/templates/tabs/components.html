@@ -1,27 +1,40 @@
-
 {% load i18n %}
 
 <div class="tab-pane fade" id="components">
-    <h5 class="card-title">{% trans 'Components last evidence' %}
-    </h5>
-      <div class="list-group col-6">
-        {% for c in object.components %}
-          <div class="list-group-item">
-            <div class="d-flex w-100 justify-content-between">
-                <h5 class="mb-1">{{ c.type }}
-                </h5>
-                <small class="text-muted">{{ evidence.created }}
-                </small>
+    <h5 class="card-title mb-4">{% trans 'Components from last evidence' %}</h5>
+
+    <div class="container-fluid px-0">
+        <div class="row row-cols-1 row-cols-md-2 g-2">
+            {% for c in object.components %}
+            <div class="col">
+                <div class="card mb-0">
+                    <div class="card-header py-1 px-2 d-flex justify-content-between align-items-center">
+                        <span class="fw-bold">{{ c.type }}</span>
+                    </div>
+                    <div class="card-body py-1 px-2">
+                        {% if c.type == 'RamModule' and c.interface == 'no module installed' %}
+                            <div class="text-center py-1">
+                                <small class="text-muted fst-italic">{% trans "Empty memory Slot" %}
+                                <i class="bi bi-memory"></i>
+                                </small>
+                            </div>
+                        {% else %}
+                            <div class="row g-1">
+                                {% for k, v in c.items %}
+                                  {# TODO: show empty fields  #}
+                                    <div class="col-6">
+                                        <div class="d-flex">
+                                            <span class="text-muted text-bold me-1">{{ k }}:</span>
+                                            <span class="">{{ v }}</span>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
             </div>
-            <p class="mb-1">
-              {% for k, v in c.items %}
-                {% if k not in 'actions,type' %}
-                    {{ k }}: {{ v }}
-                    <br />
-                {% endif %}
-              {% endfor %}
-            </p>
-          </div>
-        {% endfor %}
-      </div>
+            {% endfor %}
+        </div>
     </div>
+</div>
