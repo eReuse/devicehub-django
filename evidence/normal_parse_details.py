@@ -16,7 +16,7 @@ def get_inxi_key(inxi, component):
 
 def get_inxi(n, name):
     for k, v in n.items():
-        if f"#{name}" in k:
+        if name == k.split("#")[-1]:
             return v
 
     return ""
@@ -97,10 +97,10 @@ class ParseSnapshot:
             mb["version"] = get_inxi(m, "v")
             mb["biosDate"] = bios_date
             mb["biosVersion"] = self.get_bios_version()
-            mb["firewire"]: self.get_firmware_num()
-            mb["pcmcia"]: self.get_pcmcia_num()
-            mb["serial"]: self.get_serial_num()
-            mb["usb"]: self.get_usb_num()
+            mb["firewire"] = self.get_firmware_num()
+            mb["pcmcia"] = self.get_pcmcia_num()
+            mb["serial"] = self.get_serial_num()
+            mb["usb"] = self.get_usb_num()
 
             self.get_ram_slots(mb)
 
@@ -108,13 +108,19 @@ class ParseSnapshot:
 
     def get_ram_slots(self, mb):
         memory = get_inxi_key(self.inxi, 'Memory') or []
+
+        total_ram = ""
         for m in memory:
+            if not total_ram:
+                total_ram = get_inxi(m, "total")
+
             slots = get_inxi(m, "slots")
             if not slots:
                 continue
             mb["slots"] = slots
             mb["ramSlots"] = get_inxi(m, "modules")
             mb["ramMaxSize"] = get_inxi(m, "capacity")
+        mb["installedRam"] = total_ram
 
 
     def get_cpu(self):
@@ -164,25 +170,25 @@ class ParseSnapshot:
 
     def get_ram(self):
         memory = get_inxi_key(self.inxi, 'Memory') or []
-        mem = {"type": "RamModule"}
+        total_ram = ""
+        ram_modules = []
 
         for m in memory:
-            base = get_inxi(m, "System RAM")
-            if base:
-                mem["size"] = get_inxi(m, "total")
-            slot = get_inxi(m, "manufacturer")
-            if slot:
-                mem["manufacturer"] = slot
-                mem["model"] = get_inxi(m, "part-no")
-                mem["serialNumber"] = get_inxi(m, "serial")
-                mem["speed"] = get_inxi(m, "speed")
-                mem["bits"] = get_inxi(m, "data")
-                mem["interface"] = get_inxi(m, "type")
-            module = get_inxi(m, "modules")
-            if module:
-                mem["modules"] = module
+            if get_inxi(m, "Device"):
+                module = {
+                    "type": "RamModule",
+                    "manufacturer": get_inxi(m, "manufacturer"),
+                    "model": get_inxi(m, "part-no"),
+                    "serialNumber": get_inxi(m, "serial"),
+                    "size": get_inxi(m, "size"),
+                    "speed": get_inxi(m, "speed"),
+                    "interface": get_inxi(m, "type"),
+                    "bits": get_inxi(m, "data"),
+                }
+                if any(module.values()):
+                    ram_modules.append(module)
 
-        self.components.append(mem)
+        self.components.extend(ram_modules)
 
     def get_graphic(self):
         graphics = get_inxi_key(self.inxi, 'Graphics') or []

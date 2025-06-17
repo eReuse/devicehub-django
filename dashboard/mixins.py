@@ -9,6 +9,9 @@ from device.models import Device
 from evidence.models import SystemProperty
 from lot.models import LotTag
 from action.models import StateDefinition
+from dashboard.tables import DeviceTable
+from django_tables2 import RequestConfig, SingleTableView
+from django.utils.dateparse import parse_datetime
 
 
 class Http403(PermissionDenied):
@@ -53,10 +56,11 @@ class DashboardView(LoginRequiredMixin):
         dev_ids = self.request.session.pop("devices", [])
 
         self._devices = []
-        for x in SystemProperty.objects.filter(value__in=dev_ids).filter(
-                owner=self.request.user.institution
-        ).distinct():
-            self._devices.append(Device(id=x.value))
+        dev_ids_list = SystemProperty.objects.filter(value__in=dev_ids)
+        dev_org = dev_ids_list.filter(owner=self.request.user.institution)
+        dev_org_set = set(x.value for x in dev_org)
+        for x in dev_org_set:
+            self._devices.append(Device(id=x))
         return self._devices
 
 
@@ -97,31 +101,94 @@ class InventaryMixin(DashboardView, TemplateView):
                 pass
         return super().get(request, *args, **kwargs)
 
+#    def get_context_data(self, **kwargs):
+#         #TODO: pagination for devices table is done on DeviceTableMixin
+#         context = super().get_context_data(**kwargs)
+#         limit = self.request.GET.get("limit")
+#         page = self.request.GET.get("page")
+#         try:
+#             limit = int(limit)
+#             page = int(page)
+#             if page < 1:
+#                 page = 1
+#             if limit < 1:
+#                 limit = 10
+#         except:
+#             limit = 10
+#             page = 1
+
+#         offset = (page - 1) * limit
+#         devices, count = self.get_devices(self.request.user, offset, limit)
+#         total_pages = (count + limit - 1) // limit
+
+#         context.update({
+#             'devices': devices,
+#             'count': count,
+#             "limit": limit,
+#             "offset": offset,
+#             "page": page,
+#             "total_pages": total_pages,
+#         })
+#         return context
+
+
+class DeviceTableMixin():
+    """Mixin to handle django-tables2 dict-based tables for Devices"""
+    paginate_by = 10
+    paginate_choices = [10, 20, 50, 100, 0]
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        limit = self.request.GET.get("limit")
-        page = self.request.GET.get("page")
-        try:
-            limit = int(limit)
-            page = int(page)
-            if page < 1:
-                page = 1
-            if limit < 1:
-                limit = 10
-        except:
-            limit = 10
-            page = 1
+        return self.configure_table(context)
 
+    def build_table_row(self, device):
+        current_state = device.get_current_state()
+        return {
+            'id': device.pk,
+            'shortid': device.shortid,
+            'type': device.type,
+            'manufacturer': getattr(device, 'manufacturer', ''),
+            'model': getattr(device, 'model', ''),
+            'version': getattr(device, 'version', ''),
+            'cpu': getattr(device, 'cpu', ''),
+            'current_state': current_state.state if current_state else '--',
+            'last_updated': parse_datetime(device.updated) if device.updated else "--"
+        }
+
+    def build_table_data(self, devices):
+        return [self.build_table_row(device) for device in devices]
+
+    def get_devices(self, user, offset=0, limit=None):
+        raise NotImplementedError
+
+    def configure_table(self, context):
+        """Configure and add table to context"""
+        limit = int(self.request.GET.get('limit', self.paginate_by))
+        page = int(self.request.GET.get('page', 1))
         offset = (page - 1) * limit
+
         devices, count = self.get_devices(self.request.user, offset, limit)
-        total_pages = (count + limit - 1) // limit
+        total_pages = (count + limit - 1) // limit if limit != 0 else 1
+
+        table_data = self.build_table_data(devices)
+        table = DeviceTable(table_data)
+
+        if limit != 0:
+            RequestConfig(self.request, paginate={'page': page, 'per_page': limit}).configure(table)
+        else:
+            RequestConfig(self.request, paginate=False).configure(table)
+
+        state_definitions = StateDefinition.objects.filter(
+            institution=self.request.user.institution
+        ).order_by('order')
 
         context.update({
-            'devices': devices,
+            'table': table,
             'count': count,
-            "limit": limit,
-            "offset": offset,
-            "page": page,
-            "total_pages": total_pages,
+            'limit': limit,
+            'page': page,
+            'total_pages': total_pages,
+            'paginate_choices': self.paginate_choices,
+            "state_definitions": state_definitions
         })
         return context
