@@ -6,6 +6,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic.edit import DeleteView, CreateView, UpdateView, FormView
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
+from dashboard.mixins import DashboardView
+from django.http import HttpResponseRedirect
 from action.models import State, StateDefinition, Note, DeviceLog
 from device.models import Device
 
@@ -41,6 +43,47 @@ class ChangeStateView(LoginRequiredMixin, FormView):
 
     def get_success_url(self):
         return self.request.META.get('HTTP_REFERER') or reverse_lazy('device:details')
+
+
+class BulkStateChangeView(DashboardView, View):
+    #DashboardView will redirect to a GET method
+    def get(self, request, *args, **kwargs):
+        state_id = self.kwargs.get('pk')
+        new_state = StateDefinition.objects.filter(id=state_id).first().state
+        selected_devices = self.get_session_devices()
+
+        if not selected_devices:
+            messages.error(request, _("No devices selected"))
+            return self.get_success_url()
+        try:
+            for dev in selected_devices:
+
+                message = _("<Created> State '{}'. Previous State: '{}'").format(new_state, dev.get_current_state().state if dev.get_current_state() else _("None") )
+                State.objects.create(
+                    snapshot_uuid=dev.last_uuid(),
+                    state=new_state,
+                    user=self.request.user,
+                    institution=self.request.user.institution,
+                )
+
+                DeviceLog.objects.create(
+                    snapshot_uuid=dev.last_uuid(),
+                    event=message,
+                    user=self.request.user,
+                    institution=self.request.user.institution,
+                )
+
+            messages.success(request,_("State changed Successfully"))
+
+        except Exception as e:
+            messages.error(
+                request,
+                _("Error changing state on devices: %s") % str(e))
+
+        return self.get_success_url()
+
+    def get_success_url(self):
+        return HttpResponseRedirect(self.request.META.get('HTTP_REFERER', 'dashboard:all'))
 
 
 class AddNoteView(LoginRequiredMixin, FormView):

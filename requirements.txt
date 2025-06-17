@@ -15,3 +15,5 @@ setuptools==65.5.1
 requests==2.32.3
 wheel==0.45.1
 markdown==3.7
+tablib==3.8.0
+tablib[xlsx]==3.8.0
