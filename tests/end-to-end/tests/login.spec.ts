@@ -7,7 +7,7 @@ const TEST_PASSWD = process.env.TEST_PASSWD || '1234'
 test('Login success', async ({ page }) => {
     await page.goto(TEST_SITE);
 
-    //await page.pause();
+    await page.pause();
     await page.getByPlaceholder('Email address').click();
     await page.getByPlaceholder('Email address').fill(TEST_USER);
     await page.getByPlaceholder('Password').fill(TEST_PASSWD);
