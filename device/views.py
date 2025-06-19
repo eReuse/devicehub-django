@@ -22,6 +22,9 @@ from evidence.models import UserProperty, SystemProperty
 from lot.models import LotTag
 from device.models import Device
 from device.forms import DeviceFormSet
+from evidence.models import SystemProperty
+from evidence.tables import EvidenceTable
+from django_tables2 import RequestConfig
 if settings.DPP:
     from dpp.models import Proof
     from dpp.api_dlt import PROOF_TYPE
@@ -76,11 +79,11 @@ class EditDeviceView(DashboardView, UpdateView):
         return kwargs
 
 
-class DetailsView(DashboardView, TemplateView):
+class DetailsView(DashboardView, TemplateView ):
     template_name = "details.html"
     title = _("Device")
     breadcrumb = "Device / Details"
-    model = SystemProperty
+    table_class = EvidenceTable
 
     def get(self, request, *args, **kwargs):
         self.pk = kwargs['pk']
@@ -115,6 +118,16 @@ class DetailsView(DashboardView, TemplateView):
             enviromental_impact = None
         last_evidence = self.object.get_last_evidence()
         uuids = self.object.uuids
+
+        ev_queryset = SystemProperty.objects.filter(
+            owner=self.request.user.institution,
+            key="ereuse24",
+            uuid__in=uuids
+        ).order_by("-created").values_list("uuid", "created").distinct()
+
+        evidence_table = EvidenceTable(ev_queryset)
+        RequestConfig(self.request).configure(evidence_table)
+
         state_definitions = StateDefinition.objects.filter(
             institution=self.request.user.institution
         ).order_by('order')
@@ -132,6 +145,7 @@ class DetailsView(DashboardView, TemplateView):
             "device_states": device_states,
             "device_logs": device_logs,
             "device_notes": device_notes,
+            "table": evidence_table,
         })
         return context
 
