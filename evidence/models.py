@@ -55,6 +55,7 @@ class UserProperty(Property):
 class Evidence:
     def __init__(self, uuid):
         self.uuid = uuid
+        self.uploaded_by = None
         self.owner = None
         self.doc = None
         self.created = None
@@ -78,6 +79,7 @@ class Evidence:
         a = self.properties.first()
         if a:
             self.owner = a.owner
+            self.uploaded_by = a.user
 
     def get_phid(self):
         if not self.doc:
@@ -229,7 +231,23 @@ class Evidence:
         return SystemProperty.objects.filter(
             owner=user.institution,
             key="ereuse24",
-        ).order_by("-created").values_list("uuid", "created").distinct()
+        ).order_by("-created").distinct()
+
+    @classmethod
+    def get_user_evidences(cls, user):
+        return SystemProperty.objects.filter(
+            owner=user.institution,
+            key="ereuse24",
+            user=user
+        ).order_by("-created").distinct()
+
+    @classmethod
+    def get_device_evidences(cls,user, uuids):
+        return SystemProperty.objects.filter(
+            owner=user.institution,
+            key="ereuse24",
+            uuid__in=uuids
+        ).order_by("-created").distinct()
 
     def set_components(self):
         self.components = ParseSnapshot(self.doc).components
