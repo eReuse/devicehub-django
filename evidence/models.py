@@ -55,6 +55,7 @@ class UserProperty(Property):
 class Evidence:
     def __init__(self, uuid):
         self.uuid = uuid
+        self.uploaded_by = None
         self.owner = None
         self.doc = None
         self.created = None
@@ -78,6 +79,7 @@ class Evidence:
         a = self.properties.first()
         if a:
             self.owner = a.owner
+            self.uploaded_by = a.user
 
     def get_phid(self):
         if not self.doc:
