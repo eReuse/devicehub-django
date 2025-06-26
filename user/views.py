@@ -9,8 +9,14 @@ from django.views.generic.edit import (
     FormView,
 )
 
+from user.models import User
 from user.forms import SettingsForm
 from api.models import Token
+from django_tables2 import RequestConfig
+from django.views.generic import DetailView
+from evidence.models import Evidence
+from evidence.tables import EvidenceTable
+from django.utils.html import format_html
 
 
 class PanelView(DashboardView, TemplateView):
@@ -48,3 +54,35 @@ class SettingsView(DashboardView, FormView):
         kwargs['tokens'] = tokens
         return kwargs
 
+
+class UserProfileView(DashboardView, DetailView):
+        template_name = 'user_profile.html'
+        model = User
+        title = _("")
+        breadcrumb = "User / profile"
+        context_object_name = 'profile_user'
+        slug_field = 'pk'
+        slug_url_kwarg = 'user_id'
+
+        def get_context_data(self, **kwargs):
+            if self.object.institution != self.request.user.institution:
+                raise Http403
+
+            context = super().get_context_data(**kwargs)
+            user = self.object
+
+            ev_queryset= Evidence.get_user_evidences(user)
+            evidence_table = EvidenceTable(ev_queryset)
+            RequestConfig(self.request, paginate={"per_page": 8}).configure(evidence_table)
+            context['ev_table'] = evidence_table
+
+            context['email_display'] = user.email
+            if self.request.user != user:
+                context['email_display'] = format_html(
+                    '<a href="mailto:{}" class="text-decoration-none">{}</a>',
+                    user.email,
+                    user.email
+                )
+
+            context['title'] = f"{user.first_name or user.email}'s Profile"
+            return context
