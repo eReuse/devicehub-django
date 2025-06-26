@@ -227,7 +227,15 @@ class Evidence:
         return SystemProperty.objects.filter(
             owner=user.institution,
             key="ereuse24",
-        ).order_by("-created").values_list("uuid", "created").distinct()
+        ).order_by("-created").distinct()
+
+    @classmethod
+    def get_user_evidences(cls, user):
+        return SystemProperty.objects.filter(
+            owner=user.institution,
+            key="ereuse24",
+            user=user
+        ).order_by("-created").distinct()
 
     def set_components(self):
         self.components = ParseSnapshot(self.doc).components
