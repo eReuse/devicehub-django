@@ -97,6 +97,11 @@ class User(AbstractBaseUser):
         # Simplest possible answer: Yes, always
         return True
 
+    def get_full_name(self):
+        if self.first_name:
+            return f"{self.first_name}{self.last_name}"
+        else: return _("None")
+
     @property
     def is_staff(self):
         "Is the user a member of staff?"
