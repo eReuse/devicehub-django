@@ -169,7 +169,7 @@ class AddToLotView(DashboardView, FormView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        lots = Lot.objects.filter(owner=self.request.user.institution)
+        lots = Lot.objects.filter(owner=self.request.user.institution).order_by('-updated')
         lot_tags = LotTag.objects.filter(owner=self.request.user.institution)
         context.update({
             'lots': lots,
@@ -252,11 +252,9 @@ class LotsTagsView(DashboardView, SingleTableView):
                 Q(code__icontains=self.search_query)
             )
 
-        sort = self.request.GET.get('sort')
-        if sort:
-            queryset = queryset.order_by(sort)
+        sort = self.request.GET.get('sort', '-updated')
+        return queryset.order_by(sort)
 
-        return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
