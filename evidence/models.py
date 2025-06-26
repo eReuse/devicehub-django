@@ -237,6 +237,14 @@ class Evidence:
             user=user
         ).order_by("-created").distinct()
 
+    @classmethod
+    def get_device_evidences(cls,user, uuids):
+        return SystemProperty.objects.filter(
+            owner=user.institution,
+            key="ereuse24",
+            uuid__in=uuids
+        ).order_by("-created").distinct()
+
     def set_components(self):
         self.components = ParseSnapshot(self.doc).components
 
