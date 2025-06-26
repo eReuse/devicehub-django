@@ -31,10 +31,15 @@ class ListEvidencesView(DashboardView, SingleTableView):
     table_class = EvidenceTable
     title = _("Evidences")
     breadcrumb = "Evidences"
-    paginate_by = 10
+    paginate_by = 13
 
     def get_queryset(self):
         return Evidence.get_all(self.request.user)
+
+    def get_table_kwargs(self):
+        return {
+            'exclude': ('did_document', )
+        }
 
 
 class UploadView(DashboardView, FormView):
