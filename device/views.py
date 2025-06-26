@@ -18,7 +18,7 @@ from django.views.generic.base import TemplateView
 from action.models import StateDefinition, State, DeviceLog, Note
 from dashboard.mixins import DashboardView, Http403
 from environmental_impact.algorithms.algorithm_factory import FactoryEnvironmentImpactAlgorithm
-from evidence.models import UserProperty, SystemProperty
+from evidence.models import UserProperty, SystemProperty, Evidence
 from lot.models import LotTag
 from device.models import Device
 from device.forms import DeviceFormSet
@@ -119,13 +119,9 @@ class DetailsView(DashboardView, TemplateView ):
         last_evidence = self.object.get_last_evidence()
         uuids = self.object.uuids
 
-        ev_queryset = SystemProperty.objects.filter(
-            owner=self.request.user.institution,
-            key="ereuse24",
-            uuid__in=uuids
-        ).order_by("-created").values_list("uuid", "created").distinct()
+        ev_queryset = Evidence.get_device_evidences(self.request.user, uuids)
+        evidence_table = EvidenceTable(ev_queryset, exclude =('device', ))
 
-        evidence_table = EvidenceTable(ev_queryset)
         RequestConfig(self.request).configure(evidence_table)
 
         state_definitions = StateDefinition.objects.filter(
