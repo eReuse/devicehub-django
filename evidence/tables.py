@@ -12,109 +12,173 @@ import logging
 logger = logging.getLogger('django')
 
 class EvidenceTable(tables.Table):
-    #always pass uuid
-    uuid = tables.Column(verbose_name=_("Evidence UUID"), accessor='0')
-    time = tables.Column(verbose_name=_("Upload Date"), accessor='1')
-    uploaded_by = tables.Column(verbose_name=_("Uploaded By"), accessor='0')
-    did_document = tables.Column(verbose_name=_("DID document"), accessor='0')
-    legacy = tables.Column(verbose_name=_("Legacy"), accessor='0')
+    uuid = tables.Column(verbose_name=_("UUID"),
+        attrs={
+            'th': {'class': 'text-start'},
+            'td': {'class': 'font-monospace text-start'}
+        },
+        orderable=False
+    )
 
+    created = tables.DateTimeColumn(
+        format="Y-m-d H:i",
+        verbose_name=_("Upload Date"),
+        attrs={
+            'th': {
+                'data-type': 'date',
+                'data-format': 'YYYY-MM-DD HH:mm'
+            },
+        },
+        orderable=True
+    )
+
+    uploaded_by = tables.Column(verbose_name=_("Uploaded by"),
+        accessor='user',
+        orderable=True
+    )
+
+    did_document = tables.Column(verbose_name=_("DID Document"), accessor="uuid")
+    legacy = tables.Column(verbose_name=_("Legacy"), accessor="uuid")
+    ev_type = tables.Column(verbose_name=_("Type"), accessor="uuid")
+    device = tables.Column(verbose_name=_("Device"), accessor="value")
 
     class Meta:
         attrs = {
-            'class': 'table table-hover align-middle',
+            'class': 'table table-hover table-bordered',
             'thead': {
-                'class': 'table-light'
+                'class': 'table-light text-center'
+            },
+            'tbody': {
+                'class': 'text-center'
             }
         }
-        orderable = False
-        sequence = ('uuid', 'time', 'uploaded_by')
+        orderable= False
+        order_by = ("-created")
+        sequence = ('device','uuid','did_document', 'legacy', 'ev_type', 'uploaded_by', 'created')
 
         @property
         def empty_text(self):
             return format_html(
-                '<div class="p-4 text-muted text-center">{}</div>',
+                '<div class="text-muted text-center">{}</div>',
                 _("No evidence records found")
             )
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.evidence_map = {}
+
     def before_render(self, request):
         if self.page:
-            paginated_ids = [item[0] for item in self.page.object_list.data]
-            #lazy instantiate paginated devices by uuid and map them for did document
-            self.data = {
-                str(uuid): Evidence(uuid)
-                for uuid in paginated_ids
-            }
+            if hasattr(self.page.object_list, 'data'):
+                paginated_ids = [item.uuid for item in self.page.object_list.data]
+                # Lazy instantiate paginated devices by uuid and map them for did document
+                self.evidence_map = {
+                    uuid: Evidence(uuid)
+                    for uuid in paginated_ids
+                }
+            else:
+                self.evidence_map = {}
+
+    def render_device(self, value):
+        try:
+            url = reverse('device:details', kwargs={'pk': value })
+            return format_html(
+                '<a href="{}" class="text-decoration-none link-primary">{}</a>',
+                url,
+                value[:7].upper()
+            )
+        except Exception:
+            return self.render_error_message(_("Error loading device"))
+
 
     def render_uuid(self, value):
-        url = reverse('evidence:details', kwargs={'pk': value})
-        return format_html(
-            '''<a href="{}" class="d-block font-monospace text-decoration-none"
-                title="{}">
-               <i class="bi bi-file-earmark-text me-2"></i>{}
-               </a>''',
-            url,
-            value,
-            value
-        )
+        try:
+            url = reverse('evidence:details', kwargs={'pk': value})
+            return format_html(
+                '''<a href="{}" class="font-monospace text-decoration-none"
+                    title="{}">
+                   <i class="bi bi-file-earmark-text"></i>{}
+                   </a>''',
+                url,
+                value,
+                value
+            )
+        except Exception:
+            return self.render_error_message(_("Error loading UUID"))
 
-    def render_time(self, value):
-        if timezone.is_naive(value):
-            if hasattr(settings, 'TIME_ZONE'):
-                value = timezone.make_aware(value, timezone.get_default_timezone())
-            else:
-                return value.strftime("%Y-%m-%d %H:%M")
 
-        local_time = timezone.localtime(value)
-        return format_html(
-            '''<div class="d-flex flex-column">
-               <span class="fw-medium">{}</span>
-               <small class="text-muted">{}</small>
-               </div>''',
-            local_time.strftime("%b %d, %Y"),
-            local_time.strftime("%H:%M")
-        )
+    def render_uploaded_by(self, value, record):
+        try:
+            if not hasattr(record, 'user') or not record.user:
+                return self.render_empty(_("System"))
 
-    def render_uploaded_by(self, value):
-        ev = self.data.get(str(value))
-
-        if not ev:
-            return _("System")
-        return format_html(
-            '<p class="text-muted">{}</p>',
-            str(ev.uploaded_by)
-        )
+            url = reverse('user:profile', kwargs={'pk': record.user.pk})
+            return format_html(
+                '<a href="{}" class="text-decoration-none link-primary">{}</a>',
+                url,
+                record.user.email
+            )
+        except Exception:
+            return self.render_error_message(_("Error loading uploader"))
 
     def render_did_document(self, value):
-        ev = self.data.get(str(value))
-        if not ev:
-            return format_html('<span class="text-muted">{}</span>', _("Unknown"))
+        try:
+            ev = self.evidence_map.get(value)
+            if not ev:
+                return self.render_empty(_("N/A (Evidence not found)"))
 
-        did_url = ev.did_document()
-        if not did_url:
-            return format_html('<span class="text-muted">{}</span>', _("Not available"))
+            did_url = ev.did_document()
+            if not did_url:
+                return self.render_empty(_("Not available"))
 
-        return format_html(
-            '''<a href="{}" class="d-block text-decoration-none"
-                target="_blank" rel="noopener noreferrer"
-                title="View DID Document">
-            <i class="bi bi-file-earmark-lock me-2"></i>DID Document
-            </a>''',
-            did_url
-        )
+            return format_html(
+                '''<a href="{}" class="text-decoration-none"
+                    target="_blank" rel="noopener noreferrer"
+                    title="View DID Document">
+                <i class="bi bi-file-earmark-lock me-2"></i>{}
+                </a>''',
+                did_url, # The URL should be the first argument
+                _("DID document")
+            )
+        except Exception as e:
+            # Log the exception for debugging if necessary
+            # logger.error(f"Error rendering DID document for {value}: {e}")
+            return self.render_error_message(_("Error rendering DID"))
 
     def render_legacy(self, record, value):
-        ev = self.data.get(str(value))
-        if not ev:
-            return format_html('<span class="text-muted">{}</span>', _("Unknown"))
+        try:
+            ev = self.evidence_map.get(value)
+            if not ev:
+                return self.render_empty()
 
-        is_legacy = ev.inxi is None
+            is_legacy = ev.is_legacy()
+
+            return format_html(
+                '<span class="{}">{}</span>',
+                "fw-bold" if is_legacy else "fst-italic",
+                _("Legacy") if is_legacy else _("Modern")
+            )
+        except Exception:
+            return self.render_error_message(_("Error checking legacy status"))
+
+    def render_ev_type(self, value):
+        try:
+            ev = self.evidence_map.get(value)
+            if not ev:
+                return self.render_empty()
+            return ev.get_chassis() if hasattr(ev, 'get_chassis') else self.render_empty(_("N/A (Type not found)"))
+        except Exception:
+            return self.render_error_message(_("Error rendering evidence type"))
+
+    def render_empty(self, message=_("Unknown")):
         return format_html(
-            '''
-            <span class="" title="{}">
-                {}
-            </span>
-            ''',
-            _("Legacy") if is_legacy else _("Modern"),
-            _("Legacy") if is_legacy else _("Modern")
+            '<span class="text-muted">{}</span>',
+            message
+        )
+
+    def render_error_message(self, message=_("An error occurred")):
+        return format_html(
+            '<span class="text-danger" title="{}"><i class="bi bi-exclamation-circle-fill me-1"></i>{}</span>',
+            message,
+            _("Error")
         )
