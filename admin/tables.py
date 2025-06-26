@@ -11,18 +11,23 @@ from user.models import User
 class UserTable(tables.Table):
 
 
-    id = tables.Column(verbose_name=_("User ID"))
+    id = tables.Column(
+        verbose_name=_("User ID"),
+        attrs={
+            'th': {
+                'style': 'width:8%',
+            },
+        },
+    )
+
     status = tables.Column(
         verbose_name=_("Status"),
         orderable=True,
         accessor="is_admin",
         attrs={
             'th': {
-                'class': 'text-start',
+                'style': 'width:12%',
             },
-            'td': {
-                'class': 'text-start',
-            }
         },
     )
     email = tables.Column(verbose_name=_("Email address"))
