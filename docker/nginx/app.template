@@ -81,7 +81,7 @@ server {
     proxy_set_header Host            $host;
     proxy_set_header X-Real-IP       $remote_addr;
 
-    client_max_body_size  100k; # default is 1M
+    client_max_body_size  1M; # default is 1M, this would not allow for upload of multiple snapshots
 
     proxy_connect_timeout 10m;
     proxy_send_timeout    10m;

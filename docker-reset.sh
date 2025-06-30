@@ -140,7 +140,7 @@ main() {
 
 
         if [ "${DEVICEHUB_REMOVE_DATA}" = 'true' ];then
-
+                #remove postgres volume
                 docker volume rm DEVICEHUB_POSTGRES_DATA > /dev/null 2>&1 || true
                 rm -vfr ./db/*
                 docker compose down -v
