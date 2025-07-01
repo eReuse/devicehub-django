@@ -24,6 +24,7 @@ from dashboard.mixins import DashboardView
 from evidence.models import SystemProperty, UserProperty
 from evidence.parse_details import ParseSnapshot
 from evidence.parse import Build
+from lot.models import Lot
 from device.models import Device
 from api.models import Token
 from api.tables import TokensTable
@@ -308,3 +309,30 @@ class AddPropertyView(ApiMixing):
 
     def get(self, request, *args, **kwargs):
         return JsonResponse({}, status=404)
+
+
+class LotDevicesAPIView(View):
+    def get(self, request, lot_name):
+        lot = get_object_or_404(Lot, name=lot_name)
+
+        # Fetch all devices
+        chids = lot.devicelot_set.all().values_list(
+            "device_id", flat=True
+        ).distinct()
+        devices = [Device(id=x) for x in chids]
+
+        devices_data = [
+            device.components_export()
+            for device in devices
+        ]
+
+        response_data = {
+            "lot": {
+                "id": lot.id,
+                "name": lot.name,
+                "description": lot.description,
+            },
+            "devices": devices_data,
+        }
+
+        return JsonResponse(response_data, status=200)
