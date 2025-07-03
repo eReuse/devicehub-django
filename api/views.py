@@ -11,6 +11,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
+from django.core.exceptions import ObjectDoesNotExist
 from django_tables2 import SingleTableView
 from django.views.generic.edit import (
     CreateView,
@@ -22,6 +23,7 @@ from utils.save_snapshots import move_json, save_in_disk
 from django.views.generic.edit import View
 from dashboard.mixins import DashboardView
 from evidence.models import SystemProperty, UserProperty
+from action.models import DeviceLog
 from evidence.parse_details import ParseSnapshot
 from evidence.parse import Build
 from lot.models import Lot
@@ -58,6 +60,15 @@ class ApiMixing(View):
         if not self.tk:
             logger.error("Invalid or missing token %s", token)
             return JsonResponse({'error': 'Invalid or missing token'}, status=401)
+
+class DeviceLogAPIMixin():
+    def log_registry(self, _uuid, msg, tk):
+        DeviceLog.objects.create(
+            snapshot_uuid=_uuid,
+            event=msg,
+            user=tk.owner,
+            institution=tk.owner.institution
+        )
 
 
 class NewSnapshotView(ApiMixing):
@@ -273,47 +284,123 @@ class DetailsDeviceView(ApiMixing):
         return data
 
 
-class AddPropertyView(ApiMixing):
+class UpdateDevicePropertyView(DeviceLogAPIMixin, ApiMixing):
 
-    def post(self, request, *args, **kwargs):
+    def post(self, request, pk, key, ):
         response = self.auth()
         if response:
             return response
 
-        self.pk = kwargs['pk']
+        try:
+            institution = self.tk.owner.institution
+            self.property = SystemProperty.objects.filter(
+                owner=institution,
+                value=pk,
+            ).first()
+
+            if not self.property:
+                return JsonResponse({"error": "Device not found"}, status=404)
+
+            try:
+                body_data = json.loads(request.body)
+                value = body_data['value']
+
+            except json.JSONDecodeError:
+                return JsonResponse(
+                    {'error': 'Invalid JSON format'},
+                    status=400
+                )
+            except KeyError:
+                return JsonResponse(
+                    {'error': 'Missing value field'},
+                    status=400
+                )
+
+            property, created = UserProperty.objects.update_or_create(
+                uuid=self.property.uuid,
+                owner=institution,
+                key=key,
+                defaults={'value': value}
+            )
+
+            log_message = "<Updated> Property: {}: {}".format(key, value)
+            self.log_registry(self.property.pk, log_message, self.tk)
+
+            return JsonResponse({
+                "status": "success",
+                "action": "created" if created else "updated",
+                "property": {
+                    "key": key,
+                    "value": value,
+                    "device_uuid": str(self.property.uuid),
+                }
+            }, status=201 if created else 200)
+
+        except Exception as e:
+            logging.exception("Error in UpdateDevicePropertyView")
+            return JsonResponse(
+                {'error': 'Internal server error'},
+                status=500
+            )
+
+    def get(self, request, pk, key):
+        """Get a specific property for a device"""
+        if auth_response := self.auth():
+            return auth_response
+
         institution = self.tk.owner.institution
         self.property = SystemProperty.objects.filter(
             owner=institution,
-            value=self.pk,
+            value=pk,
         ).first()
 
         if not self.property:
-            return JsonResponse({}, status=404)
+            return JsonResponse({"error": "Device not found"}, status=404)
 
         try:
-            data = json.loads(request.body)
-            key = data["key"]
-            value = data["value"]
-        except Exception:
-            logger.error("Invalid Snapshot of user %s", self.tk.owner)
-            return JsonResponse({'error': 'Invalid JSON'}, status=500)
+            user_property = UserProperty.objects.get(
+                uuid=self.property.uuid,
+                key=key,
+                owner=institution
+            )
+            return JsonResponse({
+                "status": "success",
+                "property": {
+                    "key": user_property.key,
+                    "value": user_property.value,
+                    "uuid": str(self.property.uuid),
+                    "created_at": user_property.created.isoformat(),
+                }
+            })
+        except ObjectDoesNotExist:
+            return JsonResponse(
+                {'error': 'Property not found'},
+                status=404
+            )
+        except Exception as e:
+            logging.exception("Error fetching property")
+            return JsonResponse(
+                {'error': 'Internal server error'},
+                status=500
+            )
 
-        UserProperty.objects.create(
-            uuid=self.property.uuid,
-            owner=self.tk.owner.institution,
-            key = key,
-            value = value
-        )
 
-        return JsonResponse({"status": "success"}, status=200)
-
-    def get(self, request, *args, **kwargs):
+class LotDevicesAPIView(ApiMixing):
+    def post(self, request, *args, **kwargs):
         return JsonResponse({}, status=404)
 
+    def get(self, request, *args, **kwargs):
+        identifier = kwargs.get('identifier')
 
-class LotDevicesAPIView(View):
-    def get(self, request, lot_name):
-        lot = get_object_or_404(Lot, name=lot_name)
+        #TODO: add institution and ownership checks
+        if (isinstance(identifier,int)):
+            lot = get_object_or_404(
+                Lot.objects, id=identifier
+                )
+        else:
+            lot = get_object_or_404(
+                Lot.objects, name=identifier
+            )
 
         # Fetch all devices
         chids = lot.devicelot_set.all().values_list(
