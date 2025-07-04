@@ -344,7 +344,6 @@ class UpdateDevicePropertyView(DeviceLogAPIMixin, ApiMixing):
             )
 
     def get(self, request, pk, key):
-        """Get a specific property for a device"""
         if auth_response := self.auth():
             return auth_response
 
@@ -387,7 +386,125 @@ class UpdateDevicePropertyView(DeviceLogAPIMixin, ApiMixing):
 
 class LotDevicesAPIView(ApiMixing):
     def post(self, request, *args, **kwargs):
-        return JsonResponse({}, status=404)
+
+        if auth_response := self.auth():
+            return auth_response
+
+        identifier = kwargs.get('identifier')
+        institution = self.tk.owner.institution
+
+        try:
+            if identifier.isdigit():
+                lot = Lot.objects.get(
+                    id=int(identifier),
+                    owner=institution
+                )
+            else:
+                lot = Lot.objects.get(
+                    name=identifier,
+                    owner=institution
+                )
+        except Lot.DoesNotExist:
+            return JsonResponse(
+                {'error': 'Lot not found or access denied'},
+                status=404
+            )
+
+        try:
+            body_data = json.loads(request.body)
+            devices = body_data.get('devices', [])
+
+            if not isinstance(devices, list):
+                return JsonResponse(
+                    {'error': 'Devices must be provided as an array'},
+                    status=400
+                )
+
+            if not devices:
+                return JsonResponse(
+                    {'error': 'Empty devices list'},
+                    status=400
+                )
+
+        except json.JSONDecodeError:
+            return JsonResponse(
+                {'error': 'Invalid JSON format'},
+                status=400
+            )
+
+        for dev in devices:
+            lot.add(dev)
+
+        return JsonResponse(
+            {
+                "status": "assigned",
+                "devices": devices,
+                "lot_id": lot.id,
+                "lot_name": lot.name
+            },
+            status=200
+        )
+
+    def delete(self, request, *args, **kwargs):
+
+        if auth_response := self.auth():
+            return auth_response
+
+        identifier = kwargs.get('identifier')
+        institution = self.tk.owner.institution
+
+        try:
+            if identifier.isdigit():
+                lot = Lot.objects.get(
+                    id=int(identifier),
+                    owner=institution
+                )
+            else:
+                lot = Lot.objects.get(
+                    name=identifier,
+                    owner=institution
+                )
+        except Lot.DoesNotExist:
+            return JsonResponse(
+                {'error': 'Lot not found or access denied'},
+                status=404
+            )
+
+        try:
+            body_data = json.loads(request.body)
+            devices = body_data.get('devices', [])
+
+            if not isinstance(devices, list):
+                return JsonResponse(
+                    {'error': 'Devices must be provided as an array'},
+                    status=400
+                )
+
+            if not devices:
+                return JsonResponse(
+                    {'error': 'Empty devices list'},
+                    status=400
+                )
+
+        except json.JSONDecodeError:
+            return JsonResponse(
+                {'error': 'Invalid JSON format'},
+                status=400
+            )
+
+        for dev in devices:
+            lot.remove(dev)
+
+        return JsonResponse(
+            {
+                "status": "assigned",
+                "devices": devices,
+                "lot_id": lot.id,
+                "lot_name": lot.name
+            },
+            status=200
+        )
+
 
     def get(self, request, *args, **kwargs):
         identifier = kwargs.get('identifier')
