@@ -11,7 +11,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django_tables2 import SingleTableView
 from django.views.generic.edit import (
     CreateView,
@@ -60,6 +60,13 @@ class ApiMixing(View):
         if not self.tk:
             logger.error("Invalid or missing token %s", token)
             return JsonResponse({'error': 'Invalid or missing token'}, status=401)
+
+    def _get_user(self):
+        return self.tk.owner
+
+    def _get_institution(self):
+        return self.tk.owner.institution
+
 
 class DeviceLogAPIMixin():
     def log_registry(self, _uuid, msg, tk):
@@ -385,141 +392,133 @@ class UpdateDevicePropertyView(DeviceLogAPIMixin, ApiMixing):
 
 
 class LotDevicesAPIView(ApiMixing):
-    def post(self, request, *args, **kwargs):
 
+    def _find_lot(self, identifier):
+        """ Find lot by either name:(str) or pk:(int) """
+        try:
+            if identifier.isdigit():
+                return Lot.objects.get(
+                    id=int(identifier),
+                    owner=self._get_institution()
+                )
+            return Lot.objects.get(
+                name=identifier,
+                owner=self._get_institution()
+            )
+        except (BaseException) as e:
+            logger.error(f"Invalid lot identifier: {identifier}")
+
+        return None
+
+    def _load_devices_payload(self, request):
+        """
+        Returns:
+            devices_id: A list of all of the user supplied id's
+            correct_devices: a list of all valid device id's
+        Can propagate :
+            ValidationError for empty list
+        """
+        body_data = json.loads(request.body)
+        devices_id = body_data.get('devices', [])
+
+        if not isinstance(devices_id, list):
+            raise ValidationError("Devices must be provided as an array")
+        if not devices_id:
+            raise ValidationError("Empty devices list")
+
+        properties = SystemProperty.objects.filter(
+            value__in=devices_id
+        ).values_list('value', flat=True)
+
+        valid_id = [value for value in properties]
+        invalid_ids = list(set(devices_id)-set(valid_id))
+
+        if len(invalid_ids) == len(devices_id):
+            raise ValidationError("None of the provided device IDs are valid")
+
+        return devices_id, valid_id, invalid_ids
+
+    def post(self, request, identifier ):
         if auth_response := self.auth():
             return auth_response
 
-        identifier = kwargs.get('identifier')
-        institution = self.tk.owner.institution
-
-        try:
-            if identifier.isdigit():
-                lot = Lot.objects.get(
-                    id=int(identifier),
-                    owner=institution
-                )
-            else:
-                lot = Lot.objects.get(
-                    name=identifier,
-                    owner=institution
-                )
-        except Lot.DoesNotExist:
+        lot = self._find_lot(identifier)
+        if not lot:
             return JsonResponse(
                 {'error': 'Lot not found or access denied'},
                 status=404
             )
 
         try:
-            body_data = json.loads(request.body)
-            devices = body_data.get('devices', [])
-
-            if not isinstance(devices, list):
-                return JsonResponse(
-                    {'error': 'Devices must be provided as an array'},
-                    status=400
-                )
-
-            if not devices:
-                return JsonResponse(
-                    {'error': 'Empty devices list'},
-                    status=400
-                )
-
-        except json.JSONDecodeError:
+            all_ids, valid_ids, invalid_ids = self._load_devices_payload(request)
+        except (ValidationError, json.JSONDecodeError) as e:
             return JsonResponse(
-                {'error': 'Invalid JSON format'},
+                {'error': str(e)},
                 status=400
             )
 
-        for dev in devices:
+        for dev in valid_ids:
             lot.add(dev)
 
+        partial_failure = len(all_ids) != len(valid_ids)
+
         return JsonResponse(
             {
                 "status": "assigned",
-                "devices": devices,
+                "devices": valid_ids,
                 "lot_id": lot.id,
-                "lot_name": lot.name
+                "lot_name": lot.name,
+                "invalid_ids": invalid_ids
             },
-            status=200
+            status=207 if partial_failure else 200
         )
 
-    def delete(self, request, *args, **kwargs):
+    def delete(self, request, identifier):
 
         if auth_response := self.auth():
             return auth_response
 
-        identifier = kwargs.get('identifier')
-        institution = self.tk.owner.institution
-
-        try:
-            if identifier.isdigit():
-                lot = Lot.objects.get(
-                    id=int(identifier),
-                    owner=institution
-                )
-            else:
-                lot = Lot.objects.get(
-                    name=identifier,
-                    owner=institution
-                )
-        except Lot.DoesNotExist:
+        lot = self._find_lot(identifier)
+        if not lot:
             return JsonResponse(
                 {'error': 'Lot not found or access denied'},
                 status=404
             )
 
         try:
-            body_data = json.loads(request.body)
-            devices = body_data.get('devices', [])
-
-            if not isinstance(devices, list):
-                return JsonResponse(
-                    {'error': 'Devices must be provided as an array'},
-                    status=400
-                )
-
-            if not devices:
-                return JsonResponse(
-                    {'error': 'Empty devices list'},
-                    status=400
-                )
-
+            all_ids, valid_ids, invalid_ids = self._load_devices_payload(request)
+        except ValidationError as e:
+            return JsonResponse({'error': str(e)}, status=400)
         except json.JSONDecodeError:
-            return JsonResponse(
-                {'error': 'Invalid JSON format'},
-                status=400
-            )
+            return JsonResponse({'error': 'Invalid JSON format'}, status=400)
 
-        for dev in devices:
+        for dev in valid_ids:
             lot.remove(dev)
 
+        partial_failure = len(all_ids) != len(valid_ids)
         return JsonResponse(
             {
                 "status": "assigned",
-                "devices": devices,
+                "devices": valid_ids,
                 "lot_id": lot.id,
-                "lot_name": lot.name
+                "lot_name": lot.name,
+                "invalid_ids": invalid_ids
             },
-            status=200
+            status=207 if partial_failure else 200
         )
 
+    def get(self, request, identifier):
+        if auth_response := self.auth():
+            return auth_response
 
-    def get(self, request, *args, **kwargs):
-        identifier = kwargs.get('identifier')
-
-        #TODO: add institution and ownership checks
-        if (isinstance(identifier,int)):
-            lot = get_object_or_404(
-                Lot.objects, id=identifier
-                )
-        else:
-            lot = get_object_or_404(
-                Lot.objects, name=identifier
+        lot = self._find_lot(identifier)
+        if not lot:
+            return JsonResponse(
+                {'error': 'Lot not found or access denied'},
+                status=404
             )
 
-        # Fetch all devices
+        # Fetch all devices_id
         chids = lot.devicelot_set.all().values_list(
             "device_id", flat=True
         ).distinct()
