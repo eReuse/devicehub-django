@@ -308,3 +308,155 @@ class AddPropertyView(ApiMixing):
 
     def get(self, request, *args, **kwargs):
         return JsonResponse({}, status=404)
+
+
+class LotDevicesAPIView(ApiMixing):
+
+    def _find_lot(self, identifier):
+        """ Find lot by either name:(str) or pk:(int) """
+        try:
+            if identifier.isdigit():
+                return Lot.objects.get(
+                    id=int(identifier),
+                    owner=self._get_institution()
+                )
+            return Lot.objects.get(
+                name=identifier,
+                owner=self._get_institution()
+            )
+        except (BaseException) as e:
+            logger.error(f"Invalid lot identifier: {identifier}")
+
+        return None
+
+    def _load_devices_payload(self, request):
+        """
+        Returns:
+            devices_id: A list of all of the user supplied id's
+            valid_devices: a list of all valid device id's
+            invalid_ids: self explanatory
+        Can propagate :
+            ValidationError for empty list
+        """
+        body_data = json.loads(request.body)
+        devices_id = body_data.get('devices', [])
+
+        if not isinstance(devices_id, list):
+            raise ValidationError("Devices must be provided as an array")
+        if not devices_id:
+            raise ValidationError("Empty devices list")
+
+        properties = SystemProperty.objects.filter(
+            value__in=devices_id
+        ).values_list('value', flat=True)
+
+        valid_id = [value for value in properties]
+        invalid_ids = list(set(devices_id)-set(valid_id))
+
+        if len(invalid_ids) == len(devices_id):
+            raise ValidationError("None of the provided device IDs are valid")
+
+        return devices_id, valid_id, invalid_ids
+
+    def post(self, request, identifier ):
+        if auth_response := self.auth():
+            return auth_response
+
+        lot = self._find_lot(identifier)
+        if not lot:
+            return JsonResponse(
+                {'error': 'Lot not found or access denied'},
+                status=404
+            )
+
+        try:
+            all_ids, valid_ids, invalid_ids = self._load_devices_payload(request)
+        except (ValidationError, json.JSONDecodeError) as e:
+            return JsonResponse(
+                {'error': str(e)},
+                status=400
+            )
+
+        for dev in valid_ids:
+            lot.add(dev)
+
+        partial_failure = len(all_ids) != len(valid_ids)
+
+        return JsonResponse(
+            {
+                "status": "assigned",
+                "devices": valid_ids,
+                "lot_id": lot.id,
+                "lot_name": lot.name,
+                "invalid_ids": invalid_ids
+            },
+            status=207 if partial_failure else 200
+        )
+
+    def delete(self, request, identifier):
+        """Deletes devices associated with a lot"""
+
+        if auth_response := self.auth():
+            return auth_response
+
+        lot = self._find_lot(identifier)
+        if not lot:
+            return JsonResponse(
+                {'error': 'Lot not found or access denied'},
+                status=404
+            )
+
+        try:
+            all_ids, valid_ids, invalid_ids = self._load_devices_payload(request)
+        except ValidationError as e:
+            return JsonResponse({'error': str(e)}, status=400)
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON format'}, status=400)
+
+        for dev in valid_ids:
+            lot.remove(dev)
+
+        partial_failure = len(all_ids) != len(valid_ids)
+        return JsonResponse(
+            {
+                "status": "deleted",
+                "devices": valid_ids,
+                "lot_id": lot.id,
+                "lot_name": lot.name,
+                "invalid_ids": invalid_ids
+            },
+            status=207 if partial_failure else 200
+        )
+
+    def get(self, request, identifier):
+        if auth_response := self.auth():
+            return auth_response
+
+        lot = self._find_lot(identifier)
+        if not lot:
+            return JsonResponse(
+                {'error': 'Lot not found or access denied'},
+                status=404
+            )
+
+        # Fetch all devices_id
+        chids = lot.devicelot_set.all().values_list(
+            "device_id", flat=True
+        ).distinct()
+        devices = [Device(id=x) for x in chids]
+
+        devices_data = [
+            device.components_export()
+            for device in devices
+        ]
+
+        response_data = {
+            "lot": {
+                "id": lot.id,
+                "name": lot.name,
+                "description": lot.description,
+            },
+            "devices": devices_data,
+        }
+
+        return JsonResponse(response_data, status=200)
