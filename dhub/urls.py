@@ -18,6 +18,7 @@ from django.conf import settings
 from django.urls import path, include
 from django.conf.urls.i18n import i18n_patterns
 from django.views.i18n import set_language
+from api.snapshot import api
 
 urlpatterns = [
     # path('api/', include('snapshot.urls')),
@@ -30,6 +31,7 @@ urlpatterns = [
     path("user/", include("user.urls")),
     path("lot/", include("lot.urls")),
     path('api/', include('api.urls')),
+    path('api/v2/', api.urls)
 ]
 
 urlpatterns += i18n_patterns(
