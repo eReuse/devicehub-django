@@ -195,8 +195,11 @@ LANGUAGES = [
 STATIC_URL = "static/"
 STATIC_URL = '/static/'
 MEDIA_URL = '/media/'
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
 
-STATIC_ROOT = config('STATIC_ROOT', default="static")
+#STATIC_ROOT = config('STATIC_ROOT', default="static")
 MEDIA_ROOT = config('MEDIA_ROOT', default="upload")
 
 # Default primary key field type

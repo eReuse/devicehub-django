@@ -27,9 +27,14 @@ from evidence.parse import Build
 from device.models import Device
 from api.models import Token
 from api.tables import TokensTable
+from api.swagger import spec
 
 
 logger = logging.getLogger('django')
+
+
+def openapi_json(request):
+    return JsonResponse(spec.to_dict())
 
 
 class ApiMixing(View):

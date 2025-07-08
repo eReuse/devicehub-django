@@ -17,3 +17,5 @@ wheel==0.45.1
 markdown==3.7
 tablib==3.8.0
 tablib[xlsx]==3.8.0
+apispec==6.8.2
+marshmallow==4.0.0
