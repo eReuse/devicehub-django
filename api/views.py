@@ -7,16 +7,9 @@ from uuid import uuid4
 from django.urls import reverse_lazy
 from django.conf import settings
 from django.http import JsonResponse
-from django.shortcuts import get_object_or_404, redirect
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
-from django_tables2 import SingleTableView
-from django.views.generic.edit import (
-    CreateView,
-    DeleteView,
-    UpdateView,
-)
 
 from django.db.models import Q
 from utils.save_snapshots import move_json, save_in_disk
@@ -27,8 +20,6 @@ from evidence.parse_details import ParseSnapshot
 from evidence.parse import Build
 from device.models import Device
 from api.models import Token
-from user.tables import TokensTable
-
 
 logger = logging.getLogger('django')
 
@@ -141,83 +132,6 @@ class NewSnapshotView(ApiMixing):
         move_json(path_name, self.tk.owner.institution.name)
 
         return JsonResponse(response, status=200)
-
-
-class TokenView(DashboardView, SingleTableView):
-    template_name = "token.html"
-    title = _("Credential management")
-    section = "Credential"
-    subtitle = _('My Tokens')
-    icon = 'bi bi-key'
-    model = Token
-    table_class = TokensTable
-
-    def get_queryset(self):
-        """
-        Override the get_queryset method to filter events based on the user type.
-        """
-        return Token.objects.filter(owner=self.request.user).order_by("-id")
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        tokens = Token.objects.filter(owner=self.request.user)
-        context.update({
-            'tokens': tokens,
-        })
-        return context
-
-
-class TokenDeleteView(DashboardView, DeleteView):
-    model = Token
-
-    def get(self, request, *args, **kwargs):
-        self.pk = kwargs['pk']
-        self.object = get_object_or_404(self.model, pk=self.pk, owner=self.request.user)
-        self.object.delete()
-
-        return redirect('api:tokens')
-
-
-class TokenNewView(DashboardView, CreateView):
-    template_name = "new_token.html"
-    title = _("Credential management")
-    section = "Credential"
-    subtitle = _('New Tokens')
-    icon = 'bi bi-key'
-    model = Token
-    success_url = reverse_lazy('api:tokens')
-    fields = (
-        "tag",
-    )
-
-    def form_valid(self, form):
-        form.instance.owner = self.request.user
-        form.instance.token = uuid4()
-        return super().form_valid(form)
-
-
-class EditTokenView(DashboardView, UpdateView):
-    template_name = "new_token.html"
-    title = _("Credential management")
-    section = "Credential"
-    subtitle = _('New Tokens')
-    icon = 'bi bi-key'
-    model = Token
-    success_url = reverse_lazy('api:tokens')
-    fields = (
-        "tag",
-    )
-
-    def get_form_kwargs(self):
-        pk = self.kwargs.get('pk')
-        self.object = get_object_or_404(
-            self.model,
-            owner=self.request.user,
-            pk=pk,
-        )
-        kwargs = super().get_form_kwargs()
-        return kwargs
-
 
 class DetailsDeviceView(ApiMixing):
 

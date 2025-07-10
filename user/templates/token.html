@@ -11,9 +11,9 @@
         <i class="{{ icon }}"></i> {{ subtitle }}
       </h5>
       <div class="d-flex align-items-center gap-2">
-        <a class="btn btn-green-admin" href="{% url 'api:new_token' %}">
-           {% translate "New token" %}
-        </a>
+        <div class="form-actions-no-box">
+          <a class="btn btn-green-admin" href="{% url 'user:new_token' %}">{% translate "Generate a new token" %} <i class="bi bi-plus"></i></a>
+        </div>
       </div>
     </div>
 
