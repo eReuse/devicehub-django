@@ -1,85 +1,86 @@
 import django_tables2 as tables
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
+from django.urls import reverse
 
 from api.models import Token
 
 
-class ButtonColumn(tables.Column):
-    attrs = {
-        "a": {
-            "type": "button",
-            "class": "text-danger",
-            "title": "Remove",
-        }
-    }
-    # it makes no sense to order a column of buttons
-    orderable = False
-    # django_tables will only call the render function if it doesn't find
-    # any empty values in the data, so we stop it from matching the data
-    # to any value considered empty
-    empty_values = ()
-
-    def render(self):
-        return format_html('<i class="bi bi-trash"></i>')
-
-
 class TokensTable(tables.Table):
-    delete = ButtonColumn(
-            verbose_name=_("Delete"),
-            linkify={
-                "viewname": "api:delete_token",
-                "args": [tables.A("pk")]
-            },
-            orderable=False
+    token = tables.Column(
+        verbose_name=_("Token"),
+        attrs={
+            "td": {"class": "align-middle ps-3"},
+            "th": {"class": "ps-3"}
+        }
     )
-    edit_token = ButtonColumn(
-            linkify={
-                "viewname": "api:edit_token",
-                "args": [tables.A("pk")]
-                },
-            attrs = {
-                "a": {
-                    "type": "button",
-                    "class": "text-primary",
-                    "title": "Remove",
-                }
-            },
-            orderable=False,
-            verbose_name="Edit"
-            )
-    token = tables.Column(verbose_name=_("Token"), empty_values=())
-    tag = tables.Column(verbose_name=_("Tag"), empty_values=())
 
-    def render_view_user(self):
-        return format_html('<i class="bi bi-eye"></i>')
+    tag = tables.Column(
+        verbose_name=_("Tag"),
+        attrs={"td": {"class": "align-middle"}}
+    )
 
-    def render_edit_token(self):
-        return format_html('<i class="bi bi-pencil-square"></i>')
-
-    # def render_token(self, record):
-    #     return record.get_memberships()
-
-    # def order_membership(self, queryset, is_descending):
-    #     # TODO: Test that this doesn't return more rows than it should
-    #     queryset = queryset.order_by(
-    #         ("-" if is_descending else "") + "memberships__type"
-    #     )
-
-    #     return (queryset, True)
-
-    # def render_role(self, record):
-    #     return record.get_roles()
-
-    # def order_role(self, queryset, is_descending):
-    #     queryset = queryset.order_by(
-    #         ("-" if is_descending else "") + "roles"
-    #     )
-
-    #     return (queryset, True)
+    actions = tables.Column(
+        verbose_name=_(""),
+        orderable=False,
+        empty_values=(),
+        attrs={
+            "td": {"class": "text-end pe-3", "width": "150px"},
+            "th": {"class": "text-end pe-3"}
+        }
+    )
 
     class Meta:
         model = Token
         template_name = "custom_table.html"
-        fields = ("token", "tag", "edit_token")
+        fields = ("token", "tag", "actions")
+        attrs = {
+            "class": "table table-hover align-middle",
+            "thead": {"class": "table-light"}
+        }
+        row_attrs = {"class": "py-2"}
+        empty_text = format_html(
+            '<div class="p-4 text-muted text-center">{}</div>',
+            _("No tokens found")
+        )
 
+    def render_token(self, value, record):
+        return format_html(
+            '''
+            <div class="d-flex align-items-center">
+                <a href="{}" class="font-monospace text-decoration-none me-2"
+                   title="{}">
+                   {}
+                </a>
+                <button class="btn btn-sm btn-link text-muted p-0 copy-clipboard"
+                        data-token="{}" title="{}">
+                    <i class="bi bi-clipboard"></i>
+                </button>
+            </div>
+            ''',
+            reverse("api:edit_token", args=[record.pk]),
+            _("Edit token"),
+            value,
+            value,
+            _("Copy to clipboard")
+        )
+
+    def render_tag(self, value):
+        if not value:
+            return format_html('<span class="text-muted">{}</span>', _("No tag"))
+        return format_html('<span class="badge badge-lg bg-light text-dark">{}</span>', value)
+
+    def render_actions(self, record):
+        return format_html(
+            '''
+            <div class="btn-group btn-group-sm">
+                <a href="{}" class="btn btn-outline-danger" title="{}">
+                    {}
+                    <i class="bi bi-trash"></i>
+                </a>
+            </div>
+            ''',
+            _("Delete"),
+            reverse("api:delete_token", args=[record.pk]),
+            _("Delete")
+        )
