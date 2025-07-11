@@ -1,32 +1,40 @@
 # api/v1/schemas.py
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, validator
+from ninja.errors import ValidationError
 
+from lot.models import Lot
 from typing import List, Optional
-from pydantic import BaseModel, Field
+from ninja import ModelSchema
 from datetime import datetime
 
 class DeviceResponse(BaseModel):
     ID: str = Field(..., description="Unique device identifier", example="0FCDC8")
-    manufacturer: str = Field(..., description="Device manufacturer", example="BANGHO")
-    model: str = Field(..., description="Device model", example="BES G0304")
-    serial: str = Field(..., description="Device serial number", example="0800789501001027")
-    cpu_model: str = Field(..., description="CPU model", example="Intel Core i5-4340M")
-    cpu_cores: int = Field(..., description="Number of CPU cores", example=2)
-    ram_total: str = Field(..., description="Total RAM capacity", example="3.72 GiB")
-    ram_type: str = Field(..., description="RAM type", example="DDR3")
-    ram_slots: int = Field(..., description="Total RAM slots", example=4)
-    slots_used: int = Field(..., description="Used RAM slots", example=2)
-    drive: str = Field(..., description="Storage drive information", example="HTS545050A7E380 (465.76 GiB)")
-    gpu_model: str = Field(..., description="GPU model", example="Intel 4th Gen Core Processor Integrated Graphics")
-    type: str = Field(..., description="Device type", example="Laptop")
-    user_properties: str = Field(..., description="Custom user properties", example="(invoice_code:pepe2) (invoice_code2:asd)")
-    current_state: str = Field(..., description="Current device state")
-    last_updated: datetime = Field(..., description="Last update timestamp", example="2025-07-02T21:21:13.626")
+    manufacturer: str = Field(description="Device manufacturer", example="BANGHO")
+    model: str = Field(description="Device model", example="BES G0304")
+    serial: str = Field(description="Device serial number", example="0800789501001027")
+    cpu_model: str = Field(description="CPU model", example="Intel Core i5-4340M")
+    cpu_cores: int = Field(description="Number of CPU cores", example=2)
+    ram_total: str = Field(description="Total RAM capacity", example="3.72 GiB")
+    ram_type: str = Field(description="RAM type", example="DDR3")
+    ram_slots: int = Field(description="Total RAM slots", example=4)
+    slots_used: int = Field(description="Used RAM slots", example=2)
+    drive: str = Field(description="Storage drive information", example="HTS545050A7E380 (465.76 GiB)")
+    gpu_model: str = Field(description="GPU model", example="Intel 4th Gen Core Processor Integrated Graphics")
+    type: str = Field(description="Device type", example="Laptop")
+    user_properties: str = Field(description="Custom user properties", example="(invoice_code:pepe2) (invoice_code2:asd)")
+    current_state: str = Field(description="Current device state")
+    last_updated: datetime = Field(description="Last update timestamp", example="2025-07-02T21:21:13.626")
 
-class LotInfo(BaseModel):
-    id: int = Field(..., description="Unique identifier of the lot", example=1)
-    name: str = Field(..., description="Name of the lot", example="donante-orgA")
-    description: Optional[str] = Field(None, description="Description of the lot")
+class LotInfo(ModelSchema):
+    class Meta:
+        model = Lot
+        fields = ['id', 'name', 'code', 'archived', 'created', 'updated', 'description']
+
+    id: int = Field(..., example=1)
+    name: str = Field(..., example="donante-orgA")
+    code: Optional[str] = Field(description= "Custom code given by operator", example="INV-001AF")
+    archived: bool = Field(..., example=False)
+    description:Optional[str] = Field(example="Contains april's inventory")
 
 class LotDevicesResponse(BaseModel):
     lot: LotInfo
@@ -34,3 +42,31 @@ class LotDevicesResponse(BaseModel):
 
 class MessageOut(BaseModel):
     error: str = Field(..., description="Error message", example="Lot not found")
+
+class DeviceIDInput(BaseModel):
+    device_ids: List[str] = Field(
+        ...,
+        min_length=1,
+        description="List of device IDs to assign to the lot",
+        example=["0fcdc8469483f9520afae908fc933f618e8913122cb4fdc362a9f3fd6539ff2c"],
+        title="Device IDs"
+    )
+
+    @validator('device_ids')
+    def validate_device_ids(cls, v):
+        if not all(isinstance(item, str) and item.strip() for item in v):
+            raise ValueError("Device IDs must be non-empty strings")
+
+        return v
+
+class OperationResult(BaseModel):
+    success: bool
+    processed_ids: List[str]
+    invalid_ids: List[str]
+    message: Optional[str]
+
+class DeviceOperationOut(BaseModel):
+    success: bool = Field(..., description="Status of operation", example="")
+    processed_ids: List[str] = Field(..., description="IDs that were successfully processed")
+    invalid_ids: List[str] = Field(default_factory=list, description="IDs that were invalid")
+    message: Optional[str] = Field(None, description="Optional warning message")
