@@ -60,12 +60,6 @@ class DeviceIDInput(BaseModel):
         return v
 
 class OperationResult(BaseModel):
-    success: bool
-    processed_ids: List[str]
-    invalid_ids: List[str]
-    message: Optional[str]
-
-class DeviceOperationOut(BaseModel):
     success: bool = Field(..., description="Status of operation", example="")
     processed_ids: List[str] = Field(..., description="IDs that were successfully processed")
     invalid_ids: List[str] = Field(default_factory=list, description="IDs that were invalid")
