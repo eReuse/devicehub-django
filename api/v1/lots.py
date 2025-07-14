@@ -32,13 +32,14 @@ def _find_lot(identifier, institution):
         logger.error(f"Invalid lot identifier: {identifier}")
     return None
 
-def _check_valid_ids(device_ids):
+def _check_valid_ids(device_ids, owner):
     """
     Returns:
         valid_ids: a list of all valid device id's
         invalid_ids: self explanatory
     """
     properties = SystemProperty.objects.filter(
+        owner = owner,
         value__in=device_ids
     ).values_list('value', flat=True)
 
@@ -70,9 +71,9 @@ def retrieveLotDevices(request, lot_id: str):
     Args:
         lot_id: Either the numeric ID or name of the lot to retrieve
     """
-    owner = request.auth
+    user = request.auth
 
-    lot = _find_lot(lot_id, owner.institution)
+    lot = _find_lot(lot_id, user.institution)
     if not lot:
         raise HttpError(404, "Lot not found")
 
@@ -117,14 +118,14 @@ def retrieveLotDevices(request, lot_id: str):
     auth=GlobalAuth(),
 )
 def assignLotDevices(request, lot_id: str, data:DeviceIDInput):
-    owner = request.auth
+    user = request.auth
     #TODO: allow assign to archived through api?, may with a flag
-    lot = _find_lot(lot_id, owner.institution)
+    lot = _find_lot(lot_id, user.institution)
     if not lot:
         raise HttpError(404, "Lot not found")
 
     try:
-        valid_ids, invalid_ids = _check_valid_ids(data.device_ids)
+        valid_ids, invalid_ids = _check_valid_ids(data.device_ids, user.instution)
         if not valid_ids:
             raise HttpError(422, "No valid device IDs provided")
 
@@ -171,13 +172,13 @@ def assignLotDevices(request, lot_id: str, data:DeviceIDInput):
     auth=GlobalAuth()
 )
 def remove_devices_from_lot(request, lot_id: str, data: DeviceIDInput):
-    owner = request.auth
-    lot = _find_lot(lot_id, owner.institution)
+    user = request.auth
+    lot = _find_lot(lot_id, user.institution)
     if not lot:
         raise HttpError(404, "Lot not found")
 
     try:
-        valid_ids, invalid_ids = _check_valid_ids(data.device_ids)
+        valid_ids, invalid_ids = _check_valid_ids(data.device_ids, user.institution)
         if not valid_ids:
             raise HttpError(422, "No valid device IDs provided")
 

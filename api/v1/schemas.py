@@ -6,6 +6,7 @@ from lot.models import Lot
 from typing import List, Optional
 from ninja import ModelSchema
 from datetime import datetime
+from evidence.models import UserProperty
 
 class DeviceResponse(BaseModel):
     ID: str = Field(..., description="Unique device identifier", example="0FCDC8")
@@ -64,3 +65,24 @@ class OperationResult(BaseModel):
     processed_ids: List[str] = Field(..., description="IDs that were successfully processed")
     invalid_ids: List[str] = Field(default_factory=list, description="IDs that were invalid")
     message: Optional[str] = Field(None, description="Optional warning message")
+
+class PropertyIn(BaseModel):
+    value: str = Field(..., min_length=1)
+
+class PropertyOut(ModelSchema):
+    class Meta:
+        model = UserProperty
+        fields = ['key', 'value', 'created']
+
+    device_id: str
+    created: datetime = Field(..., alias="created_at")
+
+    class Config:
+        json_encoders = {
+            datetime: lambda v: v.isoformat()
+        }
+
+class SuccessResponse(BaseModel):
+    status: str = "success"
+    property: PropertyOut
+    action: Optional[str] = None
