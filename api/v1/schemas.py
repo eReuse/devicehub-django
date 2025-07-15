@@ -42,7 +42,8 @@ class LotDevicesResponse(BaseModel):
     devices: List[DeviceResponse]
 
 class MessageOut(BaseModel):
-    error: str = Field(..., description="Error message", example="Lot not found")
+    error: Optional[str] = Field(None, description="Concise error rmessage.", example="Invalid JSON")
+    status: Optional[str] = Field(None, description="More contextual info info", example="Not possible to parse snapshot. Invalid --example-- field")
 
 class DeviceIDInput(BaseModel):
     device_ids: List[str] = Field(
@@ -86,3 +87,9 @@ class SuccessResponse(BaseModel):
     status: str = "success"
     property: PropertyOut
     action: Optional[str] = None
+
+class SnapshotResponse(BaseModel):
+    status: str = Field(..., example="success")
+    dhid: str = Field(..., description="DeviceHub ID", example="0FCDC8")
+    url: str = Field(..., description="Device URL", example="https://example.com/devices/0FCDC8/")
+    public_url: str = Field(..., description="Public device URL", example="https://example.com/web/devices/0FCDC8/")
