@@ -82,7 +82,7 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
             'search_query': self.request.GET.get('q', ''),
             'breadcrumb' : _("Lot / {} / Devices").format(
                 lot.name),
-            'title' : lot.name
+            'title' : lot.name,
             'subscripted': subscriptions.first(),
             'is_circuit_manager': is_circuit_manager,
             'is_shop': is_shop,

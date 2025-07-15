@@ -151,6 +151,7 @@ class Device:
             'manufacturer': lambda d: str(getattr(d, 'manufacturer', '')),
             'model': lambda d: str(getattr(d, 'model', '')),
             'current_state': lambda d: str(d.get_current_state()) if d.get_current_state() else '',
+            'status_beneficiary': lambda d: str(d.status_beneficiary),
             'serial': lambda d: str(getattr(d, 'serial_number', '')),
             'cpu': lambda d: str(getattr(d, 'cpu', '')),
             'total_ram': lambda d: str(getattr(d, 'total_ram', ''))

@@ -70,7 +70,14 @@ class DeviceTable(tables.Table):
             'td': {'class': 'text-center'}
         }
     )
-
+    status_beneficiary = tables.Column(
+        accessor='status_beneficiary',
+        verbose_name=_("Status"),
+        attrs={
+            'th': {'class': 'text-center'},
+            'td': {'class': 'text-center'}
+        }
+    )
     last_updated = tables.DateTimeColumn(
         format="Y-m-d H:i",
         accessor='last_updated',
