@@ -490,9 +490,8 @@ class Device:
     def components_export(self):
         self.get_last_evidence()
 
-        user_properties = ""
-        for x in self.get_user_properties():
-            user_properties += "({}:{}) ".format(x.key, x.value)
+
+        user_properties = dict(self.get_user_properties().values_list("key", "value"))
 
         hardware_info = {
             'ID': self.shortid or '',
@@ -500,15 +499,15 @@ class Device:
             'model': self.model or '',
             'serial': '',
             'cpu_model': '',
-            'cpu_cores': '',
+            'cpu_cores': 0,
             'ram_total': '',
             'ram_type': '',
-            'ram_slots': '',
-            'slots_used': '',
+            'ram_slots': 0,
+            'slots_used': 0,
             'drive': '',
             'gpu_model': '',
             'type': self.type,
-            'user_properties': user_properties,
+            'user_properties': str(user_properties),
             'current_state': self.get_current_state().state if self.get_current_state() else '',
             'last_updated': parse_datetime(self.updated) or ""
         }
