@@ -4,6 +4,7 @@ import logging
 from ninja import Router
 from ninja.errors import HttpError
 from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
+from django.utils.translation import gettext_lazy as _
 
 from lot.models import Lot
 from device.models import Device
@@ -39,7 +40,15 @@ def _get_device(pk, user):
 @router.get(
     "/devices/{device_id}/properties/{key}/",
     response={200: SuccessResponse, 403: MessageOut, 404: MessageOut},
-    summary="Get device property",
+    summary=_("Retrieve a specific device property"),
+    description=_("""
+    Fetch detailed information about a particular user property associated with a device.
+
+    Returns:
+    - Property key, value, creation timestamp and associated device ID
+    - 403 if user lacks permission to access this device
+    - 404 if property or device doesn't exist
+    """),
     tags=["Device Properties"],
     auth=GlobalAuth()
 )
@@ -70,8 +79,15 @@ def get_property(request, device_id: str, key: str):
         403: MessageOut,
         404: MessageOut
     },
-    summary="Delete device property",
-    description="Deletes a specific property from a device if it exists",
+    summary=_("Remove a device's user property"),
+    description=_("""
+    Permanently deletes a custom user property from a device.
+
+    Behavior:
+    - Returns 200 with deleted property details if successful
+    - Returns 404 if property or device doesn't exist
+    - Returns 403 if user lacks permission
+    """),
     tags=["Device Properties"],
     auth=GlobalAuth()
 )
@@ -108,7 +124,19 @@ def delete_property(request, device_id: str, key: str):
 @router.post(
     "/devices/{device_id}/properties/{key}/",
     response={200: SuccessResponse, 201: SuccessResponse, 400: MessageOut, 403: MessageOut},
-    summary="Create or update device property",
+    summary=_("Create or update device's user property"),
+    description=_("""
+    Sets or modifies a custom user property on a device.
+
+    Behaviour:
+    - Creates new property if it doesn't exist (201)
+    - Updates existing property (200)
+
+    Returns:
+    - Property details with action performed (created/updated)
+    - 400 for invalid input
+    - 403 for permission denied
+    """),
     tags=["Device Properties"],
     auth=GlobalAuth()
 )
@@ -162,8 +190,21 @@ def set_property(request, device_id: str, key: str, data: PropertyIn):
         403: MessageOut,
         404: MessageOut
     },
-    summary="Get device details",
-    description="Retrieve comprehensive information about a specific device",
+    summary=_("Get complete device information"),
+    description=_("""
+    Retrieves comprehensive technical specifications and metadata for a device.
+
+    Includes:
+    - Hardware specifications (CPU, RAM, storage etc.)
+    - Custom user properties
+    - Current device state
+    - Last update timestamp
+
+    Responses:
+    - 200: Full device details
+    - 403: Access denied
+    - 404: Device not found
+    """),
     tags=["Devices"],
     auth=GlobalAuth()
 )
