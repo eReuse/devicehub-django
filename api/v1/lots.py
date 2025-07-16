@@ -4,6 +4,7 @@ import logging
 from ninja import Router
 from ninja.errors import HttpError
 from django.core.exceptions import ValidationError
+from django.utils.translation import gettext_lazy as _
 
 from evidence.models import SystemProperty
 from lot.models import Lot
@@ -52,15 +53,17 @@ def _check_valid_ids(device_ids, owner):
 @router.get(
     "/{lot_id}/devices/",
     response={200: LotDevicesResponse, 404: MessageOut},
-    summary="Retrieve devices in a lot",
-    description="""Get all devices belonging to a specific lot.
+    summary=_("Retrieve devices in a lot"),
+    description=_("""Get all devices belonging to a specific lot.
 
     The lot can be identified by either:
     - Its numeric ID (e.g., #1)
     - Its name (e.g., "donante-orgA")
 
-    Returns detailed information about the lot and all its devices.
-    """,
+    Returns:
+    - 200 - Lot details (ID, name, description, etc.) and list of all devices with their technical specifications
+    - 404 - Lot not found
+    """),
     tags=["Lots"],
     auth=GlobalAuth(),
 )
@@ -95,7 +98,6 @@ def retrieveLotDevices(request, lot_id: str):
         },
         devices=[device.components_export() for device in devices]
     )
-
 @router.post(
     "/{lot_id}/devices/",
     response={
@@ -105,15 +107,19 @@ def retrieveLotDevices(request, lot_id: str):
         404: MessageOut,     # Lot not found
         422: MessageOut      # No valid devices
     },
-    summary="Assign devices in a lot",
-    description="""Assign devices to a specified lot.
+    summary=_("Assign devices to lot"),
+    description=_("""
+    Add multiple devices to a specified lot in a single operation.
 
     The lot can be identified by either:
     - Its numeric ID (e.g., #1)
     - Its name (e.g., "donante-orgA")
 
-    The input devices should be a list of Devicehub's device ids.
-    """,
+    Returns:
+    - 200: All valid devices assigned
+    - 207: Partial assignment (some invalid IDs)
+    - 422: No valid device IDs provided
+    """),
     tags=["Lots"],
     auth=GlobalAuth(),
 )
@@ -148,26 +154,28 @@ def assignLotDevices(request, lot_id: str, data:DeviceIDInput):
     except ValidationError as e:
         raise HttpError(400, str(e))
 
-
 @router.delete(
     "/{lot_id}/devices/",
     response={
         200: OperationResult,
         207: OperationResult,
-        400: MessageOut,        # Bad request
-        404: MessageOut,        # Lot not found
-        422: MessageOut         # No valid devices provided
+        400: MessageOut,
+        404: MessageOut,
+        422: MessageOut
     },
-    summary="Remove devices from a lot",
-    description="""Remove devices from a specified lot.
+    summary=_("Remove devices from lot"),
+    description=_("""
+    Remove multiple devices from a specified lot in a single operation.
+
+    The lot can be identified by either:
+    - Its numeric ID (e.g., #1)
+    - Its name (e.g., "donante-orgA")
 
     Returns:
-    - 200: All devices were successfully removed
-    - 207: Partial removal (some devices invalid/not in lot)
-    - 400: Invalid request data
-    - 404: Lot not found
-    - 422: No valid devices provided
-    """,
+    - 200: All valid devices removed
+    - 207: Partial removal (some invalid IDs)
+    - 422: No valid device IDs provided
+    """),
     tags=["Lots"],
     auth=GlobalAuth()
 )
