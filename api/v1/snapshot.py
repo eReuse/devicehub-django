@@ -2,10 +2,10 @@ import json
 import logging
 
 from ninja import Router, File
-from ninja.errors import HttpError
 from ninja.files import UploadedFile
 from django.urls import reverse_lazy
 from django.conf import settings
+from django.utils.translation import gettext_lazy as _
 
 from utils.save_snapshots import move_json, save_in_disk
 from evidence.models import SystemProperty
@@ -26,8 +26,17 @@ router = Router(tags=["Lots"])
         422: MessageOut,
         500: MessageOut
     },
-    summary="Process device snapshot",
-    description="Upload and process a device snapshot JSON file",
+    summary=_("Process device snapshot"),
+    description=_("""
+    Upload and process a workbench snapshot JSON file to register or update device information.
+
+    Returns:
+    - 200: Success - Snapshot processed successfully
+    - 400: Bad Request - Invalid JSON format
+    - 409: Conflict - Snapshot with this UUID already exists
+    - 422: Unprocessable Entity - Invalid snapshot structure or missing required fields
+    - 500: Internal Server Error - Unexpected processing failure
+    """),
     tags=["Snapshots"],
     auth=GlobalAuth()
 )
