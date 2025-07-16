@@ -82,7 +82,6 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
             'search_query': self.request.GET.get('q', ''),
             'breadcrumb' : _("Lot / {} / Devices").format(
                 lot.name),
-            'title' : lot.name,
             'subscripted': subscriptions.first(),
             'is_circuit_manager': is_circuit_manager,
             'is_shop': is_shop,
@@ -102,7 +101,7 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
                 if Device(id=x).matches_query(search_query)
             ]
 
-        return [Device(id=x) for x in chids]
+        return [Device(id=x, lot=self.object) for x in chids]
 
     def get_table_data(self):
         table_data = []
