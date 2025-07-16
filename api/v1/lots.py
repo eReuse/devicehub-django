@@ -68,12 +68,6 @@ def _check_valid_ids(device_ids, owner):
     auth=GlobalAuth(),
 )
 def retrieveLotDevices(request, lot_id: str):
-    """
-    Retrieve all devices belonging to a specific lot.
-
-    Args:
-        lot_id: Either the numeric ID or name of the lot to retrieve
-    """
     user = request.auth
 
     lot = _find_lot(lot_id, user.institution)
@@ -104,6 +98,7 @@ def retrieveLotDevices(request, lot_id: str):
         200: OperationResult,
         207: OperationResult,
         400: MessageOut,     # Bad request
+        401: MessageOut,     # Archived lot
         404: MessageOut,     # Lot not found
         422: MessageOut      # No valid devices
     },
@@ -118,6 +113,8 @@ def retrieveLotDevices(request, lot_id: str):
     Returns:
     - 200: All valid devices assigned
     - 207: Partial assignment (some invalid IDs)
+    - 401: Lot is archived
+    - 404: Lot wasnot found
     - 422: No valid device IDs provided
     """),
     tags=["Lots"],
@@ -125,11 +122,11 @@ def retrieveLotDevices(request, lot_id: str):
 )
 def assignLotDevices(request, lot_id: str, data:DeviceIDInput):
     user = request.auth
-    #TODO: allow assign to archived through api?, may with a flag
     lot = _find_lot(lot_id, user.institution)
     if not lot:
         raise HttpError(404, "Lot not found")
-
+    if lot.archived:
+        raise HttpError(401, "Lot is archived")
     try:
         valid_ids, invalid_ids = _check_valid_ids(data.device_ids, user.institution)
         if not valid_ids:
