@@ -490,11 +490,10 @@ class Device:
     def components_export(self):
         self.get_last_evidence()
 
-
         user_properties = dict(self.get_user_properties().values_list("key", "value"))
-
         hardware_info = {
-            'ID': self.shortid or '',
+            'ID': self.id or '',
+            'shortId': self.shortid or '',
             'manufacturer': self.manufacturer or '',
             'model': self.model or '',
             'serial': '',

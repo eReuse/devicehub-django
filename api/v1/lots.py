@@ -125,7 +125,7 @@ def assignLotDevices(request, lot_id: str, data:DeviceIDInput):
         raise HttpError(404, "Lot not found")
 
     try:
-        valid_ids, invalid_ids = _check_valid_ids(data.device_ids, user.instution)
+        valid_ids, invalid_ids = _check_valid_ids(data.device_ids, user.institution)
         if not valid_ids:
             raise HttpError(422, "No valid device IDs provided")
 
