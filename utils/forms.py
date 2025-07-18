@@ -4,6 +4,15 @@ from django import forms
 class MultipleFileInput(forms.ClearableFileInput):
     allow_multiple_selected = True
 
+    def __init__(self, attrs=None):
+        default_attrs = {
+            'class': 'visually-hidden',
+            'id': 'file-input',
+        }
+        if attrs:
+            default_attrs.update(attrs)
+        super().__init__(attrs=default_attrs)
+
 
 class MultipleFileField(forms.FileField):
     def __init__(self, *args, **kwargs):
