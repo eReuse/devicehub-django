@@ -142,7 +142,6 @@ class DeviceTableMixin():
         return self.configure_table(context)
 
     def build_table_row(self, device):
-        breakpoint()
         current_state = device.get_current_state()
         return {
             'id': device.pk,
