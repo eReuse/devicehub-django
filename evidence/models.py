@@ -107,8 +107,12 @@ class Evidence:
             for ev in self.doc["evidence"]:
                 if "dmidecode" == ev.get("operation"):
                     dmidecode_raw = ev["output"]
+                    if dmidecode_raw:
+                        self.dmi = DMIParse(dmidecode_raw)
                 if "inxi" == ev.get("operation"):
                     self.inxi = ev["output"]
+                    if isinstance(ev["output"], str):
+                        self.inxi = json.loads(ev["output"])
         else:
             dmidecode_raw = self.doc["data"]["dmidecode"]
             inxi_raw = self.doc.get("data", {}).get("inxi")
