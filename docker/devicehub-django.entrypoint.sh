@@ -9,18 +9,19 @@ set -x
 #   1. from the original docker compose devicehub-teal
 #   2. from the new docker compose that integrates all dpp services
 wait_for_dpp_shared() {
+        OPERATOR_TOKEN_FILE='operator-token.txt'
+        echo "Waiting for file in shared: ${OPERATOR_TOKEN_FILE}"
+
         while true; do
-                # specially ensure VERAMO_API_CRED_FILE is not empty,
-                #   it takes some time to get data in
-                OPERATOR_TOKEN_FILE='operator-token.txt'
                 if [ -f "/shared/${OPERATOR_TOKEN_FILE}" ] && \
                         [ -f "/shared/create_user_operator_finished" ]; then
                         sleep 5
                         echo "Files ready to process."
                         break
                 else
-                        echo "Waiting for file in shared: ${OPERATOR_TOKEN_FILE}"
                         sleep 5
+                        # DEBUG
+                        #echo "Waiting for file in shared: ${OPERATOR_TOKEN_FILE}"
                 fi
         done
 }
