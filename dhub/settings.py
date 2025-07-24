@@ -92,6 +92,7 @@ INSTALLED_APPS = [
     "action",
     "admin",
     "api",
+    "environmental_impact",
 ]
 
 DPP = config("DPP", default=False, cast=bool)
