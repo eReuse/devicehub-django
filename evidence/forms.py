@@ -14,13 +14,16 @@ from action.models import DeviceLog
 
 
 class UploadForm(forms.Form):
-    evidence_file = MultipleFileField(label=_("File"))
+    evidence_file = MultipleFileField()
 
     def clean_evidence_file(self):
         self.evidences = []
         data = self.cleaned_data.get('evidence_file')
         if not data:
-            return False
+            raise ValidationError(
+                _("No snapshot selected"),
+                code="no_input",
+            )
 
         for f in data:
             file_name = f.name
@@ -129,7 +132,15 @@ class UserTagForm(forms.Form):
 
 
 class ImportForm(forms.Form):
-    file_import = forms.FileField(label=_("File to import"))
+    file_import = forms.FileField(
+        widget=forms.ClearableFileInput(
+            attrs={
+                'class': 'visually-hidden',
+                'id': 'file-input',
+            }
+        ),
+        label="",
+    )
 
     def __init__(self, *args, **kwargs):
 
