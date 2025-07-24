@@ -388,7 +388,7 @@ def main():
     )
 
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    default_output_filename = "latest_carbon_intensity_by_country.pkl"
+    default_output_filename = "carbon_intensity_data.pkl"
     default_output_path = os.path.join(script_dir, default_output_filename)
 
     parser.add_argument(
