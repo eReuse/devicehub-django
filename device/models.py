@@ -137,7 +137,10 @@ class Device:
 
     def get_lots(self):
         self.lots = [
-            x.lot for x in DeviceLot.objects.filter(device_id=self.id)]
+            x.lot for x in DeviceLot.objects.filter(device_id=self.id)
+            .select_related('lot__type')
+            .order_by('-lot__type__name', '-lot__created')
+        ]
 
     def matches_query(self, query):
         if not query:
