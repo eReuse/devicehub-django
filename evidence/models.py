@@ -121,6 +121,8 @@ class Evidence:
                 pass
         if self.inxi:
             try:
+                if isinstance(self.inxi, str):
+                    self.inxi = json.loads(self.inxi)
                 machine = get_inxi_key(self.inxi, 'Machine')
                 for m in machine:
                     system = get_inxi(m, "System")
