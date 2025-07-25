@@ -262,7 +262,7 @@ class Evidence:
     def did_document(self):
         if not self.doc.get("credentialSubject"):
             return ''
-        did = self.doc.get('issuer')
+        did = self.doc.get('issuer').get('id')
         if not "did:web" in did:
             return ''
 
