@@ -21,7 +21,7 @@ class SampleEnvironmentalImpactAlgorithm(EnvironmentImpactAlgorithm):
         env_impact = EnvironmentalImpact()
         env_impact.constants = self.algorithm_constants
         co2_emissions_in_use = self.compute_co2_emissions_while_in_use(device)
-        env_impact.co2_emissions.update(co2_emissions_in_use)
+        env_impact.kg_CO2e.update(co2_emissions_in_use)
         env_impact.docs = render_algorithm_docs("docs.md", os.path.dirname(__file__))
         env_impact.relevant_input_data = {
             "power_on_hours": get_power_on_hours_from(device)

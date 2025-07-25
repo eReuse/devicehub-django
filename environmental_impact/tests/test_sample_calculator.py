@@ -149,7 +149,7 @@ class SampleEnvironmentalImpactAlgorithmTests(unittest.TestCase):
             / 1000
         )
         self.assertAlmostEqual(
-            impact.co2_emissions["in_use"],
+            impact.kg_CO2e["in_use"],
             expected_co2,
             2,  # difference between the two values is less than 0.01
         )
