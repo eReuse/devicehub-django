@@ -2,7 +2,7 @@ import pickle
 import os
 
 
-def get_carbon_intensity_factor(country_code: str) -> float:
+def get_carbon_intensity_factor_from(country_code: str) -> float:
     """
     Get carbon intensity factor for the device's location.
 
