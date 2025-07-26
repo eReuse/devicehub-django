@@ -10,7 +10,6 @@ from user.models import User
 
 class UserTable(tables.Table):
 
-
     id = tables.Column(
         verbose_name=_("User ID"),
         attrs={
@@ -45,16 +44,8 @@ class UserTable(tables.Table):
 
     class Meta:
         model = User
+        template_name = "custom_table.html"
         fields = ()
-        attrs = {
-            'class': 'table table-hover table-bordered',
-            'thead': {
-                'class': 'table-light text-center'
-            },
-            'tbody': {
-                'class': 'text-center'
-            }
-        }
         orderable = True
         empty_text = _("No user records found")
 

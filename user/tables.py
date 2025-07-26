@@ -81,5 +81,5 @@ class TokensTable(tables.Table):
     class Meta:
         model = Token
         template_name = "custom_table.html"
-        fields = ("token", "tag", "edit_token")
-
+        fields = ("tag", "token",  "edit_token")
+        sequence = ("tag", "token",  "edit_token")

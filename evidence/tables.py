@@ -13,22 +13,12 @@ logger = logging.getLogger('django')
 
 class EvidenceTable(tables.Table):
     uuid = tables.Column(verbose_name=_("UUID"),
-        attrs={
-            'th': {'class': 'text-start'},
-            'td': {'class': 'font-monospace text-start'}
-        },
         orderable=False
     )
 
     created = tables.DateTimeColumn(
         format="Y-m-d H:i",
         verbose_name=_("Upload Date"),
-        attrs={
-            'th': {
-                'data-type': 'date',
-                'data-format': 'YYYY-MM-DD HH:mm'
-            },
-        },
         orderable=True
     )
 
@@ -43,15 +33,7 @@ class EvidenceTable(tables.Table):
     device = tables.Column(verbose_name=_("Device"), accessor="value")
 
     class Meta:
-        attrs = {
-            'class': 'table table-hover table-bordered',
-            'thead': {
-                'class': 'table-light text-center'
-            },
-            'tbody': {
-                'class': 'text-center'
-            }
-        }
+        template_name = "custom_table.html"
         orderable= False
         order_by = ("-created")
         sequence = ('device','uuid','did_document', 'legacy', 'ev_type', 'uploaded_by', 'created')
@@ -97,7 +79,7 @@ class EvidenceTable(tables.Table):
             return format_html(
                 '''<a href="{}" class="font-monospace text-decoration-none"
                     title="{}">
-                   <i class="bi bi-file-earmark-text"></i>{}
+                   <i class="bi bi-file-earmark-text pe-2"></i>{}
                    </a>''',
                 url,
                 value,
@@ -137,12 +119,10 @@ class EvidenceTable(tables.Table):
                     title="View DID Document">
                 <i class="bi bi-file-earmark-lock me-2"></i>{}
                 </a>''',
-                did_url, # The URL should be the first argument
+                did_url, 
                 _("DID document")
             )
         except Exception as e:
-            # Log the exception for debugging if necessary
-            # logger.error(f"Error rendering DID document for {value}: {e}")
             return self.render_error_message(_("Error rendering DID"))
 
     def render_legacy(self, record, value):
