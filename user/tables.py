@@ -81,4 +81,4 @@ class TokensTable(tables.Table):
 
     class Meta:
         model = Token
-        fields = ("token", "tag", "edit_token")
+        fields = ("token", "tag", "is_active" , "edit_token")
