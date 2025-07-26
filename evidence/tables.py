@@ -137,12 +137,10 @@ class EvidenceTable(tables.Table):
                     title="View DID Document">
                 <i class="bi bi-file-earmark-lock me-2"></i>{}
                 </a>''',
-                did_url, # The URL should be the first argument
+                did_url, 
                 _("DID document")
             )
         except Exception as e:
-            # Log the exception for debugging if necessary
-            # logger.error(f"Error rendering DID document for {value}: {e}")
             return self.render_error_message(_("Error rendering DID"))
 
     def render_legacy(self, record, value):
