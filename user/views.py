@@ -154,6 +154,7 @@ class EditTokenView(DashboardView, UpdateView):
     success_url = reverse_lazy('user:tokens')
     fields = (
         "tag",
+        "is_active"
     )
 
     def get_form_kwargs(self):
