@@ -128,7 +128,7 @@ wait_idhub() {
         done
 }
 
-demo__send_to_sign_credential() {
+demo__send_snapshot_to_idhub() {
         filepath="${1}"
         # hashlib.sha3_256 of PREDEFINED_TOKEN for idhub
         DEMO_IDHUB_PREDEFINED_TOKEN="${DEMO_IDHUB_PREDEFINED_TOKEN:-}"
@@ -148,9 +148,13 @@ run_demo() {
                 # this demo only works with FQDN domain (with no ports)
                 url="https://${DEMO_IDHUB_DOMAIN}/webhook/sign/"
                 wait_idhub
-                demo__send_to_sign_credential \
-                        'example/demo-snapshots-vc/snapshot_pre-verifiable-credential.json' \
-                        > 'example/snapshots/snapshot_workbench-script_verifiable-credential.json'
+                prevc_in='example/demo-snapshots-vc/snapshot_pre-verifiable-credential.json'
+                vc_out='example/snapshots/snapshot_workbench-script_verifiable-credential.json'
+                if demo__send_snapshot_to_idhub "${prevc_in}" > "${vc_out}"; then
+                        echo 'Credential signed'
+                else
+                        echo 'ERROR: Credential not signed'
+                fi
         fi
         ./manage.py create_default_states "${INIT_ORG}"
         /usr/bin/time ./manage.py up_snapshots example/snapshots/ "${INIT_USER}"

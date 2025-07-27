@@ -36,11 +36,6 @@ class ListEvidencesView(DashboardView, SingleTableView):
     def get_queryset(self):
         return Evidence.get_all(self.request.user)
 
-    def get_table_kwargs(self):
-        return {
-            'exclude': ('did_document', )
-        }
-
 
 class UploadView(DashboardView, FormView):
     template_name = "upload.html"
