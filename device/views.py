@@ -111,7 +111,7 @@ class DetailsView(DashboardView, TemplateView):
             enviromental_impact = enviromental_impact_algorithm.get_device_environmental_impact(
             self.object)
         except Exception as err:
-            logger.error(err)
+            logger.error("Enviromental Impact: {}".format(err))
             enviromental_impact = None
         last_evidence = self.object.get_last_evidence()
         uuids = self.object.uuids
