@@ -59,12 +59,25 @@
                                     <i class="bi bi-pencil-square"></i>
                                     {% translate "Edit" %}
                                 </a>
+
+                                {% if profile_user.pk == 1 %}
+                                <span class="btn btn-outline-danger position-relative"
+                                    data-bs-toggle="tooltip"
+                                    data-bs-placement="top"
+                                    title="{% trans 'User #1 cannot be deleted' %}">
+                                    <i class="bi bi-trash"></i>
+                                    <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle">
+                                    </span>
+                                </span>
+                                {% else %}
                                 <a href="{% url 'admin:delete_user' profile_user.pk %}"
-                                   class="btn btn-outline-danger px-3"
-                                   title="{% translate 'Delete' %}">
+                                class="btn btn-outline-danger"
+                                title="{% translate 'Delete' %}">
                                     <i class="bi bi-trash"></i>
                                 </a>
+                                {% endif %}
                             </div>
+
                         </div>
                     </div>
                 {% endif %}
