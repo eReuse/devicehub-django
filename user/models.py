@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import ProtectedError
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser
 from utils.constants import ALGOS
@@ -78,11 +79,24 @@ class User(AbstractBaseUser):
     accept_gdpr = models.BooleanField(default=False)
     institution = models.ForeignKey(Institution, on_delete=models.CASCADE)
 
-
     objects = UserManager()
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ['institution']
+
+    def delete(self, **kwargs):
+        if self.pk == 1:
+            raise ProtectedError(
+                f"User #{self.pk} is a protected user and cannot be deleted",
+                self
+            )
+        super().delete(**kwargs)
+
+    def save(self, *args, **kwargs):
+        if self.pk == 1:
+            self.is_admin = True
+            self.is_active = True
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.email
