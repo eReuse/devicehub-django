@@ -55,6 +55,7 @@ class UserProperty(Property):
 class Evidence:
     def __init__(self, uuid):
         self.uuid = uuid
+        self.uploaded_by = None
         self.owner = None
         self.doc = None
         self.created = None
@@ -78,6 +79,7 @@ class Evidence:
         a = self.properties.first()
         if a:
             self.owner = a.owner
+            self.uploaded_by = a.user
 
     def get_phid(self):
         if not self.doc:
@@ -123,6 +125,8 @@ class Evidence:
                 pass
         if self.inxi:
             try:
+                if isinstance(self.inxi, str):
+                    self.inxi = json.loads(self.inxi)
                 machine = get_inxi_key(self.inxi, 'Machine')
                 for m in machine:
                     system = get_inxi(m, "System")
@@ -229,7 +233,23 @@ class Evidence:
         return SystemProperty.objects.filter(
             owner=user.institution,
             key="ereuse24",
-        ).order_by("-created").values_list("uuid", "created").distinct()
+        ).order_by("-created").distinct()
+
+    @classmethod
+    def get_user_evidences(cls, user):
+        return SystemProperty.objects.filter(
+            owner=user.institution,
+            key="ereuse24",
+            user=user
+        ).order_by("-created").distinct()
+
+    @classmethod
+    def get_device_evidences(cls,user, uuids):
+        return SystemProperty.objects.filter(
+            owner=user.institution,
+            key="ereuse24",
+            uuid__in=uuids
+        ).order_by("-created").distinct()
 
     def set_components(self):
         self.components = ParseSnapshot(self.doc).components
@@ -246,7 +266,7 @@ class Evidence:
     def did_document(self):
         if not self.doc.get("credentialSubject"):
             return ''
-        did = self.doc.get('issuer')
+        did = self.doc.get('issuer').get('id')
         if not "did:web" in did:
             return ''
 

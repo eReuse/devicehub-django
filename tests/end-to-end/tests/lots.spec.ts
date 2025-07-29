@@ -14,7 +14,6 @@ async function login(page, date, time) {
 
 test('Lot CRUD', async ({ page }) => {
     await login(page);
-    //await page.pause();
 
     // Create Lot
     await page.getByRole('link', { name: 'Entrada' }).click();
@@ -46,7 +45,6 @@ test('Lot CRUD', async ({ page }) => {
 test('Search function', async ({ page }) => {
     //Searches for a demo loaded lot (orgC)
     await login(page);
-    //await page.pause();
 
     await page.getByRole('link', { name: 'Entrada' }).click();
     await page.getByPlaceholder('Search by name or description').click();
@@ -58,7 +56,6 @@ test('Search function', async ({ page }) => {
 
 test('Show archived', async ({ page }) => {
     await login(page);
-    //await page.pause();
 
     await page.getByRole('link', { name: 'Entrada' }).click();
     await page.getByText('Archived (1)').click();
@@ -69,7 +66,6 @@ test('Show archived', async ({ page }) => {
 test('Sort by different columns', async ({ page }) => {
     await login(page);
 
-    //await page.pause();
     await page.getByRole('link', { name: 'Entrada' }).click();
     await page.getByText('All Lots (3)').click();
     await page.getByRole('link', { name: 'Status' }).click();
@@ -89,7 +85,6 @@ test('Sort by different columns', async ({ page }) => {
 
 test('Lot already exists', async ({ page }) => {
     await login(page);
-    //await page.pause();
 
     // Create Lot
     await page.getByRole('link', { name: 'Entrada' }).click();
@@ -116,7 +111,6 @@ test('Lot already exists', async ({ page }) => {
 
 test('Archive lot', async ({ page }) => {
     await login(page);
-    // await page.pause();
 
     // Create Lot
     await page.getByRole('link', { name: 'Entrada' }).click();
@@ -135,7 +129,6 @@ test('Archive lot', async ({ page }) => {
 
 test('Select all and delete all', async ({ page }) => {
     await login(page);
-    // await page.pause();
 
     await page.getByRole('link', { name: 'Entrada' }).click();
     await page.locator('#select-all').check();

@@ -5,6 +5,16 @@
   <div class="row">
     <div class="col">
       <h3>{{ object.uuid }}</h3>
+
+          <a href="{% url "user:profile" object.uploaded_by.pk %}" class="text-decoration-none link-primary d-block">
+            <small class="text-muted ms-1"> {% trans "Uploaded by " %}</small>
+            {{ object.uploaded_by }}
+          </a>
+          <small class="text-muted ps-1">
+            <i class="bi bi-clock"></i>
+            {% trans "ISO date" %}: {{object.created}}
+          </small>
+
     </div>
   </div>
 

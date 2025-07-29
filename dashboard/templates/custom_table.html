@@ -1,0 +1,122 @@
+{% load django_tables2 %}
+{% load i18n static %}
+
+{% block table-wrapper %}
+  <div class="table-responsive rounded-3 shadow-sm custom-hover-shadow">
+    {% block table %}
+    <table {% render_attrs table.attrs class="table table-hover table-bordered align-middle" %}>
+      {% block table.thead %}
+      <thead class="text-center">
+        <tr>
+          {% for column in table.columns %}
+          <th {{ column.attrs.th.as_html }} scope="col"
+              class="ps-3 py-2 fw-semibold fs-7 border-bottom">
+            {% if column.orderable %}
+            <a href="{% querystring table.prefixed_order_by_field=column.order_by_alias.next %}">
+              {{ column.header }}
+            </a>
+            {% else %}
+            {{ column.header }}
+            {% endif %}
+          </th>
+          {% endfor %}
+        </tr>
+      </thead>
+      {% endblock table.thead %}
+
+      {% block table.tbody %}
+      <tbody class="text-center">
+        {% for row in table.paginated_rows %}
+        <tr {{ row.attrs.as_html }} class="bg-white border-bottom">
+          {% for column, cell in row.items %}
+          <td {{ column.attrs.td.as_html }} class="ps-3 py-2">
+            {{ cell }}
+          </td>
+          {% endfor %}
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="{{ table.columns|length }}" class="text-center p-4 text-muted">
+            {{ table.empty_text }}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      {% endblock table.tbody %}
+    </table>
+    {% endblock table %}
+
+    {% block pagination %}
+    {% if table.page and table.paginator.num_pages > 1 %}
+    <div class="d-flex justify-content-between align-items-center px-3 py-2 bg-light rounded-bottom">
+      <div class="text-muted">
+        {% trans "Showing" %}
+        {{ table.page.start_index }} to {{ table.page.end_index }} of {{ table.paginator.count }}
+      </div>
+      <nav aria-label="Table navigation">
+        <ul class="pagination mb-0">
+          {% if table.page.has_previous %}
+          <li class="page-item">
+            <a class="page-link rounded px-3 py-2"
+               href="{% querystring table.prefixed_page_field=table.page.previous_page_number %}">
+              <i class="bi bi-chevron-left"></i>
+            </a>
+          </li>
+          {% endif %}
+
+          {% for p in table.page|table_page_range:table.paginator %}
+          <li class="page-item {% if p == table.page.number %}active{% endif %}">
+            <a class="page-link rounded px-3 py-2 {% if p == table.page.number %}fw-bold{% endif %}"
+               href="{% if p != '...' %}{% querystring table.prefixed_page_field=p %}{% else %}#{% endif %}">
+              {{ p }}
+            </a>
+          </li>
+          {% endfor %}
+
+          {% if table.page.has_next %}
+          <li class="page-item">
+            <a class="page-link rounded px-3 py-2"
+               href="{% querystring table.prefixed_page_field=table.page.next_page_number %}">
+              <i class="bi bi-chevron-right"></i>
+            </a>
+          </li>
+          {% endif %}
+        </ul>
+      </nav>
+    </div>
+    {% endif %}
+    {% endblock pagination %}
+  </div>
+{% endblock table-wrapper %}
+
+<style>
+.table thead {
+  background-color: #f8f9fa;
+  color: #495057;
+}
+
+.table tbody tr:hover {
+  background-color: #f0fdf0;
+}
+
+.table thead th a:hover {
+  color: #007bff;
+  text-decoration: underline;
+}
+
+.pagination .page-link {
+  color: #4caf50;
+  border: 1px solid #a5d6a7;
+  background-color: #ffffff;
+}
+
+.pagination .page-item.active .page-link {
+  background-color: #4caf50;
+  border-color: #4caf50;
+  color: white;
+}
+
+.pagination .page-link:hover {
+  background-color: #c8e6c9;
+}
+</style>

@@ -26,7 +26,7 @@ from evidence.parse_details import ParseSnapshot
 from evidence.parse import Build
 from device.models import Device
 from api.models import Token
-from api.tables import TokensTable
+from user.tables import TokensTable
 
 
 logger = logging.getLogger('django')

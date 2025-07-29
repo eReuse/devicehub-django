@@ -18,13 +18,11 @@ async function login(page, date, time) {
 //test.only('NEW example', async ({ page }) => {
 //    await login(page);
 //    test.setTimeout(0)
-//    await page.pause();
 //});
 
 
 test('Devices assign/deassign to lot', async ({ page }) => {
     await login(page);
-    //await page.pause();
 
 
     //assign all paginated devices to lot donante-orgB
@@ -48,7 +46,6 @@ test('Devices assign/deassign to lot', async ({ page }) => {
 
 test('Export devices', async ({ page }) => {
     await login(page);
-    //await page.pause();
 
     //assign all paginated devices to lot donante-orgB
     await page.getByRole('link', { name: ' Devices' }).click();
@@ -71,7 +68,6 @@ test('Export devices', async ({ page }) => {
 
 test('Bulk changed state', async ({ page }) => {
     await login(page);
-    //await page.pause();
 
     //assign all paginated devices to lot donante-orgB
     await page.getByRole('link', { name: ' Devices' }).click();
@@ -95,7 +91,6 @@ test('Bulk changed state', async ({ page }) => {
 test('Search', async ({ page }) => {
 
     await login(page);
-    //await page.pause();
 
     //assign all paginated devices to lot donante-orgB
     await page.getByRole('link', { name: ' Devices' }).click();
@@ -134,7 +129,6 @@ test('Search', async ({ page }) => {
 
 test('Paginate devices', async ({ page }) => {
     await login(page);
-    //await page.pause();
 
     //assign all paginated devices to lot donante-orgB
     await page.getByRole('link', { name: ' Devices' }).click();
