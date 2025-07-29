@@ -55,7 +55,7 @@ main() {
                 tag='stable'
         fi
 
-        _proc devicehub
+        _proc devicehub-django
 }
 
 main "${@}"
