@@ -11,12 +11,13 @@ set -x
 wait_for_dpp_shared() {
         OPERATOR_TOKEN_FILE='operator-token.txt'
         echo "Waiting for file in shared: ${OPERATOR_TOKEN_FILE}"
-
+        set +x
         while true; do
                 if [ -f "/shared/${OPERATOR_TOKEN_FILE}" ] && \
                         [ -f "/shared/create_user_operator_finished" ]; then
                         sleep 5
                         echo "Files ready to process."
+                        set -x
                         break
                 else
                         sleep 5
