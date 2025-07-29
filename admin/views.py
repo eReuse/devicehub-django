@@ -1,4 +1,5 @@
 import logging
+from django_tables2 import SingleTableView
 from smtplib import SMTPException
 from django.contrib import messages
 from django.urls import reverse_lazy
@@ -17,6 +18,7 @@ from dashboard.mixins import DashboardView, Http403
 from admin.forms import OrderingStateForm
 from user.models import User, Institution
 from admin.email import NotifyActivateUserByEmail
+from admin.tables import UserTable
 from action.models import StateDefinition
 from lot.models import LotTag
 
@@ -39,16 +41,17 @@ class PanelView(AdminView, TemplateView):
         return context
 
 
-class UsersView(AdminView, TemplateView):
+class UsersView(AdminView, SingleTableView):
     template_name = "admin_users.html"
     title = _("Users")
     breadcrumb = _("admin / Users") + " /"
+    table_class = UserTable
+
+    def get_queryset(self):
+        return User.objects.filter()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context.update({
-            "users": User.objects.filter()
-        })
         return context
 
 

@@ -21,22 +21,20 @@ from evidence.forms import (
     ImportForm,
     EraseServerForm
 )
+from django_tables2 import SingleTableView
+from evidence.tables import EvidenceTable
 
 
-class ListEvidencesView(DashboardView, TemplateView):
+class ListEvidencesView(DashboardView, SingleTableView):
     template_name = "evidences.html"
     section = "evidences"
+    table_class = EvidenceTable
     title = _("Evidences")
     breadcrumb = "Evidences"
+    paginate_by = 13
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        evidences = Evidence.get_all(self.request.user)
-
-        context.update({
-            'evidences': evidences,
-        })
-        return context
+    def get_queryset(self):
+        return Evidence.get_all(self.request.user)
 
 
 class UploadView(DashboardView, FormView):
