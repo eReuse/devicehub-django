@@ -15,7 +15,6 @@ async function login(page, date, time) {
 
 test('Display users panel ', async ({ page }) => {
   await login(page);
-  // await page.pause();
 
   await page.getByRole('link', { name: ' Admin' }).click();
   await page.getByRole('link', { name: 'Users' }).click();
@@ -25,7 +24,6 @@ test('Display users panel ', async ({ page }) => {
 
 test('Create new user ', async ({ page }) => {
   await login(page);
-  await page.pause();
 
   await page.getByRole('link', { name: ' Admin' }).click();
   await page.getByRole('link', { name: 'Users' }).click();
@@ -40,7 +38,6 @@ test('Create new user ', async ({ page }) => {
 
 test('Delete user', async ({ page }) => {
   await login(page);
-  await page.pause();
 
   await page.getByRole('link', { name: ' Admin' }).click();
   await page.getByRole('link', { name: 'Users' }).click();
@@ -54,7 +51,6 @@ test('Delete user', async ({ page }) => {
 
 test('Sort users panel ', async ({ page }) => {
   await login(page);
-  // await page.pause();
 
   await page.getByRole('link', { name: ' Admin' }).click();
   await page.getByRole('link', { name: 'Users' }).click();
@@ -73,7 +69,6 @@ test('Sort users panel ', async ({ page }) => {
 
 test('Lot GROUP-CRUD', async ({ page }) => {
   await login(page);
-  //await page.pause();
 
   // create lot group
   await page.getByRole('link', { name: ' Admin' }).click();
@@ -100,7 +95,6 @@ test('Lot GROUP-CRUD', async ({ page }) => {
 
 test('Lot group already exists (Inbox)', async ({ page }) => {
   await login(page);
-  //await page.pause();
 
   await page.getByRole('link', { name: ' Admin' }).click();
   await page.getByRole('link', { name: 'Lot Groups' }).click();

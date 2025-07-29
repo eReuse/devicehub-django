@@ -14,7 +14,6 @@ async function login(page, date, time) {
 
 test('Show evidences list', async ({ page }) => {
     await login(page);
-    //await page.pause();
 
     await page.getByRole('link', { name: ' Evidences' }).click();
     await page.getByRole('link', { name: 'List of evidences' }).click();
@@ -25,7 +24,6 @@ test('Show evidences list', async ({ page }) => {
 
 test('Sort evidences by values', async ({ page }) => {
     await login(page);
-    //await page.pause();
 
     await page.getByRole('link', { name: ' Evidences' }).click();
     await page.getByRole('link', { name: 'List of evidences' }).click();
@@ -39,7 +37,6 @@ test('Sort evidences by values', async ({ page }) => {
 
 test('Display evidences uploaded by an user', async ({ page }) => {
     await login(page);
-    // await page.pause();
 
     await page.getByRole('link', { name: ' Evidences' }).click();
     await page.getByRole('link', { name: 'List of evidences' }).click();
@@ -53,7 +50,6 @@ test('Display evidences uploaded by an user', async ({ page }) => {
 
 test('Display the device of an evidence', async ({ page }) => {
     await login(page);
-    // await page.pause();
 
     await page.getByRole('link', { name: ' Evidences' }).click();
     await page.getByRole('link', { name: 'List of evidences' }).click();
@@ -69,22 +65,20 @@ test('Display the device of an evidence', async ({ page }) => {
 
 test('Display evidences detail', async ({ page }) => {
     await login(page);
-    // await page.pause();
 
     await page.getByRole('link', { name: ' Evidences' }).click();
     await page.getByRole('link', { name: 'List of evidences' }).click();
 
-    await page.locator('td:nth-child(2)').first().click();
+    await page.locator('td:nth-child(2) a').first().click();
     await page.close();
 });
 
-test.only('Change erasure server status', async ({ page }) => {
+test('Change erasure server status', async ({ page }) => {
     await login(page);
-    await page.pause();
 
     await page.getByRole('link', { name: ' Evidences' }).click();
     await page.getByRole('link', { name: 'List of evidences' }).click();
-    await page.locator('td:nth-child(2)').first().click();
+    await page.locator('td:nth-child(2) a').first().click();
 
     await page.locator('#id_erase_server').check();
     await page.locator('#id_erase_server').uncheck();
@@ -95,11 +89,10 @@ test.only('Change erasure server status', async ({ page }) => {
 
 test('Change TAG', async ({ page }) => {
     await login(page);
-    //await page.pause();
 
     await page.getByRole('link', { name: ' Evidences' }).click();
     await page.getByRole('link', { name: 'List of evidences' }).click();
-    await page.locator('td:nth-child(2)').first().click();
+    await page.locator('td:nth-child(2) a').first().click();
     await page.getByRole('button', { name: 'Tag' }).click();
     await page.getByPlaceholder('Tag').click();
     await page.getByPlaceholder('Tag').fill('CUSTOMTAG');
@@ -114,12 +107,11 @@ test('Change TAG', async ({ page }) => {
 
 test('Download Evidence', async ({ page }) => {
     await login(page);
-    // await page.pause();
 
     await page.getByRole('link', { name: ' Evidences' }).click();
     await page.getByRole('link', { name: 'List of evidences' }).click();
 
-    await page.locator('td:nth-child(2)').first().click();
+    await page.locator('td:nth-child(2) a').first().click();
     const downloadPromise = page.waitForEvent('download');
     await page.getByRole('link', { name: 'Download File' }).click();
     const download = await downloadPromise;
