@@ -12,13 +12,18 @@
           <th {{ column.attrs.th.as_html }} scope="col"
               class="ps-3 py-2 fw-semibold fs-7 border-bottom">
             {% if column.orderable %}
-            <a href="{% querystring table.prefixed_order_by_field=column.order_by_alias.next %}">
-              {{ column.header }}
-            </a>
+              <a href="{% querystring table.prefixed_order_by_field=column.order_by_alias.next %}"
+                 class="text-decoration-none text-dark d-flex align-items-center justify-content-center gap-2">
+                {{ column.header }}
+                {% if column.is_ordered %}
+                  <i class="fa fa-solid fa-sort-{% if column.order_by_alias.is_descending %}down{% else %}up{% endif %} fs-8"></i>
+                {% else %}
+                  <i class="fa fa-solid fa-sort fs-8 text-muted opacity-50"></i>
+                {% endif %}
+              </a>
             {% else %}
             {{ column.header }}
             {% endif %}
-          </th>
           {% endfor %}
         </tr>
       </thead>
