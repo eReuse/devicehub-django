@@ -28,11 +28,29 @@ test('Create new user ', async ({ page }) => {
   await page.getByRole('link', { name: ' Admin' }).click();
   await page.getByRole('link', { name: 'Users' }).click();
 
+  await page.getByRole('link', { name: 'New user' }).click();
   await page.getByRole('textbox', { name: 'Email address' }).fill('user2@example.org');
   await page.getByRole('textbox', { name: 'Password' }).fill('password');
   await page.getByRole('button', { name: 'Save' }).click();
   await expect(page.getByRole('cell', { name: 'user2@example.org' })).toBeVisible();
 
+
+});
+
+test('Sort users panel ', async ({ page }) => {
+  await login(page);
+
+  await page.getByRole('link', { name: ' Admin' }).click();
+  await page.getByRole('link', { name: 'Users' }).click();
+
+  await page.getByRole('link', { name: 'User ID' }).click();
+  await page.getByRole('link', { name: 'User ID' }).click();
+  await page.getByRole('link', { name: 'Status' }).click();
+  await page.getByRole('link', { name: 'Status' }).click();
+  await page.getByRole('link', { name: 'Email address' }).click();
+  await page.getByRole('link', { name: 'Email address' }).click();
+  await page.getByRole('link', { name: 'Last Login' }).click();
+  await page.getByRole('link', { name: 'Last Login' }).click();
 
 });
 
@@ -47,25 +65,6 @@ test('Delete user', async ({ page }) => {
   await page.getByRole('button', { name: 'Delete' }).click();
 
 });
-
-
-test('Sort users panel ', async ({ page }) => {
-  await login(page);
-
-  await page.getByRole('link', { name: ' Admin' }).click();
-  await page.getByRole('link', { name: 'Users' }).click();
-
-  await page.getByRole('link', { name: 'User ID' }).click();
-  await page.getByRole('link', { name: 'User ID ' }).click();
-  await page.getByRole('link', { name: 'Status' }).click();
-  await page.getByRole('link', { name: 'Email address' }).click();
-  await page.getByRole('link', { name: 'Email address ' }).click();
-  await page.getByRole('link', { name: 'Last Login' }).click();
-  await page.getByRole('link', { name: 'Last Login ' }).click();
-
-});
-
-
 
 test('Lot GROUP-CRUD', async ({ page }) => {
   await login(page);

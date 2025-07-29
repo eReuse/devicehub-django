@@ -28,9 +28,9 @@ test('Sort evidences by values', async ({ page }) => {
     await page.getByRole('link', { name: ' Evidences' }).click();
     await page.getByRole('link', { name: 'List of evidences' }).click();
     await page.getByRole('link', { name: 'Uploaded by' }).click();
-    await page.getByRole('link', { name: 'Uploaded by ' }).click();
+    await page.getByRole('link', { name: 'Uploaded by ' }).click();
     await page.getByRole('link', { name: 'Upload Date' }).click();
-    await page.getByRole('link', { name: 'Upload Date ' }).click();
+    await page.getByRole('link', { name: 'Upload Date' }).click();
 
     await page.close();
 });
@@ -41,7 +41,7 @@ test('Display evidences uploaded by an user', async ({ page }) => {
     await page.getByRole('link', { name: ' Evidences' }).click();
     await page.getByRole('link', { name: 'List of evidences' }).click();
 
-    await page.locator('td:nth-child(5)').first().click();
+    await page.locator('td:nth-child(6)').first().click();
     await expect(page.getByText('Email')).toBeVisible();
     await expect(page.getByRole('heading', { name: ' Uploaded Evidences' })).toBeVisible();
 
@@ -54,7 +54,8 @@ test('Display the device of an evidence', async ({ page }) => {
     await page.getByRole('link', { name: ' Evidences' }).click();
     await page.getByRole('link', { name: 'List of evidences' }).click();
 
-    await page.locator('td:nth-child(1)').first().click();
+    await page.locator("table tr:nth-child(1) td:nth-child(2) a").click()
+    await page.locator("table tr:nth-child(1) td:nth-child(2) a").click()
     await expect(page.getByRole('link', { name: 'General details' })).toBeVisible();
     await page.getByRole('link', { name: 'Evidences', exact: true }).click();
     await expect(page.getByRole('heading', { name: ' Uploaded Evidences' })).toBeVisible();
