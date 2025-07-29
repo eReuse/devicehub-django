@@ -58,7 +58,7 @@ class UsersView(AdminView, SingleTableView):
 class CreateUserView(AdminView, NotifyActivateUserByEmail, CreateView):
     template_name = "user.html"
     title = _("User")
-    breadcrumb = _("admin / User") + " /"
+    breadcrumb = _("admin") + " / " + _("new user")
     success_url = reverse_lazy('admin:users')
     model = User
     fields = (
