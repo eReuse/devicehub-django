@@ -1,7 +1,7 @@
 services:
   devicehub-django:
     init: true
-    image: farga.pangea.org/ereuse/devicehub-django:latest
+    image: ghcr.io/ereuse/devicehub-django:${DEVICEHUB_DOCKER_TAG:-stable}
     build:
       context: .
       dockerfile: docker/devicehub-django.Dockerfile
