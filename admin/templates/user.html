@@ -22,7 +22,7 @@
   </div>
 </div>
 {% endif %}
-{% bootstrap_form form %}
+{% bootstrap_form form  layout="floating"  %}
 <div class="form-actions-no-box">
   <a class="btn btn-grey" href="{% url 'admin:users' %}">{% translate "Cancel" %}</a>
   <input class="btn btn-green-admin" type="submit" name="submit" value="{% translate 'Save' %}" />
