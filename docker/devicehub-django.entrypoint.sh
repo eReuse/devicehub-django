@@ -158,6 +158,8 @@ run_demo() {
                 fi
         fi
         ./manage.py create_default_states "${INIT_ORG}"
+        # create demo data to play with users for B2B B2C interactions
+        ./manage.py load_demo_data
         /usr/bin/time ./manage.py up_snapshots example/snapshots/ "${INIT_USER}"
 }
 
