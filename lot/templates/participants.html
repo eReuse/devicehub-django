@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+{% include 'tabs.html' %}
+{% load django_bootstrap5 %}
+<div class="row mt-3">
+  <div class="col">
+    <table class="table table-hover table-bordered align-middel">
+      <thead class="table-light">
+        <tr>
+          <th scope="col">Type</th>
+          <th scope="col">Email</th>
+          <th scope="col">Acceptance</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for s in subscriptions %}
+        <tr>
+          <td class="font-monospace">{{ s.get_type_display }}</td>
+          <td class="font-monospace">{{ s.user.email }}</td>
+          <td class="font-monospace"></td>
+        </tr>
+      {% endfor %}
+      {% if donor %}
+        <tr>
+          <td class="font-monospace">{% trans 'Donor' %}</td>
+          <td class="font-monospace">{{ donor.email }}</td>
+          <td class="font-monospace text-center">
+	    {% if donor.reconciliation %}
+	    {{ donor.reconciliation }}
+	    <i class="bi bi-shield-check text-primary"></i>
+	    {% else %}
+	    <i class="bi bi-shield-slash text-danger"></i>
+	    {% endif %}
+	  </td>
+        </tr>
+      {% endif %}
+      {% if beneficiaries %}
+      {% for beneficiary in beneficiaries %}
+        <tr>
+          <td class="font-monospace">{% trans 'Beneficiary' %}</td>
+          <td class="font-monospace">{{ beneficiary.email }}</td>
+          <td class="font-monospace">
+	    {% if beneficiary.sign_conditions %}
+	    {{ beneficiary.sign_conditions }}
+	    <i class="bi bi-shield-check text-primary"></i>
+	    {% else %}
+	    <i class="bi bi-shield-slash text-danger"></i>
+	    {% endif %}
+	  </td>
+        </tr>
+      {% endfor %}
+      {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

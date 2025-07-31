@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+{% include 'tabs.html' %}
+
+{% load django_bootstrap5 %}
+{% if donor %}
+    <div class="d-flex justify-content-end mt-1">
+      <a href="{% url 'lot:web_donor' lot.id donor.id %}" class="btn btn-green-admin d-flex align-items-center">
+	{% trans "Donor web" %}
+      </a>
+    </div>
+{% endif %}
+
+<form role="form" method="post">
+{% csrf_token %}
+{% if form.errors %}
+<div class="alert alert-danger alert-icon alert-icon-border alert-dismissible" role="alert">
+  <div class="icon"><span class="mdi mdi-close-circle-o"></span></div>
+  <div class="message">
+    {% for field, error in form.errors.items %}
+      {{ error }}<br />
+    {% endfor %}
+    <button class="btn-close" type="button" data-dismiss="alert" aria-label="Close"></button>
+  </div>
+</div>
+{% endif %}
+{% bootstrap_form form %}
+<div class="form-actions-no-box">
+  <a class="btn btn-grey" href="{% url 'dashboard:lot' lot.id %}">{% translate "Cancel" %}</a>
+  {% if path == 'del_donor' %}
+
+  <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#delete">
+     <i class="bi bi-trash me-1"></i>
+     {% trans 'Delete' %}
+  </button>
+  {% else %}
+  <input class="btn btn-green-admin" type="submit" name="submit" value="{{ action }}" />
+  {% endif %}
+</div>
+
+<div class="modal fade" id="delete" tabindex="-1" aria-labelledby="delete" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="delete">{% trans "Delete" %}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}">
+	</button>
+      </div>
+      <div class="modal-body">
+        <p>{% trans "Are you sure you want to delete this Donor?" %}</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+	  {% trans "Cancel" %}
+	</button>
+        <input class="btn btn-danger" type="submit" name="submit" value="{{ action }}" />
+      </div>
+    </div>
+  </div>
+</div>
+
+</form>
+{% endblock %}

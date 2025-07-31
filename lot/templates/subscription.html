@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+{% include 'tabs.html' %}
+
+{% if subscriptors %}
+<div class="row mt-3">
+  <div class="col">
+    <table class="table table-hover table-bordered align-middel">
+      <thead class="table-light">
+        <tr>
+          <th scope="col">Email</th>
+          <th scope="col">Type</th>
+          <th scope="col"></th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for s in subscriptors %}
+        <tr>
+          <td class="font-monospace">{{ s.user.email }}</td>
+          <td class="font-monospace">{{ s.get_type_display }}</td>
+          <td class="font-monospace">
+	    <a href="{% url 'lot:unsubscription' lot.id s.id %}">
+	       {% trans 'Unsubscription' %}
+	    </a>
+	  </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<div class="mt-4">
+  <button class="btn btn-green-admin" type="button" data-bs-toggle="collapse" data-bs-target="#subscribe">
+    {% trans 'Add subscription' %}
+  </button>
+
+  <div class="collapse mt-3" id="subscribe">
+    <div class="card card-body">
+       {% trans 'Add an email and select a type of subscription for add a new user' %}.
+    </div>
+    {% load django_bootstrap5 %}
+    <form role="form" method="post">
+      {% csrf_token %}
+      {% if form.errors %}
+      <div class="alert alert-danger alert-icon alert-icon-border alert-dismissible" role="alert">
+        <div class="icon"><span class="mdi mdi-close-circle-o"></span></div>
+        <div class="message">
+          {% for field, error in form.errors.items %}
+            {{ error }}<br />
+          {% endfor %}
+          <button class="btn-close" type="button" data-dismiss="alert" aria-label="Close"></button>
+        </div>
+      </div>
+      {% endif %}
+      {% bootstrap_form form %}
+      <div class="form-actions-no-box">
+        <a class="btn btn-grey" href="{% url 'dashboard:lot' lot.id %}">{% translate "Cancel" %}</a>
+        <input class="btn btn-green-admin" type="submit" name="submit" value="{{ action }}" />
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

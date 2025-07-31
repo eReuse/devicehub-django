@@ -196,14 +196,14 @@ class DeleteEvidenceTagView(DashboardView, DeleteView):
     def get(self, request, *args, **kwargs):
         self.object = self.get_object()
 
-        message = _("<Deleted> Evidence Tag: {}").format(self.object.value) 
+        message = _("<Deleted> Evidence Tag: {}").format(self.object.value)
         DeviceLog.objects.create(
             snapshot_uuid=self.object.uuid,
             event=message,
             user=self.request.user,
             institution=self.request.user.institution
         )
-        self.object.delete()        
+        self.object.delete()
 
         messages.info(self.request, _("Evicende Tag deleted successfully."))
         return self.handle_success()
@@ -213,6 +213,6 @@ class DeleteEvidenceTagView(DashboardView, DeleteView):
 
     def get_success_url(self):
         return self.request.META.get(
-            'HTTP_REFERER', 
+            'HTTP_REFERER',
             reverse_lazy('evidence:details', args=[self.object.uuid])
         )

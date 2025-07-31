@@ -2,13 +2,9 @@
 {% load i18n %}
 
 {% block content %}
-<div class="row">
-  <div class="col">
-    <h3>Lot {{ lot.name }}</h3>
-  </div>
-</div>
+{% include 'tabs.html' %}
 
-<div class="row">
+<div class="row mt-1">
   <div class="tab-pane fade show active" id="details">
     <div class="d-flex justify-content-end mt-1 mb-3">
       <a href="{% url 'lot:add_property' lot.pk %}" class="btn btn-green-admin d-flex align-items-center">
