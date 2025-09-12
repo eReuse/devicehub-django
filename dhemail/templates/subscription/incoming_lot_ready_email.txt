@@ -1,2 +1,2 @@
-El lote de entrada {{ lot.name }} ha sido confirmado y aceptado por el donor.
+El lote de entrada {{ donor.lot.name }} ha sido confirmado y aceptado por el donor {{ donor.email }}.
 Ya se pueden ofrecer estos dispositivos.
