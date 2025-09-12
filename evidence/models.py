@@ -11,6 +11,7 @@ from evidence.xapian import search
 from evidence.parse_details import ParseSnapshot
 from evidence.normal_parse_details import get_inxi, get_inxi_key
 from user.models import User, Institution
+from transfer.models import Transfer
 
 
 class Property(models.Model):
@@ -28,6 +29,7 @@ class Property(models.Model):
 
 class SystemProperty(Property):
     uuid = models.UUIDField()
+    transfer = models.ForeignKey(Transfer, on_delete=models.SET_NULL, null=True, blank=True)
 
     class Meta:
         constraints = [
@@ -80,11 +82,11 @@ class RootAlias(models.Model):
 
 
 class Evidence:
-    def __init__(self, uuid):
+    def __init__(self, uuid, doc={}):
         self.uuid = uuid
         self.uploaded_by = None
         self.owner = None
-        self.doc = None
+        self.doc = doc
         self.created = None
         self.dmi = None
         self.inxi = None
@@ -133,6 +135,9 @@ class Evidence:
         if self.is_legacy():
             return
 
+        self.semi_parser()
+
+    def semi_parser(self):
         if self.doc.get("credentialSubject"):
             for ev in self.doc["evidence"]:
                 if "dmidecode" == ev.get("operation"):

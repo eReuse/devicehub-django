@@ -7,6 +7,8 @@ app_name = 'api'
 
 urlpatterns = [
     path('v1/snapshot/', views.NewSnapshotView.as_view(), name='new_snapshot'),
+    path('v1/transfer', views.NewTransferView.as_view(), name='new_transfer'),
+    path('v1/transfer/<int:pk>/', views.DownloadTransfer.as_view(), name='transfer'),
     path('v1/property/<str:pk>/', views.AddPropertyView.as_view(), name='new_property'),
     path('v1/device/<str:pk>/', views.DetailsDeviceView.as_view(), name='device'),
     path('v1/tokens/', views.TokenView.as_view(), name='tokens'),

@@ -44,6 +44,8 @@ class Device:
         self.lots = []
         self.last_evidence = None
         self.get_shortid()
+        self.last_system_property = None
+        self._transfer = None
         self.get_last_evidence()
 
     def get_shortid(self):
@@ -322,6 +324,24 @@ class Device:
         ).first()
         if ev:
             return cls(id=ev.value, owner=ev.owner, uuid=ev.uuid)
+
+    @property
+    def transfer(self):
+        if not self.owner:
+            return
+
+        if self._transfer:
+            return self._transfer
+
+        if not self.last_system_property:
+            self.last_system_property = SystemProperty.objects.filter(
+                owner=self.owner,
+                value=self.pk
+            ).order_by("-created").first()
+
+        if self.last_system_property:
+            self._transfer = self.last_system_property.transfer
+            return self._transfer
 
     @property
     def is_websnapshot(self):

@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% load i18n paginacion %}
+{% load render_table from django_tables2 %}
+
+{% block content %}
+
+  <!-- Search and new lot button -->
+  <div class="d-flex justify-content-end align-items-stretch mb-4">
+    <form method="get" class="input-group w-100 me-3">
+      <input
+        type="text"
+        name="q"
+        class="form-control"
+        placeholder="{% trans 'Search by name or description...' %}"
+        value="{{ search_query }}">
+      <div class="input-group-append">
+        <button type="submit" class="btn btn-outline-secondary h-100" style="border-radius: 0 4px 4px 0;">
+          <i class="bi bi-search"></i>
+        </button>
+      </div>
+    </form>
+
+  </div>
+
+  <h3>{{ subtitle }}</h3>
+  {% if transfer %}
+  <div class="d-flex justify-content-between align-items-center p-3 bg-light border-bottom">
+    <h5 class="mb-0">
+      <i class="bi bi-arrow-left-right"></i>
+      <a href="{{ transfer.credential_id }}" target="_blank" class="text-decoration-none">
+	{{ transfer.destination_name }} {{ transfer.get_credential_id_last }}
+      </a>
+      {% if transfer.signed %}
+      <i class="bi bi-check-circle text-success" title="Signed"></i>
+      {% else %}
+      <i class="bi bi-dash-circle-fill text-warning" title="Not signed"></i>
+      {% endif %}
+      {% if transfer.sended %}
+      <i class="bi bi-envelope-check text-success" title="Sended"></i>
+      {% else %}
+      <i class="bi bi-envelope-dash text-danger" title="Not sended"></i>
+      {% endif %}
+      {% if transfer.is_foreing_transfer %}
+      <i class="bi bi-globe text-primary" title="External transfer"></i>
+      {% endif %}
+    </h5>
+    <div class="d-flex align-items-center gap-2">
+      {% if transfer.reference %}
+      <a href="{% url 'transfer:reference' transfer.id transfer.id %}">{% trans 'Reference' %}</a> |
+      {% endif %}
+      {% if lot %}
+      {% if lot.archived %}
+      <i class="bi bi-archive text-warning small"></i>
+      <a href="{% url 'dashboard:lot' lot.id %}" class="text-decoration-none">{{ lot.name }}</a>
+      <small class="text-muted ps-1"> {% trans "archived" %}</small>
+      {% else %}
+      <i class="bi bi-folder2-open small"></i>
+      <a href="{% url 'dashboard:lot' lot.id %}" class="text-decoration-none">{{ lot.name }}</a>
+      <small class="text-muted ps-1"> {% trans "open" %}</small>
+      {% endif %}
+      {% endif %}
+      <a href="{% url 'transfer:download' transfer.id %}" class="btn btn-green-user">Download</a>
+      {% if not transfer.is_foreing_transfer %}
+      {% if not transfer.sended %}
+      {% if transfer.api_destination and transfer.token_destination %}
+      <a href="{% url 'transfer:send' transfer.id %}" class="btn btn-green-user">Send</a>
+      {% endif %}
+      <a href="{% url 'transfer:edit' transfer.id %}" class="btn btn-green-user">Edit</a>
+      <a href="{% url 'transfer:delete' transfer.id %}" class="btn btn-danger">Delete</a>
+      {% endif %}
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+  {% render_table table %}
+{% endblock %}

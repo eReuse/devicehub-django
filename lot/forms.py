@@ -1,11 +1,14 @@
+
 from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import ValidationError
 from django.forms import formset_factory
 from django import forms
 from user.models import User
+from device.models import Device
 from lot.models import (
     Lot,
     LotSubscription,
+    DeviceBeneficiary,
     Beneficiary,
     Donor,
 )
@@ -18,7 +21,10 @@ class LotsForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
+        queryset = kwargs.pop("queryset", None)
         super().__init__(*args, **kwargs)
+        if queryset:
+            self.fields['lots'].queryset = queryset
 
         #grouping lots by their lot group for more readability
         self.grouped_lots = {}
@@ -30,6 +36,8 @@ class LotsForm(forms.Form):
 
     def clean(self):
         self._lots = self.cleaned_data.get("lots")
+        if self._lots.filter(transfer__isnull=False).first():
+            raise ValidationError(_("There are lots with transfers"))
         return self._lots
 
     def save(self, commit=True):
@@ -39,13 +47,20 @@ class LotsForm(forms.Form):
         for dev in self.devices:
             for lot in self._lots:
                 lot.add(dev.id)
+
+        self.remove_donor()
         return
 
     def remove(self):
         for dev in self.devices:
             for lot in self._lots:
                 lot.remove(dev.id)
+
+        self.remove_donor()
         return
+
+    def remove_donor(self):
+        Donor.objects.filter(lot__in=self._lots).delete()
 
 
 class BeneficiaryForm(forms.Form):
@@ -242,4 +257,63 @@ class SelectReturnDeviceForm(forms.Form):
     id = forms.IntegerField(widget=forms.HiddenInput())
 
 
+class SelectDeviceForm(forms.Form):
+    checked = forms.BooleanField(
+        label="",
+        required=False,
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
+    )
+    device_id = forms.CharField(widget=forms.HiddenInput())
+    id = forms.IntegerField(widget=forms.HiddenInput())
+
+    def __init__(self, *args, **kwargs):
+        self.devicebeneficiary = kwargs.pop('device', None)
+        lot = kwargs.pop('lot', None)
+        self.device = Device(id=self.devicebeneficiary.device_id, lot=lot)
+        super().__init__(*args, **kwargs)
+
+
+class BaseSelectDeviceFormSet(forms.BaseFormSet):
+    def __init__(self, *args, **kwargs):
+        self.devices = kwargs.pop('devices', [])
+        self.lot = kwargs.pop('lot', None)
+        super().__init__(*args, **kwargs)
+
+    def _construct_form(self, i, **kwargs):
+        kwargs['device'] = self.devices[i]
+        kwargs['lot'] = self.lot
+        return super()._construct_form(i, **kwargs)
+
+    def get_selected_devices_pks(self):
+        selected_pks = []
+        if self.is_valid():
+            for form in self.forms:
+                if form.cleaned_data.get('checked'):
+                    selected_pks.append(form.device.pk)
+        return selected_pks
+
+
+class BulkUpdateStatusForm(forms.Form):
+    status = forms.ChoiceField(
+        choices=DeviceBeneficiary.Status,
+        required=True,
+        label="Seleccionar nuevo estado para los equipos marcados",
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+    email = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={"class": "form-control"})
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        choices = self.fields['status'].choices
+        self.fields['status'].choices = choices[1:]
+
+
 SelectFormSet = formset_factory(SelectReturnDeviceForm, extra=0)
+SelectDeviceFormSet = forms.formset_factory(
+    SelectDeviceForm,
+    formset=BaseSelectDeviceFormSet,
+    extra=0
+)

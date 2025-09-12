@@ -29,6 +29,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config('DEVICEHUB_SECRET_KEY_SECRET')
 
+# SSL proxy pass
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+USE_X_FORWARDED_HOST = True
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEVICEHUB_DEBUG', default=False, cast=bool)
 
@@ -75,6 +79,7 @@ INSTALLED_APPS = [
     "admin",
     "api",
     "dhemail",
+    "transfer",
 ]
 
 DPP = config("DEVICEHUB_DPP", default=False, cast=bool)
@@ -277,6 +282,11 @@ TOKEN_DLT = config("DEVICEHUB_API_DLT_TOKEN_SECRET", default=None)
 API_DLT = config("DEVICEHUB_API_DLT", default=None)
 API_RESOLVER = config("DEVICEHUB_API_RESOLVER", default=None)
 ID_FEDERATED = config("DEVICEHUB_ID_FEDERATED", default=None)
+
+# IDHUB
+IDHUB_TOKEN = config("DEVICEHUB_IDHUB_TOKEN", default=None)
+IDHUB_API_SIGN = config("DEVICEHUB_IDHUB_API_SIGN", default=None)
+IDHUB_API_VERIFY = config("DEVICEHUB_IDHUB_API_VERIFY", default=None)
 
 # EMAIL
 INITIAL_ADMIN_EMAIL = config("DEVICEHUB_INIT_ADMIN_EMAIL", default='admin@example.org')

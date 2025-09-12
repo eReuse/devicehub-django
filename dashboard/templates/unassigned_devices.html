@@ -133,13 +133,22 @@
 
                 <small class="text-muted ps-1"> {% trans "open" %}</small>
               {% endif %}
+              {% if lot.transfer %}
+              <a href="{% url 'transfer:id' lot.transfer.id %}" class="btn btn-outline-success">
+                {% trans 'Transfer' %}
+              </a>
+              {% elif lot.can_do_transfer %}
+              <a href="{% url 'transfer:add' lot.id %}" class="btn btn-outline-primary">
+                {% trans 'New Transfer' %}
+              </a>
+              {% endif %}
             {% else %}
               <i class="bi bi-devices"></i> {% trans "Device Management" %}
             {% endif %}
           </h5>
           <div class="d-flex align-items-center gap-2">
             {# If a lot is archived, then dont render the unassign button  #}
-            {% if lot.name and not lot.archived %}
+            {% if lot.name and not lot.archived and not lot.transfer %}
               <button id="remove-button" class="btn btn-outline-danger" type="submit"
                       value="{% url 'lot:del_devices' lot.id %}" name="url">
                 <i class="bi bi-folder-minus"></i> {% trans 'Unassign' %}
@@ -150,10 +159,12 @@
 	        {% trans 'Beneficiary' %}
 	      </button>
             {% endif %}
+            {% if not lot or not lot.transfer or not lot.transfer.is_sended %}
             <button id="add-button" class="btn btn-green-user" type="submit" disabled name="url" value="{% url 'lot:add_devices' %}">
               <i class="bi bi-folder-symlink"></i>
               {% trans 'Assign to lot' %}
             </button>
+            {% endif %}
 
             <!-- change state button -->
             <div class="dropdown">

@@ -162,11 +162,11 @@
             <ul class="nav flex-column">
 	      {% if user.is_admin %}
               <li class="nav-item">
-                <a class="admin {% if path in 'panel users states_panel tag_panel edit_user delete_user new_user institution' %}active {% endif %}nav-link fw-bold" data-bs-toggle="collapse" data-bs-target="#ul_admin" aria-expanded="false" aria-controls="ul_admin" href="javascript:void()">
+                <a class="admin {% if path == 'panel users' or path == 'states_panel' or path == 'tag_panel' or path == 'edit_user' or path == 'delete_user' or path == 'new_user' or path == 'institution' %}active {% endif %}nav-link fw-bold" data-bs-toggle="collapse" data-bs-target="#ul_admin" aria-expanded="false" aria-controls="ul_admin" href="javascript:void()">
                   <i class="bi bi-person-fill-gear icon_sidebar"></i>
                   {% trans 'Admin' %}
                 </a>
-                <ul class="flex-column mb-2 ul_sidebar accordion-collapse {% if path in 'panel users tag_panel states_panel' %}expanded{% else %}collapse{% endif %}" id="ul_admin" data-bs-parent="#sidebarMenu">
+                <ul class="flex-column mb-2 ul_sidebar accordion-collapse {% if path == 'panel' or path == 'users' or path == 'tag_panel' or path == 'states_panel' %}expanded{% else %}collapse{% endif %}" id="ul_admin" data-bs-parent="#sidebarMenu">
                   <li class="nav-item">
                     <a class="nav-link{% if path in 'panel institution' %} active2{% endif %}" href="{% url 'admin:panel' %}">
                       {% trans 'Panel' %}
@@ -191,11 +191,11 @@
               </li>
 	      {% endif %}
               <li class="nav-item">
-                <a class="admin {% if path in 'all_device' %}active {% endif %}nav-link fw-bold" data-bs-toggle="collapse" data-bs-target="#ul_device" aria-expanded="false" aria-controls="ul_lots" href="javascript:void()">
+                <a class="admin {% if path == 'all_device' %}active {% endif %}nav-link fw-bold" data-bs-toggle="collapse" data-bs-target="#ul_device" aria-expanded="false" aria-controls="ul_lots" href="javascript:void()">
                   <i class="bi bi-laptop icon_sidebar"></i>
                   {% trans 'Devices' %}
                 </a>
-                <ul class="flex-column mb-2 ul_sidebar accordion-collapse {% if path in 'all_device' %}expanded{% else %}collapse{% endif %}" id="ul_device" data-bs-parent="#sidebarMenu">
+                <ul class="flex-column mb-2 ul_sidebar accordion-collapse {% if path == 'all_device' %}expanded{% else %}collapse{% endif %}" id="ul_device" data-bs-parent="#sidebarMenu">
 		  <li class="nav-item">
                     <a class="nav-link{% if path == 'all_device' %} active2{% endif %}" href="{% url 'dashboard:all_device' %}">
                       {% trans 'All' %}
@@ -255,6 +255,24 @@
                   <li class="nav-item">
                     <a class="nav-link{% if path == 'add' %} active2{% endif %}" href="{% url 'device:add' %}">
                       {% trans 'Upload Web Form' %}
+                    </a>
+                  </li>
+                </ul>
+              </li>
+              <li class="nav-item">
+                <a class="admin {% if path == 'sended' or path == 'received' or transfer or path == 'tag' %}active {% endif %}nav-link fw-bold" data-bs-toggle="collapse" data-bs-target="#ul_transfers" aria-expanded="false" aria-controls="ul_transfers" href="javascript:void()">
+                  <i class="bi bi-arrow-left-right icon_sidebar"></i>
+                  {% trans 'Transfer' %}
+                </a>
+                <ul class="flex-column mb-2 ul_transfers accordion-collapse {% if path == 'sended' or path == 'received'  or transfer or path == 'tag' %}expanded{% else %}collapse{% endif %}" id="ul_transfers" data-bs-parent="#sidebarMenu">
+                  <li class="nav-item">
+                    <a class="nav-link{% if path == 'received' %} active2{% endif %}" href="{% url 'transfer:received' %}">
+                      {% trans 'Received' %}
+                    </a>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link{% if path == 'send' %} active2{% endif %}" href="{% url 'transfer:sended' %}">
+                      {% trans 'Sended' %}
                     </a>
                   </li>
                 </ul>

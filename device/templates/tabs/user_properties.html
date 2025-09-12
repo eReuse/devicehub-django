@@ -2,12 +2,20 @@
 {% load i18n %}
 
 <div class="tab-pane fade" id="user_properties">
-    <div class="d-flex justify-content-end mt-1 mb-3">
+  <div class="d-flex justify-content-end mt-1 mb-3">
+    {% if transfer %}
+      <a href="{% url 'transfer:add_user_property' transfer.id object.pk %}"
+        class="btn btn-green-admin d-flex align-items-center">
+        <i class="bi bi-plus me-1"></i>
+        {% trans 'New user property' %}
+      </a>
+    {% else %}
       <a href="{% url 'device:add_user_property' object.pk %}"
         class="btn btn-green-admin d-flex align-items-center">
         <i class="bi bi-plus me-1"></i>
         {% trans 'New user property' %}
       </a>
+    {% endif %}
     </div>
 
       <h5 class="card-title">{% trans 'User properties' %}</h5>
@@ -82,11 +90,19 @@
       <div class="modal-footer justify-content-center">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}
           </button>
+	{% if transfer %}
+        <form method="post" action="{% url 'transfer:del_user_property' transfer.id object.id a.id %}">
+          {% csrf_token %}
+            <button type="submit" class="btn btn-danger">{% trans "Delete" %}
+            </button>
+        </form>
+	{% else %}
         <form method="post" action="{% url 'device:delete_user_property' object.id a.id %}">
           {% csrf_token %}
             <button type="submit" class="btn btn-danger">{% trans "Delete" %}
             </button>
         </form>
+	{% endif %}
       </div>
     </div>
   </div>
@@ -105,7 +121,11 @@
           </button>
       </div>
       <div class="modal-body">
+	{% if transfer %}
+        <form id="editForm{{ a.id }}" method="post" action="{% url 'transfer:update_user_property' transfer.id object.id a.id %}">
+	{% else %}
         <form id="editForm{{ a.id }}" method="post" action="{% url 'device:update_user_property' object.id a.id %}">
+	{% endif %}
           {% csrf_token %}
           <div class="mb-3">
               <label for="key" class="form-label">{% trans "Key" %}

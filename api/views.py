@@ -1,6 +1,7 @@
 import json
 import uuid
 import logging
+import requests
 
 from uuid import uuid4
 
@@ -27,6 +28,7 @@ from evidence.parse import Build
 from device.models import Device
 from api.models import Token
 from user.tables import TokensTable
+from transfer.models import Transfer
 
 
 logger = logging.getLogger('django')
@@ -57,6 +59,64 @@ class ApiMixing(View):
         if not self.tk:
             logger.error("Invalid or missing token %s", token)
             return JsonResponse({'error': 'Invalid or missing token'}, status=401)
+
+
+class NewTransferView(ApiMixing):
+
+    def get(self, request, *args, **kwargs):
+        return JsonResponse({}, status=404)
+
+    def post(self, request, *args, **kwargs):
+        response = self.auth()
+        if response:
+            return response
+
+        typ_trans = {
+            "desadv": Transfer.Type.SENDED,
+            "recadv": Transfer.Type.RECEIVED
+        }
+
+        try:
+            data = json.loads(request.body)
+            dtype = typ_trans[data["credentialSubject"][0]["bizTransaction"]]
+            if dtype == Transfer.Type.SENDED:
+                dtype = Transfer.Type.RECEIVED
+                organization_did = data["credentialSubject"][0]["sourceParty"]
+            elif dtype == Transfer.Type.RECEIVED:
+                dtype = Transfer.Type.SENDED
+                organization_did = data["credentialSubject"][0]["destinationParty"]
+
+            credential_id = data["id"]
+            issuer_did = data["issuer"]["id"]
+
+            reference = data["credentialSubject"][0].get("unc:externalDocument", {}).get("unc:uriid")
+            type_of_transfer = dtype
+            credential_id = data["id"]
+        except Exception:
+            txt = "error: Is not a valid transfer"
+            logger.error("%s", txt)
+            return JsonResponse({'error': 'Invalid Transfer'}, status=500)
+
+        if Transfer.objects.filter(credential_id=credential_id).first():
+            txt = "error: the transfer {} exist".format(credential_id)
+            logger.warning("%s", txt)
+            return JsonResponse({'status': txt}, status=500)
+
+        self.instance = Transfer.objects.create(
+            issuer_did=issuer_did,
+            organization_did=organization_did,
+            owner=self.tk.owner.institution,
+            type=type_of_transfer,
+            str_credential=json.dumps(data),
+            reference=reference,
+            credential_id=credential_id
+        )
+
+        response = {
+            "status": "success",
+        }
+
+        return JsonResponse(response, status=200)
 
 
 class NewSnapshotView(ApiMixing):
@@ -305,6 +365,29 @@ class AddPropertyView(ApiMixing):
         )
 
         return JsonResponse({"status": "success"}, status=200)
+
+    def get(self, request, *args, **kwargs):
+        return JsonResponse({}, status=404)
+
+
+class DownloadTransfer(ApiMixing):
+
+    def post(self, request, *args, **kwargs):
+        response = self.auth()
+        if response:
+            return response
+
+        self.pk = kwargs['pk']
+        institution = self.tk.owner.institution
+        self.transfer = Transfer.objects.filter(
+            owner=institution,
+            id=self.pk,
+        ).first()
+
+        if not self.transfer or not self.transfer.str_credential:
+            return JsonResponse({}, status=404)
+
+        return JsonResponse({"data": self.transfer.str_credential}, status=200)
 
     def get(self, request, *args, **kwargs):
         return JsonResponse({}, status=404)

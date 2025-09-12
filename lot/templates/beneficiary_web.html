@@ -128,6 +128,13 @@
 	  </table>
         </div>
       </div>
+      {% if not devices %}
+      <div class="row mt-4">
+        <div class="col">
+	  {% trans "There are not assigned devices" %}
+        </div>
+      </div>
+      {% endif %}
 
       {% if not object.sign_conditions %}
       <div class="row mt-4">

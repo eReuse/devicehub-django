@@ -8,7 +8,12 @@
     <h3>{{ object.shortid }}</h3>
   </div>
   <div class="col text-end">
-    <div class="btn-group" role="group" aria-label="Actions">
+      {% if object.transfer %}
+      <a href="{% url 'transfer:id' object.transfer.id %}" class="btn btn-success ms-2">
+        <i class="bi bi-arrow-left-right"></i> {% trans 'Transfer' %}
+      </a>
+      {% endif %}
+      <div class="btn-group" role="group" aria-label="Actions">
 
       <!-- change state button -->
       {% if state_definitions %}
@@ -80,9 +85,11 @@
           <a href="#dpps" class="nav-link" data-bs-toggle="tab" data-bs-target="#dpps">{% trans 'Dpps' %}</a>
         </li>
     {% endif %}
+    {% if not transfer %}
         <li class="nav-item">
           <a class="nav-link" href="{% url 'device:device_web' object.id %}" target="_blank">Web</a>
         </li>
+    {% endif %}
         <li class="nav-item">
           <a href="#log" class="nav-link" data-bs-toggle="tab" data-bs-target="#log">{% trans 'Log' %}</a>
         </li>

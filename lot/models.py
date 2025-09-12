@@ -1,7 +1,12 @@
 import uuid
+import json
+import requests
 
 from django.db import models
+from django.conf import settings
+from django.urls import reverse
 from django.db.models import Max
+from django.template.loader import get_template
 from django.utils.translation import gettext_lazy as _
 from utils.constants import (
     STR_SIZE,
@@ -9,7 +14,8 @@ from utils.constants import (
 )
 
 from user.models import User, Institution
-from evidence.models import Property
+from evidence.models import Property, SystemProperty
+from transfer.models import Transfer
 # from device.models import Device
 
 
@@ -53,6 +59,7 @@ class Lot(models.Model):
     owner = models.ForeignKey(Institution, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     type = models.ForeignKey(LotTag, on_delete=models.CASCADE)
+    transfer = models.ForeignKey(Transfer, on_delete=models.SET_NULL, null=True, blank=True)
 
     class Meta:
         constraints = [
@@ -71,6 +78,23 @@ class Lot(models.Model):
     @property
     def devices(self):
         return DeviceLot.objects.filter(lot=self)
+
+    @property
+    def can_do_transfer(self):
+        if self.transfer:
+            return False
+
+        ids = self.devices.values("device_id")
+        if not ids:
+            return False
+
+        transfers = SystemProperty.objects.filter(
+            value__in=ids,
+            owner=self.owner,
+            transfer__type=Transfer.Type.SENDED
+        ).first()
+
+        return True if not transfers else False
 
     def device_count(self):
         return self.devices.count()

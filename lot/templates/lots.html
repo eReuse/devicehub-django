@@ -86,10 +86,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const checkboxes = document.querySelectorAll('.select-checkbox');
     const selectAll = document.querySelector('#select-all');
     const deleteBtn = document.querySelector('#delete-selected');
+    const transferBtn = document.querySelector('#transfer-selected');
 
     function updateDeleteButton() {
         const checked = document.querySelectorAll('.select-checkbox:checked').length > 0;
         deleteBtn.classList.toggle('d-none', !checked);
+        transferBtn.classList.toggle('d-none', !checked);
     }
 
     if (selectAll) {

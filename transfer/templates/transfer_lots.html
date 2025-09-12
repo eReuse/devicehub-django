@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load django_bootstrap5 %}
+
+{% block content %}
+  <div class="d-flex justify-content-center">
+    <div class="col-md-8 mb-3">
+      <p class="lead text-center mb-4">
+        {% trans "Are you sure you want to transfer the following lot?" %}
+      </p>
+
+      <div class="card shadow-sm mb-3 border-top-0">
+        <span class="badge fs-6 {% if lot.devices.count > 0 %} btn-green-user text-secondary {% else %} bg-secondary {% endif %} border-bottom-0">
+          {{ lot.devices.count }} {% trans "device/s" %}
+        </span>
+
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+
+          <div class="d-flex align-items-center">
+            <span class="me-2 badge {% if lot.archived %}bg-warning{% else %}bg-success{% endif %}">
+              {% if lot.archived %}{% trans "Archived" %}{% else %}{% trans "Open" %}{% endif %}
+            </span>
+
+            <h5 class="card-title mb-0 me-2 text-capitalize">{{ lot.name }}</h5>
+          </div>
+          <button class="btn btn-link p-0" type="button" data-bs-toggle="collapse" data-bs-target="#lotDetails{{ forloop.counter }}" aria-expanded="false" aria-controls="lotDetails{{ forloop.counter }}">
+            <i class="bi bi-chevron-down"></i>
+          </button>
+        </div>
+
+
+        <div class="collapse" id="lotDetails{{ forloop.counter }}">
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6">
+                <ul class="list-group list-group-flush">
+                  <li class="list-group-item">
+                    <strong>{% trans "Code" %}:</strong> {{ lot.code|default:"N/A" }}
+                  </li>
+                  <li class="list-group-item">
+                    <strong>{% trans "Description" %}:</strong> <span class="text-muted">{{ lot.description|default:"N/A" }}</span>
+                  </li>
+                  <li class="list-group-item">
+                    <strong>{% trans "Owner" %}:</strong> {{ lot.owner.name }}
+                  </li>
+                  <li class="list-group-item">
+                    <strong>{% trans "Created by" %}:</strong> {{ lot.user|default:"N/A" }}
+                  </li>
+
+                </ul>
+              </div>
+              <div class="col-md-6">
+                <ul class="list-group list-group-flush">
+                  <li class="list-group-item">
+                    <strong>{% trans "Lot Group" %}:</strong> {{ lot.type.name }}
+                  </li>
+                  <li class="list-group-item">
+                    <strong>{% trans "Created" %}:</strong> {{ lot.created|date:"Y-m-d H:i" }}
+                  </li>
+
+                  <li class="list-group-item">
+                    <strong>{% trans "Last Updated" %}:</strong> {{ lot.updated|date:"Y-m-d H:i" }}
+                  </li>
+
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {% if transfer %}
+      <form role="form" method="post" action="{% url 'transfer:edit' transfer.id %}" class="mt-4">
+      {% else %}
+      <form role="form" method="post" action="{% url 'transfer:add' lot.id %}" class="mt-4">
+      {% endif %}
+        {% csrf_token %}
+	{% bootstrap_form form %}
+
+        <div class="d-grid gap-3 d-md-flex justify-content-md-center">
+          <a class="btn btn-outline-secondary" href="{{ request.META.HTTP_REFERER }}">
+            <i class="bi bi-x-circle me-1"></i>
+            {% translate "Cancel" %}
+          </a>
+	  {% if transfer.sended %}
+          <a class="btn btn-outline-secondary" href="{{ request.META.HTTP_REFERER }}">
+            <i class="bi bi-arrow-left-right me-1"></i>
+            {% translate "Transfer" %}
+          </a>
+	  {% else %}
+          <button type="submit" class="btn btn-green-user">
+            <i class="bi bi-arrow-left-right me-1"></i>
+            {% translate "Transfer" %}
+          </button>
+	  {% endif %}
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}

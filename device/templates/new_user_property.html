@@ -36,7 +36,11 @@
     {% endfor %}
   </div>
   <div class="container">
+    {% if transfer %}
+    <a class="btn btn-grey" href="{% url 'transfer:device' transfer.id object.id %}#user_properties">{% translate "Cancel" %}</a>
+    {% else %}
     <a class="btn btn-grey" href="{% url 'device:details' pk %}#user_properties">{% translate "Cancel" %}</a>
+    {% endif %}
     <input class="btn btn-green-admin" type="submit" name="submit" value="{% translate 'Save' %}" />
   </div>
 

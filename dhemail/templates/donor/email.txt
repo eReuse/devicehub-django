@@ -1,4 +1,5 @@
-Te enviamos este email porque el administrador del dominio {{ site_name }} ha terminado de procesar los equipos que le has ofrecido y ahora puedes confirmar que lo que se le envió corresponde con lo que él ha procesado.
+Te enviamos este email porque el administrador del dominio {{ site_name }} ha terminado de procesar los equipos que le has ofrecido
+y ahora puedes confirmar que lo que se le envió corresponde con lo que él ha recibido.
 Para ello visite la página: {{ web_donor }}
 
 Un cordial saludo

@@ -1,4 +1,4 @@
 Se ha enviado los siguientes devices del lote {{ lot.name }} al beneficiario {{ beneficiary.email }}
-{% for d in beneficiary.devicebeneficiary_set.filter %}
+{% for d in devs_delivered %}
   {{ d.device_id }}
 {% endfor %}
