@@ -39,14 +39,16 @@ class BuildMix:
 
                 data["dmidecode"] = evidence[0]
                 data["inxi"] = evidence[2]
-
-        dmidecode_raw = data.get("dmidecode")
-        inxi_raw = data.get("inxi")
-        device = self.json.get("device")
-        if not dmidecode_raw and not inxi_raw and not device:
-            txt = "snapshot without dmidecode and inxi datas"
-            logger.error(txt)
-            raise Exception(txt)
+        if edid_hex:= data.get("edid_hex"):
+            logger.error("PARSING display snapshot")
+        else:
+            dmidecode_raw = data.get("dmidecode")
+            inxi_raw = data.get("inxi")
+            device = self.json.get("device")
+            if not dmidecode_raw and not inxi_raw and not device:
+                txt = "snapshot without dmidecode and inxi datas"
+                logger.error(txt)
+                raise Exception(txt)
 
         self.get_details()
         self.generate_chids()

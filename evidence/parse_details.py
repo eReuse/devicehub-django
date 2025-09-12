@@ -1,6 +1,7 @@
 import logging
 
 from evidence import (
+    display_parse_details,
     legacy_parse_details,
     normal_parse_details,
     old_parse_details
@@ -24,6 +25,11 @@ class ParseSnapshot:
            )
        elif snapshot.get("data",{}).get("lshw"):
            self.build = legacy_parse_details.ParseSnapshot(
+               snapshot,
+               default=default
+           )
+       elif snapshot.get("data",{}).get("edid_hex"):
+           self.build = display_parse_details.ParseSnapshot(
                snapshot,
                default=default
            )
