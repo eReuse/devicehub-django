@@ -21,6 +21,7 @@ urlpatterns = [
     path("<int:pk>/donor/del", views.DelDonorView.as_view(), name="del_donor"),
     path("<int:pk>/donor/<uuid:id>", views.DonorView.as_view(), name="web_donor"),
     path("<int:pk>/donor/<uuid:id>/accept", views.AcceptDonorView.as_view(), name="accept_donor"),
+    path("<int:pk>/donor/<uuid:id>/export/<str:mime>", views.ExportDonorView.as_view(), name="export_donor"),
     path("<int:pk>/beneficiary", views.BeneficiaryView.as_view(), name="beneficiary"),
     path("<int:pk>/beneficiary/<uuid:id>/del", views.DeleteBeneficiaryView.as_view(), name="del_beneficiary"),
     path("<int:pk>/beneficiary/<uuid:id>/devices", views.ListDevicesBeneficiaryView.as_view(), name="devices_beneficiary"),
