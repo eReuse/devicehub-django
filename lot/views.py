@@ -1,8 +1,12 @@
 import ast
 import logging
 import datetime
+import weasyprint
 
+from tablib import Dataset
+from django.template.loader import render_to_string
 from django.db import IntegrityError
+from django.http import HttpResponse
 from django.urls import reverse_lazy
 from django.shortcuts import get_object_or_404, redirect, Http404, render
 from django.contrib import messages
@@ -670,6 +674,53 @@ class DonorView(WebMixing):
         ).distinct()
 
 
+class ExportDonorView(DonorView):
+
+    def get(self, *args, **kwargs):
+        super().get(*args, **kwargs)
+        self.mime = self.kwargs.get('mime')
+        if self.mime not in ["xlsx", "pdf"]:
+            raise Http404
+
+        return self.get_export_file()
+
+    def get_export_file(self):
+        mime = self.mime
+        file_name = "list_devices.pdf"
+        if mime == "xlsx":
+            file_name = "list_devices.xlsx"
+            mime = "vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            doc = self.build_xlsx()
+        else:
+            doc = self.build_pdf()
+
+        response = HttpResponse(doc, content_type=f"application/{mime}")
+        response['Content-Disposition'] = 'attachment; filename={}'.format(file_name)
+        return response
+
+    def build_pdf(self):
+        context = self.get_context_data()
+        context["pdf"] = True
+        html_string = render_to_string(self.template_name, context)
+        pdf_file = weasyprint.HTML(string=html_string).write_pdf()
+        return pdf_file
+
+    def build_xlsx(self):
+        headers = ["ID", _("Manufacturer"), _("Model"), _("Serial Number")]
+        data = Dataset(headers=headers)
+
+        for d in self.get_devices():
+            row = [
+                d.shortid,
+                d.manufacturer,
+                d.model,
+                d.serial_number
+            ]
+            data.append(row)
+
+        return data.export('xlsx')
+
+
 class AcceptDonorView(TemplateView, NotifyEmail):
     template_name = "donor_web.html"
 
@@ -698,7 +749,13 @@ class AcceptDonorView(TemplateView, NotifyEmail):
     def get_templates_email(self):
         self.email_template_html = 'subscription/incoming_lot_ready_email.html'
         self.email_template = 'subscription/incoming_lot_ready_email.txt'
+
         self.email_template_subject = 'subscription/incoming_lot_ready_subject.txt'
+
+    def get_email_context(self, user):
+        context = super().get_email_context(user)
+        context['donor'] = self.object
+        return context
 
 
 class BeneficiaryView(DashboardLotMixing, BeneficiaryAgreementEmail, FormView):

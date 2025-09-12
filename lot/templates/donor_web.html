@@ -119,24 +119,35 @@
         </div>
       </div>
 
-      {% if not object.reconciliation %}
+      {% if not pdf %}
       <div class="row mt-4">
+	{% if not object.reconciliation %}
         <div class="col">
           <div class="form-actions-no-box">
             <a class="btn btn-secondary" href="{% url 'lot:accept_donor' object.lot.id object.id %}">{% trans 'Accept' %}</a>
           </div>
         </div>
-      </div>
-      {% else %}
-      <div class="row mt-4">
+        {% else %}
         <div class="col">
           <div class="form-actions-no-box">
             <a class="btn btn-secondary" href="{# url 'lot:impact_doc_donor' object.lot.id object.id #}">{% trans 'Impact Inform' %}</a>
           </div>
         </div>
+        {% endif %}
+        <div class="col">
+          <div class="form-actions-no-box">
+            <a class="btn btn-secondary" href="{% url 'lot:export_donor' object.lot.id object.id 'pdf' %}">{% trans 'Export to PDF' %}</a>
+          </div>
+        </div>
+        <div class="col">
+          <div class="form-actions-no-box">
+            <a class="btn btn-secondary" href="{% url 'lot:export_donor' object.lot.id object.id 'xlsx' %}">{% trans 'Export to Excel' %}</a>
+          </div>
+        </div>
       </div>
       {% endif %}
     </div>
+    {% if not pdf %}
     <footer>
       <p>
         &copy;{% now 'Y' %} eReuse. All rights reserved.
@@ -144,5 +155,6 @@
     </footer>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
+    {% endif %}
   </body>
 </html>
