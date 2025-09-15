@@ -18,7 +18,6 @@ class ParseSnapshot:
 
         self.device = {"actions": []}
         self.components = self._parse_edid_decode(edid_decode)
-        logger.error(self.components)
 
 
         self.snapshot_json = {
@@ -56,6 +55,7 @@ class ParseSnapshot:
         base = edid_dict.get("Block 0, Base EDID", {})
         native = edid_dict.get("Native Video Resolution", {})
 
+        #done this way so it rendes properly on components tab
         items = [
             {"Manufacturer": base.get("Manufacturer")},
             {"Model": base.get("Model")},
