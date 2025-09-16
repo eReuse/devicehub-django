@@ -58,6 +58,8 @@ class ParseSnapshot:
         #done this way so it rendes properly on components tab
         items = [
             {"Manufacturer": base.get("Manufacturer")},
+            {"EDID Version": base.get("EDID Structure Version & Revision")},
+            {"Serial Number": base.get("Serial Number")},
             {"Model": base.get("Model")},
             {"Manufacture Date": base.get("Made in")},
             {"Max Image Size": base.get("Maximum image size")},
@@ -67,4 +69,9 @@ class ParseSnapshot:
             {"Preferred Timing": base.get("DTD 1")},
         ]
 
+        misc = base.get("_misc")
+        if misc:
+            items.append({
+                "Misc": "\n  - " + "\n  - ".join(misc)
+            })
         return [{k: v} for item in items for k, v in item.items() if v]

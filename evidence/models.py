@@ -267,7 +267,7 @@ class Evidence:
             return ''
 
     def get_version(self):
-        if self.inxi:
+        if self.inxi or self.edid_hex:
             return self.device_version
 
         return ""
