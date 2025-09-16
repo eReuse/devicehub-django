@@ -143,6 +143,9 @@ pip install -r requirements.txt
 
 #### Xapian
 
+> **Note**
+> If you're running a newer system like Debian 13 with Python 3.13+, the system `python3-xapian` package may be incompatible with Python 3.11. In this case, skip this section and follow the ["Alternative: Compiling Xapian from Sources"](#xapian-for-newer-systems-like-debian-13-ubuntu-2410) guide below.
+
 Now, install the xapian dependencies (xapian library and python bindings)
 
 ```bash
@@ -154,6 +157,138 @@ Allow the virtual environment to use system-installed packages:
 ```bash
 export PYTHONPATH="${PYTHONPATH}:/usr/lib/python3/dist-packages"
 ```
+
+#### Xapian for newer systems (like Debian 13, Ubuntu 24.10+)
+
+If you're running a newer system (like Debian 13, Ubuntu 24.10+) with Python 3.13+ where the system `python3-xapian` package is incompatible with older Python versions, you'll need to compile Xapian from sources for Python 3.11.
+
+**Prerequisites:**
+
+```bash
+# Install build dependencies
+sudo apt-get update
+sudo apt-get install python3-sphinx python3-dev swig build-essential
+```
+
+##### Step 1: Set up Python 3.11 using pyenv
+
+If you don't have pyenv installed:
+
+```bash
+# Install pyenv
+curl https://pyenv.run | bash
+# Restart your shell or run:
+exec "$SHELL"
+```
+
+Install and set Python 3.11.10:
+
+```bash
+# Install Python 3.11.10
+pyenv install 3.11.10
+
+# Set it as the local version for this project directory
+cd /path/to/devicehub-django
+pyenv local 3.11.10
+```
+
+##### Step 2: Create virtual environment with Python 3.11
+
+```bash
+# Remove any existing virtual environment
+rm -rf env
+
+# Create new virtual environment with Python 3.11
+python -m venv env
+source env/bin/activate
+
+# Verify Python version
+python --version  # Should show Python 3.11.10
+```
+
+##### Step 3: Download and compile Xapian from sources
+
+Download the Xapian core and bindings from the official repository:
+
+```bash
+# Download Xapian core and bindings (version 1.4.29)
+wget https://oligarchy.co.uk/xapian/1.4.29/xapian-core-1.4.29.tar.xz
+wget https://oligarchy.co.uk/xapian/1.4.29/xapian-bindings-1.4.29.tar.xz
+
+# Extract the archives
+tar -xf xapian-core-1.4.29.tar.xz
+tar -xf xapian-bindings-1.4.29.tar.xz
+```
+
+First, build and install Xapian core:
+
+```bash
+# Build Xapian core
+cd xapian-core-1.4.29
+./configure --prefix=/usr/local
+make
+sudo make install
+
+# Update library cache
+sudo ldconfig
+cd ..
+```
+
+Then, build the Python bindings:
+
+```bash
+# Navigate to xapian-bindings directory
+cd xapian-bindings-1.4.29
+
+# Make sure virtual environment is activated
+source ../env/bin/activate
+
+# Configure for Python 3.11
+./configure --with-python3 PYTHON3=$(which python) PYTHON3_INC=$(python -c "import sysconfig; print(sysconfig.get_path('include'))")
+
+# Build the bindings
+make
+
+# Copy the built module to your virtual environment
+cd ..
+cp -r xapian-bindings-1.4.29/python3/xapian env/lib/python3.11/site-packages/
+```
+
+##### Step 4: Test Xapian installation
+
+```bash
+# Test that Xapian works correctly
+python -c "import xapian; print('Xapian version:', xapian.version_string())"
+```
+
+You should see output like: `Xapian version: 1.4.29`
+
+##### Step 5: Install Python dependencies
+
+```bash
+# Install requirements (with virtual environment activated)
+pip install -r requirements.txt
+```
+
+**Note:** When using this approach, do NOT set the `PYTHONPATH` to system packages as it may cause conflicts. The compiled Xapian bindings are installed directly in your virtual environment.
+
+##### Troubleshooting
+
+**If you get "configure: error: Python3 bindings build dependencies not found":**
+
+- Make sure you installed all build dependencies: `sudo apt-get install python3-sphinx python3-dev swig build-essential`
+- Verify your Python 3.11 installation: `python --version`
+
+**If you get import errors when testing Xapian:**
+
+- Ensure you're in the virtual environment: `source env/bin/activate`, typically you should see `(env)` in your shell prompt.
+- Make sure you didn't set `PYTHONPATH` to system packages
+- Verify the xapian module was copied correctly: `ls env/lib/python3.11/site-packages/xapian/`
+
+**If the build fails with missing headers:**
+
+- Install additional development packages: `sudo apt-get install libxapian-dev build-essential`
+- Make sure Xapian core was installed successfully before building bindings
 
 #### Environment Variables
 
