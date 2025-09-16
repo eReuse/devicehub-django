@@ -1,3 +1,4 @@
+xapian-*
 env/
 __pycache__/
 .env
