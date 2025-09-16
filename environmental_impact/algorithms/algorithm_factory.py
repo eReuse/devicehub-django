@@ -2,8 +2,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from .sample_algo.sample_calculator import SampleEnvironmentalImpactAlgorithm
-from .mireia25.mieia25 import (
-    SampleEnvironmentalImpactAlgorithm as Mireia25Algorithm
+from .ereuse2025.ereuse2025 import (
+    EReuse2025EnvironmentalImpactAlgorithm as EReuse2025Algorithm
 )
 
 if TYPE_CHECKING:
@@ -16,11 +16,11 @@ class AlgorithmNames:
     """
 
     SAMPLE_CALC = "sample_calc"
-    MIREIA25 = "mireia25"
+    EREUSE2025 = "ereuse2025"
 
     algorithm_names = {
         SAMPLE_CALC: SampleEnvironmentalImpactAlgorithm(),
-        MIREIA25: Mireia25Algorithm()
+        EREUSE2025: EReuse2025Algorithm()
     }
 
 
@@ -28,7 +28,7 @@ class FactoryEnvironmentImpactAlgorithm:
 
     @staticmethod
     def run_environmental_impact_calculation(
-        algorithm_name: str = "mireia25",
+        algorithm_name: str = "ereuse2025",
     ) -> EnvironmentImpactAlgorithm:
         try:
             return AlgorithmNames.algorithm_names[algorithm_name]

@@ -1,14 +1,14 @@
 import unittest
 from unittest.mock import Mock, patch
-from environmental_impact.algorithms.mireia25.mieia25 import (
-    SampleEnvironmentalImpactAlgorithm,
+from environmental_impact.algorithms.ereuse2025.ereuse2025 import (
+    EReuse2025EnvironmentalImpactAlgorithm,
 )
 from environmental_impact.algorithms.common import get_power_on_hours_from
 from device.models import Device
 from environmental_impact.models import EnvironmentalImpact
 
 
-class Mireia25AlgorithmTests(unittest.TestCase):
+class EReuse2025AlgorithmTests(unittest.TestCase):
     """
     Test suite for the Mireia25 environmental impact algorithm.
 
@@ -17,7 +17,7 @@ class Mireia25AlgorithmTests(unittest.TestCase):
     """
 
     def setUp(self):
-        self.algorithm = SampleEnvironmentalImpactAlgorithm()
+        self.algorithm = EReuse2025EnvironmentalImpactAlgorithm()
         self.device = Mock(spec=Device)
         self.device.last_evidence = Mock()
         self.device.last_evidence.inxi = True
@@ -220,7 +220,7 @@ class Mireia25AlgorithmTests(unittest.TestCase):
 
         # Mock to return specific carbon intensity
         with patch(
-            'environmental_impact.algorithms.mireia25.carbon_intensity.'
+            'environmental_impact.algorithms.ereuse2025.carbon_intensity.'
             'carbon_intensity.get_carbon_intensity_factor_from',
             return_value=250.0
         ), patch(

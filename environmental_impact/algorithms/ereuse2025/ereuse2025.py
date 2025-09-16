@@ -1,15 +1,11 @@
 import os
-import pickle
 from device.models import Device
 from ..algorithm_interface import EnvironmentImpactAlgorithm
-from ..docs_renderer import render_docs
 from environmental_impact.models import EnvironmentalImpact
 from environmental_impact.algorithms import common
 from .carbon_intensity import carbon_intensity
 
-
-class SampleEnvironmentalImpactAlgorithm(EnvironmentImpactAlgorithm):
-
+class EReuse2025EnvironmentalImpactAlgorithm(EnvironmentImpactAlgorithm):
     algorithm_constants = {
         "AVG_KWATTS_DESKTOP_IDLE": 0.039,
         "AVG_KWATTS_LAPTOP_IDLE": 0.016,
@@ -67,10 +63,8 @@ class SampleEnvironmentalImpactAlgorithm(EnvironmentImpactAlgorithm):
         elif device_type == Device.Types.LAPTOP:
             kwatts = self.algorithm_constants["AVG_KWATTS_LAPTOP_IDLE"]
         elif device_type in Device.Types.values:
-            # For other valid device types, use default consumption
             kwatts = self.algorithm_constants["AVG_KWATTS_DEFAULT_IDLE"]
         else:
-            # Only if it's not a valid device type
             kwatts = self.algorithm_constants["AVG_KWATTS_DEFAULT_IDLE"]
         return power_on_hours * kwatts
 
@@ -90,9 +84,7 @@ class SampleEnvironmentalImpactAlgorithm(EnvironmentImpactAlgorithm):
         elif device_type == Device.Types.LAPTOP:
             kwatts = self.algorithm_constants["AVG_KWATTS_LAPTOP_SLEEP"]
         elif device_type in Device.Types.values:
-            # For other valid device types, use default consumption
             kwatts = self.algorithm_constants["AVG_KWATTS_DEFAULT_SLEEP"]
         else:
-            # Only if it's not a valid device type
             kwatts = self.algorithm_constants["AVG_KWATTS_DEFAULT_SLEEP"]
         return time_in_sleep_mode * kwatts
