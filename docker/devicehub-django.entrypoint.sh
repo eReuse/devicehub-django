@@ -9,18 +9,20 @@ set -x
 #   1. from the original docker compose devicehub-teal
 #   2. from the new docker compose that integrates all dpp services
 wait_for_dpp_shared() {
+        OPERATOR_TOKEN_FILE='operator-token.txt'
+        echo "Waiting for file in shared: ${OPERATOR_TOKEN_FILE}"
+        set +x
         while true; do
-                # specially ensure VERAMO_API_CRED_FILE is not empty,
-                #   it takes some time to get data in
-                OPERATOR_TOKEN_FILE='operator-token.txt'
                 if [ -f "/shared/${OPERATOR_TOKEN_FILE}" ] && \
                         [ -f "/shared/create_user_operator_finished" ]; then
                         sleep 5
                         echo "Files ready to process."
+                        set -x
                         break
                 else
-                        echo "Waiting for file in shared: ${OPERATOR_TOKEN_FILE}"
                         sleep 5
+                        # DEBUG
+                        #echo "Waiting for file in shared: ${OPERATOR_TOKEN_FILE}"
                 fi
         done
 }
@@ -32,7 +34,7 @@ gen_env_vars() {
         INIT_USER="${INIT_USER:-user@example.org}"
         INIT_PASSWD="${INIT_PASSWD:-1234}"
         ADMIN='True'
-        PREDEFINED_TOKEN="${PREDEFINED_TOKEN:-}"
+        DEMO_PREDEFINED_TOKEN="${DEMO_PREDEFINED_TOKEN:-}"
         # specific dpp env vars
         if [ "${DPP:-}" = 'true' ]; then
                 # fill env vars in this docker entrypoint
@@ -87,7 +89,7 @@ config_dpp_part1() {
                 # TODO when this runs more than one time per service, this is a problem, but for the docker-reset.sh workflow, that's fine
                 # TODO put this in already_configured
                 # TODO hardcoded http proto and port
-                ./manage.py dlt_insert_members "http://${DOMAIN}:8000"
+                ./manage.py dlt_insert_members "http://${DEVICEHUB_HOST}:8000"
         fi
 
         # 13. Do a rsync api resolve
@@ -108,22 +110,26 @@ END
 # wait until idhub api is prepared to received requests
 wait_idhub() {
         echo "Start waiting idhub API"
+        set +x
         while true; do
                 result="$(curl -s "${url}" \
-                               | jq -r .error \
+                               | jq -r .error 2>/dev/null \
                                || echo "Reported errors, idhub API is still not ready")"
 
                 if [ "${result}" = "Invalid request method" ]; then
+                        echo "IdHub is ready"
+                        set -x
                         break
                         sleep 2
                 else
-                        echo "Waiting idhub API"
+                        # DEBUG
+                        #echo "Waiting idhub API"
                         sleep 3
                 fi
         done
 }
 
-demo__send_to_sign_credential() {
+demo__send_snapshot_to_idhub() {
         filepath="${1}"
         # hashlib.sha3_256 of PREDEFINED_TOKEN for idhub
         DEMO_IDHUB_PREDEFINED_TOKEN="${DEMO_IDHUB_PREDEFINED_TOKEN:-}"
@@ -143,11 +149,17 @@ run_demo() {
                 # this demo only works with FQDN domain (with no ports)
                 url="https://${DEMO_IDHUB_DOMAIN}/webhook/sign/"
                 wait_idhub
-                demo__send_to_sign_credential \
-                        'example/demo-snapshots-vc/snapshot_pre-verifiable-credential.json' \
-                        > 'example/snapshots/snapshot_workbench-script_verifiable-credential.json'
+                prevc_in='example/demo-snapshots-vc/snapshot_pre-verifiable-credential.json'
+                vc_out='example/snapshots/snapshot_workbench-script_verifiable-credential.json'
+                if demo__send_snapshot_to_idhub "${prevc_in}" > "${vc_out}"; then
+                        echo 'Credential signed'
+                else
+                        echo 'ERROR: Credential not signed'
+                fi
         fi
         ./manage.py create_default_states "${INIT_ORG}"
+        # create demo data to play with users for B2B B2C interactions
+        ./manage.py load_demo_data
         /usr/bin/time ./manage.py up_snapshots example/snapshots/ "${INIT_USER}"
 }
 
@@ -159,7 +171,7 @@ config_phase() {
                 # non DL user (only for the inventory)
                 ./manage.py add_institution "${INIT_ORG}"
                 # TODO: one error on add_user, and you don't add user anymore
-                ./manage.py add_user "${INIT_ORG}" "${INIT_USER}" "${INIT_PASSWD}" "${ADMIN}" "${PREDEFINED_TOKEN}"
+                ./manage.py add_user "${INIT_ORG}" "${INIT_USER}" "${INIT_PASSWD}" "${ADMIN}" "${DEMO_PREDEFINED_TOKEN}"
 
                 if [ "${DPP:-}" = 'true' ]; then
                         # 12, 13, 14
@@ -205,7 +217,7 @@ deploy() {
         if [ "${DEBUG:-}" = 'true' ]; then
                 ./manage.py print_settings
         else
-                echo "DOMAIN: ${DOMAIN}"
+                echo "DEVICEHUB_HOST: ${DEVICEHUB_HOST}"
         fi
 
         # detect if existing deployment (TODO only works with sqlite)

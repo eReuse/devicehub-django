@@ -18,10 +18,13 @@ from django.views.generic.base import TemplateView
 from action.models import StateDefinition, State, DeviceLog, Note
 from dashboard.mixins import DashboardView, Http403
 from environmental_impact.algorithms.algorithm_factory import FactoryEnvironmentImpactAlgorithm
-from evidence.models import UserProperty, SystemProperty
+from evidence.models import UserProperty, SystemProperty, Evidence
 from lot.models import LotTag
 from device.models import Device
 from device.forms import DeviceFormSet
+from evidence.models import SystemProperty
+from evidence.tables import EvidenceTable
+from django_tables2 import RequestConfig
 if settings.DPP:
     from dpp.models import Proof
     from dpp.api_dlt import PROOF_TYPE
@@ -76,11 +79,11 @@ class EditDeviceView(DashboardView, UpdateView):
         return kwargs
 
 
-class DetailsView(DashboardView, TemplateView):
+class DetailsView(DashboardView, TemplateView ):
     template_name = "details.html"
     title = _("Device")
     breadcrumb = "Device / Details"
-    model = SystemProperty
+    table_class = EvidenceTable
 
     def get(self, request, *args, **kwargs):
         self.pk = kwargs['pk']
@@ -111,10 +114,16 @@ class DetailsView(DashboardView, TemplateView):
             enviromental_impact = enviromental_impact_algorithm.get_device_environmental_impact(
             self.object)
         except Exception as err:
-            logger.error(err)
+            logger.error("Enviromental Impact: {}".format(err))
             enviromental_impact = None
         last_evidence = self.object.get_last_evidence()
         uuids = self.object.uuids
+
+        ev_queryset = Evidence.get_device_evidences(self.request.user, uuids)
+        evidence_table = EvidenceTable(ev_queryset, exclude =('device', ))
+
+        RequestConfig(self.request).configure(evidence_table)
+
         state_definitions = StateDefinition.objects.filter(
             institution=self.request.user.institution
         ).order_by('order')
@@ -132,6 +141,7 @@ class DetailsView(DashboardView, TemplateView):
             "device_states": device_states,
             "device_logs": device_logs,
             "device_notes": device_notes,
+            "table": evidence_table,
         })
         return context
 

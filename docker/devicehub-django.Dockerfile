@@ -41,6 +41,11 @@ ENV PYTHONPATH="${PYTHONPATH}:/usr/lib/python3/dist-packages"
 COPY . .
 COPY docker/devicehub-django.entrypoint.sh /
 
+# TODO this is bad for our main server
+#   with the "next" docker things to apply this is no longer needed
+#   or will not harm anymore
+#
+# no, we really need this until we apply all idhub docker perks
 RUN chown -R app:app /opt/devicehub-django
 
 USER app

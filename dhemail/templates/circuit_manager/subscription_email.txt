@@ -1,0 +1,1 @@
+Se te envia este email porque el administrador del dominio {{ site_name }} te ha añadido al lote {{ lot.name }} para que puedas añadir al donante y hacer una confrontación con los datos del donante.

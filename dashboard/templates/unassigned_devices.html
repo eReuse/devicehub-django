@@ -49,6 +49,20 @@
             <a href="{% url 'lot:properties' object.id %}" class="btn btn-outline-primary">
               <i class="bi bi-tag"></i> {% trans 'Properties' %}
             </a>
+            <a href="{% url 'lot:subscription' object.id %}" class="btn btn-outline-primary">
+              <i class="bi bi-tag"></i> {% trans 'Subscription' %}
+            </a>
+	    {% if is_circuit_manager %}
+            {% if donor %}
+              <a href="{% url 'lot:del_donor' lot.id %}" class="btn btn-outline-primary">{% trans 'Donor' %}</a>
+            {% else %}
+              <a href="{% url 'lot:add_donor' lot.id %}" class="btn btn-outline-primary">{% trans 'Donor' %}</a>
+            {% endif %}
+            {% endif %}
+              <a href="{% url 'lot:participants' lot.id %}" class="btn btn-outline-primary">
+	        {% trans 'Participants' %}
+	      </a>
+
             <a href="{#% url 'lot:documents' object.id %#}" class="btn btn-outline-secondary me-2" data-bs-toggle="tooltip"
                title="{% trans "NOT IMPLEMENTED. Document management" %}">
               {% trans 'Documents' %}
@@ -131,7 +145,11 @@
                 <i class="bi bi-folder-minus"></i> {% trans 'Unassign' %}
               </button>
             {% endif %}
-
+            {% if lot and is_shop %}
+              <button name="url" value="{% url 'lot:beneficiary' lot.id %}" class="btn btn-outline-primary">
+	        {% trans 'Beneficiary' %}
+	      </button>
+            {% endif %}
             <button id="add-button" class="btn btn-green-user" type="submit" disabled name="url" value="{% url 'lot:add_devices' %}">
               <i class="bi bi-folder-symlink"></i>
               {% trans 'Assign to lot' %}

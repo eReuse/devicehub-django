@@ -7,7 +7,6 @@ const TEST_PASSWD = process.env.TEST_PASSWD || '1234'
 test('Login success', async ({ page }) => {
     await page.goto(TEST_SITE);
 
-    //await page.pause();
     await page.getByPlaceholder('Email address').click();
     await page.getByPlaceholder('Email address').fill(TEST_USER);
     await page.getByPlaceholder('Password').fill(TEST_PASSWD);
@@ -20,7 +19,6 @@ test('Login success', async ({ page }) => {
 test('Login failed', async ({ page }) => {
     await page.goto(TEST_SITE);
 
-    //await page.pause();
     await page.getByPlaceholder('Email address').click();
     await page.getByPlaceholder('Email address').fill(TEST_USER);
     await page.getByPlaceholder('Password').fill("incorrect password");
@@ -34,7 +32,6 @@ test('Login failed', async ({ page }) => {
 test('Recover Password ', async ({ page }) => {
     await page.goto(TEST_SITE);
 
-    // await page.pause();
     await page.getByRole('link', { name: 'Forgot your password?' }).click();
     await page.getByPlaceholder('Email').click();
 

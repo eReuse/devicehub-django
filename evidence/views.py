@@ -21,22 +21,20 @@ from evidence.forms import (
     ImportForm,
     EraseServerForm
 )
+from django_tables2 import SingleTableView
+from evidence.tables import EvidenceTable
 
 
-class ListEvidencesView(DashboardView, TemplateView):
+class ListEvidencesView(DashboardView, SingleTableView):
     template_name = "evidences.html"
     section = "evidences"
+    table_class = EvidenceTable
     title = _("Evidences")
     breadcrumb = "Evidences"
+    paginate_by = 13
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        evidences = Evidence.get_all(self.request.user)
-
-        context.update({
-            'evidences': evidences,
-        })
-        return context
+    def get_queryset(self):
+        return Evidence.get_all(self.request.user)
 
 
 class UploadView(DashboardView, FormView):
@@ -198,14 +196,14 @@ class DeleteEvidenceTagView(DashboardView, DeleteView):
     def get(self, request, *args, **kwargs):
         self.object = self.get_object()
 
-        message = _("<Deleted> Evidence Tag: {}").format(self.object.value) 
+        message = _("<Deleted> Evidence Tag: {}").format(self.object.value)
         DeviceLog.objects.create(
             snapshot_uuid=self.object.uuid,
             event=message,
             user=self.request.user,
             institution=self.request.user.institution
         )
-        self.object.delete()        
+        self.object.delete()
 
         messages.info(self.request, _("Evicende Tag deleted successfully."))
         return self.handle_success()
@@ -215,6 +213,6 @@ class DeleteEvidenceTagView(DashboardView, DeleteView):
 
     def get_success_url(self):
         return self.request.META.get(
-            'HTTP_REFERER', 
+            'HTTP_REFERER',
             reverse_lazy('evidence:details', args=[self.object.uuid])
         )

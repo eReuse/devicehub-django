@@ -1,0 +1,4 @@
+El beneficiario {{ beneficiary.email }} ha confirmado los siguientes equipos del lote {{ lot.name }}:
+{% for d in beneficiary.devicebeneficiary_set.filter %}
+ {{ d.device_id }}
+{% endfor %}

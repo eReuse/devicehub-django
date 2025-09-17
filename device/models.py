@@ -3,7 +3,7 @@ from django.db import models, connection
 from utils.constants import ALGOS
 from evidence.models import SystemProperty, UserProperty, Evidence
 from django.utils.dateparse import parse_datetime
-from lot.models import DeviceLot
+from lot.models import DeviceLot, DeviceBeneficiary
 from action.models import State
 
 
@@ -28,6 +28,7 @@ class Device:
         # the id is the chid of the device
         self.id = kwargs["id"]
         self.uuid = kwargs.get("uuid")
+        self.lot = kwargs.get("lot")
         self.pk = self.id
         self.shortid = self.pk[:6].upper()
         self.algorithm = None
@@ -137,7 +138,10 @@ class Device:
 
     def get_lots(self):
         self.lots = [
-            x.lot for x in DeviceLot.objects.filter(device_id=self.id)]
+            x.lot for x in DeviceLot.objects.filter(device_id=self.id)
+            .select_related('lot__type')
+            .order_by('-lot__type__name', '-lot__created')
+        ]
 
     def matches_query(self, query):
         if not query:
@@ -150,6 +154,7 @@ class Device:
             'manufacturer': lambda d: str(getattr(d, 'manufacturer', '')),
             'model': lambda d: str(getattr(d, 'model', '')),
             'current_state': lambda d: str(d.get_current_state()) if d.get_current_state() else '',
+            'status_beneficiary': lambda d: str(d.status_beneficiary),
             'serial': lambda d: str(getattr(d, 'serial_number', '')),
             'cpu': lambda d: str(getattr(d, 'cpu', '')),
             'total_ram': lambda d: str(getattr(d, 'total_ram', ''))
@@ -465,6 +470,22 @@ class Device:
     def did_document(self):
         self.get_last_evidence()
         return self.last_evidence.get_did_document()
+
+    @property
+    def status_beneficiary(self):
+        if not self.lot:
+            return ''
+
+        dev = DeviceBeneficiary.objects.filter(
+            device_id=self.id,
+            beneficiary__lot=self.lot
+        ).first()
+
+        status = DeviceBeneficiary.Status.AVAILABLE.label
+        if dev:
+            status = DeviceBeneficiary.Status(dev.status).label
+
+        return status
 
     def components_export(self):
         self.get_last_evidence()

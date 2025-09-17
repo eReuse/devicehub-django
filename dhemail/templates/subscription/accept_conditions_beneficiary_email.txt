@@ -1,0 +1,1 @@
+El beneficiario {{ beneficiary.email }} del lote {{ beneficiary.lot.name }} ha aceptado las condiciones

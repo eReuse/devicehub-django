@@ -93,6 +93,7 @@ INSTALLED_APPS = [
     "admin",
     "api",
     "environmental_impact",
+    "dhemail",
 ]
 
 DPP = config("DPP", default=False, cast=bool)
@@ -266,3 +267,16 @@ TOKEN_DLT = config("API_DLT_TOKEN", default=None)
 API_DLT = config("API_DLT", default=None)
 API_RESOLVER = config("API_RESOLVER", default=None)
 ID_FEDERATED = config("ID_FEDERATED", default=None)
+
+# EMAIL
+INITIAL_ADMIN_EMAIL = config("INITIAL_ADMIN_EMAIL", default='admin@example.org')
+DEFAULT_FROM_EMAIL = config(
+    'DEFAULT_FROM_EMAIL', default='webmaster@localhost')
+EMAIL_HOST = config('EMAIL_HOST', default='localhost')
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+EMAIL_PORT = config('EMAIL_PORT', default=25, cast=int)
+EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=False, cast=bool)
+EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.smtp.EmailBackend')
+EMAIL_FILE_PATH = config('EMAIL_FILE_PATH', default='/tmp/app-messages')
+ENABLE_EMAIL = config('ENABLE_EMAIL', default=True, cast=bool)
