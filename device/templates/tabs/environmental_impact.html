@@ -4,6 +4,7 @@
   <h5 class="card-title">{% trans 'Environmental Impact Details' %}</h5>
   <hr />
 
+  {% if impact %}
   <h6 class="mt-3 text-primary">{% trans 'Relevant Input Data' %}</h6>
   <div class="row mb-3">
     <div class="col-sm-12">
@@ -46,6 +47,22 @@
       </div>
     </div>
   </div>
+  {% else %}
+  <div class="row">
+    <div class="col-sm-12">
+      <div class="alert alert-warning" role="alert">
+        <h6>{% trans 'Environmental Impact Data Unavailable' %}</h6>
+        <p>{% trans 'Environmental impact calculation is not available for this device. This may be due to insufficient device data or configuration issues.' %}</p>
+        <p><strong>{% trans 'Possible reasons:' %}</strong></p>
+        <ul>
+          <li>{% trans 'Device has no usage time data (power-on hours)' %}</li>
+          <li>{% trans 'Device evidence is missing or incomplete' %}</li>
+          <li>{% trans 'Storage component information is not available' %}</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  {% endif %}
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -57,6 +74,7 @@
   }
 
   function drawChart() {
+    {% if impact %}
     var ctx = document.getElementById('impactChart').getContext('2d');
     var impactChart = new Chart(ctx, {
       type: 'bar',
@@ -84,6 +102,7 @@
         }
       }
     });
+    {% endif %}
   }
   window.onload = drawChart;
 </script>
