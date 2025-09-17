@@ -38,18 +38,16 @@ def get_power_on_hours_from(device: Device) -> int:
             return 0
         else:
             # Try to get components from device
-            components = getattr(device, 'components', None)
-            if components:
-                # Find storage component with usage time
-                storage_component = next(
-                    (comp for comp in components
-                     if comp.get("type") == "Storage"),
-                    None
-                )
-                if storage_component:
-                    str_time = storage_component.get("time of used", "")
-                    if str_time:
-                        return convert_str_time_to_hours(str_time)
+            try:
+                components = device.components
+                if components:
+                    for comp in components:
+                        if comp.get("type") == "Storage":
+                            str_time = comp.get("time of used", "")
+                            if str_time:
+                                return convert_str_time_to_hours(str_time)
+            except (AttributeError, TypeError):
+                pass
 
             return 0  # Default if no storage found or no time data
 
