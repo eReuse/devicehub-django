@@ -240,6 +240,7 @@ class DelToLotView(DashboardView, View):
 
             for dev in selected_devices:
                     lot.remove(dev.id)
+            Donor.objects.filter(lot=lot).delete()
             msg = _("Successfully unassigned %d devices from the lot")
             messages.success(request, msg % len(selected_devices))
 

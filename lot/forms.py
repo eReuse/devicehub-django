@@ -41,13 +41,20 @@ class LotsForm(forms.Form):
         for dev in self.devices:
             for lot in self._lots:
                 lot.add(dev.id)
+
+        self.remove_donor()
         return
 
     def remove(self):
         for dev in self.devices:
             for lot in self._lots:
                 lot.remove(dev.id)
+
+        self.remove_donor()
         return
+
+    def remove_donor(self):
+        Donor.objects.filter(lot__in=self._lots).delete()
 
 
 class BeneficiaryForm(forms.Form):
