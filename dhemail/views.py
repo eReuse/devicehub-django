@@ -33,22 +33,26 @@ class NotifyEmail:
         }
         return context
 
-    def send_email(self, user):
+    def send_email(self, user, msg=''):
         """
         Send a email when a user is activated.
         """
+        body = msg
+        html_email = msg.replace("\n", "<br />")
         context = self.get_email_context(user)
         subject = loader.render_to_string(self.email_template_subject, context)
         # Email subject *must not* contain newlines
         subject = ''.join(subject.splitlines())
-        body = loader.render_to_string(self.email_template, context)
+        if not msg:
+            body = loader.render_to_string(self.email_template, context)
+            html_email = loader.render_to_string(self.email_template_html, context)
         from_email = settings.DEFAULT_FROM_EMAIL
         to_email = user.email
 
         email_message = EmailMultiAlternatives(
             subject, body, from_email, [to_email])
-        html_email = loader.render_to_string(self.email_template_html, context)
         email_message.attach_alternative(html_email, 'text/html')
+
         try:
             if settings.ENABLE_EMAIL:
                 email_message.send()

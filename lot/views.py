@@ -14,7 +14,6 @@ from django.core.cache import cache
 from django.utils.translation import gettext_lazy as _
 from django.db.models import Q, Count, Case, When, IntegerField
 from django.views.generic.base import TemplateView, View
-from django.forms import modelformset_factory, Select
 from django.views.generic.edit import (
     CreateView,
     DeleteView,
@@ -33,7 +32,9 @@ from lot.forms import (
     AddDonorForm,
     BeneficiaryForm,
     PlaceReturnDeviceForm,
-    SelectFormSet
+    SelectFormSet,
+    SelectDeviceFormSet,
+    BulkUpdateStatusForm
 )
 from lot.models import (
     Lot,
@@ -875,61 +876,71 @@ class ListDevicesBeneficiaryView(DashboardLotMixing, BeneficiaryEmail, FormView)
     template_name = "beneficiaries_devices.html"
     title = _("Beneficiaries")
     breadcrumb = "Lot / Beneficiary / Devices"
+    model = Beneficiary
+    form_class = BulkUpdateStatusForm
     lot = None
+    object = None
+    devs_confirmed = []
+    devs_delivered = []
+    email_text = ''
 
     def get(self, *args, **kwargs):
-        res = super().get(*args, **kwargs)
+        response = super().get(*args, **kwargs)
         if not self.beneficiary.devicebeneficiary_set.first():
             url = reverse_lazy("dashboard:lot", args=[self.beneficiary.lot.id])
             return redirect(url)
 
-        return res
+        return response
 
-    def get_form_class(self):
-        return modelformset_factory(
-            DeviceBeneficiary,
-            fields=["status"],
-            widgets={"status": Select(attrs={"class": "form-select"})},
-            labels={"status": ""},
-            extra=0
-        )
+    def get_chids(self):
+        return self.object.devicebeneficiary_set.all().values_list(
+            "device_id", flat=True
+        ).distinct()
 
-    def get_form(self):
-        form_class = self.get_form_class()
-        formset = form_class(**self.get_form_kwargs())
+    def get_object(self):
+        if self.object:
+            return
 
-        for f in formset:
-            f.device = Device(id=f.instance.device_id)
-            choices = f.fields['status'].choices
-            f.fields['status'].choices = choices[1:]
-
-        return formset
-
-    def get_form_kwargs(self):
         self.pk = self.kwargs.get('pk')
         self.id = self.kwargs.get('id')
-        kwargs = super().get_form_kwargs()
 
+        self.object = get_object_or_404(
+            self.model,
+            id=self.id,
+            lot_id=self.pk
+        )
+
+        self.lot = get_object_or_404(
+            Lot,
+            owner=self.request.user.institution,
+            id=self.pk
+        )
+
+    def get_formset(self):
+        self.get_object()
         self.success_url = reverse_lazy(
             'lot:devices_beneficiary',
             args=[self.pk, self.id]
         )
-
-        self.beneficiary = get_object_or_404(
-            Beneficiary,
-            lot_id=self.pk,
-            id=self.id
+        devices = self.object.devicebeneficiary_set.filter()
+        self.beneficiary = self.object
+        initial_data = []
+        for dev in devices:
+            initial_data.append(
+                {'id': dev.id, 'device_id': dev.device_id, 'checked': False}
+            )
+        formset = SelectDeviceFormSet(
+            self.request.POST or None,
+            initial=initial_data,
+            devices=devices,
+            lot=self.lot
         )
-
-        kwargs["queryset"] = self.beneficiary.devicebeneficiary_set.filter()
-        return kwargs
+        return formset
 
     def get_context_data(self, **kwargs):
-        self.pk = self.kwargs.get('pk')
-        self.id = self.kwargs.get('id')
-        self.get_lot()
-
+        formset = self.get_formset()
         context = super().get_context_data(**kwargs)
+
         self.is_shop = LotSubscription.objects.filter(
             lot=self.lot,
             user=self.request.user,
@@ -943,8 +954,8 @@ class ListDevicesBeneficiaryView(DashboardLotMixing, BeneficiaryEmail, FormView)
             raise Http404
 
         new_devices = self.request.session.get("devices")
-        devices = len(context.get("form", []))
-        returned = self.beneficiary.devicebeneficiary_set.filter(
+        devices = self.beneficiary.devicebeneficiary_set.filter()
+        returned = devices.filter(
             status=DeviceBeneficiary.Status.RETURNED
         ).first()
 
@@ -953,17 +964,17 @@ class ListDevicesBeneficiaryView(DashboardLotMixing, BeneficiaryEmail, FormView)
             'beneficiary': self.beneficiary,
             'new_devices': new_devices,
             'devices': devices,
-            'returned': returned
+            'formset': formset,
+            'returned': returned,
+            'devs_confirmed': self.devs_confirmed,
+            'devs_delivered': self.devs_delivered,
+            'confirmed_status': DeviceBeneficiary.Status.CONFIRMED.value,
+            'delivered_status': DeviceBeneficiary.Status.DELIVERED.value,
+            'email_confirmed': self.get_email_body("confirmed"),
+            'email_delivered': self.get_email_body("delivered")
         })
 
         return context
-
-    def get_lot(self):
-        self.lot = get_object_or_404(
-            Lot,
-            owner=self.request.user.institution,
-            id=self.pk
-        )
 
     def get_subscriptors(self):
         return LotSubscription.objects.filter(
@@ -971,51 +982,90 @@ class ListDevicesBeneficiaryView(DashboardLotMixing, BeneficiaryEmail, FormView)
         )
 
     def form_valid(self, form):
-        form.save()
-        response = super().form_valid(form)
+        formset = self.get_formset()
 
-        if form.changed_objects:
-            devs_confirmed = []
-            devs_delivered = []
-            for ff in form.changed_objects:
-                f = ff[0]
-                if f.status == f.Status.CONFIRMED:
-                    devs_confirmed.append(f.device_id)
-                if f.status == f.Status.DELIVERED:
-                    devs_delivered.append(f.device_id)
+        if formset.is_valid():
+            try:
+                self.status = DeviceBeneficiary.Status(int(form.cleaned_data["status"]))
+                self.email_text = form.cleaned_data["email"]
+            except Exception:
+                return super().form_valid(form)
 
-            if devs_confirmed:
-                self.email_template_subject = 'beneficiary/confirm/subject.txt'
-                self.email_template = 'beneficiary/confirm/email.txt'
-                self.email_template_html = 'beneficiary/confirm/email.html'
-                self.send_email(self.beneficiary)
+            devices_changed = []
+            for f in formset:
+                if f.cleaned_data["checked"]:
+                    devices_changed.append(f.cleaned_data["id"])
 
-                self.email_template_html = 'subscription/confirm_beneficiary_email.html'
-                self.email_template = 'subscription/confirm_beneficiary_email.txt'
-                self.email_template_subject = 'subscription/confirm_beneficiary_subject.txt'
+            if not devices_changed:
+                messages.error(self.request, _('You have not selected any device.'))
+                return super().form_valid(form)
 
-                for c in self.get_subscriptors():
-                    self.send_email(c.user)
+            self.devs_confirmed = []
+            self.devs_delivered = []
+            for dev in self.object.devicebeneficiary_set.filter(id__in=devices_changed):
+                dev.status = self.status
+                dev.save()
+                if self.status == DeviceBeneficiary.Status.CONFIRMED:
+                    self.devs_confirmed.append(dev)
+                elif self.status == DeviceBeneficiary.Status.DELIVERED:
+                    self.devs_delivered.append(dev)
 
-            if devs_delivered:
-                self.email_template_subject = 'beneficiary/delivery/subject.txt'
-                self.email_template = 'beneficiary/delivery/email.txt'
-                self.email_template_html = 'beneficiary/delivery/email.html'
-                self.send_email(self.beneficiary)
+            self.get_context_data(form=form)
+            self.prepare_email()
+            self.email_text = ""
+            messages.success(self.request, _('Update devices succesfully'))
 
-                self.email_template_subject = 'beneficiary/return/subject.txt'
-                self.email_template = 'beneficiary/return/email.txt'
-                self.email_template_html = 'beneficiary/return/email.html'
-                self.send_email(self.beneficiary)
+            return super().form_valid(form)
 
-                self.email_template_html = 'subscription/delivery_beneficiary_email.html'
-                self.email_template = 'subscription/delivery_beneficiary_email.txt'
-                self.email_template_subject = 'subscription/delivery_beneficiary_subject.txt'
+        return self.render_to_response(self.get_context_data(form=form))
 
-                for c in self.get_subscriptors():
-                    self.send_email(c.user)
+    def get_email_context(self, user):
+        context = super().get_email_context(user)
+        context['devs_confirmed'] = set(self.devs_confirmed)
+        context['devs_delivered'] = set(self.devs_delivered)
 
-        return response
+        return context
+
+    def get_email_body(self, type_email=None):
+        context = self.get_email_context(self.beneficiary)
+        if type_email == 'confirmed':
+            return render_to_string('beneficiary/confirm/email.txt', context)
+        if type_email == 'delivered':
+            return render_to_string('beneficiary/delivery/email.txt', context)
+
+        return ''
+
+    def prepare_email(self):
+        if self.status == DeviceBeneficiary.Status.CONFIRMED:
+            self.email_template_subject = 'beneficiary/confirm/subject.txt'
+            self.email_template = 'beneficiary/confirm/email.txt'
+            self.email_template_html = 'beneficiary/confirm/email.html'
+            self.send_email(self.beneficiary, msg=self.email_text)
+
+            self.email_template_html = 'subscription/confirm_beneficiary_email.html'
+            self.email_template = 'subscription/confirm_beneficiary_email.txt'
+            self.email_template_subject = 'subscription/confirm_beneficiary_subject.txt'
+
+            for c in self.get_subscriptors():
+                self.send_email(c.user)
+
+        elif self.status == DeviceBeneficiary.Status.DELIVERED:
+            self.email_template_subject = 'beneficiary/delivery/subject.txt'
+            self.email_template = 'beneficiary/delivery/email.txt'
+            self.email_template_html = 'beneficiary/delivery/email.html'
+            self.send_email(self.beneficiary, msg=self.email_text)
+
+            self.email_template_subject = 'beneficiary/return/subject.txt'
+            self.email_template = 'beneficiary/return/email.txt'
+            self.email_template_html = 'beneficiary/return/email.html'
+            self.send_email(self.beneficiary)
+
+            self.email_template_html = 'subscription/delivery_beneficiary_email.html'
+            self.email_template = 'subscription/delivery_beneficiary_email.txt'
+            self.email_template_subject = 'subscription/delivery_beneficiary_subject.txt'
+
+            for c in self.get_subscriptors():
+                self.send_email(c.user)
 
 
 class DelDeviceBeneficiaryView(DashboardView, TemplateView):
@@ -1126,8 +1176,7 @@ class WebBeneficiaryView(WebMixing, FormView):
 
     def get_formset(self):
         self.get_object()
-        self.pk = self.kwargs.get('pk')
-        self.id = self.kwargs.get('id')
+
         self.success_url = reverse_lazy(
             'lot:web_beneficiary',
             args=[self.pk, self.id]
@@ -1157,6 +1206,20 @@ class WebBeneficiaryView(WebMixing, FormView):
         context["formset"] = formset
         context["count_returned"] = len(formset)
         return context
+
+    def get_object(self):
+        if self.object:
+            return
+
+        self.pk = self.kwargs.get('pk')
+        self.id = self.kwargs.get('id')
+
+        self.object = get_object_or_404(
+            self.model,
+            id=self.id,
+            lot_id=self.pk
+        )
+
 
     def form_valid(self, form):
         formset = self.get_formset()
