@@ -7,7 +7,7 @@
 <form method="post">
     {% csrf_token %}
 
-    {{ form.management_form }}
+    {{ formset.management_form }}
 <div class="row mt-3">
   <div class="col">
     Beneficiary: {{ beneficiary.email }}
@@ -19,6 +19,7 @@
     <table class="table table-hover table-bordered align-middel">
       <thead class="table-light">
         <tr>
+          <th scope="col"></th>
           <th scope="col">{% trans 'ShortId' %}</th>
           <th scope="col">{% trans 'Manufacturer' %}</th>
           <th scope="col">{% trans 'Model' %}</th>
@@ -31,13 +32,14 @@
         </tr>
       </thead>
       <tbody>
-      {% for f in form %}
+	{% for f in formset %}
         <tr>
+          <td class="font-monospace">{{ f }}</td>
           <td class="font-monospace">{{ f.device.shortid }}</td>
           <td class="font-monospace">{{ f.device.manufacturer }}</td>
           <td class="font-monospace">{{ f.device.model }}</td>
           <td class="font-monospace">{{ f.device.serial_number }}</td>
-	  <td class="font-monospace">{{ f }}</td>
+	  <td class="font-monospace">{{ f.device.status_beneficiary }}</td>
 	  {% if returned %}
           <td class="font-monospace">{{ f.instance.returned_place|default:"" }}</td>
 	  {% endif %}
@@ -47,7 +49,7 @@
 	    </a>
 	  </td>
         </tr>
-      {% endfor %}
+        {% endfor %}
       </tbody>
     </table>
   </div>
@@ -60,9 +62,40 @@
   </a>
 {% endif %}
 {% if devices %}
+<div class="mt-4">
+  <div class="col-4">
+    {{ form.as_div }}
+  </div>
+</div>
+<div class="mt-4">
   <button  class="btn btn-green-admin" type="submit">{% trans 'Save' %}</button>
+</div>
 {% endif %}
 </div>
 
 </form>
+
+<div id="email-{{ confirmed_status }}" class="d-none">
+  {{ email_confirmed }}
+</div>
+<div id="email-{{ delivered_status }}" class="d-none">
+  {{ email_delivered }}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const statusSelect = document.querySelector('#id_status');
+  const emailTextarea = document.querySelector('#id_email');
+
+  statusSelect.addEventListener('change', function() {
+    const selectedStatus = this.value;
+    const emailDiv = document.querySelector(`#email-${selectedStatus}`);
+    if (emailDiv) {
+      emailTextarea.value = emailDiv.textContent.trim();
+    } else {
+      emailTextarea.value = '';
+    }
+  });
+});
+</script>
 {% endblock %}
