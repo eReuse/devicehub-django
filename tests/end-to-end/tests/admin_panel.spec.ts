@@ -29,7 +29,6 @@ test('Create new user ', async ({ page }) => {
   await page.getByRole('link', { name: 'Users' }).click();
   await page.getByRole('link', { name: 'New user' }).click();
 
-  await page.getByRole('link', { name: 'New user' }).click();
   await page.getByRole('textbox', { name: 'Email address' }).fill('user2@example.org');
   await page.getByRole('textbox', { name: 'Password' }).fill('password');
   await page.getByRole('button', { name: 'Save' }).click();
