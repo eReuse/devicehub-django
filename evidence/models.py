@@ -118,8 +118,8 @@ class Evidence:
                     self.inxi = ev["output"]
                     if isinstance(ev["output"], str):
                         self.inxi = json.loads(ev["output"])
-        elif edid_hex:= self.doc["data"]["edid_hex"]:
-            self.edid_hex = edid_hex
+        elif self.doc.get("data").get("edid_hex"):
+            self.edid_hex = self.doc["data"]["edid_hex"]
             data = self.get_components() or []
             flat = {k: v for d in data for k, v in d.items()}
 
