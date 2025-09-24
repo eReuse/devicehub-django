@@ -127,7 +127,7 @@ proxy_read_timeout 600;
 
 ### Baremetal Prerequisites
 
-- Python 3.11
+- Python 3.13
 - pip
 - virtualenv
 
@@ -143,10 +143,7 @@ pip install -r requirements.txt
 
 #### Xapian
 
-> **Note**
-> If you're running a newer system like Debian 13 with Python 3.13+, the system `python3-xapian` package may be incompatible with Python 3.11. In this case, skip this section and follow the ["Alternative: Compiling Xapian from Sources"](#xapian-for-newer-systems-like-debian-13-ubuntu-2410) guide below.
-
-Now, install the xapian dependencies (xapian library and python bindings)
+Install the xapian dependencies (xapian library and python bindings):
 
 ```bash
 sudo apt-get install python3-xapian libxapian-dev
@@ -158,9 +155,9 @@ Allow the virtual environment to use system-installed packages:
 export PYTHONPATH="${PYTHONPATH}:/usr/lib/python3/dist-packages"
 ```
 
-#### Xapian for newer systems (like Debian 13, Ubuntu 24.10+)
+#### Advanced: Compiling Xapian from Sources (Optional)
 
-If you're running a newer system (like Debian 13, Ubuntu 24.10+) with Python 3.13+ where the system `python3-xapian` package is incompatible with older Python versions, you'll need to compile Xapian from sources for Python 3.11.
+For advanced users who need to compile Xapian from sources (e.g., for custom Python versions or specific system configurations), you can build Xapian bindings manually.
 
 **Prerequisites:**
 
@@ -181,7 +178,7 @@ curl https://pyenv.run | bash
 exec "$SHELL"
 ```
 
-Install and set Python 3.11.10:
+Install and set Python 3.11:
 
 ```bash
 # Install Python 3.11.10
