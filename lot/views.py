@@ -112,12 +112,27 @@ class NewLotView(LotSuccessUrlMixin, DashboardView, CreateView):
             return self.form_invalid(form)
 
 
-class DeleteLotsView(LotSuccessUrlMixin, DashboardView, TemplateView ):
+class TransferLotsView(LotSuccessUrlMixin, DashboardView, TemplateView):
+    template_name = "transfer_lots.html"
+    title = _("Transfer lot/s")
+    breadcrumb = "lots / Transfer"
+
+
+class DeleteLotsView(LotSuccessUrlMixin, DashboardView, TemplateView):
     template_name = "delete_lots.html"
     title = _("Delete lot/s")
     breadcrumb = "lots / Delete"
 
     def get(self, request, *args, **kwargs):
+        if "transfer" in request.GET:
+            url = reverse_lazy('lot:transfer')
+            query_params = request.GET.copy()
+            query_params.pop('transfer', None)
+            query_string = query_params.urlencode()
+            if query_string:
+                url = f"{url}?{query_string}"
+            return redirect(url)
+
         selected_ids = request.GET.getlist('select')
         if not selected_ids:
             messages.error(request, _("No lots selected for deletion."))
@@ -148,7 +163,7 @@ class DeleteLotsView(LotSuccessUrlMixin, DashboardView, TemplateView ):
         )
 
         lot_tag = lots_to_delete.first().type
-        deleted_count = lots_to_delete.delete()
+        lots_to_delete.delete()
         messages.success(request, _("Lots succesfully deleted"))
         return redirect(self.get_success_url(lot_tag=lot_tag))
 
