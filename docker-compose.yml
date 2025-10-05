@@ -7,22 +7,23 @@ services:
       context: .
       dockerfile: docker/devicehub-django.Dockerfile
     environment:
-      - DEBUG=${DEBUG:-false}
+      - DEBUG=${DEVICEHUB_DEBUG:-false}
       - DEVICEHUB_HOST=${DEVICEHUB_HOST:-localhost}
       - PORT=${DEVICEHUB_PORT:-8000}
       - ALLOWED_HOSTS=${DEVICEHUB_ALLOWED_HOSTS:-$DEVICEHUB_HOST}
-      - DEMO=${DEMO:-false}
+      - DEMO=${DEVICEHUB_DEMO:-false}
       - DEMO_IDHUB_DOMAIN=${DEMO_IDHUB_DOMAIN:-}
       - DEMO_IDHUB_PREDEFINED_TOKEN=${IDHUB_PREDEFINED_TOKEN:-}
-      - PREDEFINED_TOKEN=${PREDEFINED_TOKEN:-}
-      - DPP=${DPP:-false}
+      - DEMO_PREDEFINED_TOKEN=${DEMO_DEVICEHUB_PREDEFINED_TOKEN:-}
+      - SECRET_KEY=${DEVICEHUB_SECRET_KEY}
+      - DPP=${DEVICEHUB_DPP:-false}
       - DB_TYPE=${DEVICEHUB_DB_TYPE:-postgres}
-      - TIME_ZONE=${TIME_ZONE:-UTC}
-      - DB_HOST=${DB_HOST:-devicehub-postgres}
-      - DB_PORT=${DB_PORT:-5432}
-      - DB_NAME=${DB_NAME}
-      - DB_USER=${DB_USER}
-      - DB_PASSWORD=${DB_PASSWORD}
+      - TIME_ZONE=${DEVICEHUB_TIME_ZONE:-UTC}
+      - DB_HOST=${DEVICEHUB_POSTGRES_HOST:-devicehub-postgres}
+      - DB_PORT=${DEVICEHUB_POSTGRES_PORT:-5432}
+      - DB_NAME=${DEVICEHUB_POSTGRES_NAME}
+      - DB_USER=${DEVICEHUB_POSTGRES_USER}
+      - DB_PASSWORD=${DEVICEHUB_POSTGRES_PASSWORD}
     # TODO manage volumes dev vs prod
     volumes:
       - ${DEVICEHUB_VOLUME:-.:/opt/devicehub}
@@ -35,16 +36,17 @@ services:
         restart: true
 
   devicehub-postgres:
+    profiles: [devicehub-postgres]
     restart: ${DOCKER_RESTART_POLICY:-unless-stopped}
     image: postgres:17
     environment:
-      - POSTGRES_DB=${DB_NAME}
-      - POSTGRES_USER=${DB_USER}
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DEVICEHUB_POSTGRES_NAME}
+      - POSTGRES_USER=${DEVICEHUB_POSTGRES_USER}
+      - POSTGRES_PASSWORD=${DEVICEHUB_POSTGRES_PASSWORD}
     volumes:
       - DEVICEHUB_POSTGRES_DATA:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DEVICEHUB_POSTGRES_USER} -d ${DEVICEHUB_POSTGRES_NAME}"]
       start_period: 1s
       interval: 1s
       timeout: 10s
@@ -59,7 +61,7 @@ services:
     environment:
       - WEBSERVER_HOST=${DEVICEHUB_HOST}
       - APP_HOST=devicehub-django:${DEVICEHUB_PORT}
-      - FAKE_HTTP_CERT=${DEVICEHUB_FAKE_HTTP_CERT}
+      - ENABLE_LETSENCRYPT=${ENABLE_LETSENCRYPT}
     ports:
     - "80:80"
     - "443:443"
@@ -99,26 +101,35 @@ services:
 
 
   idhub:
-    # https://docs.docker.com/compose/how-tos/profiles/
+    restart: ${DOCKER_RESTART_POLICY:-unless-stopped}
     init: true
     profiles: [idhub]
-    image: farga.pangea.org/ereuse/idhub:stable
+    image: ghcr.io/ereuse/idhub:${IDHUB_DOCKER_TAG:-stable}
     environment:
       - DOMAIN=${IDHUB_DOMAIN:-localhost}
       - ALLOWED_HOSTS=${IDHUB_ALLOWED_HOSTS:-$IDHUB_DOMAIN}
       - DEBUG=${IDHUB_DEBUG:-true}
       - DEMO=${IDHUB_DEMO:-true}
-      - IDHUB_DB_TYPE=${IDHUB_DB_TYPE:-postgres}
-      - INITIAL_ADMIN_EMAIL=${IDHUB_ADMIN_EMAIL}
-      - INITIAL_ADMIN_PASSWORD=${IDHUB_ADMIN_PASSWD}
+      - DEMO_AUTODECRYPT=${IDHUB_DEMO_AUTODECRYPT:-false}
+      - DEMO_CREATE_SCHEMAS=${IDHUB_DEMO_CREATE_SCHEMAS:-true}
+      - REMOVE_DATA=${IDHUB_REMOVE_DATA:-false}
+      - DB_TYPE=${IDHUB_DB_TYPE:-postgres}
       - CREATE_TEST_USERS=${IDHUB_CREATE_TEST_USERS:-true}
+      - INIT_ADMIN_EMAIL=${IDHUB_INIT_ADMIN_EMAIL}
+      - INIT_ADMIN_PASSWORD=${IDHUB_INIT_ADMIN_PASSWORD}
+      - INIT_ORG=${IDHUB_INIT_ORG}
+      - POLICY_PRIVACY=${IDHUB_POLICY_PRIVACY}
+      - POLICY_LEGAL=${IDHUB_POLICY_LEGAL}
+      - POLICY_COOKIES=${IDHUB_POLICY_COOKIES}
       - ENABLE_EMAIL=${IDHUB_ENABLE_EMAIL:-true}
       - ENABLE_2FACTOR_AUTH=${IDHUB_ENABLE_2FACTOR_AUTH:-true}
       - ENABLE_DOMAIN_CHECKER=${IDHUB_ENABLE_DOMAIN_CHECKER:-true}
-      - PREDEFINED_TOKEN=${IDHUB_PREDEFINED_TOKEN:-}
-      - SECRET_KEY=${IDHUB_SECRET_KEY:-publicsecretisnotsecureVtmKBfxpVV47PpBCF2Nzz2H6qnbd}
-      - STATIC_ROOT=${IDHUB_STATIC_ROOT:-/static/}
+      - DEMO_PREDEFINED_TOKEN=${DEMO_IDHUB_PREDEFINED_TOKEN:-}
+      - SECRET_KEY=${IDHUB_SECRET_KEY}
+      - MEDIA_URL=${IDHUB_MEDIA_URL:-/media/}
       - MEDIA_ROOT=${IDHUB_MEDIA_ROOT:-/media/}
+      - STATIC_URL=${IDHUB_STATIC_URL:-/static/}
+      - STATIC_ROOT=${IDHUB_STATIC_ROOT:-/static/}
       - PORT=${IDHUB_PORT:-9001}
       - DEFAULT_FROM_EMAIL=${IDHUB_DEFAULT_FROM_EMAIL}
       - EMAIL_HOST=${IDHUB_EMAIL_HOST}
@@ -134,27 +145,27 @@ services:
       - DB_NAME=${IDHUB_POSTGRES_NAME}
       - DB_USER=${IDHUB_POSTGRES_USER}
       - DB_PASSWORD=${IDHUB_POSTGRES_PASSWORD}
+      - TIME_ZONE=${IDHUB_TIME_ZONE}
+      - DPP=${IDHUB_DPP:-false}
+
     ports:
       - ${IDHUB_PORT:-9001}:${IDHUB_PORT:-9001}
+    # TODO review volumes
     volumes:
-      - ${IDHUB_VOLUME:-.:/opt/idhub}
-    depends_on:
-      idhub-postgres:
-        condition: service_healthy
-        restart: true
+      - ${IDHUB_VOLUME:-.}:/opt/idhub
+      - ${IDHUB_ROOT_DIR}/${IDHUB_DOCKER_DIR}/${IDHUB_DOMAIN}/idhub-postgres:/idhub-postgres
+      - ${DOCKER_IDHUB_STATIC_ROOT}:${IDHUB_STATIC_ROOT:-/static/}
+      - ${DOCKER_IDHUB_MEDIA_ROOT}:${IDHUB_MEDIA_ROOT:-/media/}
 
   idhub-postgres:
-    profiles: [idhub]
+    profiles: [idhub-postgres]
     image: postgres:17
     environment:
       - POSTGRES_DB=${IDHUB_POSTGRES_NAME}
       - POSTGRES_USER=${IDHUB_POSTGRES_USER}
       - POSTGRES_PASSWORD=${IDHUB_POSTGRES_PASSWORD}
-      # TODO probablemente no hace falta, si no afecta borrar 'ports'
-      #ports:
-      #  - 5432:5432
     volumes:
-      - IDHUB_POSTGRES_DATA:/var/lib/postgresql/data
+      - ${IDHUB_ROOT_DIR}/${IDHUB_DOCKER_DIR}/${IDHUB_DOMAIN}/idhub-postgres:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${IDHUB_POSTGRES_USER} -d ${IDHUB_POSTGRES_NAME}"]
       start_period: 1s
@@ -162,10 +173,45 @@ services:
       timeout: 10s
       retries: 10
 
+  ereuse-rproxy:
+    restart: ${DOCKER_RESTART_POLICY:-unless-stopped}
+    profiles: [rproxy]
+    image: ghcr.io/ereuse/ereuse-rproxy:${RPROXY_DOCKER_TAG:-stable}
+    build:
+      context: .
+      dockerfile: ./docker/nginx.Dockerfile
+    environment:
+      - ENABLE_LETSENCRYPT=${RPROXY_ENABLE_LETSENCRYPT}
+      # sorry the confusion, for some reason we decided that DEVICEHUB_HOST is equivalent to IDHUB_DOMAIN
+      #   internal ref https://farga.pangea.org/ereuse/devicehub-django/pulls/58
+      - DEVICEHUB_HOST=${DEVICEHUB_HOST}
+      # upstream refers how to connect to this service
+      - DEVICEHUB_UPSTREAM=devicehub:${DEVICEHUB_PORT}
+      - IDHUB_ENABLED=${IDHUB_ENABLED}
+      - IDHUB_DOMAIN=${IDHUB_DOMAIN}
+      - IDHUB_UPSTREAM=idhub:${IDHUB_PORT}
+    ports:
+     - "80:80"
+     - "443:443"
+    volumes:
+      - type: bind
+        source: docker/nginx/app.template
+        target: /etc/nginx/conf.d/app.template
+      # TODO static nginx files
+      #- static:/path/to/static/files:ro
+      - certbot-www:/var/www/certbot
+      - ${DEVICEHUB_ROOT_DIR}/${DEVICEHUB_DOCKER_DIR}/${DEVICEHUB_DOMAIN}/certbot/conf:/etc/letsencrypt
+
+  certbot:
+    restart: ${DOCKER_RESTART_POLICY:-unless-stopped}
+    profiles: [letsencrypt]
+    container_name: certbot
+    image: certbot/certbot
+    volumes:
+      - ${DEVICEHUB_ROOT_DIR}/${DEVICEHUB_DOCKER_DIR}/${DEVICEHUB_DOMAIN}/certbot/conf:/etc/letsencrypt
+      - certbot-www:/var/www/certbot
+    entrypoint: /bin/sh -c "trap exit TERM; while true; do certbot renew --webroot -w /var/www/certbot; sleep 12h & wait $${!}; done;"
+
 
 volumes:
-  IDHUB_DATA:
-  IDHUB_POSTGRES_DATA:
-  DEVICEHUB_DATA:
-  DEVICEHUB_POSTGRES_DATA:
   certbot-www:

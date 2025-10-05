@@ -32,7 +32,7 @@ server {
 }
 
 upstream backend {
-  server ${APP_HOST};
+  server ${APP_UPSTREAM};
 }
 
 server {
@@ -90,44 +90,4 @@ server {
 
     proxy_pass http://backend;
   }
-
-
-  ##
-  # Performance optimizations
-  # For extra performance please refer to https://github.com/denji/nginx-tuning
-  ##
-
-  # TODO
-  #root /var/www/app;
-
-  # Enable compression for JS/CSS/HTML, for improved client load times.
-  # It might be nice to compress JSON/XML as returned by the API, but
-  # leaving that out to protect against potential BREACH attack.
-  gzip              on;
-  gzip_vary         on;
-  gzip_types        # text/html is always compressed by HttpGzipModule
-                    text/css
-                    application/javascript
-                    font/truetype
-                    font/opentype
-                    application/vnd.ms-fontobject
-                    image/svg+xml;
-  gzip_min_length   1000; # default is 20 bytes
-  gzip_buffers      16 8k;
-  gzip_comp_level   2; # default is 1
-
-  client_body_timeout       30s; # default is 60
-  client_header_timeout     10s; # default is 60
-  send_timeout              10s; # default is 60
-  keepalive_timeout         10s; # default is 75
-  resolver_timeout          10s; # default is 30
-  reset_timedout_connection on;
-  proxy_ignore_client_abort on;
-
-  tcp_nopush                on; # send headers in one piece
-  tcp_nodelay               on; # don't buffer data sent, good for small data bursts in real time
-
-  # If you have a small /var/lib partition, it could be interesting to store temp nginx uploads in a different place
-  # See https://nginx.org/en/docs/http/ngx_http_core_module.html#client_body_temp_path
-  #client_body_temp_path /var/www/app/storage/nginx/;
 }

@@ -6,29 +6,39 @@ set -u
 # DEBUG
 set -x
 
-# Process the nginx template
-SOURCE_FILE="/etc/nginx/conf.d/app.template"
-TARGET_FILE="/etc/nginx/conf.d/default.conf"
-export WEBSERVER_HOST="${WEBSERVER_HOST}"
-export APP_HOST="${APP_HOST}"
+generate_webserver() {
+        export WEBSERVER_HOST="${1}"
+        export APP_UPSTREAM="${1}"
 
-if [ "${FAKE_HTTP_CERT:-true}" = "true" ]; then
-  # do same snakeoil certs as `ssl-cert` debian package
-  export SSL_CERTIFICATE_PATH="/etc/ssl/certs/ssl-cert-snakeoil.pem";
-  export SSL_CERTIFICATE_KEY_PATH="/etc/ssl/private/ssl-cert-snakeoil.key";
-else
-  export SSL_CERTIFICATE_PATH="/etc/letsencrypt/live/${WEBSERVER_HOST}/fullchain.pem"
-  export SSL_CERTIFICATE_KEY_PATH="/etc/letsencrypt/live/${WEBSERVER_HOST}/privkey.pem";
-fi
+        if [ "${ENABLE_LETSENCRYPT:-true}" = "true" ]; then
+                export SSL_CERTIFICATE_PATH="/etc/letsencrypt/live/${WEBSERVER_HOST}/fullchain.pem"
+                export SSL_CERTIFICATE_KEY_PATH="/etc/letsencrypt/live/${WEBSERVER_HOST}/privkey.pem";
+        else
+                # do selfsigned certs as `ssl-cert` debian package
+                export SSL_CERTIFICATE_PATH="/etc/ssl/certs/ssl-cert-snakeoil.pem";
+                export SSL_CERTIFICATE_KEY_PATH="/etc/ssl/private/ssl-cert-snakeoil.key";
+        fi
 
-envsubst '${WEBSERVER_HOST} ${APP_HOST} ${SSL_CERTIFICATE_PATH} ${SSL_CERTIFICATE_KEY_PATH}' < $SOURCE_FILE > $TARGET_FILE
+        envsubst '${WEBSERVER_HOST} ${APP_UPSTREAM} ${SSL_CERTIFICATE_PATH} ${SSL_CERTIFICATE_KEY_PATH}' < ${SOURCE_FILE} > "/etc/nginx/conf.d/${WEBSERVER_HOST}.conf"
+}
 
-# DEBUG
-#sleep infinity
+main() {
+        # Process the nginx template
+        SOURCE_FILE="/etc/nginx/conf.d/app.template"
 
-while [ ! "${FAKE_HTTP_CERT:-}" = "true" ]; do
-  sleep 12h & wait $!;
-  nginx -s reload;
-done &
+        generate_webserver "${DEVICEHUB_HOST}" "${DEVICEHUB_UPSTREAM}"
 
-exec nginx -g 'worker_processes 2; daemon off;'
+        if [ "${IDHUB_ENABLE}" = 'true' ]; then
+                generate_webserver "${IDHUB_DOMAIN}" "${IDHUB_UPSTREAM}"
+        fi
+
+        # DEBUG
+        #sleep infinity
+
+        while [ "${ENABLE_LETSENCRYPT:-}" = "true" ]; do
+                sleep 12h & wait $!;
+                nginx -s reload;
+        done &
+
+        exec nginx -g 'worker_processes 2; daemon off;'
+}

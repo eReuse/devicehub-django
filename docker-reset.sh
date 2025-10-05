@@ -1,6 +1,5 @@
 #!/bin/sh
 
-# Copyright (c) 2024 Pedro <copyright@cas.cat>
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 set -e
@@ -52,6 +51,19 @@ use_env_var() {
         add_env_var "${var_name}"
 }
 
+docker_wizard_idhub_enabled() {
+        export COMPOSE_PROFILES="${COMPOSE_PROFILES},idhub"
+
+        use_env_var IDHUB_DOMAIN_REQUEST "idhub.example.org"
+        export IDHUB_SECRET_KEY_REQUEST="$(python3 -c 'import secrets; print(secrets.token_hex(100))')"
+        add_env_var IDHUB_SECRET_KEY_REQUEST
+
+        if echo "${DEVICEHUB_DB_TYPE_REQUEST}" | grep -q 'postgres' ; then
+                echo "idhub-postgres docker profile detected, adding to COMPOSE_PROFILES env var"
+                COMPOSE_PROFILES_REQUEST="${COMPOSE_PROFILES_REQUEST},idhub-postgres"
+        fi
+}
+
 docker_wizard() {
         set +x
         printf "\nDetected .env file is missing, so let's initialize the config (if you
@@ -59,10 +71,9 @@ want to see again, remove .env file)\n\nPress enter to continue... "
         read enter
 
         template_env_vars=''
-        #TODO: unused in .env.example
-        use_env_var DEVICEHUB_DOMAIN_REQUEST "devicehub.example.org"
+        use_env_var DEVICEHUB_HOST_REQUEST "devicehub.example.org"
 
-        use_env_var DEVICEHUB_TIME_ZONE_REQUEST "Europe/Madrid"
+        use_env_var TIME_ZONE_REQUEST "Europe/Madrid"
         use_env_var DEVICEHUB_REMOVE_DATA_REQUEST "false" 'Use false for production and true for development'
 
         docker_profiles_info="Use
@@ -71,37 +82,34 @@ want to see again, remove .env file)\n\nPress enter to continue... "
 by default does not use rproxy nor letsencrypt"
         use_env_var COMPOSE_PROFILES_REQUEST "" "${docker_profiles_info}"
 
-        use_env_var DEVICEHUB_DB_TYPE_REQUEST "postgres" "Use
+        use_env_var DB_TYPE_REQUEST "postgres" "Use
   postgres  production ready solution
   sqlite    minimalist solution"
         if echo "${DEVICEHUB_DB_TYPE_REQUEST}" | grep -q 'postgres' ; then
-                echo "postgres docker profile detected, adding to COMPOSE_PROFILES env var"
-                COMPOSE_PROFILES_REQUEST="${COMPOSE_PROFILES_REQUEST},postgres"
+                echo "devicehub-postgres docker profile detected, adding to COMPOSE_PROFILES env var"
+                COMPOSE_PROFILES_REQUEST="${COMPOSE_PROFILES_REQUEST},devicehub-postgres"
         fi
 
-        #Shouldnt it be the other way? always build to latest on dev, but stable image on production
+        if [ "${IDHUB_ENABLED:-}" = 'true' ]; then
+                docker_wizard_idhub_enabled
+        fi
+
         use_env_var DOCKER_ALWAYS_BUILD_REQUEST 'false' 'Use true for production and false for development'
 
         set -x
 
         if echo "${COMPOSE_PROFILES_REQUEST}" | grep -q 'letsencrypt' ; then
-                export DEVICEHUB_FAKE_HTTP_CERT_REQUEST=false
+                export RPROXY_ENABLE_LETSENCRYPT=enable
         else
-                export DEVICEHUB_FAKE_HTTP_CERT_REQUEST=true
+                export RPROXY_ENABLE_LETSENCRYPT=false
         fi
-        add_env_var DEVICEHUB_FAKE_HTTP_CERT_REQUEST
-
-        # adapt docker user to your runtime needs -> src https://denibertovic.com/posts/handling-permissions-with-docker-volumes/
-        #   via https://github.com/moby/moby/issues/22258#issuecomment-293664282
-        #   related https://github.com/moby/moby/issues/2259
-        export DEVICEHUB_LOCAL_USER_ID_REQUEST="$(id -u "${USER}")"
-        add_env_var DEVICEHUB_LOCAL_USER_ID_REQUEST
+        add_env_var RPROXY_ENABLE_LETSENCRYPT
 
         # if user is root, place it in /opt
-        if [ "${DEVICEHUB_LOCAL_USER_ID_REQUEST}" = 0 ]; then
-                export DEVICEHUB_ROOT_DIR_REQUEST='/opt'
+        if [ "$(id -u "${USER}")" = 0 ]; then
+                export ROOT_DIR_REQUEST='/opt'
         else
-                export DEVICEHUB_ROOT_DIR_REQUEST="${HOME}"
+                export ROOT_DIR_REQUEST="${HOME}"
         fi
         add_env_var DEVICEHUB_ROOT_DIR_REQUEST
 
@@ -119,40 +127,24 @@ by default does not use rproxy nor letsencrypt"
         fi
 }
 
-
 main() {
+        clear
         cd "$(dirname "${0}")"
-
-        if [ "${DETACH:-}" ]; then
-                detach_arg='-d'
-        fi
 
         if [ ! -f .env ]; then
                 docker_wizard
         fi
-
-        # load vars
         . ./.env
 
-        if [ "${IDHUB_ENABLED:-}" = 'true' ]; then
-                export COMPOSE_PROFILES='idhub'
-        fi
-
-
-        if [ "${DEVICEHUB_REMOVE_DATA}" = 'true' ];then
-                #remove postgres volume
-                docker volume rm DEVICEHUB_POSTGRES_DATA > /dev/null 2>&1 || true
-                rm -vfr ./db/*
+        if [ "${DEVICEHUB_REMOVE_DATA}" = 'true' ]; then
                 docker compose down -v
         else
                 docker compose down
         fi
 
-
         if [ "${DOCKER_ALWAYS_BUILD:-}" = 'true' ]; then
                 docker compose build
         fi
-
         docker compose up ${detach_arg:-}
 }
 
