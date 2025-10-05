@@ -52,53 +52,6 @@ services:
       timeout: 10s
       retries: 10
 
-  devicehub-rproxy:
-    restart: ${DOCKER_RESTART_POLICY:-unless-stopped}
-    profiles: [rproxy]
-    build:
-      context: .
-      dockerfile: ./docker/nginx.Dockerfile
-    environment:
-      - WEBSERVER_HOST=${DEVICEHUB_HOST}
-      - APP_HOST=devicehub-django:${DEVICEHUB_PORT}
-      - ENABLE_LETSENCRYPT=${ENABLE_LETSENCRYPT}
-    ports:
-    - "80:80"
-    - "443:443"
-    volumes:
-      - type: bind
-        source: docker/nginx/app.template
-        target: /etc/nginx/conf.d/app.template
-      # TODO static nginx files
-      #- static:/path/to/static/files:ro
-      - certbot-www:/var/www/certbot
-      - ${DEVICEHUB_ROOT_DIR}/${DEVICEHUB_DOCKER_DIR}/${DEVICEHUB_HOST}/certbot/conf:/etc/letsencrypt
-    depends_on:
-      - devicehub-django
-
-  certbot:
-    restart: ${DOCKER_RESTART_POLICY:-unless-stopped}
-    profiles: [letsencrypt]
-    container_name: certbot
-    image: certbot/certbot
-    volumes:
-      # TODO IDHUB_DOMAIN?
-      #
-      - ${DEVICEHUB_ROOT_DIR}/${DEVICEHUB_DOCKER_DIR}/${DEVICEHUB_HOST}/certbot/conf:/etc/letsencrypt
-      - certbot-www:/var/www/certbot
-    entrypoint: /bin/sh -c "trap exit TERM; while true; do certbot renew --webroot -w /var/www/certbot; sleep 12h & wait $${!}; done;"
-    depends_on:
-      - devicehub-rproxy
-
-
-
-
-
-
-
-
-
-
 
   idhub:
     restart: ${DOCKER_RESTART_POLICY:-unless-stopped}
@@ -191,8 +144,8 @@ services:
       - IDHUB_DOMAIN=${IDHUB_DOMAIN}
       - IDHUB_UPSTREAM=idhub:${IDHUB_PORT}
     ports:
-     - "80:80"
-     - "443:443"
+      - "80:80"
+      - "443:443"
     volumes:
       - type: bind
         source: docker/nginx/app.template
