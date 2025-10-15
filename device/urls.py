@@ -14,4 +14,6 @@ urlpatterns = [
     path("<str:device_id>/user_property/<int:pk>/update",
          views.UpdateUserPropertyView.as_view(), name="update_user_property"),
     path("<str:pk>/public/", views.PublicDeviceWebView.as_view(), name="device_web"),
+
+    path("<str:device_id>/issue-dpp/", views.IssueDigitalPassportView.as_view(), name="issue_dpp"),
 ]

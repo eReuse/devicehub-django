@@ -1,5 +1,7 @@
 import json
 import logging
+import requests
+import re
 
 from django.http import JsonResponse
 from django.conf import settings
@@ -8,7 +10,9 @@ from django.urls import reverse_lazy
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect, Http404
 from django.utils.translation import gettext_lazy as _
+from django.urls import reverse
 from django.views.generic.edit import (
+    View,
     CreateView,
     UpdateView,
     FormView,
@@ -22,7 +26,7 @@ from evidence.models import UserProperty, SystemProperty, Evidence
 from lot.models import LotTag
 from device.models import Device
 from device.forms import DeviceFormSet
-from evidence.models import SystemProperty
+from evidence.models import SystemProperty, CredentialProperty
 from evidence.tables import EvidenceTable
 from django_tables2 import RequestConfig
 if settings.DPP:
@@ -319,3 +323,123 @@ class DeleteUserPropertyView(DeviceLogMixin, DeleteView):
     def get_success_url(self):
         pk = self.kwargs.get('device_id')
         return reverse_lazy('device:details', args=[pk]) + "#user_properties"
+
+
+class IssueDigitalPassportView(DeviceLogMixin, View):
+    def get(self, request, *args, **kwargs):
+        pk = self.kwargs.get('device_id')
+        device = Device(id=pk)
+        last_evidence = device.last_evidence
+
+        API_ENDPOINT = getattr(settings, "IDHUB_API_ENDPOINTasdasd", "https://192.168.0.61/api/v1/issue-credential/")
+        API_KEY = getattr(settings, "PASSPORT_API_KEYasdads", "your_default_api_key")
+
+        def convert_ram_to_mb(ram_string):
+            if not isinstance(ram_string, str): return 0
+            match = re.match(r'(\d+\.?\d*)\s*(GiB|MiB|GB|MB)', ram_string, re.IGNORECASE)
+            if not match: return 0
+            value, unit = float(match.groups()[0]), match.groups()[1].lower()
+            if 'gib' in unit: return int(value * 1024)
+            if 'gb' in unit: return int(value * 1000)
+            if 'mib' in unit or 'mb' in unit: return int(value)
+            return 0
+
+        components = device.components_export()
+        characteristics = {
+            "chassis": components.get('type') or "Laptop",
+            "manufacturer": components.get('manufacturer') or "Unknown",
+            "model": components.get('model') or "Unknown",
+            "cpu_model": components.get('cpu_model'),
+            "cpu_cores": components.get('cpu_cores'),
+            "current_state": components.get('current_state') or "used",
+            "ram_total": convert_ram_to_mb(components.get('ram_total')),
+            "ram_type": components.get('ram_type') or "Other",
+            "ram_slots": components.get('ram_slots'),
+            "slots_used": components.get('slots_used'),
+            "drive": components.get('drive') or "Other",
+            "gpu_model": components.get('gpu_model'),
+            "user_properties": components.get('user_properties'),
+            "serial": components.get('serial')
+        }
+        characteristics = {k: v for k, v in characteristics.items() if v is not None and v != ''}
+
+        credential_subject = {
+            "type": ["ProductPassport"],
+            "id": f"urn:uuid:{device.id}",
+            "product": {
+                "type": ["Product"],
+                "id": f"urn:ereuse:device:{device.id}",
+                "name": f"{components.get('manufacturer', 'Unknown')} {components.get('model', 'Unknown')}",
+                "description": "A personal computing device.",
+                "serialNumber": components.get('serial'),
+                "characteristics": characteristics
+            }
+        }
+
+        service_endpoint = request.build_absolute_uri(
+            reverse('evidence:credential_by_evidence', kwargs={'uuid': last_evidence.uuid})
+        )
+        payload = {
+            "schema_name": "ICTGoodsPassport_UNTP_schema.json",
+            "create_did": True,
+            "credentialSubject": credential_subject,
+            "service_endpoint": service_endpoint
+        }
+
+        headers = {
+            'Authorization': f'Bearer {API_KEY}',
+            'Content-Type': 'application/json'
+        }
+
+        try:
+            response = requests.post(
+                API_ENDPOINT,
+                json=payload,
+                headers=headers,
+                timeout=15,
+                verify=False,
+                allow_redirects=False
+            )
+            response.raise_for_status()
+
+            signed_credential = response.json()
+            credential_id = signed_credential.get('id')
+
+            if credential_id:
+                last_evidence = device.last_evidence
+                if not last_evidence or not last_evidence.uuid:
+                    messages.error(self.request, "Could not save passport: Device is missing evidence or the evidence has no UUID.")
+                    return redirect('device:details', pk=pk)
+
+                credential= CredentialProperty.objects.create(
+                    uuid=last_evidence.uuid,
+                    key="DigitalProductPassport",
+                    value=credential_id or 'N/A',
+                    credential=signed_credential,
+                    owner=request.user.institution if hasattr(request.user, 'institution') else 'Default Owner',
+                    user=request.user
+                )
+                log_message = f"Digital Passport issued successfully. Credential/subject ID: {credential_id}"
+                messages.success(self.request, log_message)
+            else:
+                 messages.warning(self.request, "API returned a success status but no credential ID.")
+
+        except requests.exceptions.HTTPError as http_err:
+            error_message = f"An API error occurred: {http_err.response.status_code}"
+            if http_err.response:
+                try:
+                    error_data = http_err.response.json()
+                    server_error = error_data.get('error', 'An unknown error occurred on the server.')
+                    details = error_data.get('details')
+                    error_message = f"API Error: {server_error}"
+                    if details:
+                        error_message += f" Details: {details}"
+                except json.JSONDecodeError:
+                    error_message = f"API Error ({http_err.response.status_code}): {http_err.response.text}"
+            messages.error(self.request, error_message)
+        except requests.exceptions.RequestException as err:
+            messages.error(self.request, f"An API request error occurred: {err}")
+        except Exception as e:
+            messages.error(self.request, f"An unexpected error occurred: {e}")
+
+        return redirect('device:details', pk=pk)
