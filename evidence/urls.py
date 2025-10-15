@@ -21,4 +21,9 @@ urlpatterns = [
     path("<uuid:pk>/eraseserver", views.EraseServerView.as_view(), name="erase_server"),
     path("<uuid:pk>/download", views.DownloadEvidenceView.as_view(), name="download"),
     path("tag/<str:pk>/delete", views.DeleteEvidenceTagView.as_view(), name="delete_tag"),
+
+    path('credential/<int:pk>/', views.CredentialDetailView.as_view(), name='credential_detail'),
+    path('credential/<int:pk>/download/', views.DownloadDPPView.as_view(), name='download_dpp'),
+    path('credential/by-evidence/<uuid:uuid>/', views.CredentialByEvidenceUUIDView.as_view(), name='credential_by_evidence')
+
 ]

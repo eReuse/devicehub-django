@@ -7,6 +7,7 @@ from django.utils.translation import gettext_lazy as _
 from django.shortcuts import get_object_or_404, redirect, Http404
 from django.views.generic.base import TemplateView
 from django.urls import reverse_lazy, resolve
+from django.views.generic import DetailView
 from django.views.generic.edit import (
     DeleteView,
     FormView,
@@ -14,7 +15,7 @@ from django.views.generic.edit import (
 
 from action.models import DeviceLog
 from dashboard.mixins import  DashboardView, Http403
-from evidence.models import SystemProperty, UserProperty, Evidence
+from evidence.models import SystemProperty, CredentialProperty, Evidence
 from evidence.forms import (
     UploadForm,
     UserTagForm,
@@ -139,6 +140,41 @@ class DownloadEvidenceView(DashboardView, TemplateView):
         response = HttpResponse(data, content_type="application/json")
         response['Content-Disposition'] = 'attachment; filename={}'.format("evidence.json")
         return response
+
+class CredentialDetailView(DetailView):
+
+    model = CredentialProperty
+    template_name = 'credential_details.html'
+    context_object_name = 'credential_prop'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['credential'] = self.object.credential
+        return context
+
+class DownloadDPPView(DashboardView, TemplateView):
+    def get(self, request, *args, **kwargs):
+        pk = kwargs.get('pk')
+        try:
+            credential_prop = get_object_or_404(CredentialProperty, pk=pk)
+
+            data = json.dumps(credential_prop.credential, indent=4)
+            response = HttpResponse(data, content_type="application/json")
+            response['Content-Disposition'] = f'attachment; filename="dpp_credential_{pk}.json"'
+            return response
+        except CredentialProperty.DoesNotExist:
+            raise Http404("Credential not found.")
+
+
+class CredentialByEvidenceUUIDView(TemplateView):
+    def get(self, request, *args, **kwargs):
+        uuid = kwargs.get('uuid')
+        credential_prop = CredentialProperty.objects.filter(uuid=uuid).order_by('-created').first()
+
+        if credential_prop:
+            return redirect('evidence:credential_detail', pk=credential_prop.pk)
+        else:
+            raise Http404("No credential found for the specified evidence UUID.")
 
 
 class EraseServerView(DashboardView, FormView):
