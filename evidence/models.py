@@ -91,6 +91,7 @@ class Evidence:
         self.inxi = None
         self.edid_hex = None
         self.edid_decode = None
+        self.smartctl = None
         self.properties = []
         self.components = []
         self.default = "n/a"
@@ -146,7 +147,8 @@ class Evidence:
                     self.inxi = ev["output"]
                     if isinstance(ev["output"], str):
                         self.inxi = json.loads(ev["output"])
-        elif self.doc.get("data").get("edid_hex"):
+
+        elif self.doc.get("data", {}).get("edid_hex"):
             self.edid_hex = self.doc["data"]["edid_hex"]
             data = self.get_components() or []
             flat = {k: v for d in data for k, v in d.items()}
@@ -157,6 +159,17 @@ class Evidence:
             self.device_version = flat.get("Manufacture Date", "")
             self.device_resolution = flat.get("Native Resolution", "")
             self.device_chassis = "Display"
+
+        elif self.doc.get("data", {}).get("snapshot_type") == "Disk":
+            self.smartctl = self.doc["data"]["smartctl"]
+            data = self.get_components() or []
+            flat = {k: v for d in data for k, v in d.items()}
+
+            self.device_manufacturer = flat.get("Model Family", "")
+            self.device_model = flat.get("Model Name", "")
+            self.device_serial_number = flat.get("Serial Number", "")
+            self.device_version = flat.get("Firmware Version", "")
+            self.device_chassis = "Disk"
 
         else:
             dmidecode_raw = self.doc["data"]["dmidecode"]
@@ -208,7 +221,7 @@ class Evidence:
         if self.is_legacy():
             return self.doc.get('device', {}).get('manufacturer', '')
 
-        if self.inxi or self.edid_hex:
+        if self.inxi or self.edid_hex or self.smartctl:
             return self.device_manufacturer
 
         try:
@@ -226,7 +239,7 @@ class Evidence:
         if self.is_legacy():
             return self.doc.get('device', {}).get('model', '')
 
-        if self.inxi or self.edid_hex:
+        if self.inxi or self.edid_hex or self.smartctl:
             return self.device_model
 
         try:
@@ -238,8 +251,7 @@ class Evidence:
         if self.is_legacy():
             return self.doc.get('device', {}).get('model', '')
 
-
-        if self.inxi or self.edid_hex:
+        if self.inxi or self.edid_hex or self.smartctl:
             return self.device_chassis
 
         dmi_chassis = self.dmi.get("Chassis")
@@ -258,7 +270,7 @@ class Evidence:
         if self.is_legacy():
             return self.doc.get('device', {}).get('serialNumber', '')
 
-        if self.inxi or self.edid_hex:
+        if self.inxi or self.edid_hex or self.smartctl:
             return self.device_serial_number
 
         try:
@@ -267,7 +279,7 @@ class Evidence:
             return ''
 
     def get_version(self):
-        if self.inxi or self.edid_hex:
+        if self.inxi or self.edid_hex or self.smartctl:
             return self.device_version
 
         return ""

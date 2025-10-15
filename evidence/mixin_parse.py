@@ -40,7 +40,9 @@ class BuildMix:
                 data["dmidecode"] = evidence[0]
                 data["inxi"] = evidence[2]
         if edid_hex:= data.get("edid_hex"):
-            logger.error("PARSING display snapshot")
+            logger.info("PARSING display snapshot")
+        elif data.get("snapshot_type") == "Disk":
+            logger.info("PARSING disk snapshot")
         else:
             dmidecode_raw = data.get("dmidecode")
             inxi_raw = data.get("inxi")
