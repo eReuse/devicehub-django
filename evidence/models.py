@@ -35,6 +35,10 @@ class SystemProperty(Property):
                 fields=["key", "uuid"], name="system_unique_type_key_uuid")
         ]
 
+class CredentialProperty(Property):
+    credential = models.JSONField()
+    uuid = models.UUIDField()
+
 
 class UserProperty(Property):
 
@@ -72,6 +76,12 @@ class Evidence:
         self.properties = SystemProperty.objects.filter(
             uuid=self.uuid
         ).order_by("created")
+
+    def get_credential(self):
+        self.credentials = CredentialProperty.objects.filter(
+            uuid=self.uuid
+        ).order_by("created")
+        return self.credentials.first()
 
     def get_owner(self):
         if not self.properties:
