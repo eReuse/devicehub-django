@@ -1,7 +1,12 @@
 import uuid
+import json
+import requests
 
 from django.db import models
+from django.conf import settings
+from django.urls import reverse
 from django.db.models import Max
+from django.template.loader import get_template
 from django.utils.translation import gettext_lazy as _
 from utils.constants import (
     STR_SIZE,
@@ -43,6 +48,41 @@ class DeviceLot(models.Model):
     device_id = models.CharField(max_length=STR_EXTEND_SIZE, blank=False, null=False)
 
 
+class Transfer(models.Model):
+    issuer_did = models.CharField(max_length=STR_SIZE)
+    destination_did = models.CharField(max_length=STR_SIZE)
+    destination_name = models.CharField(max_length=STR_SIZE)
+    credential = models.CharField(max_length=5000)
+
+    def create_credential(self):
+        cred = self._render()
+        self._sig(cred)
+
+    def _render(self):
+        credential = get_template('credentials/base.json')
+
+        lot = self.lots.set.first()
+        if not lot:
+            return ""
+
+        credential["issue"]["id"] = self.issuer_did
+        credential["issue"]["name"] = lot.institution.name
+        credential["id"] = self.get_url()
+
+    def get_url(self):
+        path = reverse("lot:credential_transfer", args=[self.id])
+        domain = settings.DEVICEHUB_HOST
+        return f"https://{domain}/{path}"
+
+    def _sig(self, credential):
+        if not credential:
+            return ""
+
+        res = requests.post()
+        if 200 < res.status < 300:
+            self.credential = res.text
+
+
 class Lot(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
@@ -53,6 +93,7 @@ class Lot(models.Model):
     owner = models.ForeignKey(Institution, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     type = models.ForeignKey(LotTag, on_delete=models.CASCADE)
+    transfer = models.ForeignKey(Transfer, on_delete=models.SET_NULL, null=True, blank=True)
 
     class Meta:
         constraints = [
