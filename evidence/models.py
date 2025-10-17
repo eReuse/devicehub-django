@@ -4,6 +4,7 @@ import re
 
 from dmidecode import DMIParse
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 
 from django.db.models import Q
@@ -137,11 +138,12 @@ class Evidence:
             data = self.get_components() or []
             flat = {k: v for d in data for k, v in d.items()}
 
-            self.device_manufacturer = flat.get("Model Family", "")
-            self.device_model = flat.get("Model Name", "")
-            self.device_serial_number = flat.get("Serial Number", "")
-            self.device_version = flat.get("Firmware Version", "")
-            self.device_chassis = "Disk"
+            self.device_manufacturer = flat.get(_("Manufacturer"), "")
+            self.device_model = flat.get(_("Model"), "")
+            self.device_serial_number = flat.get(_("Serial Number"), "")
+            self.device_version = flat.get(_("Firmware Version"), "")
+            #Either HDD or SSD
+            self.device_chassis = flat.get(_("Device Type"),"")
 
         else:
             dmidecode_raw = self.doc["data"]["dmidecode"]
