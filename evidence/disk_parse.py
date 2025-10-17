@@ -9,28 +9,37 @@ from evidence.normal_parse_details import ParseSnapshot
 logger = logging.getLogger('django')
 
 class Build(BuildMix):
-
     def get_details(self):
         self.from_credential()
         try:
-            if "smartctl" in self.json.get("data", {}) and self.json["data"]["smartctl"]:
-                smartctl_str = self.json["data"]["smartctl"][0]
+            smartctl_data = self.json.get("data", {}).get("smartctl")
 
-                smartctl_data = json.loads(smartctl_str)
-
-                self.type = "Disk"
-
-                self.manufacturer = smartctl_data.get("model_family")
-                self.model = smartctl_data.get("model_name")
-                self.serial_number = smartctl_data.get("serial_number")
-                self.version = smartctl_data.get("firmware_version")
-
-            else:
+            if not smartctl_data:
                 logger.error("No 'smartctl' data found in snapshot %s", self.uuid)
+                return
 
-        except (json.JSONDecodeError, KeyError, IndexError, TypeError) as e:
-            logger.error("Failed to parse smartctl data for snapshot %s: %s", self.uuid, e)
+            if isinstance(smartctl_data, list) and smartctl_data:
+                smartctl_data = smartctl_data[0]
 
+            if isinstance(smartctl_data, str):
+                try:
+                    smartctl_data = json.loads(smartctl_data)
+                except json.JSONDecodeError as e:
+                    logger.error("Could not decode smartctl JSON string for %s: %s", self.uuid, e)
+                    return
+
+            if not isinstance(smartctl_data, dict):
+                logger.error("'smartctl' data is not a dictionary for snapshot %s. Type: %s", self.uuid, type(smartctl_data))
+                return
+
+            self.type = "Disk"
+            self.manufacturer = smartctl_data.get("model_family")
+            self.model = smartctl_data.get("model_name")
+            self.serial_number = smartctl_data.get("serial_number")
+            self.version = smartctl_data.get("firmware_version")
+
+        except Exception as e:
+            logger.error("An unexpected error occurred parsing smartctl data for %s: %s", self.uuid, e, exc_info=True)
 
     def from_credential(self):
         if not self.json.get("credentialSubject"):
@@ -45,7 +54,6 @@ class Build(BuildMix):
                 if not k:
                     continue
                 self.json["data"][k] = ev.get("output")
-
 
     def _get_components(self):
         data = ParseSnapshot(self.json)
