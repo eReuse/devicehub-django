@@ -8,11 +8,12 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'dhub.settings')
 
 django.setup()
 
+from datetime import datetime
 from django.contrib.auth import get_user_model
 
 from utils.save_snapshots import move_json, save_in_disk
 from evidence.parse import Build
-from evidence.models import Annotation
+from evidence.models import SystemProperty
 from lot.models import Lot, LotTag, DeviceLot
 
 
@@ -80,14 +81,13 @@ def open_snapshot(uuid):
 
 
 ### migration snapshots ###
-def create_custom_id(dhid, uuid, user):
+def create_custom_id(dhid, uuid, user, created):
 
     if not uuid or not dhid:
         return
 
-    tag = Annotation.objects.filter(
+    tag = SystemProperty.objects.filter(
         uuid=uuid,
-        type=Annotation.Type.SYSTEM,
         key='CUSTOM_ID',
         owner=user.institution
     ).first()
@@ -95,14 +95,19 @@ def create_custom_id(dhid, uuid, user):
     if tag or not uuid or not dhid:
         return
 
-    Annotation.objects.create(
+    dcreated = datetime.strptime(created+"00", "%Y-%m-%d %H:%M:%S.%f%z")
+
+    SystemProperty.objects.create(
         uuid=uuid,
-        type=Annotation.Type.SYSTEM,
         key='CUSTOM_ID',
         value=dhid,
         owner=user.institution,
         user=user
     )
+
+    for obj in SystemProperty.objects.filter(uuid=uuid):
+        obj.created = dcreated
+        obj.save()
 
 
 def migrate_snapshots(row, user):
@@ -111,13 +116,14 @@ def migrate_snapshots(row, user):
 
     dhid = row.get("dhid")
     uuid = row.get("uuid")
+    created = row.get("created")
     snapshot, snapshot_path = open_snapshot(uuid)
     if not snapshot or not snapshot_path:
         return
 
     logger.info(snapshot.get("version"))
-    if snapshot.get('version') == "2022.12.2-beta":
-        return
+    # if snapshot.get('version') == "2022.12.2-beta":
+    #     return
 
     # insert snapshot
     path_name = save_in_disk(snapshot, user.institution.name)
@@ -126,7 +132,7 @@ def migrate_snapshots(row, user):
 
     # insert dhid
     try:
-        create_custom_id(dhid, uuid, user)
+        create_custom_id(dhid, uuid, user, created)
     except Exception as err:
         logger.error(err)
         logger.error("DHID: %s uuid: %s", dhid, uuid)
@@ -146,7 +152,7 @@ def migrate_lots(row, user):
             user=user
         )
 
-    if Lot.objects.filter(name=tag, owner=user.institution).first():
+    if Lot.objects.filter(name=name, owner=user.institution).first():
         return
 
     Lot.objects.create(
@@ -164,8 +170,7 @@ def add_device_in_lot(row, user):
     if not lot_name or not dhid:
         return
 
-    dev = Annotation.objects.filter(
-        type=Annotation.Type.SYSTEM,
+    dev = SystemProperty.objects.filter(
         key='CUSTOM_ID',
         value=dhid,
         owner=user.institution,
@@ -182,14 +187,11 @@ def add_device_in_lot(row, user):
     ).first()
 
     if not lot:
-        lot = Lot.objects.create(
-            name=lot_name,
-            owner=user.institution,
-            user=user,
-        )
+        return
 
     if DeviceLot.objects.filter(lot=lot, device_id=dhid).exists():
         return
+
     DeviceLot.objects.create(lot=lot, device_id=dhid)
 
 ### end migration lots ###
@@ -261,5 +263,6 @@ def main():
     if args.csv_lots_dhid:
         for row in open_csv(args.csv_lots_dhid):
             add_device_in_lot(row, user)
+
 if __name__ == '__main__':
     main()
