@@ -197,7 +197,7 @@ class ImportForm(forms.Form):
                 cred.save()
                 create_index(doc, self.user)
                 move_json(path_name, self.user.institution.name, place="placeholder")
-                return table
+            return table
 
         return
 
