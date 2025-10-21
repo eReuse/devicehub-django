@@ -80,5 +80,6 @@ class TokensTable(tables.Table):
     #     return (queryset, True)
 
     class Meta:
+        template_name = "custom_table.html"
         model = Token
         fields = ("token", "tag", "is_active" , "edit_token")
