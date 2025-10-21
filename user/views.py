@@ -15,6 +15,8 @@ from django.views.generic.edit import (
 )
 from user.tables import TokensTable
 from user.forms import SettingsForm
+from user.models import User
+from uuid import uuid4
 from api.models import Token
 from django_tables2 import RequestConfig
 from django.views.generic import DetailView
