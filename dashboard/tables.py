@@ -134,10 +134,5 @@ class DeviceTable(tables.Table):
         return safe_value
 
     class Meta:
-        attrs = {
-            'class': 'table table-hover table-bordered',
-            'thead': {
-                'class': 'table-light'
-            }
-        }
+        template_name = "custom_table.html"
         order_by = ("-last_updated",)
