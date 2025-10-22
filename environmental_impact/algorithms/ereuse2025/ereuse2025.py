@@ -4,8 +4,13 @@ from ..algorithm_interface import EnvironmentImpactAlgorithm
 from environmental_impact.models import EnvironmentalImpact
 from environmental_impact.algorithms import common
 from .carbon_intensity import carbon_intensity
+from .lifecycle_extractors import get_evidences_data_from_device
+from .disk_change_detector import detect_disk_changes
+from .time_calculations import calculate_total_usage_time, calculate_reuse_time
+
 
 class EReuse2025EnvironmentalImpactAlgorithm(EnvironmentImpactAlgorithm):
+
     algorithm_constants = {
         "AVG_KWATTS_DESKTOP_IDLE": 0.039,
         "AVG_KWATTS_LAPTOP_IDLE": 0.016,
@@ -19,25 +24,84 @@ class EReuse2025EnvironmentalImpactAlgorithm(EnvironmentImpactAlgorithm):
     def get_device_environmental_impact(self, device: Device) -> EnvironmentalImpact:
         env_impact = EnvironmentalImpact()
         env_impact.constants = self.algorithm_constants
-        kg_CO2e = self._compute_co2_emissions_while_in_use(device)
+        lifecycle_metrics = self._calculate_lifecycle_metrics(device)
+        total_usage_time = lifecycle_metrics["total_usage_time"]
+        kg_CO2e = self._compute_co2_emissions_while_in_use_with_lifecycle(
+            total_usage_time, device.type
+        )
         env_impact.kg_CO2e.update(kg_CO2e)
         env_impact.docs = common.render_algorithm_docs(
             "docs.md", os.path.dirname(__file__)
         )
         env_impact.relevant_input_data = {
-            "power_on_hours": common.get_power_on_hours_from(device),
-            "hours_in_sleep_mode": self._get_time_while_in_sleep_mode(
-                common.get_power_on_hours_from(device)
-            ),
-            "carbon_intensity_factor": carbon_intensity.get_carbon_intensity_factor_from(
-                "ES"  # TODO Default to Spain for now
+            "total_usage_time": total_usage_time,
+            "reuse_time": lifecycle_metrics["reuse_time"],
+            "evidence_count": lifecycle_metrics["evidence_count"],
+            "disk_change_count": lifecycle_metrics["disk_change_count"],
+            "hours_in_sleep_mode": self._get_time_while_in_sleep_mode(total_usage_time),
+            "carbon_intensity_factor": (
+                carbon_intensity.get_carbon_intensity_factor_from(
+                    "ES"
+                )  # TODO Default to Spain for now
             ),
             "device_type": device.type,
         }
         return env_impact
 
+    def _calculate_lifecycle_metrics(self, device: Device) -> dict:
+        """
+        Calculate lifecycle metrics (T_T, T_R) from all device evidences.
+
+        Returns dict with total_usage_time, reuse_time, evidence_count,
+        and disk_change_count.
+        """
+        evidences_data = get_evidences_data_from_device(device)
+
+        if not evidences_data:
+            # Fallback to single evidence if no evidences found
+            return {
+                "total_usage_time": common.get_poh_from_device(device),
+                "reuse_time": 0,
+                "evidence_count": 1 if device.last_evidence else 0,
+                "disk_change_count": 0,
+            }
+
+        disk_change_indices = detect_disk_changes(evidences_data)
+        total_usage_time = calculate_total_usage_time(
+            evidences_data, disk_change_indices
+        )
+        reuse_time = calculate_reuse_time(evidences_data)
+
+        return {
+            "total_usage_time": total_usage_time,
+            "reuse_time": reuse_time,
+            "evidence_count": len(evidences_data),
+            "disk_change_count": len(disk_change_indices),
+        }
+
+    def _compute_co2_emissions_while_in_use_with_lifecycle(
+        self, total_usage_time: int, device_type: str
+    ) -> dict:
+        """Compute CO2 emissions using lifecycle total usage time."""
+        energy_kwh_idle = self._compute_energy_consumption_in_kwh_while_idle(
+            total_usage_time, device_type
+        )
+        energy_kwh_sleeping = self._compute_energy_consumption_while_sleeping(
+            total_usage_time, device_type
+        )
+        carbon_intensity_factor = carbon_intensity.get_carbon_intensity_factor_from(
+            "ES"
+        )
+        kgco2e_consumption_in_use = (
+            carbon_intensity_factor * (energy_kwh_idle + energy_kwh_sleeping) / 1000
+        )
+        return {
+            "in_use": kgco2e_consumption_in_use,
+            "carbon_intensity_factor": carbon_intensity_factor,
+        }
+
     def _compute_co2_emissions_while_in_use(self, device: Device) -> dict:
-        power_on_hours = common.get_power_on_hours_from(device)
+        power_on_hours = common.get_poh_from_device(device)
         energy_kwh_idle = self._compute_energy_consumption_in_kwh_while_idle(
             power_on_hours, device.type
         )
