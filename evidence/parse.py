@@ -63,7 +63,7 @@ class Build:
             return
 
         self.index()
-        self.create_annotations()
+        self.create_properties()
         if settings.DPP:
             self.register_device_dlt()
 
@@ -71,7 +71,7 @@ class Build:
         snap = json.dumps(self.evidence)
         index(self.user.institution, self.uuid, snap)
 
-    def create_annotations(self):
+    def create_properties(self):
         prop = SystemProperty.objects.filter(
                 uuid=self.uuid,
                 owner=self.user.institution,
