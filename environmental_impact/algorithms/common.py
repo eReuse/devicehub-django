@@ -1,58 +1,60 @@
-"""
-Common utility functions for environmental impact algorithms.
-
-This module contains shared operations that can be used across different
-environmental impact calculation algorithms.
-"""
-
 import os
+from typing import List, Dict, Optional
 from device.models import Device
+from evidence.models import Evidence
 from .docs_renderer import render_docs
 
 
-def get_power_on_hours_from(device: Device) -> int:
+def get_poh_from_evidence(evidence: Evidence) -> int:
     """
-    Extract power-on hours from device evidence.
+    Extract power-on hours from an evidence object.
 
-    This function attempts to retrieve the power-on hours from a device's
+    This function attempts to retrieve the power-on hours from an evidence's
     storage components. It handles both legacy workbench and modern inxi-based
     evidence formats.
 
     Args:
-        device (Device): The device object containing evidence and components
+        evidence (Evidence): The evidence object containing components data
 
     Returns:
         int: Power-on hours, or 0 if unable to determine
     """
     try:
-        if not device.last_evidence:
-            return 0
-
         # Check if it's legacy workbench (no inxi data)
-        is_legacy_workbench = (
-            not hasattr(device.last_evidence, 'inxi') or
-            not device.last_evidence.inxi
-        )
-
+        is_legacy_workbench = not evidence.inxi
         if is_legacy_workbench:
             return 0
-        else:
-            # Try to get components from device
-            try:
-                components = device.components
-                if components:
-                    for comp in components:
-                        if comp.get("type") == "Storage":
-                            str_time = comp.get("time of used", "")
-                            if str_time:
-                                return convert_str_time_to_hours(str_time)
-            except (AttributeError, TypeError):
-                pass
-
-            return 0  # Default if no storage found or no time data
+        # Try to get components from evidence
+        try:
+            components = evidence.get_components()
+            if components:
+                for comp in components:
+                    if comp.get("type") == "Storage":
+                        str_time = comp.get("time of used", "")
+                        if str_time:
+                            return convert_str_time_to_hours(str_time)
+        except (AttributeError, TypeError):
+            pass
+        return 0  # Default if no storage found or no time data
 
     except Exception:
         return 0  # Default fallback for any errors
+
+
+def get_poh_from_device(device: Device) -> int:
+    """
+    Extract power-on hours from device.
+
+    This function attempts to retrieve the power-on hours from a device's
+    last evidence.
+
+    Args:
+        device (Device): The device object containing evidence
+
+    Returns:
+        int: Power-on hours, or 0 if unable to determine
+    """
+    return get_poh_from_evidence(device.last_evidence)
 
 
 def convert_str_time_to_hours(time_str: str) -> int:
@@ -81,8 +83,8 @@ def convert_str_time_to_hours(time_str: str) -> int:
         # Define multipliers for each unit
         multipliers = {
             "y": 365 * 24,  # years to hours
-            "d": 24,        # days to hours
-            "h": 1          # hours to hours
+            "d": 24,  # days to hours
+            "h": 1,  # hours to hours
         }
 
         total_hours = 0
@@ -106,14 +108,15 @@ def convert_str_time_to_hours(time_str: str) -> int:
         # Fallback: try to extract just digits if format is unexpected
         try:
             if "hour" in time_str.lower():
-                return int(''.join(filter(str.isdigit, time_str)))
+                return int("".join(filter(str.isdigit, time_str)))
             return 0
         except (ValueError, AttributeError):
             return 0
 
 
-def render_algorithm_docs(docs_path: str, algorithm_dir: str,
-                          fallback_text: str | None = None) -> str:
+def render_algorithm_docs(
+    docs_path: str, algorithm_dir: str, fallback_text: str | None = None
+) -> str:
     """
     Render documentation for an algorithm from a markdown file.
 
@@ -135,8 +138,7 @@ def render_algorithm_docs(docs_path: str, algorithm_dir: str,
         return fallback_text or "Error loading documentation"
 
 
-def compute_energy_consumption_kwh(power_on_hours: int,
-                                   avg_watts: float) -> float:
+def compute_energy_consumption_kwh(power_on_hours: int, avg_watts: float) -> float:
     """
     Compute energy consumption in kilowatt-hours.
 
@@ -164,3 +166,23 @@ def compute_co2_emissions(energy_kwh: float, co2_per_kwh: float) -> float:
         float: CO2 emissions in grams
     """
     return energy_kwh * co2_per_kwh
+
+def extract_disk_metadata_from_components(components: List[Dict]) -> Optional[Dict]:
+    """
+    Extract disk metadata from storage components.
+
+    Args:
+        components (List[Dict]): List of device components
+
+    Returns:
+        Optional[Dict]: Dictionary with serial, model, manufacturer keys,
+                       or None if no storage component found
+    """
+    for comp in components:
+        if comp.get("type") == "Storage":
+            return {
+                "serial": comp.get("serialNumber", ""),
+                "model": comp.get("model", ""),
+                "manufacturer": comp.get("manufacturer", ""),
+            }
+    return None
