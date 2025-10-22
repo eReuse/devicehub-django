@@ -3,7 +3,7 @@ import logging
 import re
 
 from evidence.mixin_parse import BuildMix
-from evidence.normal_parse_details import get_inxi_key, get_inxi, ParseSnapshot
+from evidence.display_parse_details import ParseSnapshot
 
 
 logger = logging.getLogger('django')
@@ -11,28 +11,19 @@ logger = logging.getLogger('django')
 class Build(BuildMix):
 
     def get_details(self):
-
         self.from_credential()
-        try:
-            self.edid_decode = self.json["data"]["edid_decode"]
-            if isinstance(self.edid_decode, str):
-                self.edid_decode = json.loads(self.edid_decode)
-        except Exception:
-            logger.error("No edid-decode in snapshot %s", self.uuid)
-
         self.type = "Display"
+        self._get_components()
 
-        m = re.search(r"Manufacturer:\s+(\S+)", self.edid_decode)
-        if m: self.manufacturer = m.group(1)
+        self.manufacturer = self.device.get("manufacturer")
+        self.model = self.device.get("model")
+        self.serial_number = self.device.get("serialNumber")
+        self.version = self.device.get("version")
 
-        m = re.search(r"Model:\s+(\S+)", self.edid_decode)
-        if m: self.model= m.group(1)
+        if not self.json.get("data", {}).get("edid_decode"):
+            logger.error("No 'edid_decode' data found in snapshot %s", self.uuid)
 
-        m = re.search(r"Serial Number:\s+(\d+)", self.edid_decode)
-        if m: self.serial_number = m.group(1)
-
-        m = re.search(r"EDID Structure Version & Revision:\s+([0-9.]+)", self.edid_decode)
-        if m: self.version = m.group(1)
+        return
 
 
     def from_credential(self):
@@ -49,6 +40,8 @@ class Build(BuildMix):
                     continue
                 self.json["data"][k] = ev.get("output")
 
+        return
+
     def _get_components(self):
         data = ParseSnapshot(self.json)
         self.device = data.device
@@ -57,3 +50,4 @@ class Build(BuildMix):
         self.device.pop("actions", None)
         for c in self.components:
             c.pop("actions", None)
+        return
