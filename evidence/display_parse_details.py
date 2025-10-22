@@ -16,9 +16,18 @@ class ParseSnapshot:
         if not edid_decode:
             self.edid_raw = data.get("data").get("edid_hex", {})
 
-        self.device = {"actions": []}
-        self.components = self._parse_edid_decode(edid_decode)
+        info = self._parse_edid_decode(edid_decode)
 
+        self.device = {
+            "actions": [],
+            "manufacturer": info.get("Manufacturer"),
+            "model": info.get("Model"),
+            "serialNumber": info.get("Serial Number"),
+            "version": info.get("EDID Version"),
+        }
+
+        #done this way so it rendes properly on components tab
+        self.components = [{k: v} for k, v in info.items() if v is not None]
 
         self.snapshot_json = {
             "type": "Snapshot",
@@ -55,23 +64,21 @@ class ParseSnapshot:
         base = edid_dict.get("Block 0, Base EDID", {})
         native = edid_dict.get("Native Video Resolution", {})
 
-        #done this way so it rendes properly on components tab
-        items = [
-            {"Manufacturer": base.get("Manufacturer")},
-            {"EDID Version": base.get("EDID Structure Version & Revision")},
-            {"Serial Number": base.get("Serial Number")},
-            {"Model": base.get("Model")},
-            {"Manufacture Date": base.get("Made in")},
-            {"Max Image Size": base.get("Maximum image size")},
-            {"Gamma": base.get("Gamma")},
-            {"Color Format": base.get("Supported color formats")},
-            {"Native Resolution": (native.get("_misc") or [None])[0]},
-            {"Preferred Timing": base.get("DTD 1")},
-        ]
+        info = {
+            "Manufacturer": base.get("Manufacturer"),
+            "EDID Version": base.get("EDID Structure Version & Revision"),
+            "Serial Number": base.get("Serial Number"),
+            "Model": base.get("Model"),
+            "Manufacture Date": base.get("Made in"),
+            "Max Image Size": base.get("Maximum image size"),
+            "Gamma": base.get("Gamma"),
+            "Color Format": base.get("Supported color formats"),
+            "Native Resolution": (native.get("_misc") or [None])[0],
+            "Preferred Timing": base.get("DTD 1"),
+        }
 
         misc = base.get("_misc")
         if misc:
-            items.append({
-                "Misc": "\n  - " + "\n  - ".join(misc)
-            })
-        return [{k: v} for item in items for k, v in item.items() if v]
+            info["Misc"] = "\n  - " + "\n  - ".join(misc)
+
+        return info
