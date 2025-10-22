@@ -4,7 +4,7 @@ from environmental_impact.algorithms.sample_algo.sample_calculator import (
     SampleEnvironmentalImpactAlgorithm,
 )
 from environmental_impact.algorithms.common import (
-    get_power_on_hours_from,
+    get_poh_from_device,
     convert_str_time_to_hours
 )
 from device.models import Device
@@ -18,7 +18,7 @@ class SampleEnvironmentalImpactAlgorithmTests(unittest.TestCase):
         self.device = Mock(spec=Device)
         self.device.last_evidence = Mock()
         self.device.last_evidence.inxi = True
-        self.device.components = [
+        components = [
             {
                 "type": "Motherboard",
                 "manufacturer": "TOSHIBA",
@@ -119,10 +119,13 @@ class SampleEnvironmentalImpactAlgorithmTests(unittest.TestCase):
                 "volts": "15.1",
             },
         ]
+        # Mock get_components to return the components list
+        self.device.last_evidence.get_components.return_value = components
+        self.device.components = components
 
     def test_get_power_on_hours_from_inxi_device(self):
         """Test extracting power-on hours from an inxi device."""
-        hours = get_power_on_hours_from(self.device)
+        hours = get_poh_from_device(self.device)
         self.assertIsInstance(hours, int)
 
     def test_convert_str_time_to_hours(self):

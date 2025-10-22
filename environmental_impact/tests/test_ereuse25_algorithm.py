@@ -3,14 +3,14 @@ from unittest.mock import Mock, patch
 from environmental_impact.algorithms.ereuse2025.ereuse2025 import (
     EReuse2025EnvironmentalImpactAlgorithm,
 )
-from environmental_impact.algorithms.common import get_power_on_hours_from
+from environmental_impact.algorithms.common import get_poh_from_device
 from device.models import Device
 from environmental_impact.models import EnvironmentalImpact
 
 
 class EReuse2025AlgorithmTests(unittest.TestCase):
     """
-    Test suite for the Mireia25 environmental impact algorithm.
+    Test suite for the ereuse25 environmental impact algorithm.
 
     Tests GHG emissions calculation based on the formula:
     U = FU · (P_idle + P_sleep) = FU · (KWh_idle · Poh + KW_sleep · Ts)
@@ -19,30 +19,40 @@ class EReuse2025AlgorithmTests(unittest.TestCase):
     def setUp(self):
         self.algorithm = EReuse2025EnvironmentalImpactAlgorithm()
         self.device = Mock(spec=Device)
-        self.device.last_evidence = Mock()
-        self.device.last_evidence.inxi = True
-        self.device.components = [
-            {
-                "type": "Storage",
-                "manufacturer": "Samsung",
-                "model": "SSD 970 EVO Plus 500GB",
-                "serialNumber": "S4EWNX0N123456",
-                "size": "465.76 GiB",
-                "speed": "6.0 Gb/s",
-                "interface": "NVMe",
-                "firmware": "2B2QEXM7",
-                "sata": "",
-                "cycles": "1234",
-                "health": "PASSED",
-                "time of used": "1000d 12h",
-                "read used": "50.5 TB",
-                "written used": "25.2 TB",
-            },
-        ]
+
+        # Mock evidence with components
+        evidence = Mock()
+        evidence.uuid = "test-evidence-uuid"
+        evidence.inxi = True
+        evidence.get_components = Mock(
+            return_value=[
+                {
+                    "type": "Storage",
+                    "manufacturer": "Samsung",
+                    "model": "SSD 970 EVO Plus 500GB",
+                    "serialNumber": "S4EWNX0N123456",
+                    "size": "465.76 GiB",
+                    "speed": "6.0 Gb/s",
+                    "interface": "NVMe",
+                    "firmware": "2B2QEXM7",
+                    "sata": "",
+                    "cycles": "1234",
+                    "health": "PASSED",
+                    "time of used": "1000d 12h",
+                    "read used": "50.5 TB",
+                    "written used": "25.2 TB",
+                },
+            ]
+        )
+
+        # Set up device with evidence
+        self.device.last_evidence = evidence
+        self.device.evidences = [evidence]
+        self.device.components = evidence.get_components()
 
     def test_get_power_on_hours_from_device(self):
         """Test extracting power-on hours from device evidence."""
-        hours = get_power_on_hours_from(self.device)
+        hours = get_poh_from_device(self.device)
         self.assertIsInstance(hours, int)
         # Should extract from "time of used": "1000d 12h" = 24012 hours
         self.assertEqual(hours, 24012)
@@ -60,14 +70,17 @@ class EReuse2025AlgorithmTests(unittest.TestCase):
         self.assertIn("carbon_intensity_factor", impact.kg_CO2e)
         self.assertEqual(impact.constants, self.algorithm.algorithm_constants)
         self.assertEqual(impact.docs, "Algorithm Docs")
-        # Verify relevant input data structure
+        # Verify relevant input data structure includes lifecycle metrics
         expected_keys = {
-            "power_on_hours", "hours_in_sleep_mode",
-            "carbon_intensity_factor", "device_type"
+            "total_usage_time",
+            "reuse_time",
+            "evidence_count",
+            "disk_change_count",
+            "hours_in_sleep_mode",
+            "carbon_intensity_factor",
+            "device_type",
         }
-        self.assertEqual(
-            set(impact.relevant_input_data.keys()), expected_keys
-        )
+        self.assertEqual(set(impact.relevant_input_data.keys()), expected_keys)
 
     @patch(
         "environmental_impact.algorithms.common.render_algorithm_docs",
@@ -80,9 +93,7 @@ class EReuse2025AlgorithmTests(unittest.TestCase):
 
         self.assertIsInstance(impact, EnvironmentalImpact)
         self.assertIn("in_use", impact.kg_CO2e)
-        self.assertEqual(
-            impact.relevant_input_data["device_type"], Device.Types.LAPTOP
-        )
+        self.assertEqual(impact.relevant_input_data["device_type"], Device.Types.LAPTOP)
 
     def test_compute_energy_consumption_idle_desktop(self):
         """Test idle energy consumption calculation for desktop."""
@@ -157,9 +168,7 @@ class EReuse2025AlgorithmTests(unittest.TestCase):
             power_on_hours, device_type
         )
 
-        sleep_time = self.algorithm._get_time_while_in_sleep_mode(
-            power_on_hours
-        )
+        sleep_time = self.algorithm._get_time_while_in_sleep_mode(power_on_hours)
         expected = sleep_time * 0.0005  # Laptop sleep power
         self.assertEqual(result, expected)
 
@@ -172,9 +181,7 @@ class EReuse2025AlgorithmTests(unittest.TestCase):
             power_on_hours, device_type
         )
 
-        sleep_time = self.algorithm._get_time_while_in_sleep_mode(
-            power_on_hours
-        )
+        sleep_time = self.algorithm._get_time_while_in_sleep_mode(power_on_hours)
         expected = sleep_time * 0.001  # Default sleep power
         self.assertEqual(result, expected)
 
@@ -220,16 +227,14 @@ class EReuse2025AlgorithmTests(unittest.TestCase):
 
         # Mock to return specific carbon intensity
         with patch(
-            'environmental_impact.algorithms.ereuse2025.carbon_intensity.'
-            'carbon_intensity.get_carbon_intensity_factor_from',
-            return_value=250.0
+            "environmental_impact.algorithms.ereuse2025.carbon_intensity."
+            "carbon_intensity.get_carbon_intensity_factor_from",
+            return_value=250.0,
         ), patch(
-            'environmental_impact.algorithms.common.get_power_on_hours_from',
-            return_value=power_on_hours
+            "environmental_impact.algorithms.common.get_poh_from_device",
+            return_value=power_on_hours,
         ):
-            result = self.algorithm._compute_co2_emissions_while_in_use(
-                self.device
-            )
+            result = self.algorithm._compute_co2_emissions_while_in_use(self.device)
 
             expected_co2 = (250.0 * total_energy) / 1000
             self.assertAlmostEqual(result["in_use"], expected_co2, places=4)
