@@ -7,7 +7,7 @@ This function calculates the **carbon footprint** of a device based on its power
 - `co2_per_kwh = 0.475`: CO₂ emissions per kilowatt-hour (kg CO₂/kWh), based on an estimated energy mix.
 
 ### 2. Retrieve Device Usage
-- Calls `get_power_on_hours_from(device)`, which returns the total **power-on hours** for the device.
+- Calls `get_poh_from_device(device)`, which returns the total **power-on hours** for the device.
 
 ### 3. Compute Energy Consumption
 - Converts power consumption to **kilowatt-hours (kWh)** using:

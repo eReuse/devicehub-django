@@ -3,7 +3,7 @@ from device.models import Device
 from ..algorithm_interface import EnvironmentImpactAlgorithm
 from environmental_impact.models import EnvironmentalImpact
 from ..common import (
-    get_power_on_hours_from,
+    get_poh_from_device,
     render_algorithm_docs,
     compute_energy_consumption_kwh,
     compute_co2_emissions,
@@ -24,12 +24,12 @@ class SampleEnvironmentalImpactAlgorithm(EnvironmentImpactAlgorithm):
         env_impact.kg_CO2e.update(co2_emissions_in_use)
         env_impact.docs = render_algorithm_docs("docs.md", os.path.dirname(__file__))
         env_impact.relevant_input_data = {
-            "power_on_hours": get_power_on_hours_from(device)
+            "power_on_hours": get_poh_from_device(device)
         }
         return env_impact
 
     def compute_co2_emissions_while_in_use(self, device: Device) -> dict:
-        power_on_hours = get_power_on_hours_from(device)
+        power_on_hours = get_poh_from_device(device)
         energy_kwh = compute_energy_consumption_kwh(
             power_on_hours, self.algorithm_constants["AVG_WATTS"]
         )
