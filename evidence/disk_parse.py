@@ -3,7 +3,7 @@ import json
 import logging
 
 from evidence.mixin_parse import BuildMix
-from evidence.normal_parse_details import ParseSnapshot
+from evidence.disk_parse_details import ParseSnapshot
 
 
 logger = logging.getLogger('django')
