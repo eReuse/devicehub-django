@@ -131,7 +131,7 @@ class Evidence:
             self.device_serial_number = flat.get("Serial Number", "")
             self.device_version = flat.get("Manufacture Date", "")
             self.device_resolution = flat.get("Native Resolution", "")
-            self.device_chassis = "Display"
+            self.device_chassis = flat.get(_("Device Type"),"")
 
         elif self.doc.get("data", {}).get("snapshot_type") == "Disk":
             self.smartctl = self.doc["data"]["smartctl"]
@@ -182,6 +182,9 @@ class Evidence:
     def get_components(self):
         if self.is_legacy():
             return self.doc.get('components', [])
+        if self.components:
+            return self.components
+
         self.set_components()
         return self.components
 
