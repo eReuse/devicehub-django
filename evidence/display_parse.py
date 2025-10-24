@@ -1,6 +1,4 @@
-import json
 import logging
-import re
 
 from evidence.mixin_parse import BuildMix
 from evidence.display_parse_details import ParseSnapshot
@@ -13,15 +11,14 @@ class Build(BuildMix):
     def get_details(self):
         self.from_credential()
         self.type = "Display"
-        self._get_components()
+        if not self.json.get("data", {}).get("edid_decode"):
+            logger.error("No 'edid_decode' data found in snapshot %s", self.uuid)
 
+        self._get_components()
         self.manufacturer = self.device.get("manufacturer")
         self.model = self.device.get("model")
         self.serial_number = self.device.get("serialNumber")
         self.version = self.device.get("version")
-
-        if not self.json.get("data", {}).get("edid_decode"):
-            logger.error("No 'edid_decode' data found in snapshot %s", self.uuid)
 
         return
 
