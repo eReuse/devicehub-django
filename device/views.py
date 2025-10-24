@@ -97,7 +97,6 @@ class DetailsView(DashboardView, TemplateView ):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        self.object.initial()
         lot_tags = LotTag.objects.filter(owner=self.request.user.institution)
         dpps = []
         if settings.DPP:
@@ -117,6 +116,7 @@ class DetailsView(DashboardView, TemplateView ):
             logger.error("Enviromental Impact: {}".format(err))
             enviromental_impact = None
         last_evidence = self.object.get_last_evidence()
+        self.object.get_uuids()
         uuids = self.object.uuids
 
         ev_queryset = Evidence.get_device_evidences(self.request.user, uuids)
