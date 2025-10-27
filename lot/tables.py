@@ -48,6 +48,7 @@ class LotTable(tables.Table):
     actions = tables.TemplateColumn(
         template_name="lot_actions.html",
         verbose_name=_(""),
+        orderable=False,
     )
 
     def render_archived(self, value):

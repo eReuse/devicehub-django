@@ -157,21 +157,28 @@
 
             <!-- change state button -->
             <div class="dropdown">
-              <a class="btn btn-green-admin dropdown-toggle disabled" id="addStateDropdown" data-bs-toggle="dropdown" >
-                {% trans "Change state" %}
-              </a>
-              <ul class="dropdown-menu" style="width: 120%;">
-                {% for state in state_definitions %}
-                  <li style="width: 100%;">
-                    <button type="submit" class="dropdown-item d-flex justify-content-between align-items-center" name="url" value="{% url 'action:bulk_change_state' state.id %}" >
-                      <span class="font-monospace">{{ state.state }}</span>
-                      <span class="badge bg-secondary rounded-pill-sm">{{ forloop.counter }}</span>
-                    </button>
-                  </li>
-                {% endfor %}
-              </ul>
-            </div>
+                <a class="btn btn-green-admin dropdown-toggle disabled"
+                  id="addStateDropdown" data-bs-toggle="dropdown" >
+                    {% trans "Change state" %}
+                </a>
 
+                <ul class="dropdown-menu" style="width: 120%;">
+                    {% for state in state_definitions %}
+                        <li style="width: 100%;">
+                            <button type="submit" class="dropdown-item d-flex justify-content-between align-items-center" name="url" value="{% url 'action:bulk_change_state' state.id %}" >
+                                <span class="font-monospace">{{ state.state }}</span>
+                                <span class="badge bg-secondary rounded-pill-sm">{{ forloop.counter }}</span>
+                            </button>
+                        </li>
+                    {% empty %}
+                        <li style="width: 100%;">
+                            <button type="button" class="dropdown-item text-muted disabled" disabled>
+                                {% trans "No states defined." %}
+                            </button>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
           </div>
         </div>
 
