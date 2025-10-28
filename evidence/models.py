@@ -238,14 +238,14 @@ class Evidence:
     def get_all(cls, user):
         return SystemProperty.objects.filter(
             owner=user.institution,
-            key="ereuse24",
+            key__in=[user.institution.algorithm, "CUSTOM_ID"],
         ).order_by("-created").distinct()
 
     @classmethod
     def get_user_evidences(cls, user):
         return SystemProperty.objects.filter(
             owner=user.institution,
-            key="ereuse24",
+            key__in=[user.institution.algorithm, "CUSTOM_ID"],
             user=user
         ).order_by("-created").distinct()
 
@@ -253,7 +253,7 @@ class Evidence:
     def get_device_evidences(cls,user, uuids):
         return SystemProperty.objects.filter(
             owner=user.institution,
-            key="ereuse24",
+            key__in=[user.institution.algorithm, "CUSTOM_ID"],
             uuid__in=uuids
         ).order_by("-created").distinct()
 
