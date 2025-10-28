@@ -45,11 +45,6 @@ class LotTable(tables.Table):
         verbose_name=_("Created By"),
         default=_("Unknown"),
     )
-    actions = tables.TemplateColumn(
-        template_name="lot_actions.html",
-        verbose_name=_(""),
-        orderable=False,
-    )
 
     def render_archived(self, value):
         if value:
@@ -59,5 +54,5 @@ class LotTable(tables.Table):
     class Meta:
         template_name = "custom_table.html"
         model = Lot
-        fields = ("select", "archived", "name", "description", "device_count", "created", "user", "actions")
+        fields = ("select", "archived", "name", "description", "device_count", "created", "user")
         order_by = ("-created",)

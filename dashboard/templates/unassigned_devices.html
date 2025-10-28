@@ -36,6 +36,11 @@
                     </span>
                 </div>
             </form>
+            {% if user.is_admin %}
+            <a href="{% url 'lot:edit' object.id %}" class="btn btn-outline-dark d-flex align-items-center ms-3" style="white-space: nowrap;">
+              <span>{% trans 'Edit lot' %}</span>
+            </a>
+           {% endif %}
         </div>
     {% endif %}
 
