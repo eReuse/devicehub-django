@@ -105,6 +105,9 @@ class Evidence:
         if self.is_legacy():
             return
 
+        if self.is_web_snapshot():
+            return
+
         if self.doc.get("credentialSubject"):
             for ev in self.doc["evidence"]:
                 if "dmidecode" == ev.get("operation"):
@@ -192,6 +195,9 @@ class Evidence:
             return ''
 
     def get_chassis(self):
+        if self.is_web_snapshot():
+            return self.doc.get('device', {}).get('type', '')
+
         if self.is_legacy():
             return self.doc.get('device', {}).get('model', '')
 

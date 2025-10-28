@@ -146,7 +146,7 @@ class EvidenceTable(tables.Table):
             ev = self.evidence_map.get(value)
             if not ev:
                 return self.render_empty()
-            return ev.get_chassis() if hasattr(ev, 'get_chassis') else self.render_empty(_("N/A (Type not found)"))
+            return ev.get_chassis() if ev.get_chassis() else self.render_empty(_("N/A"))
         except Exception:
             return self.render_error_message(_("Error rendering evidence type"))
 
