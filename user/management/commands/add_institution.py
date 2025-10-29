@@ -20,6 +20,11 @@ class Command(BaseCommand):
             name="Inbox",
             owner=self.institution
         )
+        LotTag.objects.create(
+            transfer=True,
+            name="Transfers",
+            owner=self.institution
+        )
         tags = [
             "Entrada",
             "Salida",
