@@ -37,3 +37,22 @@ class SampleEnvironmentalImpactAlgorithm(EnvironmentImpactAlgorithm):
             energy_kwh, self.algorithm_constants["CO2_PER_KWH"]
         )
         return {"in_use": co2_consumption_in_use}
+
+    def get_lot_environmental_impact(
+        self, devices: list[Device]
+    ) -> EnvironmentalImpact:
+        env_impact = EnvironmentalImpact()
+        env_impact.constants = self.algorithm_constants
+        total_kg_CO2e = {"in_use": 0.0}
+        for device in devices:
+            device_env_impact = self.get_device_environmental_impact(device)
+            total_kg_CO2e["in_use"] += device_env_impact.kg_CO2e.get(
+                "in_use", 0.0
+            )
+        env_impact.kg_CO2e = total_kg_CO2e
+        env_impact.docs = render_algorithm_docs(
+            "docs.md", os.path.dirname(__file__)
+        )
+        return env_impact
+
+
