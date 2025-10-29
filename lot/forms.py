@@ -247,6 +247,8 @@ class TransferForm(forms.Form):
     did = forms.CharField()
     name = forms.CharField()
     website = forms.URLField()
+    api_destination = forms.URLField(required=False)
+    token_destination = forms.CharField(required=False)
     type_of_transfer = forms.ChoiceField(
         choices=[("cbv:BTT-desad", _("Send")), ("cbv:BTT-recadv", _("Receibe"))]
     )
@@ -262,7 +264,6 @@ class TransferForm(forms.Form):
             choices = kwargs.get("data", {}).getlist("selected_ids")
         self.user = kwargs.pop('user', [])
         self.website = kwargs.pop('website', "")
-        self.credential = ""
 
         super().__init__(*args, **kwargs)
         self.fields['selected_ids'].choices = [(x, x) for x in choices]
@@ -283,18 +284,28 @@ class TransferForm(forms.Form):
             self.instance = Transfer.objects.create(
                 issuer_did=self.cleaned_data.get("issuer_did"),
                 destination_did=self.cleaned_data.get("did"),
-                destination_name=self.cleaned_data.get("name")
+                destination_name=self.cleaned_data.get("name"),
+                api_destination=self.cleaned_data.get("api_destination"),
+                token_destination=self.cleaned_data.get("token_destination")
             )
             self.send_sign()
-            if not self.credential:
+            if not self.instance.credential:
                 self.instance.delete()
                 self.instance = None
                 return
 
+            self.instance.save()
+
+            c = 0
             for lot in self.lots:
+                if lot.transfer:
+                    continue
+                c = 1
                 lot.transfer = self.instance
                 lot.save()
 
+            if not c:
+                self.instance.delete()
         return
 
     def get_data(self):
@@ -337,6 +348,7 @@ class TransferForm(forms.Form):
         return {
             "credentialSubject": credential_subject,
             "evidences": evidences,
+            "issuer": institution,
             "id": self.get_url()
         }
 
@@ -370,15 +382,14 @@ class TransferForm(forms.Form):
 
     def send_sign(self):
         data = self.get_data()
-        import pdb; pdb.set_trace()
-        url = "https://localhost/webhook/tsign/"
-        token = "TODO"
+        url = settings.IDHUB_API_SIGN
+        token = settings.IDHUB_TOKEN
         header = {"Authorization": f"Bearer {token}"}
         verify = not settings.DEBUG
-        res = requests.post(url, data=data, headers=header, verify=verify)
+        res = requests.post(url, json=data, headers=header, verify=verify)
 
-        if 199 < res.status < 300:
-            self.instance.credential = self.res.text
+        if 199 < res.status_code < 300:
+            self.instance.credential = res.text
 
         return
 
@@ -398,7 +409,11 @@ class SelectReturnDeviceForm(forms.Form):
 
 
 class SelectDeviceForm(forms.Form):
-    checked = forms.BooleanField(label="", required=False, widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}))
+    checked = forms.BooleanField(
+        label="",
+        required=False,
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
+    )
     device_id = forms.CharField(widget=forms.HiddenInput())
     id = forms.IntegerField(widget=forms.HiddenInput())
 

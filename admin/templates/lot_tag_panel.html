@@ -61,7 +61,7 @@
               type="button" class="btn btn-sm btn-outline-danger d-flex align-items-center"
               data-bs-toggle="modal"
               data-bs-target="#deleteLotTagModal{{ tag.id }}"
-              {% if tag.id == 1 %} disabled {% endif %}>
+              {% if tag.id == 1 or tag.id == 2 %} disabled {% endif %}>
               <i class="bi bi-trash me-1"></i>
               {% trans 'Delete' %}
             </button>

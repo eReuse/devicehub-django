@@ -44,7 +44,8 @@ from lot.models import (
     LotSubscription,
     Beneficiary,
     Donor,
-    DeviceBeneficiary
+    DeviceBeneficiary,
+    Transfer
 )
 from dhemail.views import (
     NotifyEmail,
@@ -96,7 +97,8 @@ class NewLotView(LotSuccessUrlMixin, DashboardView, CreateView):
         form = super().get_form()
         form.fields["type"].queryset = LotTag.objects.filter(
             owner=self.request.user.institution,
-            inbox=False
+            inbox=False,
+            transaction=False
         )
         return form
 
@@ -129,6 +131,10 @@ class TransferLotsView(LotSuccessUrlMixin, DashboardView, FormView):
             id__in=selected_ids,
             owner=self.request.user.institution
         )
+        for lot in self.lots:
+            if lot.transfer:
+                txt = _("Error lot {} have a transfer")
+                messages.error(self.request, txt.format(lot.name))
         return super().get(request, *args, **kwargs)
 
     def get_success_url(self):
@@ -382,6 +388,14 @@ class LotsTagsView(DashboardView, SingleTableView):
             cache.set(cache_key, counts, timeout=250)
 
         return counts
+
+
+class TransferTagView(LotsTagsView):
+    def get_queryset(self):
+        return Transfer.objects.filter(owner=self.request.user.institution)
+
+    def get_counts(self):
+        return self.get_queryset.count()
 
 
 class DashboardLotMixing(DashboardView):

@@ -1,6 +1,7 @@
 import json
 import uuid
 import logging
+import requests
 
 from uuid import uuid4
 
@@ -303,6 +304,34 @@ class AddPropertyView(ApiMixing):
             key = key,
             value = value
         )
+
+        return JsonResponse({"status": "success"}, status=200)
+
+    def get(self, request, *args, **kwargs):
+        return JsonResponse({}, status=404)
+
+
+class NewTransaction(ApiMixing):
+
+    def post(self, request, *args, **kwargs):
+        response = self.auth()
+        if response:
+            return response
+
+        data = kwargs['data']
+        try:
+            url = settings.IDHUB_API_VERIFY
+            token = settings.IDHUB_TOKEN
+            header = {"Authorization": f"Bearer {token}"}
+            verify = not settings.DEBUG
+            res = requests.post(url, json=data, headers=header, verify=verify)
+
+            if 199 < res.status_code < 300:
+                self.instance.credential = res.text
+        except Exception:
+            txt = "is a invalid credential"
+            return JsonResponse({"status": "Error", "text": txt}, status=500)
+
 
         return JsonResponse({"status": "success"}, status=200)
 

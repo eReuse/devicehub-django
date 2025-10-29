@@ -288,6 +288,11 @@ API_DLT = config("API_DLT", default=None)
 API_RESOLVER = config("API_RESOLVER", default=None)
 ID_FEDERATED = config("ID_FEDERATED", default=None)
 
+# IDHUB
+IDHUB_TOKEN = config("IDHUB_TOKEN", default=None)
+IDHUB_API_SIGN = config("IDHUB_API_SIGN", default=None)
+IDHUB_API_VERIFY = config("IDHUB_API_VERIFY", default=None)
+
 # EMAIL
 INITIAL_ADMIN_EMAIL = config("INITIAL_ADMIN_EMAIL", default='admin@example.org')
 DEFAULT_FROM_EMAIL = config(

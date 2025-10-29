@@ -23,6 +23,7 @@ class LotTag(models.Model):
     owner = models.ForeignKey(Institution, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     inbox = models.BooleanField(default=False)
+    transfer = models.BooleanField(default=False)
     order = models.PositiveIntegerField(default=0)
 
     def __str__(self):
@@ -53,32 +54,18 @@ class Transfer(models.Model):
     destination_did = models.CharField(max_length=STR_SIZE)
     destination_name = models.CharField(max_length=STR_SIZE)
     credential = models.CharField(max_length=5000)
+    api_destination = models.CharField(max_length=5000)
+    token_destination = models.CharField(max_length=5000)
 
-    def create_credential(self):
-        cred = self._render()
-        self._sig(cred)
-
-    def _render(self):
-        credential = get_template('credentials/base.json')
-
-        lot = self.lots.set.first()
-        if not lot:
+    def send_transfer(self):
+        if not all([self.credential, self.api_destination, self.token_destination]):
             return ""
 
-        credential["issue"]["id"] = self.issuer_did
-        credential["issue"]["name"] = lot.institution.name
-        credential["id"] = self.get_url()
+        data = {"data": self.credential}
+        header = {"Authorization": "Bearer {}".format(self.token_destination)}
+        verify = not settings.DEBUG
+        res = requests.post(self.api_destination, json=data, headers=header, verify=verify)
 
-    def get_url(self):
-        path = reverse("lot:credential_transfer", args=[self.id])
-        domain = settings.DEVICEHUB_HOST
-        return f"https://{domain}/{path}"
-
-    def _sig(self, credential):
-        if not credential:
-            return ""
-
-        res = requests.post()
         if 200 < res.status < 300:
             self.credential = res.text
 
