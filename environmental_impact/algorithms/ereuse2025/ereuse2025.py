@@ -152,3 +152,22 @@ class EReuse2025EnvironmentalImpactAlgorithm(EnvironmentImpactAlgorithm):
         else:
             kwatts = self.algorithm_constants["AVG_KWATTS_DEFAULT_SLEEP"]
         return time_in_sleep_mode * kwatts
+
+    def get_lot_environmental_impact(
+        self, devices: list[Device]
+    ) -> EnvironmentalImpact:
+        env_impact = EnvironmentalImpact()
+        env_impact.constants = self.algorithm_constants
+        total_kg_CO2e = {"in_use": 0.0, "carbon_intensity_factor": 0.0}
+        for device in devices:
+            device_env_impact = self.get_device_environmental_impact(device)
+            total_kg_CO2e["in_use"] += device_env_impact.kg_CO2e.get("in_use", 0.0)
+        env_impact.kg_CO2e = total_kg_CO2e
+        env_impact.docs = (
+            common.render_algorithm_docs("docs.md", os.path.dirname(__file__))
+            + "\n\n## Lot Aggregation\n"
+            "This impact calculation aggregates individual device impacts:\n"
+            f"- Total devices in lot: {len(devices)}\n"
+            f"- CO2e emissions are summed across all devices. Total: {env_impact.kg_CO2e} kgCO2e\n"
+        )
+        return env_impact
