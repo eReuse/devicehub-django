@@ -46,6 +46,8 @@ class BuildMix:
         device = self.json.get("device")
         if data.get("snapshot_type") == "Image":
             logger.info("PARSING image snapshot")
+        if data.get("edid_hex"):
+            logger.info("PARSING display snapshot")
         elif not dmidecode_raw and not inxi_raw and not device:
             txt = "snapshot without dmidecode and inxi datas"
             logger.error(txt)
