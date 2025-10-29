@@ -4,7 +4,7 @@ import logging
 
 from evidence import legacy_parse
 from evidence import old_parse
-from evidence import normal_parse
+from evidence import normal_parse, display_parse
 from evidence.parse_details import ParseSnapshot
 
 from evidence.models import SystemProperty
@@ -49,6 +49,8 @@ class Build:
             self.build = old_parse.Build(evidence_json)
         elif evidence_json.get("data",{}).get("lshw"):
             self.build = legacy_parse.Build(evidence_json)
+        elif evidence_json.get("data",{}).get("snapshot_type") == "Display":
+            self.build = display_parse.Build(evidence_json)
         else:
             self.build = normal_parse.Build(evidence_json)
 
