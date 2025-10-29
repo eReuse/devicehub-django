@@ -39,10 +39,10 @@ class BuildMix:
 
                 data["dmidecode"] = evidence[0]
                 data["inxi"] = evidence[2]
-
-        if data.get("edid_hex"):
+        elif data.get("snapshot_type") == "Display":
             logger.info("PARSING display snapshot")
-            breakpoint()
+        elif data.get("snapshot_type") == "Disk":
+            logger.info("PARSING disk snapshot")
         else:
             dmidecode_raw = data.get("dmidecode")
             inxi_raw = data.get("inxi")
