@@ -239,3 +239,102 @@ class EReuse2025AlgorithmTests(unittest.TestCase):
             expected_co2 = (250.0 * total_energy) / 1000
             self.assertAlmostEqual(result["in_use"], expected_co2, places=4)
             self.assertEqual(result["carbon_intensity_factor"], 250.0)
+
+    @patch(
+        "environmental_impact.algorithms.common.render_algorithm_docs",
+        return_value="Algorithm Docs",
+    )
+    def test_get_lot_environmental_impact_empty_list(self, mock_render_docs):
+        """Test lot impact calculation with empty device list."""
+        devices = []
+        impact = self.algorithm.get_lot_environmental_impact(devices)
+        self.assertIsInstance(impact, EnvironmentalImpact)
+        self.assertEqual(impact.kg_CO2e["in_use"], 0.0)
+        self.assertEqual(impact.constants, self.algorithm.algorithm_constants)
+        self.assertIn("Algorithm Docs", impact.docs)
+
+    @patch(
+        "environmental_impact.algorithms.common.render_algorithm_docs",
+        return_value="Algorithm Docs",
+    )
+    def test_get_lot_environmental_impact_single_device(self, mock_render_docs):
+        """Test lot impact calculation with single device."""
+        devices = [self.device]
+        self.device.type = Device.Types.LAPTOP
+        impact = self.algorithm.get_lot_environmental_impact(devices)
+        self.assertIsInstance(impact, EnvironmentalImpact)
+        self.assertIn("in_use", impact.kg_CO2e)
+        self.assertGreater(impact.kg_CO2e["in_use"], 0.0)
+        self.assertEqual(impact.constants, self.algorithm.algorithm_constants)
+
+    @patch(
+        "environmental_impact.algorithms.common.render_algorithm_docs",
+        return_value="Algorithm Docs",
+    )
+    def test_get_lot_environmental_impact_multiple_devices(self, mock_render_docs):
+        """Test lot impact calculation with multiple devices."""
+        # Create three mock devices
+        device1 = Mock(spec=Device)
+        device1.type = Device.Types.DESKTOP
+        device1.last_evidence = self.device.last_evidence
+        device1.evidences = [self.device.last_evidence]
+        device1.components = self.device.components
+
+        device2 = Mock(spec=Device)
+        device2.type = Device.Types.LAPTOP
+        device2.last_evidence = self.device.last_evidence
+        device2.evidences = [self.device.last_evidence]
+        device2.components = self.device.components
+
+        device3 = Mock(spec=Device)
+        device3.type = Device.Types.SERVER
+        device3.last_evidence = self.device.last_evidence
+        device3.evidences = [self.device.last_evidence]
+        device3.components = self.device.components
+
+        devices = [device1, device2, device3]
+
+        # Get individual impacts for comparison
+        impact1 = self.algorithm.get_device_environmental_impact(device1)
+        impact2 = self.algorithm.get_device_environmental_impact(device2)
+        impact3 = self.algorithm.get_device_environmental_impact(device3)
+
+        # Get lot impact
+        lot_impact = self.algorithm.get_lot_environmental_impact(devices)
+
+        # Verify aggregation
+        expected_total = (
+            impact1.kg_CO2e["in_use"]
+            + impact2.kg_CO2e["in_use"]
+            + impact3.kg_CO2e["in_use"]
+        )
+
+        self.assertAlmostEqual(lot_impact.kg_CO2e["in_use"], expected_total, places=6)
+
+    @patch(
+        "environmental_impact.algorithms.common.render_algorithm_docs",
+        return_value="Algorithm Docs",
+    )
+    def test_get_lot_environmental_impact_aggregation_correctness(
+        self, mock_render_docs
+    ):
+        """Test that lot impact correctly sums individual device impacts."""
+        # Create devices with known power-on hours
+        devices = []
+        expected_total = 0.0
+
+        for i in range(5):
+            device = Mock(spec=Device)
+            device.type = Device.Types.LAPTOP
+            device.last_evidence = self.device.last_evidence
+            device.evidences = [self.device.last_evidence]
+            device.components = self.device.components
+            devices.append(device)
+
+            # Calculate expected impact for this device
+            device_impact = self.algorithm.get_device_environmental_impact(device)
+            expected_total += device_impact.kg_CO2e["in_use"]
+
+        lot_impact = self.algorithm.get_lot_environmental_impact(devices)
+
+        self.assertAlmostEqual(lot_impact.kg_CO2e["in_use"], expected_total, places=6)
