@@ -3,6 +3,7 @@ import hashlib
 
 from dmidecode import DMIParse
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 
 from django.db.models import Q
@@ -90,6 +91,7 @@ class Evidence:
         self.inxi = None
         self.edid_hex = None
         self.edid_decode = None
+        self.smartctl = None
         self.properties = []
         self.components = []
         self.default = "n/a"
@@ -158,6 +160,18 @@ class Evidence:
             self.device_resolution = flat.get("Native Resolution", "")
             self.device_chassis = flat.get("Device Type","")
 
+        elif self.doc.get("data", {}).get("snapshot_type") == "Disk":
+            self.smartctl = self.doc["data"]["smartctl"]
+            data = self.get_components() or []
+            flat = {k: v for d in data for k, v in d.items()}
+
+            self.device_manufacturer = flat.get(_("Manufacturer"), "")
+            self.device_model = flat.get(_("Model"), "")
+            self.device_serial_number = flat.get(_("Serial Number"), "")
+            self.device_version = flat.get(_("Firmware Version"), "")
+            #Either HDD or SSD
+            self.device_chassis = flat.get(_("Device Type"),"")
+
         else:
             dmidecode_raw = self.doc["data"]["dmidecode"]
             inxi_raw = self.doc.get("data", {}).get("inxi")
@@ -211,7 +225,7 @@ class Evidence:
         if self.is_legacy():
             return self.doc.get('device', {}).get('manufacturer', '')
 
-        if self.inxi or self.edid_hex:
+        if self.inxi or self.edid_hex or self.smartctl:
             return self.device_manufacturer
 
         try:
@@ -229,7 +243,7 @@ class Evidence:
         if self.is_legacy():
             return self.doc.get('device', {}).get('model', '')
 
-        if self.inxi or self.edid_hex:
+        if self.inxi or self.edid_hex or self.smartctl:
             return self.device_model
 
         try:
@@ -241,7 +255,7 @@ class Evidence:
         if self.is_legacy():
             return self.doc.get('device', {}).get('model', '')
 
-        if self.inxi or self.edid_hex:
+        if self.inxi or self.edid_hex or self.smartctl:
             return self.device_chassis
 
         dmi_chassis = self.dmi.get("Chassis")
@@ -260,7 +274,7 @@ class Evidence:
         if self.is_legacy():
             return self.doc.get('device', {}).get('serialNumber', '')
 
-        if self.inxi or self.edid_hex:
+        if self.inxi or self.edid_hex or self.smartctl:
             return self.device_serial_number
 
         try:
@@ -269,7 +283,7 @@ class Evidence:
             return ''
 
     def get_version(self):
-        if self.inxi or self.edid_hex:
+        if self.inxi or self.edid_hex or self.smartctl:
             return self.device_version
 
         return ""
