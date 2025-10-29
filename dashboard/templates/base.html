@@ -66,6 +66,17 @@
           padding-top: 0;
           padding-bottom: .5rem;
       }
+      /* Remove bullets from all sidebar <ul> */
+      #sidebarMenu ul {
+          list-style: none; /* removes bullets */
+          padding-left: 0;  /* removes indentation */
+          margin: 0;        /* optional: removes extra spacing */
+      }
+
+      /* Optional: adjust nested ul spacing */
+      #sidebarMenu ul ul {
+          padding-left: 1rem; /* indent nested items slightly */
+      }
 
     </style>
 
@@ -77,7 +88,9 @@
   </head>
   <body>
   <header class="navbar navbar-dark sticky-top admin bg-green flex-md-nowrap p-0 shadow">
-      <button class="btn d-md-none" type="button" id="sidebarToggle" style="color: #fff; font-size: 1.5rem; border: none; background: none; padding: 0.5rem 1rem;">
+      <button class="btn d-md-none" type="button" id="sidebarToggle"
+              data-bs-toggle="collapse" data-bs-target="#sidebarMenu"
+              style="color: #fff; font-size: 1.5rem; border: none; background: none; padding: 0.5rem 1rem;">
           <i class="bi bi-list"></i>
       </button>
       <div id="navbar-brand-sm" class="d-sm-none px-3">
@@ -144,8 +157,8 @@
   </header>
     <div class="container-fluid">
       <div class="row">
-        <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
-          <div class="position-sticky pt-5">
+        <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse collapse-horizontal" style="max-width: 200px;">
+          <div class="position-sticky pt-md-5">
             <ul class="nav flex-column">
 	      {% if user.is_admin %}
               <li class="nav-item">
