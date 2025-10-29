@@ -14,8 +14,19 @@ class ParseSnapshot:
             logger.error("smartctl data is not in the expected dictionary format.")
             smartctl_data = {}
 
-        self.device = {"actions": []}
-        self.components = self._parse_smartctl(smartctl_data)
+        info = self._parse_smartctl(smartctl_data)
+
+        self.device = {
+            "actions": [],
+            "manufacturer_id": info.get("Manufacturer ID"),
+            "manufacturer": info.get("Manufacturer"),
+            "model": info.get("Model"),
+            "serialNumber": info.get("Serial Number"),
+            "edid_version": info.get("EDID Version"),
+        }
+
+        #done this way so it rendes properly on components tab
+        self.components = [{k: v} for k, v in info.items() if v is not None]
 
         self.snapshot_json = {
             "type": "Snapshot",
@@ -47,28 +58,28 @@ class ParseSnapshot:
 
         info = {
             # Core
-            _("Device Type"): device_type,
-            _("Manufacturer"): smartctl_data.get("model_family"),
-            _("Model"): smartctl_data.get("model_name"),
-            _("Serial Number"): smartctl_data.get("serial_number"),
-            _("Firmware Version"): smartctl_data.get("firmware_version"),
-            _("Capacity (GB)"): capacity_gb,
-            _("Capacity (bytes)"): capacity_bytes,
-            _("Form Factor"): smartctl_data.get("form_factor", {}).get("name"),
-            _("Interface Speed"): smartctl_data.get("interface_speed", {}).get("current", {}).get("string"),
-            _("SATA Version"): smartctl_data.get("sata_version", {}).get("string"),
-            _("Rotation Rate (RPM)"): rotation_rate,
+            "Device Type": device_type,
+            "Manufacturer": smartctl_data.get("model_family"),
+            "Model": smartctl_data.get("model_name"),
+            "Serial Number": smartctl_data.get("serial_number"),
+            "Firmware Version": smartctl_data.get("firmware_version"),
+            "Capacity (GB)": capacity_gb,
+            "Capacity (bytes)": capacity_bytes,
+            "Form Factor": smartctl_data.get("form_factor", {}).get("name"),
+            "Interface Speed": smartctl_data.get("interface_speed", {}).get("current", {}).get("string"),
+            "SATA Version": smartctl_data.get("sata_version", {}).get("string"),
+            "Rotation Rate (RPM)": rotation_rate,
 
             # Health Data
-            _("Health Status"): health_status,
-            _("Power On Hours"): smartctl_data.get("power_on_time", {}).get("hours"),
-            _("Reallocated Sector Count"): attr_map.get(5),
-            _("Current Pending Sector Count"): attr_map.get(197),
-            _("Offline Uncorrectable Sector Count"): attr_map.get(198),
+            "Health Status": health_status,
+            "Power On Hours": smartctl_data.get("power_on_time", {}).get("hours"),
+            "Reallocated Sector Count": attr_map.get(5),
+            "Current Pending Sector Count": attr_map.get(197),
+            "Offline Uncorrectable Sector Count": attr_map.get(198),
 
             # SSD-specific data
-            _("SSD Percentage Used (NVMe)"): smartctl_data.get("nvme_smart_health_information_log", {}).get("percentage_used"),
-            _("SSD Wear Indicator (SATA)"): attr_map.get(233),
+            "SSD Percentage Used (NVMe)": smartctl_data.get("nvme_smart_health_information_log", {}).get("percentage_used"),
+            "SSD Wear Indicator (SATA)": attr_map.get(233),
         }
 
-        return [{k: v} for k, v in info.items() if v is not None]
+        return info
