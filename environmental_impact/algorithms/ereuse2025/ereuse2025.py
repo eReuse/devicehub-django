@@ -158,7 +158,7 @@ class EReuse2025EnvironmentalImpactAlgorithm(EnvironmentImpactAlgorithm):
     ) -> EnvironmentalImpact:
         env_impact = EnvironmentalImpact()
         env_impact.constants = self.algorithm_constants
-        total_kg_CO2e = {"in_use": 0.0, "carbon_intensity_factor": 0.0}
+        total_kg_CO2e = {"in_use": 0.0}
         for device in devices:
             device_env_impact = self.get_device_environmental_impact(device)
             total_kg_CO2e["in_use"] += device_env_impact.kg_CO2e.get("in_use", 0.0)
