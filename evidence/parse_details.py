@@ -2,6 +2,7 @@ import logging
 
 from evidence import (
     display_parse_details,
+    disk_parse_details,
     legacy_parse_details,
     normal_parse_details,
     old_parse_details
@@ -30,6 +31,11 @@ class ParseSnapshot:
            )
        elif snapshot.get("data",{}).get("snapshot_type") == "Display":
            self.build = display_parse_details.ParseSnapshot(
+               snapshot,
+               default=default
+           )
+       elif snapshot.get("data",{}).get("snapshot_type") == "Disk":
+           self.build = disk_parse_details.ParseSnapshot(
                snapshot,
                default=default
            )
