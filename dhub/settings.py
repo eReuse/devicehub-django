@@ -97,6 +97,7 @@ INSTALLED_APPS = [
     "admin",
     "api",
     "dhemail",
+    "transfer",
 ]
 
 DPP = config("DPP", default=False, cast=bool)

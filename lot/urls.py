@@ -6,7 +6,6 @@ app_name = 'lot'
 urlpatterns = [
     path("add/", views.NewLotView.as_view(), name="add"),
     path("lots/delete/", views.DeleteLotsView.as_view(), name="delete"),
-    path("lots/transfer/", views.TransferLotsView.as_view(), name="transfer"),
     path("edit/<int:pk>/", views.EditLotView.as_view(), name="edit"),
     path("add/devices/", views.AddToLotView.as_view(), name="add_devices"),
     path('lot/<int:pk>/unassign-devices/', views.DelToLotView.as_view(), name='del_devices'),
