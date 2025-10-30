@@ -247,6 +247,11 @@
                       {% trans 'Upload Spreadsheet' %}
                     </a>
                   </li>
+                    <li class="nav-item">
+                        <a class="nav-link{% if path == 'photo' %} active2{% endif %}" href="{% url 'evidence:photo' %}">
+                            {% trans 'Upload Photo' %}
+                        </a>
+                    </li>
                   <li class="nav-item">
                     <a class="nav-link{% if path == 'add' %} active2{% endif %}" href="{% url 'device:add' %}">
                       {% trans 'Upload Web Form' %}

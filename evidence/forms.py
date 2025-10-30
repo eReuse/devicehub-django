@@ -1,9 +1,14 @@
 import json
 import pandas as pd
+import hashlib
+import uuid
+import os
+from datetime import datetime
 
 from django import forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
+from django.conf import settings
 from utils.device import create_property, create_doc, create_index
 from utils.forms import MultipleFileField
 from device.models import Device
@@ -44,7 +49,7 @@ class UploadForm(forms.Form):
                         code="duplicate_snapshot",
                     )
 
-            #Catch any error and display it as Validation Error so the Form handles it
+            # Catch any error and display it as Validation Error so the Form handles it
             except Exception as e:
                 raise ValidationError(
                     _("Error on '%(file_name)s': %(error)s"),
@@ -106,15 +111,15 @@ class UserTagForm(forms.Form):
         if self.instance:
             old_value = self.instance.value
             if not self.tag:
-                message =_("<Deleted> Evidence Tag. Old Value: '{}'").format(old_value)
+                message = _("<Deleted> Evidence Tag. Old Value: '{}'").format(old_value)
                 self.instance.delete()
             else:
                 self.instance.value = self.tag
                 self.instance.save()
                 if old_value != self.tag:
-                    message=_("<Updated> Evidence Tag. Old Value: '{}'. New Value: '{}'").format(old_value, self.tag)
+                    message = _("<Updated> Evidence Tag. Old Value: '{}'. New Value: '{}'").format(old_value, self.tag)
         else:
-            message =_("<Created> Evidence Tag. Value: '{}'").format(self.tag)
+            message = _("<Created> Evidence Tag. Value: '{}'").format(self.tag)
             SystemProperty.objects.create(
                 uuid=self.uuid,
                 key='CUSTOM_ID',
@@ -122,13 +127,13 @@ class UserTagForm(forms.Form):
                 owner=self.user.institution,
                 user=self.user
             )
-        
+
         DeviceLog.objects.create(
-                snapshot_uuid=self.uuid,
-                event= message,
-                user=self.user,
-                institution=self.user.institution
-            )
+            snapshot_uuid=self.uuid,
+            event=message,
+            user=self.user,
+            institution=self.user.institution
+        )
 
 
 class ImportForm(forms.Form):
@@ -181,7 +186,6 @@ class ImportForm(forms.Form):
             self.rows.append(data_pd[n])
 
         return data
-
 
     def save(self, commit=True):
         table = []
@@ -253,3 +257,85 @@ class EraseServerForm(forms.Form):
             owner=self.user.institution,
             user=self.user
         )
+
+
+class PhotoForm(forms.Form):
+    photo_file = forms.FileField(
+        widget=forms.ClearableFileInput(
+            attrs={
+                'class': 'visually-hidden',
+                'id': 'file-input',
+                'accept': 'image/jpeg,image/jpg,image/png,image/gif,image/webp',
+            }
+        ),
+        label="",
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user')
+        self.photo_data = None
+        self.md5sum = None
+        super().__init__(*args, **kwargs)
+
+    def clean_photo_file(self):
+        photo = self.cleaned_data.get('photo_file')
+
+        if not photo:
+            raise ValidationError(
+                _("No photo selected"),
+                code="no_input",
+            )
+
+        max_size = 10 * 1024 * 1024
+        if photo.size > max_size:
+            raise ValidationError(
+                _("File size exceeds 10MB limit"),
+                code="file_too_large",
+            )
+
+        allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']
+        content_type = photo.content_type
+        if content_type not in allowed_types:
+            raise ValidationError(
+                _("Invalid file type. Only JPEG, PNG, GIF, and WebP images are allowed"),
+                code="invalid_type",
+            )
+
+        allowed_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp']
+        file_ext = os.path.splitext(photo.name)[1].lower()
+        if file_ext not in allowed_extensions:
+            raise ValidationError(
+                _("Invalid file extension. Only .jpg, .jpeg, .png, .gif, and .webp are allowed"),
+                code="invalid_extension",
+            )
+
+        photo.seek(0)
+        file_content = photo.read()
+        self.md5sum = hashlib.md5(file_content).hexdigest()
+        photo.seek(0)  # Reset file pointer
+
+        self.photo_data = {
+            'file': photo,
+            'content': file_content,
+            'extension': file_ext,
+            'mime_type': content_type,
+            'size': photo.size,
+            'original_name': photo.name,
+        }
+
+        return photo
+
+    def save(self, commit=True):
+        if not commit or not self.user or not self.photo_data:
+            return
+
+        # Store photo on specific EVIDENCES_DIR/photo folder
+        photos_dir = os.path.join(settings.EVIDENCES_DIR, 'photos')
+        if not os.path.exists(photos_dir):
+            os.makedirs(photos_dir, exist_ok=True)
+
+        filename = f"{self.md5sum}{self.photo_data['extension']}"
+        file_path = os.path.join(photos_dir, filename)
+
+        with open(file_path, 'wb') as f:
+            f.write(self.photo_data['content'])

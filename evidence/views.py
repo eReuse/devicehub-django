@@ -1,7 +1,6 @@
 import json
 
 from django.contrib import messages
-from urllib.parse import urlparse
 from django.http import HttpResponse
 from django.utils.translation import gettext_lazy as _
 from django.shortcuts import get_object_or_404, redirect, Http404
@@ -13,13 +12,14 @@ from django.views.generic.edit import (
 )
 
 from action.models import DeviceLog
-from dashboard.mixins import  DashboardView, Http403
+from dashboard.mixins import DashboardView, Http403
 from evidence.models import SystemProperty, UserProperty, Evidence
 from evidence.forms import (
     UploadForm,
     UserTagForm,
     ImportForm,
-    EraseServerForm
+    EraseServerForm,
+    PhotoForm
 )
 from django_tables2 import SingleTableView
 from evidence.tables import EvidenceTable
@@ -72,6 +72,30 @@ class ImportView(DashboardView, FormView):
     def form_valid(self, form):
         form.save()
         messages.success(self.request, _("Evidence imported successfully."))
+        response = super().form_valid(form)
+        return response
+
+    def form_invalid(self, form):
+        response = super().form_invalid(form)
+        return response
+
+
+class ImportPhotoView(DashboardView, FormView):
+    template_name = "upload.html"
+    section = "evidences"
+    title = _("Import Photo Evidence")
+    breadcrumb = "Evidences / Photo"
+    success_url = reverse_lazy('evidence:list')
+    form_class = PhotoForm
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+
+    def form_valid(self, form):
+        form.save()
+        messages.success(self.request, _("Photo evidence uploaded successfully."))
         response = super().form_valid(form)
         return response
 
