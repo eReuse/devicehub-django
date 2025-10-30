@@ -15,6 +15,7 @@ from utils.constants import (
 
 from user.models import User, Institution
 from evidence.models import Property
+from transfer.models import Transfer
 # from device.models import Device
 
 
@@ -47,27 +48,6 @@ class LotTag(models.Model):
 class DeviceLot(models.Model):
     lot = models.ForeignKey("Lot", on_delete=models.CASCADE)
     device_id = models.CharField(max_length=STR_EXTEND_SIZE, blank=False, null=False)
-
-
-class Transfer(models.Model):
-    issuer_did = models.CharField(max_length=STR_SIZE)
-    destination_did = models.CharField(max_length=STR_SIZE)
-    destination_name = models.CharField(max_length=STR_SIZE)
-    credential = models.CharField(max_length=5000)
-    api_destination = models.CharField(max_length=5000)
-    token_destination = models.CharField(max_length=5000)
-
-    def send_transfer(self):
-        if not all([self.credential, self.api_destination, self.token_destination]):
-            return ""
-
-        data = {"data": self.credential}
-        header = {"Authorization": "Bearer {}".format(self.token_destination)}
-        verify = not settings.DEBUG
-        res = requests.post(self.api_destination, json=data, headers=header, verify=verify)
-
-        if 200 < res.status < 300:
-            self.credential = res.text
 
 
 class Lot(models.Model):
