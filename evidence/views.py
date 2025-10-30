@@ -1,8 +1,8 @@
 import json
+import os
 
 from django.contrib import messages
-from urllib.parse import urlparse
-from django.http import HttpResponse
+from django.http import HttpResponse, FileResponse
 from django.utils.translation import gettext_lazy as _
 from django.shortcuts import get_object_or_404, redirect, Http404
 from django.views.generic.base import TemplateView
@@ -19,7 +19,8 @@ from evidence.forms import (
     UploadForm,
     UserTagForm,
     ImportForm,
-    EraseServerForm
+    EraseServerForm,
+    PhotoForm
 )
 from django_tables2 import SingleTableView
 from evidence.tables import EvidenceTable
@@ -72,6 +73,30 @@ class ImportView(DashboardView, FormView):
     def form_valid(self, form):
         form.save()
         messages.success(self.request, _("Evidence imported successfully."))
+        response = super().form_valid(form)
+        return response
+
+    def form_invalid(self, form):
+        response = super().form_invalid(form)
+        return response
+
+
+class ImportPhotoView(DashboardView, FormView):
+    template_name = "upload.html"
+    section = "evidences"
+    title = _("Import Photo Evidence")
+    breadcrumb = "Evidences / Photo"
+    success_url = reverse_lazy('evidence:list')
+    form_class = PhotoForm
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+
+    def form_valid(self, form):
+        form.save()
+        messages.success(self.request, _("Photo evidence uploaded successfully."))
         response = super().form_valid(form)
         return response
 
@@ -138,6 +163,44 @@ class DownloadEvidenceView(DashboardView, TemplateView):
         data = json.dumps(evidence.doc)
         response = HttpResponse(data, content_type="application/json")
         response['Content-Disposition'] = 'attachment; filename={}'.format("evidence.json")
+        return response
+
+
+class PhotoEvidenceView(DashboardView, TemplateView):
+    """View to serve photo evidence files"""
+
+    def get(self, request, *args, **kwargs):
+        from utils.photo_evidence import get_photos_dir
+
+        pk = kwargs['pk']
+        evidence = Evidence(pk)
+        if evidence.owner != self.request.user.institution:
+            raise Http403()
+
+        evidence.get_doc()
+
+        # Check if this is actually a photo evidence
+        if not evidence.is_photo_evidence():
+            raise Http404("This evidence is not a photo")
+
+        # Get photo data from document
+        photo_data = evidence.doc.get('photo')
+        if not photo_data:
+            raise Http404("Photo data not found")
+
+        # Construct file path
+        photo_filename = photo_data.get('name')
+        if not photo_filename:
+            raise Http404("Photo filename not found")
+
+        photos_dir = get_photos_dir(evidence.owner.name)
+        file_path = os.path.join(photos_dir, photo_filename)
+
+        if not os.path.exists(file_path):
+            raise Http404("Photo file not found on disk")
+
+        # Serve the file
+        response = FileResponse(open(file_path, 'rb'), content_type=photo_data.get('mime_type', 'image/jpeg'))
         return response
 
 

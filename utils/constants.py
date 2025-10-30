@@ -28,9 +28,18 @@ EREUSE22 = [
     "version"
 ]
 
+# Algorithm to build photo evidences
+PHOTO25 = {
+    "photo": {"extension", "mime_type", "size", "original_name", "name", "hash"},
+    "ocr": {'text', 'error'},
+    "barcodes": ['type', 'data'],
+    "barcode_error": {'error'}
+}
+
 ALGOS = {
     "ereuse24": EREUSE24,
-    "ereuse22": EREUSE22
+    "ereuse22": EREUSE22,
+    "photo25": PHOTO25
 }
 
 
