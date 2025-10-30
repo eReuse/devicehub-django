@@ -227,11 +227,11 @@
                 </ul>
               </li>
               <li class="nav-item">
-                <a class="admin {% if path in 'upload list import add' %}active {% endif %}nav-link fw-bold" data-bs-toggle="collapse" data-bs-target="#ul_evidences" aria-expanded="false" aria-controls="ul_evidences" href="javascript:void()">
+                <a class="admin {% if path in 'upload list import add photo' %}active {% endif %}nav-link fw-bold" data-bs-toggle="collapse" data-bs-target="#ul_evidences" aria-expanded="false" aria-controls="ul_evidences" href="javascript:void()">
                   <i class="bi bi-usb-drive icon_sidebar"></i>
                   {% trans 'Evidences' %}
                 </a>
-                <ul class="flex-column mb-2 ul_sidebar accordion-collapse {% if path in 'upload list import add' %}expanded{% else %}collapse{% endif %}" id="ul_evidences" data-bs-parent="#sidebarMenu">
+                <ul class="flex-column mb-2 ul_sidebar accordion-collapse {% if path in 'upload list import add photo' %}expanded{% else %}collapse{% endif %}" id="ul_evidences" data-bs-parent="#sidebarMenu">
                   <li class="nav-item">
                     <a class="nav-link{% if path == 'list' %} active2{% endif %}" href="{% url 'evidence:list' %}">
                       {% trans 'List of evidences' %}
@@ -247,6 +247,11 @@
                       {% trans 'Upload Spreadsheet' %}
                     </a>
                   </li>
+                    <li class="nav-item">
+                        <a class="nav-link{% if path == 'photo' %} active2{% endif %}" href="{% url 'evidence:photo' %}">
+                            {% trans 'Upload Photo' %}
+                        </a>
+                    </li>
                   <li class="nav-item">
                     <a class="nav-link{% if path == 'add' %} active2{% endif %}" href="{% url 'device:add' %}">
                       {% trans 'Upload Web Form' %}
