@@ -1,6 +1,7 @@
 # Device Hub
 
-DeviceHub is an IT Asset Management System focused on reusing devices, created under the [eReuse.org](https://www.ereuse.org) project.
+DeviceHub is an IT Asset Management System focused on reusing devices, created under
+the [eReuse.org](https://www.ereuse.org) project.
 
 ## Overview
 
@@ -24,9 +25,11 @@ Assuming a host with debian stable
 ### Quickstart
 
 > **Note**
-> This docker container was designed to be setup with user `1000`, which correspond to default linux user. Hence not root user, or any other specific linux user. Sorry. We would like to fix this better and soon.
+> This docker container was designed to be setup with user `1000`, which correspond to default linux user. Hence not
+> root user, or any other specific linux user. Sorry. We would like to fix this better and soon.
 
-For a quick start with pre-generated sample data, DeviceHub can be run directly with docker. To do so, from the root of the project run:
+For a quick start with pre-generated sample data, DeviceHub can be run directly with docker. To do so, from the root of
+the project run:
 
 ```bash
 git clone https://farga.pangea.org/ereuse/devicehub-django
@@ -36,7 +39,8 @@ cd devicehub-django
 
 Note that everytime you perform the `docker-reset.sh` script, all data is lost.
 
-Also there is a demo running in http://demo.ereuse.org/. The token for accessing the instance will be always: `token=5018dd65-9abd-4a62-8896-80f34ac66150`, but the instance will be reset every day at 4 am.
+Also there is a demo running in http://demo.ereuse.org/. The token for accessing the instance will be always:
+`token=5018dd65-9abd-4a62-8896-80f34ac66150`, but the instance will be reset every day at 4 am.
 
 For production needs, review and change .env file properly
 
@@ -45,13 +49,16 @@ For production needs, review and change .env file properly
 > **Warning**
 > DeviceHub is not ready for production yet. The following are work in progress instructions.
 
-The recommended way to run DeviceHub in production is using Docker. This allows for easy deployment and management of the application and its dependencies.
+The recommended way to run DeviceHub in production is using Docker. This allows for easy deployment and management of
+the application and its dependencies.
 
 #### Prerequisites
 
-Devicehub can run comfortably in a server with 2GB of RAM and 2 CPU cores. The recommended way to run DeviceHub in production is using Docker. This allows for easy deployment and management of the application and its dependencies.
+Devicehub can run comfortably in a server with 2GB of RAM and 2 CPU cores. The recommended way to run DeviceHub in
+production is using Docker. This allows for easy deployment and management of the application and its dependencies.
 
-Devicehub must be ran with UID 1000, so is recommended to create a user with this UID. This can be done by running the following command:
+Devicehub must be ran with UID 1000, so is recommended to create a user with this UID. This can be done by running the
+following command:
 
 ```bash
 sudo useradd -u 1000 -m devicehub
@@ -75,7 +82,8 @@ docker-compose up -d
 
 #### Running Devicehub with HTTPS
 
-The recommended way to run DeviceHub with HTTPS is using a reverse proxy. The following example uses Nginx, but you can use any other reverse proxy. Here there is an example of how to run DeviceHub with HTTPS using Nginx:
+The recommended way to run DeviceHub with HTTPS is using a reverse proxy. The following example uses Nginx, but you can
+use any other reverse proxy. Here there is an example of how to run DeviceHub with HTTPS using Nginx:
 
 ```nginx
 server {
@@ -131,7 +139,8 @@ proxy_read_timeout 600;
 - pip
 - virtualenv
 
-Specially when developing, is quite convenient to run DeviceHub from a virtual environment. To start with this deployment, create a virtual environment to isolate our project dependencies:
+Specially when developing, is quite convenient to run DeviceHub from a virtual environment. To start with this
+deployment, create a virtual environment to isolate our project dependencies:
 
 ```bash
 python -m venv env
@@ -155,9 +164,21 @@ Allow the virtual environment to use system-installed packages:
 export PYTHONPATH="${PYTHONPATH}:/usr/lib/python3/dist-packages"
 ```
 
+#### Photo evidence dependencies
+
+Devicehub can use images to generate evidences, reading also a QR or bar code. For this, we need to install the
+following system dependencies:
+
+```bash
+sudo apt install tesseract-ocr tesseract-ocr-eng zbar-tools
+# You can install additional trained data for different languages if needed, e.g.:
+sudo apt install tesseract-ocr-spa tesseract-ocr-cat
+```
+
 #### Environment Variables
 
-Now, configure the environment variables. For this, we will expand a `.env` file. For a quickstart with localhost, you can use the default values in the `.env.example` file:
+Now, configure the environment variables. For this, we will expand a `.env` file. For a quickstart with localhost, you
+can use the default values in the `.env.example` file:
 
 ```bash
 cp .env.example .env

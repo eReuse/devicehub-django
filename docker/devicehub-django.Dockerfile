@@ -10,6 +10,9 @@ RUN apt update && \
     jq \
     time \
     vim \
+    tesseract-ocr \
+    tesseract-ocr-eng \
+    zbar-tools \
     && rm -rf /var/lib/apt/lists/*
 
 # TODO I don't like this, but the whole ereuse-dpp works with user 1000 because of the volume mapping

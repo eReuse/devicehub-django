@@ -274,7 +274,7 @@ class PhotoForm(forms.Form):
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user')
         self.photo_data = None
-        self.md5sum = None
+        self.uuid = None
         super().__init__(*args, **kwargs)
 
     def clean_photo_file(self):
@@ -311,7 +311,7 @@ class PhotoForm(forms.Form):
 
         photo.seek(0)
         file_content = photo.read()
-        self.md5sum = hashlib.md5(file_content).hexdigest()
+        self.uuid = hashlib.md5(file_content).hexdigest()
         photo.seek(0)  # Reset file pointer
 
         self.photo_data = {
@@ -334,7 +334,7 @@ class PhotoForm(forms.Form):
         if not os.path.exists(photos_dir):
             os.makedirs(photos_dir, exist_ok=True)
 
-        filename = f"{self.md5sum}{self.photo_data['extension']}"
+        filename = f"{self.uuid}{self.photo_data['extension']}"
         file_path = os.path.join(photos_dir, filename)
 
         with open(file_path, 'wb') as f:
