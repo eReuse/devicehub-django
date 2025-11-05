@@ -331,8 +331,11 @@ class IssueDigitalPassportView(DeviceLogMixin, View):
         device = Device(id=pk)
         last_evidence = device.last_evidence
 
-        API_ENDPOINT = getattr(settings, "IDHUB_API_ENDPOINTasdasd", "https://192.168.0.61/api/v1/issue-credential/")
-        API_KEY = getattr(settings, "PASSPORT_API_KEYasdads", "your_default_api_key")
+        API_ENDPOINT = getattr(settings, "DEMO_IDHUB_DOMAIN", "https://192.168.0.61")
+        API_ENDPOINT = f"{API_ENDPOINT}/api/v1/issue-credential/"
+
+        API_KEY = getattr(settings, "DPP_IDHUB_TOKEN", "your_default_api_key")
+        PASSPORT_SCHEMA = getattr(settings, "DPP_DEVICE_CREDENTIAL", "ICTGoodsPassport_UNTP_schema_v1.json")
 
         def convert_ram_to_mb(ram_string):
             if not isinstance(ram_string, str): return 0
@@ -351,7 +354,7 @@ class IssueDigitalPassportView(DeviceLogMixin, View):
             "model": components.get('model') or "Unknown",
             "cpu_model": components.get('cpu_model'),
             "cpu_cores": components.get('cpu_cores'),
-            "current_state": components.get('current_state') or "used",
+            "current_state": components.get('current_state') or "refurbished",
             "ram_total": convert_ram_to_mb(components.get('ram_total')),
             "ram_type": components.get('ram_type') or "Other",
             "ram_slots": components.get('ram_slots'),
@@ -370,7 +373,7 @@ class IssueDigitalPassportView(DeviceLogMixin, View):
                 "type": ["Product"],
                 "id": f"urn:ereuse:device:{device.id}",
                 "name": f"{components.get('manufacturer', 'Unknown')} {components.get('model', 'Unknown')}",
-                "description": "A personal computing device.",
+                "description": "A personal refurbished computing device.",
                 "serialNumber": components.get('serial'),
                 "characteristics": characteristics
             }
@@ -380,7 +383,7 @@ class IssueDigitalPassportView(DeviceLogMixin, View):
             reverse('evidence:credential_by_evidence', kwargs={'uuid': last_evidence.uuid})
         )
         payload = {
-            "schema_name": "ICTGoodsPassport_UNTP_schema.json",
+            "schema_name": PASSPORT_SCHEMA,
             "create_did": True,
             "credentialSubject": credential_subject,
             "service_endpoint": service_endpoint
@@ -425,21 +428,48 @@ class IssueDigitalPassportView(DeviceLogMixin, View):
                  messages.warning(self.request, "API returned a success status but no credential ID.")
 
         except requests.exceptions.HTTPError as http_err:
-            error_message = f"An API error occurred: {http_err.response.status_code}"
-            if http_err.response:
-                try:
-                    error_data = http_err.response.json()
-                    server_error = error_data.get('error', 'An unknown error occurred on the server.')
-                    details = error_data.get('details')
-                    error_message = f"API Error: {server_error}"
-                    if details:
-                        error_message += f" Details: {details}"
-                except json.JSONDecodeError:
-                    error_message = f"API Error ({http_err.response.status_code}): {http_err.response.text}"
-            messages.error(self.request, error_message)
+            status_code = http_err.response.status_code
+            error_message = self._get_api_error_message(http_err.response)
+            logger.warning(f"API HTTP error {status_code} for device {pk}: {error_message}")
+
+            if status_code == 400:
+                messages.error(self.request, f"Failed to issue passport. The data was invalid. {error_message}")
+            elif status_code == 409:
+                messages.warning(self.request, "A digital passport already exists for this device's evidence log.")
+            elif status_code == 422:
+                messages.error(self.request, f"Configuration Error: The schema '{PASSPORT_SCHEMA}' was not found on the API server. Please contact an administrator.")
+            elif status_code == 500:
+                messages.error(self.request, f"Failed to issue passport: The remote API server failed due to a configuration error. Please contact an administrator. {error_message}")
+            else:
+                messages.error(self.request, f"An unexpected API error occurred. {error_message}")
+
+        except requests.exceptions.ConnectionError:
+            logger.error(f"API ConnectionError for device {pk}: Could not connect to {API_ENDPOINT}")
+            messages.error(self.request, f"Network Error: Could not connect to the passport service at {API_ENDPOINT}.")
+        except requests.exceptions.Timeout:
+            logger.warning(f"API Timeout for device {pk} at {API_ENDPOINT}")
+            messages.error(self.request, "Network Error: The request to the passport service timed out.")
         except requests.exceptions.RequestException as err:
+            logger.error(f"API RequestException for device {pk}: {err}", exc_info=True)
             messages.error(self.request, f"An API request error occurred: {err}")
         except Exception as e:
-            messages.error(self.request, f"An unexpected error occurred: {e}")
+            logger.error(f"Unexpected local error issuing passport for device {pk}: {e}", exc_info=True)
+            messages.error(self.request, f"An unexpected local error occurred: {e}")
 
         return redirect('device:details', pk=pk)
+
+    def _get_api_error_message(self, response: requests.Response):
+        try:
+            error_data = response.json()
+            server_error = error_data.get('error', 'Unknown server error')
+            details = error_data.get('details')
+            path = error_data.get('path')
+
+            message = f"API Error: {server_error}"
+            if details:
+                message += f" Details: {details}"
+            if path:
+                message += f" (Field: {''.join(['[' + str(p) + ']' if isinstance(p, int) else '.' + p for p in path]).lstrip('.')})"
+            return message
+        except json.JSONDecodeError:
+            return f"API Error ({response.status_code}): {response.text[:250]}..."
