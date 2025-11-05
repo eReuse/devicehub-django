@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+{% load i18n get_language_code %}
+
+{% block content %}
+
+  <div class="col d-flex align-items-center mb-4">
+    <div class="d-flex align-items-center">
+      <i class="bi bi-speedometer2 fs-2 me-3"></i>
+      <h3 class="mb-0">{% translate 'Inventory Overview' %}</h3>
+    </div>
+  </div>
+
+  {% if error %}
+    <div class="alert alert-danger" role="alert">
+      {{ error }}
+    </div>
+  {% else %}
+
+    <div class="row mb-4">
+
+      <div class="col-md-4 mb-3">
+        <div class="card h-100 shadow-sm border-0 text-bg-primary">
+          <div class="card-body d-flex flex-column">
+            <h5 class="card-title text-uppercase opacity-75 mb-3">{% translate 'Total Devices' %}</h5>
+            <div class="flex-grow-1">
+              <p class="card-text display-4 fw-bold mb-0">{{ total_devices }}</p>
+            </div>
+            <div class="mt-2">
+              {% for type, count in total_types_summary.items %}
+                <span class="me-3 small text-opacity-75">
+                  {% include "_icon_snippet.html" with type_name=type %}
+                  <span class="ms-1">{{ type|default:"Unknown" }}: {{ count }}</span>
+                </span>
+              {% empty %}
+                 <span class="small text-opacity-75">
+                  {% translate 'No types found' %}
+                 </span>
+              {% endfor %}
+            </div>
+          </div>
+          <a href="{% url 'dashboard:all_device' %}" class="card-footer text-reset text-decoration-none d-flex justify-content-between align-items-center">
+            <span>{% translate 'View All Devices' %}</span>
+            <i class="bi bi-arrow-right"></i>
+          </a>
+        </div>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <div class="card h-100 shadow-sm border-0 text-bg-success">
+          <div class="card-body d-flex flex-column">
+            <h5 class="card-title text-uppercase opacity-75 mb-3">{% translate 'Assigned Devices' %}</h5>
+            <div class="flex-grow-1">
+              <p class="card-text display-4 fw-bold mb-0">{{ assigned_devices }}</p>
+              {% if total_devices > 0 %}
+                <p class="card-text fs-5 mb-0 opacity-75">
+                  {% widthratio assigned_devices total_devices 100 %}% of total
+                </p>
+              {% endif %}
+            </div>
+            <div class="mt-2">
+              {% for type, count in assigned_types_summary.items %}
+                <span class="me-3 small text-opacity-75">
+                  {% include "_icon_snippet.html" with type_name=type %}
+                  <span class="ms-1">{{ type|default:"Unknown" }}: {{ count }}</span>
+                </span>
+              {% empty %}
+                <span class="small text-opacity-75">
+                  {% translate 'No types found' %}
+                </span>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <div class="card h-100 shadow-sm border-0 text-bg-warning">
+          <div class="card-body d-flex flex-column">
+            <h5 class="card-title text-uppercase opacity-75 mb-3">{% translate 'Unassigned (Inbox)' %}</h5>
+            <div class="flex-grow-1">
+              <p class="card-text display-4 fw-bold mb-0">{{ unassigned_devices }}</p>
+              {% if total_devices > 0 %}
+                <p class="card-text fs-5 mb-0 opacity-75">
+                  {% widthratio unassigned_devices total_devices 100 %}% of total
+                </p>
+              {% endif %}
+            </div>
+            <div class="mt-2">
+              {% for type, count in unassigned_types_summary.items %}
+                <span class="me-3 small text-dark text-opacity-75">
+                  {% include "_icon_snippet.html" with type_name=type %}
+                  <span class="ms-1">{{ type|default:"Unknown" }}: {{ count }}</span>
+                </span>
+              {% empty %}
+                <span class="small text-dark text-opacity-75">
+                  {% translate 'No types found' %}
+                </span>
+              {% endfor %}
+            </div>
+          </div>
+          <a href="{% url 'dashboard:unassigned' %}" class="card-footer text-reset text-decoration-none d-flex justify-content-between align-items-center">
+            <span>{% translate 'Go to Inbox' %}</span>
+            <i class="bi bi-arrow-right"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="row mb-4">
+
+      <div class="col-md-6 mb-3">
+        <div class="card h-100 shadow-sm border-0">
+          <div class="card-body d-flex flex-column">
+            <h5 class="card-title mb-3">
+              <i class="bi bi-box-seam me-2"></i> {% translate 'Devices by Lot (Top 10)' %}
+            </h5>
+            <div class="flex-grow-1">
+              <ul class="list-group list-group-flush">
+                {% for lot in lots_summary %}
+                  <a href="{% url 'dashboard:lot' lot.pk %}" class="list-group-item list-group-item-action">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <span class="fw-bold">
+                        <i class="bi bi-box-seam me-2 opacity-50"></i>
+                        {{ lot.name }}
+                      </span>
+                      <span class="badge bg-primary rounded-pill fs-6">{{ lot.count }}</span>
+                    </div>
+                    <div class="mt-2 ps-4">
+                      {% for type, count in lot.types.items %}
+                         <div class="d-flex justify-content-between align-items-center small text-muted">
+                           <span>
+                             {% include "_icon_snippet.html" with type_name=type %}
+                             <span class="ms-1">{{ type|default:"Unknown" }}</span>
+                           </span>
+                           <span>{{ count }}</span>
+                         </div>
+                      {% empty %}
+                        <small class="text-muted d-block">{% translate 'No typed devices in this lot.' %}</small>
+                      {% endfor %}
+                    </div>
+                  </a>
+                {% empty %}
+                  <li class="list-group-item text-muted">{% translate 'No lots found.' %}</li>
+                {% endfor %}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6 mb-3">
+        <div class="card h-100 shadow-sm border-0">
+          <div class="card-body d-flex flex-column">
+            <h5 class="card-title mb-3">
+              <i class="bi bi-tags me-2"></i> {% translate 'Devices by State' %}
+            </h5>
+            <div class="flex-grow-1">
+              <ul class="list-group list-group-flush">
+                {% for state in states_summary %}
+                  <li class="list-group-item">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <span class="fw-bold">
+                        <i class="bi bi-tag me-2 opacity-50"></i>
+                        {{ state.state }}
+                      </span>
+                      <span class="badge bg-secondary rounded-pill fs-6">{{ state.count }}</span>
+                    </div>
+                    <div class="mt-2 ps-4">
+                      {% for type, count in state.types.items %}
+                         <div classs="d-flex justify-content-between align-items-center small text-muted">
+                           <span>
+                             {% include "_icon_snippet.html" with type_name=type %}
+                             <span class="ms-1">{{ type|default:"Unknown" }}</span>
+                           </span>
+                           <span>{{ count }}</span>
+                         </div>
+                      {% empty %}
+                        <small class="text-muted d-block">{% translate 'No typed devices in this state.' %}</small>
+                      {% endfor %}
+                    </div>
+                  </li>
+                {% empty %}
+                  <li class="list-group-item text-muted">{% translate 'No state information found.' %}</li>
+                {% endfor %}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  {% endif %}
+
+{% endblock %}

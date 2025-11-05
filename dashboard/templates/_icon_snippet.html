@@ -1,0 +1,25 @@
+{% load i18n %}
+{% comment %}
+  e.g., {% include "dashboard/_icon_snippet.html" with type_name=type %}
+{% endcomment %}
+
+{% if "Laptop" in type_name %}
+  <i class="bi bi-laptop"></i>
+{% elif "Desktop" in type_name %}
+  <i class="bi bi-pc-display"></i>
+{% elif "Server" in type_name %}
+  <i class="bi bi-server"></i>
+{% elif "SolidStateDrive" in type_name or "HardDrive" in type_name %}
+  <i class="bi bi-device-hdd"></i>
+{% elif "Display" in type_name %}
+  <i class="bi bi-display"></i>
+{% elif "Processor" in type_name %}
+  <i class="bi bi-cpu"></i>
+{% elif "RamModule" in type_name %}
+  <i class="bi bi-memory"></i>
+{% elif "Battery" in type_name %}
+  <i class="bi bi-battery-half"></i>
+{% elif "Motherboard" in type_name %}
+  <i class="bi bi-motherboard"></i>
+{% else %}
+  <i class="bi bi-hdd-stack"></i> {% endif %}
