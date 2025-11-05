@@ -296,3 +296,8 @@ EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=False, cast=bool)
 EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.smtp.EmailBackend')
 EMAIL_FILE_PATH = config('EMAIL_FILE_PATH', default='/tmp/app-messages')
 ENABLE_EMAIL = config('ENABLE_EMAIL', default=True, cast=bool)
+
+#DPP settings
+EMAIL_BACKEND = config('DEMO_IDHUB_DOMAIN', default='https://www.idhub.pangea.org/')
+EMAIL_BACKEND = config('DPP_DEVICE_CREDENTIAL', default='ICTGoodsPassport_UNTP_schema_v1.json')
+EMAIL_BACKEND = config('DPP_IDHUB_TOKEN', default='a112bd75-e106-4658-86e8-b770811ca623')
