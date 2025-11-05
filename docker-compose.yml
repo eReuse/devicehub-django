@@ -15,6 +15,7 @@ services:
       - DEMO_IDHUB_PREDEFINED_TOKEN=${DEMO_IDHUB_PREDEFINED_TOKEN:-}
       - DEMO_PREDEFINED_TOKEN=${DEMO_PREDEFINED_TOKEN:-}
       - DPP=${DPP:-false}
+      - DPP_DEVICE_CREDENTIAL=${DPP_DEVICE_CREDENTIAL:-}
       - TIME_ZONE=${TIME_ZONE:-UTC}
     # TODO manage volumes dev vs prod
     volumes:

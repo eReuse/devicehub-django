@@ -331,10 +331,10 @@ class IssueDigitalPassportView(DeviceLogMixin, View):
         device = Device(id=pk)
         last_evidence = device.last_evidence
 
-        API_ENDPOINT = getattr(settings, "DEMO_IDHUB_DOMAIN", "https://192.168.0.61")
+        API_ENDPOINT = getattr(settings, "DPP_IDHUB_DOMAIN", "https://cloudy5.pc.ac.upc.edu")
         API_ENDPOINT = f"{API_ENDPOINT}/api/v1/issue-credential/"
 
-        API_KEY = getattr(settings, "DPP_IDHUB_TOKEN", "your_default_api_key")
+        API_KEY = getattr(settings, "DPP_IDHUB_TOKEN", "970a6c32-4829-4863-b80a-0a351a6a892f")
         PASSPORT_SCHEMA = getattr(settings, "DPP_DEVICE_CREDENTIAL", "ICTGoodsPassport_UNTP_schema_v1.json")
 
         def convert_ram_to_mb(ram_string):
@@ -393,6 +393,7 @@ class IssueDigitalPassportView(DeviceLogMixin, View):
             'Authorization': f'Bearer {API_KEY}',
             'Content-Type': 'application/json'
         }
+        breakpoint()
 
         try:
             response = requests.post(

@@ -298,6 +298,6 @@ EMAIL_FILE_PATH = config('EMAIL_FILE_PATH', default='/tmp/app-messages')
 ENABLE_EMAIL = config('ENABLE_EMAIL', default=True, cast=bool)
 
 #DPP settings
-EMAIL_BACKEND = config('DEMO_IDHUB_DOMAIN', default='https://www.idhub.pangea.org/')
-EMAIL_BACKEND = config('DPP_DEVICE_CREDENTIAL', default='ICTGoodsPassport_UNTP_schema_v1.json')
-EMAIL_BACKEND = config('DPP_IDHUB_TOKEN', default='a112bd75-e106-4658-86e8-b770811ca623')
+DPP_IDHUB_DOMAIN= config('DEMO_IDHUB_DOMAIN', default='https://www.idhub.pangea.org/')
+DPP_DEVICE_CREDENTIAL = config('DPP_DEVICE_CREDENTIAL', default='ICTGoodsPassport_UNTP_schema_v1.json')
+DPP_IDHUB_TOKEN = config('DEMO_IDHUB_PREDEFINED_TOKEN', default='a112bd75-e106-4658-86e8-b770811ca623')
