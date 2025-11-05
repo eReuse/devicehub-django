@@ -2,6 +2,8 @@ services:
   devicehub-django:
     init: true
     image: ghcr.io/ereuse/devicehub-django:${DEVICEHUB_DOCKER_TAG:-stable}
+    stdin_open: true
+    tty: true
     build:
       context: .
       dockerfile: docker/devicehub-django.Dockerfile
