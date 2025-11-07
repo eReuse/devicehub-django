@@ -5,7 +5,8 @@ app_name = 'transfer'
 
 urlpatterns = [
     path("add/", views.NewTransferView.as_view(), name="add"),
-    path("tag/", views.TransferTagView.as_view(), name="tag"),
+    path("sended/", views.TransferSendedView.as_view(), name="sended"),
+    path("received/", views.TransferReceivedView.as_view(), name="received"),
     path("<int:id>", views.TransferView.as_view(), name="id"),
     path("<int:id>/device/<str:pk>", views.DeviceView.as_view(), name="device"),
     path("<int:id>/device/<str:pk>/property/add",

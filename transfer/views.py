@@ -30,7 +30,7 @@ from transfer.tables import TransferTable, DeviceTable
 logger = logging.getLogger(__name__)
 
 
-class TransferTagView(DashboardView, SingleTableView):
+class TransferTagMixing(DashboardView, SingleTableView):
     template_name = "transfers.html"
     title = _("Transfers")
     breadcrumb = _("transfers") + " / "
@@ -51,6 +51,25 @@ class TransferTagView(DashboardView, SingleTableView):
             'search_query': "",
         })
         return context
+
+class TransferSendedView(TransferTagMixing):
+    breadcrumb = _("transfers") + " / " + _("sended")
+
+    def get_queryset(self):
+        return self.model.objects.filter(
+            owner=self.request.user.institution,
+            type=self.model.Type.SENDED
+        )
+
+
+class TransferReceivedView(TransferTagMixing):
+    breadcrumb = _("transfers") + " / " + _("received")
+
+    def get_queryset(self):
+        return self.model.objects.filter(
+            owner=self.request.user.institution,
+            type=self.model.Type.RECEIVED
+        )
 
 
 class TransferView(DashboardView, SingleTableView):

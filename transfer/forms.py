@@ -49,13 +49,18 @@ class TransferForm(forms.Form):
     def save(self, commit=True):
 
         if commit:
+            typ_trans = {
+                "cbv:BTT-desad": Transfer.Type.SENDED,
+                "cbv:BTT-recadv": Transfer.Type.RECEIVED
+            }
             self.instance = Transfer.objects.create(
                 issuer_did=self.cleaned_data.get("issuer_did"),
                 destination_did=self.cleaned_data.get("did"),
                 destination_name=self.cleaned_data.get("name"),
                 api_destination=self.cleaned_data.get("api_destination"),
                 token_destination=self.cleaned_data.get("token_destination"),
-                owner=self.user.institution
+                owner=self.user.institution,
+                type=typ_trans[self.cleaned_data.get("type_of_transfer")]
             )
             self.send_sign()
             if not self.instance.credential:
