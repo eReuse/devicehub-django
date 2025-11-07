@@ -1,3 +1,4 @@
+import json
 import requests
 import logging
 
@@ -13,6 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 class Transfer(models.Model):
+    created = models.DateTimeField(auto_now_add=True)
     issuer_did = models.CharField(max_length=STR_SIZE)
     owner = models.ForeignKey(Institution, on_delete=models.CASCADE)
     destination_did = models.CharField(max_length=STR_SIZE)
@@ -32,3 +34,32 @@ class Transfer(models.Model):
 
         if 200 < res.status < 300:
             self.credential = res.text
+
+    def get_items(self):
+        try:
+            cred = json.loads(self.credential)
+            items = json.loads(cred['data'])["credentialSubject"]['epcList']
+            for i in items:
+                i["transfer"] = self.id
+            return items
+        except Exception:
+            return []
+
+    def get_evidences(self):
+        try:
+            cred = json.loads(self.credential)
+            return json.loads(cred['data'])["evidences"]
+        except Exception:
+            return []
+
+    @property
+    def number_items(self):
+        try:
+            cred = json.loads(self.credential)
+            return len(json.loads(cred['data'])["credentialSubject"]['epcList'])
+        except Exception:
+            return 0
+
+    @property
+    def is_transfer(self):
+        return True

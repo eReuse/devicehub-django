@@ -43,7 +43,6 @@ from lot.models import (
     Beneficiary,
     Donor,
     DeviceBeneficiary,
-    Transfer
 )
 from dhemail.views import (
     NotifyEmail,
@@ -120,7 +119,7 @@ class DeleteLotsView(LotSuccessUrlMixin, DashboardView, TemplateView):
 
     def get(self, request, *args, **kwargs):
         if "transfer" in request.GET:
-            url = reverse_lazy('lot:transfer')
+            url = reverse_lazy('transfer:add')
             query_params = request.GET.copy()
             query_params.pop('transfer', None)
             query_string = query_params.urlencode()
@@ -326,22 +325,6 @@ class LotsTagsView(DashboardView, SingleTableView):
             cache.set(cache_key, counts, timeout=250)
 
         return counts
-
-
-class TransferTagView(LotsTagsView):
-    template_name = "lots.html"
-    title = _("Transfers")
-    breadcrumb = _("transfers") + " /"
-    success_url = reverse_lazy('dashboard:unassigned')
-    model = Transfer
-    table_class = LotTable
-    paginate_by = 10
-
-    def get_queryset(self):
-        return Transfer.objects.filter(owner=self.request.user.institution)
-
-    def get_counts(self):
-        return self.get_queryset.count()
 
 
 class DashboardLotMixing(DashboardView):

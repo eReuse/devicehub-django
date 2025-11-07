@@ -53,11 +53,11 @@ class UserProperty(Property):
 
 
 class Evidence:
-    def __init__(self, uuid):
+    def __init__(self, uuid, doc={}):
         self.uuid = uuid
         self.uploaded_by = None
         self.owner = None
-        self.doc = None
+        self.doc = doc
         self.created = None
         self.dmi = None
         self.inxi = None
@@ -105,6 +105,9 @@ class Evidence:
         if self.is_legacy():
             return
 
+        self.semi_parser()
+
+    def semi_parser(self):
         if self.doc.get("credentialSubject"):
             for ev in self.doc["evidence"]:
                 if "dmidecode" == ev.get("operation"):

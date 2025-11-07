@@ -54,7 +54,8 @@ class TransferForm(forms.Form):
                 destination_did=self.cleaned_data.get("did"),
                 destination_name=self.cleaned_data.get("name"),
                 api_destination=self.cleaned_data.get("api_destination"),
-                token_destination=self.cleaned_data.get("token_destination")
+                token_destination=self.cleaned_data.get("token_destination"),
+                owner=self.user.institution
             )
             self.send_sign()
             if not self.instance.credential:
@@ -140,12 +141,12 @@ class TransferForm(forms.Form):
         return devs
 
     def get_evidences(self):
-        evs = []
+        evs = {}
         for lot in self.lots:
             for d in lot.devices:
                 dev = Device(id=d.device_id)
                 dev.get_last_evidence()
-                evs.append(dev.last_evidence.doc)
+                evs[dev.shortid] = dev.last_evidence.doc
         return evs
 
     def send_sign(self):
