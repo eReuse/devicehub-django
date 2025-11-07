@@ -365,8 +365,9 @@ class PhotoForm(forms.Form):
         }
 
         # Save JSON snapshot to disk
-        path_name = save_in_disk(doc, self.user.institution.name, place="placeholder")
-        move_json(path_name, self.user.institution.name, place="placeholder")
+        path_name = save_in_disk(doc, self.user.institution.name)
+        create_index(doc, self.user)
+        move_json(path_name, self.user.institution.name)
 
         # Create SystemProperty for tracking
         SystemProperty.objects.create(
@@ -379,6 +380,4 @@ class PhotoForm(forms.Form):
         # todo: should i use this function instead?
         # create_property(doc, self.user, commit=commit)
 
-        # Index in Xapian
-        create_index(doc, self.user)
-        return self.uuid
+        return doc
