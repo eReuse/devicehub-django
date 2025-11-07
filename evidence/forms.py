@@ -15,7 +15,9 @@ from device.models import Device
 from evidence.parse import Build
 from evidence.models import SystemProperty, UserProperty
 from utils.save_snapshots import move_json, save_in_disk
+from utils.photo_evidence import save_photo_in_disk, get_photos_dir
 from action.models import DeviceLog
+from evidence.image_processing import process_image
 
 
 class UploadForm(forms.Form):
@@ -311,8 +313,17 @@ class PhotoForm(forms.Form):
 
         photo.seek(0)
         file_content = photo.read()
-        self.uuid = hashlib.md5(file_content).hexdigest()
+        sha256 = hashlib.sha256(file_content).hexdigest()
         photo.seek(0)  # Reset file pointer
+        name = f"{sha256}{file_ext}"
+
+        # Check if photo already exists based on hash
+        photo_path = os.path.join(
+            get_photos_dir(self.user.institution.name),
+            name,
+        )
+        if os.path.exists(photo_path):
+            raise ValidationError(f"Photo already exists.")
 
         self.photo_data = {
             'file': photo,
@@ -321,21 +332,53 @@ class PhotoForm(forms.Form):
             'mime_type': content_type,
             'size': photo.size,
             'original_name': photo.name,
+            'name': name,
+            'hash': sha256
         }
-
         return photo
 
     def save(self, commit=True):
         if not commit or not self.user or not self.photo_data:
             return
 
-        # Store photo on specific EVIDENCES_DIR/photo folder
-        photos_dir = os.path.join(settings.EVIDENCES_DIR, 'photos')
-        if not os.path.exists(photos_dir):
-            os.makedirs(photos_dir, exist_ok=True)
+        file_path = save_photo_in_disk(self.photo_data, self.user.institution.name)
 
-        filename = f"{self.uuid}{self.photo_data['extension']}"
-        file_path = os.path.join(photos_dir, filename)
+        # Process image for OCR and barcode detection
+        processing_result = process_image(file_path)
 
-        with open(file_path, 'wb') as f:
-            f.write(self.photo_data['content'])
+        # Build document structure
+        self.photo_data.pop('content', None)
+        self.photo_data.pop('file', None)
+        _uuid = str(uuid.uuid4())
+        doc = {
+            'uuid': _uuid,
+            'endTime': datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
+            'software': 'DeviceHub',
+            'type': 'PhotoEvidence',
+            'photo': self.photo_data,
+            'ocr': {
+                'text': processing_result.get('ocr_text'),
+                'error': processing_result.get('ocr_error')
+            },
+            'barcodes': processing_result.get('barcodes', []),
+            'barcode_error': processing_result.get('barcode_error')
+        }
+
+        # Save JSON snapshot to disk
+        path_name = save_in_disk(doc, self.user.institution.name, place="placeholder")
+        move_json(path_name, self.user.institution.name, place="placeholder")
+
+        # Create SystemProperty for tracking
+        SystemProperty.objects.create(
+            uuid=_uuid,
+            key='PHOTO_EVIDENCE',
+            value=doc,
+            owner=self.user.institution,
+            user=self.user
+        )
+        # todo: should i use this function instead?
+        # create_property(doc, self.user, commit=commit)
+
+        # Index in Xapian
+        create_index(doc, self.user)
+        return self.uuid
