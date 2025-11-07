@@ -299,67 +299,92 @@ class InventoryOverviewView(LoginRequiredMixin, TemplateView):
         institution = self.request.user.institution
         cache_key = f"dashboard_stats_{institution.id}"
 
-        # cache.delete(cache_key) # Uncomment to force-refresh cache
-
+        cache.delete(cache_key)
         cached_context = cache.get(cache_key)
         if cached_context:
             context.update(cached_context)
             return context
 
-        # --- 1. GET ALL DEVICE OBJECTS (THE SLOW N+1 PART) ---
+
+        # getting all devices ID
         all_device_ids_list, _ = Device.get_all(institution, limit=None)
         unassigned_device_ids_list, _ = Device.get_unassigned(institution, limit=None)
         unassigned_ids_set = {d.id for d in unassigned_device_ids_list}
 
-        all_devices_full = [Device(id=d.id) for d in all_device_ids_list]
+        total_devices = len(all_device_ids_list)
+        unassigned_devices = len(unassigned_ids_set)
+        assigned_devices = total_devices - unassigned_devices
 
-        assigned_devices_full = [d for d in all_devices_full if d.id not in unassigned_ids_set]
-        unassigned_devices_full = [d for d in all_devices_full if d.id in unassigned_ids_set]
-
-        total_devices = len(all_devices_full)
-        unassigned_devices = len(unassigned_devices_full)
-        assigned_devices = len(assigned_devices_full)
-
-        # --- 2. GET TYPE-BREAKDOWNS FOR STAT CARDS ---
-
-        # MODIFIED: Get top 4 types for the Total card
-        total_types_counter = Counter(d.type for d in all_devices_full if d.type)
-        total_types_summary = dict(total_types_counter.most_common(4))
-
-        assigned_types_counter = Counter(d.type for d in assigned_devices_full if d.type)
-        assigned_types_summary = dict(assigned_types_counter.most_common(3))
-
-        unassigned_types_counter = Counter(d.type for d in unassigned_devices_full if d.type)
-        unassigned_types_summary = dict(unassigned_types_counter.most_common(3))
-
-
-        # --- 3. GET STATE-BREAKDOWN (FAST SQL + PYTHON) ---
+        # States
         latest_prop_created_sq = SystemProperty.objects.filter(value=OuterRef('value'), owner=institution).order_by('-created')
         latest_uuid_sq = SystemProperty.objects.filter(value=OuterRef('value'), created=Subquery(latest_prop_created_sq.values('created')[:1])).values('uuid')[:1]
         latest_state_name_sq = State.objects.filter(snapshot_uuid=OuterRef('latest_uuid')).order_by('-date')
-
         device_state_qset = SystemProperty.objects.filter(
             owner=institution
         ).values('value').distinct().annotate(
             latest_uuid=Subquery(latest_uuid_sq),
             current_state_name=Subquery(latest_state_name_sq.values('state')[:1])
         ).values('value', 'current_state_name')
-
         device_id_to_state_map = {
             item['value']: item.get('current_state_name') or 'Unknown'
             for item in device_state_qset
         }
 
+        # Lots
+        device_id_to_lot_map = {}
+        all_device_lots = DeviceLot.objects.filter(
+            lot__owner=institution,
+            lot__archived=False
+        ).select_related('lot')
+        for dl in all_device_lots:
+            device_id_to_lot_map.setdefault(dl.device_id, []).append(dl.lot)
+
+
+        # PROCESS ALL DEVICES IN BATCHES
+        total_types_counter = Counter()
+        assigned_types_counter = Counter()
+        unassigned_types_counter = Counter()
         states_breakdown = {}
-        for d in all_devices_full:
-            state_name = device_id_to_state_map.get(d.id, 'Unknown')
-            device_type = d.type or 'Unknown'
+        lots_breakdown = {}
 
-            if state_name not in states_breakdown:
-                states_breakdown[state_name] = {'total': 0, 'types': Counter()}
+        batch_size = 250  # 250 at a time
 
-            states_breakdown[state_name]['total'] += 1
-            states_breakdown[state_name]['types'][device_type] += 1
+        for i in range(0, total_devices, batch_size):
+            # Get ids
+            batch_id_objects = all_device_ids_list[i:i + batch_size]
+
+            #instatiate by batch
+            batch_devices = [Device(id=d.id) for d in batch_id_objects]
+
+            for d in batch_devices:
+                device_type = d.type or 'Unknown'
+                total_types_counter[device_type] += 1
+
+                is_assigned = d.id not in unassigned_ids_set
+
+                if is_assigned:
+                    assigned_types_counter[device_type] += 1
+                else:
+                    unassigned_types_counter[device_type] += 1
+
+                state_name = device_id_to_state_map.get(d.id, 'Unknown')
+                if state_name not in states_breakdown:
+                    states_breakdown[state_name] = {'total': 0, 'types': Counter()}
+                states_breakdown[state_name]['total'] += 1
+                states_breakdown[state_name]['types'][device_type] += 1
+
+                if is_assigned:
+                    lots_for_device = device_id_to_lot_map.get(d.id, [])
+                    for lot in lots_for_device:
+                        if lot.pk not in lots_breakdown:
+                            lots_breakdown[lot.pk] = {'name': lot.name, 'total': 0, 'types': Counter()}
+                        lots_breakdown[lot.pk]['total'] += 1
+                        lots_breakdown[lot.pk]['types'][device_type] += 1
+
+
+        total_types_summary = dict(total_types_counter.most_common(4))
+        assigned_types_summary = dict(assigned_types_counter.most_common(3))
+        unassigned_types_summary = dict(unassigned_types_counter.most_common(3))
 
         states_summary = []
         for name, data in states_breakdown.items():
@@ -369,31 +394,6 @@ class InventoryOverviewView(LoginRequiredMixin, TemplateView):
                 'types': dict(data['types'].most_common(3))
             })
         states_summary = sorted(states_summary, key=lambda x: x['count'], reverse=True)
-
-
-        # --- 4. GET LOT-BREAKDOWN (FAST SQL + PYTHON) ---
-        device_id_to_lot_map = {}
-        all_device_lots = DeviceLot.objects.filter(
-            lot__owner=institution,
-            lot__archived=False
-        ).select_related('lot')
-
-        for dl in all_device_lots:
-            if dl.device_id not in device_id_to_lot_map:
-                device_id_to_lot_map[dl.device_id] = []
-            device_id_to_lot_map[dl.device_id].append(dl.lot)
-
-        lots_breakdown = {}
-        for d in assigned_devices_full:
-            lots_for_device = device_id_to_lot_map.get(d.id, [])
-            device_type = d.type or 'Unknown'
-
-            for lot in lots_for_device:
-                if lot.pk not in lots_breakdown:
-                    lots_breakdown[lot.pk] = {'name': lot.name, 'total': 0, 'types': Counter()}
-
-                lots_breakdown[lot.pk]['total'] += 1
-                lots_breakdown[lot.pk]['types'][device_type] += 1
 
         lots_summary = []
         for pk, data in lots_breakdown.items():
@@ -405,11 +405,9 @@ class InventoryOverviewView(LoginRequiredMixin, TemplateView):
             })
         lots_summary = sorted(lots_summary, key=lambda x: x['count'], reverse=True)[:10]
 
-
-        # --- 5. COMPILE FINAL CONTEXT & CACHE ---
         final_context = {
             'total_devices': total_devices,
-            'total_types_summary': total_types_summary, # MODIFIED
+            'total_types_summary': total_types_summary,
             'unassigned_devices': unassigned_devices,
             'unassigned_types_summary': unassigned_types_summary,
             'assigned_devices': assigned_devices,
