@@ -12,7 +12,11 @@
 
       <ul class="list-group list-group-flush">
         {% for lot in group.list %}
+  	  {% if lot.is_transfer %}
+          <a href="{% url 'transfer:id' lot.id %}" class="list-group-item list-group-item-action py-2">
+	  {% else %}
           <a href="{% url 'dashboard:lot' lot.id %}" class="list-group-item list-group-item-action py-2">
+	  {% endif %}
             <div class="d-flex justify-content-between align-items-center">
               <div>
                 <strong class="h6">{{ lot.name }}</strong>
