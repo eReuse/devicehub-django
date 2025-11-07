@@ -27,6 +27,10 @@ class TransferTable(tables.Table):
         attrs={
         }
     )
+    lot = tables.Column(
+       linkify=("dashboard:lot", {"pk": tables.A("get_id_lot")}),
+       verbose_name=_("Lot"),
+    )
     created = tables.DateColumn(
         format="Y-m-d",
         verbose_name=_("Created On"),
@@ -40,6 +44,7 @@ class TransferTable(tables.Table):
             "issuer_did",
             "destination_name",
             "number_items",
+            "lot",
             "created"
         )
         order_by = ("-created",)

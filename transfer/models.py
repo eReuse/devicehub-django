@@ -4,8 +4,10 @@ import logging
 
 from django.db import models
 from django.conf import settings
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from utils.constants import STR_SIZE
+
 
 from user.models import Institution
 
@@ -14,7 +16,11 @@ logger = logging.getLogger(__name__)
 
 
 class Transfer(models.Model):
-    created = models.DateTimeField(auto_now_add=True)
+    class Type(models.IntegerChoices):
+        SENDED = 0, _("Sended")
+        RECEIVED = 1, _("Received")
+
+    created = models.DateTimeField(default=timezone.now)
     issuer_did = models.CharField(max_length=STR_SIZE)
     owner = models.ForeignKey(Institution, on_delete=models.CASCADE)
     destination_did = models.CharField(max_length=STR_SIZE)
@@ -22,6 +28,7 @@ class Transfer(models.Model):
     credential = models.CharField(max_length=5000)
     api_destination = models.CharField(max_length=5000)
     token_destination = models.CharField(max_length=5000)
+    type = models.SmallIntegerField(choices=Type.choices, default=Type.SENDED)
 
     def send_transfer(self):
         if not all([self.credential, self.api_destination, self.token_destination]):
@@ -63,3 +70,11 @@ class Transfer(models.Model):
     @property
     def is_transfer(self):
         return True
+
+    @property
+    def lot(self):
+        return self.lot_set.first().name
+
+    @property
+    def get_id_lot(self):
+        return self.lot_set.first().id
