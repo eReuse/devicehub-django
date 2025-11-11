@@ -22,9 +22,4 @@ class Migration(migrations.Migration):
                 to="transfer.transfer",
             ),
         ),
-        migrations.AddField(
-            model_name="lottag",
-            name="transfer",
-            field=models.BooleanField(default=False),
-        ),
     ]
