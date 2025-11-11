@@ -349,9 +349,9 @@ class PhotoForm(forms.Form):
         # Build document structure
         self.photo_data.pop('content', None)
         self.photo_data.pop('file', None)
-        _uuid = str(uuid.uuid4())
+        self.uuid = str(uuid.uuid4())
         doc = {
-            'uuid': _uuid,
+            'uuid': self.uuid,
             'endTime': datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
             'software': 'DeviceHub',
             'type': 'PhotoEvidence',
@@ -369,11 +369,12 @@ class PhotoForm(forms.Form):
         create_index(doc, self.user)
         move_json(path_name, self.user.institution.name)
 
-        # Create SystemProperty for tracking
+        # Create SystemProperty with key='ereuse24' so photo appears in evidence list
+        # Using photo hash as the value (similar to device CHID for snapshots)
         SystemProperty.objects.create(
-            uuid=_uuid,
-            key='PHOTO_EVIDENCE',
-            value=doc,
+            uuid=self.uuid,
+            key='ereuse24',
+            value=self.photo_data['hash'],
             owner=self.user.institution,
             user=self.user
         )
