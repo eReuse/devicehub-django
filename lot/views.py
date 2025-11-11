@@ -94,8 +94,7 @@ class NewLotView(LotSuccessUrlMixin, DashboardView, CreateView):
         form = super().get_form()
         form.fields["type"].queryset = LotTag.objects.filter(
             owner=self.request.user.institution,
-            inbox=False,
-            transfer=False
+            inbox=False
         )
         return form
 

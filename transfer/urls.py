@@ -4,7 +4,7 @@ from transfer import views
 app_name = 'transfer'
 
 urlpatterns = [
-    path("add/", views.NewTransferView.as_view(), name="add"),
+    path("add/<int:lot_id>", views.NewTransferView.as_view(), name="add"),
     path("sended/", views.TransferSendedView.as_view(), name="sended"),
     path("received/", views.TransferReceivedView.as_view(), name="received"),
     path("<int:id>", views.TransferView.as_view(), name="id"),
