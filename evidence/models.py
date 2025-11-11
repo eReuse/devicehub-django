@@ -263,6 +263,9 @@ class Evidence:
     def is_web_snapshot(self):
         return self.doc.get("type") == "WebSnapshot"
 
+    def is_photo_evidence(self):
+        return self.doc.get("type") == "PhotoEvidence"
+
     def did_document(self):
         if not self.doc.get("credentialSubject"):
             return ''
