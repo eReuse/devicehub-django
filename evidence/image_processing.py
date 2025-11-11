@@ -98,7 +98,7 @@ def extract_barcodes(image_path):
     try:
         # Run zbarimg with --quiet (no verbose output) and --raw (only data)
         result = subprocess.run(
-            ['zbarimg', '--quiet', '--raw', image_path],
+            ['zbarimg', '--quiet', image_path],
             capture_output=True,
             text=True,
             timeout=30,
@@ -119,8 +119,11 @@ def extract_barcodes(image_path):
         if result.stdout:
             for line in result.stdout.strip().split('\n'):
                 if line:
-                    barcodes.append(line)
-
+                    # split at first colon to separate type and data
+                    parts = line.split(':', 1)
+                    if len(parts) == 2:
+                        _type, data = parts
+                        barcodes.append({'type': _type, 'data': data.strip()})
         return {
             'barcodes': barcodes,
             'error': None
