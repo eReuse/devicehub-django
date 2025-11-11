@@ -117,15 +117,6 @@ class DeleteLotsView(LotSuccessUrlMixin, DashboardView, TemplateView):
     breadcrumb = "lots / Delete"
 
     def get(self, request, *args, **kwargs):
-        if "transfer" in request.GET:
-            url = reverse_lazy('transfer:add')
-            query_params = request.GET.copy()
-            query_params.pop('transfer', None)
-            query_string = query_params.urlencode()
-            if query_string:
-                url = f"{url}?{query_string}"
-            return redirect(url)
-
         selected_ids = request.GET.getlist('select')
         if not selected_ids:
             messages.error(request, _("No lots selected for deletion."))
