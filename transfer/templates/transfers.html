@@ -23,5 +23,20 @@
   </div>
 
   <h3>{{ subtitle }}</h3>
+  {% if lot %}
+  <div class="d-flex justify-content-between align-items-center p-3 bg-light border-bottom">
+    <h5 class="mb-0">
+      {% if lot.archived %}
+      <i class="bi bi-archive text-warning small"></i>
+      <a href="{% url 'dashboard:lot' lot.id %}" class="text-decoration-none">{{ lot.name }}</a>
+        <small class="text-muted ps-1"> {% trans "archived" %}</small>
+      {% else %}
+        <i class="bi bi-folder2-open small"></i>
+        <a href="{% url 'dashboard:lot' lot.id %}" class="text-decoration-none">{{ lot.name }}</a>
+        <small class="text-muted ps-1"> {% trans "open" %}</small>
+      {% endif %}
+    </h5>
+  </div>
+  {% endif %}
   {% render_table table %}
 {% endblock %}

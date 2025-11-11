@@ -24,7 +24,6 @@ class LotTag(models.Model):
     owner = models.ForeignKey(Institution, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     inbox = models.BooleanField(default=False)
-    transfer = models.BooleanField(default=False)
     order = models.PositiveIntegerField(default=0)
 
     def __str__(self):

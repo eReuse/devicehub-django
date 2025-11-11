@@ -6,7 +6,6 @@ from django.conf import settings
 from django.urls import reverse
 from django import forms
 from device.models import Device
-from lot.models import Lot
 from transfer.models import Transfer
 
 
@@ -20,35 +19,20 @@ class TransferForm(forms.Form):
     type_of_transfer = forms.ChoiceField(
         choices=[("cbv:BTT-desad", _("Send")), ("cbv:BTT-recadv", _("Receibe"))]
     )
-    selected_ids = forms.MultipleChoiceField(
-        choices=[],
-        widget=forms.MultipleHiddenInput,
-        required=False,
-    )
 
     def __init__(self, *args, **kwargs):
-        choices = kwargs.get("initial").get('selected_ids', [])
-        if not choices:
-            choices = kwargs.get("data", {}).getlist("selected_ids")
         self.user = kwargs.pop('user', [])
         self.website = kwargs.pop('website', "")
+        self.lot = kwargs.pop('lot')
 
         super().__init__(*args, **kwargs)
-        self.fields['selected_ids'].choices = [(x, x) for x in choices]
-
-
-    def clean(self):
-        selected_ids = self.cleaned_data.get("selected_ids")
-        self.lots = Lot.objects.filter(
-            id__in=selected_ids,
-            owner=self.user.institution
-        )
-
-        return self.cleaned_data
 
     def save(self, commit=True):
 
         if commit:
+            if self.lot.transfer:
+                return
+
             typ_trans = {
                 "cbv:BTT-desad": Transfer.Type.SENDED,
                 "cbv:BTT-recadv": Transfer.Type.RECEIVED
@@ -69,17 +53,9 @@ class TransferForm(forms.Form):
                 return
 
             self.instance.save()
+            self.lot.transfer = self.instance
+            self.lot.save()
 
-            c = 0
-            for lot in self.lots:
-                if lot.transfer:
-                    continue
-                c = 1
-                lot.transfer = self.instance
-                lot.save()
-
-            if not c:
-                self.instance.delete()
         return
 
     def get_data(self):
@@ -134,24 +110,22 @@ class TransferForm(forms.Form):
 
     def get_epc_list(self):
         devs = []
-        for lot in self.lots:
-            for d in lot.devices:
-                dev = Device(id=d.device_id)
-                name = "{} {} {}".format(dev.type, dev.manufacturer, dev.model)
-                devs.append({
-                    "type": ["Item"],
-                    "id": dev.shortid,
-                    "name": name
-                })
+        for d in self.lot.devices:
+            dev = Device(id=d.device_id)
+            name = "{} {} {}".format(dev.type, dev.manufacturer, dev.model)
+            devs.append({
+                "type": ["Item"],
+                "id": dev.shortid,
+                "name": name
+            })
         return devs
 
     def get_evidences(self):
         evs = {}
-        for lot in self.lots:
-            for d in lot.devices:
-                dev = Device(id=d.device_id)
-                dev.get_last_evidence()
-                evs[dev.shortid] = dev.last_evidence.doc
+        for d in self.lot.devices:
+            dev = Device(id=d.device_id)
+            dev.get_last_evidence()
+            evs[dev.shortid] = dev.last_evidence.doc
         return evs
 
     def send_sign(self):
