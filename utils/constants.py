@@ -7,7 +7,6 @@ STR_SIZE = 64
 STR_BIG_SIZE = 128
 STR_EXTEND_SIZE = 256
 
-
 # Algorithms for build hids
 EREUSE24 = [
     "manufacturer",
@@ -28,11 +27,19 @@ EREUSE22 = [
     "version"
 ]
 
-ALGOS = {
-    "ereuse24": EREUSE24,
-    "ereuse22": EREUSE22
+# Algorithm to build photo evidences
+PHOTO25 = {
+    "photo": {"extension", "mime_type", "size", "original_name", "name", "hash"},
+    "ocr": {'text', 'error'},
+    "barcodes": ['type', 'data'],
+    "barcode_error": {'error'}
 }
 
+ALGOS = {
+    "ereuse24": EREUSE24,
+    "ereuse22": EREUSE22,
+    "photo25": PHOTO25
+}
 
 CHASSIS_DH = {
     'Tower': {'desktop', 'low-profile', 'tower', 'server'},
@@ -51,10 +58,9 @@ CHASSIS_DH = {
     'Virtual': {'_virtual'},
 }
 
-
 DATASTORAGEINTERFACE = [
- 'ATA',
- 'USB',
- 'PCI',
- 'NVME',
+    'ATA',
+    'USB',
+    'PCI',
+    'NVME',
 ]

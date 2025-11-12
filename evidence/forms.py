@@ -350,11 +350,13 @@ class PhotoForm(forms.Form):
         self.photo_data.pop('content', None)
         self.photo_data.pop('file', None)
         self.uuid = str(uuid.uuid4())
+        algo_key = 'photo25'
+
         doc = {
             'uuid': self.uuid,
+            'type': algo_key,
             'endTime': datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
             'software': 'DeviceHub',
-            'type': 'PhotoEvidence',
             'photo': self.photo_data,
             'ocr': {
                 'text': processing_result.get('ocr_text'),
@@ -369,16 +371,14 @@ class PhotoForm(forms.Form):
         create_index(doc, self.user)
         move_json(path_name, self.user.institution.name)
 
-        # Create SystemProperty with key='ereuse24' so photo appears in evidence list
+        # Create SystemProperty with key='photo25' so photo appears in evidence list
         # Using photo hash as the value (similar to device CHID for snapshots)
         SystemProperty.objects.create(
             uuid=self.uuid,
-            key='ereuse24',
+            key=algo_key,
             value=self.photo_data['hash'],
             owner=self.user.institution,
             user=self.user
         )
-        # todo: should i use this function instead?
-        # create_property(doc, self.user, commit=commit)
 
         return doc

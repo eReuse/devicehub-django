@@ -4,7 +4,6 @@ import hashlib
 from dmidecode import DMIParse
 from django.db import models
 
-
 from django.db.models import Q
 from utils.constants import STR_EXTEND_SIZE, CHASSIS_DH
 from evidence.xapian import search
@@ -22,7 +21,7 @@ class Property(models.Model):
     value = models.CharField(max_length=STR_EXTEND_SIZE)
 
     class Meta:
-        #Only for shared behaviour, it is not a table
+        # Only for shared behaviour, it is not a table
         abstract = True
 
 
@@ -37,7 +36,6 @@ class SystemProperty(Property):
 
 
 class UserProperty(Property):
-
     class Type(models.IntegerChoices):
         USER = 1, "User"
         ERASE_SERVER = 2, "EraseServer"
@@ -232,22 +230,22 @@ class Evidence:
     def get_all(cls, user):
         return SystemProperty.objects.filter(
             owner=user.institution,
-            key="ereuse24",
+            key__in=["ereuse24", "photo25"],
         ).order_by("-created").distinct()
 
     @classmethod
     def get_user_evidences(cls, user):
         return SystemProperty.objects.filter(
             owner=user.institution,
-            key="ereuse24",
+            key__in=["ereuse24", "photo25"],
             user=user
         ).order_by("-created").distinct()
 
     @classmethod
-    def get_device_evidences(cls,user, uuids):
+    def get_device_evidences(cls, user, uuids):
         return SystemProperty.objects.filter(
             owner=user.institution,
-            key="ereuse24",
+            key__in=["ereuse24", "photo25"],
             uuid__in=uuids
         ).order_by("-created").distinct()
 
@@ -264,7 +262,7 @@ class Evidence:
         return self.doc.get("type") == "WebSnapshot"
 
     def is_photo_evidence(self):
-        return self.doc.get("type") == "PhotoEvidence"
+        return self.doc.get("type") == "photo25"
 
     def did_document(self):
         if not self.doc.get("credentialSubject"):
@@ -273,6 +271,6 @@ class Evidence:
         if not "did:web" in did:
             return ''
 
-        return  "https://{}/did.json".format(
+        return "https://{}/did.json".format(
             did.split("did:web:")[1].replace(":", "/")
         )
