@@ -3,10 +3,28 @@
 
 {% block content %}
 
-  <div class="col d-flex align-items-center mb-4">
+  <div class="d-flex align-items-center justify-content-between mb-4">
+
+      {% if last_updated %}
+        <small class="text-muted ms-3 fw-normal" style="font-size: 0.9rem;">
+          {% translate "Last updated:" %} {{ last_updated|date:"N j, Y, P" }}
+        </small>
+      {% endif %}
+
     <div class="d-flex align-items-center">
-      <i class="bi bi-speedometer2 fs-2 me-3"></i>
-      <h3 class="mb-0">{% translate 'Inventory Overview' %}</h3>
+      {% if user.is_admin %}
+        <a href="?refresh=true" class="btn btn-outline-danger btn-sm me-3"
+           title="{% translate 'Force a full refresh of all dashboard data' %}">
+          <i class="bi bi-arrow-clockwise me-1"></i>
+          {% translate 'Refresh Cache' %}
+        </a>
+      {% endif %}
+
+      <a href="{% url 'user:customize_dashboard' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-person-check me-2"></i>
+        {% translate 'Customize' %}
+      </a>
+
     </div>
   </div>
 
@@ -19,7 +37,7 @@
     <div class="row mb-4">
 
       <div class="col-md-4 mb-3">
-        <div class="card h-100 shadow-sm border-0 text-bg-primary">
+        <div class="card h-100 shadow-sm border-0 text-bg-primary rounded-4">
           <div class="card-body d-flex flex-column">
             <h5 class="card-title text-uppercase opacity-75 mb-3">{% translate 'Total Devices' %}</h5>
             <div class="flex-grow-1">
@@ -46,7 +64,7 @@
       </div>
 
       <div class="col-md-4 mb-3">
-        <div class="card h-100 shadow-sm border-0 text-bg-success">
+        <div class="card h-100 shadow-sm border-0 text-bg-success rounded-4">
           <div class="card-body d-flex flex-column">
             <h5 class="card-title text-uppercase opacity-75 mb-3">{% translate 'Assigned Devices' %}</h5>
             <div class="flex-grow-1">
@@ -74,7 +92,7 @@
       </div>
 
       <div class="col-md-4 mb-3">
-        <div class="card h-100 shadow-sm border-0 text-bg-warning">
+        <div class="card h-100 shadow-sm border-0 text-bg-warning rounded-4">
           <div class="card-body d-flex flex-column">
             <h5 class="card-title text-uppercase opacity-75 mb-3">{% translate 'Unassigned (Inbox)' %}</h5>
             <div class="flex-grow-1">
@@ -109,15 +127,20 @@
     <div class="row mb-4">
 
       <div class="col-md-6 mb-3">
-        <div class="card h-100 shadow-sm border-0">
+        <div class="card h-100 shadow-sm border-0 rounded-4">
           <div class="card-body d-flex flex-column">
             <h5 class="card-title mb-3">
-              <i class="bi bi-box-seam me-2"></i> {% translate 'Devices by Lot (Top 10)' %}
+              <i class="bi bi-box-seam me-2"></i>
+              {% if has_pinned_lots %}
+                {% translate 'Pinned Lots' %}
+              {% else %}
+                {% translate 'Devices by Lot (Top 10)' %}
+              {% endif %}
             </h5>
             <div class="flex-grow-1">
               <ul class="list-group list-group-flush">
                 {% for lot in lots_summary %}
-                  <a href="{% url 'dashboard:lot' lot.pk %}" class="list-group-item list-group-item-action">
+                  <a href="{% url 'dashboard:lot' lot.pk %}" class="list-group-item list-group-item-action py-2">
                     <div class="d-flex justify-content-between align-items-center">
                       <span class="fw-bold">
                         <i class="bi bi-box-seam me-2 opacity-50"></i>
@@ -140,7 +163,13 @@
                     </div>
                   </a>
                 {% empty %}
-                  <li class="list-group-item text-muted">{% translate 'No lots found.' %}</li>
+                  <li class="list-group-item text-muted py-2">
+                    {% if has_pinned_lots %}
+                      {% translate 'No devices found in your pinned lots.' %}
+                    {% else %}
+                      {% translate 'No lots found.' %}
+                    {% endif %}
+                  </li>
                 {% endfor %}
               </ul>
             </div>
@@ -149,15 +178,20 @@
       </div>
 
       <div class="col-md-6 mb-3">
-        <div class="card h-100 shadow-sm border-0">
+        <div class="card h-100 shadow-sm border-0 rounded-4">
           <div class="card-body d-flex flex-column">
             <h5 class="card-title mb-3">
-              <i class="bi bi-tags me-2"></i> {% translate 'Devices by State' %}
+              <i class="bi bi-tags me-2"></i>
+              {% if has_pinned_states %}
+                {% translate 'Pinned States' %}
+              {% else %}
+                {% translate 'Devices by State' %}
+              {% endif %}
             </h5>
             <div class="flex-grow-1">
               <ul class="list-group list-group-flush">
                 {% for state in states_summary %}
-                  <li class="list-group-item">
+                  <li class="list-group-item py-2">
                     <div class="d-flex justify-content-between align-items-center">
                       <span class="fw-bold">
                         <i class="bi bi-tag me-2 opacity-50"></i>
@@ -167,7 +201,7 @@
                     </div>
                     <div class="mt-2 ps-4">
                       {% for type, count in state.types.items %}
-                         <div classs="d-flex justify-content-between align-items-center small text-muted">
+                        <div classG="d-flex justify-content-between align-items-center small text-muted">
                            <span>
                              {% include "_icon_snippet.html" with type_name=type %}
                              <span class="ms-1">{{ type|default:"Unknown" }}</span>
@@ -180,14 +214,19 @@
                     </div>
                   </li>
                 {% empty %}
-                  <li class="list-group-item text-muted">{% translate 'No state information found.' %}</li>
+                  <li class="list-group-item text-muted py-2">
+                    {% if has_pinned_states %}
+                      {% translate 'No devices found in your pinned states.' %}
+                    {% else %}
+                      {% translate 'No state information found.' %}
+                    {% endif %}
+                  </li>
                 {% endfor %}
               </ul>
             </div>
           </div>
         </div>
       </div>
-
     </div>
   {% endif %}
 

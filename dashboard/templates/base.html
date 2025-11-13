@@ -201,6 +201,11 @@
                       {% trans 'All' %}
                     </a>
                   </li>
+		              <li class="nav-item">
+                    <a class="nav-link{% if path == 'overview' %} active2{% endif %}" href="{% url 'dashboard:overview' %}">
+                      {% trans 'Overview' %}
+                    </a>
+                  </li>
                 </ul>
               </li>
               <li class="nav-item">
@@ -220,7 +225,7 @@
 		  {% else %}
                     <a class="nav-link{% if path == 'lot:tags' and tag.id == selected_tag_id %} active2{% endif %}" href="{% url 'lot:tags' tag.id %}">
                       {{ tag.name }}
-		  {% endif %}
+		                {% endif %}
                     </a>
                   </li>
                   {% endfor %}
