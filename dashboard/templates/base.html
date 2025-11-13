@@ -159,12 +159,17 @@
               </li>
 	      {% endif %}
               <li class="nav-item">
-                <a class="admin {% if path in 'all_device' %}active {% endif %}nav-link fw-bold" data-bs-toggle="collapse" data-bs-target="#ul_device" aria-expanded="false" aria-controls="ul_lots" href="javascript:void()">
+                <a class="admin {% if path in 'all_device overview' %}active {% endif %}nav-link fw-bold" data-bs-toggle="collapse" data-bs-target="#ul_device" aria-expanded="false" aria-controls="ul_lots" href="javascript:void()">
                   <i class="bi bi-laptop icon_sidebar"></i>
                   {% trans 'Devices' %}
                 </a>
-                <ul class="flex-column mb-2 ul_sidebar accordion-collapse {% if path in 'all_device' %}expanded{% else %}collapse{% endif %}" id="ul_device" data-bs-parent="#sidebarMenu">
-		  <li class="nav-item">
+                <ul class="flex-column mb-2 ul_sidebar accordion-collapse {% if path in 'all_device overview'%}expanded{% else %}collapse{% endif %}" id="ul_device" data-bs-parent="#sidebarMenu">
+		              <li class="nav-item">
+                    <a class="nav-link{% if path == 'overview' %} active2{% endif %}" href="{% url 'dashboard:overview' %}">
+                      {% trans 'Overview' %}
+                    </a>
+                  </li>
+		              <li class="nav-item">
                     <a class="nav-link{% if path == 'all_device' %} active2{% endif %}" href="{% url 'dashboard:all_device' %}">
                       {% trans 'All' %}
                     </a>
@@ -180,15 +185,15 @@
 
                   {% for tag in lot_tags %}
                   <li class="nav-items">
-		  {% if tag.inbox %}
+		                {% if tag.inbox %}
                     <a class="nav-link{% if path == 'inbox' %} active2{% endif %}" href="{% url 'dashboard:unassigned' %}">
                       <i>
                         {{ tag.name }}
                       </i>
-		  {% else %}
+		                {% else %}
                     <a class="nav-link{% if path == 'tags' %} active2{% endif %}" href="{% url 'lot:tags' tag.id %}">
                       {{ tag.name }}
-		  {% endif %}
+		                {% endif %}
                     </a>
                   </li>
                   {% endfor %}
