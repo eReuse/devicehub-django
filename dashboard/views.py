@@ -5,6 +5,9 @@ from tablib import Dataset
 
 from django.utils.translation import gettext_lazy as _
 from django.utils.dateparse import parse_datetime
+from django.utils import timezone
+from django.shortcuts import redirect
+from django.contrib import messages
 from django.http import HttpResponse
 from dashboard.tables import DeviceTable
 from django.core.cache import cache
@@ -15,12 +18,12 @@ from django_tables2.export.views import ExportMixin
 from django.contrib.auth.mixins import LoginRequiredMixin
 
 from action.models import StateDefinition
-from django.db.models import Q, Count, Subquery, OuterRef, F, CharField, Value
+from django.db.models import Q, Subquery, OuterRef
 from lot.models import DeviceLot
-from django.db.models.functions import Coalesce
+from user.models import UserProfile
 from django.views.generic import TemplateView
 
-from dashboard.mixins import InventaryMixin, DetailsMixin, DeviceTableMixin
+from dashboard.mixins import DashboardView, InventaryMixin, DetailsMixin, DeviceTableMixin
 from evidence.models import SystemProperty
 from evidence.xapian import search
 from device.models import Device
@@ -278,16 +281,23 @@ class SearchView(DeviceTableMixin, InventaryMixin):
 
         return [Device(id=x) for x in chids_page], chids.count()
 
-class InventoryOverviewView(LoginRequiredMixin, TemplateView):
-    """
-    A view to display "at-a-glance" dashboard statistics for the
-    device inventory.
 
-    This view is CACHED because it must perform slow operations
-    (instantiating Device() for all devices) to get
-    statistics on non-SQL fields like device type.
-    """
+class InventoryOverviewView(DashboardView, TemplateView):
     template_name = 'inventory_overview.html'
+    section = _("Inbox")
+    title = _("Overview")
+    breadcrumb = f"{_('Devices')} / {_('Overview')}"
+
+    def get(self, request, *args, **kwargs):
+        if request.user.is_admin and request.GET.get('refresh') == 'true':
+            if hasattr(request.user, 'institution'):
+                institution = request.user.institution
+                cache_key = f"dashboard_stats_institution_{institution.id}"
+                cache.delete(cache_key)
+                messages.success(request, _("Cache has been cleared. Data is refreshing."))
+
+            return redirect('dashboard:overview')
+        return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -297,125 +307,165 @@ class InventoryOverviewView(LoginRequiredMixin, TemplateView):
             return context
 
         institution = self.request.user.institution
-        cache_key = f"dashboard_stats_{institution.id}"
+        cache_key = f"dashboard_stats_institution_{institution.id}"
+        cached_data = cache.get(cache_key)
 
-        cache.delete(cache_key)
-        cached_context = cache.get(cache_key)
-        if cached_context:
-            context.update(cached_context)
-            return context
+        if not cached_data:
+
+            all_device_ids_list, _ = Device.get_all(institution, limit=None)
+            unassigned_device_ids_list, _ = Device.get_unassigned(institution, limit=None)
+            unassigned_ids_set = {d.id for d in unassigned_device_ids_list}
+            total_devices = len(all_device_ids_list)
+
+            # Get State Map
+            latest_prop_created_sq = SystemProperty.objects.filter(value=OuterRef('value'), owner=institution).order_by('-created')
+            latest_uuid_sq = SystemProperty.objects.filter(value=OuterRef('value'), created=Subquery(latest_prop_created_sq.values('created')[:1])).values('uuid')[:1]
+            latest_state_name_sq = State.objects.filter(snapshot_uuid=OuterRef('latest_uuid')).order_by('-date')
+            device_state_qset = SystemProperty.objects.filter(
+                owner=institution
+            ).values('value').distinct().annotate(
+                latest_uuid=Subquery(latest_uuid_sq),
+                current_state_name=Subquery(latest_state_name_sq.values('state')[:1])
+            ).values('value', 'current_state_name')
+            device_id_to_state_map = {
+                item['value']: item.get('current_state_name') or 'Unknown'
+                for item in device_state_qset
+            }
+
+            # Get Lot Map
+            device_id_to_lot_map = {}
+            all_device_lots = DeviceLot.objects.filter(
+                lot__owner=institution,
+                lot__archived=False
+            ).select_related('lot')
+            for dl in all_device_lots:
+                device_id_to_lot_map.setdefault(dl.device_id, []).append(dl.lot)
+
+            # process in Batches
+            total_types_counter = Counter()
+            assigned_types_counter = Counter()
+            unassigned_types_counter = Counter()
+            states_breakdown = {}
+            lots_breakdown = {}
+            batch_size = 250
+
+            for i in range(0, total_devices, batch_size):
+                batch_id_objects = all_device_ids_list[i:i + batch_size]
+                batch_devices = [Device(id=d.id) for d in batch_id_objects]
+
+                for d in batch_devices:
+                    device_type = d.type or 'Unknown'
+                    total_types_counter[device_type] += 1
+                    is_assigned = d.id not in unassigned_ids_set
+
+                    if is_assigned:
+                        assigned_types_counter[device_type] += 1
+                    else:
+                        unassigned_types_counter[device_type] += 1
+
+                    state_name = device_id_to_state_map.get(d.id, 'Unknown')
+                    states_breakdown.setdefault(state_name, {'total': 0, 'types': Counter()})['total'] += 1
+                    states_breakdown[state_name]['types'][device_type] += 1
+
+                    if is_assigned:
+                        lots_for_device = device_id_to_lot_map.get(d.id, [])
+                        for lot in lots_for_device:
+                            lots_breakdown.setdefault(lot.pk, {'name': lot.name, 'total': 0, 'types': Counter()})['total'] += 1
+                            lots_breakdown[lot.pk]['types'][device_type] += 1
+
+            total_types_summary = dict(total_types_counter.most_common(4))
+            assigned_types_summary = dict(assigned_types_counter.most_common(3))
+            unassigned_types_summary = dict(unassigned_types_counter.most_common(3))
+
+            states_summary = []
+            for name, data in states_breakdown.items():
+                states_summary.append({
+                    'state': name,
+                    'count': data['total'],
+                    'types': dict(data['types'].most_common(3))
+                })
+
+            states_summary = sorted(states_summary, key=lambda x: x['count'], reverse=True)
+
+            lots_summary = []
+            for pk, data in lots_breakdown.items():
+                lots_summary.append({
+                    'pk': pk,
+                    'name': data['name'],
+                    'count': data['total'],
+                    'types': dict(data['types'].most_common(3))
+                })
+            lots_summary = sorted(lots_summary, key=lambda x: x['count'], reverse=True)
+
+            unassigned_devices = len(unassigned_ids_set)
+            assigned_devices = total_devices - unassigned_devices
+
+            cached_data = {
+                'last_updated': timezone.now(),
+                'total_devices': total_devices,
+                'total_types_summary': total_types_summary,
+                'unassigned_devices': unassigned_devices,
+                'unassigned_types_summary': unassigned_types_summary,
+                'assigned_devices': assigned_devices,
+                'assigned_types_summary': assigned_types_summary,
+                'lots_summary': lots_summary,
+                'states_summary': states_summary,
+            }
+            cache.set(cache_key, cached_data, timeout=14400)
 
 
-        # getting all devices ID
-        all_device_ids_list, _ = Device.get_all(institution, limit=None)
-        unassigned_device_ids_list, _ = Device.get_unassigned(institution, limit=None)
-        unassigned_ids_set = {d.id for d in unassigned_device_ids_list}
+        final_context = cached_data.copy()
+        profile, created = UserProfile.objects.get_or_create(user=self.request.user)
 
-        total_devices = len(all_device_ids_list)
-        unassigned_devices = len(unassigned_ids_set)
-        assigned_devices = total_devices - unassigned_devices
+        pinned_lot_pks = set(profile.pinned_lots.values_list('pk', flat=True))
+        pinned_state_pks = set(profile.pinned_states.values_list('pk', flat=True))
+        has_pinned_lots = bool(pinned_lot_pks)
+        has_pinned_states = bool(pinned_state_pks)
 
-        # States
-        latest_prop_created_sq = SystemProperty.objects.filter(value=OuterRef('value'), owner=institution).order_by('-created')
-        latest_uuid_sq = SystemProperty.objects.filter(value=OuterRef('value'), created=Subquery(latest_prop_created_sq.values('created')[:1])).values('uuid')[:1]
-        latest_state_name_sq = State.objects.filter(snapshot_uuid=OuterRef('latest_uuid')).order_by('-date')
-        device_state_qset = SystemProperty.objects.filter(
-            owner=institution
-        ).values('value').distinct().annotate(
-            latest_uuid=Subquery(latest_uuid_sq),
-            current_state_name=Subquery(latest_state_name_sq.values('state')[:1])
-        ).values('value', 'current_state_name')
-        device_id_to_state_map = {
-            item['value']: item.get('current_state_name') or 'Unknown'
-            for item in device_state_qset
-        }
+        if has_pinned_lots:
+            cached_lots_map = {lot['pk']: lot for lot in cached_data['lots_summary']}
+            user_lots_summary = []
 
-        # Lots
-        device_id_to_lot_map = {}
-        all_device_lots = DeviceLot.objects.filter(
-            lot__owner=institution,
-            lot__archived=False
-        ).select_related('lot')
-        for dl in all_device_lots:
-            device_id_to_lot_map.setdefault(dl.device_id, []).append(dl.lot)
+            all_pinned_lots = Lot.objects.filter(pk__in=pinned_lot_pks)
 
-
-        # PROCESS ALL DEVICES IN BATCHES
-        total_types_counter = Counter()
-        assigned_types_counter = Counter()
-        unassigned_types_counter = Counter()
-        states_breakdown = {}
-        lots_breakdown = {}
-
-        batch_size = 250  # 250 at a time
-
-        for i in range(0, total_devices, batch_size):
-            # Get ids
-            batch_id_objects = all_device_ids_list[i:i + batch_size]
-
-            #instatiate by batch
-            batch_devices = [Device(id=d.id) for d in batch_id_objects]
-
-            for d in batch_devices:
-                device_type = d.type or 'Unknown'
-                total_types_counter[device_type] += 1
-
-                is_assigned = d.id not in unassigned_ids_set
-
-                if is_assigned:
-                    assigned_types_counter[device_type] += 1
+            for lot in all_pinned_lots:
+                if lot.pk in cached_lots_map:
+                    user_lots_summary.append(cached_lots_map[lot.pk])
                 else:
-                    unassigned_types_counter[device_type] += 1
-
-                state_name = device_id_to_state_map.get(d.id, 'Unknown')
-                if state_name not in states_breakdown:
-                    states_breakdown[state_name] = {'total': 0, 'types': Counter()}
-                states_breakdown[state_name]['total'] += 1
-                states_breakdown[state_name]['types'][device_type] += 1
-
-                if is_assigned:
-                    lots_for_device = device_id_to_lot_map.get(d.id, [])
-                    for lot in lots_for_device:
-                        if lot.pk not in lots_breakdown:
-                            lots_breakdown[lot.pk] = {'name': lot.name, 'total': 0, 'types': Counter()}
-                        lots_breakdown[lot.pk]['total'] += 1
-                        lots_breakdown[lot.pk]['types'][device_type] += 1
+                    user_lots_summary.append({
+                        'pk': lot.pk,
+                        'name': lot.name,
+                        'count': 0,
+                        'types': {}
+                    })
+            final_context['lots_summary'] = sorted(user_lots_summary, key=lambda x: x['name'])
+        else:
+            final_context['lots_summary'] = cached_data['lots_summary'][:10]
 
 
-        total_types_summary = dict(total_types_counter.most_common(4))
-        assigned_types_summary = dict(assigned_types_counter.most_common(3))
-        unassigned_types_summary = dict(unassigned_types_counter.most_common(3))
+        if has_pinned_states:
+            cached_states_map = {state['state']: state for state in cached_data['states_summary']}
+            user_states_summary = []
 
-        states_summary = []
-        for name, data in states_breakdown.items():
-            states_summary.append({
-                'state': name,
-                'count': data['total'],
-                'types': dict(data['types'].most_common(3))
-            })
-        states_summary = sorted(states_summary, key=lambda x: x['count'], reverse=True)
+            all_pinned_states = StateDefinition.objects.filter(pk__in=pinned_state_pks)
 
-        lots_summary = []
-        for pk, data in lots_breakdown.items():
-            lots_summary.append({
-                'pk': pk,
-                'name': data['name'],
-                'count': data['total'],
-                'types': dict(data['types'].most_common(3))
-            })
-        lots_summary = sorted(lots_summary, key=lambda x: x['count'], reverse=True)[:10]
+            for state_def in all_pinned_states:
+                state_name = state_def.state
+                if state_name in cached_states_map:
+                    # State is pinned AND has devices
+                    user_states_summary.append(cached_states_map[state_name])
+                else:
+                    user_states_summary.append({
+                        'state': state_name,
+                        'count': 0,
+                        'types': {}
+                    })
+            final_context['states_summary'] = sorted(user_states_summary, key=lambda x: x['state'])
+        else:
+            final_context['states_summary'] = cached_data['states_summary']
 
-        final_context = {
-            'total_devices': total_devices,
-            'total_types_summary': total_types_summary,
-            'unassigned_devices': unassigned_devices,
-            'unassigned_types_summary': unassigned_types_summary,
-            'assigned_devices': assigned_devices,
-            'assigned_types_summary': assigned_types_summary,
-            'lots_summary': lots_summary,
-            'states_summary': states_summary,
-        }
+        final_context['has_pinned_lots'] = has_pinned_lots
+        final_context['has_pinned_states'] = has_pinned_states
 
-        cache.set(cache_key, final_context, timeout=600)
         context.update(final_context)
         return context
