@@ -2,6 +2,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser
 from utils.constants import ALGOS
+from django.conf import settings
 
 
 ALGORITHMS = [(x, x) for x in ALGOS.keys()]
@@ -141,3 +142,34 @@ class User(AbstractBaseUser):
     def username(self):
         "Is the email of the user"
         return self.email
+
+
+class UserProfile(models.Model):
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='profile'
+    )
+
+    language = models.CharField(
+        _("Language"),
+        max_length=10,
+        choices=settings.LANGUAGES,
+        default=settings.LANGUAGE_CODE,
+        help_text=_("The user's preferred language for the interface.")
+    )
+
+    pinned_lots = models.ManyToManyField(
+        "lot.Lot",
+        blank=True,
+        help_text=_("Lots the user wants to see on their dashboard.")
+    )
+
+    pinned_states = models.ManyToManyField(
+        "action.StateDefinition",
+        blank=True,
+        help_text=_("States the user wants to see on their dashboard.")
+    )
+
+    def __str__(self):
+        return f"Profile for {self.user.email}"
