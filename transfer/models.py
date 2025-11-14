@@ -23,29 +23,33 @@ class Transfer(models.Model):
     created = models.DateTimeField(default=timezone.now)
     issuer_did = models.CharField(max_length=STR_SIZE)
     owner = models.ForeignKey(Institution, on_delete=models.CASCADE)
-    destination_did = models.CharField(max_length=STR_SIZE)
-    destination_name = models.CharField(max_length=STR_SIZE)
-    credential = models.CharField(max_length=5000)
-    api_destination = models.CharField(max_length=5000)
-    token_destination = models.CharField(max_length=5000)
+    organization_did = models.CharField(max_length=STR_SIZE)
+    organization_name = models.CharField(max_length=STR_SIZE)
+    str_credential = models.CharField(max_length=5000)
+    reference = models.CharField(max_length=STR_SIZE, null=True)
+    api_destination = models.CharField(max_length=5000, null=True)
+    token_destination = models.CharField(max_length=5000, null=True)
     type = models.SmallIntegerField(choices=Type.choices, default=Type.SENDED)
+    sended = models.BooleanField(default=False)
+    credential_id = models.CharField(max_length=STR_SIZE)
 
     def send_transfer(self):
         if not all([self.credential, self.api_destination, self.token_destination]):
             return ""
 
-        data = {"data": self.credential}
+        data = self.credential
         header = {"Authorization": "Bearer {}".format(self.token_destination)}
         verify = not settings.DEBUG
         res = requests.post(self.api_destination, json=data, headers=header, verify=verify)
 
         if 200 < res.status < 300:
-            self.credential = res.text
+            self.sended = True
+
+        self.save()
 
     def get_items(self):
         try:
-            cred = json.loads(self.credential)
-            items = json.loads(cred['data'])["credentialSubject"]['epcList']
+            items = self.credential["credentialSubject"]['epcList']
             for i in items:
                 i["transfer"] = self.id
             return items
@@ -54,16 +58,34 @@ class Transfer(models.Model):
 
     def get_evidences(self):
         try:
-            cred = json.loads(self.credential)
-            return json.loads(cred['data'])["evidences"]
+            return self.credential["evidences"]
         except Exception:
             return []
+
+    def get_credential_id(self):
+        self.credential_id = self.credential["id"]
+        return self.credential_id
+
+    @property
+    def get_credential_id_last(self):
+        return self.credential_id.split("/")[-1]
+
+    @property
+    def signed(self):
+        return True if self.credential.get("proof") else False
+
+    @property
+    def credential(self):
+        if hasattr(self, "_credential"):
+            return self._credential
+
+        self._credential = json.loads(self.str_credential)
+        return self._credential
 
     @property
     def number_items(self):
         try:
-            cred = json.loads(self.credential)
-            return len(json.loads(cred['data'])["credentialSubject"]['epcList'])
+            return len(self.credential["credentialSubject"]['epcList'])
         except Exception:
             return 0
 

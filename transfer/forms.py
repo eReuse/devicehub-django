@@ -1,3 +1,4 @@
+import json
 import requests
 
 from django.utils.translation import gettext_lazy as _
@@ -11,9 +12,10 @@ from transfer.models import Transfer
 
 class TransferForm(forms.Form):
     issuer_did = forms.CharField()
-    did = forms.CharField()
-    name = forms.CharField()
-    website = forms.URLField()
+    did = forms.CharField(label=_("Organization Did"))
+    name = forms.CharField(label=_("Organization Name"))
+    website = forms.URLField(label=_("Organization WebSite"))
+    reference = forms.URLField(label=_("ID of transfer reference"), required=False)
     api_destination = forms.URLField(required=False)
     token_destination = forms.CharField(required=False)
     type_of_transfer = forms.ChoiceField(
@@ -22,8 +24,8 @@ class TransferForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user', [])
-        self.website = kwargs.pop('website', "")
         self.lot = kwargs.pop('lot')
+        self.domain = kwargs.pop("domain")
 
         super().__init__(*args, **kwargs)
 
@@ -39,8 +41,9 @@ class TransferForm(forms.Form):
             }
             self.instance = Transfer.objects.create(
                 issuer_did=self.cleaned_data.get("issuer_did"),
-                destination_did=self.cleaned_data.get("did"),
-                destination_name=self.cleaned_data.get("name"),
+                organization_did=self.cleaned_data.get("did"),
+                organization_name=self.cleaned_data.get("name"),
+                reference=self.cleaned_data.get("reference"),
                 api_destination=self.cleaned_data.get("api_destination"),
                 token_destination=self.cleaned_data.get("token_destination"),
                 owner=self.user.institution,
@@ -66,7 +69,7 @@ class TransferForm(forms.Form):
         institution = {
             "id": issuer_did,
             "name": self.user.institution.name,
-            "organisationWebsite": self.website
+            "organisationWebsite": self.domain
         }
         other_part = {
             "id": did,
@@ -103,10 +106,8 @@ class TransferForm(forms.Form):
         }
 
     def get_url(self):
-        return "https://localhost"
-        path = reverse("lot:credential_transfer", args=[self.instance.id])
-        domain = self.website
-        return f"https://{domain}/{path}"
+        path = reverse("transfer:id", args=[self.instance.id])
+        return "{}{}".format(self.domain, path)
 
     def get_epc_list(self):
         devs = []
@@ -130,13 +131,19 @@ class TransferForm(forms.Form):
 
     def send_sign(self):
         data = self.get_data()
+        self.instance.str_credential = data
         url = settings.IDHUB_API_SIGN
         token = settings.IDHUB_TOKEN
         header = {"Authorization": f"Bearer {token}"}
         verify = not settings.DEBUG
-        res = requests.post(url, json=data, headers=header, verify=verify)
+        try:
+            res = requests.post(url, json=data, headers=header, verify=verify)
 
-        if 199 < res.status_code < 300:
-            self.instance.credential = res.text
+            if 199 < res.status_code < 300:
+                cred = json.loads(res.text)
+                if cred.get("data"):
+                    self.instance.str_credential = cred["data"]
+        except Exception:
+            pass
 
         return

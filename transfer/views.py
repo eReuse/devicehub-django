@@ -96,7 +96,8 @@ class TransferView(DashboardView, SingleTableView):
             'breadcrumb': self.breadcrumb,
             'search_query': "",
             'path': 'tag',
-            'lot': self.object.lot_set.first()
+            'lot': self.object.lot_set.first(),
+            'transfer': self.object,
         })
         return context
 
@@ -131,7 +132,7 @@ class NewTransferView(DashboardView, FormView):
         )
         kwargs = super().get_form_kwargs()
         kwargs['user'] = self.request.user
-        kwargs['website'] = "{}://{}".format(self.request.scheme, self.request.get_host())
+        kwargs['domain'] = "{}://{}".format(self.request.scheme, self.request.get_host())
         kwargs['lot'] = self.lot
         return kwargs
 
