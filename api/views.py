@@ -28,6 +28,7 @@ from evidence.parse import Build
 from device.models import Device
 from api.models import Token
 from user.tables import TokensTable
+from transfer.models import Transfer
 
 
 logger = logging.getLogger('django')
@@ -58,6 +59,54 @@ class ApiMixing(View):
         if not self.tk:
             logger.error("Invalid or missing token %s", token)
             return JsonResponse({'error': 'Invalid or missing token'}, status=401)
+
+
+class NewTransferView(ApiMixing):
+
+    def get(self, request, *args, **kwargs):
+        return JsonResponse({}, status=404)
+
+    def post(self, request, *args, **kwargs):
+        response = self.auth()
+        if response:
+            return response
+
+        typ_trans = {
+            "cbv:BTT-desad": Transfer.Type.SENDED,
+            "cbv:BTT-recadv": Transfer.Type.RECEIVED
+        }
+
+        try:
+            data = json.loads(request.body)
+            credential_id = data["id"]
+            issuer_did = data["issuer"]["id"]
+            organization_name = data["credentialSubject"]["sourceParty"]["name"]
+            organization_did = data["credentialSubject"]["sourceParty"]["id"]
+            type_of_transfer = typ_trans[data["credentialSubject"]["bizTransaction"]]
+        except Exception:
+            txt = "error: Is not a valid transfer"
+            logger.error("%s", txt)
+            return JsonResponse({'error': 'Invalid Transfer'}, status=500)
+
+        if Transfer.objects.filter(credential_id=credential_id).first():
+            txt = "error: the transfer {} exist".format(credential_id)
+            logger.warning("%s", txt)
+            return JsonResponse({'status': txt}, status=500)
+
+        self.instance = Transfer.objects.create(
+            issuer_did=issuer_did,
+            organization_did=organization_did,
+            organization_name=organization_name,
+            # reference=reference,
+            owner=self.user.institution,
+            type=type_of_transfer
+        )
+
+        response = {
+            "status": "success",
+        }
+
+        return JsonResponse(response, status=200)
 
 
 class NewSnapshotView(ApiMixing):
