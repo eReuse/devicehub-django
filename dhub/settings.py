@@ -83,6 +83,7 @@ INSTALLED_APPS = [
     'django_extensions',
     'django_bootstrap5',
     'django_tables2',
+    'dbbackup',
     "login",
     "user",
     "device",
@@ -149,6 +150,22 @@ DATABASES = {
         "NAME": BASE_DIR / "db/db.sqlite3",
     }
 }
+
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage'
+   },
+    "dbbackup": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+        "OPTIONS": {
+            "location": os.path.join(BASE_DIR, "backups"),  # Secure folder custom
+        },
+    },
+}
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
