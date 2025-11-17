@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% load i18n django_tables2 %}
+
+{% block content %}
+
+  <form method="post">
+    {% csrf_token %}
+
+    <div class="row">
+
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 shadow-sm border-0 rounded-4">
+          <div class="card-body d-flex flex-column">
+            <h5 class="card-title mb-3">
+              <i class="bi bi-box-seam me-2"></i> {% translate 'Pin Lots to Dashboard' %}
+            </h5>
+            <p class="card-text text-muted">{% translate 'Select which lots you want to monitor.' %}</p>
+            <div class="table-responsive">
+              {% render_table lots_table %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 shadow-sm border-0 rounded-4">
+          <div class="card-body d-flex flex-column">
+            <h5 class="card-title mb-3">
+              <i class="bi bi-tags me-2"></i> {% translate 'Pin States to Dashboard' %}
+            </h5>
+            <p class="card-text text-muted">{% translate 'Select which states you want to monitor.' %}</p>
+            <div class="table-responsive">
+              {% render_table states_table %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="card-body text-end">
+      <a href="{% url 'dashboard:overview' %}" class="btn btn-secondary me-2">{% translate 'Cancel' %}</a>
+      <button type="submit" class="btn btn-primary">{% translate 'Save Preferences' %}</button>
+    </div>
+  </form>
+
+  <script>
+    function toggle(source) {
+      let table = source.closest('table');
+      // Ensure we only select checkboxes in the *body*
+      let checkboxes = table.querySelectorAll('tbody input[type="checkbox"]');
+      for(let i=0; i < checkboxes.length; i++) {
+        checkboxes[i].checked = source.checked;
+      }
+    }
+  </script>
+{% endblock %}
