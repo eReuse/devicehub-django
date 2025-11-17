@@ -3,30 +3,6 @@
 
 {% block content %}
 
-  <div class="d-flex align-items-center justify-content-between mb-4">
-
-      {% if last_updated %}
-        <small class="text-muted ms-3 fw-normal" style="font-size: 0.9rem;">
-          {% translate "Last updated:" %} {{ last_updated|date:"N j, Y, P" }}
-        </small>
-      {% endif %}
-
-    <div class="d-flex align-items-center">
-      {% if user.is_admin %}
-        <a href="?refresh=true" class="btn btn-outline-danger btn-sm me-3"
-           title="{% translate 'Force a full refresh of all dashboard data' %}">
-          <i class="bi bi-arrow-clockwise me-1"></i>
-          {% translate 'Refresh Cache' %}
-        </a>
-      {% endif %}
-
-      <a href="{% url 'user:customize_dashboard' %}" class="btn btn-outline-secondary btn-sm">
-        <i class="bi bi-person-check me-2"></i>
-        {% translate 'Customize' %}
-      </a>
-
-    </div>
-  </div>
 
   {% if error %}
     <div class="alert alert-danger" role="alert">
@@ -228,6 +204,32 @@
         </div>
       </div>
     </div>
-  {% endif %}
+  {% endif%}
+
+    <div class="d-flex align-items-center justify-content-between mb-4">
+
+      {% if last_updated %}
+        <small class="text-muted ms-3 fw-normal" style="font-size: 0.9rem;">
+          {% translate "Last updated:" %} {{ last_updated|date:"N j, Y, P" }}
+        </small>
+      {% endif %}
+
+    <div class="d-flex align-items-center">
+      {% if user.is_admin %}
+        <a href="?refresh=true" class="btn btn-outline-danger btn-sm me-3"
+           title="{% translate 'Force a full refresh of all dashboard data' %}">
+          <i class="bi bi-arrow-clockwise me-1"></i>
+          {% translate 'Refresh' %}
+        </a>
+      {% endif %}
+
+      <a href="{% url 'user:customize_dashboard' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-person-check me-2"></i>
+        {% translate 'Customize' %}
+      </a>
+
+    </div>
+  </div>
+
 
 {% endblock %}
