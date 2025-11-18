@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block content %}
+<!-- Top bar with lot name -->
+<div class="row">
+  <div class="col">
+    <h3>{{ lot.name }} - {% trans 'Environmental Impact' %}</h3>
+  </div>
+</div>
+
+{% include 'tabs.html' with path='environmental_impact' %}
+
+<div class="row mt-4">
+  <div class="col">
+    <h5 class="card-title">{% trans 'Lot Environmental Impact Summary' %}</h5>
+    <hr />
+
+    {% if impact %}
+    <div class="row mb-3">
+      <div class="col-md-12">
+        <div class="card">
+          <div class="card-body">
+            <h6 class="card-subtitle mb-2 text-muted">{% trans 'CO2 Emissions Summary' %}</h6>
+            <div class="text-center">
+              <h2 class="text-primary">{{ impact.kg_CO2e.in_use|floatformat:2 }}</h2>
+              <p class="text-muted">kg CO2e (in use phase)</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row mt-4">
+      <div class="col-md-8">
+        <h6 class="mt-3 text-primary">{% trans 'Environmental Impact Visualization' %}</h6>
+        <div style="max-width: 700px;">
+          <canvas id="lotImpactChart" width="300" height="150"></canvas>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <button class="btn btn-outline-primary mb-3" type="button" data-bs-toggle="collapse" data-bs-target="#docsCollapse" aria-expanded="false" aria-controls="docsCollapse">
+          {% trans 'Read about the algorithm insights' %}
+        </button>
+
+        <div class="collapse" id="docsCollapse">
+          <div class="card card-body">
+            <div class="markdown-content">{{ impact.docs|safe }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {% else %}
+    <div class="row mt-4">
+      <div class="col-sm-12">
+        <div class="alert alert-warning" role="alert">
+          <h6><i class="bi bi-exclamation-triangle"></i> {% trans 'Environmental Impact Data Unavailable' %}</h6>
+          <p>{% trans 'Environmental impact calculation is not available for this lot. This may be due to insufficient device data.' %}</p>
+          <p><strong>{% trans 'Possible reasons:' %}</strong></p>
+          <ul>
+            <li>{% trans 'No devices in the lot have evidence data' %}</li>
+            <li>{% trans 'Devices have no usage time data (power-on hours)' %}</li>
+            <li>{% trans 'Device evidences are missing or incomplete' %}</li>
+          </ul>
+          <p class="mb-0">
+            <strong>{% trans 'What to do:' %}</strong>
+            {% trans 'Ensure devices in this lot have been properly inventoried with complete evidence data, including power-on hours and storage information.' %}
+          </p>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  function drawLotChart() {
+    {% if impact %}
+    var ctx = document.getElementById('lotImpactChart').getContext('2d');
+    var lotImpactChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['{% trans "Raw material acquisition (A)" %}', '{% trans "Production (B)" %}', '{% trans "Use (C)" %}', '{% trans "EoLT (D)" %}'],
+        datasets: [{
+          label: 'kg CO2e',
+          data: [0, 0, {{ impact.kg_CO2e.in_use|default:0 }}, 0],
+          backgroundColor: ['#66c2a5', '#fc8d62', '#8da0cb', '#e78ac3']
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        scales: {
+          y: {
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: 'kg CO2e'
+            }
+          }
+        },
+        plugins: {
+          legend: {
+            display: false
+          },
+          title: {
+            display: true,
+            text: '{% trans "Total CO2 Emissions by Lifecycle Phase" %}'
+          }
+        }
+      }
+    });
+    {% endif %}
+  }
+
+  // Run the chart drawing function when the page loads
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', drawLotChart);
+  } else {
+    drawLotChart();
+  }
+</script>
+
+{% endblock %}
