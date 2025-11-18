@@ -11,6 +11,10 @@ from dashboard.tables import DeviceTable
 from django.core.cache import cache
 from collections import Counter
 
+from django.template.loader import render_to_string
+from django.http import HttpResponse
+import weasyprint
+
 from django_tables2.views import SingleTableMixin
 from django_tables2.export.views import ExportMixin
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -464,3 +468,59 @@ class InventoryOverviewView(DashboardView, TemplateView):
 
         context.update(final_context)
         return context
+
+
+class DashboardReportView(DashboardView, TemplateView):
+    def get(self, request, *args, **kwargs):
+        if not hasattr(request.user, 'institution'):
+            return redirect('dashboard:overview')
+
+        institution = request.user.institution
+        cache_key = f"dashboard_stats_institution_{institution.id}"
+        cached_data = cache.get(cache_key)
+
+        if not cached_data:
+            messages.warning(request, "Please load the dashboard first to generate statistics.")
+            return redirect('dashboard:overview')
+
+        all_device_ids, _ = Device.get_all(institution, limit=None)
+
+        all_devices = [Device(id=d.id) for d in all_device_ids]
+
+        devices_by_lot = {}
+
+        for device in all_devices:
+            if device.lots:
+                lot_name = device.lots[0].name
+            else:
+                lot_name = "Inbox"
+
+            if lot_name not in devices_by_lot:
+                devices_by_lot[lot_name] = []
+            devices_by_lot[lot_name].append(device)
+
+        sorted_devices_by_lot = dict(sorted(devices_by_lot.items()))
+
+        context = {
+            'institution': institution,
+            'generated_at': timezone.now(),
+            'user': request.user,
+            'devices_by_lot': sorted_devices_by_lot,
+
+            # Cached Summaries
+            'total_devices': cached_data.get('total_devices'),
+            'assigned_devices': cached_data.get('assigned_devices'),
+            'unassigned_devices': cached_data.get('unassigned_devices'),
+            'total_types_summary': cached_data.get('total_types_summary'),
+            'states_summary': cached_data.get('states_summary'),
+            'lots_summary': cached_data.get('lots_summary'),
+        }
+
+        html_string = render_to_string('dashboard_report.html', context, request=request)
+
+        response = HttpResponse(content_type='application/pdf')
+        filename = f"inventory_report_{institution.name}_{timezone.now().date()}.pdf"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+        weasyprint.HTML(string=html_string, base_url=request.build_absolute_uri()).write_pdf(response)
+        return response

@@ -221,6 +221,10 @@
           <i class="bi bi-arrow-clockwise me-1"></i>
           {% translate 'Refresh' %}
         </a>
+      <a href="{% url 'dashboard:report_download' %}" class="btn btn-outline-primary btn-sm me-2">
+          <i class="bi bi-file-earmark-pdf me-2"></i>
+          {% translate 'Download Report' %}
+        </a>
       {% endif %}
 
       <a href="{% url 'user:customize_dashboard' %}" class="btn btn-outline-secondary btn-sm">

@@ -9,4 +9,5 @@ urlpatterns = [
     path("overview", views.InventoryOverviewView.as_view(), name="overview"),
     path("<int:pk>/", views.LotDashboardView.as_view(), name="lot"),
     path("search", views.SearchView.as_view(), name="search"),
+    path('report/download/', views.DashboardReportView.as_view(), name='report_download'),
 ]

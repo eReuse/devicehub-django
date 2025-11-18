@@ -1,18 +1,29 @@
+{% load i18n %}
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{{ object.type }}</title>
+    <title>{% translate "Inventory Report" %}</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
     <style>
+      @page {
+          size: A4;
+          margin: 1.5cm;
+          @bottom-right {
+              content: "Page " counter(page) " of " counter(pages);
+              font-family: Helvetica, sans-serif;
+              font-size: 8pt;
+          }
+      }
       body {
         font-size: 0.875rem;
         background-color: #f8f9fa;
         display: flex;
         flex-direction: column;
         min-height: 100vh;
+        font-family: Helvetica, sans-serif;
       }
       .custom-container {
         background-color: #ffffff;
@@ -21,151 +32,347 @@
         padding: 30px;
         margin-top: 30px;
         flex-grow: 1;
+        margin-bottom: 30px;
+      }
+      .report-header {
+        border-bottom: 2px solid #9cc666;
+        padding-bottom: 20px;
+        margin-bottom: 30px;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+      }
+      .report-header h1 {
+        color: #545f71;
+        margin: 0;
+        font-size: 2rem;
+        font-weight: bold;
+      }
+      .report-meta {
+        text-align: right;
+        font-size: 0.85rem;
+        color: #6c757d;
       }
       .section-title {
         color: #7a9f4f;
-        border-bottom: 2px solid #9cc666;
-        padding-bottom: 10px;
+        border-bottom: 1px solid #9cc666;
+        padding-bottom: 5px;
+        margin-top: 30px;
         margin-bottom: 20px;
-        font-size: 1.5em;
+        font-size: 1.3rem;
+        font-weight: 600;
       }
-      .info-row {
-        margin-bottom: 10px;
+
+      /* Summary Boxes */
+      .summary-card {
+        background-color: #f8f9fa;
+        border-left: 4px solid #9cc666;
+        padding: 15px;
+        border-radius: 4px;
+        height: 100%;
       }
-      .info-label {
+      .summary-card h5 {
+        color: #9cc666;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        margin-bottom: 5px;
+        font-weight: bold;
+      }
+      .summary-card .number {
+        font-size: 2rem;
         font-weight: bold;
         color: #545f71;
       }
-      .info-value {
+      .summary-card .sub {
+        font-size: 0.75rem;
+        color: #6c757d;
+      }
+
+      /* Tables */
+      .table-custom {
+        width: 100%;
+        margin-bottom: 1rem;
+        border-collapse: collapse;
+      }
+      .table-custom th {
+        background-color: #545f71;
+        color: #fff;
+        padding: 10px;
+        font-weight: 600;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        border: none;
+      }
+      .table-custom td {
+        padding: 10px;
+        border-bottom: 1px solid #e9ecef;
+        vertical-align: top;
         color: #333;
       }
-      .component-card {
+      .table-custom tr:nth-child(even) {
         background-color: #f8f9fa;
-        border-left: 4px solid #9cc666;
-        margin-bottom: 15px;
-        transition: all 0.3s ease;
       }
-      .component-card:hover {
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        transform: translateY(-2px);
+
+      /* Lot Header */
+      .lot-header {
+        background-color: #e9f2df; /* Light green tint */
+        padding: 8px 15px;
+        border-left: 4px solid #7a9f4f;
+        margin-top: 25px;
+        margin-bottom: 10px;
+        border-radius: 0 4px 4px 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        page-break-after: avoid;
       }
-      .hash-value {
-        word-break: break-all;
-        background-color: #f3f3f3;
-        padding: 5px;
-        border-radius: 4px;
-        font-family: monospace;
-        font-size: 0.9em;
-        border: 1px solid #e0e0e0;
+      .lot-header h3 {
+        margin: 0;
+        font-size: 1.1rem;
+        color: #3d4552;
+        font-weight: bold;
       }
-      .card-title {
-        color: #9cc666;
+      .lot-count {
+        font-size: 0.85rem;
+        color: #545f71;
+        background-color: #fff;
+        padding: 2px 8px;
+        border-radius: 10px;
       }
-      .btn-primary {
+
+      /* Badges & Specs */
+      .type-badge {
         background-color: #9cc666;
-        border-color: #9cc666;
-        padding: 0.1em 2em;
-        font-weight: 700;
+        color: white;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 0.7rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        display: inline-block;
+        margin-bottom: 4px;
       }
-      .btn-primary:hover {
-        background-color: #8ab555;
-        border-color: #8ab555;
+      .spec-label {
+        color: #7a9f4f;
+        font-size: 0.7rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        margin-right: 4px;
       }
-      .btn-green-user {
-        background-color: #c7e3a3;
+      .text-muted-custom {
+        color: #6c757d;
+        font-size: 0.8rem;
       }
-      .btn-grey {
-        background-color: #f3f3f3;
-      }
+
       footer {
         background-color: #545f71;
         color: #ffffff;
         text-align: center;
         padding: 10px 0;
-        margin-top: 20px;
+        margin-top: auto; /* Push to bottom */
       }
     </style>
   </head>
   <body>
+
     <div class="container custom-container">
-      <h1 class="text-center mb-4" style="color: #545f71;">{{ object.manufacturer }} {{ object.type }} {{ object.model }}</h1>
 
-      <div class="row">
-        <div class="col-lg-6">
-          <h2 class="section-title">Details</h2>
-          <div class="info-row row">
-            <div class="col-md-4 info-label">Phid</div>
-            <div class="col-md-8 info-value">
-              <div class="hash-value">{{ object.id }}</div>
-            </div>
+      <div class="report-header">
+        <div>
+          <h1>{% translate "Inventory Report" %}</h1>
+          <div style="font-size: 1.1rem; color: #7a9f4f; margin-top: 5px; font-weight: bold;">
+            {{ institution.name }}
           </div>
-          <div class="info-row row">
-            <div class="col-md-4 info-label">Type</div>
-            <div class="col-md-8 info-value">{{ object.type }}</div>
-          </div>
-
-          {% if object.is_websnapshot %}
-            {% for snapshot_key, snapshot_value in object.last_user_evidence %}
-              <div class="info-row row">
-                <div class="col-md-4 info-label">{{ snapshot_key }}</div>
-                <div class="col-md-8 info-value">{{ snapshot_value|default:'' }}</div>
-              </div>
-            {% endfor %}
-          {% else %}
-            <div class="info-row row">
-              <div class="col-md-4 info-label">Manufacturer</div>
-              <div class="col-md-8 info-value">{{ object.manufacturer|default:'' }}</div>
-            </div>
-            <div class="info-row row">
-              <div class="col-md-4 info-label">Model</div>
-              <div class="col-md-8 info-value">{{ object.model|default:'' }}</div>
-            </div>
-            {% if user.is_authenticated %}
-              <div class="info-row row">
-                <div class="col-md-4 info-label">Serial Number</div>
-                <div class="col-md-8 info-value">{{ object.serial_number|default:'' }}</div>
-              </div>
-            {% endif %}
-          {% endif %}
         </div>
-
-        <div class="col-lg-6">
-          <h2 class="section-title">Identifiers</h2>
-          {% for chid in object.hids %}
-            <div class="info-row">
-              <div class="hash-value">{{ chid|default:'' }}</div>
-            </div>
-          {% endfor %}
+        <div class="report-meta">
+          <div><strong>{% translate "Date:" %}</strong> {{ generated_at|date:"Y-m-d H:i" }}</div>
+          <div><strong>{% translate "User:" %}</strong> {{ user.email }}</div>
         </div>
       </div>
-      <h2 class="section-title mt-5">Components</h2>
-      <div class="row">
-        {% for component in object.components %}
-          <div class="col-md-6 mb-3">
-            <div class="card component-card">
-              <div class="card-body">
-                <h5 class="card-title">{{ component.type }}</h5>
-                <p class="card-text">
-                  {% for component_key, component_value in component.items %}
-                    {% if component_key not in 'actions,type' %}
-                      {% if component_key != 'serialNumber' or user.is_authenticated %}
-                        <strong>{{ component_key }}:</strong> {{ component_value }}<br />
-                      {% endif %}
-                    {% endif %}
-                  {% endfor %}
-                </p>
-              </div>
+
+      <h2 class="section-title">{% translate "Executive Summary" %}</h2>
+      <div class="row mb-4">
+        <div class="col-4">
+          <div class="summary-card">
+            <h5>{% translate "Total Assets" %}</h5>
+            <div class="number">{{ total_devices }}</div>
+            <div class="sub">
+                {% for type, count in total_types_summary.items %}
+                    {{ type }}: {{ count }}{% if not forloop.last %}, {% endif %}
+                {% endfor %}
             </div>
           </div>
-        {% endfor %}
+        </div>
+        <div class="col-4">
+          <div class="summary-card">
+            <h5>{% translate "Assigned" %}</h5>
+            <div class="number">{{ assigned_devices }}</div>
+            <div class="sub">{% widthratio assigned_devices total_devices 100 %}% {% translate "Utilization" %}</div>
+          </div>
+        </div>
+        <div class="col-4">
+          <div class="summary-card">
+            <h5>{% translate "Unassigned" %}</h5>
+            <div class="number">{{ unassigned_devices }}</div>
+            <div class="sub">{% translate "Available stock" %}</div>
+          </div>
+        </div>
       </div>
+
+      <div class="row mb-5">
+        <div class="col-6">
+            <h2 class="section-title">{% translate "Top Lots" %}</h2>
+            <table class="table-custom">
+                <thead>
+                    <tr>
+                        <th>{% translate "Lot Name" %}</th>
+                        <th style="text-align:right;">{% translate "Count" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for lot in lots_summary|slice:":10" %}
+                    <tr>
+                        <td>{{ lot.name }}</td>
+                        <td style="text-align:right;"><strong>{{ lot.count }}</strong></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="col-6">
+            <h2 class="section-title">{% translate "Device States" %}</h2>
+            <table class="table-custom">
+                <thead>
+                    <tr>
+                        <th>{% translate "State" %}</th>
+                        <th style="text-align:right;">{% translate "Count" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for state in states_summary %}
+                    <tr>
+                        <td>{{ state.state }}</td>
+                        <td style="text-align:right;"><strong>{{ state.count }}</strong></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+      </div>
+
+      <h2 class="section-title" style="page-break-before: always;">{% translate "Detailed Inventory Ledger" %}</h2>
+
+      {% for lot_name, devices in devices_by_lot.items %}
+
+        <div class="lot-header">
+            <h3>{{ lot_name }}</h3>
+            <span class="lot-count">{{ devices|length }} {% translate "items" %}</span>
+        </div>
+
+        <table class="table-custom">
+            <thead>
+                <tr>
+                    <th width="18%">{% translate "ID / Serial" %}</th>
+                    <th width="22%">{% translate "Device" %}</th>
+                    <th width="35%">{% translate "Technical Specs" %}</th>
+                    <th width="15%">{% translate "Status" %}</th>
+                    <th width="10%">{% translate "Updated" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for device in devices %}
+                <tr>
+                    <td>
+                        <div style="font-family: monospace; background: #f3f3f3; padding: 2px 5px; display: inline-block; border-radius: 3px; font-weight: bold;">
+                            {{ device.shortid }}
+                        </div>
+                        <div class="text-muted-custom mt-1">
+                            {{ device.serial_number|default:"-"|truncatechars:15 }}
+                        </div>
+                    </td>
+
+                    <td>
+                        <span class="type-badge">{{ device.type }}</span><br>
+                        <strong>{{ device.manufacturer }}</strong> {{ device.model }}
+                    </td>
+
+                    <td>
+                        {% if "Laptop" in device.type or "Desktop" in device.type or "Server" in device.type %}
+                            {% if device.cpu %}
+                                <div><span class="spec-label">CPU</span> {{ device.cpu|truncatechars:30 }}</div>
+                            {% endif %}
+                            {% if device.total_ram %}
+                                <div><span class="spec-label">RAM</span> {{ device.total_ram }}</div>
+                            {% endif %}
+
+                            {% for c in device.components %}
+                                {% if c.type == "Storage" and c.size %}
+                                    <div><span class="spec-label">DISK</span> {{ c.size }}</div>
+                                {% endif %}
+                            {% endfor %}
+
+                        {% elif "Display" in device.type or "Monitor" in device.type %}
+                            {% for p in device.get_properties %}
+                                {% if "Native Resolution" in p.key or "resolution" in p.key|lower %}
+                                    <div><span class="spec-label">RES</span> {{ p.value }}</div>
+                                {% endif %}
+                             {% endfor %}
+                             {% for c in device.components %}
+                                {% if c.type == "Display" and c.resolution %}
+                                     <div><span class="spec-label">RES</span> {{ c.resolution }}</div>
+                                {% endif %}
+                             {% endfor %}
+
+                        {% elif "HardDrive" in device.type or "SolidStateDrive" in device.type %}
+                            {% for c in device.components %}
+                                {% if c.type == "Storage" and c.size %}
+                                    <div><span class="spec-label">CAPACITY</span> {{ c.size }}</div>
+                                    {% if c.interface %}
+                                        <div><span class="spec-label">IFACE</span> {{ c.interface }}</div>
+                                    {% endif %}
+                                {% endif %}
+                            {% endfor %}
+
+                        {% elif "RamModule" in device.type %}
+                             {% for c in device.components %}
+                                {% if c.type == "RamModule" %}
+                                    <div><span class="spec-label">SIZE</span> {{ c.capacity|default:c.size }}</div>
+                                    <div><span class="spec-label">TYPE</span> {{ c.memory_type|default:c.interface }}</div>
+                                {% endif %}
+                            {% endfor %}
+
+                        {% else %}
+                            <span style="color:#999;">-</span>
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        {% with state=device.get_current_state %}
+                            {% if state %}
+                                {{ state.state }}
+                            {% else %}
+                                <span style="color:#999;">{% translate "Unknown" %}</span>
+                            {% endif %}
+                        {% endwith %}
+                    </td>
+
+                    <td style="font-size: 0.8rem;">
+                        {{ device.updated|date:"Y-m-d" }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div style="margin-bottom: 30px;"></div>
+      {% endfor %}
+
     </div>
+
     <footer>
       <p>
-        &copy;{% now 'Y' %}eReuse. All rights reserved.
+        &copy; {% now 'Y' %} eReuse. All rights reserved.
       </p>
     </footer>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
   </body>
 </html>
