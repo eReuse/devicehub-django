@@ -163,4 +163,7 @@ class EReuse2025EnvironmentalImpactAlgorithm(EnvironmentImpactAlgorithm):
             device_env_impact = self.get_device_environmental_impact(device)
             total_kg_CO2e["in_use"] += device_env_impact.kg_CO2e.get("in_use", 0.0)
         env_impact.kg_CO2e = total_kg_CO2e
+        env_impact.docs = common.render_algorithm_docs(
+            "docs.md", os.path.dirname(__file__)
+        )
         return env_impact
