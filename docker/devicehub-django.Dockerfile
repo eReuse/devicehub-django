@@ -10,6 +10,7 @@ RUN apt update && \
     jq \
     time \
     vim \
+    python3-pip libpango-1.0-0 libpangoft2-1.0-0 libharfbuzz-subset0 libjpeg-dev libopenjp2-7-dev libffi-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # TODO I don't like this, but the whole ereuse-dpp works with user 1000 because of the volume mapping
