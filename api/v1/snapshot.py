@@ -15,7 +15,7 @@ from api.auth import GlobalAuth
 
 logger = logging.getLogger('django')
 
-router = Router(tags=["Lots"])
+router = Router(tags=["Snapshot"])
 
 @router.post(
     "/",
@@ -38,6 +38,7 @@ router = Router(tags=["Lots"])
     - 500: Internal Server Error - Unexpected processing failure
     """),
     tags=["Snapshots"],
+    url_name="upload_snapshot",
     auth=GlobalAuth()
 )
 def NewSnapshot(request, snapshot: UploadedFile = File(...)):

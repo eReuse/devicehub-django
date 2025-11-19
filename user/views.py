@@ -42,7 +42,7 @@ class SettingsView(DashboardView, FormView):
     def form_valid(self, form):
         cleaned_data = form.cleaned_data.copy()
         settings_tmpl = "settings.ini"
-        path = reverse("api:new_snapshot")
+        path = reverse("api_v1:upload_snapshot")
         cleaned_data['url'] = self.request.build_absolute_uri(path)
 
         if config("LEGACY", False):
@@ -56,7 +56,7 @@ class SettingsView(DashboardView, FormView):
         return response
 
     def get_form_kwargs(self):
-        tokens = Token.objects.filter(owner=self.request.user)
+        tokens = Token.objects.filter(owner=self.request.user, is_active=True)
         kwargs = super().get_form_kwargs()
         kwargs['tokens'] = tokens
         return kwargs
