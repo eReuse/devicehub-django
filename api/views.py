@@ -101,6 +101,7 @@ class NewTransferView(ApiMixing):
             # reference=reference,
             owner=self.tk.owner.institution,
             type=type_of_transfer,
+            str_credential=json.dumps(data),
             credential_id=credential_id
         )
 
