@@ -337,7 +337,7 @@ class DeviceView(DashboardView, TemplateView):
             self.object.last_evidence = evi
             self.object.uuid = uuid
             self.object.uuids = [uuid]
-            self.transfer.name = self.transfer.destination_name
+            self.transfer.name = self.transfer.organization_name
             self.transfer.code = ""
             self.transfer.description = ""
             self.object.owner = self.request.user.institution
