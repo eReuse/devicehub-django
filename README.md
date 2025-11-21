@@ -155,6 +155,18 @@ Allow the virtual environment to use system-installed packages:
 export PYTHONPATH="${PYTHONPATH}:/usr/lib/python3/dist-packages"
 ```
 
+#### Photo evidence dependencies
+
+Devicehub can use images to generate evidences, reading also a QR or bar code. For this, we need to install the following system dependencies:
+
+```bash
+sudo apt install tesseract-ocr tesseract-ocr-eng zbar-tools imagemagick
+# You can install additional trained data for different languages if needed, e.g.:
+sudo apt install tesseract-ocr-spa tesseract-ocr-cat
+```
+
+Note: it uses `imagemagick` to detect images orientation, so pass it on the correct orientation to tesseract.
+
 #### Environment Variables
 
 Now, configure the environment variables. For this, we will expand a `.env` file. For a quickstart with localhost, you can use the default values in the `.env.example` file:
