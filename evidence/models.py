@@ -232,14 +232,14 @@ class Evidence:
     def get_all(cls, user):
         return SystemProperty.objects.filter(
             owner=user.institution,
-            key="ereuse24",
+            key__in=["ereuse24", "photo25"],
         ).order_by("-created").distinct()
 
     @classmethod
     def get_user_evidences(cls, user):
         return SystemProperty.objects.filter(
             owner=user.institution,
-            key="ereuse24",
+            key__in=["ereuse24", "photo25"],
             user=user
         ).order_by("-created").distinct()
 
@@ -247,7 +247,7 @@ class Evidence:
     def get_device_evidences(cls,user, uuids):
         return SystemProperty.objects.filter(
             owner=user.institution,
-            key="ereuse24",
+            key__in=["ereuse24", "photo25"],
             uuid__in=uuids
         ).order_by("-created").distinct()
 
@@ -262,6 +262,9 @@ class Evidence:
 
     def is_web_snapshot(self):
         return self.doc.get("type") == "WebSnapshot"
+
+    def is_photo_evidence(self):
+        return self.doc.get("type") == "photo25"
 
     def did_document(self):
         if not self.doc.get("credentialSubject"):

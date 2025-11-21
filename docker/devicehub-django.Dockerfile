@@ -1,4 +1,4 @@
-FROM python:3.11.10-slim-bookworm
+FROM python:3.11.14-bookworm
 
 # last line is dependencies for weasyprint (for generating pdfs in lafede pilot) https://doc.courtbouillon.org/weasyprint/stable/first_steps.html#debian-11
 RUN apt update && \
@@ -10,6 +10,12 @@ RUN apt update && \
     jq \
     time \
     vim \
+    tesseract-ocr \
+    tesseract-ocr-eng \
+    tesseract-ocr-cat \
+    tesseract-ocr-spa \
+    zbar-tools \
+    imagemagick \
     && rm -rf /var/lib/apt/lists/*
 
 # TODO I don't like this, but the whole ereuse-dpp works with user 1000 because of the volume mapping
