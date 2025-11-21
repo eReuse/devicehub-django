@@ -83,6 +83,7 @@ class NewTransferView(ApiMixing):
             organization_name = data["credentialSubject"]["sourceParty"]["name"]
             organization_did = data["credentialSubject"]["sourceParty"]["id"]
             type_of_transfer = typ_trans[data["credentialSubject"]["bizTransaction"]]
+            credential_id = data["id"]
         except Exception:
             txt = "error: Is not a valid transfer"
             logger.error("%s", txt)
@@ -98,8 +99,9 @@ class NewTransferView(ApiMixing):
             organization_did=organization_did,
             organization_name=organization_name,
             # reference=reference,
-            owner=self.user.institution,
-            type=type_of_transfer
+            owner=self.tk.owner.institution,
+            type=type_of_transfer,
+            credential_id=credential_id
         )
 
         response = {

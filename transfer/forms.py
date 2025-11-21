@@ -26,19 +26,34 @@ class TransferForm(forms.Form):
         self.user = kwargs.pop('user', [])
         self.lot = kwargs.pop('lot')
         self.domain = kwargs.pop("domain")
-
+        self.instance = kwargs.pop("instance", None)
         super().__init__(*args, **kwargs)
+        if self.instance and (self.instance.signed or self.instance.sended):
+            self.fields['issuer_did'].widget.attrs['readonly'] = True
+            self.fields['did'].widget.attrs['readonly'] = True
+            self.fields['name'].widget.attrs['readonly'] = True
+            self.fields['website'].widget.attrs['readonly'] = True
+            self.fields['reference'].widget.attrs['readonly'] = True
+            self.fields['type_of_transfer'].widget.attrs['readonly'] = True
+        if self.instance and self.instance.sended:
+            self.fields['api_destination'].widget.attrs['readonly'] = True
+            self.fields['token_destination'].widget.attrs['readonly'] = True
+
 
     def save(self, commit=True):
 
-        if commit:
-            if self.lot.transfer:
-                return
+        if not commit:
+            return
 
-            typ_trans = {
-                "cbv:BTT-desad": Transfer.Type.SENDED,
-                "cbv:BTT-recadv": Transfer.Type.RECEIVED
-            }
+        if not self.instance and self.lot.transfer:
+            self.instance = self.lot.transfer
+            return
+
+        typ_trans = {
+            "cbv:BTT-desad": Transfer.Type.SENDED,
+            "cbv:BTT-recadv": Transfer.Type.RECEIVED
+        }
+        if not self.instance:
             self.instance = Transfer.objects.create(
                 issuer_did=self.cleaned_data.get("issuer_did"),
                 organization_did=self.cleaned_data.get("did"),
@@ -49,15 +64,26 @@ class TransferForm(forms.Form):
                 owner=self.user.institution,
                 type=typ_trans[self.cleaned_data.get("type_of_transfer")]
             )
+            self.instance.credential_id = self.get_url()
             self.send_sign()
-            if not self.instance.credential:
-                self.instance.delete()
-                self.instance = None
+        else:
+            if self.instance.sended:
                 return
 
-            self.instance.save()
-            self.lot.transfer = self.instance
-            self.lot.save()
+            self.instance.api_destination=self.cleaned_data.get("api_destination")
+            self.instance.token_destination=self.cleaned_data.get("token_destination")
+
+            if not self.instance.signed:
+                self.instance.issuer_did=self.cleaned_data.get("issuer_did")
+                self.instance.organization_did=self.cleaned_data.get("did")
+                self.instance.organization_name=self.cleaned_data.get("name")
+                self.instance.reference=self.cleaned_data.get("reference")
+                self.instance.type=typ_trans[self.cleaned_data.get("type_of_transfer")]
+                self.send_sign()
+
+        self.instance.save()
+        self.lot.transfer = self.instance
+        self.lot.save()
 
         return
 
@@ -131,7 +157,7 @@ class TransferForm(forms.Form):
 
     def send_sign(self):
         data = self.get_data()
-        self.instance.str_credential = data
+        self.instance.str_credential = json.dumps(data)
         url = settings.IDHUB_API_SIGN
         token = settings.IDHUB_TOKEN
         header = {"Authorization": f"Bearer {token}"}

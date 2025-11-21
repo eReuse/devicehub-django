@@ -37,14 +37,13 @@ class Transfer(models.Model):
         if not all([self.credential, self.api_destination, self.token_destination]):
             return ""
 
-        data = self.credential
+        data = self.str_credential
         header = {"Authorization": "Bearer {}".format(self.token_destination)}
         verify = not settings.DEBUG
-        res = requests.post(self.api_destination, json=data, headers=header, verify=verify)
+        res = requests.post(self.api_destination, data=data, headers=header, verify=verify)
 
-        if 200 < res.status < 300:
-            self.sended = True
-
+        assert 200 <= res.status_code < 300, "Bad connection with {}".format(self.api_destination)
+        self.sended = True
         self.save()
 
     def get_items(self):
@@ -76,6 +75,9 @@ class Transfer(models.Model):
 
     @property
     def credential(self):
+        if not self.str_credential:
+            return {}
+
         if hasattr(self, "_credential"):
             return self._credential
 
@@ -100,3 +102,15 @@ class Transfer(models.Model):
     @property
     def get_id_lot(self):
         return self.lot_set.first().id
+
+    @property
+    def website(self):
+        source  = self.credential.get("credentialSubject", {}).get("sourceParty", {})
+        destination  = self.credential.get("credentialSubject", {}).get("destinationParty", {})
+        if self.organization_name == source.get("name"):
+            return source.get("organisationWebsite", '')
+
+        if self.organization_name == destination.get("name"):
+            return destination.get("organisationWebsite", '')
+
+        return ''

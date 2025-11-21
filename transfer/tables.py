@@ -21,7 +21,7 @@ class TransferTable(tables.Table):
     destination_name = tables.Column(
         verbose_name=_("Organization Name"),
     )
-    get_credential_id = tables.Column(
+    credential_id = tables.Column(
         linkify=("transfer:id", {"id": tables.A("id")}),
         verbose_name=_("Credential Id"),
         attrs={
@@ -41,7 +41,7 @@ class TransferTable(tables.Table):
         model = Transfer
         fields = (
             "select",
-            "get_credential_id",
+            "credential_id",
             "destination_name",
             "number_items",
             "lot",

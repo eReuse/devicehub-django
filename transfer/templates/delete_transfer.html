@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load django_bootstrap5 %}
+
+{% block content %}
+  <div class="d-flex justify-content-center">
+    <div class="col-md-8 mb-3">
+      <p class="lead text-center mb-4">
+        {% trans "Are you sure you want to delete the following transfer?" %}<br />
+	ID: {{ object.get_credential_id }}
+      </p>
+
+      <form role="form" method="post" action="{% url 'transfer:delete' object.id %}" class="mt-4">
+        {% csrf_token %}
+
+        <div class="d-grid gap-3 d-md-flex justify-content-md-center">
+          <a class="btn btn-outline-secondary" href="{{ request.META.HTTP_REFERER }}">
+            <i class="bi bi-x-circle me-1"></i>
+            {% translate "Cancel" %}
+          </a>
+	  {% if object.sended %}
+          <a class="btn btn-outline-secondary" href="{{ request.META.HTTP_REFERER }}">
+            <i class="bi bi-x-circle me-1"></i>
+            {% translate "Delete" %}
+          </a>
+	  {% else %}
+          <button type="submit" class="btn btn-danger">
+            <i class="bi bi-trash me-1"></i>
+            {% translate "Delete" %}
+          </button>
+	  {% endif %}
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}
