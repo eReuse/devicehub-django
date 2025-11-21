@@ -5,14 +5,12 @@ from django.contrib import messages
 from django.db import IntegrityError
 from django.urls import reverse_lazy
 from django.views.generic.edit import FormView
-from django.shortcuts import get_object_or_404, Http404
+from django.shortcuts import get_object_or_404, Http404, redirect, render
 from django.utils.translation import gettext_lazy as _
 from django_tables2 import SingleTableView
 from django.views.generic.base import TemplateView
 from django.views.generic.edit import (
     CreateView,
-    UpdateView,
-    DeleteView,
 )
 
 from environmental_impact.algorithms.algorithm_factory import FactoryEnvironmentImpactAlgorithm as Feia
@@ -152,6 +150,117 @@ class NewTransferView(DashboardView, FormView):
         messages.error(self.request, _("Lot error transfer"))
         response = super().form_invalid(form)
         return response
+
+
+class SendTransferView(DashboardView, TemplateView):
+    object = None
+
+    def get(self, request, *args, **kwargs):
+        super().get(request, *args, **kwargs)
+        self.request = request
+        self.args = args
+        self.kwargs = kwargs
+        self.get_object()
+        try:
+            self.object.send_transfer()
+        except Exception as err:
+            logger.error("Sending Transfer: {}".format(err))
+            messages.error(self.request, _("Error sending transfer"))
+            return redirect(self.get_success_url())
+
+        messages.success(self.request, _("Transfer succesfully sended"))
+        return redirect(self.get_success_url())
+
+    def get_object(self):
+        if self.object:
+            return self.object
+
+        self.object = get_object_or_404(
+            Transfer,
+            owner=self.request.user.institution,
+            id=self.kwargs.get("id"),
+            sended=False
+        )
+
+    def get_success_url(self):
+        return reverse_lazy('transfer:id', args=[self.object.id])
+
+
+class EditTransferView(DashboardView, FormView):
+    template_name = "transfer_lots.html"
+    title = _("Transfer lot/s")
+    breadcrumb = "transfer / edit"
+    success_url = reverse_lazy('dashboard:unassigned')
+    form_class = TransferForm
+    object = None
+
+    def get_success_url(self):
+        return reverse_lazy('transfer:id', args=[self.object.id])
+
+    def get_object(self):
+        if self.object:
+            return self.object
+
+        self.object = get_object_or_404(
+            Transfer,
+            owner=self.request.user.institution,
+            id=self.kwargs.get("id"),
+        )
+        self.lot = self.object.lot_set.first()
+        return self.object
+
+    def get_initial(self):
+        self.get_object()
+        typ = {0: "cbv:BTT-desad", 1: "cbv:BTT-recadv"}
+        return {
+            'issuer_did': self.object.issuer_did,
+            'did': self.object.organization_did,
+            'name': self.object.organization_name,
+            'website': self.object.website,
+            'api_destination': self.object.api_destination,
+            'token_destination': self.object.token_destination,
+            'type_of_transfer': typ.get(self.object.type)
+        }
+
+    def get_form_kwargs(self):
+        self.get_object()
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        kwargs['domain'] = "{}://{}".format(self.request.scheme, self.request.get_host())
+        kwargs['lot'] = self.lot
+        kwargs['instance'] = self.object
+
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({
+            'lot': self.lot,
+            'transfer': self.object,
+            'lots_with_devices': self.lot.devices.exists(),
+            'breadcrumb': self.breadcrumb,
+            'title': self.title,
+        })
+
+        return context
+
+    def form_valid(self, form):
+        form.save()
+
+        if form.instance:
+            messages.success(self.request, _("Lot succesfully transfer"))
+            self.transfer = form.instance
+        else:
+            messages.error(self.request, _("Error signing transaction"))
+
+        response = super().form_valid(form)
+        return response
+
+    def form_invalid(self, form):
+        messages.error(self.request, _("Lot error transfer"))
+        response = super().form_invalid(form)
+        return response
+
 
 
 class DeviceView(DashboardView, TemplateView):
@@ -324,3 +433,43 @@ class TransferUpdateUserPropertyView(UpdateUserPropertyView):
         id = self.kwargs.get('id')
         pk = self.kwargs.get('device_id')
         return reverse_lazy('transfer:device', args=[id, pk]) + "#user_properties"
+
+
+class DeleteTransferView(DashboardView, TemplateView):
+    template_name = "delete_transfer.html"
+    title = _("Delete transfer")
+    breadcrumb = "transfer / Delete"
+    object = None
+
+    def get(self, request, *args, **kwargs):
+        self.get_object()
+        context = {
+            'lot': self.lot,
+            'object': self.object,
+            'breadcrumb': self.breadcrumb,
+            'title': self.title,
+        }
+        return render(request, self.template_name, context)
+
+    def post(self, request, *args, **kwargs):
+        self.get_object()
+
+        self.object.delete()
+        messages.success(request, _("Transfer succesfully deleted"))
+        return redirect(self.get_success_url())
+
+    def get_object(self):
+        if self.object:
+            return self.object
+
+        self.object = get_object_or_404(
+            Transfer,
+            owner=self.request.user.institution,
+            id=self.kwargs.get("id"),
+            sended=False
+        )
+        self.lot = self.object.lot_set.first()
+        return self.object
+
+    def get_success_url(self):
+        return reverse_lazy('dashboard:lot', args=[self.lot.id])
