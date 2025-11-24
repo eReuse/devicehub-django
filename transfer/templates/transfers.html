@@ -40,6 +40,9 @@
       {% else %}
       <i class="bi bi-envelope-dash text-danger" title="Not sended"></i>
       {% endif %}
+      {% if transfer.is_foreing %}
+      <i class="bi bi-globe" title="External transfer"></i>
+      {% endif %}
     </h5>
     <div class="d-flex align-items-center gap-2">
       {% if lot.archived %}

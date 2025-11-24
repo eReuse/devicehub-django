@@ -114,3 +114,13 @@ class Transfer(models.Model):
             return destination.get("organisationWebsite", '')
 
         return ''
+
+    @property
+    def is_foreing_transfer(self):
+        dtype = self.credential.get("credentialSubject", {}).get("bizTransaction")
+        typ_trans = {
+            self.Type.SENDED: "cbv:BTT-desad",
+            self.Type.RECEIVED: "cbv:BTT-recadv"
+        }
+
+        return typ_trans.get(dtype) != self.type

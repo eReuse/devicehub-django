@@ -78,11 +78,16 @@ class NewTransferView(ApiMixing):
 
         try:
             data = json.loads(request.body)
+            dtype = typ_trans[data["credentialSubject"]["bizTransaction"]]
+            if dtype == Transfer.Type.SENDED:
+                dtype = Transfer.Type.RECEIVED
+            elif dtype == Transfer.Type.RECEIVED:
+                dtype = Transfer.Type.SENDED
             credential_id = data["id"]
             issuer_did = data["issuer"]["id"]
             organization_name = data["credentialSubject"]["sourceParty"]["name"]
             organization_did = data["credentialSubject"]["sourceParty"]["id"]
-            type_of_transfer = typ_trans[data["credentialSubject"]["bizTransaction"]]
+            type_of_transfer = dtype
             credential_id = data["id"]
         except Exception:
             txt = "error: Is not a valid transfer"
