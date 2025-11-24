@@ -59,12 +59,26 @@
                                     <i class="bi bi-pencil-square"></i>
                                     {% translate "Edit" %}
                                 </a>
-                                <a href="{% url 'admin:delete_user' profile_user.pk %}"
-                                   class="btn btn-outline-danger px-3"
-                                   title="{% translate 'Delete' %}">
+
+                                {% if profile_user.pk == 1 %}
+                                <span class="btn btn-outline-danger position-relative"
+                                    data-bs-toggle="tooltip"
+                                    data-bs-placement="top"
+                                    title="{% trans 'User #1 cannot be deleted' %}">
                                     <i class="bi bi-trash"></i>
-                                </a>
+                                    <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle">
+                                    </span>
+                                </span>
+                                {% else %}
+                                <button
+                                    type="button" class="btn btn-outline-danger"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#deleteUserModal" >
+                                    <i class="bi bi-trash me-1"></i>
+                                </button>
+                                {% endif %}
                             </div>
+
                         </div>
                     </div>
                 {% endif %}
@@ -103,4 +117,47 @@
         </div>
     </div>
 </div>
+
+<div class="modal fade" id="deleteUserModal" tabindex="-1" aria-labelledby="deleteUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title fw-bold" id="deleteUserModalLabel">
+                    {% trans "Delete User Account" %}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger" role="alert">
+                    <p class="mb-0 small">{% trans "This will permanently delete the user account." %}</p>
+                </div>
+                <div class="border rounded p-3 mt-3 bg-light">
+                    <div>
+                        {% if profile_user.is_admin %}
+                            <span class="badge bg-warning text-dark mt-1">
+                                {% trans "Administrator" %}
+                            </span>
+
+                        {% endif %}
+                        <p class="mb-0 text-muted small text-end">{{ profile_user.get_full_name|default:profile_user.first_name }}</p>
+                        <p class="mb-0 fw-bold text-end">{{ profile_user.email }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    {% trans "Cancel" %}
+                </button>
+                <form method="post" action="{% url 'admin:delete_user' profile_user.pk %}" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash-fill me-1"></i> {% trans "Confirm Deletion" %}
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<div>
 {% endblock %}
