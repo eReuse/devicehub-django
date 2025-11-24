@@ -394,3 +394,26 @@ class NewTransaction(ApiMixing):
 
     def get(self, request, *args, **kwargs):
         return JsonResponse({}, status=404)
+
+
+class DownloadTransfer(ApiMixing):
+
+    def post(self, request, *args, **kwargs):
+        response = self.auth()
+        if response:
+            return response
+
+        self.pk = kwargs['pk']
+        institution = self.tk.owner.institution
+        self.transfer = Transfer.objects.filter(
+            owner=institution,
+            id=self.pk,
+        ).first()
+
+        if not self.transfer or not self.transfer.str_credential:
+            return JsonResponse({}, status=404)
+
+        return JsonResponse({"data": self.transfer.str_credential}, status=200)
+
+    def get(self, request, *args, **kwargs):
+        return JsonResponse({}, status=404)
