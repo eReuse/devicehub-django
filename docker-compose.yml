@@ -79,5 +79,28 @@ services:
       - ${DOCKER_IDHUB_STATIC_ROOT}:${IDHUB_STATIC_ROOT:-/static/}
       - ${DOCKER_IDHUB_MEDIA_ROOT}:${IDHUB_MEDIA_ROOT:-/media/}
 
+  devicehub-django-test:
+      # https://docs.docker.com/compose/how-tos/profiles/
+      profiles: [test]
+      init: true
+      image: ghcr.io/ereuse/devicehub-django:${DEVICEHUB_DOCKER_TAG:-stable}
+      build:
+          context: .
+          dockerfile: docker/devicehub-django.Dockerfile
+      entrypoint: /devicehub-django.test.entrypoint.sh
+      environment:
+          - DEBUG=${DEBUG:-true}
+          - DEVICEHUB_HOST=${DEVICEHUB_HOST:-localhost}
+          - PORT=${DEVICEHUB_PORT:-8000}
+          - ALLOWED_HOSTS=${DEVICEHUB_ALLOWED_HOSTS:-$DEVICEHUB_HOST}
+          - DEMO=${DEMO:-false}
+          - DEMO_IDHUB_DOMAIN=${DEMO_IDHUB_DOMAIN:-}
+          - DEMO_IDHUB_PREDEFINED_TOKEN=${DEMO_IDHUB_PREDEFINED_TOKEN:-}
+          - DEMO_PREDEFINED_TOKEN=${DEMO_PREDEFINED_TOKEN:-}
+          - DPP=${DPP:-false}
+          - TIME_ZONE=${TIME_ZONE:-UTC}
+      volumes:
+          - .:/opt/devicehub-django
+
 volumes:
   IDHUB_DATA:

@@ -40,6 +40,10 @@ ENV PYTHONPATH="${PYTHONPATH}:/usr/lib/python3/dist-packages"
 
 COPY . .
 COPY docker/devicehub-django.entrypoint.sh /
+COPY docker/devicehub-django.test.entrypoint.sh /
+
+# Make entrypoint scripts executable
+RUN chmod +x /devicehub-django.entrypoint.sh /devicehub-django.test.entrypoint.sh
 
 # TODO this is bad for our main server
 #   with the "next" docker things to apply this is no longer needed
