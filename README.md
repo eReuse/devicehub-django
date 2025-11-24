@@ -202,6 +202,27 @@ To clean up the deployment and start fresh, just delete Django's database:
 rm db/*
 ```
 
+## Testing
+
+DeviceHub includes a Docker-based testing environment for running unit tests in isolation.
+
+To run all tests, execute from the project root:
+
+```bash
+./docker-test.sh
+```
+
+You can also run specific tests by passing arguments, for a test module:
+
+```
+./docker-test.sh device.tests
+./docker-test.sh device.tests.TestDeviceModel
+./docker-test.sh device.tests.TestDeviceModel.test_device_creation
+```
+
+The test environment automatically sets up a fresh test database, runs migrations, creates test institutions and users,
+and cleans up after completion.
+
 ## License
 
 DeviceHub is released under the [GNU Affero General Public License v3.0](LICENSE).
