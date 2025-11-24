@@ -393,7 +393,6 @@ class IssueDigitalPassportView(DeviceLogMixin, View):
             'Authorization': f'Bearer {API_KEY}',
             'Content-Type': 'application/json'
         }
-        breakpoint()
 
         try:
             response = requests.post(

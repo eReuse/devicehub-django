@@ -83,7 +83,7 @@ class Evidence:
     def get_credential(self):
         self.credentials = CredentialProperty.objects.filter(
             uuid=self.uuid
-        ).order_by("created")
+        ).order_by("-created")
         return self.credentials.first()
 
     def get_owner(self):
