@@ -1,9 +1,9 @@
-import json
 import logging
 
 from django.contrib import messages
 from django.db import IntegrityError
 from django.urls import reverse_lazy
+from django.http import HttpResponse
 from django.views.generic.edit import FormView
 from django.shortcuts import get_object_or_404, Http404, redirect, render
 from django.utils.translation import gettext_lazy as _
@@ -473,3 +473,16 @@ class DeleteTransferView(DashboardView, TemplateView):
 
     def get_success_url(self):
         return reverse_lazy('dashboard:lot', args=[self.lot.id])
+
+
+class DownloadTransferView(DashboardView, TemplateView):
+    def get(self, request, *args, **kwargs):
+        self.id = self.kwargs.get("id")
+        self.object = get_object_or_404(
+            Transfer,
+            owner=self.request.user.institution,
+            id=self.id,
+        )
+        response = HttpResponse(self.object.str_credential, content_type="application/json")
+        response['Content-Disposition'] = 'attachment; filename={}'.format("credential.json")
+        return response

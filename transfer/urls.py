@@ -10,6 +10,7 @@ urlpatterns = [
     path("<int:id>", views.TransferView.as_view(), name="id"),
     path("<int:id>/edit", views.EditTransferView.as_view(), name="edit"),
     path("<int:id>/send", views.SendTransferView.as_view(), name="send"),
+    path("<int:id>/download", views.DownloadTransferView.as_view(), name="download"),
     path("<int:id>/delete", views.DeleteTransferView.as_view(), name="delete"),
     path("<int:id>/device/<str:pk>", views.DeviceView.as_view(), name="device"),
     path("<int:id>/device/<str:pk>/property/add",
