@@ -23,7 +23,7 @@
   </div>
 
   <h3>{{ subtitle }}</h3>
-  {% if lot %}
+  {% if transfer %}
   <div class="d-flex justify-content-between align-items-center p-3 bg-light border-bottom">
     <h5 class="mb-0">
       <i class="bi bi-arrow-left-right"></i>
@@ -45,6 +45,7 @@
       {% endif %}
     </h5>
     <div class="d-flex align-items-center gap-2">
+      {% if lot %}
       {% if lot.archived %}
       <i class="bi bi-archive text-warning small"></i>
       <a href="{% url 'dashboard:lot' lot.id %}" class="text-decoration-none">{{ lot.name }}</a>
@@ -53,6 +54,7 @@
       <i class="bi bi-folder2-open small"></i>
       <a href="{% url 'dashboard:lot' lot.id %}" class="text-decoration-none">{{ lot.name }}</a>
       <small class="text-muted ps-1"> {% trans "open" %}</small>
+      {% endif %}
       {% endif %}
       <a href="{% url 'transfer:download' transfer.id %}" class="btn btn-green-user">Download</a>
       {% if not transfer.sended %}
