@@ -33,6 +33,8 @@ class LotsForm(forms.Form):
 
     def clean(self):
         self._lots = self.cleaned_data.get("lots")
+        if self._lots.filter(transfer__isnull=False).first():
+            raise ValidationError(_("There are lots with transfers"))
         return self._lots
 
     def save(self, commit=True):

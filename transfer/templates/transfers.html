@@ -40,8 +40,8 @@
       {% else %}
       <i class="bi bi-envelope-dash text-danger" title="Not sended"></i>
       {% endif %}
-      {% if transfer.is_foreing %}
-      <i class="bi bi-globe" title="External transfer"></i>
+      {% if transfer.is_foreing_transfer %}
+      <i class="bi bi-globe text-primary" title="External transfer"></i>
       {% endif %}
     </h5>
     <div class="d-flex align-items-center gap-2">
@@ -57,6 +57,7 @@
       {% endif %}
       {% endif %}
       <a href="{% url 'transfer:download' transfer.id %}" class="btn btn-green-user">Download</a>
+      {% if not transfer.is_foreing_transfer %}
       {% if not transfer.sended %}
       {% if transfer.api_destination and transfer.token_destination %}
       <a href="{% url 'transfer:send' transfer.id %}" class="btn btn-green-user">Send</a>
@@ -64,7 +65,7 @@
       <a href="{% url 'transfer:edit' transfer.id %}" class="btn btn-green-user">Edit</a>
       <a href="{% url 'transfer:delete' transfer.id %}" class="btn btn-danger">Delete</a>
       {% endif %}
-
+      {% endif %}
     </div>
   </div>
   {% endif %}

@@ -148,7 +148,7 @@
           </h5>
           <div class="d-flex align-items-center gap-2">
             {# If a lot is archived, then dont render the unassign button  #}
-            {% if lot.name and not lot.archived %}
+            {% if lot.name and not lot.archived and not lot.transfer %}
               <button id="remove-button" class="btn btn-outline-danger" type="submit"
                       value="{% url 'lot:del_devices' lot.id %}" name="url">
                 <i class="bi bi-folder-minus"></i> {% trans 'Unassign' %}
@@ -159,10 +159,12 @@
 	        {% trans 'Beneficiary' %}
 	      </button>
             {% endif %}
+            {% if lot and not lot.transfer %}
             <button id="add-button" class="btn btn-green-user" type="submit" disabled name="url" value="{% url 'lot:add_devices' %}">
               <i class="bi bi-folder-symlink"></i>
               {% trans 'Assign to lot' %}
             </button>
+            {% endif %}
 
             <!-- change state button -->
             <div class="dropdown">

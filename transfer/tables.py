@@ -18,7 +18,7 @@ class TransferTable(tables.Table):
         },
         orderable=False
     )
-    destination_name = tables.Column(
+    organization_name = tables.Column(
         verbose_name=_("Organization Name"),
     )
     credential_id = tables.Column(
@@ -42,7 +42,7 @@ class TransferTable(tables.Table):
         fields = (
             "select",
             "credential_id",
-            "destination_name",
+            "organization_name",
             "number_items",
             "lot",
             "created"

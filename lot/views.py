@@ -126,6 +126,9 @@ class DeleteLotsView(LotSuccessUrlMixin, DashboardView, TemplateView):
             id__in=selected_ids,
             owner=request.user.institution
         )
+        if lots_to_delete.filter(transfer__isnull=False).first():
+            messages.error(request, _("There are lots with transfers"))
+            return redirect(self.request.META.get("HTTP_REFERER"))
         context = {
             'lots': lots_to_delete,
             'lots_with_devices': any(lot.devices.exists() for lot in lots_to_delete),
@@ -143,8 +146,13 @@ class DeleteLotsView(LotSuccessUrlMixin, DashboardView, TemplateView):
 
         lots_to_delete = Lot.objects.filter(
             id__in=selected_ids,
+            transfer=None,
             owner=request.user.institution
         )
+
+        if not lots_to_delete.first():
+            messages.error(request, _("No there are Lots to deleted"))
+            return redirect(self.request.META.get("HTTP_REFERER"))
 
         lot_tag = lots_to_delete.first().type
         lots_to_delete.delete()
@@ -219,6 +227,11 @@ class AddToLotView(DashboardView, FormView):
         messages.success(self.request, _("Devices assigned to Lot."))
         return response
 
+    def form_invalid(self, form):
+        super().form_valid(form)
+        messages.error(self.request, _("There are lots with transfers"))
+        return redirect(self.request.META.get("HTTP_REFERER"))
+
     def get_success_url(self):
         return reverse_lazy('dashboard:lot', args=[self.request.POST.getlist('lots')[0]])
 
@@ -226,16 +239,20 @@ class AddToLotView(DashboardView, FormView):
 class DelToLotView(DashboardView, View):
     #DashboardView will redirect to a GET method
     def get(self, request, *args, **kwargs):
-        lot_id = self.kwargs.get('pk')
+        self.lot_id = self.kwargs.get('pk')
         selected_devices = self.get_session_devices()
 
         if not selected_devices:
             messages.error(request, _("No devices selected"))
-            return redirect(reverse_lazy('dashboard:lot', kwargs={'pk': lot_id}))
+            return self.get_success_url()
         try:
             lot = Lot.objects.filter(
-                id=lot_id,
+                id=self.lot_id,
             ).first()
+
+            if lot.transfer:
+                messages.error(self.request, _("This lot has a transfer"))
+                return self.get_success_url()
 
             for dev in selected_devices:
                     lot.remove(dev.id)
@@ -248,7 +265,10 @@ class DelToLotView(DashboardView, View):
                 request,
                 _("Error unassigning devices: %s") % str(e))
 
-        return redirect(reverse_lazy('dashboard:lot', kwargs={'pk': lot_id}))
+        return self.get_success_url()
+
+    def get_success_url(self):
+        return redirect(reverse_lazy('dashboard:lot', kwargs={'pk': self.lot_id}))
 
 
 class LotsTagsView(DashboardView, SingleTableView):
