@@ -86,10 +86,11 @@ class TransferForm(forms.Form):
         self.instance.save()
         self.lot.transfer = self.instance
         self.lot.save()
-        for d in  self.lot.devices:
-            ev = SystemProperty.objects.filter(value=d.device_id).order_by("-created").first()
-            ev.transfer = self.instance
-            ev.save()
+        if self.instance.is_sended:
+            for d in  self.lot.devices:
+                ev = SystemProperty.objects.filter(value=d.device_id).order_by("-created").first()
+                ev.transfer = self.instance
+                ev.save()
 
         return
 

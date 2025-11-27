@@ -96,6 +96,10 @@ class Transfer(models.Model):
         return True
 
     @property
+    def is_sended(self):
+        return self.type == self.Type.SENDED
+
+    @property
     def lot(self):
         return self.lot_set.first().name
 
