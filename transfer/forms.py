@@ -6,6 +6,7 @@ from django.core.exceptions import ValidationError
 from django.conf import settings
 from django.urls import reverse
 from django import forms
+from evidence.models import SystemProperty
 from device.models import Device
 from transfer.models import Transfer
 
@@ -19,7 +20,7 @@ class TransferForm(forms.Form):
     api_destination = forms.URLField(required=False)
     token_destination = forms.CharField(required=False)
     type_of_transfer = forms.ChoiceField(
-        choices=[("cbv:BTT-desad", _("Send")), ("cbv:BTT-recadv", _("Receibe"))]
+        choices=[("desad", _("Send")), ("recadv", _("Receibe"))]
     )
 
     def __init__(self, *args, **kwargs):
@@ -50,9 +51,10 @@ class TransferForm(forms.Form):
             return
 
         typ_trans = {
-            "cbv:BTT-desad": Transfer.Type.SENDED,
-            "cbv:BTT-recadv": Transfer.Type.RECEIVED
+            "desad": Transfer.Type.SENDED,
+            "recadv": Transfer.Type.RECEIVED
         }
+
         if not self.instance:
             self.instance = Transfer.objects.create(
                 issuer_did=self.cleaned_data.get("issuer_did"),
@@ -84,6 +86,10 @@ class TransferForm(forms.Form):
         self.instance.save()
         self.lot.transfer = self.instance
         self.lot.save()
+        for d in  self.lot.devices:
+            ev = SystemProperty.objects.filter(value=d.device_id).order_by("-created").first()
+            ev.transfer = self.instance
+            ev.save()
 
         return
 
@@ -105,10 +111,10 @@ class TransferForm(forms.Form):
         biz_transaction = self.cleaned_data.get("type_of_transfer")
         source_party = {}
         destination_party = {}
-        if biz_transaction == "cbv:BTT-desad":
+        if biz_transaction == "desad":
             source_party = institution
             destination_party = other_part
-        elif biz_transaction == "cbv:BTT-recadv":
+        elif biz_transaction == "recadv":
             source_party = other_part
             destination_party = institution
 
@@ -116,11 +122,17 @@ class TransferForm(forms.Form):
             return
 
         credential_subject = {
+            "id": self.get_url(),
             "sourceParty": source_party,
             "destinationParty": destination_party,
             "bizTransaction": biz_transaction,
             "epcList": self.get_epc_list()
         }
+
+        if self.instance.reference:
+            credential_subject["unc:externalDocument"] = {
+                "unc:uriid": self.instance.reference
+            }
 
         evidences = self.get_evidences()
 

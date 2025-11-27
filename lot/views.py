@@ -222,6 +222,16 @@ class AddToLotView(DashboardView, FormView):
 
     def form_valid(self, form):
         form.devices = self.get_session_devices()
+        ids = [d.pk for d in form.devices]
+        transfers = SystemProperty.objects.filter(
+            value__in=ids,
+            owner=self.request.user.institution,
+            transfer__isnull=False
+        )
+        if transfers:
+            messages.error(self.request, _("There are devices with transfers"))
+            return redirect(self.request.META.get("HTTP_REFERER"))
+
         form.save()
         response = super().form_valid(form)
         messages.success(self.request, _("Devices assigned to Lot."))

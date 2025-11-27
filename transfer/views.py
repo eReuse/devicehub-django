@@ -211,7 +211,7 @@ class EditTransferView(DashboardView, FormView):
 
     def get_initial(self):
         self.get_object()
-        typ = {0: "cbv:BTT-desad", 1: "cbv:BTT-recadv"}
+        typ = {0: "desad", 1: "recadv"}
         return {
             'issuer_did': self.object.issuer_did,
             'did': self.object.organization_did,
@@ -325,7 +325,7 @@ class DeviceView(DashboardView, TemplateView):
         evidences = self.transfer.get_evidences()
 
         try:
-            self.object = Device(id=self.pk)
+            self.object = Device(id=self.pk, owner=self.request.user.institution)
             doc = evidences[self.pk]
             uuid= doc.get("uuid")
             evi = Evidence(uuid, doc=doc)
@@ -340,7 +340,7 @@ class DeviceView(DashboardView, TemplateView):
             self.transfer.name = self.transfer.organization_name
             self.transfer.code = ""
             self.transfer.description = ""
-            self.object.owner = self.request.user.institution
+            self.object._transfer = self.transfer
             return self.object
         except Exception:
             return

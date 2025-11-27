@@ -72,8 +72,8 @@ class NewTransferView(ApiMixing):
             return response
 
         typ_trans = {
-            "cbv:BTT-desad": Transfer.Type.SENDED,
-            "cbv:BTT-recadv": Transfer.Type.RECEIVED
+            "desad": Transfer.Type.SENDED,
+            "recadv": Transfer.Type.RECEIVED
         }
 
         try:

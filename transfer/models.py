@@ -119,8 +119,8 @@ class Transfer(models.Model):
     def is_foreing_transfer(self):
         dtype = self.credential.get("credentialSubject", {}).get("bizTransaction")
         typ_trans = {
-            "cbv:BTT-desad": self.Type.SENDED,
-            "cbv:BTT-recadv": self.Type.RECEIVED
+            "desad": self.Type.SENDED,
+            "recadv": self.Type.RECEIVED
         }
 
         return typ_trans.get(dtype) != self.Type(self.type)

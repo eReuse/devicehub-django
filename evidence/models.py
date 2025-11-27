@@ -11,6 +11,7 @@ from evidence.xapian import search
 from evidence.parse_details import ParseSnapshot
 from evidence.normal_parse_details import get_inxi, get_inxi_key
 from user.models import User, Institution
+from transfer.models import Transfer
 
 
 class Property(models.Model):
@@ -28,6 +29,7 @@ class Property(models.Model):
 
 class SystemProperty(Property):
     uuid = models.UUIDField()
+    transfer = models.ForeignKey(Transfer, on_delete=models.SET_NULL, null=True, blank=True)
 
     class Meta:
         constraints = [

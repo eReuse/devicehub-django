@@ -32,13 +32,15 @@ class Device:
         self.pk = self.id
         self.shortid = self.pk[:6].upper()
         self.algorithm = None
-        self.owner = None
+        self.owner = kwargs.get("owner")
         self.properties = []
         self.hids = []
         self.uuids = []
         self.evidences = []
         self.lots = []
         self.last_evidence = None
+        self.last_system_property = None
+        self._transfer = None
         self.get_last_evidence()
 
     def initial(self):
@@ -399,6 +401,24 @@ class Device:
             properties = cursor.fetchall()
 
         return cls(id=properties[0][0])
+
+    @property
+    def transfer(self):
+        if not self.owner:
+            return
+
+        if self._transfer:
+            return self._transfer
+
+        if not self.last_system_property:
+            self.last_system_property = SystemProperty.objects.filter(
+                owner=self.owner,
+                value=self.pk
+            ).order_by("-created").first()
+
+        if self.last_system_property:
+            self._transfer = self.last_system_property.transfer
+            return self._transfer
 
     @property
     def is_websnapshot(self):

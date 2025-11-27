@@ -159,7 +159,7 @@
 	        {% trans 'Beneficiary' %}
 	      </button>
             {% endif %}
-            {% if lot and not lot.transfer %}
+            {% if not lot or not lot.transfer %}
             <button id="add-button" class="btn btn-green-user" type="submit" disabled name="url" value="{% url 'lot:add_devices' %}">
               <i class="bi bi-folder-symlink"></i>
               {% trans 'Assign to lot' %}
