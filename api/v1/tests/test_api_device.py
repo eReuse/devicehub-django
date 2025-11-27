@@ -108,6 +108,13 @@ class DeviceAPITests(TestCase):
 
         return test_device
 
+    def _create_not_found_device(self, device_id):
+        """Helper to create a device that simulates not found (no last_evidence)"""
+        test_device = TestDevice(id=device_id)
+        test_device.last_evidence = None
+        test_device.owner = self.institution
+        return test_device
+
     @patch('api.v1.devices.Device')
     def test_get_device_details_success(self, MockDevice):
         """Test successful device retrieval with valid authentication"""
@@ -283,3 +290,374 @@ class DeviceAPITests(TestCase):
         self.assertEqual(len(json_data['shortId']), 6)
         self.assertTrue(json_data['shortId'].isupper())
         self.assertEqual(json_data['shortId'], self.device_id[:6].upper())
+
+    # === URL Encoding & Special Characters Tests ===
+
+    @patch('api.v1.devices.Device')
+    def test_device_id_with_spaces(self, MockDevice):
+        """Test device ID containing spaces returns 404"""
+        from urllib.parse import quote
+
+        device_id_with_spaces = "test device with spaces"
+        test_device = self._create_not_found_device(device_id_with_spaces)
+        MockDevice.return_value = test_device
+
+        # URL encode the device ID
+        encoded_id = quote(device_id_with_spaces, safe='')
+        url = f'/api/v1/devices/{encoded_id}/'
+
+        response = self.client.get(
+            url,
+            HTTP_AUTHORIZATION=f'Bearer {self.token.token}'
+        )
+
+        self.assertEqual(response.status_code, 404)
+
+    @patch('api.v1.devices.Device')
+    def test_device_id_with_url_special_chars(self, MockDevice):
+        """Test device ID with URL special characters returns 404"""
+        from urllib.parse import quote
+
+        device_id = "test?id=123&foo=bar#anchor"
+        test_device = self._create_not_found_device(device_id)
+        MockDevice.return_value = test_device
+
+        encoded_id = quote(device_id, safe='')
+        url = f'/api/v1/devices/{encoded_id}/'
+
+        response = self.client.get(
+            url,
+            HTTP_AUTHORIZATION=f'Bearer {self.token.token}'
+        )
+
+        self.assertEqual(response.status_code, 404)
+
+    @patch('api.v1.devices.Device')
+    def test_device_id_with_slashes(self, MockDevice):
+        """Test device ID with path traversal attempts returns 404"""
+        from urllib.parse import quote
+
+        device_id = "../../../etc/passwd"
+        test_device = self._create_not_found_device(device_id)
+        MockDevice.return_value = test_device
+
+        encoded_id = quote(device_id, safe='')
+        url = f'/api/v1/devices/{encoded_id}/'
+
+        response = self.client.get(
+            url,
+            HTTP_AUTHORIZATION=f'Bearer {self.token.token}'
+        )
+
+        self.assertEqual(response.status_code, 404)
+
+    @patch('api.v1.devices.Device')
+    def test_device_id_with_quotes(self, MockDevice):
+        """Test device ID with various quote characters returns 404"""
+        from urllib.parse import quote
+
+        device_id = "test'id\"with`quotes"
+        test_device = self._create_not_found_device(device_id)
+        MockDevice.return_value = test_device
+
+        encoded_id = quote(device_id, safe='')
+        url = f'/api/v1/devices/{encoded_id}/'
+
+        response = self.client.get(
+            url,
+            HTTP_AUTHORIZATION=f'Bearer {self.token.token}'
+        )
+
+        self.assertEqual(response.status_code, 404)
+
+    @patch('api.v1.devices.Device')
+    def test_device_id_with_sql_injection_patterns(self, MockDevice):
+        """Test device ID with SQL injection patterns returns 404"""
+        from urllib.parse import quote
+
+        device_id = "'; DROP TABLE devices--"
+        test_device = self._create_not_found_device(device_id)
+        MockDevice.return_value = test_device
+
+        encoded_id = quote(device_id, safe='')
+        url = f'/api/v1/devices/{encoded_id}/'
+
+        response = self.client.get(
+            url,
+            HTTP_AUTHORIZATION=f'Bearer {self.token.token}'
+        )
+
+        self.assertEqual(response.status_code, 404)
+
+    @patch('api.v1.devices.Device')
+    def test_device_id_with_newlines_and_whitespace(self, MockDevice):
+        """Test device ID with newlines and whitespace returns 404"""
+        from urllib.parse import quote
+
+        device_id = "test\nid\twith\rwhitespace"
+        test_device = self._create_not_found_device(device_id)
+        MockDevice.return_value = test_device
+
+        encoded_id = quote(device_id, safe='')
+        url = f'/api/v1/devices/{encoded_id}/'
+
+        response = self.client.get(
+            url,
+            HTTP_AUTHORIZATION=f'Bearer {self.token.token}'
+        )
+
+        self.assertEqual(response.status_code, 404)
+
+    # === Boundary Condition Tests ===
+
+    @patch('api.v1.devices.Device')
+    def test_device_id_very_long(self, MockDevice):
+        """Test device ID exceeding database max_length (256 chars) returns 404"""
+        # Create 257-character device ID (exceeds STR_EXTEND_SIZE=256)
+        long_device_id = "a" * 257
+        test_device = self._create_not_found_device(long_device_id)
+        MockDevice.return_value = test_device
+
+        url = f'/api/v1/devices/{long_device_id}/'
+
+        response = self.client.get(
+            url,
+            HTTP_AUTHORIZATION=f'Bearer {self.token.token}'
+        )
+
+        self.assertEqual(response.status_code, 404)
+
+    @patch('api.v1.devices.Device')
+    def test_device_id_exactly_256_chars(self, MockDevice):
+        """Test device ID at exact database boundary (256 chars) returns 404"""
+        # Create exactly 256-character device ID (at STR_EXTEND_SIZE limit)
+        boundary_device_id = "b" * 256
+        test_device = self._create_not_found_device(boundary_device_id)
+        MockDevice.return_value = test_device
+
+        url = f'/api/v1/devices/{boundary_device_id}/'
+
+        response = self.client.get(
+            url,
+            HTTP_AUTHORIZATION=f'Bearer {self.token.token}'
+        )
+
+        self.assertEqual(response.status_code, 404)
+
+    @patch('api.v1.devices.Device')
+    def test_device_id_unicode(self, MockDevice):
+        """Test device ID with Unicode characters returns 404"""
+        from urllib.parse import quote
+
+        device_id = "test🔒中文€device"
+        test_device = self._create_not_found_device(device_id)
+        MockDevice.return_value = test_device
+
+        encoded_id = quote(device_id, safe='')
+        url = f'/api/v1/devices/{encoded_id}/'
+
+        response = self.client.get(
+            url,
+            HTTP_AUTHORIZATION=f'Bearer {self.token.token}'
+        )
+
+        self.assertEqual(response.status_code, 404)
+
+    # === Numeric Edge Cases Tests ===
+
+    @patch('api.v1.devices.Device')
+    def test_device_id_negative_number(self, MockDevice):
+        """Test device ID with negative number returns 404"""
+        device_id = "-123"
+        test_device = self._create_not_found_device(device_id)
+        MockDevice.return_value = test_device
+
+        response = self.client.get(
+            f'/api/v1/devices/{device_id}/',
+            HTTP_AUTHORIZATION=f'Bearer {self.token.token}'
+        )
+
+        self.assertEqual(response.status_code, 404)
+
+    @patch('api.v1.devices.Device')
+    def test_device_id_zero(self, MockDevice):
+        """Test device ID as zero returns 404"""
+        device_id = "0"
+        test_device = self._create_not_found_device(device_id)
+        MockDevice.return_value = test_device
+
+        response = self.client.get(
+            f'/api/v1/devices/{device_id}/',
+            HTTP_AUTHORIZATION=f'Bearer {self.token.token}'
+        )
+
+        self.assertEqual(response.status_code, 404)
+
+    @patch('api.v1.devices.Device')
+    def test_device_id_float_format(self, MockDevice):
+        """Test device ID with decimal point returns 404"""
+        device_id = "123.456"
+        test_device = self._create_not_found_device(device_id)
+        MockDevice.return_value = test_device
+
+        response = self.client.get(
+            f'/api/v1/devices/{device_id}/',
+            HTTP_AUTHORIZATION=f'Bearer {self.token.token}'
+        )
+
+        self.assertEqual(response.status_code, 404)
+
+    @patch('api.v1.devices.Device')
+    def test_device_id_scientific_notation(self, MockDevice):
+        """Test device ID in scientific notation returns 404"""
+        device_id = "1e10"
+        test_device = self._create_not_found_device(device_id)
+        MockDevice.return_value = test_device
+
+        response = self.client.get(
+            f'/api/v1/devices/{device_id}/',
+            HTTP_AUTHORIZATION=f'Bearer {self.token.token}'
+        )
+
+        self.assertEqual(response.status_code, 404)
+
+    @patch('api.v1.devices.Device')
+    def test_device_id_leading_zeros(self, MockDevice):
+        """Test device ID with leading zeros returns 404"""
+        device_id = "00000123"
+        test_device = self._create_not_found_device(device_id)
+        MockDevice.return_value = test_device
+
+        response = self.client.get(
+            f'/api/v1/devices/{device_id}/',
+            HTTP_AUTHORIZATION=f'Bearer {self.token.token}'
+        )
+
+        self.assertEqual(response.status_code, 404)
+
+    # === CHID Format Validation Tests ===
+
+    @patch('api.v1.devices.Device')
+    def test_device_id_non_hexadecimal(self, MockDevice):
+        """Test device ID with non-hexadecimal characters returns 404"""
+        device_id = "notahexstring123xyz"
+        test_device = self._create_not_found_device(device_id)
+        MockDevice.return_value = test_device
+
+        response = self.client.get(
+            f'/api/v1/devices/{device_id}/',
+            HTTP_AUTHORIZATION=f'Bearer {self.token.token}'
+        )
+
+        self.assertEqual(response.status_code, 404)
+
+    @patch('api.v1.devices.Device')
+    def test_device_id_wrong_length(self, MockDevice):
+        """Test device ID with valid hex but wrong length (not 64 chars) returns 404"""
+        # Valid hex but only 32 characters (should be 64 for SHA3-256)
+        device_id = "a1b2c3d4e5f60123456789abcdef0123"
+        test_device = self._create_not_found_device(device_id)
+        MockDevice.return_value = test_device
+
+        response = self.client.get(
+            f'/api/v1/devices/{device_id}/',
+            HTTP_AUTHORIZATION=f'Bearer {self.token.token}'
+        )
+
+        self.assertEqual(response.status_code, 404)
+
+    @patch('api.v1.devices.Device')
+    def test_device_id_with_hyphens(self, MockDevice):
+        """Test device ID with UUID-like hyphens returns 404"""
+        device_id = "a1b2c3d4-e5f6-0123-4567-89abcdef0123"
+        test_device = self._create_not_found_device(device_id)
+        MockDevice.return_value = test_device
+
+        response = self.client.get(
+            f'/api/v1/devices/{device_id}/',
+            HTTP_AUTHORIZATION=f'Bearer {self.token.token}'
+        )
+
+        self.assertEqual(response.status_code, 404)
+
+    # === ShortID Edge Cases Tests ===
+
+    @patch('api.v1.devices.Device')
+    def test_shortid_with_short_device_id(self, MockDevice):
+        """Test shortId generation when device ID is less than 6 characters"""
+        device_id = "abc"  # Only 3 chars
+        test_device = TestDevice(id=device_id)
+        test_device.owner = self.institution
+        test_device.pk = device_id
+
+        # Mock components_export to return data with short shortId
+        test_device.components_export = MagicMock(return_value={
+            'ID': device_id,
+            'shortId': device_id.upper(),  # Will be "ABC" instead of 6 chars
+            'manufacturer': 'Test Manufacturer',
+            'model': 'Test Model',
+            'serial': 'SN123456',
+            'cpu_model': 'Intel i7',
+            'cpu_cores': 4,
+            'ram_total': '16 GiB',
+            'ram_type': 'DDR4',
+            'ram_slots': 2,
+            'slots_used': 2,
+            'drive': 'Samsung SSD (512 GB)',
+            'gpu_model': 'NVIDIA GTX 1080',
+            'type': 'Laptop',
+            'user_properties': "{'test_key': 'test_value'}",
+            'current_state': 'TO REPAIR',
+            'last_updated': datetime.now()
+        })
+
+        mock_state = MagicMock(spec=State)
+        mock_state.state = 'TO REPAIR'
+        test_device.get_current_state = MagicMock(return_value=mock_state)
+
+        MockDevice.return_value = test_device
+
+        response = self.client.get(
+            f'/api/v1/devices/{device_id}/',
+            HTTP_AUTHORIZATION=f'Bearer {self.token.token}'
+        )
+
+        self.assertEqual(response.status_code, 200)
+        json_data = response.json()
+        self.assertEqual(len(json_data['shortId']), 3)  # Only 3 chars available
+        self.assertTrue(json_data['shortId'].isupper())
+
+    @patch('api.v1.devices.Device')
+    def test_shortid_case_insensitive_lookup(self, MockDevice):
+        """Test that device lookup works with different case variations"""
+        # Use lowercase device ID
+        device_id_lower = "abcdef123456"
+        test_device = self._create_mock_device(device_id=device_id_lower)
+        MockDevice.return_value = test_device
+
+        response = self.client.get(
+            f'/api/v1/devices/{device_id_lower}/',
+            HTTP_AUTHORIZATION=f'Bearer {self.token.token}'
+        )
+
+        self.assertEqual(response.status_code, 200)
+        json_data = response.json()
+        # ShortId should be uppercase regardless of input case
+        self.assertEqual(json_data['shortId'], device_id_lower[:6].upper())
+
+    @patch('api.v1.devices.Device')
+    def test_shortid_with_special_chars_prefix(self, MockDevice):
+        """Test shortId generation when device ID starts with numbers"""
+        device_id = "123abc456def"
+        test_device = self._create_mock_device(device_id=device_id)
+        MockDevice.return_value = test_device
+
+        response = self.client.get(
+            f'/api/v1/devices/{device_id}/',
+            HTTP_AUTHORIZATION=f'Bearer {self.token.token}'
+        )
+
+        self.assertEqual(response.status_code, 200)
+        json_data = response.json()
+        # ShortId should be first 6 chars uppercased: "123ABC"
+        self.assertEqual(json_data['shortId'], "123ABC")
