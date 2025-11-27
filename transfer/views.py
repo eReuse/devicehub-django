@@ -78,12 +78,27 @@ class TransferView(DashboardView, SingleTableView):
     table_class = DeviceTable
     paginate_by = 10
 
-    def get_queryset(self):
+    def get(self, request, *args, **kwargs):
         self.object = get_object_or_404(
             self.model,
             owner=self.request.user.institution,
             id=self.kwargs.get("id")
         )
+
+        if self.kwargs.get("reference") and self.object.reference:
+           ref_object = self.model.objects.filter(
+               owner=self.request.user.institution,
+               credential_id=self.object.reference
+           ).first()
+           if ref_object:
+               return redirect(reverse_lazy('transfer:id', args=[ref_object.id]))
+           else:
+               return redirect(self.object.reference)
+
+        return super().get(request, *args, **kwargs)
+
+    def get_queryset(self):
+
         return self.object.get_items()
 
     def get_context_data(self, **kwargs):
@@ -217,6 +232,7 @@ class EditTransferView(DashboardView, FormView):
             'did': self.object.organization_did,
             'name': self.object.organization_name,
             'website': self.object.website,
+            'reference': self.object.reference,
             'api_destination': self.object.api_destination,
             'token_destination': self.object.token_destination,
             'type_of_transfer': typ.get(self.object.type)

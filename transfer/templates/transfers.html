@@ -45,6 +45,9 @@
       {% endif %}
     </h5>
     <div class="d-flex align-items-center gap-2">
+      {% if transfer.reference %}
+      <a href="{% url 'transfer:reference' transfer.id transfer.id %}">{% trans 'Reference' %}</a> |
+      {% endif %}
       {% if lot %}
       {% if lot.archived %}
       <i class="bi bi-archive text-warning small"></i>

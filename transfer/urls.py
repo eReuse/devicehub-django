@@ -8,6 +8,7 @@ urlpatterns = [
     path("sended/", views.TransferSendedView.as_view(), name="sended"),
     path("received/", views.TransferReceivedView.as_view(), name="received"),
     path("<int:id>", views.TransferView.as_view(), name="id"),
+    path("<int:id>/ref/<int:reference>", views.TransferView.as_view(), name="reference"),
     path("<int:id>/edit", views.EditTransferView.as_view(), name="edit"),
     path("<int:id>/send", views.SendTransferView.as_view(), name="send"),
     path("<int:id>/download", views.DownloadTransferView.as_view(), name="download"),
