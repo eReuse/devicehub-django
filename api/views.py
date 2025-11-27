@@ -87,7 +87,7 @@ class NewTransferView(ApiMixing):
             issuer_did = data["issuer"]["id"]
             organization_name = data["credentialSubject"]["sourceParty"]["name"]
             organization_did = data["credentialSubject"]["sourceParty"]["id"]
-            reference = data["credentialSubject"].get("unc:externalDocumen", {}).get("unc:uriid")
+            reference = data["credentialSubject"].get("unc:externalDocument", {}).get("unc:uriid")
             type_of_transfer = dtype
             credential_id = data["id"]
         except Exception:
