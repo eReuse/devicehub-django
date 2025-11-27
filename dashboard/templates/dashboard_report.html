@@ -23,22 +23,25 @@
         .header .meta { text-align: right; font-size: 8pt; color: #666; }
 
         /* Summaries */
-        .summary-grid { display: flex; justify-content: space-between; margin-bottom: 20px; }
+        .summary-grid { display: flex; justify-content: space-between; margin-bottom: 30px; }
         .summary-box { width: 32%; background: #f4f4f4; border: 1px solid #ddd; padding: 8px; }
         .summary-box h3 { margin: 0; font-size: 8pt; color: #666; text-transform: uppercase; }
         .summary-box .number { font-size: 14pt; font-weight: bold; color: #333; }
 
-        /* Lot Section Headers */
-        .lot-header {
+        /* Section Headers */
+        .section-break { page-break-before: always; }
+        .main-header { font-size: 16pt; color: #2c3e50; border-bottom: 2px solid #2c3e50; margin-bottom: 15px; padding-bottom: 5px; margin-top: 20px;}
+
+        .group-header {
             background-color: #eee;
             padding: 5px 10px;
             border-left: 5px solid #2c3e50;
             margin-top: 25px;
             margin-bottom: 10px;
-            page-break-after: avoid; /* Keep header with table */
+            page-break-after: avoid;
         }
-        .lot-header h2 { margin: 0; font-size: 12pt; color: #333; }
-        .lot-count { float: right; font-size: 9pt; font-weight: normal; }
+        .group-header h2 { margin: 0; font-size: 12pt; color: #333; }
+        .group-count { float: right; font-size: 9pt; font-weight: normal; }
 
         /* Tables */
         table { width: 100%; border-collapse: collapse; margin-bottom: 10px; page-break-inside: auto; }
@@ -47,9 +50,9 @@
         td { padding: 6px 5px; border-bottom: 1px solid #eee; font-size: 8.5pt; vertical-align: top; }
         tr:nth-child(even) { background-color: #f9f9f9; }
 
-        /* Specific Data Styling */
         .spec-label { color: #777; font-size: 7pt; text-transform: uppercase; margin-right: 3px; }
         .badge { display: inline-block; padding: 1px 3px; border-radius: 2px; font-size: 7pt; background: #e0e0e0; border: 1px solid #ccc; }
+        .info-block { margin-bottom: 2px; }
     </style>
 </head>
 <body>
@@ -80,21 +83,77 @@
         </div>
     </div>
 
+    <h1 class="main-header">{% translate "1. Master Device List" %}</h1>
+
+    <table>
+        <thead>
+            <tr>
+                <th width="15%">{% translate "ID" %}</th>
+                <th width="25%">{% translate "Device" %}</th>
+                <th width="30%">{% translate "Technical Specs" %}</th>
+                <th width="15%">{% translate "Status" %}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for device in master_list %}
+            <tr>
+                <td>
+                    <strong>{{ device.shortid }}</strong><br>
+                    <span style="color:#666; font-size:7.5pt;">{{ device.serial_number|default:"-"|truncatechars:12 }}</span>
+                </td>
+                <td>
+                    <span class="badge">{{ device.type }}</span><br>
+                    {{ device.manufacturer }} {{ device.model }}
+                </td>
+                <td>
+                    {% if "Laptop" in device.type or "Desktop" in device.type or "Server" in device.type %}
+                        {% if device.cpu %}<div class="info-block"><span class="spec-label">CPU</span> {{ device.cpu|truncatechars:25 }}</div>{% endif %}
+                        {% if device.total_ram %}<div class="info-block"><span class="spec-label">RAM</span> {{ device.total_ram }}</div>{% endif %}
+                        {% for c in device.components %}
+                            {% if c.type == "Storage" and c.size %}<div class="info-block"><span class="spec-label">DISK</span> {{ c.size }}</div>{% endif %}
+                        {% endfor %}
+                    {% elif "Display" in device.type or "Monitor" in device.type %}
+                         {% for p in device.get_properties %}
+                            {% if "Native Resolution" in p.key %}<div class="info-block"><span class="spec-label">RES</span> {{ p.value }}</div>{% endif %}
+                         {% endfor %}
+                    {% elif "HardDrive" in device.type or "SolidStateDrive" in device.type %}
+                         {% for c in device.components %}
+                            {% if c.type == "Storage" and c.size %}<div class="info-block"><span class="spec-label">CAP</span> {{ c.size }}</div>{% endif %}
+                        {% endfor %}
+                    {% elif "RamModule" in device.type %}
+                         {% for c in device.components %}
+                            {% if c.type == "RamModule" %}<div class="info-block"><span class="spec-label">RAM</span> {{ c.capacity|default:c.size }}</div>{% endif %}
+                        {% endfor %}
+                    {% else %}
+                        <span style="color:#999;">-</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% with state=device.get_current_state %}
+                        {% if state %}{{ state.state }}{% else %}<span style="color:#999;">{% translate "Unknown" %}</span>{% endif %}
+                    {% endwith %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+
+    <div class="section-break"></div>
+    <h1 class="main-header">{% translate "2. Devices by Lot" %}</h1>
+
     {% for lot_name, devices in devices_by_lot.items %}
-
-        <div class="lot-header">
-            <span class="lot-count">{{ devices|length }} {% translate "items" %}</span>
-            <h2>{% translate "Lot:" %} {{ lot_name }}</h2>
+        <div class="group-header">
+            <span class="group-count">{{ devices|length }} {% translate "items" %}</span>
+            <h2>{{ lot_name }}</h2>
         </div>
-
         <table>
             <thead>
                 <tr>
-                    <th width="15%">{% translate "ID / Serial" %}</th>
-                    <th width="25%">{% translate "Device" %}</th>
-                    <th width="35%">{% translate "Technical Specs" %}</th>
+                    <th width="15%">{% translate "ID" %}</th>
+                    <th width="30%">{% translate "Device" %}</th>
+                    <th width="40%">{% translate "Technical Specs" %}</th>
                     <th width="15%">{% translate "Status" %}</th>
-                    <th width="10%">{% translate "Updated" %}</th>
                 </tr>
             </thead>
             <tbody>
@@ -102,89 +161,87 @@
                 <tr>
                     <td>
                         <strong>{{ device.shortid }}</strong><br>
-                        <span style="color:#666; font-size:7.5pt;">
-                            {{ device.serial_number|default:"-"|truncatechars:15 }}
-                        </span>
+                        <span style="color:#666; font-size:7.5pt;">{{ device.serial_number|default:"-"|truncatechars:12 }}</span>
                     </td>
-
                     <td>
                         <span class="badge">{{ device.type }}</span><br>
                         {{ device.manufacturer }} {{ device.model }}
                     </td>
-
                     <td>
                         {% if "Laptop" in device.type or "Desktop" in device.type or "Server" in device.type %}
-                            {% if device.cpu %}
-                                <div><span class="spec-label">CPU</span> {{ device.cpu|truncatechars:30 }}</div>
-                            {% endif %}
-                            {% if device.total_ram %}
-                                <div><span class="spec-label">RAM</span> {{ device.total_ram }}</div>
-                            {% endif %}
-
-                            {% comment %} Attempt to find storage in components {% endcomment %}
-                            {% for c in device.components %}
-                                {% if c.type == "Storage" and c.size %}
-                                    <div><span class="spec-label">DISK</span> {{ c.size }}</div>
-                                {% endif %}
-                            {% endfor %}
-
-                        {% elif "Display" in device.type or "Monitor" in device.type %}
-                            {% comment %} Attempt to find resolution in properties {% endcomment %}
+                            {% if device.cpu %}<div class="info-block"><span class="spec-label">CPU</span> {{ device.cpu|truncatechars:30 }}</div>{% endif %}
+                            {% if device.total_ram %}<div class="info-block"><span class="spec-label">RAM</span> {{ device.total_ram }}</div>{% endif %}
+                        {% elif "Display" in device.type %}
                              {% for p in device.get_properties %}
-                                {% if "Native Resolution" in p.key or "resolution" in p.key|lower %}
-                                    <div><span class="spec-label">RES</span> {{ p.value }}</div>
-                                {% endif %}
+                                {% if "Native Resolution" in p.key %}<div class="info-block"><span class="spec-label">RES</span> {{ p.value }}</div>{% endif %}
                              {% endfor %}
-                             {% comment %} Fallback: check components {% endcomment %}
-                             {% for c in device.components %}
-                                {% if c.type == "Display" and c.resolution %}
-                                     <div><span class="spec-label">RES</span> {{ c.resolution }}</div>
-                                {% endif %}
-                             {% endfor %}
-
                         {% elif "HardDrive" in device.type or "SolidStateDrive" in device.type %}
-                            {% for c in device.components %}
-                                {% if c.type == "Storage" and c.size %}
-                                    <div><span class="spec-label">CAPACITY</span> {{ c.size }}</div>
-                                    {% if c.interface %}
-                                        <div><span class="spec-label">IFACE</span> {{ c.interface }}</div>
-                                    {% endif %}
-                                {% endif %}
-                            {% endfor %}
-
-                        {% elif "RamModule" in device.type %}
                              {% for c in device.components %}
-                                {% if c.type == "RamModule" %}
-                                    <div><span class="spec-label">SIZE</span> {{ c.capacity|default:c.size }}</div>
-                                    <div><span class="spec-label">TYPE</span> {{ c.memory_type|default:c.interface }}</div>
-                                {% endif %}
+                                {% if c.type == "Storage" and c.size %}<div class="info-block"><span class="spec-label">CAP</span> {{ c.size }}</div>{% endif %}
                             {% endfor %}
-
                         {% else %}
                             <span style="color:#999;">-</span>
                         {% endif %}
                     </td>
-
                     <td>
                         {% with state=device.get_current_state %}
-                            {% if state %}
-                                {{ state.state }}
-                            {% else %}
-                                <span style="color:#999;">{% translate "Unknown" %}</span>
-                            {% endif %}
+                            {% if state %}{{ state.state }}{% else %}<span style="color:#999;">{% translate "Unknown" %}</span>{% endif %}
                         {% endwith %}
-                    </td>
-
-                    <td>
-                        {{ device.updated|date:"Y-m-d" }}
                     </td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
+    {% empty %}
+        <p>{% translate "No lot data available." %}</p>
+    {% endfor %}
 
-        <div style="margin-bottom: 20px;"></div>
 
+    <div class="section-break"></div>
+    <h1 class="main-header">{% translate "3. Devices by State" %}</h1>
+
+    {% for state_name, devices in devices_by_state.items %}
+        <div class="group-header">
+            <span class="group-count">{{ devices|length }} {% translate "items" %}</span>
+            <h2>{{ state_name }}</h2>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th width="15%">{% translate "ID" %}</th>
+                    <th width="30%">{% translate "Device" %}</th>
+                    <th width="40%">{% translate "Technical Specs" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for device in devices %}
+                <tr>
+                    <td>
+                        <strong>{{ device.shortid }}</strong><br>
+                        <span style="color:#666; font-size:7.5pt;">{{ device.serial_number|default:"-"|truncatechars:12 }}</span>
+                    </td>
+                    <td>
+                        <span class="badge">{{ device.type }}</span><br>
+                        {{ device.manufacturer }} {{ device.model }}
+                    </td>
+                    <td>
+                        {% if "Laptop" in device.type or "Desktop" in device.type or "Server" in device.type %}
+                            {% if device.cpu %}<div class="info-block"><span class="spec-label">CPU</span> {{ device.cpu|truncatechars:30 }}</div>{% endif %}
+                            {% if device.total_ram %}<div class="info-block"><span class="spec-label">RAM</span> {{ device.total_ram }}</div>{% endif %}
+                        {% elif "Display" in device.type %}
+                             {% for p in device.get_properties %}
+                                {% if "Native Resolution" in p.key %}<div class="info-block"><span class="spec-label">RES</span> {{ p.value }}</div>{% endif %}
+                             {% endfor %}
+                        {% else %}
+                            <span style="color:#999;">-</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% empty %}
+        <p>{% translate "No state data available." %}</p>
     {% endfor %}
 
 </body>

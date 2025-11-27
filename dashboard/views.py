@@ -2,6 +2,7 @@ import json
 from tablib import Dataset
 
 from django.utils.translation import gettext_lazy as _
+from collections import defaultdict, namedtuple
 from django.utils.dateparse import parse_datetime
 from django.utils import timezone
 from django.shortcuts import redirect
@@ -470,50 +471,85 @@ class InventoryOverviewView(DashboardView, TemplateView):
         return context
 
 
+MockLot = namedtuple('MockLot', ['name'])
 class DashboardReportView(DashboardView, TemplateView):
+
+
     def get(self, request, *args, **kwargs):
         if not hasattr(request.user, 'institution'):
             return redirect('dashboard:overview')
 
         institution = request.user.institution
+
         cache_key = f"dashboard_stats_institution_{institution.id}"
         cached_data = cache.get(cache_key)
-
         if not cached_data:
-            messages.warning(request, "Please load the dashboard first to generate statistics.")
-            return redirect('dashboard:overview')
+            cached_data = {}
 
         all_device_ids, _ = Device.get_all(institution, limit=None)
 
-        all_devices = [Device(id=d.id) for d in all_device_ids]
+        all_devices_raw = [Device(id=d.id) for d in all_device_ids]
 
-        devices_by_lot = {}
+        device_to_lot_name = {}
+        device_lots_qs = DeviceLot.objects.filter(
+            lot__owner=institution,
+            lot__archived=False
+        ).select_related('lot')
 
-        for device in all_devices:
-            if device.lots:
-                lot_name = device.lots[0].name
+        for dl in device_lots_qs:
+            if dl.device_id not in device_to_lot_name:
+                device_to_lot_name[dl.device_id] = dl.lot.name
+
+        latest_prop_created_sq = SystemProperty.objects.filter(value=OuterRef('value'), owner=institution).order_by('-created')
+        latest_uuid_sq = SystemProperty.objects.filter(value=OuterRef('value'), created=Subquery(latest_prop_created_sq.values('created')[:1])).values('uuid')[:1]
+        latest_state_name_sq = State.objects.filter(snapshot_uuid=OuterRef('latest_uuid')).order_by('-date')
+
+        device_state_qset = SystemProperty.objects.filter(
+            owner=institution
+        ).values('value').distinct().annotate(
+            latest_uuid=Subquery(latest_uuid_sq),
+            current_state_name=Subquery(latest_state_name_sq.values('state')[:1])
+        ).values('value', 'current_state_name')
+
+        device_to_state_name = {
+            item['value']: (item.get('current_state_name') or "Unknown")
+            for item in device_state_qset
+        }
+
+        master_list = []
+        devices_by_lot = defaultdict(list)
+        devices_by_state = defaultdict(list)
+
+        for device in all_devices_raw:
+            lot_name = device_to_lot_name.get(device.id)
+            if lot_name:
+                device.lots = [MockLot(name=lot_name)]
             else:
-                lot_name = "Inbox"
+                lot_name = "Unassigned / Inbox"
+                device.lots = []
 
-            if lot_name not in devices_by_lot:
-                devices_by_lot[lot_name] = []
+            state_name = device_to_state_name.get(device.id, "Unknown")
+
+            master_list.append(device)
             devices_by_lot[lot_name].append(device)
+            devices_by_state[state_name].append(device)
 
         sorted_devices_by_lot = dict(sorted(devices_by_lot.items()))
+        sorted_devices_by_state = dict(sorted(devices_by_state.items()))
 
         context = {
             'institution': institution,
             'generated_at': timezone.now(),
             'user': request.user,
-            'devices_by_lot': sorted_devices_by_lot,
 
-            # Cached Summaries
-            'total_devices': cached_data.get('total_devices'),
-            'assigned_devices': cached_data.get('assigned_devices'),
-            'unassigned_devices': cached_data.get('unassigned_devices'),
-            'total_types_summary': cached_data.get('total_types_summary'),
-            'states_summary': cached_data.get('states_summary'),
-            'lots_summary': cached_data.get('lots_summary'),
+            'master_list': master_list,
+            'devices_by_lot': sorted_devices_by_lot,
+            'devices_by_state': sorted_devices_by_state,
+
+            'total_devices': cached_data.get('total_devices', len(master_list)),
+            'assigned_devices': cached_data.get('assigned_devices', 0),
+            'unassigned_devices': cached_data.get('unassigned_devices', 0),
+            'total_types_summary': cached_data.get('total_types_summary', {}),
         }
 
         html_string = render_to_string('dashboard_report.html', context, request=request)
