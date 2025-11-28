@@ -14,7 +14,7 @@ from utils.constants import (
 )
 
 from user.models import User, Institution
-from evidence.models import Property
+from evidence.models import Property, SystemProperty
 from transfer.models import Transfer
 # from device.models import Device
 
@@ -78,6 +78,23 @@ class Lot(models.Model):
     @property
     def devices(self):
         return DeviceLot.objects.filter(lot=self)
+
+    @property
+    def can_do_transfer(self):
+        if self.transfer:
+            return False
+
+        ids = self.devices.values("device_id")
+        if not ids:
+            return False
+
+        transfers = SystemProperty.objects.filter(
+            value__in=ids,
+            owner=self.owner,
+            transfer__type=Transfer.Type.SENDED
+        ).first()
+
+        return True if not transfers else False
 
     def device_count(self):
         return self.devices.count()

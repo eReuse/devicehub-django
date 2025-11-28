@@ -137,7 +137,7 @@
               <a href="{% url 'transfer:id' lot.transfer.id %}" class="btn btn-outline-success">
                 {% trans 'Transfer' %}
               </a>
-              {% else %}
+              {% elif lot.can_do_transfer %}
               <a href="{% url 'transfer:add' lot.id %}" class="btn btn-outline-primary">
                 {% trans 'New Transfer' %}
               </a>

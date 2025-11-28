@@ -21,7 +21,10 @@ class LotsForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
+        queryset = kwargs.pop("queryset", None)
         super().__init__(*args, **kwargs)
+        if queryset:
+            self.fields['lots'].queryset = queryset
 
         #grouping lots by their lot group for more readability
         self.grouped_lots = {}

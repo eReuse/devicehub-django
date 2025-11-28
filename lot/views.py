@@ -25,6 +25,7 @@ from dashboard.mixins import DashboardView
 from lot.tables import LotTable
 from device.models import Device
 from evidence.models import SystemProperty
+from transfer.models import Transfer
 from lot.forms import (
     LotsForm,
     LotSubscriptionForm,
@@ -206,7 +207,10 @@ class AddToLotView(DashboardView, FormView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        lots = Lot.objects.filter(owner=self.request.user.institution).order_by('-updated')
+        lots = Lot.objects.filter(
+            owner=self.request.user.institution,
+        ).order_by('-updated')
+
         lot_tags = LotTag.objects.filter(owner=self.request.user.institution)
         context.update({
             'lots': lots,
@@ -214,33 +218,21 @@ class AddToLotView(DashboardView, FormView):
         })
         return context
 
-    def get_form(self):
-        form = super().get_form()
-        form.fields["lots"].queryset = Lot.objects.filter(
-            owner=self.request.user.institution)
-        return form
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["queryset"] = Lot.objects.filter(
+            owner=self.request.user.institution,
+            transfer__isnull=True,
+            archived=False
+        )
+        return kwargs
 
     def form_valid(self, form):
         form.devices = self.get_session_devices()
-        ids = [d.pk for d in form.devices]
-        transfers = SystemProperty.objects.filter(
-            value__in=ids,
-            owner=self.request.user.institution,
-            transfer__isnull=False
-        )
-        if transfers:
-            messages.error(self.request, _("There are devices with transfers"))
-            return redirect(self.request.META.get("HTTP_REFERER"))
-
         form.save()
         response = super().form_valid(form)
         messages.success(self.request, _("Devices assigned to Lot."))
         return response
-
-    def form_invalid(self, form):
-        super().form_valid(form)
-        messages.error(self.request, _("There are lots with transfers"))
-        return redirect(self.request.META.get("HTTP_REFERER"))
 
     def get_success_url(self):
         return reverse_lazy('dashboard:lot', args=[self.request.POST.getlist('lots')[0]])

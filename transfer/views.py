@@ -19,7 +19,7 @@ from action.models import StateDefinition, State, DeviceLog, Note
 from device.views import DeviceLogMixin, DeleteUserPropertyView, UpdateUserPropertyView
 from lot.models import Lot, LotTag
 from device.models import Device
-from evidence.models import Evidence, UserProperty
+from evidence.models import Evidence, UserProperty, SystemProperty
 from transfer.models import Transfer
 from transfer.forms import TransferForm
 from transfer.tables import TransferTable, DeviceTable
@@ -121,6 +121,25 @@ class NewTransferView(DashboardView, FormView):
     breadcrumb = "transfer / new"
     success_url = reverse_lazy('dashboard:unassigned')
     form_class = TransferForm
+
+    def get(self, request, *args, **kwargs):
+        response =  super().get(request, *args, **kwargs)
+        ids = self.lot.devices.values("device_id")
+        if not ids:
+            messages.error(self.request, _("No there are devices in this lot"))
+            return redirect(reverse_lazy('dashboard:lot', args=[self.lot.id]))
+
+        transfers = SystemProperty.objects.filter(
+            value__in=ids,
+            owner=self.request.user.institution,
+            transfer__type=Transfer.Type.SENDED
+        ).first()
+
+        if transfers:
+            messages.error(self.request, _("There are devices sended in this lot"))
+            return redirect(reverse_lazy('dashboard:lot', args=[self.lot.id]))
+
+        return response
 
     def get_success_url(self):
         return reverse_lazy('transfer:id', args=[self.transfer.id])
