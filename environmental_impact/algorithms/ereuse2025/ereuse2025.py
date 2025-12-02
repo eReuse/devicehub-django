@@ -26,8 +26,9 @@ class EReuse2025EnvironmentalImpactAlgorithm(EnvironmentImpactAlgorithm):
         env_impact.constants = self.algorithm_constants
         lifecycle_metrics = self._calculate_lifecycle_metrics(device)
         total_usage_time = lifecycle_metrics["total_usage_time"]
+        device_type = self._get_normalized_device_type(device.type)
         kg_CO2e = self._compute_co2_emissions_while_in_use_with_lifecycle(
-            total_usage_time, device.type
+            total_usage_time, device_type
         )
         env_impact.kg_CO2e.update(kg_CO2e)
         env_impact.docs = common.render_algorithm_docs(
@@ -44,9 +45,14 @@ class EReuse2025EnvironmentalImpactAlgorithm(EnvironmentImpactAlgorithm):
                     "ES"
                 )  # TODO Default to Spain for now
             ),
-            "device_type": device.type,
+            "device_type": device_type,
         }
         return env_impact
+
+    def _get_normalized_device_type(self, device_type: str) -> str:
+        if device_type in [Device.Types.DESKTOP, Device.Types.LAPTOP]:
+            return device_type
+        return "Unknown"
 
     def _calculate_lifecycle_metrics(self, device: Device) -> dict:
         """
@@ -102,11 +108,12 @@ class EReuse2025EnvironmentalImpactAlgorithm(EnvironmentImpactAlgorithm):
 
     def _compute_co2_emissions_while_in_use(self, device: Device) -> dict:
         power_on_hours = common.get_poh_from_device(device)
+        device_type = self._get_normalized_device_type(device.type)
         energy_kwh_idle = self._compute_energy_consumption_in_kwh_while_idle(
-            power_on_hours, device.type
+            power_on_hours, device_type
         )
         energy_kwh_sleeping = self._compute_energy_consumption_while_sleeping(
-            power_on_hours, device.type
+            power_on_hours, device_type
         )
         carbon_intensity_factor = carbon_intensity.get_carbon_intensity_factor_from(
             "ES"
@@ -159,11 +166,31 @@ class EReuse2025EnvironmentalImpactAlgorithm(EnvironmentImpactAlgorithm):
         env_impact = EnvironmentalImpact()
         env_impact.constants = self.algorithm_constants
         total_kg_CO2e = {"in_use": 0.0}
+        total_usage_time = 0
+        total_reuse_time = 0
+        device_types_count = {}
         for device in devices:
             device_env_impact = self.get_device_environmental_impact(device)
             total_kg_CO2e["in_use"] += device_env_impact.kg_CO2e.get("in_use", 0.0)
+            data = device_env_impact.relevant_input_data
+            total_usage_time += data.get("total_usage_time", 0)
+            total_reuse_time += data.get("reuse_time", 0)
+            d_type = data.get("device_type", "Unknown")
+            device_types_count[d_type] = device_types_count.get(d_type, 0) + 1
         env_impact.kg_CO2e = total_kg_CO2e
         env_impact.docs = common.render_algorithm_docs(
             "docs.md", os.path.dirname(__file__)
         )
+        device_types_str = ", ".join(
+            [f"{k}: {v}" for k, v in device_types_count.items()]
+        )
+        env_impact.relevant_input_data = {
+            "total_devices": len(devices),
+            "total_usage_time": total_usage_time,
+            "total_reuse_time": total_reuse_time,
+            "device_types_breakdown": device_types_str,
+            "carbon_intensity_factor": (
+                carbon_intensity.get_carbon_intensity_factor_from("ES")
+            ),
+        }
         return env_impact
