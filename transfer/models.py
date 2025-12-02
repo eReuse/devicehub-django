@@ -48,7 +48,7 @@ class Transfer(models.Model):
 
     def get_items(self):
         try:
-            items = self.credential["credentialSubject"]['epcList']
+            items = self.credential["credentialSubject"][0]['epcList']
             for i in items:
                 i["transfer"] = self.id
             return items
@@ -87,7 +87,7 @@ class Transfer(models.Model):
     @property
     def number_items(self):
         try:
-            return len(self.credential["credentialSubject"]['epcList'])
+            return len(self.credential["credentialSubject"][0]['epcList'])
         except Exception:
             return 0
 
@@ -108,23 +108,14 @@ class Transfer(models.Model):
         return self.lot_set.first().id
 
     @property
-    def website(self):
-        source  = self.credential.get("credentialSubject", {}).get("sourceParty", {})
-        destination  = self.credential.get("credentialSubject", {}).get("destinationParty", {})
-        if self.organization_name == source.get("name"):
-            return source.get("organisationWebsite", '')
-
-        if self.organization_name == destination.get("name"):
-            return destination.get("organisationWebsite", '')
-
-        return ''
-
-    @property
     def is_foreing_transfer(self):
-        dtype = self.credential.get("credentialSubject", {}).get("bizTransaction")
-        typ_trans = {
-            "desad": self.Type.SENDED,
-            "recadv": self.Type.RECEIVED
-        }
+        try:
+            dtype = self.credential.get("credentialSubject")[0].get("bizTransaction")
+            typ_trans = {
+                "desadv": self.Type.SENDED,
+                "recadv": self.Type.RECEIVED
+            }
 
-        return typ_trans.get(dtype) != self.Type(self.type)
+            return typ_trans.get(dtype) != self.Type(self.type)
+        except Exception:
+            return False

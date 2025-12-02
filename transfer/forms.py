@@ -15,12 +15,11 @@ class TransferForm(forms.Form):
     issuer_did = forms.CharField()
     did = forms.CharField(label=_("Organization Did"))
     name = forms.CharField(label=_("Organization Name"))
-    website = forms.URLField(label=_("Organization WebSite"))
     reference = forms.URLField(label=_("ID of transfer reference"), required=False)
     api_destination = forms.URLField(required=False)
     token_destination = forms.CharField(required=False)
     type_of_transfer = forms.ChoiceField(
-        choices=[("desad", _("Send")), ("recadv", _("Receibe"))]
+        choices=[("desadv", _("Send")), ("recadv", _("Receibe"))]
     )
 
     def __init__(self, *args, **kwargs):
@@ -33,7 +32,6 @@ class TransferForm(forms.Form):
             self.fields['issuer_did'].widget.attrs['readonly'] = True
             self.fields['did'].widget.attrs['readonly'] = True
             self.fields['name'].widget.attrs['readonly'] = True
-            self.fields['website'].widget.attrs['readonly'] = True
             self.fields['reference'].widget.attrs['readonly'] = True
             self.fields['type_of_transfer'].widget.attrs['readonly'] = True
         if self.instance and self.instance.sended:
@@ -51,7 +49,7 @@ class TransferForm(forms.Form):
             return
 
         typ_trans = {
-            "desad": Transfer.Type.SENDED,
+            "desadv": Transfer.Type.SENDED,
             "recadv": Transfer.Type.RECEIVED
         }
 
@@ -97,22 +95,12 @@ class TransferForm(forms.Form):
     def get_data(self):
         issuer_did = self.cleaned_data.get("issuer_did")
         did = self.cleaned_data.get("did")
-        name = self.cleaned_data.get("name")
-        website = self.cleaned_data.get("website")
-        institution = {
-            "id": issuer_did,
-            "name": self.user.institution.name,
-            "organisationWebsite": self.domain
-        }
-        other_part = {
-            "id": did,
-            "name": name,
-            "organisationWebsite": website
-        }
+        institution = issuer_did
+        other_part = did
         biz_transaction = self.cleaned_data.get("type_of_transfer")
-        source_party = {}
-        destination_party = {}
-        if biz_transaction == "desad":
+        source_party = ''
+        destination_party = ''
+        if biz_transaction == "desadv":
             source_party = institution
             destination_party = other_part
         elif biz_transaction == "recadv":
@@ -122,16 +110,17 @@ class TransferForm(forms.Form):
         if not destination_party or not source_party:
             return
 
-        credential_subject = {
+        credential_subject = [{
             "id": self.get_url(),
+            "type": ['TransactionEvent', 'Event'],
             "sourceParty": source_party,
             "destinationParty": destination_party,
             "bizTransaction": biz_transaction,
             "epcList": self.get_epc_list()
-        }
+        }]
 
         if self.instance.reference:
-            credential_subject["unc:externalDocument"] = {
+            credential_subject[0]["unc:externalDocument"] = {
                 "unc:uriid": self.instance.reference
             }
 
@@ -140,7 +129,8 @@ class TransferForm(forms.Form):
         return {
             "credentialSubject": credential_subject,
             "evidences": evidences,
-            "issuer": institution,
+            "issuer": {"id": institution, "name": self.user.institution.name},
+
             "id": self.get_url()
         }
 
@@ -153,9 +143,10 @@ class TransferForm(forms.Form):
         for d in self.lot.devices:
             dev = Device(id=d.device_id)
             name = "{} {} {}".format(dev.type, dev.manufacturer, dev.model)
+            d_path = reverse("device:device_web", args=[dev.shortid])
             devs.append({
                 "type": ["Item"],
-                "id": dev.shortid,
+                "id": "{}{}".format(self.domain, d_path),
                 "name": name
             })
         return devs

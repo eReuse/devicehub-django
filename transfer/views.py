@@ -98,8 +98,15 @@ class TransferView(DashboardView, SingleTableView):
         return super().get(request, *args, **kwargs)
 
     def get_queryset(self):
+        items = []
+        for i in self.object.get_items():
+            try:
+                i["id"] = i["id"].split("/")[-3]
+            except Exception:
+                pass
 
-        return self.object.get_items()
+            items.append(i)
+        return items
 
     def get_context_data(self, **kwargs):
         self.get_queryset()
@@ -250,7 +257,6 @@ class EditTransferView(DashboardView, FormView):
             'issuer_did': self.object.issuer_did,
             'did': self.object.organization_did,
             'name': self.object.organization_name,
-            'website': self.object.website,
             'reference': self.object.reference,
             'api_destination': self.object.api_destination,
             'token_destination': self.object.token_destination,
