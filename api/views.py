@@ -72,22 +72,24 @@ class NewTransferView(ApiMixing):
             return response
 
         typ_trans = {
-            "desad": Transfer.Type.SENDED,
+            "desadv": Transfer.Type.SENDED,
             "recadv": Transfer.Type.RECEIVED
         }
 
         try:
             data = json.loads(request.body)
-            dtype = typ_trans[data["credentialSubject"]["bizTransaction"]]
+            dtype = typ_trans[data["credentialSubject"][0]["bizTransaction"]]
             if dtype == Transfer.Type.SENDED:
                 dtype = Transfer.Type.RECEIVED
+                organization_did = data["credentialSubject"][0]["sourceParty"]
             elif dtype == Transfer.Type.RECEIVED:
                 dtype = Transfer.Type.SENDED
+                organization_did = data["credentialSubject"][0]["destinationParty"]
+
             credential_id = data["id"]
             issuer_did = data["issuer"]["id"]
-            organization_name = data["credentialSubject"]["sourceParty"]["name"]
-            organization_did = data["credentialSubject"]["sourceParty"]["id"]
-            reference = data["credentialSubject"].get("unc:externalDocument", {}).get("unc:uriid")
+
+            reference = data["credentialSubject"][0].get("unc:externalDocument", {}).get("unc:uriid")
             type_of_transfer = dtype
             credential_id = data["id"]
         except Exception:
@@ -103,7 +105,6 @@ class NewTransferView(ApiMixing):
         self.instance = Transfer.objects.create(
             issuer_did=issuer_did,
             organization_did=organization_did,
-            organization_name=organization_name,
             # reference=reference,
             owner=self.tk.owner.institution,
             type=type_of_transfer,
