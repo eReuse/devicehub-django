@@ -105,7 +105,6 @@ class NewTransferView(ApiMixing):
         self.instance = Transfer.objects.create(
             issuer_did=issuer_did,
             organization_did=organization_did,
-            # reference=reference,
             owner=self.tk.owner.institution,
             type=type_of_transfer,
             str_credential=json.dumps(data),
