@@ -129,7 +129,7 @@ class UserTagForm(forms.Form):
                 owner=self.user.institution,
                 user=self.user
             )
-        
+
         DeviceLog.objects.create(
                 snapshot_uuid=self.uuid,
                 event= message,
@@ -364,7 +364,9 @@ class PhotoForm(forms.Form):
                 'error': processing_result.get('ocr_error')
             },
             'barcodes': processing_result.get('barcodes', []),
-            'barcode_error': processing_result.get('barcode_error')
+            'barcode_error': processing_result.get('barcode_error'),
+            'exif': processing_result.get('exif'),
+            'exif_error': processing_result.get('exif_error'),
         }
 
         # Save JSON snapshot to disk

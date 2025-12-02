@@ -33,7 +33,9 @@ PHOTO25 = {
     "photo": {"extension", "mime_type", "size", "original_name", "name", "hash"},
     "ocr": {'text', 'error'},
     "barcodes": ['type', 'data'],
-    "barcode_error": {'error'}
+    "barcode_error": {'error'},
+    "exif": {},
+    "exif_error": {'error'},
 }
 
 ALGOS = {

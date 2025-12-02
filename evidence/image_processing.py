@@ -4,6 +4,7 @@ Image processing utilities for OCR and barcode scanning.
 import subprocess
 import shutil
 import logging
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -165,9 +166,70 @@ def extract_barcodes(image_path):
         }
 
 
+def extract_exif(image_path):
+    """
+    Extract exif data using Pillow
+
+    Args:
+        image_path (str): Path to the image file
+
+    Returns:
+        dict: indexed by the EXIF tag name strings
+    """
+    if not shutil.which('exiftool'):
+        logger.warning("exiftool is not installed. Skipping exif extraction.")
+        return {
+            'exif': {},
+            'error': 'exiftool command not found'
+        }
+
+    try:
+        result = subprocess.run(
+            ['exiftool', "-json", image_path],
+            capture_output=True,
+            text=True,
+            check=True,
+            timeout=30  # 30 second timeout
+        )
+        # Parse JSON output
+        metadata = json.loads(result.stdout)
+
+        # exiftool returns a list with one item per file
+        if not metadata:
+            logger.error(f"No metadata returned from exiftool for image: {image_path}")
+            return {
+                'exif': {},
+                'error': 'No metadata'
+            }
+        return {
+            'exif': metadata[0],
+            'error': None
+        }
+
+    except subprocess.TimeoutExpired:
+        logger.error(f"exiftool timeout for image: {image_path}")
+        return {
+            'exif': {},
+            'error': 'Barcode scanning timeout'
+        }
+
+    except json.JSONDecodeError as e:
+        logger.error(f"Failed to parse exiftool JSON output for image: {image_path}: {e}")
+        return {
+            'exif': {},
+            'error': 'JSON decode error'
+        }
+    except Exception as e:
+        logger.error(f"Unexpected error during barcode scanning: {str(e)}")
+        return {
+            'exif': {},
+            'error': str(e)
+        }
+
+
 def process_image(image_path):
     """
-    Process an image to extract text (OCR) and barcodes/QR codes.
+    Process an image to extract text (OCR), barcodes/QR codes and exif data.
 
     Args:
         image_path (str): Path to the image file to process
@@ -185,9 +247,13 @@ def process_image(image_path):
     # Extract barcodes
     barcode_result = extract_barcodes(image_path)
 
+    exif_result = extract_exif(image_path)
+
     return {
         'ocr_text': ocr_result['text'],
         'ocr_error': ocr_result['error'],
         'barcodes': barcode_result['barcodes'],
-        'barcode_error': barcode_result['error']
+        'barcode_error': barcode_result['error'],
+        'exif': exif_result['exif'],
+        'exif_error': exif_result['error'],
     }
