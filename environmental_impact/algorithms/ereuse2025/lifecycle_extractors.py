@@ -2,14 +2,30 @@
 Extraction utilities for lifecycle data from device evidences.
 """
 
-from typing import List
+from typing import List, Optional, Tuple, Dict
 from device.models import Device
-from ..common import (
-    extract_disk_metadata_from_components,
-    convert_str_time_to_hours,
-)
+from ..common import convert_str_time_to_hours
 from .lifecycle_models import EvidenceData, DiskMetadata
-from ..common import get_poh_from_evidence
+
+
+def _find_storage_with_poh(components: List[Dict]) -> Tuple[int, Optional[Dict]]:
+    """Try to find storage component that has usage time."""
+    if components:
+        for comp in components:
+            if comp.get("type") == "Storage":
+                str_time = comp.get("time of used", "")
+                if str_time:
+                    return convert_str_time_to_hours(str_time), comp
+    return 0, None
+
+
+def _find_first_storage(components: List[Dict]) -> Optional[Dict]:
+    """Find the first storage component as fallback."""
+    if components:
+        for comp in components:
+            if comp.get("type") == "Storage":
+                return comp
+    return None
 
 
 def get_evidences_data_from_device(device: Device) -> List[EvidenceData]:
@@ -24,21 +40,22 @@ def get_evidences_data_from_device(device: Device) -> List[EvidenceData]:
     """
 
     evidences_data = []
-    for idx, evidence in enumerate(device.evidences):
+    # We want chronological order (oldest first)
+    for idx, evidence in enumerate(reversed(device.evidences)):
         components = evidence.get_components()
-        # Extract PoH from this evidence's storage components
-        poh = get_poh_from_evidence(evidence)
-        # Extract disk metadata from components
-        disk_dict = extract_disk_metadata_from_components(components)
-        if disk_dict:
-            disk_metadata = DiskMetadata(
-                serial=disk_dict.get("serial", ""),
-                model=disk_dict.get("model", ""),
-                manufacturer=disk_dict.get("manufacturer", ""),
-            )
-        else:
-            disk_metadata = DiskMetadata("", "", "")
-
+        poh = 0
+        disk_metadata = DiskMetadata("", "", "")
+        # Only process if not legacy (inxi present)
+        if getattr(evidence, "inxi", None):
+            poh, candidate_comp = _find_storage_with_poh(components)
+            if not candidate_comp:
+                candidate_comp = _find_first_storage(components)
+            if candidate_comp:
+                disk_metadata = DiskMetadata(
+                    serial=candidate_comp.get("serialNumber", ""),
+                    model=candidate_comp.get("model", ""),
+                    manufacturer=candidate_comp.get("manufacturer", ""),
+                )
         evidences_data.append(
             EvidenceData(
                 uuid=evidence.uuid,
@@ -47,5 +64,4 @@ def get_evidences_data_from_device(device: Device) -> List[EvidenceData]:
                 disk_metadata=disk_metadata,
             )
         )
-
     return evidences_data
