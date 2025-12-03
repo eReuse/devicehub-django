@@ -6,7 +6,8 @@ from django.conf import settings
 from django.db import IntegrityError
 from django.urls import reverse_lazy
 from django.contrib import messages
-from django.shortcuts import get_object_or_404, redirect, Http404
+from django.shortcuts import get_object_or_404, redirect, Http404, render
+from django.db import transaction
 from django.utils.translation import gettext_lazy as _
 from django.views.generic.edit import (
     CreateView,
@@ -21,7 +22,8 @@ from environmental_impact.algorithms.algorithm_factory import FactoryEnvironment
 from evidence.models import UserProperty, SystemProperty, Evidence
 from lot.models import LotTag
 from device.models import Device
-from device.forms import DeviceFormSet
+from device.forms import DeviceMainForm, DeviceAttributeFormSet, save_device_data
+
 from evidence.models import SystemProperty
 from evidence.tables import EvidenceTable
 from django_tables2 import RequestConfig
@@ -45,19 +47,59 @@ class DeviceLogMixin(DashboardView):
 
 class NewDeviceView(DashboardView, FormView):
     template_name = "new_device.html"
+    form_class = DeviceMainForm
+    success_url = reverse_lazy('dashboard:unassigned')
     title = _("New Device")
     breadcrumb = "Device / New Device"
-    success_url = reverse_lazy('dashboard:unassigned')
-    form_class = DeviceFormSet
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        if self.request.POST:
+            context['attribute_formset'] = DeviceAttributeFormSet(self.request.POST)
+        else:
+            context['attribute_formset'] = DeviceAttributeFormSet()
+
+        context['subtitle'] = self.title
+        return context
 
     def form_valid(self, form):
-        form.save(self.request.user)
-        response = super().form_valid(form)
-        return response
+        context = self.get_context_data()
+        attribute_formset = context['attribute_formset']
 
-    def form_invalid(self, form):
-        response = super().form_invalid(form)
-        return response
+        if not attribute_formset.is_valid():
+            return self.render_to_response(context)
+
+        photo_doc = form.process_photo_upload(user=self.request.user)
+
+        try:
+            amount = int(form.cleaned_data.get('amount', 1))
+        except (ValueError, TypeError):
+            amount = 1
+        with transaction.atomic():
+            for i in range(amount):
+                device_doc = save_device_data(
+                    main_data=form.cleaned_data,
+                    attribute_formset=attribute_formset,
+                    user=self.request.user,
+                )
+
+                custom_id = device_doc.get('CUSTOMER_ID')
+                if photo_doc and custom_id:
+                    SystemProperty.objects.create(
+                        uuid=photo_doc['uuid'],
+                        key='CUSTOM_ID',
+                        value=custom_id,
+                        owner=self.request.user.institution,
+                        user=self.request.user
+                    )
+
+        return super().form_valid(form)
 
 
 class EditDeviceView(DashboardView, UpdateView):
@@ -119,7 +161,7 @@ class DetailsView(DashboardView, TemplateView ):
         last_evidence = self.object.get_last_evidence()
         uuids = self.object.uuids
 
-        ev_queryset = Evidence.get_device_evidences(self.request.user, uuids)
+        ev_queryset = Evidence.get_device_evidences(self.request.user, uuids, self.pk)
         evidence_table = EvidenceTable(ev_queryset, exclude =('device', ))
 
         RequestConfig(self.request).configure(evidence_table)

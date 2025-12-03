@@ -261,11 +261,19 @@ class SearchView(DeviceTableMixin, InventaryMixin):
             if i:
                 qry |= Q(value__startswith=i)
 
-        chids = SystemProperty.objects.filter(
+        matching_uuids = SystemProperty.objects.filter(
             owner=self.request.user.institution
         ).filter(
             qry
-        ).values_list("value", flat=True).distinct()
-        chids_page = chids[offset:offset+limit]
+        ).values_list("uuid", flat=True)
 
-        return [Device(id=x) for x in chids_page], chids.count()
+        device_ids = SystemProperty.objects.filter(
+            owner=self.request.user.institution,
+            uuid__in=matching_uuids,
+            key__in= ["ereuse25", "CUSTOM_ID"]
+        ).values_list("value", flat=True).distinct()
+
+        total_count = device_ids.count()
+        chids_page = device_ids[offset:offset+limit]
+
+        return [Device(id=x) for x in chids_page], total_count
