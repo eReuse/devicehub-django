@@ -32,7 +32,7 @@ class SystemProperty(Property):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["key", "uuid"], name="system_unique_type_key_uuid")
+                fields=["key", "value", "uuid"], name="system_unique_type_key_uuid")
         ]
 
 
@@ -232,23 +232,24 @@ class Evidence:
     def get_all(cls, user):
         return SystemProperty.objects.filter(
             owner=user.institution,
-            key__in=["ereuse24", "photo25"],
+            key__in=["ereuse24", "photo25", "CUSTOM_ID"],
         ).order_by("-created").distinct()
 
     @classmethod
     def get_user_evidences(cls, user):
         return SystemProperty.objects.filter(
             owner=user.institution,
-            key__in=["ereuse24", "photo25"],
+            key__in=["ereuse24", "photo25", "CUSTOM_ID"],
             user=user
         ).order_by("-created").distinct()
 
     @classmethod
-    def get_device_evidences(cls,user, uuids):
+    def get_device_evidences(cls,user, uuids, id):
         return SystemProperty.objects.filter(
             owner=user.institution,
-            key__in=["ereuse24", "photo25"],
-            uuid__in=uuids
+            key__in=["ereuse24", "CUSTOM_ID"],
+            uuid__in=uuids,
+            value=id
         ).order_by("-created").distinct()
 
     def set_components(self):
