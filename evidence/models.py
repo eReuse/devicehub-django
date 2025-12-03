@@ -52,6 +52,21 @@ class UserProperty(Property):
         ]
 
 
+class RootAlias(models.Model):
+    created = models.DateTimeField(auto_now_add=True)
+    owner = models.ForeignKey(Institution, on_delete=models.CASCADE)
+    user = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True)
+    alias = models.CharField(max_length=STR_EXTEND_SIZE)
+    root = models.CharField(max_length=STR_EXTEND_SIZE)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["owner", "alias", "root"], name="rootalias_unique")
+        ]
+
+
 class Evidence:
     def __init__(self, uuid):
         self.uuid = uuid
@@ -228,18 +243,21 @@ class Evidence:
 
         return ""
 
+    def get_alias(self, user):
+        return RootAlias.objects.filter(
+            owner=user.institution
+        ).order_by("-created")
+
     @classmethod
     def get_all(cls, user):
         return SystemProperty.objects.filter(
             owner=user.institution,
-            key__in=["ereuse24", "photo25"],
         ).order_by("-created").distinct()
 
     @classmethod
     def get_user_evidences(cls, user):
         return SystemProperty.objects.filter(
             owner=user.institution,
-            key__in=["ereuse24", "photo25"],
             user=user
         ).order_by("-created").distinct()
 
@@ -247,7 +265,6 @@ class Evidence:
     def get_device_evidences(cls,user, uuids):
         return SystemProperty.objects.filter(
             owner=user.institution,
-            key__in=["ereuse24", "photo25"],
             uuid__in=uuids
         ).order_by("-created").distinct()
 

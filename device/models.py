@@ -26,6 +26,7 @@ class Device:
 
     def __init__(self, *args, **kwargs):
         # the id is the chid of the device
+        # in the rootalias table id is the root
         self.id = kwargs["id"]
         self.uuid = kwargs.get("uuid")
         self.lot = kwargs.get("lot")
@@ -49,6 +50,7 @@ class Device:
         self.get_lots()
 
     def get_properties(self):
+        # TODO is good not filter from owner?
         if self.properties:
             return self.properties
 
@@ -186,219 +188,259 @@ class Device:
         return False
 
     @classmethod
-    def get_all(cls, institution, offset=0, limit=None):
-        sql = """
-            WITH RankedProperties AS (
-                SELECT
-                    t1.value,
-                    t1.key,
-                    t1.created,
-                    ROW_NUMBER() OVER (
-                        PARTITION BY t1.uuid
-                        ORDER BY
-                            CASE
-                                WHEN t1.key = 'CUSTOM_ID' THEN 1
-                                WHEN t1.key = '{algorithm}' THEN 2
-                            END,
-                            t1.created DESC
-                    ) AS row_num
-                FROM evidence_systemproperty AS t1
-                WHERE t1.owner_id = {institution}
-                  AND t1.key IN ('CUSTOM_ID', '{algorithm}')
-            )
-            SELECT DISTINCT
-                value
-            FROM
-                RankedProperties
-            WHERE
-                row_num = 1
-            ORDER BY created DESC
-        """.format(
-            institution=institution.id,
-            algorithm=institution.algorithm,
-        )
-        if limit:
-            sql += " limit {} offset {}".format(int(limit), int(offset))
+    def get_all(cls, institution, offset=0, limit=20):
+        evs = SystemProperty.objects.filter(
+            owner=institution
+        ).order_by("-created")[offset:offset+limit]
 
-        sql += ";"
-
-        annotations = []
-        with connection.cursor() as cursor:
-            cursor.execute(sql)
-            annotations = cursor.fetchall()
-
-        devices = [cls(id=x[0]) for x in annotations]
+        devices = [cls(id=x[0]) for x in evs]
         count = cls.get_all_count(institution)
         return devices, count
 
     @classmethod
     def get_all_count(cls, institution):
+        return SystemProperty.objects.filter(
+            owner=institution
+        ).count()
 
-        sql = """
-            WITH RankedProperties AS (
-                SELECT
-                    t1.value,
-                    t1.key,
-                    t1.created,
-                    ROW_NUMBER() OVER (
-                        PARTITION BY t1.uuid
-                        ORDER BY
-                            CASE
-                                WHEN t1.key = 'CUSTOM_ID' THEN 1
-                                WHEN t1.key = '{algorithm}' THEN 2
-                            END,
-                            t1.created DESC
-                    ) AS row_num
+    # @classmethod
+    # def get_all(cls, institution, offset=0, limit=None):
+    #     sql = """
+    #         WITH RankedProperties AS (
+    #             SELECT
+    #                 t1.value,
+    #                 t1.key,
+    #                 t1.created,
+    #                 ROW_NUMBER() OVER (
+    #                     PARTITION BY t1.uuid
+    #                     ORDER BY
+    #                         CASE
+    #                             WHEN t1.key = 'CUSTOM_ID' THEN 1
+    #                             WHEN t1.key = '{algorithm}' THEN 2
+    #                         END,
+    #                         t1.created DESC
+    #                 ) AS row_num
+    #             FROM evidence_systemproperty AS t1
+    #             WHERE t1.owner_id = {institution}
+    #               AND t1.key IN ('CUSTOM_ID', '{algorithm}')
+    #         )
+    #         SELECT DISTINCT
+    #             value
+    #         FROM
+    #             RankedProperties
+    #         WHERE
+    #             row_num = 1
+    #         ORDER BY created DESC
+    #     """.format(
+    #         institution=institution.id,
+    #         algorithm=institution.algorithm,
+    #     )
+    #     if limit:
+    #         sql += " limit {} offset {}".format(int(limit), int(offset))
 
-                FROM evidence_systemproperty AS t1
-               WHERE t1.owner_id = {institution}
-                  AND t1.key IN ('CUSTOM_ID', '{algorithm}')
-            )
-            SELECT
-                COUNT(DISTINCT value)
-            FROM
-                RankedProperties
-            WHERE
-                row_num = 1
-            ORDER BY created DESC
-        """.format(
-            institution=institution.id,
-            algorithm=institution.algorithm
-        )
-        with connection.cursor() as cursor:
-            cursor.execute(sql)
-            return cursor.fetchall()[0][0]
+    #     sql += ";"
+
+    #     annotations = []
+    #     with connection.cursor() as cursor:
+    #         cursor.execute(sql)
+    #         annotations = cursor.fetchall()
+
+    #     devices = [cls(id=x[0]) for x in annotations]
+    #     count = cls.get_all_count(institution)
+    #     return devices, count
+
+    # @classmethod
+    # def get_all_count(cls, institution):
+
+    #     sql = """
+    #         WITH RankedProperties AS (
+    #             SELECT
+    #                 t1.value,
+    #                 t1.key,
+    #                 t1.created,
+    #                 ROW_NUMBER() OVER (
+    #                     PARTITION BY t1.uuid
+    #                     ORDER BY
+    #                         CASE
+    #                             WHEN t1.key = 'CUSTOM_ID' THEN 1
+    #                             WHEN t1.key = '{algorithm}' THEN 2
+    #                         END,
+    #                         t1.created DESC
+    #                 ) AS row_num
+
+    #             FROM evidence_systemproperty AS t1
+    #            WHERE t1.owner_id = {institution}
+    #               AND t1.key IN ('CUSTOM_ID', '{algorithm}')
+    #         )
+    #         SELECT
+    #             COUNT(DISTINCT value)
+    #         FROM
+    #             RankedProperties
+    #         WHERE
+    #             row_num = 1
+    #         ORDER BY created DESC
+    #     """.format(
+    #         institution=institution.id,
+    #         algorithm=institution.algorithm
+    #     )
+    #     with connection.cursor() as cursor:
+    #         cursor.execute(sql)
+    #         return cursor.fetchall()[0][0]
 
 
     @classmethod
-    def get_unassigned(cls, institution, offset=0, limit=None):
-
-        sql = """
-            WITH RankedProperties AS (
-                SELECT
-                    t1.value,
-                    t1.key,
-                    t1.created,
-                    ROW_NUMBER() OVER (
-                        PARTITION BY t1.uuid
-                        ORDER BY
-                            CASE
-                                WHEN t1.key = 'CUSTOM_ID' THEN 1
-                                WHEN t1.key = '{algorithm}' THEN 2
-                            END,
-                            t1.created DESC
-                    ) AS row_num
-                FROM evidence_systemproperty AS t1
-                LEFT JOIN lot_devicelot AS t2 ON t1.value = t2.device_id
-                WHERE t2.device_id IS NULL
-                  AND t1.owner_id = {institution}
-                  AND t1.key IN ('CUSTOM_ID', '{algorithm}')
-            )
-            SELECT DISTINCT
-                value
-            FROM
-                RankedProperties
-            WHERE
-                row_num = 1
-            ORDER BY created DESC
-        """.format(
-            institution=institution.id,
-            algorithm=institution.algorithm
-        )
-        if limit:
-            sql += " limit {} offset {}".format(int(limit), int(offset))
-
-        sql += ";"
-
-        properties = []
-        with connection.cursor() as cursor:
-            cursor.execute(sql)
-            properties = cursor.fetchall()
-
-        devices = [cls(id=x[0]) for x in properties]
+    def get_unassigned(cls, institution, offset=0, limit=20):
+        evs = SystemProperty.objects.filter(
+            owner=institution
+        ).order_by("-created")[offset:offset+limit]
+        devices = [cls(id=x[0]) for x in evs]
         count = cls.get_unassigned_count(institution)
         return devices, count
 
     @classmethod
     def get_unassigned_count(cls, institution):
+        return SystemProperty.objects.filter(
+            owner=institution
+        ).count()
 
-        sql = """
-            WITH RankedProperties AS (
-                SELECT
-                    t1.value,
-                    t1.key,
-                    t1.created,
-                    ROW_NUMBER() OVER (
-                        PARTITION BY t1.uuid
-                        ORDER BY
-                            CASE
-                                WHEN t1.key = 'CUSTOM_ID' THEN 1
-                                WHEN t1.key = '{algorithm}' THEN 2
-                            END,
-                            t1.created DESC
-                    ) AS row_num
-                FROM evidence_systemproperty AS t1
-                LEFT JOIN lot_devicelot AS t2 ON t1.value = t2.device_id
-                WHERE t2.device_id IS NULL
-                  AND t1.owner_id = {institution}
-                  AND t1.key IN ('CUSTOM_ID', '{algorithm}')
-            )
-            SELECT
-                COUNT(DISTINCT value)
-            FROM
-                RankedProperties
-            WHERE
-                row_num = 1
-            ORDER BY created DESC
-        """.format(
-            institution=institution.id,
-            algorithm=institution.algorithm
-        )
-        with connection.cursor() as cursor:
-            cursor.execute(sql)
-            return cursor.fetchall()[0][0]
+    # @classmethod
+    # def get_unassigned(cls, institution, offset=0, limit=None):
+
+    #     sql = """
+    #         WITH RankedProperties AS (
+    #             SELECT
+    #                 t1.value,
+    #                 t1.key,
+    #                 t1.created,
+    #                 ROW_NUMBER() OVER (
+    #                     PARTITION BY t1.uuid
+    #                     ORDER BY
+    #                         CASE
+    #                             WHEN t1.key = 'CUSTOM_ID' THEN 1
+    #                             WHEN t1.key = '{algorithm}' THEN 2
+    #                         END,
+    #                         t1.created DESC
+    #                 ) AS row_num
+    #             FROM evidence_systemproperty AS t1
+    #             LEFT JOIN lot_devicelot AS t2 ON t1.value = t2.device_id
+    #             WHERE t2.device_id IS NULL
+    #               AND t1.owner_id = {institution}
+    #               AND t1.key IN ('CUSTOM_ID', '{algorithm}')
+    #         )
+    #         SELECT DISTINCT
+    #             value
+    #         FROM
+    #             RankedProperties
+    #         WHERE
+    #             row_num = 1
+    #         ORDER BY created DESC
+    #     """.format(
+    #         institution=institution.id,
+    #         algorithm=institution.algorithm
+    #     )
+    #     if limit:
+    #         sql += " limit {} offset {}".format(int(limit), int(offset))
+
+    #     sql += ";"
+
+    #     properties = []
+    #     with connection.cursor() as cursor:
+    #         cursor.execute(sql)
+    #         properties = cursor.fetchall()
+
+    #     devices = [cls(id=x[0]) for x in properties]
+    #     count = cls.get_unassigned_count(institution)
+    #     return devices, count
+
+    # @classmethod
+    # def get_unassigned_count(cls, institution):
+
+    #     sql = """
+    #         WITH RankedProperties AS (
+    #             SELECT
+    #                 t1.value,
+    #                 t1.key,
+    #                 t1.created,
+    #                 ROW_NUMBER() OVER (
+    #                     PARTITION BY t1.uuid
+    #                     ORDER BY
+    #                         CASE
+    #                             WHEN t1.key = 'CUSTOM_ID' THEN 1
+    #                             WHEN t1.key = '{algorithm}' THEN 2
+    #                         END,
+    #                         t1.created DESC
+    #                 ) AS row_num
+    #             FROM evidence_systemproperty AS t1
+    #             LEFT JOIN lot_devicelot AS t2 ON t1.value = t2.device_id
+    #             WHERE t2.device_id IS NULL
+    #               AND t1.owner_id = {institution}
+    #               AND t1.key IN ('CUSTOM_ID', '{algorithm}')
+    #         )
+    #         SELECT
+    #             COUNT(DISTINCT value)
+    #         FROM
+    #             RankedProperties
+    #         WHERE
+    #             row_num = 1
+    #         ORDER BY created DESC
+    #     """.format(
+    #         institution=institution.id,
+    #         algorithm=institution.algorithm
+    #     )
+    #     with connection.cursor() as cursor:
+    #         cursor.execute(sql)
+    #         return cursor.fetchall()[0][0]
 
     @classmethod
     def get_properties_from_uuid(cls, uuid, institution):
-        sql = """
-            WITH RankedProperties AS (
-                SELECT
-                    t1.value,
-                    t1.key,
-                    t1.created,
-                    ROW_NUMBER() OVER (
-                        PARTITION BY t1.uuid
-                        ORDER BY
-                            CASE
-                                WHEN t1.key = 'CUSTOM_ID' THEN 1
-                                WHEN t1.key = '{algorithm}' THEN 2
-                            END,
-                            t1.created DESC
-                    ) AS row_num
-                FROM evidence_systemproperty AS t1
-                WHERE t1.owner_id = {institution}
-                  AND t1.uuid = '{uuid}'
-                  AND t1.key IN ('CUSTOM_ID', '{algorithm}')
-            )
-            SELECT DISTINCT
-                value
-            FROM
-                RankedProperties
-            WHERE
-                row_num = 1
-            ORDER BY created DESC
-        """.format(
-            uuid=uuid.replace("-", ""),
-            institution=institution.id,
-            algorithm=institution.algorithm,
-        )
+        ev = SystemProperty.objects.filter(
+            owner=institution,
+            uuid=uuid
+        ).first()
+        if ev:
+            return cls(id=ev)
 
-        properties = []
-        with connection.cursor() as cursor:
-            cursor.execute(sql)
-            properties = cursor.fetchall()
+    # @classmethod
+    # def get_properties_from_uuid(cls, uuid, institution):
+    #     sql = """
+    #         WITH RankedProperties AS (
+    #             SELECT
+    #                 t1.value,
+    #                 t1.key,
+    #                 t1.created,
+    #                 ROW_NUMBER() OVER (
+    #                     PARTITION BY t1.uuid
+    #                     ORDER BY
+    #                         CASE
+    #                             WHEN t1.key = 'CUSTOM_ID' THEN 1
+    #                             WHEN t1.key = '{algorithm}' THEN 2
+    #                         END,
+    #                         t1.created DESC
+    #                 ) AS row_num
+    #             FROM evidence_systemproperty AS t1
+    #             WHERE t1.owner_id = {institution}
+    #               AND t1.uuid = '{uuid}'
+    #               AND t1.key IN ('CUSTOM_ID', '{algorithm}')
+    #         )
+    #         SELECT DISTINCT
+    #             value
+    #         FROM
+    #             RankedProperties
+    #         WHERE
+    #             row_num = 1
+    #         ORDER BY created DESC
+    #     """.format(
+    #         uuid=uuid.replace("-", ""),
+    #         institution=institution.id,
+    #         algorithm=institution.algorithm,
+    #     )
 
-        return cls(id=properties[0][0])
+    #     properties = []
+    #     with connection.cursor() as cursor:
+    #         cursor.execute(sql)
+    #         properties = cursor.fetchall()
+
+    #     return cls(id=properties[0][0])
 
     @property
     def is_websnapshot(self):
