@@ -58,6 +58,23 @@
           </div>
         </div>
 
+        <!-- Reuse Time Summary -->
+        <div class="card impact-summary-card" style="border-left-color: #198754;">
+          <div class="card-body">
+            <div class="row align-items-center">
+              <div class="col-md-8">
+                <h5 class="card-title">{% trans 'Total Reuse Time' %}</h5>
+                <p class="text-muted mb-0">
+                  {% trans 'Total hours of reuse (second life) accumulated by devices in this lot.' %}
+                </p>
+              </div>
+              <div class="col-md-4 text-md-end">
+                <h2 class="mb-0 text-success">{{ impact.relevant_input_data.total_reuse_time|default:0 }} <small class="text-muted">{% trans 'hours' %}</small></h2>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Comparisons -->
         <h5 class="mb-3">{% trans 'Equivalent To' %}</h5>
         <div class="row">
