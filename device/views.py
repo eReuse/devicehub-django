@@ -87,7 +87,7 @@ class DetailsView(DashboardView, TemplateView ):
 
     def get(self, request, *args, **kwargs):
         self.pk = kwargs['pk']
-        self.object = Device(id=self.pk)
+        self.object = Device(id=self.pk, owner=self.request.user.institution)
         if not self.object.last_evidence:
             raise Http404
         if self.object.owner != self.request.user.institution:
