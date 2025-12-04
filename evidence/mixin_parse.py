@@ -1,5 +1,6 @@
 import logging
 from django.conf import settings
+import hashlib
 
 from utils.constants import ALGOS
 
@@ -43,7 +44,9 @@ class BuildMix:
         dmidecode_raw = data.get("dmidecode")
         inxi_raw = data.get("inxi")
         device = self.json.get("device")
-        if not dmidecode_raw and not inxi_raw and not device:
+        if data.get("snapshot_type") == "Image":
+            logger.info("PARSING image snapshot")
+        elif not dmidecode_raw and not inxi_raw and not device:
             txt = "snapshot without dmidecode and inxi datas"
             logger.error(txt)
             raise Exception(txt)
@@ -57,21 +60,22 @@ class BuildMix:
         for f in algorithm:
             if hasattr(self, f):
                 hid += getattr(self, f) or ''
-        return hid
+        return self.sign(hid)
 
     def generate_chids(self):
         self.algorithms = {}
-        k = settings.DEVICEHUB_ALGORITHM_DEVICE
-        if self.type == "Display":
-            k = settings.DEVICEHUB_ALGORITHM_DISPLAY
-        elif self.type == "Disk":
-            k = settings.DEVICEHUB_ALGORITHM_DISK
-        self.algorithms[k] = self.get_hid(k)
-        # for k in ALGOS.keys():
-        #     if not settings.DPP and k == 'ereuse22':
-        #         continue
+
+        for k in ALGOS.keys():
+            if not settings.DPP and k == 'ereuse22':
+                continue
+            #Photo build class handles this algo
+            if k == "photo25":
+                continue
 
         #     self.algorithms[k] = self.get_hid(k)
+
+    def sign(self, doc):
+        return hashlib.sha3_256(doc.encode()).hexdigest()
 
     def get_doc(self):
         self._get_components()
