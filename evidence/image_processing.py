@@ -4,8 +4,37 @@ Image processing utilities for OCR and barcode scanning.
 import subprocess
 import shutil
 import logging
+from evidence.mixin_parse import BuildMix
+from utils.constants import ALGOS
 
 logger = logging.getLogger(__name__)
+
+
+class Build(BuildMix):
+    def get_details(self):
+        #Only hash needed for photo25
+        self.hash = self.json.get("photo").get("hash", "")
+
+        return
+
+    def from_credential(self):
+        return
+
+    def _get_components(self):
+        "Image wont have any components to be extracted,"
+        return
+
+    def get_hid(self, algo="photo25"):
+        return self.hash
+
+    def generate_chids(self):
+        # Create SystemProperty with key='photo25' so photo appears in evidence list
+        # Using photo hash as the value (similar to device CHID for snapshots)
+        self.algorithms = {}
+        for k in ALGOS.keys():
+            if not k == 'photo25':
+                continue
+            self.algorithms[k] = self.get_hid(k)
 
 
 def extract_text_with_ocr(image_path):
