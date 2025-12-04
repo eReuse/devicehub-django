@@ -365,44 +365,51 @@ class PhotoForm(forms.Form):
         if not commit or not self.user or not self.photo_data:
             return
 
-        file_path = save_photo_in_disk(self.photo_data, self.user.institution.name)
+        image_path = save_photo_in_disk(self.photo_data, self.user.institution.name)
+        doc = self.build_json(image_path)
+        build = Build
+        build(doc, self.user)
 
-        # Process image for OCR and barcode detection
-        processing_result = process_image(file_path)
+        path_name = save_in_disk(doc, self.user.institution.name)
+        move_json(path_name, self.user.institution.name)
+
+        return
+
+    def build_json(self, image_path):
+        processing_result = process_image(image_path)
 
         # Build document structure
         self.photo_data.pop('content', None)
         self.photo_data.pop('file', None)
         self.uuid = str(uuid.uuid4())
-        algo_key = 'photo25'
 
         doc = {
             'uuid': self.uuid,
-            'type': algo_key,
             'endTime': datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
+            'type': "photo25",
             'software': 'DeviceHub',
             'photo': self.photo_data,
-            'ocr': {
-                'text': processing_result.get('ocr_text'),
-                'error': processing_result.get('ocr_error')
-            },
+            'data': {
+                'snapshot_type': "Image",
+                'ocr': {
+                    'text': processing_result.get('ocr_text'),
+                    'error': processing_result.get('ocr_error')
+                },
             'barcodes': processing_result.get('barcodes', []),
             'barcode_error': processing_result.get('barcode_error')
+            }
         }
-
-        # Save JSON snapshot to disk
-        path_name = save_in_disk(doc, self.user.institution.name)
-        create_index(doc, self.user)
-        move_json(path_name, self.user.institution.name)
-
-        # Create SystemProperty with key='photo25' so photo appears in evidence list
-        # Using photo hash as the value (similar to device CHID for snapshots)
-        SystemProperty.objects.create(
-            uuid=self.uuid,
-            key=algo_key,
-            value=self.photo_data['hash'],
-            owner=self.user.institution,
-            user=self.user
-        )
-
         return doc
+
+        # # Save JSON snapshot to disk
+        # path_name = save_in_disk(doc, self.user.institution.name)
+        # create_index(doc, self.user)
+        # move_json(path_name, self.user.institution.name)
+
+        # SystemProperty.objects.create(
+        #     uuid=self.uuid,
+        #     key=algo_key,
+        #     value=self.photo_data['hash'],
+        #     owner=self.user.institution,
+        #     user=self.user
+        # )
