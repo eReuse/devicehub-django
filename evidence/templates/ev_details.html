@@ -122,7 +122,7 @@
                   <h6 class="mb-0"><i class="bi bi-upc-scan"></i> {% trans "Barcodes" %}</h6>
               </div>
               <div class="card-body">
-                  {% if object.doc.barcodes %}
+                  {% if object.doc.data.barcodes %}
                   <table class="table table-sm">
                       <thead>
                       <tr>
@@ -131,7 +131,7 @@
                       </tr>
                       </thead>
                       <tbody>
-                      {% for barcode in object.doc.barcodes %}
+                      {% for barcode in object.doc.data.barcodes %}
                       <tr>
                           <td><span class="badge bg-secondary">{{ barcode.type }}</span></td>
                           <td><code>{{ barcode.data }}</code></td>
@@ -139,7 +139,7 @@
                       {% endfor %}
                       </tbody>
                   </table>
-                  {% elif object.doc.barcode_error %}
+                  {% elif object.doc.data.barcode_error %}
                   <div class="alert alert-danger mb-0">
                       <i class="bi bi-exclamation-triangle"></i> {% trans "Barcode Error:" %} {{ object.doc.barcode_error }}
                   </div>
@@ -155,11 +155,11 @@
             <h6 class="mb-0"><i class="bi bi-file-text"></i> {% trans "OCR Text" %}</h6>
           </div>
           <div class="card-body">
-            {% if object.doc.ocr.text %}
-              <pre class="mb-0" style="white-space: pre-wrap;">{{ object.doc.ocr.text }}</pre>
-            {% elif object.doc.ocr.error %}
+            {% if object.doc.data.ocr.text %}
+              <pre class="mb-0" style="white-space: pre-wrap;">{{ object.doc.data.ocr.text }}</pre>
+            {% elif object.doc.data.ocr.error %}
               <div class="alert alert-danger mb-0">
-                <i class="bi bi-exclamation-triangle"></i> {% trans "OCR Error:" %} {{ object.doc.ocr.error }}
+                <i class="bi bi-exclamation-triangle"></i> {% trans "OCR Error:" %} {{ object.doc.data.ocr.error }}
               </div>
             {% else %}
               <p class="text-muted mb-0">{% trans "No text detected" %}</p>
