@@ -51,7 +51,7 @@ class Device:
                 alias=self.pk
             ).first()
             if alias:
-                self.shortid = alias.root
+                self.shortid = alias.root[:6].upper()
 
     def initial(self):
         self.get_properties()
@@ -71,6 +71,7 @@ class Device:
             # if hid exist as alias
             ali = RootAlias.objects.filter(alias=self.id).first()
             if ali:
+                roots.append(ali.root)
                 for x in RootAlias.objects.filter(root=ali.root, owner=self.owner):
                     if x.alias not in roots:
                         roots.append(x.alias)
@@ -387,6 +388,22 @@ class Device:
                 )
             )
         """
+        roots_of_hids_in_lots = f"""
+            select mp.root from evidence_rootalias as mp
+              where mp.owner_id={institution_id} and mp.root in (
+                select distinct root from evidence_rootalias as ra
+                  where ra.owner_id={institution_id} and (ra.alias in (
+                    select device_id from lot_devicelot as ld
+                      left join lot_lot as lot on ld.lot_id=lot.id
+                    where lot.owner_id = {institution_id}
+                  ) or ra.root in (
+                    select device_id from lot_devicelot as ld
+                      left join lot_lot as lot on ld.lot_id=lot.id
+                    where lot.owner_id = {institution_id}
+                  )
+                )
+            )
+        """
         # Search all values in Systemproperty than not exists in qry3
         sql = f"""
             select distinct sp.value from evidence_systemproperty as sp
@@ -394,6 +411,7 @@ class Device:
               sp.value not in ({qry3}) and
               sp.value not in ({device_lots}) and
               sp.value not in ({alias_of_hids_in_lots}) and
+              sp.value not in ({roots_of_hids_in_lots}) and
               sp.owner_id = {institution_id}
         """
         if limit:
@@ -457,6 +475,22 @@ class Device:
                 )
             )
         """
+        roots_of_hids_in_lots = f"""
+            select mp.root from evidence_rootalias as mp
+              where mp.owner_id={institution_id} and mp.root in (
+                select distinct root from evidence_rootalias as ra
+                  where ra.owner_id={institution_id} and (ra.alias in (
+                    select device_id from lot_devicelot as ld
+                      left join lot_lot as lot on ld.lot_id=lot.id
+                    where lot.owner_id = {institution_id}
+                  ) or ra.root in (
+                    select device_id from lot_devicelot as ld
+                      left join lot_lot as lot on ld.lot_id=lot.id
+                    where lot.owner_id = {institution_id}
+                  )
+                )
+            )
+        """
         # Search all values in Systemproperty than not exists in qry3
         sql = f"""
             select count(distinct sp.value) from evidence_systemproperty as sp
@@ -464,6 +498,7 @@ class Device:
               sp.value not in ({qry3}) and
               sp.value not in ({device_lots}) and
               sp.value not in ({alias_of_hids_in_lots}) and
+              sp.value not in ({roots_of_hids_in_lots}) and
               sp.owner_id = {institution_id};
         """
 
