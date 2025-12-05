@@ -63,7 +63,7 @@ class RootAlias(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["owner", "alias", "root"], name="rootalias_unique")
+                fields=["owner", "alias"], name="rootalias_unique")
         ]
 
 
@@ -84,6 +84,7 @@ class Evidence:
         self.get_time()
 
     def get_properties(self):
+        # TODO is good not filter by institution?
         self.properties = SystemProperty.objects.filter(
             uuid=self.uuid
         ).order_by("created")
@@ -262,7 +263,7 @@ class Evidence:
         ).order_by("-created").distinct()
 
     @classmethod
-    def get_device_evidences(cls,user, uuids):
+    def get_device_evidences(cls, user, uuids):
         return SystemProperty.objects.filter(
             owner=user.institution,
             uuid__in=uuids

@@ -103,7 +103,8 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
                     ldevices.append(dev)
             return ldevices
 
-        return [Device(id=x, lot=self.object) for x in chids]
+        owner = self.request.user.institution
+        return [Device(id=x, lot=self.object, owner=owner) for x in chids]
 
     def get_table_data(self):
         table_data = []

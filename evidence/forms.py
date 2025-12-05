@@ -13,7 +13,7 @@ from utils.device import create_property, create_doc, create_index
 from utils.forms import MultipleFileField
 from device.models import Device
 from evidence.parse import Build
-from evidence.models import SystemProperty, UserProperty
+from evidence.models import SystemProperty, UserProperty, RootAlias
 from utils.save_snapshots import move_json, save_in_disk
 from utils.photo_evidence import save_photo_in_disk, get_photos_dir
 from action.models import DeviceLog
@@ -74,62 +74,84 @@ class UploadForm(forms.Form):
             move_json(path_name, user.institution.name)
 
 
-class UserTagForm(forms.Form):
-    tag = forms.CharField(label=_("Tag"))
+class UserAliasForm(forms.Form):
+    root = forms.CharField(label=_("Alias"), required=False)
 
     def __init__(self, *args, **kwargs):
-        self.pk = None
         self.uuid = kwargs.pop('uuid', None)
         self.user = kwargs.pop('user')
-        instance = SystemProperty.objects.filter(
-            uuid=self.uuid,
-            key='CUSTOM_ID',
-            owner=self.user.institution
-        ).first()
+        self.sysprop = kwargs.pop('instance', None)
+        self.instance = None
+        if self.sysprop:
+            self.instance = RootAlias.objects.filter(
+                owner=self.sysprop.owner,
+                alias=self.sysprop.value
+            ).first()
 
-        if instance:
-            kwargs["initial"]["tag"] = instance.value
-            self.pk = instance.pk
+        if self.instance:
+            kwargs["initial"]["root"] = self.instance.root
 
         super().__init__(*args, **kwargs)
 
     def clean(self):
-        data = self.cleaned_data.get('tag')
-        if not data:
-            return False
-        self.tag = data
-        self.instance = SystemProperty.objects.filter(
-            uuid=self.uuid,
-            key='CUSTOM_ID',
-            owner=self.user.institution
-        ).first()
+        self.root_alias = self.cleaned_data.get('root')
+
+        if not self.root_alias:
+            return True
+
+        alias = RootAlias.objects.filter(
+            owner=self.user.institution,
+            root=self.sysprop.value
+        )
+
+        if self.root_alias == self.sysprop.value:
+            txt = _("This alias is the same as the HID")
+            raise ValidationError(txt)
+
+        if alias.first():
+            all_alias = ", ".join([x.alias for x in alias])
+            txt = _("{} is root from {}. ").format(self.sysprop.value, all_alias)
+            txt += _("You need deactivate the rest before add a alias in this.")
+            raise ValidationError(txt)
 
         return True
 
-    def save(self, user, commit=True):
+    def save(self, commit=True):
         if not commit:
             return
 
-        if self.instance:
-            old_value = self.instance.value
-            if not self.tag:
-                message =_("<Deleted> Evidence Tag. Old Value: '{}'").format(old_value)
-                self.instance.delete()
-            else:
-                self.instance.value = self.tag
-                self.instance.save()
-                if old_value != self.tag:
-                    message=_("<Updated> Evidence Tag. Old Value: '{}'. New Value: '{}'").format(old_value, self.tag)
-        else:
-            message =_("<Created> Evidence Tag. Value: '{}'").format(self.tag)
-            SystemProperty.objects.create(
-                uuid=self.uuid,
-                key='CUSTOM_ID',
-                value=self.tag,
-                owner=self.user.institution,
-                user=self.user
+        if not self.instance:
+            if not self.root_alias:
+                return
+
+            message =_("<Created> Evidence alias. Value: '{}'").format(self.root_alias)
+            self.instance = RootAlias.objects.create(
+                owner=self.sysprop.owner,
+                alias=self.sysprop.value,
+                root=self.root_alias
             )
-        
+            self.log(message)
+            return self.instance
+
+        old_value = self.instance.root
+        if old_value == self.root_alias:
+            return
+
+        if not self.root_alias:
+            message =_("<Deleted> Evidence alias. Old Value: '{}'").format(old_value)
+            self.instance.delete()
+            self.log(message)
+            return
+
+        self.instance.root = self.root_alias
+        self.instance.save()
+        if old_value != self.root_alias:
+            message=_("<Updated> Evidence alias. Old Value: '{}'. New Value: '{}'").format(
+                old_value, self.root_alias
+            )
+        self.log(message)
+
+    def log(self, message):
         DeviceLog.objects.create(
                 snapshot_uuid=self.uuid,
                 event= message,
@@ -216,6 +238,7 @@ class EraseServerForm(forms.Form):
         self.pk = None
         self.uuid = kwargs.pop('uuid', None)
         self.user = kwargs.pop('user')
+        kwargs.pop('instance', None)
         instance = UserProperty.objects.filter(
             uuid=self.uuid,
             type=UserProperty.Type.ERASE_SERVER,

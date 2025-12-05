@@ -6,13 +6,15 @@
     <div class="col">
       <h3>{{ object.uuid }}</h3>
 
+          {% if object.uploaded_by.pk %}
           <a href="{% url "user:profile" object.uploaded_by.pk %}" class="text-decoration-none link-primary d-block">
             <small class="text-muted ms-1"> {% trans "Uploaded by " %}</small>
             {{ object.uploaded_by }}
           </a>
+	  {% endif %}
           <small class="text-muted ps-1">
             <i class="bi bi-clock"></i>
-            {% trans "ISO date" %}: {{object.created}}
+            {% trans "ISO date" %}: {{ object.created }}
           </small>
 
     </div>
@@ -73,7 +75,7 @@
           </li>
         {% endif %}
         <li class="nav-item">
-          <button class="nav-link {% if not object.is_photo_evidence %}{% endif %}" data-bs-toggle="tab" data-bs-target="#tag">{% trans "Tag" %}</button>
+          <button class="nav-link {% if not object.is_photo_evidence %}{% endif %}" data-bs-toggle="tab" data-bs-target="#tag">{% trans "Alias" %}</button>
         </li>
       </ul>
     </div>
