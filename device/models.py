@@ -318,6 +318,27 @@ class Device:
             return cursor.fetchall()[0][0]
 
     @classmethod
+    def queryset_pgsql_unassigned(cls, institution):
+        qry4 = cls.queryset_pgsql(institution)
+        alias = RootAlias.objects.filter(owner=institution)
+        dev_lots = DeviceLot.objects.filter(lot__owner=institution).distinct(
+            "device_id").values_list("device_id", flat=True)
+        root_lots = alias.filter(root__in=dev_lots).distinct(
+            "alias").values_list("alias", flat=True)
+        alias_lots = alias.filter(alias__in=dev_lots).distinct(
+            "alias").values_list("alias", flat=True)
+
+        # excluding devices and alias linked to lots
+        exclude_lots = qry4.exclude(
+            device_id__in=dev_lots
+        ).exclude(
+            device_id__in=root_lots
+        ).exclude(
+            device_id__in=alias_lots
+        ).order_by("-created")
+        return exclude_lots
+
+    @classmethod
     def queryset_SQL_unassigned(cls, institution, offset=0, limit=None):
         institution_id = institution.id
 
@@ -420,12 +441,29 @@ class Device:
             select device_id from lot_devicelot as ld left join lot_lot as lot on ld.lot_id=lot.id
               where lot.owner_id = {institution_id}
         """
+        alias_of_hids_in_lots = f"""
+            select mp.alias from evidence_rootalias as mp
+              where mp.owner_id={institution_id} and mp.root in (
+                select distinct root from evidence_rootalias as ra
+                  where ra.owner_id={institution_id} and (ra.alias in (
+                    select device_id from lot_devicelot as ld
+                      left join lot_lot as lot on ld.lot_id=lot.id
+                    where lot.owner_id = {institution_id}
+                  ) or ra.root in (
+                    select device_id from lot_devicelot as ld
+                      left join lot_lot as lot on ld.lot_id=lot.id
+                    where lot.owner_id = {institution_id}
+                  )
+                )
+            )
+        """
         # Search all values in Systemproperty than not exists in qry3
         sql = f"""
             select count(distinct sp.value) from evidence_systemproperty as sp
             where
               sp.value not in ({qry3}) and
               sp.value not in ({device_lots}) and
+              sp.value not in ({alias_of_hids_in_lots}) and
               sp.owner_id = {institution_id};
         """
 
@@ -451,8 +489,7 @@ class Device:
     def get_unassigned(cls, institution, offset=0, limit=20):
         engine = settings.DATABASES.get("default", {}).get("ENGINE")
         if 'django.db.backends.postgresql' == engine:
-            device_lots = DeviceLot.objects.filter(lot__owner=institution).values("device_id").distinct()
-            qry = cls.queryset_pgsql(institution).exclude(value__in=device_lots)
+            qry = cls.queryset_pgsql_unassigned(institution)
             evs = qry[offset:offset+limit]
             count = qry.count()
         else:
