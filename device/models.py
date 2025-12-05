@@ -227,7 +227,7 @@ class Device:
         qry2 = alias.filter(root__in=qry1).order_by('root', 'id').distinct('root').values_list(
             "alias", flat=True
         ).distinct()
-        qry3 = alias.exclude(alias_in=qry2).values_list("alias", flat=True).distinct()
+        qry3 = alias.exclude(alias__in=qry2).values_list("alias", flat=True).distinct()
         qry4 = sp.exclude(value__in=qry3).order_by("-created")
         return qry4
 
@@ -330,11 +330,11 @@ class Device:
 
         # excluding devices and alias linked to lots
         exclude_lots = qry4.exclude(
-            device_id__in=dev_lots
+            value__in=dev_lots
         ).exclude(
-            device_id__in=root_lots
+            value__in=root_lots
         ).exclude(
-            device_id__in=alias_lots
+            value__in=alias_lots
         ).order_by("-created")
         return exclude_lots
 
@@ -473,29 +473,31 @@ class Device:
 
     @classmethod
     def get_all(cls, institution, offset=0, limit=None):
-        engine = settings.DATABASES.get("default", {}).get("ENGINE")
-        if 'django.db.backends.postgresql' == engine:
-            qry = cls.queryset_pgsql(institution)
-            evs = qry[offset:offset+limit]
-            count = qry.count()
-        else:
-            evs = cls.queryset_SQL(institution, offset=offset, limit=limit)
-            count = cls.queryset_SQL_count(institution)
+        # engine = settings.DATABASES.get("default", {}).get("ENGINE")
+        # if 'django.db.backends.postgresql' == engine:
+        #     qry = cls.queryset_pgsql(institution)
+        #     evs = qry[offset:offset+limit]
+        #     count = qry.count()
+        #     devices = [cls(id=x.value, owner=institution) for x in evs]
+        #     return devices, count
 
+        evs = cls.queryset_SQL(institution, offset=offset, limit=limit)
+        count = cls.queryset_SQL_count(institution)
         devices = [cls(id=x[0], owner=institution) for x in evs]
         return devices, count
 
     @classmethod
     def get_unassigned(cls, institution, offset=0, limit=20):
-        engine = settings.DATABASES.get("default", {}).get("ENGINE")
-        if 'django.db.backends.postgresql' == engine:
-            qry = cls.queryset_pgsql_unassigned(institution)
-            evs = qry[offset:offset+limit]
-            count = qry.count()
-        else:
-            evs = cls.queryset_SQL_unassigned(institution, offset=offset, limit=limit)
-            count = cls.queryset_SQL_unassigned_count(institution)
+        # engine = settings.DATABASES.get("default", {}).get("ENGINE")
+        # if 'django.db.backends.postgresql' == engine:
+        #     qry = cls.queryset_pgsql_unassigned(institution)
+        #     evs = qry[offset:offset+limit]
+        #     count = qry.count()
+        #     devices = [cls(id=x.value, owner=institution) for x in evs]
+        #     return devices, count
 
+        evs = cls.queryset_SQL_unassigned(institution, offset=offset, limit=limit)
+        count = cls.queryset_SQL_unassigned_count(institution)
         devices = [cls(id=x[0], owner=institution) for x in evs]
         return devices, count
 
