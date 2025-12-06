@@ -17,7 +17,7 @@ from evidence.models import SystemProperty, UserProperty, RootAlias
 from utils.save_snapshots import move_json, save_in_disk
 from utils.photo_evidence import save_photo_in_disk, get_photos_dir
 from action.models import DeviceLog
-from evidence.image_processing import process_image
+from evidence.image_processing import build_json
 
 
 class UploadForm(forms.Form):
@@ -366,7 +366,7 @@ class PhotoForm(forms.Form):
             return
 
         image_path = save_photo_in_disk(self.photo_data, self.user.institution.name)
-        doc = self.build_json(image_path)
+        doc = build_json(self.photo_data, image_path)
         build = Build
         build(doc, self.user)
 

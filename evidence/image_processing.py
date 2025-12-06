@@ -36,6 +36,32 @@ class Build(BuildMix):
                 continue
             self.algorithms[k] = self.get_hid(k)
 
+def build_json(photo_data, image_path):
+    processing_result = process_image(image_path)
+
+    # Build document structure
+    photo_data.pop('content', None)
+    photo_data.pop('file', None)
+    uuid = str(uuid.uuid4())
+
+    doc = {
+        'uuid': uuid,
+        'endTime': datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
+        'type': "photo25",
+        'software': 'DeviceHub',
+        'photo': photo_data,
+        'data': {
+            'snapshot_type': "Image",
+            'ocr': {
+                'text': processing_result.get('ocr_text'),
+                'error': processing_result.get('ocr_error')
+            },
+        'barcodes': processing_result.get('barcodes', []),
+        'barcode_error': processing_result.get('barcode_error')
+        }
+    }
+    return doc
+
 
 def extract_text_with_ocr(image_path):
     """
