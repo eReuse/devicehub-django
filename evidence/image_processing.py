@@ -1,11 +1,14 @@
 """
 Image processing utilities for OCR and barcode scanning.
 """
-import subprocess
+import uuid
 import shutil
 import logging
+import subprocess
 from evidence.mixin_parse import BuildMix
 from utils.constants import ALGOS
+
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -42,10 +45,10 @@ def build_json(photo_data, image_path):
     # Build document structure
     photo_data.pop('content', None)
     photo_data.pop('file', None)
-    uuid = str(uuid.uuid4())
+    _uuid = str(uuid.uuid4())
 
     doc = {
-        'uuid': uuid,
+        'uuid': _uuid,
         'endTime': datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
         'type': "photo25",
         'software': 'DeviceHub',
