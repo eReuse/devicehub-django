@@ -65,12 +65,19 @@ class EvidenceTable(tables.Table):
         try:
             # Check if this is a photo evidence (doesn't have device yet)
             ev = self.evidence_map.get(record.uuid)
-            if ev and hasattr(ev, 'is_photo_evidence') and ev.is_photo_evidence():
+            if ev and ev.is_nil_chid():
                 return format_html(
                     '<span class="text-muted" title="{}">{}</span>',
-                    _("Photo evidence - device not linked yet"),
+                    _("Device not linked yet"),
                     _("Not linked")
                 )
+            if ev:
+                cust_id = ev.get_custom_id()
+                if cust_id:
+                    value = cust_id
+
+                if not value:
+                    return format_html('<span class="text-muted">-</span>')
 
             device_id = ev.get_alias()
             url = reverse('device:details', kwargs={'pk': device_id})
