@@ -42,6 +42,7 @@ ALGOS = {
     "photo25": PHOTO25
 }
 
+EMPTY_SHA3_256_HASH= "a7ffc6f8bf1ed76651c14756a061d662f580ff4de43b49fa82d80a4b80f8434a"
 
 CHASSIS_DH = {
     'Tower': {'desktop', 'low-profile', 'tower', 'server'},

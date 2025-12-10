@@ -7,7 +7,7 @@ from django.utils.translation import gettext_lazy as _
 
 
 from django.db.models import Q
-from utils.constants import STR_EXTEND_SIZE, CHASSIS_DH
+from utils.constants import STR_EXTEND_SIZE, CHASSIS_DH, EMPTY_SHA3_256_HASH
 from evidence.xapian import search
 from evidence.parse_details import ParseSnapshot
 from evidence.normal_parse_details import get_inxi, get_inxi_key
@@ -118,6 +118,18 @@ class Evidence:
             self.get_doc()
 
         return hashlib.sha3_256(json.dumps(self.doc)).hexdigest()
+
+    def get_custom_id(self):
+        return next(
+            (item.value for item in self.properties if item.key == "CUSTOM_ID"),
+            None
+        )
+
+    def is_nil_chid(self):
+        if self.get_custom_id() is not None:
+            return False
+
+        return any(item.value == EMPTY_SHA3_256_HASH for item in self.properties)
 
     def get_doc(self):
         self.doc = {}
