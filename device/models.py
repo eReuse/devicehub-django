@@ -417,15 +417,35 @@ class Device:
     def components_export(self):
         self.get_last_evidence()
 
-        user_properties = ""
-        for x in self.get_user_properties():
-            user_properties += "({}:{}) ".format(x.key, x.value)
+        hardware_info = self._get_base_hardware_info()
 
-        hardware_info = {
+        if not self.last_evidence or not self.last_evidence.is_legacy:
+            return hardware_info
+
+        if self.type == "Display":
+            self._process_display(hardware_info)
+        elif self.type == "HardDrive" or self.type == "SolidStateDrive":
+            self._process_disk(hardware_info)
+        else:
+            self._process_device(hardware_info)
+
+        return hardware_info
+
+    def _get_base_hardware_info(self):
+        user_properties_str = ""
+        for x in self.get_user_properties():
+            user_properties_str += "({}:{}) ".format(x.key, x.value)
+
+        return {
             'ID': self.shortid or '',
             'manufacturer': self.manufacturer or '',
             'model': self.model or '',
             'serial': '',
+            'type': self.type,
+            'current_state': self.get_current_state().state if self.get_current_state() else '',
+            'last_updated': parse_datetime(self.updated) or "",
+            'user_properties': user_properties_str,
+
             'cpu_model': '',
             'cpu_cores': '',
             'ram_total': '',
@@ -434,18 +454,62 @@ class Device:
             'slots_used': '',
             'drive': '',
             'gpu_model': '',
-            'type': self.type,
-            'user_properties': user_properties,
-            'current_state': self.get_current_state().state if self.get_current_state() else '',
-            'last_updated': parse_datetime(self.updated) or ""
+
+            'disk_capacity': '',
+            'disk_interface': '',
+            'disk_health': '',
+
+            'native_resolution': '',
+            'screen_size': '',
+            'gamma': '',
+            'color_format': '',
         }
 
-        if not self.last_evidence.is_legacy or not self.last_evidence:
-            return hardware_info
+    def _process_display(self, hardware_info):
+        props = {k: v for item in self.components for k, v in item.items()}
 
+        hardware_info.update({
+            'manufacturer': props.get('Manufacturer', hardware_info['manufacturer']),
+            'model': props.get('Model', hardware_info['model']),
+            'serial': props.get('Serial Number', ''),
+            'type': 'Display',
+
+            'native_resolution': props.get('Native Resolution', ''),
+            'screen_size': props.get('Max Image Size', ''),
+            'gamma': props.get('Gamma', ''),
+            'color_format': props.get('Color Format', ''),
+        })
+
+        if hardware_info['native_resolution']:
+            hardware_info['model'] = f"{hardware_info['model']} [{hardware_info['native_resolution']}]"
+
+    def _process_disk(self, hardware_info):
+        props = {k: v for item in self.components for k, v in item.items()}
+
+        hardware_info.update({
+            'manufacturer': props.get('Manufacturer', hardware_info['manufacturer']),
+            'model': props.get('Model', hardware_info['model']),
+            'serial': props.get('Serial Number', ''),
+            'type': props.get('Device Type', hardware_info['type']),
+
+            'disk_interface': props.get('Interface Speed', ''),
+            'disk_health': props.get('Health Status', ''),
+        })
+
+        capacity = props.get('Capacity (GB)', props.get('Capacity (bytes)', 'Unknown Size'))
+        if capacity != 'Unknown Size' and 'bytes' not in str(capacity):
+             capacity = f"{capacity} GB"
+
+        hardware_info['disk_capacity'] = str(capacity)
+
+        interface = props.get('Interface Speed', '')
+        hardware_info['drive'] = f"{interface} {props.get('Model', '')} ({capacity})".strip()
+
+    def _process_device(self, hardware_info):
         storage_devices = []
         gpu_models = []
-        slots_used = slots_total = 0
+        slots_used = 0
+        slots_total = 0
 
         for c in self.components:
             match c.get("type"):
@@ -463,9 +527,7 @@ class Device:
                 case "RamModule":
                     slots_total += 1
                     if slots_used == 0:
-                        hardware_info.update({
-                            'ram_type': c.get("interface", "")
-                        })
+                        hardware_info['ram_type'] = c.get("interface", "")
                     if c.get("interface", "") != "no module installed":
                         slots_used += 1
                 case "Storage":
@@ -480,8 +542,10 @@ class Device:
                         gpu_models.append(model)
 
         if storage_devices:
-            hardware_info['drive'] = ", ".join([f" {d['type']} {d['model']} ({d['size']} )"
-                                            for d in storage_devices])
+            hardware_info['drive'] = ", ".join(
+                [f" {d['type']} {d['model']} ({d['size']} )" for d in storage_devices]
+            )
+
         if gpu_models:
             hardware_info['gpu_model'] = ", ".join(gpu_models)
 

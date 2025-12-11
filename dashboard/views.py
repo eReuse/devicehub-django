@@ -158,31 +158,24 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
             devices = self.get_queryset()
 
             headers = [
-                'ID', 'type', 'manufacturer', 'model', 'cpu_model', 'cpu_cores', 'current_state',
-                'ram_total', 'ram_type', 'ram_slots', 'slots_used', 'drive', 'gpu_model', 'user_properties','serial', 'last_updated',
+                'ID', 'type', 'manufacturer', 'model', 'serial',
+                'current_state', 'last_updated',
+                'cpu_model', 'cpu_cores', 'ram_total', 'ram_type',
+                'ram_slots', 'slots_used', 'gpu_model',
+
+                # Disk fields
+                'drive', 'disk_capacity', 'disk_interface', 'disk_health',
+
+                # Display fields
+                'native_resolution', 'screen_size', 'gamma', 'color_format',
+
+                'user_properties',
             ]
             data = Dataset(headers=headers)
 
             for device in devices:
                 row_data = device.components_export()
-                row_values = [
-                    row_data['ID'],
-                    row_data['type'],
-                    row_data['manufacturer'],
-                    row_data['model'],
-                    row_data['cpu_model'],
-                    row_data['cpu_cores'],
-                    row_data['current_state'],
-                    row_data['ram_total'],
-                    row_data['ram_type'],
-                    row_data['ram_slots'],
-                    row_data['slots_used'],
-                    row_data['drive'],
-                    row_data['gpu_model'],
-                    row_data['user_properties'],
-                    row_data['serial'],
-                    row_data['last_updated']
-                ]
+                row_values = [row_data.get(h, '') for h in headers]
                 data.append(row_values)
 
             content_types = {
