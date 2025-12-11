@@ -1,5 +1,6 @@
 from django.db import models, connection
-from django.conf import settings
+from django.db.models import Subquery, F, Window
+from django.db.models.functions import RowNumber
 
 from utils.constants import ALGOS
 from evidence.models import SystemProperty, UserProperty, Evidence, RootAlias
@@ -32,6 +33,7 @@ class Device:
         self.uuid = kwargs.get("uuid")
         self.lot = kwargs.get("lot")
         self.pk = self.id
+        self.hid = self.id.split(":")[1]
         self.algorithm = None
         self.owner = kwargs.get("owner")
         self.properties = []
@@ -44,14 +46,14 @@ class Device:
         self.get_last_evidence()
 
     def get_shortid(self):
-        self.shortid = self.pk[:6].upper()
+        self.shortid = self.pk.split(":")[1][:6].upper()
         if self.owner:
             alias = RootAlias.objects.filter(
                 owner=self.owner,
                 alias=self.pk
             ).first()
             if alias:
-                self.shortid = alias.root[:6].upper()
+                self.shortid = alias.root.split(":")[1][:6].upper()
 
     def initial(self):
         self.get_properties()
@@ -113,9 +115,9 @@ class Device:
 
         algos = list(ALGOS.keys())
         algos.append('CUSTOM_ID')
-        self.hids = list(set(properties.filter(
+        self.hids = list(set([x.value for x in properties.filter(
             key__in=algos,
-        ).values_list("value", flat=True)))
+        )]))
 
     def get_evidences(self):
         if not self.uuids:
@@ -216,21 +218,60 @@ class Device:
         return False
 
     @classmethod
-    def queryset_pgsql(cls, institution):
+    def queryset_orm(cls, institution):
         alias = RootAlias.objects.filter(owner=institution)
         sp = SystemProperty.objects.filter(owner=institution)
 
-        # Search roots in RootAlias than not exist in Systemproperty
-        # Search the first entry alias for every one root of qry1
-        # Search all alias in RootAlias than not exists in qry2
-        # Search all values in Systemproperty than not exists in qry3
-        qry1 = alias.exclude(root__in=sp.values("value")).values_list("root", flat=True).distinct()
-        qry2 = alias.filter(root__in=qry1).order_by('root', 'id').distinct('root').values_list(
-            "alias", flat=True
-        ).distinct()
+        # qry1 = Search roots in RootAlias than not exist in Systemproperty
+        # qry2 = Search the first entry alias for every one root of qry1
+        # qry3 = Search all alias in RootAlias than not exists in qry2
+        # qry4 = Search all values in Systemproperty than not exists in qry3
+
+        qry1 = alias.exclude(root__in=sp.values_list("value", flat=True))
+
+        #######
+        ranked_qs = qry1.annotate(
+            rank=Window(
+                expression=RowNumber(),
+                partition_by=[F('root')],
+                order_by=[F('id')]
+            )
+        ).filter(
+            rank=1
+        ).values_list('pk', flat=True).distinct()
+
+        qry2 = alias.filter(
+            pk__in=Subquery(ranked_qs)).values_list("alias", flat=True).distinct()
+
+        # only for postgresql
+        # qry2 = alias.filter(root__in=qry1).order_by('root', 'id').distinct('root').values_list(
+        #     "alias", flat=True
+        # ).distinct()
+        #######
         qry3 = alias.exclude(alias__in=qry2).values_list("alias", flat=True).distinct()
-        qry4 = sp.exclude(value__in=qry3).order_by("-created")
+        qry4 = sp.exclude(value__in=qry3
+                          ).values_list("value", flat=True
+                                        ).distinct()
         return qry4
+
+    @classmethod
+    def queryset_orm_unassigned(cls, institution):
+        qry4 = cls.queryset_orm(institution)
+        alias = RootAlias.objects.filter(owner=institution)
+        dev_lots = DeviceLot.objects.filter(lot__owner=institution
+                                            ).values_list("device_id", flat=True).distinct()
+        root_lots = alias.filter(root__in=dev_lots).values_list("alias", flat=True).distinct()
+        alias_lots = alias.filter(alias__in=dev_lots).values_list("alias", flat=True).distinct()
+
+        # excluding devices and alias linked to lots
+        exclude_lots = qry4.exclude(
+            value__in=dev_lots
+        ).exclude(
+            value__in=root_lots
+        ).exclude(
+            value__in=alias_lots
+        ).distinct()
+        return exclude_lots
 
     @classmethod
     def queryset_SQL(cls, institution, offset=0, limit=None):
@@ -317,27 +358,6 @@ class Device:
         with connection.cursor() as cursor:
             cursor.execute(sql)
             return cursor.fetchall()[0][0]
-
-    @classmethod
-    def queryset_pgsql_unassigned(cls, institution):
-        qry4 = cls.queryset_pgsql(institution)
-        alias = RootAlias.objects.filter(owner=institution)
-        dev_lots = DeviceLot.objects.filter(lot__owner=institution).distinct(
-            "device_id").values_list("device_id", flat=True)
-        root_lots = alias.filter(root__in=dev_lots).distinct(
-            "alias").values_list("alias", flat=True)
-        alias_lots = alias.filter(alias__in=dev_lots).distinct(
-            "alias").values_list("alias", flat=True)
-
-        # excluding devices and alias linked to lots
-        exclude_lots = qry4.exclude(
-            value__in=dev_lots
-        ).exclude(
-            value__in=root_lots
-        ).exclude(
-            value__in=alias_lots
-        ).order_by("-created")
-        return exclude_lots
 
     @classmethod
     def queryset_SQL_unassigned(cls, institution, offset=0, limit=None):
@@ -508,29 +528,39 @@ class Device:
 
     @classmethod
     def get_all(cls, institution, offset=0, limit=None):
-        # engine = settings.DATABASES.get("default", {}).get("ENGINE")
-        # if 'django.db.backends.postgresql' == engine:
-        #     qry = cls.queryset_pgsql(institution)
-        #     evs = qry[offset:offset+limit]
-        #     count = qry.count()
-        #     devices = [cls(id=x.value, owner=institution) for x in evs]
-        #     return devices, count
+        # return cls.get_all_sql(institution, offset=offset, limit=limit)
+        return cls.get_all_orm(institution, offset=offset, limit=limit)
 
+    @classmethod
+    def get_unassigned(cls, institution, offset=0, limit=20):
+        # return cls.get_unassigned_sql(institution, offset=offset, limit=limit)
+        return cls.get_unassigned_orm(institution, offset=offset, limit=limit)
+
+    @classmethod
+    def get_all_orm(cls, institution, offset=0, limit=None):
+        qry = cls.queryset_orm(institution)
+        evs = qry[offset:offset+limit]
+        count = qry.count()
+        devices = [cls(id=x, owner=institution) for x in evs]
+        return devices, count
+
+    @classmethod
+    def get_unassigned_orm(cls, institution, offset=0, limit=20):
+        qry = cls.queryset_orm_unassigned(institution)
+        evs = qry[offset:offset+limit]
+        count = qry.count()
+        devices = [cls(id=x, owner=institution) for x in evs]
+        return devices, count
+
+    @classmethod
+    def get_all_sql(cls, institution, offset=0, limit=None):
         evs = cls.queryset_SQL(institution, offset=offset, limit=limit)
         count = cls.queryset_SQL_count(institution)
         devices = [cls(id=x[0], owner=institution) for x in evs]
         return devices, count
 
     @classmethod
-    def get_unassigned(cls, institution, offset=0, limit=20):
-        # engine = settings.DATABASES.get("default", {}).get("ENGINE")
-        # if 'django.db.backends.postgresql' == engine:
-        #     qry = cls.queryset_pgsql_unassigned(institution)
-        #     evs = qry[offset:offset+limit]
-        #     count = qry.count()
-        #     devices = [cls(id=x.value, owner=institution) for x in evs]
-        #     return devices, count
-
+    def get_unassigned_sql(cls, institution, offset=0, limit=20):
         evs = cls.queryset_SQL_unassigned(institution, offset=offset, limit=limit)
         count = cls.queryset_SQL_unassigned_count(institution)
         devices = [cls(id=x[0], owner=institution) for x in evs]
