@@ -1,4 +1,5 @@
 import xapian
+from django.conf import settings
 
 # database = xapian.WritableDatabase("db", xapian.DB_CREATE_OR_OPEN)
 
@@ -12,7 +13,7 @@ import xapian
 
 def search(institution, qs, offset=0, limit=10):
     try:
-        database = xapian.Database("db")
+        database = xapian.Database(settings.EVIDENCES_DIR)
     except (xapian.DatabaseNotFoundError, xapian.DatabaseOpeningError):
         return
 
@@ -42,7 +43,7 @@ def index(institution, uuid, snap):
     if matches and matches.size() > 0:
         return
 
-    database = xapian.WritableDatabase("db", xapian.DB_CREATE_OR_OPEN)
+    database = xapian.WritableDatabase(settings.EVIDENCES_DIR, xapian.DB_CREATE_OR_OPEN)
     indexer = xapian.TermGenerator()
     stemmer = xapian.Stem("english")
     indexer.set_stemmer(stemmer)

@@ -18,3 +18,5 @@ wheel
 markdown==3.7
 tablib==3.8.0
 tablib[xlsx]==3.8.0
+psycopg2-binary==2.9.10
+gunicorn==21.2.0
