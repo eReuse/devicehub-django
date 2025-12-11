@@ -296,3 +296,9 @@ EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=False, cast=bool)
 EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.smtp.EmailBackend')
 EMAIL_FILE_PATH = config('EMAIL_FILE_PATH', default='/tmp/app-messages')
 ENABLE_EMAIL = config('ENABLE_EMAIL', default=True, cast=bool)
+
+# ALGORITHM
+DEVICEHUB_ALGORITHM_DEVICE=config('DEVICEHUB_ALGORITHM_DEVICE', default="ereuse24")
+DEVICEHUB_ALGORITHM_PHOTO=config('DEVICEHUB_ALGORITHM_PHOTO', default="photo25")
+DEVICEHUB_ALGORITHM_DISPLAY=config('DEVICEHUB_ALGORITHM_DISPLAY', default="ereuse24")
+DEVICEHUB_ALGORITHM_DISK=config('DEVICEHUB_ALGORITHM_DISK', default="ereuse24")

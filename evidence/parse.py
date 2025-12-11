@@ -79,12 +79,13 @@ class Build:
             return
 
         for k, v in self.build.algorithms.items():
+            value = "{}:{}".format(k, self.sign(v))
             SystemProperty.objects.create(
                 uuid=self.uuid,
                 owner=self.user.institution,
                 user=self.user,
                 key=k,
-                value=self.sign(v)
+                value=value
             )
 
     def sign(self, doc):

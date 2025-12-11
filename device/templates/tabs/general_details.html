@@ -9,7 +9,7 @@
           <div class="row mb-3">
             <div class="col-sm-4 text-muted fw-bold">{% trans 'Phid' %}
             </div>
-            <div class="col-sm-8">{{ object.id }}
+            <div class="col-sm-8">{{ object.hid }}
             </div>
           </div>
 
@@ -69,7 +69,7 @@
           {% endif %}
 
           <div class="row mb-3">
-            <div class="col-sm-4 text-muted fw-bold">{% trans 'Identifiers' %}
+            <div class="col-sm-4 text-muted fw-bold">{% trans 'Alias Identifiers' %}
             </div>
             <div class="col-sm-8">
               {% for chid in object.hids %}
