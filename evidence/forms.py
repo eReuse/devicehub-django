@@ -75,7 +75,7 @@ class UploadForm(forms.Form):
 
 
 class UserAliasForm(forms.Form):
-    root = forms.CharField(label=_("Alias"), required=False)
+    root = forms.CharField(label=_("Alias"), required=True)
 
     def __init__(self, *args, **kwargs):
         self.uuid = kwargs.pop('uuid', None)
@@ -89,15 +89,16 @@ class UserAliasForm(forms.Form):
             ).first()
 
         if self.instance:
-            kwargs["initial"]["root"] = self.instance.root
+            root = self.instance.root
+            if "custom_id" == root.split(":")[0]:
+                root = root.split(":")[1]
+
+            kwargs["initial"]["root"] = root
 
         super().__init__(*args, **kwargs)
 
     def clean(self):
-        self.root_alias = self.cleaned_data.get('root')
-
-        if not self.root_alias:
-            return True
+        self.root_alias = self.cleaned_data.get('root').lower()
 
         alias = RootAlias.objects.filter(
             owner=self.user.institution,
@@ -120,16 +121,20 @@ class UserAliasForm(forms.Form):
         if not commit:
             return
 
-        if not self.instance:
-            if not self.root_alias:
-                return
+        root_alias = self.root_alias
+        sp = SystemProperty.objects.filter(owner=self.sysprop.owner)
 
-            message =_("<Created> Evidence alias. Value: '{}'").format(self.root_alias)
+        if not sp.filter(value=self.root_alias).first():
+            root_alias = "custom_id:{}".format(self.root_alias)
+
+        if not self.instance:
             self.instance = RootAlias.objects.create(
                 owner=self.sysprop.owner,
                 alias=self.sysprop.value,
-                root=self.root_alias
+                root=root_alias
             )
+
+            message =_("<Created> Evidence alias. Value: '{}'").format(root_alias)
             self.log(message)
             return self.instance
 
@@ -137,17 +142,11 @@ class UserAliasForm(forms.Form):
         if old_value == self.root_alias:
             return
 
-        if not self.root_alias:
-            message =_("<Deleted> Evidence alias. Old Value: '{}'").format(old_value)
-            self.instance.delete()
-            self.log(message)
-            return
-
-        self.instance.root = self.root_alias
+        self.instance.root = root_alias
         self.instance.save()
         if old_value != self.root_alias:
             message=_("<Updated> Evidence alias. Old Value: '{}'. New Value: '{}'").format(
-                old_value, self.root_alias
+                old_value, root_alias
             )
         self.log(message)
 

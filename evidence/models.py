@@ -35,6 +35,14 @@ class SystemProperty(Property):
                 fields=["key", "uuid"], name="system_unique_type_key_uuid")
         ]
 
+    @property
+    def shortid(self):
+        return self.value.split(":")[1][:6].upper()
+
+    @property
+    def hid(self):
+        return self.value.split(":")[1]
+
 
 class UserProperty(Property):
 
