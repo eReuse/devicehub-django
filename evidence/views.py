@@ -6,7 +6,7 @@ from django.http import HttpResponse, FileResponse
 from django.utils.translation import gettext_lazy as _
 from django.shortcuts import get_object_or_404, redirect, Http404
 from django.views.generic.base import TemplateView
-from django.urls import reverse_lazy, resolve
+from django.urls import reverse_lazy
 from django.views.generic.edit import (
     DeleteView,
     FormView,
@@ -14,10 +14,10 @@ from django.views.generic.edit import (
 
 from action.models import DeviceLog
 from dashboard.mixins import  DashboardView, Http403
-from evidence.models import SystemProperty, UserProperty, Evidence
+from evidence.models import SystemProperty, RootAlias, Evidence
 from evidence.forms import (
     UploadForm,
-    UserTagForm,
+    UserAliasForm,
     ImportForm,
     EraseServerForm,
     PhotoForm
@@ -111,14 +111,16 @@ class EvidenceView(DashboardView, FormView):
     title = _("Evidences")
     breadcrumb = "Evidences / Details"
     success_url = reverse_lazy('evidence:list')
-    form_class = UserTagForm
+    form_class = UserAliasForm
 
-    def get(self, request, *args, **kwargs):
-        self.pk = kwargs['pk']
+    def get_object(self):
+        self.pk = self.kwargs['pk']
         self.object = Evidence(self.pk)
         if self.object.owner != self.request.user.institution:
             raise Http403
 
+    def get(self, request, *args, **kwargs):
+        self.get_object()
         self.object.get_properties()
         return super().get(request, *args, **kwargs)
 
@@ -126,23 +128,39 @@ class EvidenceView(DashboardView, FormView):
         context = super().get_context_data(**kwargs)
         context.update({
             'object': self.object,
-            'form2': EraseServerForm(**self.get_form_kwargs(), data=self.request.POST or None),
+            'form2': EraseServerForm(**self.get_form_erase_kwargs()),
         })
         return context
 
-    def get_form_kwargs(self):
+    def get_form_erase_kwargs(self):
         self.pk = self.kwargs.get('pk')
         kwargs = super().get_form_kwargs()
         kwargs['uuid'] = self.pk
         kwargs['user'] = self.request.user
         return kwargs
 
+    def get_form_kwargs(self):
+        self.pk = self.kwargs.get('pk')
+        kwargs = super().get_form_kwargs()
+        instance = get_object_or_404(
+            SystemProperty,
+            uuid=self.pk,
+            owner=self.request.user.institution
+        )
+        kwargs['uuid'] = self.pk
+        kwargs['instance'] = instance
+        kwargs['user'] = self.request.user
+        return kwargs
+
     def form_valid(self, form):
-        form.save(self.request.user)
+        form.save()
         response = super().form_valid(form)
         return response
 
     def form_invalid(self, form):
+        self.get_object()
+        txt = ", ".join(form.errors.get("__all__"))
+        messages.error(self.request, txt)
         response = super().form_invalid(form)
         return response
 
@@ -249,26 +267,26 @@ class EraseServerView(DashboardView, FormView):
         return success_url
 
 
-class DeleteEvidenceTagView(DashboardView, DeleteView):
+class DeleteEvidenceAliasView(DashboardView, DeleteView):
     model = SystemProperty
 
     def get_queryset(self):
-        # only those with 'CUSTOM_ID'
-        return SystemProperty.objects.filter(owner=self.request.user.institution, key='CUSTOM_ID')
+        return RootAlias.objects.filter(owner=self.request.user.institution)
 
     def get(self, request, *args, **kwargs):
         self.object = self.get_object()
+        self.snapshot_id = kwargs.get("snapshot_id")
 
-        message = _("<Deleted> Evidence Tag: {}").format(self.object.value)
+        message = _("<Deleted> Evidence alias: {}").format(self.object.root)
         DeviceLog.objects.create(
-            snapshot_uuid=self.object.uuid,
+            snapshot_uuid=self.snapshot_id,
             event=message,
             user=self.request.user,
             institution=self.request.user.institution
         )
         self.object.delete()
 
-        messages.info(self.request, _("Evicende Tag deleted successfully."))
+        messages.info(self.request, _("Evicende alias deleted successfully."))
         return self.handle_success()
 
     def handle_success(self):
@@ -277,5 +295,5 @@ class DeleteEvidenceTagView(DashboardView, DeleteView):
     def get_success_url(self):
         return self.request.META.get(
             'HTTP_REFERER',
-            reverse_lazy('evidence:details', args=[self.object.uuid])
+            reverse_lazy('evidence:details', args=[self.snapshot_id])
         )
