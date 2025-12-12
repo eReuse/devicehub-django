@@ -1,6 +1,7 @@
 import uuid
 from django.test import TestCase
 from device.models import Device
+from utils import sql_query as q_sql
 from lot.models import DeviceLot, Lot, LotTag
 from user.models import Institution
 from evidence.models import SystemProperty, RootAlias
@@ -35,15 +36,31 @@ class PublicDeviceWebViewTests(TestCase):
     def test_queryset_all(self):
         # z1 need to appear
         result = ['a2', 'b1', 'c1', 'd2', 'z1']
+
+        # Device
         result_orm = [x for x in Device.queryset_orm(self.institution)]
-        result_sql = [x[0] for x in Device.queryset_SQL(self.institution)]
+        result_sql = [x[0] for x in q_sql.queryset_SQL(self.institution.id)]
         self.assertEqual(result_orm, result_sql)
         self.assertEqual(result_orm, result)
+
+        # Count
+        result_orm_count = Device.queryset_orm(self.institution).count()
+        result_sql_count = q_sql.queryset_SQL_count(self.institution.id)
+        self.assertEqual(result_orm_count, result_sql_count)
+        self.assertEqual(result_orm_count, 5)
 
     def test_queryset_unassigned(self):
         result = ['b1', 'c1', 'd2', 'z1']
         DeviceLot.objects.create(lot=self.lot, device_id="a2")
+
+        # Device
         result_orm = [x for x in Device.queryset_orm_unassigned(self.institution)]
-        result_sql = [x[0] for x in Device.queryset_SQL_unassigned(self.institution)]
+        result_sql = [x[0] for x in q_sql.queryset_SQL_unassigned(self.institution.id)]
         self.assertEqual(result_orm, result_sql)
         self.assertEqual(result_orm, result)
+
+        # Count
+        result_orm_count = Device.queryset_orm_unassigned(self.institution).count()
+        result_sql_count = q_sql.queryset_SQL_unassigned_count(self.institution.id)
+        self.assertEqual(result_orm_count, result_sql_count)
+        self.assertEqual(result_orm_count, 4)
