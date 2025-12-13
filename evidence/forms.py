@@ -98,7 +98,8 @@ class UserAliasForm(forms.Form):
         super().__init__(*args, **kwargs)
 
     def clean(self):
-        self.root_alias = self.cleaned_data.get('root').lower()
+        cleaned_data = super().clean()
+        self.root_alias = self.cleaned_data.get('root', '').lower()
 
         alias = RootAlias.objects.filter(
             owner=self.user.institution,
@@ -107,13 +108,15 @@ class UserAliasForm(forms.Form):
 
         if self.root_alias == self.sysprop.value:
             txt = _("This alias is the same as the HID")
-            raise ValidationError(txt)
+            self.add_error('root', txt)
+            return cleaned_data
 
         if alias.first():
             all_alias = ", ".join([x.alias for x in alias])
             txt = _("{} is root from {}. ").format(self.sysprop.value, all_alias)
-            txt += _("You need deactivate the rest before add a alias in this.")
-            raise ValidationError(txt)
+            txt += _("You need to deactivate the rest of the aliases before adding an alias in this evidence.")
+            self.add_error('root', txt)
+            return cleaned_data
 
         return True
 

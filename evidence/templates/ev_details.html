@@ -206,18 +206,7 @@
       <div class="list-group col-6">
         <form role="form" method="post">
           {% csrf_token %}
-          {% if form.errors %}
-            <div class="alert alert-danger alert-icon alert-icon-border alert-dismissible" role="alert">
-              <div class="icon"><span class="mdi mdi-close-circle-o"></span></div>
-              <div class="message">
-                {% for field, error in form.errors.items %}
-                  {{ error }}<br />
-                {% endfor %}
-                <button class="btn-close" type="button" data-dismiss="alert" aria-label="Close"></button>
-              </div>
-            </div>
-          {% endif %}
-          {% bootstrap_form form %}
+          {% bootstrap_form form  layout="floating"  %}
           <div class="container">
             <div class="row">
               <div class="col">
