@@ -158,11 +158,15 @@ class EvidenceView(DashboardView, FormView):
         return response
 
     def form_invalid(self, form):
+        for field, errors in form.errors.items():
+            for error in errors:
+                if field == '__all__':
+                    messages.error(self.request, error)
+                else:
+                    messages.error(self.request, f"{field.title()}: {error}")
+
         self.get_object()
-        txt = ", ".join(form.errors.get("__all__"))
-        messages.error(self.request, txt)
-        response = super().form_invalid(form)
-        return response
+        return super().form_invalid(form)
 
     def get_success_url(self):
         success_url = reverse_lazy('evidence:details', args=[self.pk])
