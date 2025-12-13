@@ -74,6 +74,10 @@ class RootAlias(models.Model):
                 fields=["owner", "alias"], name="rootalias_unique")
         ]
 
+    @property
+    def root_hid(self):
+        return self.root.split(":")[1]
+
 
 class Evidence:
     def __init__(self, uuid):
@@ -252,10 +256,17 @@ class Evidence:
 
         return ""
 
-    def get_alias(self, user):
-        return RootAlias.objects.filter(
-            owner=user.institution
+    def get_alias(self):
+        aliases = [ x.value for x in self.properties ]
+        alias_obj = RootAlias.objects.filter(
+            alias__in = aliases,
         ).order_by("-created")
+
+        if alias_obj:
+            return alias_obj[0].root
+        else:
+            return self.properties[0].value
+
 
     @classmethod
     def get_all(cls, user):
