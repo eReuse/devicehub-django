@@ -71,27 +71,24 @@
             {% if lot %}
             <div class="dropdown ms-2 flex-shrink-0">
               <button class="btn btn-outline-success dropdown-toggle" type="button" id="exportDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                <i class="bi bi-download"></i> {% trans "Export" %}
+                <i class="bi bi-download"></i>
+                  {% if search_query %}
+                  {% trans 'Export filtered' %}
+                  {% else %}
+                  {% trans 'Export All' %}
+                  {% endif %}
               </button>
               <ul class="dropdown-menu dropdown-menu-sm-end" aria-labelledby="exportDropdown">
                 <li>
                   <a class="dropdown-item" href="{% export_url 'csv' %}">
                     <i class="bi bi-filetype-csv"></i>
-                    {% if search_query %}
-                      {% trans 'Export filtered (.csv)' %}
-                    {% else %}
-                      {% trans 'Export all (.csv)' %}
-                    {% endif %}
+                      {% trans '.csv' %}
                   </a>
                 </li>
                 <li>
                   <a class="dropdown-item" href="{% export_url 'xlsx' %}">
                     <i class="bi bi-filetype-xlsx"></i>
-                    {% if search_query %}
-                      {% trans 'Export filtered (.xlsx)' %}
-                    {% else %}
-                      {% trans 'Export all (.xlsx)' %}
-                    {% endif %}
+                      {% trans '.xlsx' %}
                   </a>
                 </li>
               </ul>
