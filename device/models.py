@@ -290,7 +290,10 @@ class Device:
     @classmethod
     def get_all_orm(cls, institution, offset=0, limit=None):
         qry = cls.queryset_orm(institution)
-        evs = qry[offset:offset+limit]
+        if limit:
+            evs = qry[offset:offset+limit]
+        else:
+            evs = qry[offset:]
         count = qry.count()
         devices = [cls(id=x, owner=institution) for x in evs]
         return devices, count
