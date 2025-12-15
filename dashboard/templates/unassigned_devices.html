@@ -188,7 +188,7 @@
       const changeStateButton = document.getElementById('addStateDropdown');
 
       const form = document.getElementById("devices-form");
-      const buttons = document.querySelectorAll("#remove-button, #add-button, #addStateDropwdown");
+      const buttons = document.querySelectorAll("#remove-button, #add-button, #addStateDropdown");
 
 
       function updateButtons() {
@@ -198,7 +198,7 @@
           addButton.disabled = !checked;
           changeStateButton.classList.toggle('disabled', !checked);
           if (removeButton) {
-              removeButton.style.visibility = checked ? 'visible' : 'hidden';
+              removeButton.style.display = checked ? 'inherit' : 'none';
           }
       }
 
