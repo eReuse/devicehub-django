@@ -4,23 +4,30 @@
 {% load render_table export_url from django_tables2 %}
 
 {% block content %}
-    {% if path == "lot" %}
-        <div class="d-flex justify-content-end align-items-stretch mb-2">
-            <form method="get" class="input-group w-100 me-3">
-                <input
-                    type="text"
-                    name="q"
-                    class="form-control"
-                    placeholder="{% trans "Search devices within lot (append :field for filters)" %}"
-                    value="{{ search_query }}">
-                <div class="input-group-append">
-                    <button type="submit" class="btn btn-outline-secondary h-100" style="border-radius: 0 4px 4px 0;">
-                        <i class="bi bi-search"></i>
-                    </button>
-                    <span class="ms-3"
-                           data-bs-toggle="tooltip"
-                           data-bs-html="true"
-                           title="
+  <div class="container-fluid px-0">
+    {% if lot %}
+    <div class="mb-3">
+      {% include 'tabs.html' %}
+    </div>
+    {% endif %}
+
+      {% if path == "lot" %}
+      <div class="d-flex justify-content-end align-items-stretch mb-2">
+          <form method="get" class="input-group w-100 me-3">
+              <input
+                  type="text"
+                  name="q"
+                  class="form-control"
+                  placeholder="{% trans "Search devices within lot (append :field for filters)" %}"
+              value="{{ search_query }}">
+              <div class="input-group-append">
+                  <button type="submit" class="btn btn-outline-secondary h-100" style="border-radius: 0 4px 4px 0;">
+                      <i class="bi bi-search"></i>
+                  </button>
+                  <span class="ms-3"
+                        data-bs-toggle="tooltip"
+                        data-bs-html="true"
+                        title="
                                <strong>{% trans 'Available filters:' %}</strong>
                                <ul class='mb-0 ps-3'>
                                    <li>:shortid</li>
@@ -34,39 +41,16 @@
                                  ">
                         <i class="h5 bi bi-info-circle text-muted"></i>
                     </span>
-                </div>
-            </form>
-        </div>
-    {% endif %}
+              </div>
+          </form>
+      </div>
+      {% endif %}
 
-  <div class="container-fluid px-0">
     <div class="mb-4">
       <div class="mt-4 d-flex align-items-center justify-content-end">
-
-        <!-- Action Buttons -->
-        <div class="btn-group" role="group">
-          {% if lot %}
-            <a href="{% url 'lot:properties' object.id %}" class="btn btn-outline-primary">
-              <i class="bi bi-tag"></i> {% trans 'Properties' %}
-            </a>
-            <a href="{% url 'lot:subscription' object.id %}" class="btn btn-outline-primary">
-              <i class="bi bi-tag"></i> {% trans 'Subscription' %}
-            </a>
-	    {% if is_circuit_manager %}
-            {% if donor %}
-              <a href="{% url 'lot:del_donor' lot.id %}" class="btn btn-outline-primary">{% trans 'Donor' %}</a>
-            {% else %}
-              <a href="{% url 'lot:add_donor' lot.id %}" class="btn btn-outline-primary">{% trans 'Donor' %}</a>
-            {% endif %}
-            {% endif %}
-              <a href="{% url 'lot:participants' lot.id %}" class="btn btn-outline-primary">
-	        {% trans 'Participants' %}
-	      </a>
-
-            <a href="{#% url 'lot:documents' object.id %#}" class="btn btn-outline-secondary me-2" data-bs-toggle="tooltip"
-               title="{% trans "NOT IMPLEMENTED. Document management" %}">
-              {% trans 'Documents' %}
-            </a>
+        <!-- Export buttons and device limit per page picker -->
+        {% if lot %}
+        <div class="btn-group me-3" role="group">
           <a href="{% export_url 'csv' %}" class="btn btn-outline-success" data-bs-toggle="tooltip"
             title="{% trans 'Export main components (.csv)' %}">
             <i class="bi bi-filetype-csv"></i>
@@ -85,8 +69,8 @@
               {% trans 'Export all (.xlsx)' %}
             {% endif %}
           </a>
-        {% endif %}
         </div>
+        {% endif %}
 
         <!-- device limit per page picker -->
         <form method="get" class="ms-3">
