@@ -21,4 +21,3 @@ tablib[xlsx]==3.8.0
 psycopg2-binary==2.9.10
 gunicorn==21.2.0
 weasyprint==66.0
-Transfer)
