@@ -54,7 +54,7 @@ use_env_var() {
 docker_wizard__idhub_enabled() {
         add_env_var IDHUB_DOMAIN_REQUEST 'idhub.example.org'
 
-        export COMPOSE_PROFILES="${COMPOSE_PROFILES},idhub"
+        export COMPOSE_PROFILES="${COMPOSE_PROFILES:-},idhub"
 
         if echo "${DB_TYPE_REQUEST}" | grep -q 'postgres' ; then
                 echo 'idhub-postgres docker profile detected, adding to COMPOSE_PROFILES env var'
