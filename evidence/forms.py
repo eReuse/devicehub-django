@@ -107,15 +107,13 @@ class UserAliasForm(forms.Form):
         )
 
         if self.root_alias == self.sysprop.value:
-            txt = _("This alias is the same as the HID")
-            self.add_error('root', txt)
+            txt = _("This alias is the same as the current evidence.")
+            self.add_error('', txt)
             return cleaned_data
 
         if alias.first():
-            all_alias = ", ".join([x.alias for x in alias])
-            txt = _("{} is root from {}. ").format(self.sysprop.value, all_alias)
-            txt += _("You need to deactivate the rest of the aliases before adding an alias in this evidence.")
-            self.add_error('root', txt)
+            txt = _("To prevent loops, current evidence cannot be linked to another Alias Identifier because it is already linked by other evidences.")
+            self.add_error('', txt)
             return cleaned_data
 
         return True
