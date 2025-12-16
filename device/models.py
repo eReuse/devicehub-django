@@ -321,7 +321,7 @@ class Device:
             uuid=uuid
         ).first()
         if ev:
-            return cls(id=ev)
+            return cls(id=ev.value, owner=ev.owner, uuid=ev.uuid)
 
     @property
     def is_websnapshot(self):
