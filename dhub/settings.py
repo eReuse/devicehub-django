@@ -125,15 +125,15 @@ WSGI_APPLICATION = "dhub.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
-if os.getenv('DEVICEHUB_DB_TYPE', 'postgres') == 'postgres':
+if config('DEVICEHUB_DB_TYPE', 'postgres') == 'postgres':
     DATABASES = {
         'default': {
             'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.postgresql'),
-            'NAME': os.getenv('DEVICEHUB_POSTGRES_NAME', 'devicehub'),
-            'USER': os.getenv('DEVICEHUB_POSTGRES_USER', 'ereuse'),
-            'PASSWORD': os.getenv('DEVICEHUB_POSTGRES_PASSWORD_SECRET', 'ereuse'),
-            'HOST': os.getenv('DEVICEHUB_DB_HOST', 'devicehub-postgres'),
-            'PORT': os.getenv('DB_PORT', '5432'),
+            'NAME': config('DEVICEHUB_POSTGRES_NAME', 'devicehub'),
+            'USER': config('DEVICEHUB_POSTGRES_USER', 'ereuse'),
+            'PASSWORD': config('DEVICEHUB_POSTGRES_PASSWORD_SECRET', 'ereuse'),
+            'HOST': config('DEVICEHUB_DB_HOST', 'devicehub-postgres'),
+            'PORT': config('DEVICEHUB_DB_PORT', '5432'),
         }
     }
 # sqlite is fallback
