@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("evidence", "0006_userproperty_userproperty_unique_type_key_uuid"),
+        ("evidence", "0007_rootalias_rootalias_rootalias_unique"),
         ("transfer", "0001_initial"),
     ]
 
