@@ -21,7 +21,7 @@ def create_doc(data):
     device = {"manufacturer": "", "model": "", "amount": 1}
     kv = {}
     _uuid = str(uuid.uuid4())
-    web_id = "web:{}".format(hashlib.sha3_256(_uuid.encode()).hexdigest())
+    web_id = "web25:{}".format(hashlib.sha3_256(_uuid.encode()).hexdigest())
 
 
     for k, v in data.items():
