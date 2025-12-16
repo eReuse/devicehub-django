@@ -16,20 +16,19 @@ logger = logging.getLogger('django')
 def create_doc(data):
     if not data:
         return
-    
+
     doc = {}
     device = {"manufacturer": "", "model": "", "amount": 1}
     kv = {}
     _uuid = str(uuid.uuid4())
-    customer_id = hashlib.sha3_256(_uuid.encode()).hexdigest()
+    web_id = "web:{}".format(hashlib.sha3_256(_uuid.encode()).hexdigest())
 
 
     for k, v in data.items():
         if not v:
             continue
-        
-        if k.upper() == "CUSTOMER_ID":
-            customer_id = v
+
+        if k.upper() == "WEB_ID":
             continue
 
         if k.lower() == "type":
@@ -37,7 +36,7 @@ def create_doc(data):
                 raise ValidationError("{} is not a valid device".format(v))
 
             device["type"] = v
-            
+
         elif k.lower() == "amount":
             try:
                 amount = int(v)
@@ -62,22 +61,22 @@ def create_doc(data):
         doc["uuid"] = _uuid
         doc["endTime"] = date
         doc["software"] = "DeviceHub"
-        doc["CUSTOMER_ID"] = customer_id
+        doc["WEB_ID"] = web_id
         doc["type"] = "WebSnapshot"
 
     return doc
 
 
 def create_property(doc, user, commit=False):
-    if not doc or not doc.get('uuid') or not doc.get("CUSTOMER_ID"):
+    if not doc or not doc.get('uuid') or not doc.get("WEB_ID"):
         return []
-    
+
     data = {
         'uuid': doc['uuid'],
         'owner': user.institution,
         'user': user,
-        'key': 'CUSTOM_ID',
-        'value': doc['CUSTOMER_ID'],
+        'key': 'web',
+        'value': doc['WEB_ID'],
     }
     if commit:
         prop = SystemProperty.objects.filter(
@@ -98,7 +97,7 @@ def create_property(doc, user, commit=False):
 def create_index(doc, user):
     if not doc or not doc.get('uuid'):
         return []
-    
+
     _uuid = doc['uuid']
     ev = json.dumps(doc)
     index(user.institution, _uuid, ev)
