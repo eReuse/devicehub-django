@@ -1,7 +1,8 @@
-from django.db import models, connection
-from django.db.models import Subquery, F, Window
+from django.db import models
+from django.db.models import Subquery, F, Window, Max
 from django.db.models.functions import RowNumber
 
+from utils import sql_query as q_sql
 from utils.constants import ALGOS
 from evidence.models import SystemProperty, UserProperty, Evidence, RootAlias
 from django.utils.dateparse import parse_datetime
@@ -249,10 +250,9 @@ class Device:
         # ).distinct()
         #######
         qry3 = alias.exclude(alias__in=qry2).values_list("alias", flat=True).distinct()
-        qry4 = sp.exclude(value__in=qry3
-                          ).values_list("value", flat=True
-                                        ).distinct()
-        return qry4
+        qry4 = sp.exclude(value__in=qry3).values('value').annotate(max_created=Max('created'))
+        qry5 = qry4.order_by("-max_created").values_list('value', flat=True)
+        return qry5
 
     @classmethod
     def queryset_orm_unassigned(cls, institution):
@@ -272,259 +272,6 @@ class Device:
             value__in=alias_lots
         ).distinct()
         return exclude_lots
-
-    @classmethod
-    def queryset_SQL(cls, institution, offset=0, limit=None):
-        institution_id = institution.id
-
-        # Search roots in RootAlias than not exist in Systemproperty
-        qry1 = f"""
-            select distinct root from evidence_rootalias as al
-            where al.owner_id = {institution_id} and not exists (
-                select 1
-                from evidence_systemproperty as sp
-                where al.root = sp.value and sp.owner_id = {institution_id}
-                and al.owner_id = {institution_id}
-            )
-        """
-        # Search the first entry alias for every one root of qry1
-        qry2 = f"""
-            select alias from (
-                select alias, root, row_number() over (
-                    partition by root order by id asc
-                ) as row_num from evidence_rootalias as _root
-                where _root.owner_id = {institution_id}
-            ) as subquery
-            where row_num = 1 and root in ({qry1})
-        """
-        # Search all alias in RootAlias than not exists in qry2
-        qry3 = f"""
-            select distinct ali.alias from evidence_rootalias as ali
-            where ali.alias not in ({qry2}) and ali.owner_id = {institution_id}
-        """
-        # Search all values in Systemproperty than not exists in qry3
-        sql = f"""
-            select distinct sp.value from evidence_systemproperty as sp
-            where sp.value not in ({qry3}) and sp.owner_id = {institution_id}
-        """
-
-        if limit:
-            sql += " limit {} offset {}".format(int(limit), int(offset))
-
-        sql += ";"
-
-        annotations = []
-        with connection.cursor() as cursor:
-            cursor.execute(sql)
-            annotations = cursor.fetchall()
-
-        return annotations
-
-    @classmethod
-    def queryset_SQL_count(cls, institution):
-        institution_id = institution.id
-
-        # Search roots in RootAlias than not exist in Systemproperty
-        qry1 = f"""
-            select distinct root from evidence_rootalias as al
-            where al.owner_id = {institution_id} and not exists (
-                select 1
-                from evidence_systemproperty as sp
-                where al.root = sp.value and sp.owner_id = {institution_id}
-                and al.owner_id = {institution_id}
-            )
-        """
-        # Search the first entry alias for every one root of qry1
-        qry2 = f"""
-            select alias from (
-                select alias, root, row_number() over (
-                    partition by root order by id asc
-                ) as row_num from evidence_rootalias as _root
-                where _root.owner_id = {institution_id}
-            ) as subquery
-            where row_num = 1 and root in ({qry1})
-        """
-        # Search all alias in RootAlias than not exists in qry2
-        qry3 = f"""
-            select distinct ali.alias from evidence_rootalias as ali
-            where ali.alias not in ({qry2}) and ali.owner_id = {institution_id}
-        """
-        # Search all values in Systemproperty than not exists in qry3
-        sql = f"""
-         select count(distinct sp.value) from evidence_systemproperty as sp
-            where sp.value not in ({qry3}) and sp.owner_id = {institution_id};
-        """
-
-        with connection.cursor() as cursor:
-            cursor.execute(sql)
-            return cursor.fetchall()[0][0]
-
-    @classmethod
-    def queryset_SQL_unassigned(cls, institution, offset=0, limit=None):
-        institution_id = institution.id
-
-        # Search roots in RootAlias than not exist in Systemproperty
-        qry1 = f"""
-            select distinct root from evidence_rootalias as al
-            where al.owner_id = {institution_id} and not exists (
-                select 1
-                from evidence_systemproperty as sp
-                where al.root = sp.value and sp.owner_id = {institution_id}
-                and al.owner_id = {institution_id}
-            )
-        """
-        # Search the first entry alias for every one root of qry1
-        qry2 = f"""
-            select alias from (
-                select alias, root, row_number() over (
-                    partition by root order by id asc
-                ) as row_num from evidence_rootalias as _root
-                where _root.owner_id = {institution_id}
-            ) as subquery
-            where row_num = 1 and root in ({qry1})
-        """
-        # Search all alias in RootAlias than not exists in qry2
-        qry3 = f"""
-            select distinct ali.alias from evidence_rootalias as ali
-            where ali.alias not in ({qry2}) and ali.owner_id = {institution_id}
-        """
-        device_lots = f"""
-            select device_id from lot_devicelot as ld left join lot_lot as lot on ld.lot_id=lot.id
-              where lot.owner_id = {institution_id}
-        """
-        alias_of_hids_in_lots = f"""
-            select mp.alias from evidence_rootalias as mp
-              where mp.owner_id={institution_id} and mp.root in (
-                select distinct root from evidence_rootalias as ra
-                  where ra.owner_id={institution_id} and (ra.alias in (
-                    select device_id from lot_devicelot as ld
-                      left join lot_lot as lot on ld.lot_id=lot.id
-                    where lot.owner_id = {institution_id}
-                  ) or ra.root in (
-                    select device_id from lot_devicelot as ld
-                      left join lot_lot as lot on ld.lot_id=lot.id
-                    where lot.owner_id = {institution_id}
-                  )
-                )
-            )
-        """
-        roots_of_hids_in_lots = f"""
-            select mp.root from evidence_rootalias as mp
-              where mp.owner_id={institution_id} and mp.root in (
-                select distinct root from evidence_rootalias as ra
-                  where ra.owner_id={institution_id} and (ra.alias in (
-                    select device_id from lot_devicelot as ld
-                      left join lot_lot as lot on ld.lot_id=lot.id
-                    where lot.owner_id = {institution_id}
-                  ) or ra.root in (
-                    select device_id from lot_devicelot as ld
-                      left join lot_lot as lot on ld.lot_id=lot.id
-                    where lot.owner_id = {institution_id}
-                  )
-                )
-            )
-        """
-        # Search all values in Systemproperty than not exists in qry3
-        sql = f"""
-            select distinct sp.value from evidence_systemproperty as sp
-            where
-              sp.value not in ({qry3}) and
-              sp.value not in ({device_lots}) and
-              sp.value not in ({alias_of_hids_in_lots}) and
-              sp.value not in ({roots_of_hids_in_lots}) and
-              sp.owner_id = {institution_id}
-        """
-        if limit:
-            sql += " limit {} offset {}".format(int(limit), int(offset))
-
-        sql += ";"
-
-        annotations = []
-        with connection.cursor() as cursor:
-            cursor.execute(sql)
-            annotations = cursor.fetchall()
-
-        return annotations
-
-    @classmethod
-    def queryset_SQL_unassigned_count(cls, institution):
-        institution_id = institution.id
-
-        # Search roots in RootAlias than not exist in Systemproperty
-        qry1 = f"""
-            select distinct root from evidence_rootalias as al
-            where al.owner_id = {institution_id} and not exists (
-                select 1
-                from evidence_systemproperty as sp
-                where al.root = sp.value and sp.owner_id = {institution_id}
-                and al.owner_id = {institution_id}
-            )
-        """
-        # Search the first entry alias for every one root of qry1
-        qry2 = f"""
-            select alias from (
-                select alias, root, row_number() over (
-                    partition by root order by id asc
-                ) as row_num from evidence_rootalias as _root
-                where _root.owner_id = {institution_id}
-            ) as subquery
-            where row_num = 1 and root in ({qry1})
-        """
-        # Search all alias in RootAlias than not exists in qry2
-        qry3 = f"""
-            select distinct ali.alias from evidence_rootalias as ali
-            where ali.alias not in ({qry2}) and ali.owner_id = {institution_id}
-        """
-        device_lots = f"""
-            select device_id from lot_devicelot as ld left join lot_lot as lot on ld.lot_id=lot.id
-              where lot.owner_id = {institution_id}
-        """
-        alias_of_hids_in_lots = f"""
-            select mp.alias from evidence_rootalias as mp
-              where mp.owner_id={institution_id} and mp.root in (
-                select distinct root from evidence_rootalias as ra
-                  where ra.owner_id={institution_id} and (ra.alias in (
-                    select device_id from lot_devicelot as ld
-                      left join lot_lot as lot on ld.lot_id=lot.id
-                    where lot.owner_id = {institution_id}
-                  ) or ra.root in (
-                    select device_id from lot_devicelot as ld
-                      left join lot_lot as lot on ld.lot_id=lot.id
-                    where lot.owner_id = {institution_id}
-                  )
-                )
-            )
-        """
-        roots_of_hids_in_lots = f"""
-            select mp.root from evidence_rootalias as mp
-              where mp.owner_id={institution_id} and mp.root in (
-                select distinct root from evidence_rootalias as ra
-                  where ra.owner_id={institution_id} and (ra.alias in (
-                    select device_id from lot_devicelot as ld
-                      left join lot_lot as lot on ld.lot_id=lot.id
-                    where lot.owner_id = {institution_id}
-                  ) or ra.root in (
-                    select device_id from lot_devicelot as ld
-                      left join lot_lot as lot on ld.lot_id=lot.id
-                    where lot.owner_id = {institution_id}
-                  )
-                )
-            )
-        """
-        # Search all values in Systemproperty than not exists in qry3
-        sql = f"""
-            select count(distinct sp.value) from evidence_systemproperty as sp
-            where
-              sp.value not in ({qry3}) and
-              sp.value not in ({device_lots}) and
-              sp.value not in ({alias_of_hids_in_lots}) and
-              sp.value not in ({roots_of_hids_in_lots}) and
-              sp.owner_id = {institution_id};
-        """
-
-        with connection.cursor() as cursor:
-            cursor.execute(sql)
-            return cursor.fetchall()[0][0]
 
     @classmethod
     def get_all(cls, institution, offset=0, limit=None):
@@ -554,15 +301,15 @@ class Device:
 
     @classmethod
     def get_all_sql(cls, institution, offset=0, limit=None):
-        evs = cls.queryset_SQL(institution, offset=offset, limit=limit)
-        count = cls.queryset_SQL_count(institution)
+        evs = q_sql.queryset_SQL(institution, offset=offset, limit=limit)
+        count = q_sql.queryset_SQL_count(institution)
         devices = [cls(id=x[0], owner=institution) for x in evs]
         return devices, count
 
     @classmethod
     def get_unassigned_sql(cls, institution, offset=0, limit=20):
-        evs = cls.queryset_SQL_unassigned(institution, offset=offset, limit=limit)
-        count = cls.queryset_SQL_unassigned_count(institution)
+        evs = q_sql.queryset_SQL_unassigned(institution, offset=offset, limit=limit)
+        count = q_sql.queryset_SQL_unassigned_count(institution)
         devices = [cls(id=x[0], owner=institution) for x in evs]
         return devices, count
 
