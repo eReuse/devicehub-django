@@ -262,7 +262,7 @@ class SearchView(DeviceTableMixin, InventaryMixin):
 
         for i in query[0].split(" "):
             if i:
-                qry |= Q(value__startswith=i)
+                qry |= Q(value__contains=i)
 
         chids = SystemProperty.objects.filter(
             owner=self.request.user.institution
