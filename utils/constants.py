@@ -39,7 +39,8 @@ PHOTO25 = {
 ALGOS = {
     "ereuse24": EREUSE24,
     "ereuse22": EREUSE22,
-    "photo25": PHOTO25
+    "photo25": PHOTO25,
+    "web25": {}
 }
 
 
