@@ -38,6 +38,9 @@ class Build:
         3) some snapshots come as a credential. In this case is parsed as normal_parse
         4) normal snapshot from worbench-script is the most basic and is parsed as normal_parse
         """
+        if evidence_json.get('type') == 'DeviceSnapshotV1':
+            evidence_json = evidence_json["data"].copy()
+
         self.evidence = evidence_json.copy()
         self.uuid = self.evidence.get('uuid')
         self.user = user
