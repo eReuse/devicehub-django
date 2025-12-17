@@ -133,6 +133,7 @@
 
                 <small class="text-muted ps-1"> {% trans "open" %}</small>
               {% endif %}
+              {% if TRANSFER %}
               {% if lot.transfer %}
               <a href="{% url 'transfer:id' lot.transfer.id %}" class="btn btn-outline-success">
                 {% trans 'Transfer' %}
@@ -141,6 +142,7 @@
               <a href="{% url 'transfer:add' lot.id %}" class="btn btn-outline-primary">
                 {% trans 'New Transfer' %}
               </a>
+              {% endif %}
               {% endif %}
             {% else %}
               <i class="bi bi-devices"></i> {% trans "Device Management" %}

@@ -259,6 +259,7 @@
                   </li>
                 </ul>
               </li>
+	      {% if TRANSFER %}
               <li class="nav-item">
                 <a class="admin {% if path == 'sended' or path == 'received' or transfer or path == 'tag' %}active {% endif %}nav-link fw-bold" data-bs-toggle="collapse" data-bs-target="#ul_transfers" aria-expanded="false" aria-controls="ul_transfers" href="javascript:void()">
                   <i class="bi bi-arrow-left-right icon_sidebar"></i>
@@ -277,6 +278,7 @@
                   </li>
                 </ul>
               </li>
+	      {% endif %}
             </ul>
           </div>
         </nav>
