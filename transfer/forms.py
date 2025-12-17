@@ -143,7 +143,7 @@ class TransferForm(forms.Form):
         for d in self.lot.devices:
             dev = Device(id=d.device_id)
             name = "{} {} {}".format(dev.type, dev.manufacturer, dev.model)
-            d_path = reverse("device:device_web", args=[dev.shortid])
+            d_path = reverse("device:device_web", args=[dev.id])
             devs.append({
                 "type": ["Item"],
                 "id": "{}{}".format(self.domain, d_path),

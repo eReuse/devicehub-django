@@ -65,7 +65,7 @@ class DeviceTable(tables.Table):
         orderable=False
     )
 
-    id = tables.Column(
+    shortid = tables.Column(
         linkify=("transfer:device", {"id": tables.A("transfer"), "pk": tables.A("id")}),
         verbose_name=_("Short id"),
         attrs={
@@ -80,7 +80,7 @@ class DeviceTable(tables.Table):
         model = Transfer
         fields = (
             "select",
-            "id",
+            "shortid",
             "name"
         )
         order_by = ("-name",)

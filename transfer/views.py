@@ -102,6 +102,7 @@ class TransferView(DashboardView, SingleTableView):
         for i in self.object.get_items():
             try:
                 i["id"] = i["id"].split("/")[-3]
+                i["shortid"] = i["id"].split(":")[1][:6].upper()
             except Exception:
                 pass
 
@@ -367,7 +368,7 @@ class DeviceView(DashboardView, TemplateView):
 
         try:
             self.object = Device(id=self.pk, owner=self.request.user.institution)
-            doc = evidences[self.pk]
+            doc = evidences[self.object.shortid]
             uuid= doc.get("uuid")
             evi = Evidence(uuid, doc=doc)
             evi.owner = self.transfer.owner
