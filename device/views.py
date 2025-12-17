@@ -151,7 +151,11 @@ class PublicDeviceWebView(TemplateView):
 
     def get(self, request, *args, **kwargs):
         self.pk = kwargs['pk']
-        self.object = Device(id=self.pk)
+
+        try:
+            self.object = Device(id=self.pk)
+        except Exception:
+            raise Http404
 
         if not self.object.last_evidence:
             raise Http404
