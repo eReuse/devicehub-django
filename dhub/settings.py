@@ -90,11 +90,14 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     'django.middleware.locale.LocaleMiddleware',
     "django.middleware.csrf.CsrfViewMiddleware",
-    "django_htmx.middleware.HtmxMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+
+HTMLX = config("DEVICEHUB_HTMLX", default=False, cast=bool)
+if HTMLX:
+    MIDDLEWARE.append("django_htmx.middleware.HtmxMiddleware")
 
 ROOT_URLCONF = "dhub.urls"
 
