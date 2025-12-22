@@ -1,4 +1,6 @@
 import json
+import logging
+
 from tablib import Dataset
 
 from django.utils.translation import gettext_lazy as _
@@ -22,6 +24,7 @@ from evidence.xapian import search
 from device.models import Device
 from lot.models import Lot, LotSubscription, Donor
 
+logger = logging.getLogger('django')
 
 class UnassignedDevicesView(DeviceTableMixin, InventaryMixin):
     template_name = "unassigned_devices.html"
@@ -238,11 +241,14 @@ class SearchView(DeviceTableMixin, InventaryMixin):
 
             for x in matches:
                 # devices.append(self.get_annotations(x))
-                dev = self.get_properties(x)
-                if dev.id not in dev_id:
-                    devices.append(dev)
-                    dev_id.add(dev.id)
-
+                try:
+                    dev = self.get_properties(x)
+                    if dev.id not in dev_id:
+                        devices.append(dev)
+                        dev_id.add(dev.id)
+                except Exception as err:
+                    logger.error("Error: {}".format(err))
+                    continue
             # TODO fix of pagination, the count is not correct
             return devices, len(dev_id)
 
