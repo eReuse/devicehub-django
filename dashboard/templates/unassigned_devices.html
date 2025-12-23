@@ -62,6 +62,9 @@
               <a href="{% url 'lot:participants' lot.id %}" class="btn btn-outline-primary">
 	        {% trans 'Participants' %}
 	      </a>
+              <a href="{% url 'lot:environmental_impact' lot.id %}" class="btn btn-outline-primary">
+	        <i class="bi bi-globe2"></i> {% trans 'Environmental Impact' %}
+	      </a>
 
             <a href="{#% url 'lot:documents' object.id %#}" class="btn btn-outline-secondary me-2" data-bs-toggle="tooltip"
                title="{% trans "NOT IMPLEMENTED. Document management" %}">
