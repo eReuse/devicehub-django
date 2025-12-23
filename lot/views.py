@@ -19,10 +19,12 @@ from django.views.generic.edit import (
 )
 from django_tables2 import SingleTableView
 from dashboard.mixins import DashboardView
+from environmental_impact.models import EnvironmentalImpact
 from lot.tables import LotTable
 from device.models import Device
 from evidence.models import SystemProperty
 from lot.tables import LotTable
+from environmental_impact.algorithms.algorithm_factory import FactoryEnvironmentImpactAlgorithm
 from lot.forms import (
     LotsForm,
     LotSubscriptionForm,
@@ -381,6 +383,51 @@ class LotPropertiesView(DashboardLotMixing, TemplateView):
         })
 
         return context
+
+
+class LotEnvironmentalImpactView(DashboardLotMixing, TemplateView):
+    template_name = "lot_environmental_impact.html"
+    title = _("Environmental Impact")
+    breadcrumb = "Lot / Environmental Impact"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        device_ids = self.lot.devicelot_set.all().values_list(
+            "device_id", flat=True
+        ).distinct()
+        devices = [Device(id=dev_id) for dev_id in device_ids]
+        devices_with_evidence = [
+            dev for dev in devices if dev.last_evidence
+        ]
+        env_impact = self._compute_environmental_impact(devices_with_evidence)
+        context.update({
+            'impact': env_impact,
+            'device_count': len(devices),
+            'devices_with_evidence': len(devices_with_evidence),
+        })
+        return context
+
+
+    def _compute_environmental_impact(self, devices) -> EnvironmentalImpact:
+        env_impact = None
+        try:
+            algorithm = (
+                FactoryEnvironmentImpactAlgorithm
+                .run_environmental_impact_calculation()
+            )
+            if devices:
+                env_impact = algorithm.get_lot_environmental_impact(
+                    devices
+                )
+                # Check if there's actual impact data
+                if (env_impact and
+                        env_impact.kg_CO2e.get('in_use', 0) == 0):
+                    env_impact = None
+        except Exception as err:
+            logger.error(f"Lot Environmental Impact Error: {err}")
+            env_impact = None
+
+        return env_impact
 
 
 class AddLotPropertyView(DashboardView, CreateView):
