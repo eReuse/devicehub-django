@@ -74,6 +74,7 @@ INSTALLED_APPS = [
     "action",
     "admin",
     "api",
+    "environmental_impact",
     "dhemail",
 ]
 

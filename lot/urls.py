@@ -11,6 +11,7 @@ urlpatterns = [
     path('lot/<int:pk>/unassign-devices/', views.DelToLotView.as_view(), name='del_devices'),
     path("group/<int:pk>/", views.LotsTagsView.as_view(), name="tags"),
     path("<int:pk>/property", views.LotPropertiesView.as_view(), name="properties"),
+    path("<int:pk>/environmental-impact", views.LotEnvironmentalImpactView.as_view(), name="environmental_impact"),
     path("<int:pk>/participants", views.ParticipantsView.as_view(), name="participants"),
     path("<int:pk>/property/add", views.AddLotPropertyView.as_view(), name="add_property"),
     path("<int:pk>/property/update", views.UpdateLotPropertyView.as_view(), name="update_property"),
