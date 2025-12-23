@@ -1,0 +1,239 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block content %}
+  <style>
+    .impact-summary-card {
+      border-left: 4px solid #0d6efd;
+      margin-bottom: 1.5rem;
+    }
+
+    .comparison-card {
+      border: 1px solid #dee2e6;
+      border-radius: 0.25rem;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      background: #f8f9fa;
+    }
+
+    .comparison-label {
+      font-size: 0.875rem;
+      color: #6c757d;
+      margin-bottom: 0.25rem;
+    }
+
+    .comparison-value {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #212529;
+    }
+  </style>
+
+  <!-- Top bar with lot name -->
+  <div class="row">
+    <div class="col">
+      <h3>{{ lot.name }} -{% trans 'Environmental Impact' %}</h3>
+    </div>
+  </div>
+
+  {% include 'tabs.html' with path='environmental_impact' %}
+
+  {% if impact %}
+    <div class="row mt-4">
+      <div class="col">
+        <!-- Main CO2 Summary -->
+        <div class="card impact-summary-card">
+          <div class="card-body">
+            <div class="row align-items-center">
+              <div class="col-md-8">
+                <h5 class="card-title">{% trans 'Total Carbon Footprint (Use Phase)' %}</h5>
+                <p class="text-muted mb-0">
+                  {% trans 'Total CO2 emissions from all devices in this lot during their use phase.' %}
+                </p>
+              </div>
+              <div class="col-md-4 text-md-end">
+                <h2 class="mb-0 text-primary">{{ impact.kg_CO2e.in_use|floatformat:2 }} <small class="text-muted">kg CO2e</small></h2>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Reuse Time Summary -->
+        <div class="card impact-summary-card" style="border-left-color: #198754;">
+          <div class="card-body">
+            <div class="row align-items-center">
+              <div class="col-md-8">
+                <h5 class="card-title">{% trans 'Total Reuse Time' %}</h5>
+                <p class="text-muted mb-0">
+                  {% trans 'Total hours of reuse (second life) accumulated by devices in this lot.' %}
+                </p>
+              </div>
+              <div class="col-md-4 text-md-end">
+                <h2 class="mb-0 text-success">{{ impact.relevant_input_data.total_reuse_time|default:0 }} <small class="text-muted">{% trans 'hours' %}</small></h2>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Comparisons -->
+        <h5 class="mb-3">{% trans 'Equivalent To' %}</h5>
+        <div class="row">
+          <div class="col-md-4">
+            <div class="comparison-card">
+              <div class="comparison-label">
+                🚗{% trans 'Kilometers driven by car' %}
+              </div>
+              <div class="comparison-value" id="kmDriven">-</div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="comparison-card">
+              <div class="comparison-label">
+                🌳{% trans 'Trees needed (1 year)' %}
+              </div>
+              <div class="comparison-value" id="treesNeeded">-</div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="comparison-card">
+              <div class="comparison-label">
+                ⚡{% trans 'Energy consumed (kWh)' %}
+              </div>
+              <div class="comparison-value" id="energyUsed">-</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="row mt-4">
+          <div class="col-md-5">
+            <div class="card">
+              <div class="card-body">
+                <h6 class="card-title">{% trans 'Lifecycle Phase Breakdown' %}</h6>
+                <canvas id="lotImpactChart"></canvas>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-7">
+            <div class="card">
+              <div class="card-body">
+                <h6 class="card-title">{% trans 'Algorithm Information' %}</h6>
+                <button class="btn btn-outline-secondary btn-sm w-100 mb-2" type="button" data-bs-toggle="collapse" data-bs-target="#docsCollapse" aria-expanded="false">{% trans 'Show details' %}</button>
+                <div class="collapse" id="docsCollapse">
+                  <div style="max-height: 600px; overflow-y: auto; font-size: 0.875rem;">{{ impact.docs|safe }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% else %}
+    <div class="row mt-4">
+      <div class="col-sm-12">
+        <div class="alert alert-warning" role="alert">
+          <h6><i class="bi bi-exclamation-triangle"></i> {% trans 'Environmental Impact Data Unavailable' %}</h6>
+          <p>
+            {% trans 'Environmental impact calculation is not available for this lot. This may be due to insufficient device data.' %}
+          </p>
+          <p>
+            <strong>{% trans 'Possible reasons:' %}</strong>
+          </p>
+          <ul>
+            <li>
+              {% trans 'There are no devices in this lot' %}
+            </li>
+            <li>
+              {% trans 'Devices have no usage time data (e.g. power-on hours)' %}
+            </li>
+          </ul>
+          <p class="mb-0">
+            <strong>{% trans 'What to do:' %}</strong>
+            {% trans 'Ensure devices in this lot have been properly inventoried with complete evidence data, including power-on hours and storage information.' %}
+          </p>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <script>
+  {% if impact %}
+  const co2kg = {{ impact.kg_CO2e.in_use|default:0 }};
+
+  // Conversion factors
+  const kmPerKgCO2 = 5.5;
+  const treesPerKgCO2 = 0.05;
+  const kwhPerKgCO2 = 2;
+
+  // Update comparison values
+  document.getElementById('kmDriven').textContent = Math.round(co2kg * kmPerKgCO2).toLocaleString();
+  document.getElementById('treesNeeded').textContent = Math.round(co2kg * treesPerKgCO2);
+  document.getElementById('energyUsed').textContent = Math.round(co2kg * kwhPerKgCO2).toLocaleString();
+
+  // Lifecycle Bar Chart
+  const ctx = document.getElementById('lotImpactChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['{% trans "Raw material (A)" %}', '{% trans "Production (B)" %}', '{% trans "Use (C)" %}', '{% trans "EoLT (D)" %}'],
+      datasets: [{
+        label: 'kg CO2e',
+        data: [0, 0, co2kg, 0],
+        backgroundColor: ['#66c2a5', '#fc8d62', '#8da0cb', '#e78ac3']
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      scales: {
+        y: {
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: 'kg CO2e'
+          }
+        }
+      },
+      plugins: {
+        legend: { display: false }
+      }
+    }
+  });
+  {% endif %}
+</script>
+
+  <!-- Relevant Input Data Table -->
+  <h5 class="mt-4 mb-3">{% trans 'Relevant Input Data' %}</h5>
+  <div class="row mb-3">
+    <div class="col-sm-12">
+      <table class="table table-bordered table-striped">
+        <thead>
+          <tr>
+            <th>
+              {% trans 'Input Parameter' %}
+            </th>
+            <th>
+              {% trans 'Value' %}
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for key, value in impact.relevant_input_data.items %}
+            <tr>
+              <td>{{ key|capfirst }}</td>
+              <td>{{ value }}</td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="2" class="text-center text-muted">
+                {% trans 'No relevant input data available' %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endblock %}

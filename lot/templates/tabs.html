@@ -33,6 +33,11 @@
 	  {% trans 'Participants' %}
 	</a>
       </li>
+      <li class="nav-item">
+        <a href="{% url 'lot:environmental_impact' lot.id %}" class="nav-link {% if path == 'environmental_impact' %}active{% endif %}">
+	  {% trans 'Environmental Impact' %}
+	</a>
+      </li>
     </ul>
   </div>
 </div>
