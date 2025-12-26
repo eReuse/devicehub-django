@@ -1,11 +1,93 @@
 """
 Image processing utilities for OCR and barcode scanning.
 """
-import subprocess
+import uuid
 import shutil
 import logging
+import subprocess
+from datetime import datetime
+from utils.constants import ALGOS
+from evidence.mixin_parse import BuildMix
+from utils.save_snapshots import move_json, save_in_disk
+from evidence.models import SystemProperty
+from utils.photo_evidence import save_photo_in_disk
+from utils.device import create_property, create_doc, create_index
 
 logger = logging.getLogger(__name__)
+
+
+class Build(BuildMix):
+    def get_details(self):
+        #Only hash needed for photo25
+        self.hash = self.json.get("photo").get("hash", "")
+
+        return
+
+    def from_credential(self):
+        return
+
+    def _get_components(self):
+        "Image wont have any components to be extracted,"
+        return
+
+    def get_hid(self, algo="photo25"):
+        return self.hash
+
+
+def build_json(photo_data, image_path):
+    processing_result = process_image(image_path)
+
+    # Build document structur
+    photo_data.pop('content', None)
+    photo_data.pop('file', None)
+    _uuid = str(uuid.uuid4())
+
+    doc = {
+        'uuid': _uuid,
+        'endTime': datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
+        'type': "photo25",
+        'software': 'DeviceHub',
+        'photo': photo_data,
+        'data': {
+            'snapshot_type': "Image",
+            'ocr': {
+                'text': processing_result.get('ocr_text'),
+                'error': processing_result.get('ocr_error')
+            },
+        'barcodes': processing_result.get('barcodes', []),
+        'barcode_error': processing_result.get('barcode_error')
+        }
+    }
+    return doc
+
+
+def process_photo_upload(photo_data, user=None, algo_key='photo25'):
+    if not photo_data:
+        return None
+
+    if not user:
+        raise ValueError("User instance required for processing photo.")
+
+    # Save image file
+    file_path = save_photo_in_disk(photo_data, user.institution.name)
+    doc = build_json(photo_data, file_path)
+
+    path_name = save_in_disk(doc, user.institution.name)
+    create_index(doc, user)
+    move_json(path_name, user.institution.name)
+
+    # Create SystemProperty with key='photo25' so photo appears in evidence list
+    # Using photo hash as the value (similar to device CHID for snapshots)
+    prop_value = "{}:{}".format(algo_key, doc.get("photo", {}).get("hash", ""))
+    SystemProperty.objects.create(
+        uuid=doc.get("uuid", ""),
+        key=algo_key,
+        value=prop_value,
+        owner=user.institution,
+        user=user
+    )
+
+    return doc
 
 
 def extract_text_with_ocr(image_path):
