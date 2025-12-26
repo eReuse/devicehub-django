@@ -63,16 +63,13 @@ class EvidenceTable(tables.Table):
 
     def render_device(self, value, record):
         try:
-            # Check if this is a photo evidence (doesn't have device yet)
             ev = self.evidence_map.get(record.uuid)
-            if ev and hasattr(ev, 'is_photo_evidence') and ev.is_photo_evidence():
-                return format_html(
-                    '<span class="text-muted" title="{}">{}</span>',
-                    _("Photo evidence - device not linked yet"),
-                    _("Not linked")
-                )
-
             device_id = ev.get_alias()
+
+            #If alias starts with photo then hasnt been linked
+            if device_id.startswith("photo"):
+                raise Exception
+
             url = reverse('device:details', kwargs={'pk': device_id})
             return format_html(
                 '<a href="{}" class="text-decoration-none link-primary">{}</a>',
@@ -80,7 +77,7 @@ class EvidenceTable(tables.Table):
                 device_id.split(":")[1][:7].upper()
             )
         except Exception:
-            return self.render_error_message(_("Error loading device"))
+            return self.render_error_message(_("Not linked"))
 
 
     def render_uuid(self, value):
@@ -177,7 +174,7 @@ class EvidenceTable(tables.Table):
 
     def render_error_message(self, message=_("An error occurred")):
         return format_html(
-            '<span class="text-danger" title="{}"><i class="bi bi-exclamation-circle-fill me-1"></i>{}</span>',
+            '<span class="text-muted" title="{}">{}</span>',
+            _("Error"),
             message,
-            _("Error")
         )

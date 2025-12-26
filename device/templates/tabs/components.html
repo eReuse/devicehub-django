@@ -4,6 +4,31 @@
     <h5 class="card-title mb-4">{% trans 'Components from last evidence' %}</h5>
 
     <div class="container-fluid px-0">
+        {% if object.is_websnapshot %}
+            <div class="card mb-3">
+                <div class="card-header py-2">
+                    <span class="fw-bold text-primary">
+                        {% trans "Manually Entered Attributes" %}
+                    </span>
+                </div>
+                <div class="card-body">
+                    {% if object.components %}
+                        <div class="row row-cols-1 row-cols-md-2 g-2">
+                            {% for key, value in object.components.items %}
+                                <div class="col">
+                                    <div class="d-flex border-bottom pb-1">
+                                        <span class="text-muted fw-bold me-2">{{ key }}:</span>
+                                        <span class="text-dark">{{ value }}</span>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted fst-italic mb-0">{% trans "No attributes recorded." %}</p>
+                    {% endif %}
+                </div>
+            </div>
+        {% else %}
         <div class="row row-cols-1 row-cols-md-2 g-2">
             {% for c in object.components %}
             <div class="col">
@@ -36,5 +61,7 @@
             </div>
             {% endfor %}
         </div>
+
+    {% endif %}
     </div>
 </div>
