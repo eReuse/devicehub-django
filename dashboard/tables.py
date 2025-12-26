@@ -18,8 +18,6 @@ class DeviceTable(tables.Table):
             'td__input': {
                 'class': 'select-checkbox form-check-input'
             },
-            'th': {'class': 'text-center'},
-            'td': {'class': 'text-center'}
         },
         orderable=False,
         exclude_from_export=True
@@ -27,56 +25,28 @@ class DeviceTable(tables.Table):
     shortid = tables.Column(
         linkify=("device:details", {"pk": tables.A("id")}),
         verbose_name=_("Short ID"),
-        attrs={
-            'th': {'class': 'text-center'},
-            'td': {'class': 'text-center'}
-        },
         orderable=True,
     )
     current_state = tables.Column(
         accessor='current_state',
         verbose_name=_("Current State"),
-        attrs={
-            'th': {'class': 'text-center'},
-            'td': {'class': 'text-muted text-center'}
-        },
         default="N/A"
     )
     type = tables.Column(
         verbose_name=_("Type"),
-        attrs={
-            'th': {'class': 'text-center'},
-            'td': {'class': 'text-center'}
-        }
     )
     manufacturer = tables.Column(
         verbose_name=_("Manufacturer"),
-        attrs={
-            'th': {'class': 'text-center'},
-            'td': {'class': 'text-center'}
-        }
     )
     model = tables.Column(
         verbose_name=_("Model"),
-        attrs={
-            'th': {'class': 'text-center'},
-            'td': {'class': 'text-center'}
-        }
     )
     cpu = tables.Column(
         verbose_name=_("Cpu"),
-        attrs={
-            'th': {'class': 'text-center'},
-            'td': {'class': 'text-center'}
-        }
     )
     status_beneficiary = tables.Column(
         accessor='status_beneficiary',
         verbose_name=_("Status"),
-        attrs={
-            'th': {'class': 'text-center'},
-            'td': {'class': 'text-center'}
-        }
     )
     last_updated = tables.DateTimeColumn(
         format="Y-m-d H:i",
@@ -119,25 +89,6 @@ class DeviceTable(tables.Table):
             safe_value
         )
 
-    def value_type(self, value, record):
-
-        safe_value = escape(value)
-        return format_html(
-            safe_value
-        )
-
-    def render_model(self, value, record):
-        safe_value = escape(value)
-        if hasattr(record, 'version') and record.version:
-            safe_version = escape(record.version)
-            return format_html('{} {}', safe_version, safe_value)
-        return safe_value
-
     class Meta:
-        attrs = {
-            'class': 'table table-hover table-bordered',
-            'thead': {
-                'class': 'table-light'
-            }
-        }
+        template_name = "custom_table.html"
         order_by = ("-last_updated",)
