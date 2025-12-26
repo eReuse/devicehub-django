@@ -1,5 +1,5 @@
 -- Defined the email of user
-\set email 'user@example.org'
+\set email 'rodriguez.eduardoj@gmail.com'
 --\set email 'user@dhub.com'
 
 -- save dhids and uuids of snapshots
