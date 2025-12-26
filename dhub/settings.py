@@ -31,6 +31,7 @@ SECRET_KEY = config('DEVICEHUB_SECRET_KEY_SECRET')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEVICEHUB_DEBUG', default=False, cast=bool)
+DEMO = config('DEVICEHUB_DEMO', default=False, cast=bool)
 
 DEVICEHUB_HOST = config("DEVICEHUB_HOST")
 assert DEVICEHUB_HOST not in [None, ''], "DEVICEHUB_HOST var is MANDATORY"
