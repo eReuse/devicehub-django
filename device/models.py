@@ -131,15 +131,16 @@ class Device:
             return
 
         if self.uuid:
-            self.last_evidence = Evidence(self.uuid)
-            return
+            uuid_evidence = Evidence(self.uuid)
+            if not uuid_evidence.is_photo_evidence():
+               self.last_evidence = uuid_evidence
+               return self.last_evidence
 
-        properties = self.get_properties()
-        if not properties.count():
-            return
-        prop = properties.first()
-
-        self.last_evidence = Evidence(prop.uuid)
+        self.get_evidences()
+        for evidence in self.evidences:
+            if not evidence.is_photo_evidence():
+                self.last_evidence = evidence
+                return self.last_evidence
 
     def is_eraseserver(self):
         if not self.uuids:
@@ -364,20 +365,13 @@ class Device:
 
     @property
     def cpu(self):
-        cpu_component = next(
-            (c for c in self.components if c.get('type') == 'Processor'),
-            None
-        )
-        cpu_model = cpu_component.get('model', '') if cpu_component else ""
-        return cpu_model
+        self.get_last_evidence()
+        return self.last_evidence.get_cpu()
 
     @property
-    def total_ram(self):
-        ram_component = next(
-            (c for c in self.components if c.get('type') == 'RamModule'),
-            None
-        )
-        return ram_component.get('total_ram', '') if ram_component else ""
+    def ram(self):
+        self.get_last_evidence()
+        return self.last_evidence.get_ram()
 
     @property
     def version(self):
