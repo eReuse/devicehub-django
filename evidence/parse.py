@@ -45,10 +45,10 @@ class Build:
         if evidence_json.get("credentialSubject"):
             self.build = normal_parse.Build(evidence_json)
             self.uuid = evidence_json.get("credentialSubject", {}).get("uuid")
-        elif evidence_json.get("software") != "workbench-script":
-            self.build = old_parse.Build(evidence_json)
         elif evidence_json.get("data",{}).get("lshw"):
             self.build = legacy_parse.Build(evidence_json)
+        elif evidence_json.get("software") != "workbench-script":
+            self.build = old_parse.Build(evidence_json)
         else:
             self.build = normal_parse.Build(evidence_json)
 

@@ -1,4 +1,6 @@
 from django.core.management.base import BaseCommand
+from django.conf import settings
+
 from user.models import Institution
 from lot.models import LotTag, Lot
 
@@ -11,8 +13,10 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         self.institution = Institution.objects.create(name=kwargs['name'])
+        # create lot groups "Entrada, Temporal, Salida" (TODO in English?)
         self.create_lot_tags()
-        self.create_lots()
+        if settings.DEMO:
+            self.create_demo_lots()
 
     def create_lot_tags(self):
         LotTag.objects.create(
@@ -31,7 +35,7 @@ class Command(BaseCommand):
                 owner=self.institution
             )
 
-    def create_lots(self):
+    def create_demo_lots(self):
         for g in LotTag.objects.all():
             if g.name == "Entrada":
                 Lot.objects.create(
