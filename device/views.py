@@ -6,7 +6,8 @@ from django.conf import settings
 from django.db import IntegrityError
 from django.urls import reverse_lazy
 from django.contrib import messages
-from django.shortcuts import get_object_or_404, redirect, Http404
+from django.shortcuts import get_object_or_404, redirect, Http404, render
+from django.db import transaction
 from django.utils.translation import gettext_lazy as _
 from django.views.generic.edit import (
     CreateView,
@@ -21,7 +22,8 @@ from environmental_impact.algorithms.algorithm_factory import FactoryEnvironment
 from evidence.models import UserProperty, SystemProperty, Evidence
 from lot.models import LotTag
 from device.models import Device
-from device.forms import DeviceFormSet
+from device.forms import DeviceMainForm, DeviceAttributeFormSet, save_device_data
+
 from evidence.models import SystemProperty
 from evidence.tables import EvidenceTable
 from django_tables2 import RequestConfig
@@ -45,19 +47,36 @@ class DeviceLogMixin(DashboardView):
 
 class NewDeviceView(DashboardView, FormView):
     template_name = "new_device.html"
+    form_class = DeviceMainForm
+    success_url = reverse_lazy('dashboard:unassigned')
     title = _("New Device")
     breadcrumb = "Device / New Device"
-    success_url = reverse_lazy('dashboard:unassigned')
-    form_class = DeviceFormSet
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        if self.request.POST:
+            context['attribute_formset'] = DeviceAttributeFormSet(self.request.POST)
+        else:
+            context['attribute_formset'] = DeviceAttributeFormSet()
+
+        context['subtitle'] = self.title
+        return context
 
     def form_valid(self, form):
-        form.save(self.request.user)
-        response = super().form_valid(form)
-        return response
+        context = self.get_context_data()
+        attribute_formset = context['attribute_formset']
 
-    def form_invalid(self, form):
-        response = super().form_invalid(form)
-        return response
+        if not attribute_formset.is_valid():
+            return self.render_to_response(context)
+        form.save(attribute_formset=attribute_formset)
+
+        return super().form_valid(form)
 
 
 class EditDeviceView(DashboardView, UpdateView):
