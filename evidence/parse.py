@@ -4,7 +4,7 @@ import logging
 
 from evidence import legacy_parse
 from evidence import old_parse
-from evidence import normal_parse
+from evidence import normal_parse, image_processing
 from evidence.parse_details import ParseSnapshot
 
 from evidence.models import SystemProperty
@@ -49,6 +49,8 @@ class Build:
             self.build = old_parse.Build(evidence_json)
         elif evidence_json.get("data",{}).get("lshw"):
             self.build = legacy_parse.Build(evidence_json)
+        elif evidence_json.get("data",{}).get("snapshot_type") == "Image":
+            self.build = image_processing.Build(evidence_json)
         else:
             self.build = normal_parse.Build(evidence_json)
 
@@ -79,7 +81,7 @@ class Build:
             return
 
         for k, v in self.build.algorithms.items():
-            value = "{}:{}".format(k, self.sign(v))
+            value = "{}:{}".format(k, v)
             SystemProperty.objects.create(
                 uuid=self.uuid,
                 owner=self.user.institution,
@@ -88,8 +90,6 @@ class Build:
                 value=value
             )
 
-    def sign(self, doc):
-        return hashlib.sha3_256(doc.encode()).hexdigest()
 
     def register_device_dlt(self):
         legacy_dpp = self.build.algorithms.get('ereuse22')

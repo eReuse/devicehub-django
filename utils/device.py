@@ -37,13 +37,6 @@ def create_doc(data):
 
             device["type"] = v
 
-        elif k.lower() == "amount":
-            try:
-                amount = int(v)
-                device["amount"] = amount
-            except Exception:
-                pass
-
         else:
             kv[k] = v
 
@@ -75,7 +68,7 @@ def create_property(doc, user, commit=False):
         'uuid': doc['uuid'],
         'owner': user.institution,
         'user': user,
-        'key': 'web',
+        'key': 'web25',
         'value': doc['WEB_ID'],
     }
     if commit:

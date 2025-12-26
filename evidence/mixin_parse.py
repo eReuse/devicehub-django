@@ -1,5 +1,6 @@
 import logging
 from django.conf import settings
+import hashlib
 
 from utils.constants import ALGOS
 
@@ -57,7 +58,7 @@ class BuildMix:
         for f in algorithm:
             if hasattr(self, f):
                 hid += getattr(self, f) or ''
-        return hid
+        return self.sign(hid)
 
     def generate_chids(self):
         self.algorithms = {}
@@ -66,12 +67,17 @@ class BuildMix:
             k = settings.DEVICEHUB_ALGORITHM_DISPLAY
         elif self.type == "Disk":
             k = settings.DEVICEHUB_ALGORITHM_DISK
+        elif self.type == "Image":
+            k = settings.DEVICEHUB_ALGORITHM_PHOTO
         self.algorithms[k] = self.get_hid(k)
         # for k in ALGOS.keys():
         #     if not settings.DPP and k == 'ereuse22':
         #         continue
 
         #     self.algorithms[k] = self.get_hid(k)
+
+    def sign(self, doc):
+        return hashlib.sha3_256(doc.encode()).hexdigest()
 
     def get_doc(self):
         self._get_components()
