@@ -130,6 +130,20 @@ class Evidence:
         for xa in matches:
             self.doc = json.loads(xa.document.get_data())
 
+        if self.is_beta():
+            parse = ParseSnapshot(self.doc)
+            device = parse.device
+            if not device:
+                return
+            self.device_manufacturer = device.get("manufacturer") or ''
+            self.device_model = device.get("model") or ''
+            self.device_serial_number = device.get("serialNumber") or ''
+            self.device_chassis = device.get("chassis") or ''
+            self.device_version = device.get("version") or ''
+            self.components = parse.components
+            for c in self.components:
+                c.pop("actions", None)
+
         if self.is_legacy():
             return
 
@@ -178,8 +192,12 @@ class Evidence:
         return self.properties.last().created.isoformat()
 
     def get_components(self):
+        if self.is_beta():
+            return self.components
+
         if self.is_legacy():
             return self.doc.get('components', [])
+
         self.set_components()
         return self.components
 
@@ -190,11 +208,11 @@ class Evidence:
                 return ""
             return list(self.doc.get('kv').values())[0]
 
+        if self.inxi or self.is_beta():
+            return self.device_manufacturer
+
         if self.is_legacy():
             return self.doc.get('device', {}).get('manufacturer', '')
-
-        if self.inxi:
-            return self.device_manufacturer
 
         try:
             return self.dmi.manufacturer().strip()
@@ -208,11 +226,13 @@ class Evidence:
                 return ""
             return list(self.doc.get('kv').values())[1]
 
-        if self.is_legacy():
-            return self.doc.get('device', {}).get('model', '')
-
-        if self.inxi:
+        if self.inxi or self.is_beta():
             return self.device_model
+
+        if self.is_legacy():
+            model = self.doc.get('device', {}).get('model', '') or ''
+            version = self.doc.get('device', {}).get('version', '') or ''
+            return "{} {}".format(model, version)
 
         try:
             return self.dmi.model().strip()
@@ -220,11 +240,11 @@ class Evidence:
             return ''
 
     def get_chassis(self):
-        if self.is_legacy():
-            return self.doc.get('device', {}).get('model', '')
-
-        if self.inxi:
+        if self.inxi or self.is_beta():
             return self.device_chassis
+
+        if self.is_legacy():
+            return self.doc.get('device', {}).get('chassis', '')
 
         dmi_chassis = self.dmi.get("Chassis")
         if not dmi_chassis:
@@ -239,11 +259,11 @@ class Evidence:
         return ""
 
     def get_serial_number(self):
+        if self.inxi or self.is_beta():
+            return self.device_serial_number
+
         if self.is_legacy():
             return self.doc.get('device', {}).get('serialNumber', '')
-
-        if self.inxi:
-            return self.device_serial_number
 
         try:
             return self.dmi.serial_number().strip()
@@ -251,7 +271,7 @@ class Evidence:
             return ''
 
     def get_version(self):
-        if self.inxi:
+        if self.inxi or self.is_beta():
             return self.device_version
 
         return ""
@@ -266,7 +286,6 @@ class Evidence:
             return alias_obj[0].root
         else:
             return self.properties[0].value
-
 
     @classmethod
     def get_all(cls, user):
@@ -291,6 +310,9 @@ class Evidence:
     def set_components(self):
         self.components = ParseSnapshot(self.doc).components
 
+    def is_beta(self):
+        return self.doc.get("version") == '2022.12.2-beta'
+
     def is_legacy(self):
         if self.doc.get("credentialSubject"):
             return False
@@ -307,7 +329,7 @@ class Evidence:
         if not self.doc.get("credentialSubject"):
             return ''
         did = self.doc.get('issuer').get('id')
-        if not "did:web" in did:
+        if "did:web" not in did:
             return ''
 
         return  "https://{}/did.json".format(
