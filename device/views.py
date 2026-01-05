@@ -24,7 +24,7 @@ from lot.models import LotTag
 from device.models import Device
 from device.forms import DeviceMainForm, DeviceAttributeFormSet, save_device_data
 
-from evidence.models import SystemProperty
+from evidence.models import SystemProperty, RootAlias
 from evidence.tables import EvidenceTable
 from django_tables2 import RequestConfig
 if settings.DPP:
@@ -171,17 +171,34 @@ class PublicDeviceWebView(TemplateView):
     def get(self, request, *args, **kwargs):
         self.pk = kwargs['pk']
         self.object = Device(id=self.pk)
+        owner = self.get_owner_for_device(self.pk)
 
-        if not self.object.last_evidence:
+        if not owner:
+            raise Http404("Device ID not recognized")
+
+        self.object = Device(id=self.pk, owner=owner)
+        self.object.initial()
+
+        if not self.object.get_last_evidence():
             raise Http404
 
         if self.request.headers.get('Accept') == 'application/json':
             return self.get_json_response()
         return super().get(request, *args, **kwargs)
 
+    def get_owner_for_device(self, pk):
+        prop = SystemProperty.objects.filter(value=pk).select_related('owner').first()
+        if prop:
+            return prop.owner
+
+        alias = RootAlias.objects.filter(root=pk).select_related('owner').first()
+        if alias:
+            return alias.owner
+
+        return None
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        self.object.initial()
         context.update({
             'object': self.object
         })

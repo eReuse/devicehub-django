@@ -130,19 +130,32 @@ class Device:
 
     def get_last_evidence(self):
         if self.last_evidence:
-            return
+            return self.last_evidence
+
+        latest_photo = None
 
         if self.uuid:
             uuid_evidence = Evidence(self.uuid)
             if not uuid_evidence.is_photo_evidence():
                self.last_evidence = uuid_evidence
                return self.last_evidence
+            else:
+                latest_photo = uuid_evidence
 
         self.get_evidences()
-        for evidence in self.evidences:
+        for evidence in reversed(self.evidences):
             if not evidence.is_photo_evidence():
                 self.last_evidence = evidence
                 return self.last_evidence
+
+            if latest_photo is None or evidence != latest_photo:
+                latest_photo = evidence
+
+        if latest_photo:
+            self.last_evidence = latest_photo
+            return self.last_evidence
+
+        return None
 
     def is_eraseserver(self):
         if not self.uuids:

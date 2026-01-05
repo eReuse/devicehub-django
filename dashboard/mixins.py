@@ -6,7 +6,7 @@ from django.core.exceptions import PermissionDenied
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic.base import TemplateView
 from device.models import Device
-from evidence.models import SystemProperty
+from evidence.models import SystemProperty, RootAlias
 from lot.models import LotTag
 from action.models import StateDefinition
 from dashboard.tables import DeviceTable
@@ -54,12 +54,22 @@ class DashboardView(LoginRequiredMixin):
 
     def get_session_devices(self):
         dev_ids = self.request.session.pop("devices", [])
+        user_institution = self.request.user.institution
 
+        prop_device_ids = SystemProperty.objects.filter(
+            value__in=dev_ids,
+            owner=user_institution
+        ).values_list('value', flat=True)
+
+        alias_device_ids = RootAlias.objects.filter(
+            root__in=dev_ids,
+            owner=user_institution
+        ).values_list('root', flat=True)
+
+        all_device_ids = set(prop_device_ids) | set(alias_device_ids)
         self._devices = []
-        dev_ids_list = SystemProperty.objects.filter(value__in=dev_ids)
-        dev_org = dev_ids_list.filter(owner=self.request.user.institution)
-        dev_org_set = set(x.value for x in dev_org)
-        for x in dev_org_set:
+
+        for x in all_device_ids:
             self._devices.append(Device(id=x))
         return self._devices
 
