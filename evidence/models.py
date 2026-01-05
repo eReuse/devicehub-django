@@ -220,6 +220,9 @@ class Evidence:
         if self.is_web_snapshot():
             return "Websnapshot"
 
+        if self.is_photo_evidence():
+            return "Image"
+
         if self.is_legacy():
             return self.doc.get('device', {}).get('model', '')
 

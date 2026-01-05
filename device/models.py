@@ -54,6 +54,8 @@ class Device:
                 alias=self.pk
             ).first()
             if alias:
+                self.id = alias.root
+                self.pk = alias.root
                 self.shortid = alias.root.split(":")[1][:6].upper()
 
     def initial(self):
@@ -332,7 +334,7 @@ class Device:
     @property
     def last_user_evidence(self):
         self.get_last_evidence()
-        return self.last_evidence.doc['kv'].items()
+        return self.last_evidence.doc.get('kv') or {}
 
     @property
     def manufacturer(self):
@@ -353,7 +355,7 @@ class Device:
     @property
     def type(self):
         self.get_last_evidence()
-        if self.last_evidence.doc['type'] == "WebSnapshot":
+        if self.last_evidence and self.last_evidence.doc.get("type", "") == "WebSnapshot":
             return self.last_evidence.doc.get("device", {}).get("type", "")
 
         return self.last_evidence.get_chassis()
