@@ -159,8 +159,9 @@ class TokenView(DashboardView, SingleTableView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        tokens = Token.objects.filter(owner=self.request.user)
         context.update({
-            'tokens': Token.objects.all(),
+            'tokens': tokens,
         })
         return context
 
