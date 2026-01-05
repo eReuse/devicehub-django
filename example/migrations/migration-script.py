@@ -132,8 +132,21 @@ def migrate_snapshots(snap_path, user):
 
     # insert snapshot
     path_name = save_in_disk(snapshot, user.institution.name)
-    Build(snapshot, user)
+    build = Build(snapshot, user)
     move_json(path_name, user.institution.name)
+
+    for s in SystemProperty.objects.filter(owner=user.institution, uuid=build.uuid):
+        timestamp = snapshot.get("timestamp") or snapshot.get("endTime")
+        if not timestamp:
+            continue
+
+        if "+" not in timestamp and "Z" not in timestamp:
+            timestamp += "+00:00"
+
+        timestamp = datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%S.%f%z")
+
+        s.created = timestamp
+        s.save()
 
 ### end migration snapshots ###
 
