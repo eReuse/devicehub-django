@@ -16,8 +16,8 @@ class Command(BaseCommand):
         parser.add_argument('institution', type=str, help='institution')
         parser.add_argument('email', type=str, help='email')
         parser.add_argument('password', type=str, help='password')
-        parser.add_argument('is_admin', nargs='?', default=False, type=str, help='is admin')
-        parser.add_argument('predefined_token', nargs='?', default='', type=str, help='predefined token')
+        parser.add_argument('is_admin', nargs='?', default=False, type=str, help='Whether the user has admin privileges')
+        parser.add_argument('predefined_token', nargs='?', default='', type=str, help='Predefined token for user')
 
     def handle(self, *args, **kwargs):
         email = kwargs['email']
@@ -39,5 +39,5 @@ class Command(BaseCommand):
         else:
             token = uuid4()
 
-        Token.objects.create(token=token, owner=self.u)
+        Token.objects.create(tag="default" ,token=token, owner=self.u)
         print(f"TOKEN: {token}")
