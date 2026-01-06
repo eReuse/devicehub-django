@@ -87,7 +87,7 @@ class DetailsView(DashboardView, TemplateView ):
 
     def get(self, request, *args, **kwargs):
         self.pk = kwargs['pk']
-        self.object = Device(id=self.pk)
+        self.object = Device(id=self.pk, owner=self.request.user.institution)
         if not self.object.last_evidence:
             raise Http404
         if self.object.owner != self.request.user.institution:
@@ -113,8 +113,13 @@ class DetailsView(DashboardView, TemplateView ):
             enviromental_impact_algorithm = FactoryEnvironmentImpactAlgorithm.run_environmental_impact_calculation()
             enviromental_impact = enviromental_impact_algorithm.get_device_environmental_impact(
             self.object)
+            # If total usage time is 0, treat as unavailable data
+            if (enviromental_impact and
+                    enviromental_impact.relevant_input_data.get(
+                        'total_usage_time', 0) == 0):
+                enviromental_impact = None
         except Exception as err:
-            logger.error("Enviromental Impact: {}".format(err))
+            logger.error("Environmental Impact Error: {}".format(err))
             enviromental_impact = None
         last_evidence = self.object.get_last_evidence()
         uuids = self.object.uuids

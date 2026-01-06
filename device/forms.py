@@ -1,6 +1,7 @@
 from django import forms
 from utils.device import create_property, create_doc, create_index
 from utils.save_snapshots import move_json, save_in_disk
+from evidence.models import RootAlias
 
 
 DEVICE_TYPES = [
@@ -35,7 +36,7 @@ class BaseDeviceFormSet(forms.BaseFormSet):
             if x.get("amount"):
                 return True
         return False
-        
+
     def save(self, user, commit=True):
         self.user = user
         row = {}
@@ -56,14 +57,20 @@ class BaseDeviceFormSet(forms.BaseFormSet):
         doc = create_doc(row)
         if not commit:
             return doc
-        
+
         path_name = save_in_disk(doc, self.user.institution.name, place="placeholder")
         create_index(doc, self.user)
         create_property(doc, user, commit=commit)
         move_json(path_name, self.user.institution.name, place="placeholder")
-        
+        if d.get("custom_id"):
+            RootAlias.objects.create(
+                owner=self.user.institution,
+                user=self.user,
+                root="custom_id:{}".format(d["custom_id"]),
+                alias=doc["WEB_ID"]
+            )
+
         return doc
 
 
 DeviceFormSet = forms.formset_factory(form=DeviceForm, formset=BaseDeviceFormSet, extra=1)
-

@@ -61,11 +61,17 @@ class BuildMix:
 
     def generate_chids(self):
         self.algorithms = {}
-        for k in ALGOS.keys():
-            if not settings.DPP and k == 'ereuse22':
-                continue
+        k = settings.DEVICEHUB_ALGORITHM_DEVICE
+        if self.type == "Display":
+            k = settings.DEVICEHUB_ALGORITHM_DISPLAY
+        elif self.type == "Disk":
+            k = settings.DEVICEHUB_ALGORITHM_DISK
+        self.algorithms[k] = self.get_hid(k)
+        # for k in ALGOS.keys():
+        #     if not settings.DPP and k == 'ereuse22':
+        #         continue
 
-            self.algorithms[k] = self.get_hid(k)
+        #     self.algorithms[k] = self.get_hid(k)
 
     def get_doc(self):
         self._get_components()

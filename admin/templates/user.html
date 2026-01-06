@@ -8,6 +8,7 @@
   </div>
 </div>
 
+<div class="border p-4 rounded col-md-8 col-lg-6" >
 {% load django_bootstrap5 %}
 <form role="form" method="post">
 {% csrf_token %}
@@ -22,11 +23,18 @@
   </div>
 </div>
 {% endif %}
-{% bootstrap_form form %}
-<div class="form-actions-no-box">
+{% bootstrap_form form  layout="floating"  %}
+{% if object.pk == 1 %}
+<div class="alert alert-warning mb-3">
+    <i class="bi bi-shield-lock me-2"></i>
+    {% translate "System admin privileges will always remain for this user" %}
+</div>
+{% endif %}
+<div class="d-flex justify-content-end form-actions-no-box pt-4">
   <a class="btn btn-grey" href="{% url 'admin:users' %}">{% translate "Cancel" %}</a>
   <input class="btn btn-green-admin" type="submit" name="submit" value="{% translate 'Save' %}" />
 </div>
 
 </form>
+</div>
 {% endblock %}

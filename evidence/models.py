@@ -35,6 +35,14 @@ class SystemProperty(Property):
                 fields=["key", "uuid"], name="system_unique_type_key_uuid")
         ]
 
+    @property
+    def shortid(self):
+        return self.value.split(":")[1][:6].upper()
+
+    @property
+    def hid(self):
+        return self.value.split(":")[1]
+
 
 class UserProperty(Property):
 
@@ -50,6 +58,25 @@ class UserProperty(Property):
             models.UniqueConstraint(
                 fields=["key", "uuid"], name="userproperty_unique_type_key_uuid")
         ]
+
+
+class RootAlias(models.Model):
+    created = models.DateTimeField(auto_now_add=True)
+    owner = models.ForeignKey(Institution, on_delete=models.CASCADE)
+    user = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True)
+    alias = models.CharField(max_length=STR_EXTEND_SIZE)
+    root = models.CharField(max_length=STR_EXTEND_SIZE)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["owner", "alias"], name="rootalias_unique")
+        ]
+
+    @property
+    def root_hid(self):
+        return self.root.split(":")[1]
 
 
 class Evidence:
@@ -69,6 +96,7 @@ class Evidence:
         self.get_time()
 
     def get_properties(self):
+        # TODO is good not filter by institution?
         self.properties = SystemProperty.objects.filter(
             uuid=self.uuid
         ).order_by("created")
@@ -228,26 +256,35 @@ class Evidence:
 
         return ""
 
+    def get_alias(self):
+        aliases = [ x.value for x in self.properties ]
+        alias_obj = RootAlias.objects.filter(
+            alias__in = aliases,
+        ).order_by("-created")
+
+        if alias_obj:
+            return alias_obj[0].root
+        else:
+            return self.properties[0].value
+
+
     @classmethod
     def get_all(cls, user):
         return SystemProperty.objects.filter(
             owner=user.institution,
-            key="ereuse24",
         ).order_by("-created").distinct()
 
     @classmethod
     def get_user_evidences(cls, user):
         return SystemProperty.objects.filter(
             owner=user.institution,
-            key="ereuse24",
             user=user
         ).order_by("-created").distinct()
 
     @classmethod
-    def get_device_evidences(cls,user, uuids):
+    def get_device_evidences(cls, user, uuids):
         return SystemProperty.objects.filter(
             owner=user.institution,
-            key="ereuse24",
             uuid__in=uuids
         ).order_by("-created").distinct()
 
@@ -262,6 +299,9 @@ class Evidence:
 
     def is_web_snapshot(self):
         return self.doc.get("type") == "WebSnapshot"
+
+    def is_photo_evidence(self):
+        return self.doc.get("type") == "photo25"
 
     def did_document(self):
         if not self.doc.get("credentialSubject"):

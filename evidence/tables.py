@@ -61,13 +61,23 @@ class EvidenceTable(tables.Table):
             else:
                 self.evidence_map = {}
 
-    def render_device(self, value):
+    def render_device(self, value, record):
         try:
-            url = reverse('device:details', kwargs={'pk': value })
+            # Check if this is a photo evidence (doesn't have device yet)
+            ev = self.evidence_map.get(record.uuid)
+            if ev and hasattr(ev, 'is_photo_evidence') and ev.is_photo_evidence():
+                return format_html(
+                    '<span class="text-muted" title="{}">{}</span>',
+                    _("Photo evidence - device not linked yet"),
+                    _("Not linked")
+                )
+
+            device_id = ev.get_alias()
+            url = reverse('device:details', kwargs={'pk': device_id})
             return format_html(
                 '<a href="{}" class="text-decoration-none link-primary">{}</a>',
                 url,
-                value[:7].upper()
+                device_id.split(":")[1][:7].upper()
             )
         except Exception:
             return self.render_error_message(_("Error loading device"))
@@ -128,7 +138,7 @@ class EvidenceTable(tables.Table):
     def render_legacy(self, record, value):
         try:
             ev = self.evidence_map.get(value)
-            if not ev:
+            if not ev or ev and hasattr(ev, 'is_photo_evidence') and ev.is_photo_evidence():
                 return self.render_empty()
 
             is_legacy = ev.is_legacy()
@@ -146,6 +156,15 @@ class EvidenceTable(tables.Table):
             ev = self.evidence_map.get(value)
             if not ev:
                 return self.render_empty()
+
+            # Handle photo evidence - show "Photo" instead of device chassis
+            if hasattr(ev, 'is_photo_evidence') and ev.is_photo_evidence():
+                return format_html(
+                    '<span class="badge bg-info" title="{}">{}</span>',
+                    _("Photographic evidence"),
+                    _("Photo")
+                )
+
             return ev.get_chassis() if hasattr(ev, 'get_chassis') else self.render_empty(_("N/A (Type not found)"))
         except Exception:
             return self.render_error_message(_("Error rendering evidence type"))

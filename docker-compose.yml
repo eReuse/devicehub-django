@@ -1,26 +1,51 @@
 services:
   devicehub-django:
+    restart: ${DOCKER_RESTART_POLICY:-unless-stopped}
     init: true
     image: ghcr.io/ereuse/devicehub-django:${DEVICEHUB_DOCKER_TAG:-stable}
     build:
       context: .
       dockerfile: docker/devicehub-django.Dockerfile
-    environment:
-      - DEBUG=${DEBUG:-false}
-      - DEVICEHUB_HOST=${DEVICEHUB_HOST:-localhost}
-      - PORT=${DEVICEHUB_PORT:-8000}
-      - ALLOWED_HOSTS=${DEVICEHUB_ALLOWED_HOSTS:-$DEVICEHUB_HOST}
-      - DEMO=${DEMO:-false}
-      - DEMO_IDHUB_DOMAIN=${DEMO_IDHUB_DOMAIN:-}
-      - DEMO_IDHUB_PREDEFINED_TOKEN=${DEMO_IDHUB_PREDEFINED_TOKEN:-}
-      - DEMO_PREDEFINED_TOKEN=${DEMO_PREDEFINED_TOKEN:-}
-      - DPP=${DPP:-false}
-      - TIME_ZONE=${TIME_ZONE:-UTC}
+    env_file:
+      - .env
     # TODO manage volumes dev vs prod
     volumes:
-      - .:/opt/devicehub-django
+      - ${DEVICEHUB_VOLUME:-.}:/opt/devicehub-django
+      - ./.env:/opt/devicehub-django/.env:ro
+      - ${DOCKER_DEVICEHUB_DATA_DIR}/devicehub/static:${DEVICEHUB_STATIC_ROOT:-/static/}
+      - ${DOCKER_DEVICEHUB_DATA_DIR}/devicehub/media:${DEVICEHUB_MEDIA_ROOT:-/media/}
+        # db-files: evidences, index xapian files and sqlite
+      - ${DOCKER_DEVICEHUB_DATA_DIR}/devicehub/db-files:${DEVICEHUB_EVIDENCES_DIR:-/evidences/}
+      - ${DOCKER_DEVICEHUB_DATA_DIR}/devicehub/backups:${DEVICEHUB_BACKUPS_DIR:-/backups/}
     ports:
       - ${DEVICEHUB_PORT:-8000}:${DEVICEHUB_PORT:-8000}
+    deploy:
+      resources:
+        limits:
+          cpus: "${DOCKER_DEVICEHUB_CPU_LIMIT:-0.000}"
+          memory: "${DOCKER_DEVICEHUB_MEM_LIMIT:-1G}"
+  # match debian/django container so dbbackup works
+  devicehub-postgres:
+    profiles: [devicehub-postgres]
+    restart: ${DOCKER_RESTART_POLICY:-unless-stopped}
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=${DEVICEHUB_POSTGRES_DB}
+      - POSTGRES_USER=${DEVICEHUB_POSTGRES_USER}
+      - POSTGRES_PASSWORD=${DEVICEHUB_POSTGRES_PASSWORD_SECRET}
+    volumes:
+      - ${DOCKER_DEVICEHUB_DATA_DIR}/devicehub-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DEVICEHUB_POSTGRES_USER} -d ${DEVICEHUB_POSTGRES_DB}"]
+      start_period: 1s
+      interval: 1s
+      timeout: 10s
+      retries: 10
+    deploy:
+      resources:
+        limits:
+          cpus: "${DOCKER_DEVICEHUB_POSTGRES_CPU_LIMIT:-0.000}"
+          memory: "${DOCKER_DEVICEHUB_POSTGRES_MEM_LIMIT:-1G}"
 
   # TODO add database service for idhub, meanwhile sqlite
   idhub:
@@ -49,7 +74,7 @@ services:
       - ENABLE_2FACTOR_AUTH=${IDHUB_ENABLE_2FACTOR_AUTH:-true}
       - ENABLE_DOMAIN_CHECKER=${IDHUB_ENABLE_DOMAIN_CHECKER:-true}
       - DEMO_PREDEFINED_TOKEN=${DEMO_IDHUB_PREDEFINED_TOKEN:-}
-      - SECRET_KEY=${IDHUB_SECRET_KEY}
+      - SECRET_KEY=${IDHUB_SECRET_KEY_SECRET}
       - MEDIA_URL=${IDHUB_MEDIA_URL:-/media/}
       - MEDIA_ROOT=${IDHUB_MEDIA_ROOT:-/media/}
       - STATIC_URL=${IDHUB_STATIC_URL:-/static/}
@@ -66,18 +91,96 @@ services:
       - SYNC_ORG_DEV=${IDHUB_SYNC_ORG_DEV}
       - DB_PORT=${IDHUB_POSTGRES_PORT:-5432}
       - DB_HOST=${IDHUB_POSTGRES_HOST:-idhub-postgres}
-      - DB_NAME=${IDHUB_POSTGRES_NAME}
+      - DB_NAME=${IDHUB_POSTGRES_DB}
       - DB_USER=${IDHUB_POSTGRES_USER}
       - DB_PASSWORD=${IDHUB_POSTGRES_PASSWORD}
       - TIME_ZONE=${IDHUB_TIME_ZONE}
       - DPP=${IDHUB_DPP:-false}
     ports:
       - ${IDHUB_PORT:-9001}:${IDHUB_PORT:-9001}
+    # TODO review volumes
     volumes:
       - ${IDHUB_VOLUME:-./idhub}:/opt/idhub
       - ${IDHUB_ROOT_DIR}/${IDHUB_DOCKER_DIR}/${IDHUB_DOMAIN}/idhub-postgres:/idhub-postgres
       - ${DOCKER_IDHUB_STATIC_ROOT}:${IDHUB_STATIC_ROOT:-/static/}
       - ${DOCKER_IDHUB_MEDIA_ROOT}:${IDHUB_MEDIA_ROOT:-/media/}
+    deploy:
+      resources:
+        limits:
+          cpus: "${DOCKER_IDHUB_CPU_LIMIT:-0.000}"
+          memory: "${DOCKER_IDHUB_MEM_LIMIT:-1G}"
+
+  idhub-postgres:
+    profiles: [idhub-postgres]
+    image: postgres:17
+    environment:
+      - POSTGRES_DB=${IDHUB_POSTGRES_DB}
+      - POSTGRES_USER=${IDHUB_POSTGRES_USER}
+      - POSTGRES_PASSWORD=${IDHUB_POSTGRES_PASSWORD}
+    volumes:
+      - ${IDHUB_ROOT_DIR}/${IDHUB_DOCKER_DIR}/${IDHUB_DOMAIN}/idhub-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${IDHUB_POSTGRES_USER} -d ${IDHUB_POSTGRES_DB}"]
+      start_period: 1s
+      interval: 1s
+      timeout: 10s
+      retries: 10
+    deploy:
+      resources:
+        limits:
+          cpus: "${DOCKER_IDHUB_POSTGRES_CPU_LIMIT:-0.000}"
+          memory: "${DOCKER_IDHUB_POSTGRES_MEM_LIMIT:-1G}"
+
+  ereuse-rproxy:
+    restart: ${DOCKER_RESTART_POLICY:-unless-stopped}
+    profiles: [rproxy]
+    image: ghcr.io/ereuse/ereuse-rproxy:${RPROXY_DOCKER_TAG:-stable}
+    build:
+      context: .
+      dockerfile: ./docker/nginx.Dockerfile
+    environment:
+      - ENABLE_LETSENCRYPT=${RPROXY_ENABLE_LETSENCRYPT}
+      # sorry the confusion, for some reason we decided that DEVICEHUB_HOST is equivalent to IDHUB_DOMAIN
+      #   internal ref https://farga.pangea.org/ereuse/devicehub-django/pulls/58
+      - DEVICEHUB_HOST=${DEVICEHUB_HOST}
+      # upstream refers how to connect to this service
+      - DEVICEHUB_UPSTREAM=devicehub:${DEVICEHUB_PORT}
+      - IDHUB_ENABLED=${IDHUB_ENABLED}
+      - IDHUB_DOMAIN=${IDHUB_DOMAIN}
+      - IDHUB_UPSTREAM=idhub:${IDHUB_PORT}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - type: bind
+        source: docker/nginx/app.template
+        target: /etc/nginx/conf.d/app.template
+      # TODO static nginx files
+      #- static:/path/to/static/files:ro
+      - certbot-www:/var/www/certbot
+      - ${DOCKER_DEVICEHUB_DATA_DIR}/certbot/conf:/etc/letsencrypt
+    deploy:
+      resources:
+        limits:
+          cpus: "${DOCKER_RPROXY_CPU_LIMIT:-0.000}"
+          memory: "${DOCKER_RPROXY_MEM_LIMIT:-1G}"
+
+  certbot:
+    restart: ${DOCKER_RESTART_POLICY:-unless-stopped}
+    profiles: [letsencrypt]
+    container_name: certbot
+    image: certbot/certbot
+    volumes:
+      - ${DOCKER_DEVICEHUB_DATA_DIR}/certbot/conf:/etc/letsencrypt
+      - certbot-www:/var/www/certbot
+    entrypoint: /bin/sh -c "trap exit TERM; while true; do certbot renew --webroot -w /var/www/certbot; sleep 12h & wait $${!}; done;"
+    deploy:
+      resources:
+        limits:
+          cpus: "${DOCKER_CERTBOT_CPU_LIMIT:-0.000}"
+          memory: "${DOCKER_CERTBOT_MEM_LIMIT:-1G}"
 
 volumes:
+  DEVICEHUB_DATA:
   IDHUB_DATA:
+  certbot-www:

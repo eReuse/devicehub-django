@@ -56,6 +56,28 @@
        background-color: rgba(255, 255, 255, 0.2);
        transition: background-color 0.2s ease;
      }
+
+     #navbar-brand-sm > .navbar-brand {
+         padding-top: .75rem;
+         padding-bottom: .5rem;
+     }
+      #navbar-brand-sm > .navbar-sub-brand {
+          font-size: 1.2rem;
+          padding-top: 0;
+          padding-bottom: .5rem;
+      }
+      /* Remove bullets from all sidebar <ul> */
+      #sidebarMenu ul {
+          list-style: none; /* removes bullets */
+          padding-left: 0;  /* removes indentation */
+          margin: 0;        /* optional: removes extra spacing */
+      }
+
+      /* Optional: adjust nested ul spacing */
+      #sidebarMenu ul ul {
+          padding-left: 2.25rem; /* indent nested items slightly */
+      }
+
     </style>
 
 
@@ -65,68 +87,78 @@
   {% endblock %}
   </head>
   <body>
-    <header class="navbar navbar-dark sticky-top admin bg-green flex-md-nowrap p-0 shadow">
-      <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3" href="#">DEVICEHUB</a>
-      <div class="navbar-nav navbar-sub-brand">
-        {{ user.institution.name|upper }}
+  <header class="navbar navbar-dark sticky-top admin bg-green flex-md-nowrap p-0 shadow">
+      <button class="btn d-md-none" type="button" id="sidebarToggle"
+              data-bs-toggle="collapse" data-bs-target="#sidebarMenu"
+              style="color: #fff; font-size: 1.5rem; border: none; background: none; padding: 0.5rem 1rem;">
+          <i class="bi bi-list"></i>
+      </button>
+      <div id="navbar-brand-sm" class="d-sm-none px-3">
+          <a class="navbar-brand " href="#">DEVICEHUB</a>
+          <div class="navbar-nav navbar-sub-brand text-truncate" style="max-width: 200px;">
+              {{ user.institution.name|upper }}
+          </div>
       </div>
-      <div class="dropdown">
-        <a class="navbar-sub-brand nav-link dropdown-toggle d-flex align-items-center text-white text-decoration-none bg-hover py-1 mx-1 " href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-          <i class="bi bi-person me-2"></i>
-          <span class="me-2">{{ user.email }}</span>
-        </a>
-        <ul class="dropdown-menu dropdown-menu-end shadow">
-          <li>
-            <a class="dropdown-item" href="{% url 'user:panel' %}">
-              <i class="bi bi-person me-2"></i>{% trans 'Profile' %}
-            </a>
-          </li>
-          <li>
-            <a class="dropdown-item" href="{% url 'api:tokens' %}">
-              <i class="bi bi-key me-2"></i>{% trans 'My Tokens' %}
-            </a>
-          </li>
-          <li>
-            <a class="dropdown-item" href="{% url 'user:settings' %}">
-              <i class="bi bi-gear me-2"></i>{% trans 'Settings File' %}
-            </a>
-          </li>
-
-          {% if user.is_admin %}
-            <!-- Secret Admin Options -->
-            <li><hr class="dropdown-divider"></li>
-            <li>
-              <a class="dropdown-item" href="{% url 'admin:panel' %}">
-                <i class="bi bi-shield-lock me-2"></i>{% trans 'Admin Panel' %}
-              </a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="{% url 'admin:users' %}">
-                <i class="bi bi-people me-2"></i>{% trans 'Manage Users' %}
-              </a>
-            </li>
-          {% endif %}
-
-          <li><hr class="dropdown-divider"></li>
-
-            <li>
-              <a class="dropdown-item" href="https://docs.ereuse.org/help">
-               <i class="bi bi-question-circle me-2"></i>{% trans 'Help' %}
-              </a>
-            </li>
-          <li>
-            <a class="dropdown-item text-danger" href="{% url 'login:logout' %}">
-              <i class="fa fa-arrow-right-from-bracket me-2"></i>{% trans 'Logout' %}
-            </a>
-          </li>
-        </ul>
+      <a class="d-none d-sm-block navbar-brand col-md-3 col-lg-2 me-0 px-3" href="#">DEVICEHUB</a>
+      <div class="d-none d-sm-block navbar-nav navbar-sub-brand text-truncate ms-auto" style="max-width: 200px;">
+          {{ user.institution.name|upper }}
       </div>
-      </nav>
-    </header>
+      <div class="dropdown ms-auto">
+          <a class="navbar-sub-brand nav-link  d-flex align-items-center text-white text-decoration-none
+          bg-hover " href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="bi bi-person me-2"></i>
+              <span class="me-2 d-none d-md-inline" >{{ user.email }}</span>
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end shadow">
+              <li>
+                  <a class="dropdown-item" href="{% url 'user:panel' %}">
+                      <i class="bi bi-person me-2"></i>{% trans 'Profile' %}
+                  </a>
+              </li>
+              <li>
+                  <a class="dropdown-item" href="{% url 'api:tokens' %}">
+                      <i class="bi bi-key me-2"></i>{% trans 'My Tokens' %}
+                  </a>
+              </li>
+              <li>
+                  <a class="dropdown-item" href="{% url 'user:settings' %}">
+                      <i class="bi bi-gear me-2"></i>{% trans 'Settings File' %}
+                  </a>
+              </li>
+
+              {% if user.is_admin %}
+              <!-- Secret Admin Options -->
+              <li><hr class="dropdown-divider"></li>
+              <li>
+                  <a class="dropdown-item" href="{% url 'admin:panel' %}">
+                      <i class="bi bi-shield-lock me-2"></i>{% trans 'Admin Panel' %}
+                  </a>
+              </li>
+              <li>
+                  <a class="dropdown-item" href="{% url 'admin:users' %}">
+                      <i class="bi bi-people me-2"></i>{% trans 'Manage Users' %}
+                  </a>
+              </li>
+              {% endif %}
+
+              <li><hr class="dropdown-divider"></li>
+              <li>
+                  <a class="dropdown-item" href="https://docs.ereuse.org/help">
+                      <i class="bi bi-question-circle me-2"></i>{% trans 'Help' %}
+                  </a>
+              </li>
+              <li>
+                  <a class="dropdown-item text-danger" href="{% url 'login:logout' %}">
+                      <i class="fa fa-arrow-right-from-bracket me-2"></i>{% trans 'Logout' %}
+                  </a>
+              </li>
+          </ul>
+      </div>
+  </header>
     <div class="container-fluid">
       <div class="row">
-        <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
-          <div class="position-sticky pt-5">
+        <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse collapse-horizontal" style="max-width: 200px;">
+          <div class="position-sticky pt-md-5">
             <ul class="nav flex-column">
 	      {% if user.is_admin %}
               <li class="nav-item">
@@ -195,11 +227,11 @@
                 </ul>
               </li>
               <li class="nav-item">
-                <a class="admin {% if path in 'upload list import add' %}active {% endif %}nav-link fw-bold" data-bs-toggle="collapse" data-bs-target="#ul_evidences" aria-expanded="false" aria-controls="ul_evidences" href="javascript:void()">
+                <a class="admin {% if path in 'upload list import add photo' %}active {% endif %}nav-link fw-bold" data-bs-toggle="collapse" data-bs-target="#ul_evidences" aria-expanded="false" aria-controls="ul_evidences" href="javascript:void()">
                   <i class="bi bi-usb-drive icon_sidebar"></i>
                   {% trans 'Evidences' %}
                 </a>
-                <ul class="flex-column mb-2 ul_sidebar accordion-collapse {% if path in 'upload list import add' %}expanded{% else %}collapse{% endif %}" id="ul_evidences" data-bs-parent="#sidebarMenu">
+                <ul class="flex-column mb-2 ul_sidebar accordion-collapse {% if path in 'upload list import add photo' %}expanded{% else %}collapse{% endif %}" id="ul_evidences" data-bs-parent="#sidebarMenu">
                   <li class="nav-item">
                     <a class="nav-link{% if path == 'list' %} active2{% endif %}" href="{% url 'evidence:list' %}">
                       {% trans 'List of evidences' %}
@@ -215,6 +247,11 @@
                       {% trans 'Upload Spreadsheet' %}
                     </a>
                   </li>
+                    <li class="nav-item">
+                        <a class="nav-link{% if path == 'photo' %} active2{% endif %}" href="{% url 'evidence:photo' %}">
+                            {% trans 'Upload Photo' %}
+                        </a>
+                    </li>
                   <li class="nav-item">
                     <a class="nav-link{% if path == 'add' %} active2{% endif %}" href="{% url 'device:add' %}">
                       {% trans 'Upload Web Form' %}

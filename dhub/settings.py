@@ -27,43 +27,25 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-1p8rs@qf$$l^!vsbetagojw23kw@1ez(qi8^(s0t&#7!wyh!l3"
+SECRET_KEY = config('DEVICEHUB_SECRET_KEY_SECRET')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config('DEBUG', default=False, cast=bool)
+DEBUG = config('DEVICEHUB_DEBUG', default=False, cast=bool)
+DEMO = config('DEVICEHUB_DEMO', default=False, cast=bool)
 
 DEVICEHUB_HOST = config("DEVICEHUB_HOST")
 assert DEVICEHUB_HOST not in [None, ''], "DEVICEHUB_HOST var is MANDATORY"
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default=DEVICEHUB_HOST, cast=Csv())
+ALLOWED_HOSTS = config('DEVICEHUB_ALLOWED_HOSTS', default=DEVICEHUB_HOST, cast=Csv())
 assert DEVICEHUB_HOST in ALLOWED_HOSTS, f"DEVICEHUB_HOST {DEVICEHUB_HOST} is not in ALLOWED_HOSTS {ALLOWED_HOSTS}"
 
-CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default=f'https://{DEVICEHUB_HOST}', cast=Csv())
+CSRF_TRUSTED_ORIGINS = config('DEVICEHUB_CSRF_TRUSTED_ORIGINS', default=f'https://{DEVICEHUB_HOST}', cast=Csv())
 
 
-INITIAL_ADMIN_EMAIL = config("INITIAL_ADMIN_EMAIL", default='admin@example.org')
-INITIAL_ADMIN_PASSWORD = config("INITIAL_ADMIN_PASSWORD", default='1234')
+INITIAL_ADMIN_EMAIL = config("DEVICEHUB_INIT_ADMIN_EMAIL", default='admin@example.org')
+INITIAL_ADMIN_PASSWORD = config("DEVICEHUB_INIT_ADMIN_PASSWORD", default='1234')
 
-DEFAULT_FROM_EMAIL = config(
-    'DEFAULT_FROM_EMAIL', default='webmaster@localhost')
-
-EMAIL_HOST = config('EMAIL_HOST', default='localhost')
-
-EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
-
-EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
-
-EMAIL_PORT = config('EMAIL_PORT', default=25, cast=int)
-
-EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=False, cast=bool)
-
-EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.smtp.EmailBackend')
-
-EMAIL_FILE_PATH = config('EMAIL_FILE_PATH', default='/tmp/app-messages')
-
-ENABLE_EMAIL = config("ENABLE_EMAIL", default=True, cast=bool)
-
-EVIDENCES_DIR = config("EVIDENCES_DIR", default=os.path.join(BASE_DIR, "db"))
+EVIDENCES_DIR = config("DEVICEHUB_EVIDENCES_DIR", default=os.path.join(BASE_DIR, "db"))
 
 
 # Application definition
@@ -83,6 +65,7 @@ INSTALLED_APPS = [
     'django_extensions',
     'django_bootstrap5',
     'django_tables2',
+    'dbbackup',
     "login",
     "user",
     "device",
@@ -92,10 +75,11 @@ INSTALLED_APPS = [
     "action",
     "admin",
     "api",
+    "environmental_impact",
     "dhemail",
 ]
 
-DPP = config("DPP", default=False, cast=bool)
+DPP = config("DEVICEHUB_DPP", default=False, cast=bool)
 
 if DPP:
     INSTALLED_APPS.extend(["dpp", "did"])
@@ -143,12 +127,42 @@ WSGI_APPLICATION = "dhub.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
-DATABASES = {
+if config('DEVICEHUB_DB_TYPE', 'postgres') == 'postgres':
+    DATABASES = {
+        'default': {
+            'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.postgresql'),
+            'NAME': config('DEVICEHUB_POSTGRES_NAME', 'devicehub'),
+            'USER': config('DEVICEHUB_POSTGRES_USER', 'ereuse'),
+            'PASSWORD': config('DEVICEHUB_POSTGRES_PASSWORD_SECRET', 'ereuse'),
+            'HOST': config('DEVICEHUB_DB_HOST', 'devicehub-postgres'),
+            'PORT': config('DEVICEHUB_DB_PORT', '5432'),
+        }
+    }
+# sqlite is fallback
+else:
+    DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db/db.sqlite3",
+        "NAME": Path(EVIDENCES_DIR) / "db.sqlite3",
     }
 }
+
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage'
+   },
+    "dbbackup": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+        "OPTIONS": {
+            "location": config('DEVICEHUB_BACKUPS_DIR',
+                               default=os.path.join(BASE_DIR, "backups")),
+        },
+    },
+}
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
@@ -174,7 +188,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = config("TIME_ZONE", default="UTC")
+TIME_ZONE = config("DEVICEHUB_TIME_ZONE", default="UTC")
 
 USE_I18N = True
 
@@ -193,12 +207,11 @@ LANGUAGES = [
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
-STATIC_URL = "static/"
 STATIC_URL = '/static/'
 MEDIA_URL = '/media/'
 
-STATIC_ROOT = config('STATIC_ROOT', default="static")
-MEDIA_ROOT = config('MEDIA_ROOT', default="upload")
+STATIC_ROOT = config('DEVICEHUB_STATIC_ROOT', default="static")
+MEDIA_ROOT = config('DEVICEHUB_MEDIA_ROOT', default="upload")
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
@@ -259,23 +272,28 @@ LOGGING = {
 
 SNAPSHOT_PATH="/tmp/"
 DATA_UPLOAD_MAX_NUMBER_FILES = 1000
-COMMIT = config('COMMIT', default='')
+COMMIT = config('DEVICEHUB_COMMIT', default='')
 
 # DLT SETTINGS
-TOKEN_DLT = config("API_DLT_TOKEN", default=None)
-API_DLT = config("API_DLT", default=None)
-API_RESOLVER = config("API_RESOLVER", default=None)
-ID_FEDERATED = config("ID_FEDERATED", default=None)
+TOKEN_DLT = config("DEVICEHUB_API_DLT_TOKEN_SECRET", default=None)
+API_DLT = config("DEVICEHUB_API_DLT", default=None)
+API_RESOLVER = config("DEVICEHUB_API_RESOLVER", default=None)
+ID_FEDERATED = config("DEVICEHUB_ID_FEDERATED", default=None)
 
 # EMAIL
-INITIAL_ADMIN_EMAIL = config("INITIAL_ADMIN_EMAIL", default='admin@example.org')
-DEFAULT_FROM_EMAIL = config(
-    'DEFAULT_FROM_EMAIL', default='webmaster@localhost')
-EMAIL_HOST = config('EMAIL_HOST', default='localhost')
-EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
-EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
-EMAIL_PORT = config('EMAIL_PORT', default=25, cast=int)
-EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=False, cast=bool)
-EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.smtp.EmailBackend')
-EMAIL_FILE_PATH = config('EMAIL_FILE_PATH', default='/tmp/app-messages')
-ENABLE_EMAIL = config('ENABLE_EMAIL', default=True, cast=bool)
+INITIAL_ADMIN_EMAIL = config("DEVICEHUB_INIT_ADMIN_EMAIL", default='admin@example.org')
+DEFAULT_FROM_EMAIL = config('DEVICEHUB_DEFAULT_FROM_EMAIL', default='webmaster@localhost')
+EMAIL_HOST = config('DEVICEHUB_EMAIL_HOST', default='localhost')
+EMAIL_HOST_USER = config('DEVICEHUB_EMAIL_HOST_USER', default='')
+EMAIL_HOST_PASSWORD = config('DEVICEHUB_EMAIL_HOST_PASSWORD_SECRET', default='')
+EMAIL_PORT = config('DEVICEHUB_EMAIL_PORT', default=25, cast=int)
+EMAIL_USE_TLS = config('DEVICEHUB_EMAIL_USE_TLS', default=False, cast=bool)
+EMAIL_BACKEND = config('DEVICEHUB_EMAIL_BACKEND', default='django.core.mail.backends.smtp.EmailBackend')
+EMAIL_FILE_PATH = config('DEVICEHUB_EMAIL_FILE_PATH', default='/tmp/app-messages')
+ENABLE_EMAIL = config('DEVICEHUB_ENABLE_EMAIL', default=True, cast=bool)
+
+# ALGORITHM
+DEVICEHUB_ALGORITHM_DEVICE=config('DEVICEHUB_ALGORITHM_DEVICE', default="ereuse24")
+DEVICEHUB_ALGORITHM_PHOTO=config('DEVICEHUB_ALGORITHM_PHOTO', default="photo25")
+DEVICEHUB_ALGORITHM_DISPLAY=config('DEVICEHUB_ALGORITHM_DISPLAY', default="ereuse24")
+DEVICEHUB_ALGORITHM_DISK=config('DEVICEHUB_ALGORITHM_DISK', default="ereuse24")

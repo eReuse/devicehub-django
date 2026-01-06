@@ -1,4 +1,6 @@
 import json
+import logging
+
 from tablib import Dataset
 
 from django.utils.translation import gettext_lazy as _
@@ -22,6 +24,7 @@ from evidence.xapian import search
 from device.models import Device
 from lot.models import Lot, LotSubscription, Donor
 
+logger = logging.getLogger('django')
 
 class UnassignedDevicesView(DeviceTableMixin, InventaryMixin):
     template_name = "unassigned_devices.html"
@@ -96,12 +99,15 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
         search_query = self.request.GET.get('q', '').lower()
 
         if search_query:
-            return [
-                Device(id=x) for x in chids
-                if Device(id=x).matches_query(search_query)
-            ]
+            ldevices = []
+            for x in chids:
+                dev = Device(id=x)
+                if dev.matches_query(search_query):
+                    ldevices.append(dev)
+            return ldevices
 
-        return [Device(id=x, lot=self.object) for x in chids]
+        owner = self.request.user.institution
+        return [Device(id=x, lot=self.object, owner=owner) for x in chids]
 
     def get_table_data(self):
         table_data = []
@@ -235,11 +241,14 @@ class SearchView(DeviceTableMixin, InventaryMixin):
 
             for x in matches:
                 # devices.append(self.get_annotations(x))
-                dev = self.get_properties(x)
-                if dev.id not in dev_id:
-                    devices.append(dev)
-                    dev_id.add(dev.id)
-
+                try:
+                    dev = self.get_properties(x)
+                    if dev.id not in dev_id:
+                        devices.append(dev)
+                        dev_id.add(dev.id)
+                except Exception as err:
+                    logger.error("Error: {}".format(err))
+                    continue
             # TODO fix of pagination, the count is not correct
             return devices, len(dev_id)
 
@@ -259,7 +268,7 @@ class SearchView(DeviceTableMixin, InventaryMixin):
 
         for i in query[0].split(" "):
             if i:
-                qry |= Q(value__startswith=i)
+                qry |= Q(value__contains=i)
 
         chids = SystemProperty.objects.filter(
             owner=self.request.user.institution
