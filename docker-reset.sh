@@ -254,7 +254,7 @@ main() {
         if [ "${DOCKER_ALWAYS_BUILD:-}" = 'true' ]; then
                 docker compose build
         fi
-        docker compose up ${detach_arg:-}
+        docker compose up -d 
 }
 
 main "${@}"
