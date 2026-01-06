@@ -30,7 +30,7 @@ def _find_first_storage(components: List[Dict]) -> Optional[Dict]:
 
 def get_evidences_data_from_device(device: Device) -> List[EvidenceData]:
     """
-    Extract all evidences from a device as EvidenceData objects.
+    Extracts evidence data from a device, including power-on hours and disk metadata.
 
     Args:
         device: Device object with evidences
@@ -39,9 +39,29 @@ def get_evidences_data_from_device(device: Device) -> List[EvidenceData]:
         List of EvidenceData objects sorted chronologically
     """
 
+    # When root aliases exist, device.evidences contains evidences from multiple devices.
+    # For environmental impact, we only want evidences from the ACTUAL device being viewed,
+    # not from its aliases. Filter by checking if the evidence UUID has a property with
+    # the device's ID (not alias IDs).
+    from evidence.models import SystemProperty
+    
+    filtered_evidences = []
+    for evidence in device.evidences:
+        # Check if this evidence has a property matching the device ID
+        has_device_property = SystemProperty.objects.filter(
+            uuid=evidence.uuid,
+            value=device.id,
+            owner=device.owner
+        ).exists()
+        if has_device_property:
+            filtered_evidences.append(evidence)
+    
+    # Sort evidences chronologically by their created timestamp (oldest first)
+    sorted_evidences = sorted(filtered_evidences, key=lambda e: e.created or "")
+    
     evidences_data = []
-    # We want chronological order (oldest first)
-    for idx, evidence in enumerate(reversed(device.evidences)):
+    # Process evidences in chronological order (oldest first)
+    for idx, evidence in enumerate(sorted_evidences):
         components = evidence.get_components()
         poh = 0
         disk_metadata = DiskMetadata("", "", "")
