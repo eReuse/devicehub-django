@@ -6,7 +6,6 @@ from django.db import models
 
 
 import json
-from pyvckit.verify import verify_vc
 
 from django.db.models import Q
 from utils.constants import STR_EXTEND_SIZE, CHASSIS_DH

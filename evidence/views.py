@@ -27,7 +27,7 @@ from django_tables2 import SingleTableView
 from evidence.tables import EvidenceTable
 
 import json
-from pyvckit.verify import verify_vc
+from pyvckit.verify import verify_signature, verify_schema
 from jsonschema import Draft202012Validator, RefResolver
 from datetime import datetime
 
@@ -228,7 +228,7 @@ class ValidateDPPView(TemplateView):
         credential_string = json.dumps(credential_json)
 
         try:
-            is_signature_valid = verify_vc(credential_string, verify=True)
+            is_signature_valid = verify_signature(credential_string, verify=True)
             validation_status['cryptographic_valid'] = is_signature_valid
 
             if is_signature_valid:
@@ -243,30 +243,17 @@ class ValidateDPPView(TemplateView):
 
         try:
             schema_url = credential_json.get('credentialSchema', {}).get('id')
-            if not schema_url:
-                raise ValueError("Credential missing 'credentialSchema' ID.")
+            is_signature_valid = verify_schema(credential_string, verify=True)
+            validation_status['schema_valid'] = True
 
-            schema_response = requests.get(schema_url)
-            schema_response.raise_for_status()
-            schema_doc = schema_response.json()
-
-            resolver = RefResolver(base_uri=schema_url, referrer=schema_doc)
-            validator = Draft202012Validator(schema_doc, resolver=resolver)
-
-            errors = list(validator.iter_errors(credential_json))
-
-            if not errors:
-                validation_status['schema_valid'] = True
-                validation_status['schema_details'] = f"Schema valid against {schema_url}."
-            else:
-                validation_status['schema_valid'] = False
-                error_messages = [f"Error at path '{'/'.join(map(str, e.path))}'" for e in errors[:3]]
-                validation_status['schema_details'] = "Schema validation failed: " + "; ".join(error_messages)
+            validation_status['schema_details'] = f"Schema valid against {schema_url}."
 
         except requests.exceptions.RequestException:
+            validation_status['schema_valid'] = False
             validation_status['schema_details'] = f"Schema download failed: Could not fetch schema from {schema_url}."
         except Exception as e:
-            validation_status['schema_details'] = f"Schema validation failed due to internal error: {e}"
+            validation_status['schema_valid'] = False
+            validation_status['schema_details'] = f"Schema validation failed: {e}"
 
         final_status = 'verified' if validation_status['cryptographic_valid'] and validation_status['schema_valid'] else 'failed'
 
