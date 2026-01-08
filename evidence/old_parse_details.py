@@ -11,3 +11,5 @@ class ParseSnapshot:
 
         self.device = snapshot.get("device")
         self.components = snapshot.get("components")
+        for c in self.components:
+            c.pop("actions", None)

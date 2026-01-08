@@ -120,6 +120,7 @@ class Device:
 
         algos = list(ALGOS.keys())
         algos.append('CUSTOM_ID')
+        algos.append('web25')
         self.hids = list(set([x.value for x in properties.filter(
             key__in=algos,
         )]))

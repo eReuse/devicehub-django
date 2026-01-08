@@ -141,8 +141,6 @@ class Evidence:
             self.device_chassis = device.get("chassis") or ''
             self.device_version = device.get("version") or ''
             self.components = parse.components
-            for c in self.components:
-                c.pop("actions", None)
 
         if self.is_legacy():
             return

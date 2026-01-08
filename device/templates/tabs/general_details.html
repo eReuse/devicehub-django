@@ -29,7 +29,7 @@
           </div>
 
           {% if object.is_websnapshot and object.last_user_evidence %}
-            {% for k, v in object.last_user_evidence.items %}
+          {% for k, v in object.last_user_evidence %}
             <div class="row mb-3">
               <div class="col-sm-4 text-muted fw-bold">{{ k }}
               </div>

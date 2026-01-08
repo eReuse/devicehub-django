@@ -101,19 +101,38 @@ def create_dhid(row, user):
     sp.save()
 
 
-def create_computer_monitor(row, user):
-    snapshot = json.loads(row)
-    snapshot = snapshot.get("device", {})
-    if not snapshot.get("type") == "ComputerMonitor":
+def create_monitor(row, user):
+    row["type"] = "Display"
+    dhid = row.pop("dhid", '').lower()
+    created = row.pop("created", None)
+    doc = create_doc(row)
+    # path_name = save_in_disk(doc, user.institution.name, place="placeholder")
+    create_index(doc, user)
+    sp = create_property(doc, user, commit=True)
+    # move_json(path_name, user.institution.name, place="placeholder")
+
+    root_alias = RootAlias.objects.filter(
+        owner=user.institution,
+        alias=sp.value
+    ).first()
+
+    if root_alias:
+        if root_alias.root != f"custom_id:{dhid}":
+            logger.error("RootAlias Duplicate %s - %s", root_alias.root, dhid)
         return
 
-    snapshot["type"] = "Display"
-    snapshot.pop("actions", None)
-    doc = create_doc(snapshot)
-    path_name = save_in_disk(doc, user.institution.name, place="placeholder")
-    create_index(doc, user)
-    create_property(doc, user, commit=True)
-    move_json(path_name, user.institution.name, place="placeholder")
+    dcreated = datetime.strptime(created+"00", "%Y-%m-%d %H:%M:%S.%f%z")
+
+    RootAlias.objects.create(
+        created=dcreated,
+        alias=sp.value,
+        root="custom_id:{}".format(dhid),
+        owner=user.institution,
+        user=user
+    )
+
+    sp.created = dcreated
+    sp.save()
 
 
 def migrate_snapshots(snap_path, user):
@@ -121,7 +140,6 @@ def migrate_snapshots(snap_path, user):
     with open(snap_path) as _f:
         s = _f.read()
         if 'ComputerMonitor' in s:
-            create_computer_monitor(s, user)
             return
 
         snapshot = json.loads(s)
@@ -140,7 +158,7 @@ def migrate_snapshots(snap_path, user):
         if not timestamp:
             continue
 
-        if "+" not in timestamp and "Z" not in timestamp:
+        if "+" not in timestamp and "Z" not in timestamp and "-" in timestamp:
             timestamp += "+00:00"
 
         timestamp = datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%S.%f%z")
@@ -162,9 +180,9 @@ def create_lots(row, user):
         return lot
 
     tag = "Temporal"
-    if incoming == USER_ID:
+    if incoming:
         tag = "Entrada"
-    elif outgoing == USER_ID:
+    elif outgoing:
         tag = "Salida"
 
     ltag = LotTag.objects.filter(name=tag, owner=user.institution).first()
@@ -252,6 +270,10 @@ def parse_args():
         '--snapshots',
         help="dir where reside the snapshots.",
     )
+    parser.add_argument(
+        '--monitors',
+        help="path to the csv file with monitor details."
+    )
     return parser.parse_args()
 
 
@@ -285,6 +307,13 @@ def main():
     if args.csv_lots_dhid:
         for row in open_csv(args.csv_lots_dhid):
             add_device_in_lot(row, user)
+
+    if args.monitors:
+        for row in open_csv(args.monitors):
+            try:
+                create_monitor(row, user)
+            except Exception as err:
+                logger.error(err)
 
 if __name__ == '__main__':
     main()

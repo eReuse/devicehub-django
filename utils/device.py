@@ -18,7 +18,7 @@ def create_doc(data):
         return
 
     doc = {}
-    device = {"manufacturer": "", "model": "", "amount": 1}
+    device = {"manufacturer": "", "model": "", "amount": 1, "serial_number": ""}
     kv = {}
     _uuid = str(uuid.uuid4())
     web_id = "web25:{}".format(hashlib.sha3_256(_uuid.encode()).hexdigest())
@@ -75,7 +75,7 @@ def create_property(doc, user, commit=False):
         'uuid': doc['uuid'],
         'owner': user.institution,
         'user': user,
-        'key': 'web',
+        'key': 'web25',
         'value': doc['WEB_ID'],
     }
     if commit:

@@ -39,7 +39,7 @@ class ParseSnapshot:
         if snapshot.get("credentialSubject"):
             data = snapshot["credentialSubject"]
 
-        self.device = {"actions": []}
+        self.device = {}
         self.components = []
 
         self.dmi = DMIParse(self.dmidecode_raw)

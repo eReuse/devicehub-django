@@ -78,8 +78,8 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
         context.update({
             'title': "{} {}".format(_("Lot"), lot.name),
             'lot': lot,
-            'count': len(self.get_queryset()),
-            'paginate_choices': self.paginate_choices,
+            'count': self.get_queryset_count(),
+            # 'paginate_choices': self.paginate_choices,
             'state_definitions': self._get_state_definitions(),
             'limit': int(self.request.GET.get('limit', self.paginate_by)),
             'search_query': self.request.GET.get('q', ''),
@@ -91,6 +91,22 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
             'donor': donor,
         })
         return context
+
+    def get_queryset_count(self):
+        chids = self.object.devicelot_set.all().values_list(
+            "device_id", flat=True
+        ).distinct()
+        search_query = self.request.GET.get('q', '').lower()
+
+        if search_query:
+            ldevices = []
+            for x in chids:
+                dev = Device(id=x)
+                if dev.matches_query(search_query):
+                    ldevices.append(dev)
+            return len(ldevices)
+
+        return chids.count()
 
     def get_queryset(self):
         chids = self.object.devicelot_set.all().values_list(
