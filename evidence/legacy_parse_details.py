@@ -14,7 +14,7 @@ logger = logging.getLogger('django')
 
 def get_lshw_child(child, nets, component):
     try:
-        if child.get('id') == component:
+        if child.get('id', "").split(":")[0] == component:
             nets.append(child)
         if child.get('children'):
             [get_lshw_child(x, nets, component) for x in child['children']]
@@ -29,7 +29,7 @@ class ParseSnapshot:
         self.hwinfo_raw = snapshot["data"].get("hwinfo", "")
         self.lshw_raw = snapshot["data"].get("lshw", {}) or {}
         self.lscpi_raw = snapshot["data"].get("lspci", "")
-        self.device = {"actions": []}
+        self.device = {}
         self.components = []
         self.monitors = []
 
@@ -72,6 +72,8 @@ class ParseSnapshot:
         self.get_display()
         self.get_sound_card()
         self.get_networks()
+        for c in self.components:
+            c.pop("actions", None)
 
     def get_cpu(self):
         for cpu in self.dmi.get('Processor'):
@@ -80,7 +82,6 @@ class ParseSnapshot:
                 serial = cpu.get('ID').replace(' ', '')
             self.components.append(
                 {
-                    "actions": [],
                     "type": "Processor",
                     "speed": self.get_cpu_speed(cpu),
                     "cores": int(cpu.get('Core Count', 1)),
@@ -103,7 +104,6 @@ class ParseSnapshot:
 
             self.components.append(
                 {
-                    "actions": [],
                     "type": "RamModule",
                     "size": self.get_ram_size(ram),
                     "speed": self.get_ram_speed(ram),
@@ -119,7 +119,6 @@ class ParseSnapshot:
         for moder_board in self.dmi.get("Baseboard"):
             self.components.append(
                 {
-                    "actions": [],
                     "type": "Motherboard",
                     "version": moder_board.get("Version"),
                     "serialNumber": moder_board.get("Serial Number", "").strip(),
@@ -146,7 +145,6 @@ class ParseSnapshot:
 
             self.components.append(
                 {
-                    "actions": [],
                     "type": "GraphicCard",
                     "memory": "",
                     "manufacturer": c.get("vendor", self.default),
@@ -169,7 +167,6 @@ class ParseSnapshot:
 
             self.components.append(
                 {
-                    "actions": self.sanitize(sm),
                     "type": self.get_data_storage_type(sm),
                     "model": model,
                     "manufacturer": manufacturer,
@@ -207,7 +204,6 @@ class ParseSnapshot:
             wireless = bool(c.get('configuration', {}).get('wireless', False))
             self.components.append(
                 {
-                    "actions": [],
                     "type": "NetworkAdapter",
                     "model": c.get('product'),
                     "manufacturer": c.get('vendor'),
@@ -226,7 +222,6 @@ class ParseSnapshot:
         for c in multimedias:
             self.components.append(
                 {
-                    "actions": [],
                     "type": "SoundCard",
                     "model": c.get('product'),
                     "manufacturer": c.get('vendor'),
@@ -276,7 +271,6 @@ class ParseSnapshot:
 
             self.components.append(
                 {
-                    "actions": [],
                     "type": "Display",
                     "model": model,
                     "manufacturer": manufacturer,
