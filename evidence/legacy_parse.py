@@ -23,10 +23,15 @@ def get_mac(lshw):
     nets = []
     get_lshw_child(hw, nets, 'network')
 
+    if not nets:
+        get_lshw_child(hw, nets, 'bridge')
+        nets = [x for x in nets if x.get("businfo") and ":" in x.get("serial", "")]
+
+    nets = [x for x in nets if x.get("businfo") and x.get("serial")]
     nets_sorted = sorted(nets, key=lambda x: x['businfo'])
 
     if nets_sorted:
-        mac = nets_sorted[0]['serial']
+        mac = nets_sorted[0]["serial"]
         logger.debug("The snapshot has the following MAC: %s" , mac)
         return mac
 
@@ -46,6 +51,11 @@ class Build(BuildMix):
         self.sku = self.get_sku()
         self.type = self.chassis
         self.version = self.get_version()
+
+        self.mac = self.get_mac()
+        if not self.mac:
+            txt = "Could not retrieve MAC address in snapshot %s"
+            logger.warning(txt, self.uuid)
 
     def get_chassis_dh(self):
         chassis = self.get_chassis()
@@ -72,3 +82,9 @@ class Build(BuildMix):
         self.device.pop("actions", None)
         for c in self.components:
             c.pop("actions", None)
+
+    def get_mac(self):
+         lshw = self.json.get("data", {}).get("lshw")
+         if lshw:
+             return get_mac(lshw) or ""
+         return ""
