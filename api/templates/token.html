@@ -3,13 +3,24 @@
 {% load render_table from django_tables2 %}
 
 {% block content %}
-<h3>
-  <i class="{{ icon }}"></i>
-  {{ subtitle }}
-</h3>
-{% render_table table %}
+<div class="container-fluid px-0 mt-3">
+  <div class="card mb-4">
 
-<div class="form-actions-no-box">
-    <a class="btn btn-green-admin" href="{% url 'api:new_token' %}">{% translate "Generate a new token" %} <i class="bi bi-plus"></i></a>
+    <div class="d-flex justify-content-between align-items-center p-3 bg-light border-bottom">
+      <h5 class="mb-0">
+        <i class="{{ icon }}"></i> {{ subtitle }}
+      </h5>
+      <div class="d-flex align-items-center gap-2">
+        <a class="btn btn-green-admin" href="{% url 'api:new_token' %}">
+           {% translate "New token" %}
+        </a>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      {% render_table table %}
+    </div>
+
+  </div>
 </div>
 {% endblock %}
