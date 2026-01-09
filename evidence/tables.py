@@ -3,6 +3,7 @@ import django_tables2 as tables
 from django.utils.html import format_html
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
+from evidence.models import CredentialProperty
 from django.utils import timezone
 from django.conf import settings
 from evidence.models import Evidence
@@ -31,6 +32,7 @@ class EvidenceTable(tables.Table):
     legacy = tables.Column(verbose_name=_("Legacy"), accessor="uuid")
     ev_type = tables.Column(verbose_name=_("Type"), accessor="uuid")
     device = tables.Column(verbose_name=_("Device"), accessor="value")
+    digital_passport = tables.Column(verbose_name=_("Digital Passport"), accessor="uuid", orderable=False)
 
     class Meta:
         template_name = "custom_table.html"
@@ -60,6 +62,17 @@ class EvidenceTable(tables.Table):
                 }
             else:
                 self.evidence_map = {}
+
+    def render_digital_passport(self, value):
+
+        credential_prop = self.evidence_map.get(value).get_credential()
+        if credential_prop:
+            url = reverse('evidence:credential_detail', kwargs={'pk': credential_prop.pk})
+            return format_html(
+                '<a href="{}" class="btn btn-sm btn-outline-success">{}</a>',
+                url,
+                _("View")
+            )
 
     def render_device(self, value, record):
         try:

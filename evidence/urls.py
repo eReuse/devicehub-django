@@ -23,4 +23,11 @@ urlpatterns = [
     path("<uuid:pk>/download", views.DownloadEvidenceView.as_view(), name="download"),
     path("<uuid:pk>/photo", views.PhotoEvidenceView.as_view(), name="photo_file"),
     path("alias/<str:pk>/<uuid:snapshot_id>/delete", views.DeleteEvidenceAliasView.as_view(), name="delete_alias"),
+    path("tag/<str:pk>/delete", views.DeleteEvidenceAliasView.as_view(), name="delete_tag"),
+
+    path('credential/<int:pk>/', views.CredentialDetailView.as_view(), name='credential_detail'),
+    path('credential/<int:pk>/download/', views.DownloadDPPView.as_view(), name='download_dpp'),
+    path('credential/<int:pk>/validate/', views.ValidateDPPView.as_view(), name='validate_dpp'),
+    path('credential/by-evidence/<uuid:uuid>/', views.CredentialByEvidenceUUIDView.as_view(), name='credential_by_evidence')
+
 ]
