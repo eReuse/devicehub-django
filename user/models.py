@@ -53,7 +53,11 @@ class Institution(models.Model):
         blank=True,
         null=True,
         validators=[URLValidator(schemes=['http', 'https', 'did'])],
+<<<<<<< HEAD
         help_text=_("Globally unique URI for this facility (e.g., did:web:example.com).")
+=======
+        help_text=_("Globally unique URI for this facility (e.g., did:web:...)")
+>>>>>>> 0c6ecef2 (updated institution model and added config)
     )
     facility_description = models.TextField(
         _("Facility Description"),
@@ -69,6 +73,7 @@ class Institution(models.Model):
         validators=[RegexValidator(r'^[A-Z]{2}$', _("Must be a 2-letter uppercase ISO code (e.g. AU, DE)"))],
         help_text=_("ISO 3166-1 alpha-2 code (e.g., AU, US, DE).")
     )
+<<<<<<< HEAD
 
     street_address = models.CharField(
         _("Street Address"),
@@ -99,6 +104,8 @@ class Institution(models.Model):
         help_text=_("The state, province, or geographic region.")
     )
 
+=======
+>>>>>>> 0c6ecef2 (updated institution model and added config)
     algorithm = models.CharField(
         _("Algorithm"),
         max_length=30,
@@ -107,17 +114,34 @@ class Institution(models.Model):
         help_text=_("The default algorithm used for device aggregation."),
     )
 
+<<<<<<< HEAD
     def __str__(self):
         return self.name
+=======
+    street_address = models.CharField(_("Street Address"), max_length=255, blank=True, null=True)
+    postal_code = models.CharField(_("Postal Code"), max_length=20, blank=True, null=True)
+    location = models.CharField(_("City/Locality"), max_length=100, blank=True, null=True)
+    region = models.CharField(_("State/Region"), max_length=100, blank=True, null=True)
+
+    def __str__(self):
+        return self.name
+
+>>>>>>> 0c6ecef2 (updated institution model and added config)
 
 class InstitutionSettings(models.Model):
     institution = models.OneToOneField(
         Institution,
         on_delete=models.CASCADE,
         related_name='settings',
+<<<<<<< HEAD
         verbose_name=_("Institution"),
         help_text=_("The institution these settings belong to.")
+=======
+        verbose_name=_("Institution")
+>>>>>>> 0c6ecef2 (updated institution model and added config)
     )
+
+    # --- QR Settings ---
     qr_content_type = models.CharField(
         _("QR Code Content"),
         max_length=20,
@@ -144,8 +168,54 @@ class InstitutionSettings(models.Model):
         help_text=_("Text printed at the top of the label.")
     )
 
+<<<<<<< HEAD
     def __str__(self):
         return f"Settings for {self.institution.name}"
+=======
+    # --- IDHub  Settings ---
+    issuer_did = models.CharField(
+        _("Issuer DID"),
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text=_("The W3C DID (e.g., did:web:example.com) that is used on the idhub service.")
+    )
+    signing_service_domain = models.URLField(
+        _("Signing Service URL"),
+        blank=True,
+        null=True,
+        help_text=_("Idhub endpoint where the credential will be signed.")
+    )
+    signing_auth_token = models.CharField(
+        _("Signing API Token"),
+        max_length=1024,
+        blank=True,
+        null=True,
+        help_text=_("Bearer token for the signing service.")
+    )
+    device_dpp_schema = models.CharField(
+        _("Device schema name"),
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text=_("Filename of the dpp credential schema found on your idhub provider.")
+    )
+    untp_drf_schema = models.CharField(
+        _("UNTP's Digital Facility Record schema name"),
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text=_("Filename of the drf schema found on your idhub provider.")
+    )
+
+    def __str__(self):
+        return f"Settings for {self.institution.name}"
+
+    class Meta:
+        verbose_name = _("Institution Settings")
+        verbose_name_plural = _("Institution Settings")
+
+>>>>>>> 0c6ecef2 (updated institution model and added config)
 
 class UserManager(BaseUserManager):
     def create_user(self, email, institution, password=None, commit=True):

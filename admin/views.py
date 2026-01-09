@@ -13,6 +13,7 @@ from django.views.generic.edit import (
     DeleteView,
 )
 from django.db import IntegrityError,   transaction
+from user.models import Institution, InstitutionSettings
 from dashboard.mixins import DashboardView, Http403
 from admin.forms import OrderingStateForm, InstitutionSettingsForm, InstitutionForm
 from user.models import User, Institution, InstitutionSettings
@@ -247,10 +248,31 @@ class InstitutionView(AdminView, UpdateView):
     success_url = reverse_lazy('admin:panel')
     form_class = InstitutionForm
 
-    def get_form_kwargs(self):
-        self.object = self.request.user.institution
-        kwargs = super().get_form_kwargs()
-        return kwargs
+    def form_valid(self, form):
+        messages.success(self.request, _("Institution information updated successfully."))
+        return super().form_valid(form)
+
+    def get_object(self, queryset=None):
+        institution = self.request.user.institution
+        return institution
+
+
+class InstitutionConfigView( AdminView, UpdateView):
+    template_name = "institution.html"
+    model = InstitutionSettings
+    form_class = InstitutionSettingsForm
+    title = _("Configuration & Signing")
+    subtitle = _("Manage technical settings and signing credentials")
+    success_url = reverse_lazy('admin:panel')
+
+    def form_valid(self, form):
+        messages.success(self.request, _("Configuration updated successfully."))
+        return super().form_valid(form)
+
+    def get_object(self, queryset=None):
+        institution = self.request.user.institution
+        obj, created = InstitutionSettings.objects.get_or_create(institution=institution)
+        return obj
 
 
 class StateDefinitionContextMixin(ContextMixin):

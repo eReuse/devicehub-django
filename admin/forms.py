@@ -26,7 +26,7 @@ class InstitutionForm(forms.ModelForm):
             'name',
             'logo', 'responsable_person', 'supervisor_person',
             'facility_id_uri', 'facility_description', 'country',
-            'street_address', 'postal_code', 'location', 'region'
+            'street_address', 'postal_code', 'locality', 'region'
         ]
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': _('e.g. Acme Corp')}),
@@ -39,7 +39,7 @@ class InstitutionForm(forms.ModelForm):
             'country': forms.TextInput(attrs={'class': 'form-control', 'placeholder': _('e.g. US, ES, DE'), 'maxlength': '2'}),
             'street_address': forms.TextInput(attrs={'class': 'form-control', 'placeholder': _('123 Main St')}),
             'postal_code': forms.TextInput(attrs={'class': 'form-control', 'placeholder': _('10001')}),
-            'location': forms.TextInput(attrs={'class': 'form-control', 'placeholder': _('City or Locality')}), # Fixed typo here!
+            'location': forms.TextInput(attrs={'class': 'form-control', 'placeholder': _('City or Locality')}),
             'region': forms.TextInput(attrs={'class': 'form-control', 'placeholder': _('State or Province')}),
         }
 
@@ -58,7 +58,11 @@ class InstitutionSettingsForm(forms.ModelForm):
             'qr_content_type',
             'qr_label_header',
             'qr_include_logo',
-            'qr_printed_properties'
+            'qr_printed_properties',
+
+            'algorithm', 'issuer_did',
+            'signing_service_domain', 'signing_auth_token',
+            'device_dpp_schema', 'untp_drf_schema'
         ]
         widgets = {
             'qr_content_type': forms.RadioSelect,
