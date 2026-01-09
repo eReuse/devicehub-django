@@ -66,6 +66,11 @@ class InstitutionSettingsForm(forms.ModelForm):
             'qr_width_mm',
             'qr_height_mm',
             'qr_font_size'
+            'issuer_did',
+            'signing_service_domain',
+            'signing_auth_token',
+            'device_dpp_schema',
+            'untp_drf_schema'
         ]
         widgets = {
             'qr_content_type': forms.RadioSelect,
