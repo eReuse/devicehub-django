@@ -64,13 +64,17 @@ class BuildMix:
 
     def generate_chids(self):
         self.algorithms = {}
-
-        for k in ALGOS.keys():
-            if not settings.DPP and k == 'ereuse22':
-                continue
-            #Photo build class handles this algo
-            if k == "photo25":
-                continue
+        k = settings.DEVICEHUB_ALGORITHM_DEVICE
+        if self.type == "Display":
+            k = settings.DEVICEHUB_ALGORITHM_DISPLAY
+        elif self.type == "Disk":
+            k = settings.DEVICEHUB_ALGORITHM_DISK
+        elif self.type == "Image":
+            k = settings.DEVICEHUB_ALGORITHM_PHOTO
+        self.algorithms[k] = self.get_hid(k)
+        # for k in ALGOS.keys():
+        #     if not settings.DPP and k == 'ereuse22':
+        #         continue
 
         #     self.algorithms[k] = self.get_hid(k)
 

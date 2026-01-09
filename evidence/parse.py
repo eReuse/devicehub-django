@@ -81,14 +81,15 @@ class Build:
             return
 
         for k, v in self.build.algorithms.items():
-            value = "{}:{}".format(k, self.sign(v))
+            value = "{}:{}".format(k, v)
             SystemProperty.objects.create(
                 uuid=self.uuid,
                 owner=self.user.institution,
                 user=self.user,
                 key=k,
-                value=v
+                value=value
             )
+
 
     def register_device_dlt(self):
         legacy_dpp = self.build.algorithms.get('ereuse22')
