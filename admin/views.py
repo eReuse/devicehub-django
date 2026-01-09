@@ -12,10 +12,11 @@ from django.views.generic.edit import (
     UpdateView,
     DeleteView,
 )
-from django.core.exceptions import ValidationError
+from django.utils.translation import gettext_lazy as _
 from django.db import IntegrityError,   transaction
+from user.models import Institution, InstitutionSettings
 from dashboard.mixins import DashboardView, Http403
-from admin.forms import OrderingStateForm
+from admin.forms import OrderingStateForm, InstitutionForm, InstitutionSettingsForm
 from user.models import User, Institution
 from admin.email import NotifyActivateUserByEmail
 from admin.tables import UserTable
@@ -242,22 +243,37 @@ class InstitutionView(AdminView, UpdateView):
     template_name = "institution.html"
     title = _("Edit institution")
     section = "admin"
+    subtitle = _("Manage physical facility and address information")
     subtitle = _('Edit institution')
     model = Institution
     success_url = reverse_lazy('admin:panel')
-    fields = (
-        "name",
-        "logo",
-        "location",
-        "responsable_person",
-        "supervisor_person",
-        "algorithm"
-    )
+    form_class = InstitutionForm
 
-    def get_form_kwargs(self):
-        self.object = self.request.user.institution
-        kwargs = super().get_form_kwargs()
-        return kwargs
+    def form_valid(self, form):
+        messages.success(self.request, _("Institution information updated successfully."))
+        return super().form_valid(form)
+
+    def get_object(self, queryset=None):
+        institution = self.request.user.institution
+        return institution
+
+
+class InstitutionConfigView( AdminView, UpdateView):
+    template_name = "institution.html"
+    model = InstitutionSettings
+    form_class = InstitutionSettingsForm
+    title = _("Configuration & Signing")
+    subtitle = _("Manage technical settings and signing credentials")
+    success_url = reverse_lazy('admin:panel')
+
+    def form_valid(self, form):
+        messages.success(self.request, _("Configuration updated successfully."))
+        return super().form_valid(form)
+
+    def get_object(self, queryset=None):
+        institution = self.request.user.institution
+        obj, created = InstitutionSettings.objects.get_or_create(institution=institution)
+        return obj
 
 
 class StateDefinitionContextMixin(ContextMixin):

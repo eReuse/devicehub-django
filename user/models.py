@@ -12,25 +12,101 @@ class Institution(models.Model):
     name = models.CharField(
         _("Name"),
         max_length=255,
-        blank=False,
-        null=False,
-        unique=True
+        unique=True,
+        help_text=_("Official registered name of the organization.")
     )
-    logo = models.CharField(_("Logo"), max_length=255, blank=True, null=True)
-    location = models.CharField(_("Location"), max_length=255, blank=True, null=True)
-    responsable_person = models.CharField(
-        _("Responsable"),
-        max_length=255,
+    logo = models.CharField(_("Logo URL"), max_length=255, blank=True, null=True)
+
+    responsable_person = models.CharField(_("Responsable Person"), max_length=255, blank=True, null=True)
+    supervisor_person = models.CharField(_("Supervisor"), max_length=255, blank=True, null=True)
+
+    facility_id_uri = models.URLField(
+        _("Facility ID (URI)"),
+        max_length=500,
+        blank=True,
+        null=True,
+        help_text=_("Globally unique URI for this facility (e.g. https://...)")
+    )
+    facility_description = models.TextField(
+        _("Facility Description"),
         blank=True,
         null=True
     )
-    supervisor_person = models.CharField(
-        _("Supervisor"),
+    country = models.CharField(
+        _("Country of Operation"),
+        max_length=2,
+        blank=True,
+        null=True,
+        help_text=_("ISO 3166-1 alpha-2 code (e.g., AU, US, DE).")
+    )
+
+    street_address = models.CharField(_("Street Address"), max_length=255, blank=True, null=True)
+    postal_code = models.CharField(_("Postal Code"), max_length=20, blank=True, null=True)
+    locality = models.CharField(_("City/Locality"), max_length=100, blank=True, null=True)
+    region = models.CharField(_("State/Region"), max_length=100, blank=True, null=True)
+
+    def __str__(self):
+        return self.name
+
+class InstitutionSettings(models.Model):
+    institution = models.OneToOneField(
+        Institution,
+        on_delete=models.CASCADE,
+        related_name='settings',
+        verbose_name=_("Institution")
+    )
+
+    algorithm = models.CharField(
+        _("Algorithm"),
+        max_length=30,
+        default='ereuse24',
+        help_text=_("The default algorithm used for device aggregation."),
+        choices=ALGORITHMS,
+    )
+
+    issuer_did = models.CharField(
+        _("Issuer DID"),
         max_length=255,
         blank=True,
-        null=True
+        null=True,
+        help_text=_("The W3C DID (e.g., did:web:example.com) that is used on the idhub service.")
     )
-    algorithm = models.CharField(max_length=30, choices=ALGORITHMS, default='ereuse24')
+    signing_service_domain = models.URLField(
+        _("Signing Service URL"),
+        blank=True,
+        null=True,
+        help_text=_("Idhub endpoint where the credential will be signed.")
+    )
+    signing_auth_token = models.CharField(
+        _("Signing API Token"),
+        max_length=1024,
+        blank=True,
+        null=True,
+        help_text=_("Bearer token for the signing service.")
+    )
+
+    device_dpp_schema = models.CharField(
+        _("Device schema name"),
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text=_("Filename of the dpp credential schema found on your idhub provider.")
+    )
+
+    untp_drf_schema = models.CharField(
+        _("UNTP's Digital Facility Record schema name"),
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text=_("Filename of the drf schema found on your idhub provider.")
+    )
+
+    def __str__(self):
+        return f"Settings for {self.institution.name}"
+
+    class Meta:
+        verbose_name = _("Institution Settings")
+        verbose_name_plural = _("Institution Settings")
 
 
 class UserManager(BaseUserManager):
