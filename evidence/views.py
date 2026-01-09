@@ -2,10 +2,11 @@ import json
 import os
 
 from django.contrib import messages
-from django.http import HttpResponse, FileResponse
+from django.http import HttpResponse
 from django.utils.translation import gettext_lazy as _
 from django.shortcuts import get_object_or_404, redirect, Http404
 from django.views.generic.base import TemplateView
+from django.views.generic import DetailView
 from django.urls import reverse_lazy
 from django.views.generic.edit import (
     DeleteView,
@@ -14,7 +15,7 @@ from django.views.generic.edit import (
 
 from action.models import DeviceLog
 from dashboard.mixins import  DashboardView, Http403
-from evidence.models import SystemProperty, RootAlias, Evidence
+from evidence.models import SystemProperty, CredentialProperty, Evidence
 from evidence.forms import (
     UploadForm,
     UserAliasForm,
@@ -24,6 +25,8 @@ from evidence.forms import (
 )
 from django_tables2 import SingleTableView
 from evidence.tables import EvidenceTable
+
+from pyvckit.verify import verify_signature, verify_schema
 
 
 class ListEvidencesView(DashboardView, SingleTableView):
@@ -225,6 +228,120 @@ class PhotoEvidenceView(DashboardView, TemplateView):
         response = FileResponse(open(file_path, 'rb'), content_type=photo_data.get('mime_type', 'image/jpeg'))
         return response
 
+
+class CredentialDetailView(DetailView):
+    model = CredentialProperty
+    template_name = 'credential_details.html'
+    context_object_name = 'credential_prop'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['credential'] = self.object.credential
+        return context
+
+
+class DownloadDPPView(DashboardView, TemplateView):
+    def get(self, request, *args, **kwargs):
+        pk = kwargs.get('pk')
+        try:
+            credential_prop = get_object_or_404(CredentialProperty, pk=pk)
+
+            data = json.dumps(credential_prop.credential, indent=4)
+            response = HttpResponse(data, content_type="application/json")
+            response['Content-Disposition'] = f'attachment; filename="dpp_credential_{pk}.json"'
+            return response
+        except CredentialProperty.DoesNotExist:
+            raise Http404("Credential not found.")
+
+
+class CredentialByEvidenceUUIDView(TemplateView):
+    def get(self, request, *args, **kwargs):
+        uuid = kwargs.get('uuid')
+        credential_prop = CredentialProperty.objects.filter(uuid=uuid).order_by('-created').first()
+
+        if credential_prop:
+            return redirect('evidence:credential_detail', pk=credential_prop.pk)
+        else:
+            raise Http404("No credential found for the specified evidence UUID.")
+
+
+class ValidateDPPView(TemplateView):
+    def get(self, request, pk, *args, **kwargs):
+        try:
+            credential_prop = get_object_or_404(CredentialProperty, pk=pk)
+            credential_data = credential_prop.credential
+        except Http404:
+            messages.error(request, _("Error: Credential with ID {pk} not found in the database.").format(pk=pk))
+            return redirect(reverse_lazy('evidence:credential_detail', kwargs={'pk': pk}))
+
+        results = self.perform_full_dpp_validation(credential_data)
+
+        validation_status = results['status']
+        crypto_details = results['validation_results']['cryptographic_details']
+        schema_details = results['validation_results']['schema_details']
+
+        if validation_status == 'verified':
+            full_message = _("DPP Validation Successful! Cryptography and Schema checks passed.")
+            messages.success(request, full_message)
+        else:
+            full_message = _(
+                "DPP Validation Failed. "
+                "Cryptography Status: {crypto_status}. "
+                "Schema Status: {schema_status}."
+            ).format(
+                crypto_status=crypto_details,
+                schema_status=schema_details
+            )
+            messages.error(request, full_message)
+
+        return redirect(reverse_lazy('evidence:credential_detail', kwargs={'pk': pk}))
+
+
+    def perform_full_dpp_validation(self, credential_json: dict) -> dict:
+
+        validation_status = {
+            'cryptographic_valid': False,
+            'cryptographic_details': 'Verification pending...',
+            'schema_valid': False,
+            'schema_details': 'Verification pending...'
+        }
+
+        credential_string = json.dumps(credential_json)
+
+        try:
+            is_signature_valid = verify_signature(credential_string, verify=True)
+            validation_status['cryptographic_valid'] = is_signature_valid
+
+            if is_signature_valid:
+                validation_status['cryptographic_details'] = 'Signature successfully verified and identity confirmed.'
+            else:
+                validation_status['cryptographic_details'] = 'Signature verification failed (data tampered or key invalid).'
+
+        except Exception as e:
+            validation_status['cryptographic_details'] = f"Cryptographic verification error: {e.__class__.__name__}: {e}"
+            validation_status['cryptographic_valid'] = False
+
+
+        try:
+            schema_url = credential_json.get('credentialSchema', {}).get('id')
+            is_signature_valid = verify_schema(credential_string, verify=True)
+            validation_status['schema_valid'] = True
+
+            validation_status['schema_details'] = f"Schema valid against {schema_url}."
+
+        except requests.exceptions.RequestException:
+            validation_status['schema_valid'] = False
+            validation_status['schema_details'] = f"Schema download failed: Could not fetch schema from {schema_url}."
+        except Exception as e:
+            validation_status['schema_valid'] = False
+            validation_status['schema_details'] = f"Schema validation failed: {e}"
+
+        final_status = 'verified' if validation_status['cryptographic_valid'] and validation_status['schema_valid'] else 'failed'
+
+        return {
+            'status': final_status,
+            'validation_results': validation_status
+        }
 
 class EraseServerView(DashboardView, FormView):
     template_name = "ev_details.html"
