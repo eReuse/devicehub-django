@@ -142,6 +142,9 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
         else:
             self.table_pagination = False
 
+        if not self.object.beneficiary_set.exists():
+            kwargs['exclude'] = ('status_beneficiary',)
+
         return kwargs
 
     def _get_state_definitions(self):
