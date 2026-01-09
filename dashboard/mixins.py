@@ -172,8 +172,7 @@ class DeviceTableMixin():
         total_pages = (count + limit - 1) // limit if limit != 0 else 1
 
         table_data = self.build_table_data(devices)
-        table = DeviceTable(table_data)
-
+        table = DeviceTable(table_data, exclude =('status_beneficiary', ))
         if limit != 0:
             RequestConfig(self.request, paginate={'page': page, 'per_page': limit}).configure(table)
         else:
