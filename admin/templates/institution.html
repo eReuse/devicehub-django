@@ -4,6 +4,15 @@
 
 {% block content %}
 <div class="container-fluid p-0">
+
+    <div class="row mb-4 align-items-center">
+        <div class="col">
+            <h3 class="mb-0 text-dark fw-bold">
+                {{ subtitle|default:"Settings" }}
+            </h3>
+        </div>
+    </div>
+
     {% if form.errors %}
     <div class="alert alert-danger alert-dismissible fade show shadow-sm border-0 rounded-0 mb-3" role="alert">
         <div class="d-flex align-items-center">
@@ -68,5 +77,6 @@
             </form>
         </div>
     </div>
+
 </div>
 {% endblock %}
