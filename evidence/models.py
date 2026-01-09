@@ -5,6 +5,8 @@ from dmidecode import DMIParse
 from django.db import models
 from django.conf import settings
 
+import json
+
 from django.db.models import Q
 from utils.constants import STR_EXTEND_SIZE, CHASSIS_DH
 from evidence.xapian import search
@@ -41,6 +43,9 @@ class SystemProperty(Property):
     @property
     def hid(self):
         return self.value.split(":")[1]
+class CredentialProperty(Property):
+    credential = models.JSONField()
+    uuid = models.UUIDField()
 
 
 class UserProperty(Property):
@@ -95,10 +100,15 @@ class Evidence:
         self.get_time()
 
     def get_properties(self):
-        # TODO is good not filter by institution?
         self.properties = SystemProperty.objects.filter(
             uuid=self.uuid
         ).order_by("created")
+
+    def get_credential(self):
+        self.credentials = CredentialProperty.objects.filter(
+            uuid=self.uuid
+        ).order_by("-created")
+        return self.credentials.first()
 
     def get_owner(self):
         if not self.properties:
