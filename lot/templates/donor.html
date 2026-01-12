@@ -29,7 +29,7 @@
 {% bootstrap_form form %}
 <div class="form-actions-no-box">
   <a class="btn btn-grey" href="{% url 'dashboard:lot' lot.id %}">{% translate "Cancel" %}</a>
-  {% if path == 'del_donor' %}
+  {% if path == 'lot:del_donor' %}
 
   <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#delete">
      <i class="bi bi-trash me-1"></i>
