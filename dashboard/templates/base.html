@@ -213,7 +213,7 @@
                   {% for tag in lot_tags %}
                   <li class="nav-items">
 		  {% if tag.inbox %}
-                    <a class="nav-link{% if path == 'inbox' %} active2{% endif %}" href="{% url 'dashboard:unassigned' %}">
+                    <a class="nav-link{% if path == 'unassigned' %} active2{% endif %}" href="{% url 'dashboard:unassigned' %}">
                       <i>
                         {{ tag.name }}
                       </i>
