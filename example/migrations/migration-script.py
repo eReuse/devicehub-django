@@ -230,7 +230,8 @@ def add_device_in_lot(row, user):
     if DeviceLot.objects.filter(lot=lot, device_id=dhid).exists():
         return
 
-    DeviceLot.objects.create(lot=lot, device_id=dev.value)
+    if not DeviceLot.objects.filter(lot=lot, device_id=dev.value).first():
+        DeviceLot.objects.create(lot=lot, device_id=dev.value)
 
 ### end migration lots ###
 
