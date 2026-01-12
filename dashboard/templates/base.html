@@ -191,13 +191,13 @@
               </li>
 	      {% endif %}
               <li class="nav-item">
-                  <a class="admin {% if path in 'dashboard:all_device device:details device:edit' %}active {% endif %}nav-link fw-bold" data-bs-toggle="collapse" data-bs-target="#ul_device" aria-expanded="false" aria-controls="ul_lots" href="javascript:void()">
+                  <a class="admin {% if path in 'dashboard:all_device device:details device:edit' %}active {% endif %}nav-link fw-bold" href="{% url 'dashboard:all_device' %}">
                     <i class="bi bi-laptop icon_sidebar"></i>
                   {% trans 'Devices' %}
                   </a>
                   <ul class="flex-column mb-2 ul_sidebar accordion-collapse {% if path in 'dashboard:all_device device:details device:edit' %}expanded{% else %}collapse{% endif %}" id="ul_device" data-bs-parent="#sidebarMenu">
 		  <li class="nav-item">
-                    <a class="nav-link{% if path in 'dashboard:all_device device:details device:edit' %} active2{% endif %}" href="{% url 'dashboard:all_device' %}">
+                    <a class="nav-link{% if path in 'dashboard:all_device device:details device:edit' %} active2{% endif %}" href="javascript:void()">
                       {% trans 'All' %}
                     </a>
                   </li>
