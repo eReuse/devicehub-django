@@ -242,7 +242,11 @@ class Evidence:
             return self.device_chassis
 
         if self.is_legacy():
-            return self.doc.get('device', {}).get('chassis', '')
+            chassis = self.doc.get('device', {}).get('chassis', '')
+            for k, v in CHASSIS_DH.items():
+                if chassis.lower() in v:
+                    return k
+            return chassis
 
         dmi_chassis = self.dmi.get("Chassis")
         if not dmi_chassis:
