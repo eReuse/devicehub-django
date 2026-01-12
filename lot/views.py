@@ -295,6 +295,7 @@ class LotsTagsView(DashboardView, SingleTableView):
             'archived_count': counts['archived_count'],
             'active_count': counts['active_count'],
             'total_count': counts['total_count'],
+            'selected_tag_id': self.pk,
         })
         return context
 
