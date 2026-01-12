@@ -218,7 +218,7 @@
                         {{ tag.name }}
                       </i>
 		  {% else %}
-                    <a class="nav-link{% if path == 'tags' %} active2{% endif %}" href="{% url 'lot:tags' tag.id %}">
+                    <a class="nav-link{% if path == 'tags' and tag.id == selected_tag_id %} active2{% endif %}" href="{% url 'lot:tags' tag.id %}">
                       {{ tag.name }}
 		  {% endif %}
                     </a>
