@@ -42,6 +42,11 @@ class DeviceLot(models.Model):
     lot = models.ForeignKey("Lot", on_delete=models.CASCADE)
     device_id = models.CharField(max_length=STR_EXTEND_SIZE, blank=False, null=False)
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['lot', 'device_id'], name='unique_device_id_and_lot')
+        ]
+
 
 class Lot(models.Model):
     created = models.DateTimeField(auto_now_add=True)
