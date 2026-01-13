@@ -1,47 +1,65 @@
 {% load i18n %}
 {% load range %}
 
-<ul class="pagination">
-  {% if page_number > 1 %}
-  <li class="previous">
-    <a type="button" class="btn btn-grey border border-dark" href="?page=1&limit={{ limit }}{% if search %}&search={{ search }}{% endif %}">
-      &laquo;
-    </a>
-  </li>
-  <li class="previous">
-    <a type="button" class="btn btn-grey border border-dark" href="?page={{ page_number|add:-1 }}&limit={{ limit }}{% if search %}&search={{ search }}{% endif %}">
-      {% trans 'Previous' %}
-    </a>
-  </li>
-  {% endif %}
+<div class="d-flex justify-content-between align-items-center rounded-bottom">
 
-  {% if total_pages > 1 %}
+  <nav aria-label="Table navigation">
+    <ul class="pagination mb-0">
 
-  {% for p in total_pages|range_filter:page_number %}
-    <li {% if p == page_number %}class="active"{% endif %}>
-      <a type="button" class="btn btn-grey{% if p == page_number %}-selected{% endif %}
-                  border border-dark"
-       {% if p == page_number or p == "..." %}
-          href="#">
-       {% else %}
-          href="?page={{ p }}&limit={{ limit }}{% if search %}&search={{ search }}{% endif %}">
-       {% endif %}
-          {{ p }}
-     </a>
-   </li>
-   {% endfor %}
- {% endif %}
+      {% if page_number > 1 %}
+      <li class="page-item">
+        <a class="page-link rounded px-3 py-2"
+           href="?page={{ page_number|add:-1 }}&limit={{ limit }}{% if search %}&search={{ search }}{% endif %}"
+           aria-label="Previous">
+          <i class="bi bi-chevron-left"></i>
+        </a>
+      </li>
+      {% endif %}
 
-  {% if page_number < total_pages %}
-  <li class="previous">
-    <a type="button" class="btn btn-grey border border-dark" href="?page={{ page_number|add:+1 }}&limit={{ limit }}{% if search %}&search={{ search }}{% endif %}">
-      {% trans 'Next' %}
-    </a>
-  </li>
-  <li class="previous">
-    <a type="button" class="btn btn-grey border border-dark" href="?page={{ total_pages }}&limit={{ limit }}{% if search %}&search={{ search }}{% endif %}">
-      &raquo;
-    </a>
-  </li>
-  {% endif %}
-</ul>
+      {% if total_pages > 1 %}
+        {% for p in total_pages|range_filter:page_number %}
+        <li class="page-item {% if p == page_number %}active{% endif %}">
+          <a class="page-link rounded px-3 py-2 {% if p == page_number %}fw-bold{% endif %}"
+             {% if p == page_number or p == "..." %}
+               href="#"
+             {% else %}
+               href="?page={{ p }}&limit={{ limit }}{% if search %}&search={{ search }}{% endif %}"
+             {% endif %}>
+            {{ p }}
+          </a>
+        </li>
+        {% endfor %}
+      {% endif %}
+
+      {% if page_number < total_pages %}
+      <li class="page-item">
+        <a class="page-link rounded px-3 py-2"
+           href="?page={{ page_number|add:+1 }}&limit={{ limit }}{% if search %}&search={{ search }}{% endif %}"
+           aria-label="Next">
+          <i class="bi bi-chevron-right"></i>
+        </a>
+      </li>
+      {% endif %}
+
+    </ul>
+  </nav>
+</div>
+
+<style>
+.pagination .page-link {
+  color: #4caf50;
+  border: 1px solid #a5d6a7;
+  background-color: #ffffff;
+}
+
+.pagination .page-item.active .page-link {
+  background-color: #4caf50;
+  border-color: #4caf50;
+  color: white;
+}
+
+.pagination .page-link:hover {
+  background-color: #c8e6c9;
+  color: #2e7d32;
+}
+</style>
