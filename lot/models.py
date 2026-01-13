@@ -10,7 +10,8 @@ from utils.constants import (
 
 from user.models import User, Institution
 from evidence.models import Property
-# from device.models import Device
+
+from django.db.models import Subquery
 
 
 class LotTag(models.Model):
@@ -40,8 +41,7 @@ class LotTag(models.Model):
 
 class DeviceLot(models.Model):
     lot = models.ForeignKey("Lot", on_delete=models.CASCADE)
-    device_id = models.CharField(max_length=STR_EXTEND_SIZE, blank=False, null=False)
-
+    device_id = models.CharField(max_length=STR_EXTEND_SIZE, blank=False, null=False, db_index=True)
 
 class Lot(models.Model):
     created = models.DateTimeField(auto_now_add=True)
@@ -68,12 +68,24 @@ class Lot(models.Model):
         for d in DeviceLot.objects.filter(lot=self, device_id=v):
             d.delete()
 
-    @property
-    def devices(self):
-        return DeviceLot.objects.filter(lot=self)
+    def devices(self, offset=0, limit=None):
+        from device.models import Device
+        qry = Device.queryset_orm(self.owner)
+        qry_final = DeviceLot.objects.filter(
+            lot=self,
+            device_id__in=Subquery(qry.values('value'))
+        ).values_list('device_id', flat=True)
+
+        if limit:
+            evs = qry_final[offset:offset+limit]
+        else:
+            evs = qry_final[offset:]
+        self.count = qry_final.count()
+        devices = [Device(id=x, owner=self.owner) for x in evs]
+        return devices, self.count
 
     def device_count(self):
-        return self.devices.count()
+        return self.count
 
 
 class LotProperty(Property):
