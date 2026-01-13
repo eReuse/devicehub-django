@@ -59,39 +59,23 @@ class LotDashboardView(DeviceTableMixin, ExportMixin,InventaryMixin, DetailsMixi
 
     def get_devices(self, user, offset=0, limit=None):
         search_query = self.request.GET.get('q', '').lower()
-        owner = self.request.user.institution
-        all_ids_qs = self.object.devices
 
         if search_query:
-            all_ids = list(all_ids_qs)
-            all_devices_gen = (
-                Device(id=x, lot=self.object, owner=owner)
-                for x in all_ids
-            )
+            all_devices, _ = self.object.devices(offset=0, limit=None)
 
-            filtered_devices = [d for d in all_devices_gen if d.matches_query(search_query)]
+            filtered_devices = [
+                d for d in all_devices
+                if d.matches_query(search_query)
+            ]
             count = len(filtered_devices)
-
             if limit:
                 devices = filtered_devices[offset : offset + limit]
             else:
                 devices = filtered_devices[offset:]
 
             return devices, count
-
         else:
-            count = all_ids_qs.count()
-
-            if limit:
-                sliced_ids = all_ids_qs[offset : offset + limit]
-            else:
-                sliced_ids = all_ids_qs[offset:]
-
-            devices = [
-                Device(id=x, lot=self.object, owner=owner)
-                for x in sliced_ids
-            ]
-            return devices, count
+            return self.object.devices(offset=offset, limit=limit)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
