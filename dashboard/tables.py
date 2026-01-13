@@ -96,6 +96,7 @@ class DeviceTable(tables.Table):
             "Laptop": "bi-laptop",
             "Netbook": "bi-laptop",
             "Desktop": "bi-pc-display",
+            "Tower": "bi-pc",
             "Server": "bi-pc-display",
             "Motherboard": "bi-motherboard",
             "GraphicCard": "bi-gpu-card",
