@@ -4,15 +4,8 @@ import logging
 from tablib import Dataset
 
 from django.utils.translation import gettext_lazy as _
-from django.views.generic.edit import FormView
-from django.shortcuts import Http404
-from django.utils.dateparse import parse_datetime
 from django.http import HttpResponse
-from dashboard.tables import DeviceTable
 
-from django_tables2 import RequestConfig
-from django_tables2.views import SingleTableMixin
-from django_tables2.export.export import TableExport
 from django_tables2.export.views import ExportMixin
 
 from action.models import StateDefinition
@@ -35,6 +28,11 @@ class UnassignedDevicesView(DeviceTableMixin, InventaryMixin):
     def get_devices(self, user, offset=0, limit=None):
         return Device.get_unassigned(self.request.user.institution, offset, limit)
 
+    def get_table_kwargs(self):
+        kwargs = super().get_table_kwargs()
+        kwargs['exclude'] = ('status_beneficiary',)
+        return kwargs
+
 
 class AllDevicesView(DeviceTableMixin, InventaryMixin):
     template_name = "unassigned_devices.html"
@@ -45,21 +43,55 @@ class AllDevicesView(DeviceTableMixin, InventaryMixin):
     def get_devices(self, user, offset=0, limit=None):
         return Device.get_all(self.request.user.institution, offset, limit)
 
+    def get_table_kwargs(self):
+        kwargs = super().get_table_kwargs()
+        kwargs['exclude'] = ('status_beneficiary',)
+        return kwargs
 
-class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMixin):
+
+class LotDashboardView(DeviceTableMixin, ExportMixin,InventaryMixin, DetailsMixin):
     template_name = "unassigned_devices.html"
     section = "dashboard_lot"
     breadcrumb = f"{_('Lot')} / {_('Devices')}"
-    paginate_by = 10
-    paginate_choices = [10, 20, 50, 100, 0]
-    table_class = DeviceTable
     model = Lot
     export_formats = ['csv']
     export_name = 'lot_devices_export'
-    table_pagination = {
-        'per_page': paginate_by,
-        'page': 1
-    }
+
+    def get_devices(self, user, offset=0, limit=None):
+        search_query = self.request.GET.get('q', '').lower()
+        owner = self.request.user.institution
+        all_ids_qs = self.object.devices
+
+        if search_query:
+            all_ids = list(all_ids_qs)
+            all_devices_gen = (
+                Device(id=x, lot=self.object, owner=owner)
+                for x in all_ids
+            )
+
+            filtered_devices = [d for d in all_devices_gen if d.matches_query(search_query)]
+            count = len(filtered_devices)
+
+            if limit:
+                devices = filtered_devices[offset : offset + limit]
+            else:
+                devices = filtered_devices[offset:]
+
+            return devices, count
+
+        else:
+            count = all_ids_qs.count()
+
+            if limit:
+                sliced_ids = all_ids_qs[offset : offset + limit]
+            else:
+                sliced_ids = all_ids_qs[offset:]
+
+            devices = [
+                Device(id=x, lot=self.object, owner=owner)
+                for x in sliced_ids
+            ]
+            return devices, count
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -78,7 +110,6 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
         context.update({
             'title': "{} {}".format(_("Lot"), lot.name),
             'lot': lot,
-            'count': len(self.get_queryset()),
             'paginate_choices': self.paginate_choices,
             'state_definitions': self._get_state_definitions(),
             'limit': int(self.request.GET.get('limit', self.paginate_by)),
@@ -93,55 +124,10 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
         return context
 
     def get_queryset(self):
-        chids = self.object.devicelot_set.all().values_list(
-            "device_id", flat=True
-        ).distinct()
-        search_query = self.request.GET.get('q', '').lower()
-
-        if search_query:
-            ldevices = []
-            for x in chids:
-                dev = Device(id=x)
-                if dev.matches_query(search_query):
-                    ldevices.append(dev)
-            return ldevices
-
-        owner = self.request.user.institution
-        return [Device(id=x, lot=self.object, owner=owner) for x in chids]
-
-    def get_table_data(self):
-        table_data = []
-        for device in super().get_table_data():
-
-            current_state = device.get_current_state()
-
-            table_data.append({
-                'id': device.pk,
-                'shortid': device.shortid,
-                'type': device.type,
-                'manufacturer': getattr(device, 'manufacturer', ''),
-                'model': getattr(device, 'model', ''),
-                'version': getattr(device, 'version', ''),
-                'cpu': getattr(device, 'cpu', ''),
-                'current_state': current_state.state if current_state else '--',
-                'status_beneficiary': device.status_beneficiary,
-                'last_updated': parse_datetime(device.updated) if device.updated else "--"
-            })
-        return table_data
+        pass
 
     def get_table_kwargs(self):
         kwargs = super().get_table_kwargs()
-        limit = int(self.request.GET.get('limit', self.paginate_by))
-        page = int(self.request.GET.get('page', 1))
-
-        if limit != 0:
-            self.table_pagination = {
-                'per_page': limit,
-                'page': page
-            }
-        else:
-            self.table_pagination = False
-
         if not self.object.beneficiary_set.exists():
             kwargs['exclude'] = ('status_beneficiary',)
 
@@ -154,34 +140,19 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
 
     def create_export(self, export_format):
         if export_format in ('csv', 'xlsx'):
-
-            devices = self.get_queryset()
+            devices, _ = self.get_devices(self.request.user, offset=0, limit=0)
 
             headers = [
-                'ID', 'type', 'manufacturer', 'model', 'cpu_model', 'cpu_cores', 'current_state',
-                'ram_total', 'ram_type', 'ram_slots', 'slots_used', 'drive', 'gpu_model', 'user_properties','serial', 'last_updated',
+                'ID', 'type', 'manufacturer', 'model', 'cpu_model', 'cpu_cores',
+                'current_state', 'ram_total', 'ram_type', 'ram_slots', 'slots_used',
+                'drive', 'gpu_model', 'user_properties', 'serial', 'last_updated',
             ]
             data = Dataset(headers=headers)
 
             for device in devices:
                 row_data = device.components_export()
                 row_values = [
-                    row_data['ID'],
-                    row_data['type'],
-                    row_data['manufacturer'],
-                    row_data['model'],
-                    row_data['cpu_model'],
-                    row_data['cpu_cores'],
-                    row_data['current_state'],
-                    row_data['ram_total'],
-                    row_data['ram_type'],
-                    row_data['ram_slots'],
-                    row_data['slots_used'],
-                    row_data['drive'],
-                    row_data['gpu_model'],
-                    row_data['user_properties'],
-                    row_data['serial'],
-                    row_data['last_updated']
+                    row_data.get(h, '') for h in headers
                 ]
                 data.append(row_values)
 
@@ -199,6 +170,7 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
             return response
 
         return super().create_export(export_format)
+
 
 class SearchView(DeviceTableMixin, InventaryMixin):
     template_name = "unassigned_devices.html"

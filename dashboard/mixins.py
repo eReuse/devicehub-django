@@ -10,8 +10,7 @@ from evidence.models import SystemProperty
 from lot.models import LotTag
 from action.models import StateDefinition
 from dashboard.tables import DeviceTable
-from django_tables2 import RequestConfig, SingleTableView
-from django.utils.dateparse import parse_datetime
+from django_tables2 import RequestConfig
 
 
 class Http403(PermissionDenied):
@@ -133,31 +132,13 @@ class InventaryMixin(DashboardView, TemplateView):
 
 
 class DeviceTableMixin():
-    """Mixin to handle django-tables2 dict-based tables for Devices"""
+    """Mixin to handle custom slicing tables for Devices"""
     paginate_by = 10
     paginate_choices = [10, 20, 50, 100, 0]
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         return self.configure_table(context)
-
-    def build_table_row(self, device):
-        current_state = device.get_current_state()
-        return {
-            'id': device.pk,
-            'shortid': device.shortid,
-            'type': device.type,
-            'manufacturer': getattr(device, 'manufacturer', ''),
-            'model': getattr(device, 'model', ''),
-            'version': getattr(device, 'version', ''),
-            'cpu': getattr(device, 'cpu', ''),
-            'current_state': current_state.state if current_state else '--',
-            'status_beneficiary': getattr(device,'status_beneficiary', ''),
-            'last_updated': parse_datetime(device.updated) if device.updated else "--"
-        }
-
-    def build_table_data(self, devices):
-        return [self.build_table_row(device) for device in devices]
 
     def get_devices(self, user, offset=0, limit=None):
         raise NotImplementedError
@@ -171,8 +152,7 @@ class DeviceTableMixin():
         devices, count = self.get_devices(self.request.user, offset, limit)
         total_pages = (count + limit - 1) // limit if limit != 0 else 1
 
-        table_data = self.build_table_data(devices)
-        table = DeviceTable(table_data, exclude =('status_beneficiary', ))
+        table = DeviceTable(devices, exclude =('status_beneficiary', ))
         if limit != 0:
             RequestConfig(self.request, paginate={'page': page, 'per_page': limit}).configure(table)
         else:
