@@ -55,9 +55,12 @@
     {% if table.page and table.paginator.num_pages > 1 %}
     <div class="d-flex justify-content-between align-items-center px-3 py-2 bg-light rounded-bottom">
       <div class="text-muted">
-        {% trans "Showing" %}
-        {{ table.page.start_index }} to {{ table.page.end_index }} of {{ table.paginator.count }}
+        <i class="bi bi-laptop pe-2 pb-2"></i> {% if not lot.name %}
+        {% trans "Showing" %} {% endif %} {{count}}
+        {{ table.page.start_index }} {% trans "to" %} {{ table.page.end_index }} {% trans "of" %} {{ table.paginator.count }}
+        {% trans "Device/s" %}
       </div>
+
       <nav aria-label="Table navigation">
         <ul class="pagination mb-0">
           {% if table.page.has_previous %}
