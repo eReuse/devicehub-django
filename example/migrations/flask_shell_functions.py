@@ -4,7 +4,7 @@ from flask import g
 from ereuse_devicehub.resources.user.models import User
 from ereuse_devicehub.resources.action.models import Snapshot
 from ereuse_devicehub.resources.lot.models import Lot
-from ereuse_devicehub.resources.device.models import ComputerMonitor
+from ereuse_devicehub.resources.device.models import ComputerMonitor, Monitor
 
 
 
@@ -66,6 +66,12 @@ def generate_monitors(email):
     mlots = [["lot_name", "dhid", "incoming", "outgoing"]]
 
     for c in ComputerMonitor.query.filter_by(owner=u):
+        d = c.created.strftime("%Y-%m-%d %H:%M:%S.%f%z")
+        monitors.append([c.devicehub_id, c.manufacturer, c.model, c.serial_number, d])
+        for l in c.lots:
+            mlots.append([l.name, c.devicehub_id, l.is_incoming and "1" or "", l.is_outgoing and "1" or ""])
+
+    for c in Monitor.query.filter_by(owner=u):
         d = c.created.strftime("%Y-%m-%d %H:%M:%S.%f%z")
         monitors.append([c.devicehub_id, c.manufacturer, c.model, c.serial_number, d])
         for l in c.lots:
