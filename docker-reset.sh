@@ -236,7 +236,7 @@ want to see again, remove .env file)\n\nPress enter to continue... "
 }
 
 main() {
-        clear
+        [ "${TERM:-}" ] && clear
         cd "$(dirname "${0}")"
 
         if [ ! -f .env ]; then
