@@ -44,7 +44,7 @@ ALGOS = {
 
 
 CHASSIS_DH = {
-    'Tower': {'desktop', 'low-profile', 'tower', 'server', 'low profile desktop'},
+    'Desktop': {'tower', 'desktop', 'low-profile', 'tower', 'server', 'low profile desktop'},
     'Docking': {'docking'},
     'AllInOne': {'all-in-one'},
     'Microtower': {'mini-tower', 'space-saving', 'mini'},
