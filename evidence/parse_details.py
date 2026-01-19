@@ -35,4 +35,4 @@ class ParseSnapshot:
 
        self.default = default
        self.device = self.build.snapshot_json.get("device")
-       self.components = self.build.snapshot_json.get("components")
+       self.components = self.build.snapshot_json.get("components", [])
