@@ -193,9 +193,6 @@ class Evidence:
         if self.is_beta():
             return self.components
 
-        if self.is_legacy():
-            return self.doc.get('components', [])
-
         self.set_components()
         return self.components
 
