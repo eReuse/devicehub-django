@@ -101,8 +101,7 @@ def create_dhid(row, user):
     sp.save()
 
 
-def create_monitor(row, user):
-    row["type"] = "Display"
+def create_placeholder(row, user):
     dhid = row.pop("dhid", '').lower()
     created = row.pop("created", None)
     doc = create_doc(row)
@@ -272,7 +271,7 @@ def parse_args():
         help="dir where reside the snapshots.",
     )
     parser.add_argument(
-        '--monitors',
+        '--placeholders',
         help="path to the csv file with monitor details."
     )
     return parser.parse_args()
@@ -309,10 +308,10 @@ def main():
         for row in open_csv(args.csv_lots_dhid):
             add_device_in_lot(row, user)
 
-    if args.monitors:
-        for row in open_csv(args.monitors):
+    if args.placeholders:
+        for row in open_csv(args.placeholders):
             try:
-                create_monitor(row, user)
+                create_placeholder(row, user)
             except Exception as err:
                 logger.error(err)
 

@@ -1,10 +1,11 @@
 import os
 import json
+
 from flask import g
 from ereuse_devicehub.resources.user.models import User
 from ereuse_devicehub.resources.action.models import Snapshot
 from ereuse_devicehub.resources.lot.models import Lot
-from ereuse_devicehub.resources.device.models import ComputerMonitor, Monitor
+from ereuse_devicehub.resources.device.models import ComputerMonitor, Monitor, Computer
 
 
 
@@ -62,18 +63,18 @@ def generate_computers(email):
 def generate_monitors(email):
     u = User.query.filter(User.email==email).first()
     g.user = u
-    monitors = [["dhid", "manufacturer", "model", "serial_number", "created"]]
+    monitors = [["dhid", "manufacturer", "model", "serial_number", "created", "type"]]
     mlots = [["lot_name", "dhid", "incoming", "outgoing"]]
 
     for c in ComputerMonitor.query.filter_by(owner=u):
         d = c.created.strftime("%Y-%m-%d %H:%M:%S.%f%z")
-        monitors.append([c.devicehub_id, c.manufacturer, c.model, c.serial_number, d])
+        monitors.append([c.devicehub_id, c.manufacturer, c.model, c.serial_number, d, "Display"])
         for l in c.lots:
             mlots.append([l.name, c.devicehub_id, l.is_incoming and "1" or "", l.is_outgoing and "1" or ""])
 
     for c in Monitor.query.filter_by(owner=u):
         d = c.created.strftime("%Y-%m-%d %H:%M:%S.%f%z")
-        monitors.append([c.devicehub_id, c.manufacturer, c.model, c.serial_number, d])
+        monitors.append([c.devicehub_id, c.manufacturer, c.model, c.serial_number, d, "Display"])
         for l in c.lots:
             mlots.append([l.name, c.devicehub_id, l.is_incoming and "1" or "", l.is_outgoing and "1" or ""])
 
@@ -83,3 +84,50 @@ def generate_monitors(email):
 
     with open("monitors-lots.csv", "w") as _f:
         _f.write("\n".join([";".join(l) for l in mlots]))
+
+
+def generate_placeholder(email):
+    u = User.query.filter(User.email==email).first()
+    g.user = u
+    computers = [["dhid", "manufacturer", "model", "serial_number", "created", "type"]]
+    clots = [["lot_name", "dhid", "incoming", "outgoing"]]
+
+    for c in Computer.query.filter_by(owner=u):
+        if not c.placeholder or c.placeholder.binding:
+            continue
+
+        d = c.created.strftime("%Y-%m-%d %H:%M:%S.%f%z")
+        ctype = c.type
+        if ctype == "Computer":
+            ctype = "Desktop"
+
+        computers.append([c.devicehub_id or '', c.manufacturer or '', c.model or '', c.serial_number or '', d, ctype])
+
+        if c.devicehub_id:
+            for l in c.lots:
+                clots.append([l.name, c.devicehub_id, l.is_incoming and "1" or "", l.is_outgoing and "1" or ""])
+
+    with open("placeholders.csv", "w") as _f:
+        _f.write("\n".join([";".join(l) for l in computers]))
+
+    with open("placeholders-lots.csv", "w") as _f:
+        _f.write("\n".join([";".join(l) for l in clots]))
+
+
+def generate_rel_lot_devs(email):
+    u = User.query.filter(User.email==email).first()
+    g.user = u
+    devs = [["lot_name", "total"]]
+
+    for l in Lot.query.filter_by(owner=u):
+        devs.append([l.name, "{}".format(len(l.devices))])
+
+    with open("lots_count.csv", "w") as _f:
+        _f.write("\n".join([";".join(l) for l in devs]))
+
+
+def backup(email):
+    generate_computers(email)
+    generate_monitors(email)
+    generate_placeholder(email)
+    generate_rel_lot_devs(email)
