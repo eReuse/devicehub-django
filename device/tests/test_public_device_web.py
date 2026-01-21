@@ -9,7 +9,7 @@ from user.models import User, Institution
 class PublicDeviceWebViewTests(TestCase):
     def setUp(self):
         self.client = Client()
-        self.test_id = "test123"
+        self.test_id = "custom_id:test123"
         self.test_url = reverse('device:device_web',
                                 kwargs={'pk': self.test_id})
         self.institution = Institution.objects.create(
