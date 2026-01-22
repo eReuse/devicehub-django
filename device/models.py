@@ -1,3 +1,7 @@
+import qrcode
+import base64
+
+from io import BytesIO
 from django.db import models
 from django.db.models import Subquery, F, Window, Max
 from django.db.models.functions import RowNumber
@@ -487,3 +491,26 @@ class Device:
         })
 
         return hardware_info
+
+    @property
+    def QR(self):
+        if hasattr(self, "img_qr"):
+            return self.img_qr
+
+        qr = qrcode.QRCode(
+            version=1,            # Size of QR 1 to 40
+            error_correction=qrcode.constants.ERROR_CORRECT_L, # Level of correct errors
+            box_size=10,          # Pixels for every box of QR
+            border=1,             # Size of border
+        )
+
+        qr.add_data(self.shortid)
+        qr.make(fit=True)
+
+        # Custom colors with names or hexa
+        img = qr.make_image(fill_color="black", back_color="white")
+
+        buffer = BytesIO()
+        img.save(buffer, format="PNG")
+        self.img_qr = base64.b64encode(buffer.getvalue()).decode('utf-8')
+        return self.img_qr
