@@ -70,7 +70,7 @@
 	    </a>
 	  </td>
           <td class="font-monospace">
-            <a href="{% url 'lot:add_device_beneficiary' lot.id s.id %}" type="button" class="btn btn-sm btn-outline-primary d-flex align-items-center">
+            <a href="{% url 'lot:add_device_beneficiary' lot.id s.id %}" type="button" class="btn btn-sm btn-outline-primary align-items-center">
               <i class="bi bi-plus-circle me-1"></i>
               {% trans 'Assign' %}
             </a>
@@ -78,7 +78,7 @@
           <td class="font-monospace">
             <button type="button" class="btn btn-sm btn-outline-danger d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#deleteModal{{ s.id }}">
               <i class="bi bi-trash me-1"></i>
-              {% trans 'Delete' %}
+              {% trans 'Unassign' %}
             </button>
 	  </td>
         </tr>
@@ -86,7 +86,7 @@
           <div class="modal-dialog">
             <div class="modal-content">
               <div class="modal-header">
-                <h5 class="modal-title" id="deleteModalLabel{{ s.id }}">{% trans "Delete Beneficiary" %}</h5>
+                <h5 class="modal-title" id="deleteModalLabel{{ s.id }}">{% trans "Unassign Beneficiary" %}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
               </div>
               <div class="modal-body">
@@ -97,7 +97,7 @@
 		  {% trans "Cancel" %}
 		</button>
              	<a type="submit" class="btn btn-danger" href="{% url 'lot:del_beneficiary' lot.id s.id %}">
-	         {% trans 'Delete' %}
+	         {% trans 'Unassign' %}
 		</a>
 	      </div>
             </div>
