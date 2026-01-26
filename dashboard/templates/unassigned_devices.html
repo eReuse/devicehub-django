@@ -4,30 +4,30 @@
 {% load render_table export_url from django_tables2 %}
 
 {% block content %}
-  <div class="container-fluid px-0">
+<div class="container-fluid px-0">
     {% if lot %}
     <div class="mb-3">
-      {% include 'tabs.html' %}
+        {% include 'tabs.html' %}
     </div>
     {% endif %}
 
-      {% if path == "dashboard:lot" %}
-      <div class="d-flex justify-content-end align-items-stretch mb-2">
-          <form method="get" class="input-group w-100 w-md-75 me-3">
-              <input
-                  type="text"
-                  name="q"
-                  class="form-control"
-                  placeholder="{% trans 'Search devices within lot (append :field for filters)' %}"
-              value="{{ search_query }}">
-              <div class="input-group-append">
-                  <button type="submit" class="btn btn-outline-secondary h-100" style="border-radius: 0 4px 4px 0;">
-                      <i class="bi bi-search"></i>
-                  </button>
-                  <span class="ms-3"
-                        data-bs-toggle="tooltip"
-                        data-bs-html="true"
-                        title="
+    {% if path == "dashboard:lot" %}
+    <div class="d-flex justify-content-end align-items-stretch mb-2">
+        <form method="get" class="input-group w-100 w-md-75 me-3">
+            <input
+                type="text"
+                name="q"
+                class="form-control"
+                placeholder="{% trans 'Search devices within lot (append :field for filters)' %}"
+                value="{{ search_query }}">
+            <div class="input-group-append">
+                <button type="submit" class="btn btn-outline-secondary h-100" style="border-radius: 0 4px 4px 0;">
+                    <i class="bi bi-search"></i>
+                </button>
+                <span class="ms-3"
+                      data-bs-toggle="tooltip"
+                      data-bs-html="true"
+                      title="
                                <strong>{% trans 'Available filters:' %}</strong>
                                <ul class='mb-0 ps-3'>
                                    <li>:shortid</li>
@@ -41,185 +41,200 @@
                                  ">
                         <i class="h5 bi bi-info-circle text-muted"></i>
                     </span>
-                </div>
-            </form>
-        </div>
+            </div>
+        </form>
+    </div>
     {% endif %}
 
     <!-- Main Table Section -->
     <div class="card mb-4">
-      <form method="post" id="devices-form">
+        <form method="post" id="devices-form">
         {% csrf_token %}
         <!-- Table Actions -->
         <div class="p-3 bg-light border-bottom">
-          <!-- First row -->
-          <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
-            <h5 class="mb-0">
-              {% if lot.name %}
-                {% if lot.archived %}
-                  <i class="bi bi-archive text-warning small"></i> {{ lot.name }}
-                  <small class="text-muted ps-1"> {% trans "archived" %}</small>
-                {% else %}
-                  <i class="bi bi-folder2-open small"></i> {{ lot.name }}
-                  <small class="text-muted ps-1"> {% trans "open" %}</small>
-                {% endif %}
-              {% else %}
-                <i class="bi bi-devices"></i> {% trans "Device Management" %}
-              {% endif %}
-            </h5>
+            <!-- First row -->
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                <h5 class="mb-0">
+                    {% if lot.name %}
+                    {% if lot.archived %}
+                    <i class="bi bi-archive text-warning small"></i> {{ lot.name }}
+                    <small class="text-muted ps-1"> {% trans "archived" %}</small>
+                    {% else %}
+                    <i class="bi bi-folder2-open small"></i> {{ lot.name }}
+                    <small class="text-muted ps-1"> {% trans "open" %}</small>
+                    {% endif %}
+                    {% else %}
+                    <i class="bi bi-devices"></i> {% trans "Device Management" %}
+                    {% endif %}
+                </h5>
 
-              <div class="d-flex flex-wrap align-items-center gap-2">
-                  <!-- Export dropdown -->
-                  {% if lot %}
-                  <div class="dropdown flex-shrink-0">
-                      <button class="btn btn-outline-success dropdown-toggle" type="button" id="exportDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                          <i class="bi bi-download"></i>
-                          {% if search_query %}
-                          {% trans 'Export filtered' %}
-                          {% else %}
-                          {% trans 'Export All' %}
-                          {% endif %}
-                      </button>
-                      <ul class="dropdown-menu dropdown-menu-sm-end" aria-labelledby="exportDropdown">
-                          <li>
-                              <a class="dropdown-item" href="{% export_url 'csv' %}">
-                                  <i class="bi bi-filetype-csv"></i>
-                                  {% trans '.csv' %}
-                              </a>
-                          </li>
-                          <li>
-                              <a class="dropdown-item" href="{% export_url 'xlsx' %}">
-                                  <i class="bi bi-filetype-xlsx"></i>
-                                  {% trans '.xlsx' %}
-                              </a>
-                          </li>
-                      </ul>
-                  </div>
-                  {% endif %}
-                  <!-- Device limit per page picker -->
-                  <div class="flex-shrink-0">
-                      <form method="get" class="d-inline">
-                          <div class="input-group input-group-sm">
-                              <label class="input-group-text" for="limit">{% trans "Show" %}</label>
-                              <select name="limit" id="limit" class="form-select" onchange="this.form.submit()">
-                                  {% for choice in paginate_choices %}
-                                  {% if choice != 0 %}
-                                  <option value="{{ choice }}" {% if limit == choice %}selected{% endif %}>
-                                      {{ choice }}
-                                  </option>
-                                  {% elif lot.name %}
-                                  <option value="{{ choice }}" {% if limit == choice %}selected{% endif %}>
-                                      {% trans "All" %}
-                                  </option>
-                                  {% endif %}
-                                  {% endfor %}
-                              </select>
-                              <label class="input-group-text" for="limit">{% trans "devices" %}</label>
-                          </div>
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                    <!-- Export dropdown -->
+                    {% if lot %}
+                    <div class="dropdown flex-shrink-0">
+                        <button class="btn btn-outline-success dropdown-toggle" type="button" id="exportDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-download"></i>
+                            {% if search_query %}
+                            {% trans 'Export filtered' %}
+                            {% else %}
+                            {% trans 'Export All' %}
+                            {% endif %}
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-sm-end" aria-labelledby="exportDropdown">
+                            <li>
+                                <a class="dropdown-item" href="{% export_url 'csv' %}">
+                                    <i class="bi bi-filetype-csv"></i>
+                                    {% trans '.csv' %}
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% export_url 'xlsx' %}">
+                                    <i class="bi bi-filetype-xlsx"></i>
+                                    {% trans '.xlsx' %}
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
 
-                          {% for key, value in request.GET.items %}
-                          {% if key != 'limit' %}
-                          <input type="hidden" name="{{ key }}" value="{{ value }}">
-                          {% endif %}
-                          {% endfor %}
-                      </form>
-                  </div>
-              </div>
-          </div>
+            <!-- Second row  -->
+            {% csrf_token %}
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <!-- Second row first cell-->
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                    <!-- Change state dropdown -->
+                    <div class="dropdown flex-shrink-0">
+                        <a class="btn btn-green-admin dropdown-toggle" id="addStateDropdown" data-bs-toggle="dropdown" >
+                            {% trans "Change state" %}
+                        </a>
+                        <ul class="dropdown-menu" style="width: 120%;">
+                            {% for state in state_definitions %}
+                            <li style="width: 100%;">
+                                <button type="submit" class="dropdown-item d-flex justify-content-between align-items-center" name="url" value="{% url 'action:bulk_change_state' state.id %}" >
+                                    <span class="font-monospace">{{ state.state }}</span>
+                                    <span class="badge bg-secondary rounded-pill-sm">{{ forloop.counter }}</span>
+                                </button>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
 
-          <!-- Second row  -->
-          <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <!-- Assign to lot button -->
+                    <button id="add-button" class="btn btn-green-user flex-shrink-0 gap-2" type="submit" name="url" value="{% url 'lot:add_devices' %}" style="white-space: nowrap;">
+                        <i class="bi bi-folder-symlink mr-2"></i> {% trans 'Assign to lot' %}
+                    </button>
 
-              <!-- Second row first cell-->
-              <div class="d-flex flex-wrap align-items-center gap-2">
-                  <!-- Change state dropdown -->
-                  <div class="dropdown flex-shrink-0">
-                      <a class="btn btn-green-admin dropdown-toggle" id="addStateDropdown" data-bs-toggle="dropdown" >
-                          {% trans "Change state" %}
-                      </a>
-                      <ul class="dropdown-menu" style="width: 120%;">
-                          {% for state in state_definitions %}
-                          <li style="width: 100%;">
-                              <button type="submit" class="dropdown-item d-flex justify-content-between align-items-center" name="url" value="{% url 'action:bulk_change_state' state.id %}" >
-                                  <span class="font-monospace">{{ state.state }}</span>
-                                  <span class="badge bg-secondary rounded-pill-sm">{{ forloop.counter }}</span>
-                              </button>
-                          </li>
-                          {% endfor %}
-                      </ul>
-                  </div>
+                    <!-- Unassign Lot button -->
+                    {# If a lot is archived, then dont render the unassign button  #}
+                    {% if lot.name and not lot.archived %}
+                    <button id="remove-button" class="btn btn-danger flex-shrink-0 gap-2" type="submit"
+                            value="{% url 'lot:del_devices' lot.id %}" name="url">
+                        <i class="bi bi-folder-minus"></i> {% trans 'Unassign lot' %}
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+    </div>
 
-                  <!-- Assign to lot button -->
-                  <button id="add-button" class="btn btn-green-user flex-shrink-0 gap-2" type="submit" name="url" value="{% url 'lot:add_devices' %}" style="white-space: nowrap;">
-                      <i class="bi bi-folder-symlink mr-2"></i> {% trans 'Assign to lot' %}
-                  </button>
+            <!-- Table and pagination -->
+            <div class="table-responsive">
+                {% render_table table %}
+            </div>
+        </form>
+        <div class="d-flex flex-wrap align-items-center gap-2 justify-content-end p-2">
+            <!-- Number of devices info-->
+            <div class="d-flex justify-content-center text-muted align-items-center gap-1">
+                <i class="bi bi-laptop"></i> {% if not lot.name %} {% trans "Showing" %} {% endif %} {{count}} {% trans "Device/s" %}
+            </div>
+            <div class="d-flex justify-content-center text-muted align-items-center">
+                {% render_pagination page total_pages limit %}
+            </div>
 
-                  <!-- Unassign Lot button -->
-                  {# If a lot is archived, then dont render the unassign button  #}
-                  {% if lot.name and not lot.archived %}
-                  <button id="remove-button" class="btn btn-danger flex-shrink-0 gap-2" type="submit"
-                          value="{% url 'lot:del_devices' lot.id %}" name="url">
-                      <i class="bi bi-folder-minus"></i> {% trans 'Unassign lot' %}
-                  </button>
-                  {% endif %}
-              </div>
-          </div>
+            <!-- Device limit per page picker -->
+            <div class="flex-shrink-0">
+                <form method="get" class="d-inline">
+                    <div class="input-group input-group-sm">
+                        <label class="input-group-text" for="limit">{% trans "Show" %}</label>
+                        <select name="limit" id="limit" class="form-select" onchange="this.form.submit()">
+                            {% for choice in paginate_choices %}
+                            {% if choice != 0 %}
+                            <option value="{{ choice }}" {% if limit == choice %}selected{% endif %}>
+                                {{ choice }}
+                            </option>
+                            {% elif lot.name %}
+                            <option value="{{ choice }}" {% if limit == choice %}selected{% endif %}>
+                                {% trans "All" %}
+                            </option>
+                            {% endif %}
+                            {% endfor %}
+                        </select>
+                        <label class="input-group-text" for="limit">{% trans "devices" %}</label>
+                    </div>
+                    {% for key, value in request.GET.items %}
+                    {% if key != 'limit' %}
+                    <input type="hidden" name="{{ key }}" value="{{ value }}">
+                    {% endif %}
+                    {% endfor %}
+                </form>
+            </div>
+
         </div>
 
-        <!-- Table and pagination -->
-        <div class="table-responsive">
-          {% render_table table %}
-          <div class="d-flex justify-content-center text-muted">
-            <i class="bi bi-laptop pe-2 pb-2"></i> {% if not lot.name %} {% trans "Showing" %} {% endif %} {{count}} {% trans "Device/s" %}
-          </div>
-          <div class="d-flex justify-content-center text-muted">
-
-            {% render_pagination page total_pages limit %}
-          </div>
-        </div>
-      </form>
     </div>
 
 
- <script>
-  document.addEventListener('DOMContentLoaded', () => {
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
 
-      const selectAll = document.querySelector('#select-all');
-      const checkboxes = document.querySelectorAll('input[name="devices"]');
-      const addButton = document.getElementById('add-button');
-      const removeButton = document.getElementById('remove-button');
-      const changeStateButton = document.getElementById('addStateDropdown');
+            const selectAll = document.querySelector('#select-all');
+            const checkboxes = document.querySelectorAll('input[name="devices"]');
+            const addButton = document.getElementById('add-button');
+            const removeButton = document.getElementById('remove-button');
+            const changeStateButton = document.getElementById('addStateDropdown');
 
-      const form = document.getElementById("devices-form");
-      const buttons = document.querySelectorAll("#remove-button, #add-button, #addStateDropdown");
+            // const form = document.getElementById("devices-form");
+            // const buttons = document.querySelectorAll("#remove-button, #add-button, #addStateDropdown");
 
-      function updateButtons() {
-          const checked = document.querySelectorAll('.select-checkbox:checked').length > 0;
+            // function updateButtons() {
+            //     const checked = document.querySelectorAll('.select-checkbox:checked').length > 0;
+            //
+            //     addButton.style.display = 'none';
+            //     changeStateButton.style.display = 'none';
+            //     if (removeButton) removeButton.style.display = 'none';
+            //     if (checked) {
+            //         addButton.style.display = 'inherit';
+            //         changeStateButton.style.display = 'inherit';
+            //         if (removeButton) removeButton.style.display = 'inherit';
+            //     }
+            // }
 
-          addButton.style.display = 'none';
-          changeStateButton.style.display = 'none';
-          if (removeButton) removeButton.style.display = 'none';
-          if (checked) {
-              addButton.style.display = 'inherit';
-              changeStateButton.style.display = 'inherit';
-              if (removeButton) removeButton.style.display = 'inherit';
-          }
-      }
-
-      selectAll.addEventListener('change', (e) => {
-          checkboxes.forEach(checkbox => checkbox.checked = e.target.checked);
-          updateButtons();
-      });
-
-      // Add event listeners to all checkboxes
-      checkboxes.forEach(checkbox => {
-          checkbox.addEventListener('change', updateButtons);
-      });
-
-      // Initialize button states on reload
-      updateButtons();
+            function updateButtons() {
+                // Check if at least one checkbox is selected
+                const checked = document.querySelectorAll('.select-checkbox:checked').length > 0;
+                // Enable/disable buttons based on selection
+                addButton.disabled = !checked;
+                changeStateButton.classList.toggle('disabled', !checked);
+                if (removeButton) {
+                    removeButton.style.visibility = checked ? 'visible' : 'hidden';
+                }
+            }
 
 
-});
-</script>{% endblock %}
-</div>
+            selectAll.addEventListener('change', (e) => {
+                checkboxes.forEach(checkbox => checkbox.checked = e.target.checked);
+                updateButtons();
+            });
+
+            // Add event listeners to all checkboxes
+            checkboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', updateButtons);
+            });
+
+            // Initialize button states on reload
+            updateButtons();
+
+
+        });
+    </script>{% endblock %}
