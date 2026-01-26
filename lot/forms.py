@@ -93,7 +93,8 @@ class BeneficiaryForm(forms.Form):
 
 
 class LotSubscriptionForm(forms.Form):
-    user = forms.CharField()
+    name = forms.CharField(label=_("Name"))
+    email = forms.EmailField(label=_("Email"))
     type = forms.ChoiceField(
         choices=[
             ("circuit_manager", _("Circuit Manager")),
@@ -108,17 +109,20 @@ class LotSubscriptionForm(forms.Form):
         super().__init__(*args, **kwargs)
 
     def clean(self):
-        self.form_user = self.cleaned_data.get("user")
+        self.form_email = self.cleaned_data.get("email")
+        self.form_name = self.cleaned_data.get("name")
         self._type = self.cleaned_data.get("type")
 
-        self._user = User.objects.filter(email=self.form_user).first()
+        self._user = User.objects.filter(email=self.form_email).first()
         if self._user and self._user.institution != self.institution:
             txt = _("This user is from another institution")
             raise ValidationError(txt)
+
         slot = LotSubscription.objects.filter(
                 user=self._user,
                 lot_id=self.lot_pk,
         )
+
         if slot:
             txt = _("This user is already subscripted")
             raise ValidationError(txt)
@@ -131,9 +135,12 @@ class LotSubscriptionForm(forms.Form):
 
         if not self._user:
             self._user = User.objects.create_user(
-                self.form_user,
+                self.form_email,
                 self.institution,
             )
+            if self.form_name:
+                self._user.first_name = self.form_name
+                self._user.save()
             # TODO
             # self.send_email()
 
