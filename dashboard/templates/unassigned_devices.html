@@ -98,14 +98,14 @@
             <!-- Assign to lot -->
             {# If a lot is archived, then dont render the unassign button  #}
             {% if lot.name and not lot.archived %}
-            <button id="remove-button" class="btn btn-outline-danger flex-shrink-0" type="submit"
+            <button id="remove-button" class="btn btn-outline-danger flex-shrink-0" type="submit">
                   value="{% url 'lot:del_devices' lot.id %}" name="url">
-              <i class="bi bi-folder-minus"></i> {% trans 'Unassign' %}
+              <i class="bi bi-folder-minus"></i> {% trans 'Unassign Lot' %}
             </button>
             {% endif %}
             {% if lot and is_shop %}
             <button name="url" value="{% url 'lot:beneficiary' lot.id %}" class="btn btn-outline-primary flex-shrink-0">
-              {% trans 'Beneficiary' %}
+              {% trans 'Assign Beneficiary' %}
             </button>
             {% endif %}
             <button id="add-button" class="btn btn-green-user flex-shrink-0" type="submit" disabled name="url" value="{% url 'lot:add_devices' %}" style="white-space: nowrap;">
