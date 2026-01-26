@@ -49,7 +49,8 @@ class LotsForm(forms.Form):
 
 
 class BeneficiaryForm(forms.Form):
-    beneficiary = forms.CharField()
+    email = forms.EmailField(label=_("Email"))
+    name = forms.CharField(label=_("Name"))
 
     def __init__(self, *args, **kwargs):
         self.shop = kwargs.pop("shop")
@@ -59,6 +60,7 @@ class BeneficiaryForm(forms.Form):
 
     def clean(self):
         self._beneficiary = self.cleaned_data.get("beneficiary")
+        self._name = self.cleaned_data.get("name")
         self.ben = Beneficiary.objects.filter(
             lot_id=self.lot_pk,
             email=self._beneficiary
@@ -75,6 +77,7 @@ class BeneficiaryForm(forms.Form):
         else:
             self.ben = Beneficiary.objects.create(
                 email=self._beneficiary,
+                name=self._name,
                 lot_id=self.lot_pk,
                 shop=self.shop
             )

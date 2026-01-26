@@ -97,6 +97,8 @@ class LotSubscription(models.Model):
         CIRCUIT_MANAGER = 0, _("Circuit Manager")
         SHOP = 1, _("Shop")
 
+    name = models.CharField(max_length=STR_SIZE, blank=True, null=True)
+    address = models.CharField(max_length=STR_SIZE, blank=True, null=True)
     lot = models.ForeignKey(Lot, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=False, blank=False)
     type = models.SmallIntegerField(choices=Type.choices)
@@ -118,7 +120,10 @@ class LotSubscription(models.Model):
 
 class Donor(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=STR_SIZE, blank=True, null=True)
+    address = models.CharField(max_length=STR_SIZE, blank=True, null=True)
     reconciliation = models.DateTimeField(_("Reconciliation"), null=True, blank=True)
+    accept_contract = models.DateTimeField(_("Contract"), null=True, blank=True)
     lot = models.ForeignKey(Lot, on_delete=models.CASCADE)
     email = models.EmailField(
         _('Email address'),
@@ -131,6 +136,7 @@ class Beneficiary(models.Model):
     sign_conditions = models.DateTimeField(_("Conditions"), null=True, blank=True)
     lot = models.ForeignKey(Lot, on_delete=models.CASCADE)
     shop = models.ForeignKey(LotSubscription, on_delete=models.CASCADE)
+    name = models.CharField(max_length=STR_SIZE, blank=True, null=True)
     email = models.EmailField(
         _('Email address'),
         max_length=255,

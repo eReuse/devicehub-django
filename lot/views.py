@@ -655,7 +655,7 @@ class AddDonorView(DonorMixing, DonorEmail):
 
 
 class DelDonorView(DonorMixing):
-    title = _("Remove Donor")
+    title = _("Donor")
     breadcrumb = "Lot / {}".format(title)
 
     def form_valid(self, form):
@@ -731,14 +731,23 @@ class AcceptDonorView(TemplateView, NotifyEmail):
             id=id,
             lot_id=pk
         )
-        self.object.reconciliation = datetime.datetime.now()
+
+        if self.objects.accept_contract and self.object.reconciliation:
+            return redirect(self.success_url)
+
+        if not self.objects.accept_contract:
+            self.objects.accept_contract = datetime.datetime.now()
+        else:
+            self.object.reconciliation = datetime.datetime.now()
         self.object.save()
-        self.get_templates_email()
-        subscriptors = LotSubscription.objects.filter(
-            lot_id=pk,
-        )
-        for s in subscriptors:
-            self.send_email(s.user)
+
+        if self.objects.accept_contract and self.object.reconciliation:
+            self.get_templates_email()
+            subscriptors = LotSubscription.objects.filter(
+                lot_id=pk,
+            )
+            for s in subscriptors:
+                self.send_email(s.user)
 
         return redirect(self.success_url)
 
