@@ -124,7 +124,7 @@
                     </div>
 
                     <!-- Assign to lot button -->
-                    <button id="add-button" class="btn btn-green-user flex-shrink-0 gap-2" type="submit" name="url" value="{% url 'lot:add_devices' %}" style="white-space: nowrap;">
+                    <button disabled id="add-button" class="btn btn-green-user flex-shrink-0 gap-2" type="submit" name="url" value="{% url 'lot:add_devices' %}" style="white-space: nowrap;">
                         <i class="bi bi-folder-symlink mr-2"></i> {% trans 'Assign to lot' %}
                     </button>
 
@@ -141,9 +141,16 @@
     </div>
 
             <!-- Table and pagination -->
+            {% if count > 0 %}
             <div class="table-responsive">
                 {% render_table table %}
             </div>
+            {% else %}
+            <div class="text-center text-muted py-5">
+                <i class="bi bi-inbox h1"></i>
+                <p class="mt-2">{% trans "No devices found" %}</p>
+            </div>
+            {% endif %}
         </form>
         <div class="d-flex flex-wrap align-items-center gap-2 justify-content-end p-2">
             <!-- Number of devices info-->
