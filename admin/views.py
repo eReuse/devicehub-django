@@ -62,6 +62,7 @@ class CreateUserView(AdminView, NotifyActivateUserByEmail, CreateView):
     success_url = reverse_lazy('admin:users')
     model = User
     fields = (
+        "first_name",
         "email",
         "password",
         "is_admin",
@@ -104,6 +105,7 @@ class EditUserView(AdminView, UpdateView):
     success_url = reverse_lazy('admin:users')
     model = User
     fields = (
+        "first_name",
         "email",
         "is_admin",
     )
