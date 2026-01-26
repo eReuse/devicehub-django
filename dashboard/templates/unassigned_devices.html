@@ -4,23 +4,30 @@
 {% load render_table export_url from django_tables2 %}
 
 {% block content %}
-    {% if path == "dashboard:lot" %}
-        <div class="d-flex justify-content-end align-items-stretch mb-2">
-            <form method="get" class="input-group w-100 me-3">
-                <input
-                    type="text"
-                    name="q"
-                    class="form-control"
-                    placeholder="{% trans "Search devices within lot (append :field for filters)" %}"
-                    value="{{ search_query }}">
-                <div class="input-group-append">
-                    <button type="submit" class="btn btn-outline-secondary h-100" style="border-radius: 0 4px 4px 0;">
-                        <i class="bi bi-search"></i>
-                    </button>
-                    <span class="ms-3"
-                           data-bs-toggle="tooltip"
-                           data-bs-html="true"
-                           title="
+  <div class="container-fluid px-0">
+    {% if lot %}
+    <div class="mb-3">
+      {% include 'tabs.html' %}
+    </div>
+    {% endif %}
+
+      {% if path == "dashboard:lot" %}
+      <div class="d-flex justify-content-end align-items-stretch mb-2">
+          <form method="get" class="input-group w-100 w-md-75 me-3">
+              <input
+                  type="text"
+                  name="q"
+                  class="form-control"
+                  placeholder="{% trans "Search devices within lot (append :field for filters)" %}"
+              value="{{ search_query }}">
+              <div class="input-group-append">
+                  <button type="submit" class="btn btn-outline-secondary h-100" style="border-radius: 0 4px 4px 0;">
+                      <i class="bi bi-search"></i>
+                  </button>
+                  <span class="ms-3"
+                        data-bs-toggle="tooltip"
+                        data-bs-html="true"
+                        title="
                                <strong>{% trans 'Available filters:' %}</strong>
                                <ul class='mb-0 ps-3'>
                                    <li>:shortid</li>
@@ -39,94 +46,13 @@
         </div>
     {% endif %}
 
-  <div class="container-fluid px-0">
-    <div class="mb-4">
-      <div class="mt-4 d-flex align-items-center justify-content-end">
-
-        <!-- Action Buttons -->
-        <div class="btn-group" role="group">
-          {% if lot %}
-            <a href="{% url 'lot:properties' object.id %}" class="btn btn-outline-primary">
-              <i class="bi bi-tag"></i> {% trans 'Properties' %}
-            </a>
-            <a href="{% url 'lot:subscription' object.id %}" class="btn btn-outline-primary">
-              <i class="bi bi-tag"></i> {% trans 'Subscription' %}
-            </a>
-	    {% if is_circuit_manager %}
-            {% if donor %}
-              <a href="{% url 'lot:del_donor' lot.id %}" class="btn btn-outline-primary">{% trans 'Donor' %}</a>
-            {% else %}
-              <a href="{% url 'lot:add_donor' lot.id %}" class="btn btn-outline-primary">{% trans 'Donor' %}</a>
-            {% endif %}
-            {% endif %}
-              <a href="{% url 'lot:participants' lot.id %}" class="btn btn-outline-primary">
-	        {% trans 'Participants' %}
-	      </a>
-              <a href="{% url 'lot:environmental_impact' lot.id %}" class="btn btn-outline-primary">
-	        <i class="bi bi-globe2"></i> {% trans 'Environmental Impact' %}
-	      </a>
-
-            <a href="{#% url 'lot:documents' object.id %#}" class="btn btn-outline-secondary me-2" data-bs-toggle="tooltip"
-               title="{% trans "NOT IMPLEMENTED. Document management" %}">
-              {% trans 'Documents' %}
-            </a>
-          <a href="{% export_url 'csv' %}" class="btn btn-outline-success" data-bs-toggle="tooltip"
-            title="{% trans 'Export main components (.csv)' %}">
-            <i class="bi bi-filetype-csv"></i>
-            {% if search_query %}
-              {% trans 'Export filtered(.csv)' %}
-            {% else %}
-              {% trans 'Export all (.csv)' %}
-            {% endif %}
-          </a>
-          <a href="{% export_url 'xlsx' %}" class="btn btn-outline-success" data-bs-toggle="tooltip"
-            title="{% trans 'Export main components (.xlsx)' %}">
-            <i class="bi bi-filetype-xlsx"></i>
-            {% if search_query %}
-              {% trans 'Export filtered (.xlsx)' %}
-            {% else %}
-              {% trans 'Export all (.xlsx)' %}
-            {% endif %}
-          </a>
-        {% endif %}
-        </div>
-
-        <!-- device limit per page picker -->
-        <form method="get" class="ms-3">
-          <div class="input-group input-group-sm">
-            <label class="input-group-text" for="limit">{% trans "Show" %}</label>
-            <select name="limit" id="limit" class="form-select" onchange="this.form.submit()">
-                {% for choice in paginate_choices %}
-                    {% if choice != 0 %}
-                        <option value="{{ choice }}" {% if limit == choice %}selected{% endif %}>
-                            {{ choice }}
-                        </option>
-                    {% elif lot.name %}
-                        <option value="{{ choice }}" {% if limit == choice %}selected{% endif %}>
-                        {% trans "All" %}
-                        </option>
-                    {% endif %}
-                {% endfor %}
-            </select>
-            <label class="input-group-text" for="limit">{% trans "devices" %}</label>
-          </div>
-
-          {% for key, value in request.GET.items %}
-            {% if key != 'limit' %}
-              <input type="hidden" name="{{ key }}" value="{{ value }}">
-            {% endif %}
-          {% endfor %}
-        </form>
-      </div>
-    </div>
-
     <!-- Main Table Section -->
     <div class="card mb-4">
       <form method="post" id="devices-form">
         {% csrf_token %}
         <!-- Table Actions -->
-        <div class="d-flex justify-content-between align-items-center p-3 bg-light border-bottom">
-          <h5 class="mb-0">
+        <div class="d-flex flex-wrap justify-content-between align-items-center p-3 bg-light border-bottom">
+          <h5 class="mb-2">
             {% if lot.name %}
               {% if lot.archived %}
                 <i class="bi bi-archive text-warning small"></i> {{ lot.name }}
@@ -140,26 +66,54 @@
               <i class="bi bi-devices"></i> {% trans "Device Management" %}
             {% endif %}
           </h5>
-          <div class="d-flex align-items-center gap-2">
+          <div class="d-flex flex-wrap align-items-center gap-2 justify-content-end">
+            <!-- Export dropdown -->
+            {% if lot %}
+            <div class="dropdown ms-2 flex-shrink-0">
+              <button class="btn btn-outline-success dropdown-toggle" type="button" id="exportDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-download"></i>
+                  {% if search_query %}
+                  {% trans 'Export filtered' %}
+                  {% else %}
+                  {% trans 'Export All' %}
+                  {% endif %}
+              </button>
+              <ul class="dropdown-menu dropdown-menu-sm-end" aria-labelledby="exportDropdown">
+                <li>
+                  <a class="dropdown-item" href="{% export_url 'csv' %}">
+                    <i class="bi bi-filetype-csv"></i>
+                      {% trans '.csv' %}
+                  </a>
+                </li>
+                <li>
+                  <a class="dropdown-item" href="{% export_url 'xlsx' %}">
+                    <i class="bi bi-filetype-xlsx"></i>
+                      {% trans '.xlsx' %}
+                  </a>
+                </li>
+              </ul>
+            </div>
+            {% endif %}
+
+            <!-- Assign to lot -->
             {# If a lot is archived, then dont render the unassign button  #}
             {% if lot.name and not lot.archived %}
-              <button id="remove-button" class="btn btn-outline-danger" type="submit"
-                      value="{% url 'lot:del_devices' lot.id %}" name="url">
-                <i class="bi bi-folder-minus"></i> {% trans 'Unassign' %}
-              </button>
+            <button id="remove-button" class="btn btn-outline-danger flex-shrink-0" type="submit"
+                  value="{% url 'lot:del_devices' lot.id %}" name="url">
+              <i class="bi bi-folder-minus"></i> {% trans 'Unassign' %}
+            </button>
             {% endif %}
             {% if lot and is_shop %}
-              <button name="url" value="{% url 'lot:beneficiary' lot.id %}" class="btn btn-outline-primary">
-	        {% trans 'Beneficiary' %}
-	      </button>
+            <button name="url" value="{% url 'lot:beneficiary' lot.id %}" class="btn btn-outline-primary flex-shrink-0">
+              {% trans 'Beneficiary' %}
+            </button>
             {% endif %}
-            <button id="add-button" class="btn btn-green-user" type="submit" disabled name="url" value="{% url 'lot:add_devices' %}">
-              <i class="bi bi-folder-symlink"></i>
-              {% trans 'Assign to lot' %}
+            <button id="add-button" class="btn btn-green-user flex-shrink-0" type="submit" disabled name="url" value="{% url 'lot:add_devices' %}" style="white-space: nowrap;">
+              <i class="bi bi-folder-symlink"></i> {% trans 'Assign to lot' %}
             </button>
 
             <!-- change state button -->
-            <div class="dropdown">
+            <div class="dropdown flex-shrink-0">
               <a class="btn btn-green-admin dropdown-toggle disabled" id="addStateDropdown" data-bs-toggle="dropdown" >
                 {% trans "Change state" %}
               </a>
@@ -175,6 +129,34 @@
               </ul>
             </div>
 
+              <!-- Device limit per page picker -->
+              <div class="ms-2 flex-shrink-0">
+                  <form method="get" class="d-inline">
+                      <div class="input-group input-group-sm">
+                          <label class="input-group-text" for="limit">{% trans "Show" %}</label>
+                          <select name="limit" id="limit" class="form-select" onchange="this.form.submit()">
+                              {% for choice in paginate_choices %}
+                              {% if choice != 0 %}
+                              <option value="{{ choice }}" {% if limit == choice %}selected{% endif %}>
+                                  {{ choice }}
+                              </option>
+                              {% elif lot.name %}
+                              <option value="{{ choice }}" {% if limit == choice %}selected{% endif %}>
+                                  {% trans "All" %}
+                              </option>
+                              {% endif %}
+                              {% endfor %}
+                          </select>
+                          <label class="input-group-text" for="limit">{% trans "devices" %}</label>
+                      </div>
+
+                      {% for key, value in request.GET.items %}
+                      {% if key != 'limit' %}
+                      <input type="hidden" name="{{ key }}" value="{{ value }}">
+                      {% endif %}
+                      {% endfor %}
+                  </form>
+              </div>
           </div>
         </div>
 
@@ -189,7 +171,6 @@
             {% render_pagination page total_pages limit %}
           </div>
         </div>
-
       </form>
     </div>
 
@@ -204,7 +185,7 @@
       const changeStateButton = document.getElementById('addStateDropdown');
 
       const form = document.getElementById("devices-form");
-      const buttons = document.querySelectorAll("#remove-button, #add-button, #addStateDropwdown");
+      const buttons = document.querySelectorAll("#remove-button, #add-button, #addStateDropdown");
 
 
       function updateButtons() {
@@ -214,7 +195,7 @@
           addButton.disabled = !checked;
           changeStateButton.classList.toggle('disabled', !checked);
           if (removeButton) {
-              removeButton.style.visibility = checked ? 'visible' : 'hidden';
+              removeButton.style.display = checked ? 'inherit' : 'none';
           }
       }
 
