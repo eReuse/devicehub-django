@@ -54,6 +54,7 @@
         <div class="p-3 bg-light border-bottom">
             <!-- First row -->
             <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                <!-- Table title -->
                 <h5 class="mb-0">
                     {% if lot.name %}
                     {% if lot.archived %}
@@ -68,6 +69,7 @@
                     {% endif %}
                 </h5>
 
+                <!-- First row second cell-->
                 <div class="d-flex flex-wrap align-items-center gap-2">
                     <!-- Export dropdown -->
                     {% if lot %}
@@ -106,7 +108,7 @@
                 <div class="d-flex flex-wrap align-items-center gap-2">
                     <!-- Change state dropdown -->
                     <div class="dropdown flex-shrink-0">
-                        <a class="btn btn-green-admin dropdown-toggle" id="addStateDropdown" data-bs-toggle="dropdown" >
+                        <a class="btn btn-green-admin dropdown-toggle disabled" id="addStateDropdown" data-bs-toggle="dropdown" >
                             {% trans "Change state" %}
                         </a>
                         <ul class="dropdown-menu" style="width: 120%;">
@@ -129,7 +131,7 @@
                     <!-- Unassign Lot button -->
                     {# If a lot is archived, then dont render the unassign button  #}
                     {% if lot.name and not lot.archived %}
-                    <button id="remove-button" class="btn btn-danger flex-shrink-0 gap-2" type="submit"
+                    <button id="remove-button" class="btn btn-danger flex-shrink-0 gap-2" type="submit" disabled
                             value="{% url 'lot:del_devices' lot.id %}" name="url">
                         <i class="bi bi-folder-minus"></i> {% trans 'Unassign lot' %}
                     </button>
@@ -194,22 +196,6 @@
             const removeButton = document.getElementById('remove-button');
             const changeStateButton = document.getElementById('addStateDropdown');
 
-            // const form = document.getElementById("devices-form");
-            // const buttons = document.querySelectorAll("#remove-button, #add-button, #addStateDropdown");
-
-            // function updateButtons() {
-            //     const checked = document.querySelectorAll('.select-checkbox:checked').length > 0;
-            //
-            //     addButton.style.display = 'none';
-            //     changeStateButton.style.display = 'none';
-            //     if (removeButton) removeButton.style.display = 'none';
-            //     if (checked) {
-            //         addButton.style.display = 'inherit';
-            //         changeStateButton.style.display = 'inherit';
-            //         if (removeButton) removeButton.style.display = 'inherit';
-            //     }
-            // }
-
             function updateButtons() {
                 // Check if at least one checkbox is selected
                 const checked = document.querySelectorAll('.select-checkbox:checked').length > 0;
@@ -217,7 +203,7 @@
                 addButton.disabled = !checked;
                 changeStateButton.classList.toggle('disabled', !checked);
                 if (removeButton) {
-                    removeButton.style.visibility = checked ? 'visible' : 'hidden';
+                    removeButton.disabled = !checked;
                 }
             }
 
