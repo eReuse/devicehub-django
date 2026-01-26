@@ -150,16 +150,16 @@
                   </div>
 
                   <!-- Assign to lot button -->
-                  <button id="add-button" class="btn btn-green-user flex-shrink-0" type="submit" disabled name="url" value="{% url 'lot:add_devices' %}" style="white-space: nowrap;">
+                  <button id="add-button" class="btn btn-green-user flex-shrink-0 gap-2" type="submit" disabled name="url" value="{% url 'lot:add_devices' %}" style="white-space: nowrap;">
                       <i class="bi bi-folder-symlink mr-2"></i> {% trans 'Assign to lot' %}
                   </button>
 
                   <!-- Unassign Lot button -->
                   {# If a lot is archived, then dont render the unassign button  #}
                   {% if lot.name and not lot.archived %}
-                  <button id="remove-button" class="btn btn-danger flex-shrink-0" type="submit" disabled
+                  <button id="remove-button" class="btn btn-danger flex-shrink-0 gap-2" type="submit" disabled
                           value="{% url 'lot:del_devices' lot.id %}" name="url">
-                      <i class="bi bi-folder-minus mr-2"></i> {% trans 'Unassign lot' %}
+                      <i class="bi bi-folder-minus"></i> {% trans 'Unassign lot' %}
                   </button>
                   {% endif %}
               </div>
@@ -199,7 +199,7 @@
           addButton.style.display = 'none';
           changeStateButton.style.display = 'none';
           if (removeButton) removeButton.style.display = 'none';
-          if (checked) {
+          if (!checked) {
               addButton.style.display = 'inherit';
               changeStateButton.style.display = 'inherit';
               if (removeButton) removeButton.style.display = 'inherit';
