@@ -4,7 +4,7 @@ import logging
 from django.http import JsonResponse
 from django.conf import settings
 from django.db import IntegrityError
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, resolve
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect, Http404
 from django.utils.translation import gettext_lazy as _
@@ -94,6 +94,23 @@ class DetailsView(DashboardView, TemplateView ):
             raise Http403
 
         return super().get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        url = request.POST.get("url")
+
+        if url:
+            dev_ids = request.POST.getlist("devices")
+            request.session["devices"] = dev_ids
+            request.session.modified = True
+
+            try:
+                resource = resolve(url)
+                if resource:
+                    return redirect(url)
+            except Exception:
+                pass
+
+        return self.get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
