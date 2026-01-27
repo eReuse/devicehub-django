@@ -64,6 +64,7 @@ class CreateUserView(AdminView, NotifyActivateUserByEmail, CreateView):
     fields = (
         "first_name",
         "email",
+        "address",
         "password",
         "is_admin",
     )
@@ -106,6 +107,7 @@ class EditUserView(AdminView, UpdateView):
     model = User
     fields = (
         "first_name",
+        "address",
         "email",
         "is_admin",
     )

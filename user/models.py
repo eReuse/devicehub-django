@@ -106,6 +106,7 @@ class User(AbstractBaseUser):
     is_shop = models.BooleanField(_("is shop"), default=False)
     first_name = models.CharField(_("First name"), max_length=255, blank=True, null=True)
     last_name = models.CharField(_("Last name"), max_length=255, blank=True, null=True)
+    address = models.CharField(_("Address"), max_length=255, blank=True, null=True)
     accept_gdpr = models.BooleanField(default=False)
     institution = models.ForeignKey(Institution, on_delete=models.CASCADE, related_name="users")
 

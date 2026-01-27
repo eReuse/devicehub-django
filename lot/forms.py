@@ -204,7 +204,9 @@ class LotSubscriptionForm(forms.Form):
 
 
 class AddDonorForm(forms.Form):
-    user = forms.CharField()
+    name = forms.CharField(label=_("Name"))
+    email = forms.EmailField(label=_("Email"))
+    address = forms.CharField(label=_("Address"))
 
     def __init__(self, *args, **kwargs):
         self.institution = kwargs.pop("institution")
@@ -212,10 +214,14 @@ class AddDonorForm(forms.Form):
         self.donor = kwargs.pop("donor", None)
         super().__init__(*args, **kwargs)
         if self.donor:
-            self.fields['user'].widget.attrs['readonly'] = True
+            self.fields['name'].widget.attrs['readonly'] = True
+            self.fields['email'].widget.attrs['readonly'] = True
+            self.fields['address'].widget.attrs['readonly'] = True
 
     def clean(self):
-        self.form_user = self.cleaned_data.get("user")
+        self.form_name = self.cleaned_data.get("name")
+        self.form_email = self.cleaned_data.get("email")
+        self.form_address = self.cleaned_data.get("address")
         return
 
     def save(self, commit=True):
@@ -223,12 +229,14 @@ class AddDonorForm(forms.Form):
             return
 
         if self.donor:
-            self.donor.email = self.form_user
+            self.donor.email = self.form_email
             self.donor.save()
         else:
             self.donor = Donor.objects.create(
                 lot=self.lot,
-                email=self.form_user
+                email=self.form_email,
+                name=self.form_name,
+                address=self.form_address
             )
 
     def remove(self):

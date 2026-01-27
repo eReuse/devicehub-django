@@ -623,7 +623,11 @@ class DonorMixing(DashboardLotMixing, FormView):
         kwargs["institution"] = self.request.user.institution
         kwargs["lot"] = self.lot
         if self.donor:
-            kwargs["initial"] = {"user": self.donor.email}
+            kwargs["initial"] = {
+                "name": self.donor.name,
+                "email": self.donor.email,
+                "address": self.donor.address
+            }
             kwargs["donor"] = self.donor
         return kwargs
 
@@ -689,7 +693,20 @@ class WebMixing(TemplateView):
         self.get_object()
         context = super().get_context_data(**kwargs)
         context["object"] = self.object
+        context["donor"] = self.object
         context["devices"] = self.get_devices()
+        subscriptions = LotSubscription.objects.filter(
+            lot=self.object.lot,
+            user=self.request.user
+        )
+        shop = subscriptions.filter(type=LotSubscription.Type.SHOP).first()
+        if shop:
+            context["shop"] = shop
+
+        cm = subscriptions.filter(type=LotSubscription.Type.CIRCUIT_MANAGER).first()
+        if cm:
+            context["circuit_manager"] = cm
+
         return context
 
     def get_devices(self):
@@ -732,16 +749,16 @@ class AcceptDonorView(TemplateView, NotifyEmail):
             lot_id=pk
         )
 
-        if self.objects.accept_contract and self.object.reconciliation:
+        if self.object.accept_contract and self.object.reconciliation:
             return redirect(self.success_url)
 
-        if not self.objects.accept_contract:
-            self.objects.accept_contract = datetime.datetime.now()
+        if not self.object.accept_contract:
+            self.object.accept_contract = datetime.datetime.now()
         else:
             self.object.reconciliation = datetime.datetime.now()
         self.object.save()
 
-        if self.objects.accept_contract and self.object.reconciliation:
+        if self.object.accept_contract and self.object.reconciliation:
             self.get_templates_email()
             subscriptors = LotSubscription.objects.filter(
                 lot_id=pk,
