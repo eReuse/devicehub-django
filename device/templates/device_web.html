@@ -78,7 +78,7 @@
         background-color: #f3f3f3;
       }
       footer {
-        background-color: #545f71;
+        background-color: #f3f3f3;
         color: #ffffff;
         text-align: center;
         padding: 10px 0;
@@ -136,6 +136,12 @@
               <div class="hash-value">{{ chid|default:'' }}</div>
             </div>
           {% endfor %}
+
+   	  {% if object.QR %}
+          <div class="col-md-4 info-label">
+	    <img width="100px" src="data:image/png;base64,{{ object.QR }}" />
+	  </div>
+	  {% endif %}
         </div>
       </div>
       <h2 class="section-title mt-5">Components</h2>
@@ -162,7 +168,6 @@
     </div>
     <footer>
       <p>
-        &copy;{% now 'Y' %}eReuse. All rights reserved.
       </p>
     </footer>
 

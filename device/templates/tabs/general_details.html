@@ -3,8 +3,7 @@
 
 <!-- Device Details -->
     <div class="tab-pane fade show active" id="details">
-          <h5 class="card-title">{% trans 'Details' %}
-          </h5>
+          <h5 class="card-title">{% trans 'Details' %}</h5>
           <hr>
           <div class="row mb-3">
             <div class="col-sm-4 text-muted fw-bold">{% trans 'Phid' %}
@@ -77,5 +76,13 @@
                 </div>
               {% endfor %}
             </div>
-        </div>
+          </div>
+	  {% if object.QR %}
+	  <div class="row mb-3">
+            <div class="col-sm-4">
+	      <img width="100px" src="data:image/png;base64,{{ object.QR }}" />
+	    </div>
+            <div class="col-sm-8"></div>
+          </div>
+	  {% endif %}
       </div>
