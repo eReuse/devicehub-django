@@ -66,7 +66,7 @@
         </div>
       </div>
     {% endfor %}
-    <button type="submit" id="assignButton" class="btn btn-green-user mt-3">{% if path == "add_devices" %}{% trans "Assign" %} {% else %} {% trans "Deassign" %} {% endif %}</button>
+    <button type="submit" id="assignButton" class="btn btn-green-user mt-3">{% if path == "lot:add_devices" %}{% trans "Assign" %} {% else %} {% trans "Deassign" %} {% endif %}</button>
   </form>
 
 {% endblock %}

@@ -46,7 +46,7 @@ class DashboardView(LoginRequiredMixin):
             'breadcrumb': self.breadcrumb,
             # 'icon': self.icon,
             'section': self.section,
-            'path': resolve(self.request.path).url_name,
+            'path': resolve(self.request.path).view_name,
             'user': self.request.user,
             'lot_tags': lot_tags
         })

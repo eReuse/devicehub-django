@@ -4,37 +4,37 @@
   <div class="col">
     <ul class="nav nav-tabs nav-tabs-bordered">
       <li class="nav-item">
-        <a href="{% url 'dashboard:lot' lot.id %}" class="nav-link {% if path == 'lot' %}active{% endif %}">{% trans 'Devices' %}</a>
+        <a href="{% url 'dashboard:lot' lot.id %}" class="nav-link {% if path == 'dashboard:lot' %}active{% endif %}">{% trans 'Devices' %}</a>
       </li>
       <li class="nav-item">
-        <a href="{% url 'lot:properties' lot.id %}" class="nav-link {% if path == 'properties' %}active{% endif %}">{% trans 'Properties' %}</a>
+        <a href="{% url 'lot:properties' lot.id %}" class="nav-link {% if path == 'lot:properties' %}active{% endif %}">{% trans 'Properties' %}</a>
       </li>
       <li class="nav-item">
-        <a href="{% url 'lot:subscription' lot.id %}" class="nav-link {% if path == 'subscription' %}active{% endif %}">{% trans 'Subscriptions' %}</a>
+        <a href="{% url 'lot:subscription' lot.id %}" class="nav-link {% if path == 'lot:subscription' %}active{% endif %}">{% trans 'Subscriptions' %}</a>
       </li>
       {% if is_circuit_manager %}
       {% if donor %}
       <li class="nav-item">
-        <a href="{% url 'lot:del_donor' lot.id %}" class="nav-link {% if path == 'del_donor' %}active{% endif %}">{% trans 'Donor' %}</a>
+        <a href="{% url 'lot:del_donor' lot.id %}" class="nav-link {% if path == 'lot:del_donor' %}active{% endif %}">{% trans 'Donor' %}</a>
       </li>
       {% else %}
       <li class="nav-item">
-        <a href="{% url 'lot:add_donor' lot.id %}" class="nav-link {% if path == 'add_donor' %}active{% endif %}">{% trans 'Donor' %}</a>
+        <a href="{% url 'lot:add_donor' lot.id %}" class="nav-link {% if path == 'lot:add_donor' %}active{% endif %}">{% trans 'Donor' %}</a>
       </li>
       {% endif %}
       {% endif %}
       {% if is_shop %}
       <li class="nav-item">
-        <a href="{% url 'lot:beneficiary' lot.id %}" class="nav-link {% if path in 'devices_beneficiary' %}active{% endif %}">{% trans 'Beneficiary' %}</a>
+        <a href="{% url 'lot:beneficiary' lot.id %}" class="nav-link {% if path in 'lot:devices_beneficiary' %}active{% endif %}">{% trans 'Beneficiary' %}</a>
       </li>
       {% endif %}
       <li class="nav-item">
-        <a href="{% url 'lot:participants' lot.id %}" class="nav-link {% if path == 'participants' %}active{% endif %}">
+        <a href="{% url 'lot:participants' lot.id %}" class="nav-link {% if path == 'lot:participants' %}active{% endif %}">
 	  {% trans 'Participants' %}
 	</a>
       </li>
       <li class="nav-item">
-        <a href="{% url 'lot:environmental_impact' lot.id %}" class="nav-link {% if path == 'environmental_impact' %}active{% endif %}">
+        <a href="{% url 'lot:environmental_impact' lot.id %}" class="nav-link {% if path == 'lot:environmental_impact' %}active{% endif %}">
 	  {% trans 'Environmental Impact' %}
 	</a>
       </li>
