@@ -134,6 +134,12 @@
                         <i class="bi bi-folder-minus"></i> {% trans 'Unassign lot' %}
                     </button>
                     {% endif %}
+
+                    {% if lot and is_shop %}
+                    <button id="add-beneficiary-button"  name="url" value="{% url 'lot:beneficiary' lot.id %}" class="btn btn-primary" disabled>
+                        {% trans 'Add beneficiary' %}
+                    </button>
+                    {% endif %}
                 </div>
             </div>
     </div>
@@ -200,6 +206,7 @@
             const addButton = document.getElementById('add-button');
             const removeButton = document.getElementById('remove-button');
             const changeStateButton = document.getElementById('addStateDropdown');
+            const addBeneficiaryButton = document.getElementById('add-beneficiary-button');
 
             function updateButtons() {
                 // Check if at least one checkbox is selected
@@ -209,6 +216,9 @@
                 changeStateButton.classList.toggle('disabled', !checked);
                 if (removeButton) {
                     removeButton.disabled = !checked;
+                }
+                if(addBeneficiaryButton) {
+                    addBeneficiaryButton.disabled = !checked;
                 }
             }
 
@@ -229,3 +239,4 @@
 
         });
     </script>{% endblock %}
+</div>
