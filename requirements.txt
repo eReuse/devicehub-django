@@ -22,3 +22,5 @@ psycopg2-binary==2.9.10
 gunicorn==21.2.0
 qrcode[pil]==8.2
 django-ninja==1.4.3
+pyvckit
+pyroaring==0.4.5
