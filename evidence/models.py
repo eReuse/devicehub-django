@@ -44,9 +44,18 @@ class SystemProperty(Property):
     @property
     def hid(self):
         return self.value.split(":")[1]
+
+
 class CredentialProperty(Property):
     credential = models.JSONField()
-    uuid = models.UUIDField()
+    uuid = models.UUIDField(null=True, blank=True)
+    description = models.CharField(
+        "Description",
+        max_length=255,
+        null=True,
+        blank=True,
+        help_text="E.g. 'Digital Facility Record' or 'Product Passport'"
+    )
 
 
 class UserProperty(Property):

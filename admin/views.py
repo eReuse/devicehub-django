@@ -1,4 +1,4 @@
-import logging
+import uuid
 from django_tables2 import SingleTableView
 from smtplib import SMTPException
 from django.contrib import messages
@@ -14,14 +14,16 @@ from django.views.generic.edit import (
 )
 from django.utils.translation import gettext_lazy as _
 from django.db import IntegrityError,   transaction
-from user.models import Institution, InstitutionSettings
 from dashboard.mixins import DashboardView, Http403
+from user.models import User, Institution, InstitutionSettings
 from admin.forms import OrderingStateForm, InstitutionForm, InstitutionSettingsForm
-from user.models import User, Institution
 from admin.email import NotifyActivateUserByEmail
 from admin.tables import UserTable
 from action.models import StateDefinition
 from lot.models import LotTag
+from evidence.services import CredentialService
+
+from django.views import View
 
 
 class AdminView(DashboardView):
@@ -377,3 +379,63 @@ class UpdateStateDefinitionView(AdminView, UpdateView):
     def form_invalid(self, form):
         super().form_invalid(form)
         return redirect(self.get_success_url())
+
+
+class IssueDigitalFacilityRecordView(AdminView, View):
+    def get(self, request, *args, **kwargs):
+        service = CredentialService(request.user)
+        institution = request.user.institution
+
+        address_data = {
+            "type": ["Address"],
+            "streetAddress": institution.street_address,
+            "postalCode": institution.postal_code,
+            "addressLocality": institution.locality,
+            "addressRegion": institution.region,
+            "addressCountry": institution.country
+        }
+        address_data = {k: v for k, v in address_data.items() if v}
+
+        # Schema requires URIs. If facility_id_uri is missing, we generate a URN.
+        facility_uri = institution.facility_id_uri or f"urn:uuid:{uuid.uuid4()}"
+
+        facility_data = {
+            "type": ["Facility"],
+            "id": facility_uri,
+            "name": institution.name,
+            "description": institution.facility_description,
+            "countryOfOperation": institution.country,
+            "address": address_data,
+            # Schema requires 'operatedByParty' with at least id and name
+            "operatedByParty": {
+                "id": facility_uri,
+                "name": institution.name,
+                "registeredId": str(institution.id)
+            }
+        }
+        # Clean empty values
+        facility_data = {k: v for k, v in facility_data.items() if v}
+
+        # 4. Construct Credential Subject
+        credential_subject = {
+            "type": ["FacilityRecord"],
+            "id": f"urn:uuid:{uuid.uuid4()}",
+            "facility": facility_data
+        }
+
+        schema = getattr(service.settings, "untp_drf_schema", "default_drf.json")
+        credential, error = service.issue_credential(
+            schema_name=schema,
+            credential_subject=credential_subject,
+            service_endpoint=request.build_absolute_uri('/'),
+            credential_key="DigitalFacilityRecord",
+            uuid=None,
+            description="Facility Sustainability Record"
+        )
+
+        if error:
+            messages.error(request, error)
+        else:
+            messages.success(request, "Facility Record issued successfully!")
+
+        return redirect('admin:settings', pk=institution.pk)

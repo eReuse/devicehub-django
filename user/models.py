@@ -45,6 +45,13 @@ class Institution(models.Model):
     locality = models.CharField(_("City/Locality"), max_length=100, blank=True, null=True)
     region = models.CharField(_("State/Region"), max_length=100, blank=True, null=True)
 
+    @property
+    def latest_facility_credential(self):
+        return self.credentialproperty_set.filter(
+            uuid__isnull=True,
+            key='DigitalFacilityRecord'
+        ).order_by('-created').first()
+
     def __str__(self):
         return self.name
 
