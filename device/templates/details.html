@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load i18n %}
+{% load render_table from django_tables2 %}
 
 {% block content %}
 <!-- Top bar buttons -->
@@ -39,14 +40,15 @@
                 ( {% trans "None" %} )
                 {% endif %}
             </button>
-            <ul class="dropdown-menu">
-                {% for state in state_definitions %}
-                <li>
-                    <form id="changeStateForm{{ state.id }}" method="post" action="{% url 'action:change_state' %}">
-                        {% csrf_token %}
-                        <input type="hidden" name="previous_state" value="{{ device_states.0.state|default:"nil" }}">
-                        <input type="hidden" name="snapshot_uuid" value="{{ object.last_uuid }}">
-                        <input type="hidden" name="new_state" value="{{ state.state }}">
+            <ul class="dropdown-menu" aria-labelledby="addStateDropdown" style="width: 100%;">
+              {% for state in state_definitions %}
+                <li style="width: 100%;">
+                  <form id="changeStateForm{{ state.id }}" method="post" action="{% url 'action:change_state' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="previous_state" value="{{ device_states.0.state|default:"nil" }}">
+                    <input type="hidden" name="snapshot_uuid" value="{{ object.last_uuid }}">
+                    <input type="hidden" name="device_id" value="{{ object.pk }}">
+                    <input type="hidden" name="new_state" value="{{ state.state }}">
                         <a class="dropdown-item d-flex justify-content-between" href="#" onclick="document.getElementById('changeStateForm{{ state.id }}').submit(); return false;">
                             <span class="font-monospace">{{ state.state }}</span>
                             <span class="badge bg-secondary">{{ forloop.counter }}</span>
@@ -77,6 +79,9 @@
           <a href="#user_properties" class="nav-link" data-bs-toggle="tab" data-bs-target="#user_properties">{% trans 'Properties' %}</a>
         </li>
         <li class="nav-item">
+            <a href="#credentials" class="nav-link" data-bs-toggle="tab" data-bs-target="#credentials">{% trans 'Digital Credentials' %}</a>
+        </li>
+        <li class="nav-item">
           <a href="#lots" class="nav-link" data-bs-toggle="tab" data-bs-target="#lots">{% trans 'Lots' %}</a>
         </li>
         <li class="nav-item">
@@ -105,6 +110,8 @@
   <div class="tab-content pt-4">
 
   {% include 'tabs/general_details.html' %}
+
+  {% include 'tabs/credentials.html' %}
 
   {% include 'tabs/log.html' %}
 

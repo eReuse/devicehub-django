@@ -1,16 +1,21 @@
+import uuid
+from django.utils import timezone
 from django.views import View
+from django.urls import reverse
 from django.shortcuts import redirect, get_object_or_404
 from django.contrib import messages
 from action.forms import ChangeStateForm, AddNoteForm
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.generic.edit import DeleteView, CreateView, UpdateView, FormView
+from django.views.generic.edit import UpdateView, FormView
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
 from dashboard.mixins import DashboardView
 from django.http import HttpResponseRedirect
 from action.models import State, StateDefinition, Note, DeviceLog
 from device.models import Device
-
+from .models import State, DeviceLog
+from evidence.models import Evidence
+from evidence.services import CredentialService
 
 class ChangeStateView(LoginRequiredMixin, FormView):
     form_class = ChangeStateForm
@@ -19,6 +24,15 @@ class ChangeStateView(LoginRequiredMixin, FormView):
         previous_state = form.cleaned_data['previous_state']
         new_state = form.cleaned_data['new_state']
         snapshot_uuid = form.cleaned_data['snapshot_uuid']
+        device_id = form.cleaned_data['device_id']
+        device = Device(id=device_id)
+
+        if not device.last_evidence:
+            return super().form_invalid(form)
+
+        dpp_endpoint = self.request.build_absolute_uri(
+            reverse('evidence:credential_by_evidence', kwargs={'uuid': snapshot_uuid})
+        )
 
         State.objects.create(
             snapshot_uuid=snapshot_uuid,
@@ -34,7 +48,55 @@ class ChangeStateView(LoginRequiredMixin, FormView):
             user=self.request.user,
             institution=self.request.user.institution,
         )
-        messages.success(self.request, _("State successfully changed from '{}' to '{}'").format(previous_state, new_state))
+
+
+        service = CredentialService(self.request.user)
+        TRACEABILITY_SCHEMA = getattr(service.settings, "traceability_schema", "untp-dte-schema-0.6.0.json")
+
+        components = device.components_export()
+        manufacturer = components.get('manufacturer') or "Unknown"
+        model = components.get('model') or "Device"
+        clean_name = f"{manufacturer} {model}"
+
+        device_uri = f"urn:ereuse:device:{device.id}"
+        facility_uri = self.request.user.institution.facility_id_uri or f"urn:uuid:{self.request.user.institution.id}"
+        event_id = f"urn:uuid:{uuid.uuid4()}"
+        event_time = timezone.now().isoformat()
+
+        transformation_event = {
+            "type": ["TransformationEvent"],
+            "id": event_id,
+            "eventTime": event_time,
+            "action": "observe",
+            "processType": "StatusChange",
+            "disposition": f"urn:ereuse:status:{new_state}",
+            "bizLocation": facility_uri,
+
+            "inputEPCList": [{
+                "type": ["Item"],
+                "id": device_uri,
+                "name": clean_name
+            }],
+            "outputEPCList": [{
+                "type": ["Item"],
+                "id": device_uri,
+                "name": clean_name
+            }]
+        }
+
+        credential, error = service.issue_credential(
+            schema_name=TRACEABILITY_SCHEMA,
+            credential_subject=transformation_event,
+            service_endpoint=dpp_endpoint,
+            credential_key="DigitalTraceabilityEvent",
+            uuid=snapshot_uuid,
+            description=f"State Change: {previous_state} -> {new_state}"
+        )
+        if error:
+            messages.warning(self.request, _("State changed, but credential failed: {}").format(error))
+        else:
+            messages.success(self.request, _("State changed and credential issued successfully from '{}' to '{}'").format(previous_state, new_state))
+
         return super().form_valid(form)
 
     def form_invalid(self, form):
