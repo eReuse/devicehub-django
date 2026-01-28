@@ -23,13 +23,13 @@ from action.models import StateDefinition, State, DeviceLog, Note
 from dashboard.mixins import DashboardView, Http403
 from environmental_impact.algorithms.algorithm_factory import FactoryEnvironmentImpactAlgorithm
 from evidence.models import UserProperty, SystemProperty, Evidence
-from user.models import InstitutionSettings
 from lot.models import LotTag
 from device.models import Device
 from device.forms import DeviceFormSet
 from evidence.models import SystemProperty, CredentialProperty
-from evidence.tables import EvidenceTable
+from evidence.tables import EvidenceTable, CredentialTable
 from django_tables2 import RequestConfig
+from evidence.services import CredentialService
 if settings.DPP:
     from dpp.models import Proof
     from dpp.api_dlt import PROOF_TYPE
@@ -131,8 +131,15 @@ class DetailsView(DashboardView, TemplateView ):
 
         ev_queryset = Evidence.get_device_evidences(self.request.user, uuids)
         evidence_table = EvidenceTable(ev_queryset, exclude =('device', ))
-
         RequestConfig(self.request).configure(evidence_table)
+
+        credential_queryset = CredentialProperty.objects.filter(
+            uuid__in=uuids,
+            owner=self.request.user.institution
+        ).order_by('-created')
+        credential_table = CredentialTable(credential_queryset)
+        RequestConfig(self.request, paginate={'per_page': 10}).configure(credential_table)
+
 
         state_definitions = StateDefinition.objects.filter(
             institution=self.request.user.institution
@@ -152,6 +159,7 @@ class DetailsView(DashboardView, TemplateView ):
             "device_logs": device_logs,
             "device_notes": device_notes,
             "table": evidence_table,
+            "credential_table": credential_table,
         })
         return context
 
@@ -336,12 +344,7 @@ class IssueDigitalPassportView(DeviceLogMixin, View):
         pk = self.kwargs.get('device_id')
         device = Device(id=pk)
         last_evidence = device.last_evidence
-
-        institution_config = InstitutionSettings.objects.get(institution=self.request.user.institution)
-
-        API_ENDPOINT = getattr(institution_config, "signing_service_domain", "https://cloudy5.pc.ac.upc.edu/api/v1/issue-credential/")
-        API_KEY = getattr(institution_config, "signing_auth_token", "970a6c32-4829-4863-b80a-0a351a6a892f")
-        PASSPORT_SCHEMA = getattr(institution_config, "device_dpp_schema", "ICTGoodsPassport_UNTP_schema_v1.json")
+        service = CredentialService(request.user)
 
         def convert_ram_to_mb(ram_string):
             if not isinstance(ram_string, str): return 0
@@ -385,82 +388,24 @@ class IssueDigitalPassportView(DeviceLogMixin, View):
             }
         }
 
-        service_endpoint = request.build_absolute_uri(
+        schema = getattr(service.settings, "device_dpp_schema", "default_schema.json")
+        dpp_endpoint = request.build_absolute_uri(
             reverse('evidence:credential_by_evidence', kwargs={'uuid': last_evidence.uuid})
         )
-        payload = {
-            "schema_name": PASSPORT_SCHEMA,
-            "create_did": True,
-            "credentialSubject": credential_subject,
-            "service_endpoint": service_endpoint
-        }
 
-        headers = {
-            'Authorization': f'Bearer {API_KEY}',
-            'Content-Type': 'application/json'
-        }
+        credential, error = service.issue_credential(
+            schema_name=schema,
+            credential_subject=credential_subject,
+            service_endpoint=dpp_endpoint,
+            credential_key="DigitalProductPassport",
+            uuid=device.last_evidence.uuid,
+            description=f"Passport for {components.get('model')}"
+        )
 
-        try:
-            response = requests.post(
-                API_ENDPOINT,
-                json=payload,
-                headers=headers,
-                timeout=15,
-                verify=False,
-                allow_redirects=False
-            )
-            response.raise_for_status()
-
-            signed_credential = response.json()
-            credential_id = signed_credential.get('id')
-
-            if credential_id:
-                last_evidence = device.last_evidence
-                if not last_evidence or not last_evidence.uuid:
-                    messages.error(self.request, "Could not save passport: Device is missing evidence or the evidence has no UUID.")
-                    return redirect('device:details', pk=pk)
-
-                credential= CredentialProperty.objects.create(
-                    uuid=last_evidence.uuid,
-                    key="DigitalProductPassport",
-                    value=credential_id or 'N/A',
-                    credential=signed_credential,
-                    owner=request.user.institution if hasattr(request.user, 'institution') else 'Default Owner',
-                    user=request.user
-                )
-                log_message = f"Digital Passport issued successfully. Credential/subject ID: {credential_id}"
-                messages.success(self.request, log_message)
-            else:
-                 messages.warning(self.request, "API returned a success status but no credential ID.")
-
-        except requests.exceptions.HTTPError as http_err:
-            status_code = http_err.response.status_code
-            error_message = self._get_api_error_message(http_err.response)
-            logger.warning(f"API HTTP error {status_code} for device {pk}: {error_message}")
-
-            if status_code == 400:
-                messages.error(self.request, f"Failed to issue passport. The data was invalid. {error_message}")
-            elif status_code == 409:
-                messages.warning(self.request, "A digital passport already exists for this device's evidence log.")
-            elif status_code == 422:
-                messages.error(self.request, f"Configuration Error: The schema '{PASSPORT_SCHEMA}' was not found on the API server. Please contact an administrator.")
-            elif status_code == 500:
-                messages.error(self.request, f"Failed to issue passport: The remote API server failed due to a configuration error. Please contact an administrator. {error_message}")
-            else:
-                messages.error(self.request, f"An unexpected API error occurred. {error_message}")
-
-        except requests.exceptions.ConnectionError:
-            logger.error(f"API ConnectionError for device {pk}: Could not connect to {API_ENDPOINT}")
-            messages.error(self.request, f"Network Error: Could not connect to the passport service at {API_ENDPOINT}.")
-        except requests.exceptions.Timeout:
-            logger.warning(f"API Timeout for device {pk} at {API_ENDPOINT}")
-            messages.error(self.request, "Network Error: The request to the passport service timed out.")
-        except requests.exceptions.RequestException as err:
-            logger.error(f"API RequestException for device {pk}: {err}", exc_info=True)
-            messages.error(self.request, f"An API request error occurred: {err}")
-        except Exception as e:
-            logger.error(f"Unexpected local error issuing passport for device {pk}: {e}", exc_info=True)
-            messages.error(self.request, f"An unexpected local error occurred: {e}")
+        if error:
+            messages.error(request, error)
+        else:
+            messages.success(request, "Passport issued successfully!")
 
         return redirect('device:details', pk=pk)
 

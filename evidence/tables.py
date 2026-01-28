@@ -194,3 +194,99 @@ class EvidenceTable(tables.Table):
             message,
             _("Error")
         )
+
+
+class CredentialTable(tables.Table):
+    created = tables.DateTimeColumn(
+        format="Y-m-d H:i",
+        verbose_name=_("Issued Date"),
+        orderable=True
+    )
+
+    key = tables.Column(
+        verbose_name=_("Credential Type"),
+        orderable=True
+    )
+
+    description = tables.Column(
+        verbose_name=_("Description"),
+        orderable=False
+    )
+
+    target = tables.Column(
+        verbose_name=_("Issued To"),
+        empty_values=(),
+        orderable=False
+    )
+
+    user = tables.Column(
+        verbose_name=_("Issuer"),
+        accessor='user.email',
+        orderable=True
+    )
+
+    actions = tables.Column(
+        verbose_name=_("Actions"),
+        empty_values=(),
+        orderable=False
+    )
+
+    class Meta:
+        model = CredentialProperty
+        template_name = "custom_table.html"
+        fields = ("created", "key", "description", "target", "user", "actions")
+        order_by = ("-created")
+
+        @property
+        def empty_text(self):
+            return format_html(
+                '<div class="text-muted text-center">{}</div>',
+                _("No credentials issued yet.")
+            )
+
+    def render_key(self, value):
+        display_text = value
+        if value == "DigitalProductPassport":
+            display_text = "Product Passport"
+        elif value == "DigitalFacilityRecord":
+            display_text = "Facility Record"
+        elif value == "DigitalTraceabilityEvent":
+            display_text = "Traceability Event"
+
+        return format_html('<span class="fw-bold">{}</span>', display_text)
+
+    def render_target(self, record):
+        try:
+            if record.uuid:
+                short_uuid = str(record.uuid)[:8]
+                return format_html(
+                    '<span class="font-monospace" title="Device UUID: {}"><i class="bi bi-cpu me-2"></i>Device ({})</span>',
+                    record.uuid,
+                    short_uuid
+                )
+            else:
+                return format_html(
+                    '<span class="badge bg-secondary"><i class="bi bi-building me-2"></i>{}</span>',
+                    _("Organization")
+                )
+        except Exception:
+            return self.render_error_message(_("Error loading target"))
+
+    def render_actions(self, record):
+        try:
+            url = reverse('evidence:credential_detail', kwargs={'pk': record.pk})
+            return format_html(
+                '''<a href="{}" class="btn btn-sm btn-outline-primary d-inline-flex align-items-center">
+                    <i class="bi bi-eye me-2"></i>{}
+                   </a>''',
+                url,
+                _("View")
+            )
+        except Exception:
+            return self.render_error_message()
+
+    def render_error_message(self, message=_("Error")):
+        return format_html(
+            '<span class="text-danger"><i class="bi bi-exclamation-circle-fill me-1"></i>{}</span>',
+            message
+        )
