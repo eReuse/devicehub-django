@@ -6,6 +6,7 @@ class ChangeStateForm(forms.Form):
     previous_state = forms.CharField(widget=forms.HiddenInput())
     snapshot_uuid = forms.UUIDField(widget=forms.HiddenInput())
     new_state = forms.CharField(widget=forms.HiddenInput())
+    device_id = forms.CharField(widget=forms.HiddenInput())
 
 
 class AddNoteForm(forms.Form):
