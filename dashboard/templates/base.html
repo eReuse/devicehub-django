@@ -190,19 +190,19 @@
                 </ul>
               </li>
 	      {% endif %}
-              <li class="nav-item">
-                  <a class="admin {% if 'device:' in path or path in 'dashboard:all_device' %}active {% endif %}nav-link fw-bold" href="{% url 'dashboard:all_device' %}">
-                    <i class="bi bi-laptop icon_sidebar"></i>
+        <li class="nav-item">
+                <a class="admin {% if ':all_device' in path or ':overview' in path %}active {% endif %}nav-link fw-bold" data-bs-toggle="collapse" data-bs-target="#ul_device" aria-expanded="false" aria-controls="ul_device" href="javascript:void(0)">
+                  <i class="bi bi-laptop icon_sidebar"></i>
                   {% trans 'Devices' %}
-                  </a>
-                  <ul class="flex-column mb-2 ul_sidebar accordion-collapse {% if 'device:' in path or path == 'dashboard:all_device' %}expanded{% else %}collapse{% endif %}" id="ul_device" data-bs-parent="#sidebarMenu">
-		  <li class="nav-item">
-                    <a class="nav-link{% if 'device:' in path or path in 'dashboard:all_device' %} active2{% endif %}" href="javascript:void()">
+                </a>
+                <ul class="flex-column mb-2 ul_sidebar accordion-collapse {% if ':all_device' in path or ':overview' in path %}expanded{% else %}collapse{% endif %}" id="ul_device" data-bs-parent="#sidebarMenu">
+                  <li class="nav-item">
+                    <a class="nav-link{% if 'device:' in path or path in 'dashboard:all_device' %} active2{% endif %}" href="{% url 'dashboard:all_device' %}">
                       {% trans 'All' %}
                     </a>
                   </li>
-		              <li class="nav-item">
-                    <a class="nav-link{% if path == 'overview' %} active2{% endif %}" href="{% url 'dashboard:overview' %}">
+                  <li class="nav-item">
+                    <a class="nav-link{% if ':overview' in path %} active2{% endif %}" href="{% url 'dashboard:overview' %}">
                       {% trans 'Overview' %}
                     </a>
                   </li>
