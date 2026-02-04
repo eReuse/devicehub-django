@@ -3,6 +3,7 @@ import logging
 import datetime
 
 from django.db import IntegrityError
+from utils.icons import get_icon_by_type
 from django.urls import reverse_lazy
 from django.shortcuts import get_object_or_404, redirect, Http404, render
 from django.contrib import messages
@@ -789,6 +790,7 @@ class BeneficiaryView(DashboardLotMixing, BeneficiaryAgreementEmail, FormView):
                 'id': device_id,
                 'shortid': device.shortid,
                 'type': device.type or '',
+                'icon': get_icon_by_type(device.type),
                 'manufacturer': device.manufacturer or '',
                 'model': device.model or '',
             }
