@@ -94,12 +94,6 @@
         <div class="col-lg-6">
           <h2 class="section-title">Details</h2>
           <div class="info-row row">
-            <div class="col-md-4 info-label">Phid</div>
-            <div class="col-md-8 info-value">
-              <div class="hash-value">{{ object.id }}</div>
-            </div>
-          </div>
-          <div class="info-row row">
             <div class="col-md-4 info-label">Type</div>
             <div class="col-md-8 info-value">{{ object.type }}</div>
           </div>
@@ -131,11 +125,18 @@
 
         <div class="col-lg-6">
           <h2 class="section-title">Identifiers</h2>
-          {% for chid in object.hids %}
-            <div class="info-row">
-              <div class="hash-value">{{ chid|default:'' }}</div>
+          <div class="info-row row">
+            <div class="col-md-4 info-label">Chid</div>
+            <div class="col-md-8 info-value">
+              <div class="hash-value">{{ object.id }}</div>
             </div>
-          {% endfor %}
+          </div>
+          <div class="info-row row">
+            <div class="col-md-4 info-label">Short ID</div>
+            <div class="col-md-8 info-value">
+              <div class="hash-value">{{ object.shortid }}</div>
+            </div>
+          </div>
 
    	  {% if object.QR %}
           <div class="col-md-4 info-label">
