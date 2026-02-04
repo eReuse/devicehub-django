@@ -3,58 +3,60 @@
 
 {% block content %}
 <!-- Top bar buttons -->
-<div class="row">
-  <div class="col">
-    <h3>{{ object.shortid }}</h3>
-  </div>
-  <div class="col text-end">
-    <div class="btn-group" role="group" aria-label="Actions">
-
-      <!-- change state button -->
-      {% if state_definitions %}
-      <div class="dropdown ms-2">
-        <a class="btn btn-green-admin dropdown-toggle" id="addStateDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-          {% trans "Change state" %}
-          {% if device_states %}
-            ({{ device_states.0.state }})
-          {% else %}
-            ( {% trans "None" %} )
-            {% endif %}
-        </a>
-        <ul class="dropdown-menu" aria-labelledby="addStateDropdown" style="width: 100%;">
-          {% for state in state_definitions %}
-            <li style="width: 100%;">
-              <form id="changeStateForm{{ state.id }}" method="post" action="{% url 'action:change_state' %}">
-                {% csrf_token %}
-                <input type="hidden" name="previous_state" value="{{ device_states.0.state|default:"nil" }}">
-                <input type="hidden" name="snapshot_uuid" value="{{ object.last_uuid }}">
-                <input type="hidden" name="new_state" value="{{ state.state }}">
-
-                <a class="dropdown-item d-flex justify-content-between align-items-center" href="#" onclick="document.getElementById('changeStateForm{{ state.id }}').submit(); return false;">
-                  <span class="font-monospace">{{ state.state }}</span>
-                  <span class="badge bg-secondary rounded-pill-sm">{{ forloop.counter }}</span>
-                </a>
-              </form>
-            </li>
-          {% endfor %}
-        </ul>
-      </div>
-      {% else %}
-        <button class="btn btn-green-admin" type="button" disabled>
-          <i class="bi bi-plus"></i> {% trans "Change state" %}
-          {% if device_states %}
-            ({{ device_states.0.state }})
-          {% endif %}
-        </button>
-      {% endif %}
-      <!-- Add note button -->
-      <button class="btn btn-yellow ms-2" type="button" data-bs-toggle="modal" data-bs-target="#addNoteModal">
-        <i class="bi bi-sticky"></i> {% trans "Add a note" %}
-      </button>
-
+<div class="row align-items-center pb-2">
+    <div class="col-auto">
+        <h3>{{ object.shortid }}</h3>
     </div>
-  </div>
+
+    <div class="col d-flex justify-content-end flex-wrap gap-2">
+
+        <!-- Add note -->
+        <button class="btn btn-yellow flex-shrink-0" type="button" data-bs-toggle="modal" data-bs-target="#addNoteModal">
+            <i class="bi bi-sticky"></i> {% trans "Add a note" %}
+        </button>
+
+        <!-- Assign to lot -->
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="devices" value="{{ object.id }}">
+            <button class="btn btn-green-user flex-shrink-0" type="submit" name="url" value="{% url 'lot:add_devices' %}">
+                <i class="bi bi-folder-symlink"></i> {% trans 'Assign to lot' %}
+            </button>
+        </form>
+
+
+        <!-- Change state -->
+        {% if state_definitions %}
+        <div class="dropdown flex-shrink-0">
+            <button class="btn btn-green-admin dropdown-toggle" data-bs-toggle="dropdown">
+                {% trans "Change state" %}
+                {% if device_states %}
+                ({{ device_states.0.state }})
+                {% else %}
+                ( {% trans "None" %} )
+                {% endif %}
+            </button>
+            <ul class="dropdown-menu">
+                {% for state in state_definitions %}
+                <li>
+                    <form id="changeStateForm{{ state.id }}" method="post" action="{% url 'action:change_state' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="previous_state" value="{{ device_states.0.state|default:"nil" }}">
+                        <input type="hidden" name="snapshot_uuid" value="{{ object.last_uuid }}">
+                        <input type="hidden" name="new_state" value="{{ state.state }}">
+                        <a class="dropdown-item d-flex justify-content-between" href="#" onclick="document.getElementById('changeStateForm{{ state.id }}').submit(); return false;">
+                            <span class="font-monospace">{{ state.state }}</span>
+                            <span class="badge bg-secondary">{{ forloop.counter }}</span>
+                        </a>
+                    </form>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+    </div>
 </div>
+
 
 
   <div class="row">
