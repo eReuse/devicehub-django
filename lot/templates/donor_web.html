@@ -6,7 +6,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{{ object.email }}</title>
+    <title>{{ object.name }}</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
     <style>
@@ -91,7 +91,7 @@
   </head>
   <body>
     <div class="container custom-container">
-      <h1 class="text-center mb-4" style="color: #545f71;">{{ object.email }}</h1>
+      <h1 class="text-center mb-4" style="color: #545f71;">{{ object.name }}</h1>
 
       {% if object.accept_contract %}
       <div class="row mt-4">

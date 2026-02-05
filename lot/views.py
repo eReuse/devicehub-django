@@ -318,7 +318,7 @@ class DashboardLotMixing(DashboardView):
     lot = None
 
     def get_context_data(self, **kwargs):
-        self.pk = kwargs.get('pk')
+        self.pk = kwargs.get('pk') or self.kwargs.get("pk")
         context = super().get_context_data(**kwargs)
         self.get_lot()
 
@@ -567,8 +567,14 @@ class SubscriptLotView(DashboardLotMixing, SubscriptionEmail, FormView):
         response = super().form_valid(form)
         return response
 
+    def form_invalid(self, form):
+        for err in form.errors.values():
+            messages.error(self.request, err[0])
+        super().form_invalid(form)
+        return redirect(self.get_success_url())
+
     def get_success_url(self):
-        return reverse_lazy("lot:subscription", args=[self.lot.id])
+        return reverse_lazy("lot:subscription", args=[self.pk])
 
 
 class UnsubscriptLotView(DashboardView, TemplateView):
@@ -626,7 +632,16 @@ class DonorMixing(DashboardLotMixing, FormView):
             kwargs["initial"] = {
                 "name": self.donor.name,
                 "email": self.donor.email,
-                "address": self.donor.address
+                "address": self.donor.address,
+                "representative": self.donor.representative,
+                "cm_representative": self.donor.cm_representative,
+                "cm_established_in": self.donor.cm_established_in,
+                "cm_location": self.donor.cm_location,
+                "committee": self.donor.committee,
+                "recipient_entity_name": self.donor.recipient_entity_name,
+                "collaborated_entity": self.donor.collaborated_entity,
+                "jurisdiction_city": self.donor.jurisdiction_city,
+                "agreement_place": self.donor.agreement_place,
             }
             kwargs["donor"] = self.donor
         return kwargs
@@ -707,6 +722,8 @@ class WebMixing(TemplateView):
         if cm:
             context["circuit_manager"] = cm
 
+        if hasattr(self.object, 'agreement_date'):
+            self.object.agreement_date = datetime.datetime.now().strftime("%d-%m-%Y")
         return context
 
     def get_devices(self):

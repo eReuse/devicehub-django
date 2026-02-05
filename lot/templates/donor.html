@@ -26,7 +26,25 @@
   </div>
 </div>
 {% endif %}
-{% bootstrap_form form %}
+<fieldset class="border p-3 mb-4 rounded">
+        <legend class="w-auto px-2 h5">{% trans "Donor" %}</legend>
+        {% bootstrap_field form.name %}
+        {% bootstrap_field form.email %}
+        {% bootstrap_field form.address %}
+        {% bootstrap_field form.representative %}
+</fieldset>
+
+<fieldset class="border p-3 mb-4 rounded">
+        <legend class="w-auto px-2 h5">{% trans "Circuit Manager" %}</legend>
+        {% bootstrap_field form.cm_representative %}
+        {% bootstrap_field form.cm_established_in %}
+        {% bootstrap_field form.cm_location %}
+        {% bootstrap_field form.committee %}
+        {% bootstrap_field form.recipient_entity_name %}
+        {% bootstrap_field form.collaborated_entity %}
+        {% bootstrap_field form.jurisdiction_city %}
+        {% bootstrap_field form.agreement_place %}
+</fieldset>
 <div class="form-actions-no-box">
   <a class="btn btn-grey" href="{% url 'dashboard:lot' lot.id %}">{% translate "Cancel" %}</a>
   {% if path == 'del_donor' %}

@@ -81,7 +81,7 @@
         background-color: #f3f3f3;
       }
       footer {
-        background-color: #545f71;
+        background-color: #f3f3f3;
         color: #ffffff;
         text-align: center;
         padding: 10px 0;
@@ -95,7 +95,8 @@
 
       <div class="row mt-4">
         <div class="col">
-	  Convenio
+	  <input class="select-checkbox form-check-input" type="checkbox" id="checkContract" />
+          <a href="/contract" target="_blank">Convenio</a>
 	</div>
       </div>
 
@@ -103,7 +104,7 @@
       <div class="row mt-4">
         <div class="col">
           <div class="form-actions-no-box">
-            <a class="btn btn-secondary" href="{% url 'lot:accept_beneficiary' object.lot.id object.id %}">{% trans 'Accept' %}</a>
+            <a id="btnAcept" class="btn btn-secondary disabled" href="{% url 'lot:accept_beneficiary' object.lot.id object.id %}" disabled>{% trans 'Accept' %}</a>
           </div>
         </div>
       </div>
@@ -111,10 +112,16 @@
     </div>
     <footer>
       <p>
-        &copy;{% now 'Y' %} eReuse. All rights reserved.
       </p>
     </footer>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
+    <script>
+      document.getElementById('checkContract').addEventListener('change', function() {
+        const btn = document.getElementById('btnAcept');
+        btn.classList.toggle('disabled', !this.checked);
+        btn.classList.toggle('pe-none', !this.checked);
+      });
+    </script>
   </body>
 </html>

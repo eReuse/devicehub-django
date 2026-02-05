@@ -59,7 +59,7 @@ class BeneficiaryForm(forms.Form):
         super().__init__(*args, **kwargs)
 
     def clean(self):
-        self._beneficiary = self.cleaned_data.get("beneficiary")
+        self._beneficiary = self.cleaned_data.get("email")
         self._name = self.cleaned_data.get("name")
         self.ben = Beneficiary.objects.filter(
             lot_id=self.lot_pk,
@@ -204,9 +204,18 @@ class LotSubscriptionForm(forms.Form):
 
 
 class AddDonorForm(forms.Form):
-    name = forms.CharField(label=_("Name"))
-    email = forms.EmailField(label=_("Email"))
-    address = forms.CharField(label=_("Address"))
+    name = forms.CharField(label=_("Name"), required=False)
+    email = forms.EmailField(label=_("Email"), required=True)
+    address = forms.CharField(label=_("Address"), required=False)
+    representative = forms.CharField(label=_("Representative"), required=False)
+    cm_representative = forms.CharField(label=_("Representative"), required=False)
+    cm_established_in = forms.CharField(label=_("Established In"), required=False)
+    cm_location = forms.CharField(label=_("Location"), required=False)
+    committee = forms.CharField(label=_("Committee"), required=False)
+    recipient_entity_name = forms.CharField(label=_("Recipient Entity Name"), required=False)
+    collaborated_entity = forms.CharField(label=_("Collaborated Entity"), required=False)
+    jurisdiction_city = forms.CharField(label=_("Jurisdiction City"), required=False)
+    agreement_place = forms.CharField(label=_("Agreement Place"), required=False)
 
     def __init__(self, *args, **kwargs):
         self.institution = kwargs.pop("institution")
@@ -217,11 +226,29 @@ class AddDonorForm(forms.Form):
             self.fields['name'].widget.attrs['readonly'] = True
             self.fields['email'].widget.attrs['readonly'] = True
             self.fields['address'].widget.attrs['readonly'] = True
+            self.fields['representative'].widget.attrs['readonly'] = True
+            self.fields['cm_representative'].widget.attrs['readonly'] = True
+            self.fields['cm_established_in'].widget.attrs['readonly'] = True
+            self.fields['cm_location'].widget.attrs['readonly'] = True
+            self.fields['committee'].widget.attrs['readonly'] = True
+            self.fields['recipient_entity_name'].widget.attrs['readonly'] = True
+            self.fields['collaborated_entity'].widget.attrs['readonly'] = True
+            self.fields['jurisdiction_city'].widget.attrs['readonly'] = True
+            self.fields['agreement_place'].widget.attrs['readonly'] = True
 
     def clean(self):
         self.form_name = self.cleaned_data.get("name")
         self.form_email = self.cleaned_data.get("email")
         self.form_address = self.cleaned_data.get("address")
+        self.form_representative = self.cleaned_data.get("representative")
+        self.form_cm_representative = self.cleaned_data.get("cm_representative")
+        self.form_cm_established_in = self.cleaned_data.get("cm_established_in")
+        self.form_cm_location = self.cleaned_data.get("cm_location")
+        self.form_committee = self.cleaned_data.get("committee")
+        self.form_recipient_entity_name = self.cleaned_data.get("recipient_entity_name")
+        self.form_collaborated_entity = self.cleaned_data.get("collaborated_entity")
+        self.form_jurisdiction_city = self.cleaned_data.get("jurisdiction_city")
+        self.form_agreement_place = self.cleaned_data.get("agreement_place")
         return
 
     def save(self, commit=True):
@@ -236,7 +263,16 @@ class AddDonorForm(forms.Form):
                 lot=self.lot,
                 email=self.form_email,
                 name=self.form_name,
-                address=self.form_address
+                address=self.form_address,
+                representative=self.form_representative,
+                cm_representative=self.form_cm_representative,
+                cm_established_in=self.form_cm_established_in,
+                cm_location=self.form_cm_location,
+                committee=self.form_committee,
+                recipient_entity_name=self.form_recipient_entity_name,
+                collaborated_entity=self.form_collaborated_entity,
+                jurisdiction_city=self.form_jurisdiction_city,
+                agreement_place=self.form_agreement_place,
             )
 
     def remove(self):

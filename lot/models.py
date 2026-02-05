@@ -97,41 +97,6 @@ class LotSubscription(models.Model):
         CIRCUIT_MANAGER = 0, _("Circuit Manager")
         SHOP = 1, _("Shop")
 
-    representative = models.CharField(_("Representative"), max_length=STR_SIZE, null=False, blank=False)
-    established_in = models.CharField(_("Established in"), max_length=STR_SIZE, null=False, blank=False)
-    location = models.CharField(_("Location"), max_length=STR_SIZE, null=False, blank=False)
-    committee = models.CharField(
-        _("Monitoring Committee Donee members"),
-        max_length=STR_SIZE,
-        null=False,
-        blank=False
-    )
-    subannex2 = models.CharField(
-        _("Subannex2 recipient entity name"),
-        max_length=STR_SIZE,
-        null=False,
-        blank=False
-    )
-    appendix1b_collaborated_entity = models.CharField(
-        _("Appendix 1b collaborated entity"),
-        max_length=STR_SIZE,
-        null=False,
-        blank=False
-    )
-    jurisdiction_city = models.CharField(
-        _("Jurisdiction City"),
-        max_length=STR_SIZE,
-        null=False,
-        blank=False
-    )
-    agreement_place = models.CharField(
-        _("Agreement place"),
-        max_length=STR_SIZE,
-        null=False,
-        blank=False
-    )
-    agreement_date = models.DateTimeField(_("Agreement date"), null=False, blank=False)
-    apendix_1b_date = models.DateTimeField(_("Apendix 1b date"), null=False, blank=False)
     lot = models.ForeignKey(Lot, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=False, blank=False)
     type = models.SmallIntegerField(choices=Type.choices)
@@ -153,11 +118,47 @@ class LotSubscription(models.Model):
 
 class Donor(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    name = models.CharField(max_length=STR_SIZE, blank=True, null=True)
-    address = models.CharField(max_length=STR_SIZE, blank=True, null=True)
-    representative = models.CharField(_("Representative"), max_length=STR_SIZE, null=False, blank=False)
+    name = models.CharField(_("Donor name"), max_length=STR_SIZE, blank=True, null=True)
+    address = models.CharField(_("Donor address"), max_length=STR_SIZE, blank=True, null=True)
+    representative = models.CharField(_("Donor Representative"), max_length=STR_SIZE, null=False, blank=False)
     reconciliation = models.DateTimeField(_("Reconciliation"), null=True, blank=True)
     accept_contract = models.DateTimeField(_("Contract"), null=True, blank=True)
+
+    cm_representative = models.CharField(_("Circuit Manager Representative"), max_length=STR_SIZE, null=True, blank=True)
+    cm_established_in = models.CharField(_("Circuit Manager Established in"), max_length=STR_SIZE, null=True, blank=True)
+    cm_location = models.CharField(_("Circuit Manager Location"), max_length=STR_SIZE, null=True, blank=True)
+    committee = models.CharField(
+        _("Monitoring Committee Donee members"),
+        max_length=STR_SIZE,
+        null=True,
+        blank=True
+    )
+    recipient_entity_name = models.CharField(
+        _("Recipient entity name"),
+        max_length=STR_SIZE,
+        null=True,
+        blank=True
+    )
+    collaborated_entity = models.CharField(
+        _("Collaborated entity"),
+        max_length=STR_SIZE,
+        null=True,
+        blank=True
+    )
+    jurisdiction_city = models.CharField(
+        _("Jurisdiction City"),
+        max_length=STR_SIZE,
+        null=True,
+        blank=True
+    )
+    agreement_place = models.CharField(
+        _("Agreement place"),
+        max_length=STR_SIZE,
+        null=True,
+        blank=True
+    )
+    agreement_date = models.DateTimeField(_("Agreement date"), null=True, blank=True)
+
     lot = models.ForeignKey(Lot, on_delete=models.CASCADE)
     email = models.EmailField(
         _('Email address'),

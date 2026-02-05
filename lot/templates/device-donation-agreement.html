@@ -1,17 +1,17 @@
 <h1>Device Donation Agreement</h1>
 <h2>Between {{ donor.name }} and {{ circuit_manager.user.first_name }}</h2>
-<p>In {{ agreement.place }}, on {{ agreement.date }}</p>
+<p>In {{ donor.agreement_place }}, on {{ donor.agreement_date }}</p>
 <p>On one part, {{ donor.name }}, located at {{ donor.address }},
 represented herein by {{ donor.representative }}, hereinafter referred
 to as the DONOR.</p>
-<p>On the other part, {{ circuit_manager.user.first_name }}, located at {{ circuit_manager.address }}, represented herein by {{ circuit_manager.representative }}, hereinafter referred to as the
+<p>On the other part, {{ circuit_manager.user.first_name }}, located at {{ circuit_manager.user.address }}, represented herein by {{ donor.cm_representative }}, hereinafter referred to as the
 DONEE.</p>
 <p>Both parties, acting in exercise of their respective positions,
 declare and state that they intervene in this agreement with the
 necessary legal capacity and sufficient competence to subscribe to
 it.</p>
 <h2 id="background">BACKGROUND</h2>
-<p>I. {{ circuit_manager.user.first_name }} is an association established in {{ circuit_manager.established_in }} aiming to provide Internet and new
+<p>I. {{ circuit_manager.user.first_name }} is an association established in {{ donot.cm_established_in }} aiming to provide Internet and new
 information and communication technologies (ICT) to associations, NGOs,
 individuals, and non-profit groups working towards change, education,
 peace, environment, development, cooperation, and social justice.</p>
@@ -22,7 +22,7 @@ encourage the reuse, traceability, and final recycling of digital
 devices such as computers, laptops, or mobile phones.</li>
 </ol>
 <p>Participants federate and implement locally managed reuse circuits.
-In {{ circuit_manager.location }}, the {{ circuit_manager.user.first_name }} has been
+In {{ donor.cm_location }}, the {{ circuit_manager.user.first_name }} has been
 created, an open and voluntary circuit, democratically managed where
 participating agents are ESS initiatives creating a common space to
 facilitate the donation, collection, refurbishment, and local
@@ -189,8 +189,8 @@ development of the agreement - Ensure commitments are fulfilled - Ensure
 donations comply with regulations - Ensure correct application of
 selection conditions - Specify which equipment can be donated (including
 unusable-goods declaration and inventory removal)</p>
-<p>It consists of {{ circuit_manager.committee }} people from
-the circuit and {{ circuit_manager.committee }} people from {{
+<p>It consists of {{ donor.committee }} people from
+the circuit and {{ donor.committee }} people from {{
 donor.name }}. It meets annually and keeps records.</p>
 <p>Regardless of the committee, the DONEE will regularly present
 monitoring reports to {{ donor.name }} and circuit adherents.</p>
@@ -229,7 +229,7 @@ good-faith fulfillment and necessary negotiations.</p>
 Represented by: {{ donor.representative }}<br />
 Signature: ______________________ Date: __________________</p>
 <p>DONEE: {{ circuit_manager.user.first_name }}<br />
-Represented by: {{ circuit_manager.representative }}<br />
+Represented by: {{ donor.cm_representative }}<br />
 Signature: ______________________ Date: __________________</p>
 <hr />
 <h2 id="sub-annex-1-selection-criteria-for-collaborating-entities">Sub
@@ -247,140 +247,3 @@ social, and environmental interest. 7. They distribute equipment to
 recipients according to the criteria established in clause 4.2 of the
 agreement.</p>
 <hr />
-<h2 id="sub-annex-2-subsequent-donations">Sub Annex 2 — Subsequent
-donations</h2>
-<p>In the event of non-conformity, COLLABORATED ENTITIES receive a minor
-fault and are excluded from the next three collections; three minor
-faults may trigger proposed exclusion, decided by the Monitoring
-Committee.</p>
-<p>This sub annex confirms devices delivered by the DONOR are in
-accordance with the “Device Donation Agreement between {{ donor.name }}
-and {{ circuit_manager.user.first_name }},” signed on {{ circuit_manager.agreement_date }} in {{
-circuit_manager.agreement_place }}.</p>
-<p>In line with the agreement, {{ donor.name }} delivers to {{
-circuit_manager.subannex2_recipient_entity_name }}, a circuit member, the devices and
-other hardware listed below:</p>
-<table>
-<colgroup>
-<col style="width: 21%" />
-<col style="width: 15%" />
-<col style="width: 15%" />
-<col style="width: 15%" />
-<col style="width: 15%" />
-<col style="width: 15%" />
-</colgroup>
-<thead>
-<tr>
-<th style="text-align: right;">Quantity</th>
-<th>DONOR hardware</th>
-<th>Identifier</th>
-<th>Manufacturer</th>
-<th>Model</th>
-<th>Serial Number</th>
-</tr>
-</thead>
-<tbody>
-</tbody>
-</table>
-<p>{% for item in devices %} | {{ item.quantity|default:"" }} | {{
-item.type|default:"" }} | {{ item.shortid|default:"" }} | {{ item.manufacturer|default:"" }} | {{
-item.model|default:"" }} | {{ item.serial_number|default:"" }} | {% endfor %}</p>
-<hr />
-<h2 id="appendix-1a-inventory-note-from-donor">Appendix 1A — Inventory
-note from DONOR</h2>
-<table>
-<thead>
-<tr>
-<th>DONOR hardware</th>
-<th>Identifier</th>
-<th>Manufacturer</th>
-<th>Model</th>
-<th>Serial Number</th>
-</tr>
-</thead>
-<tbody>
-</tbody>
-</table>
-<p>{% for item in devices %} | {{ item.quantity|default:"" }} | {{
-item.type|default:"" }} | {{ item.shortid|default:"" }} | {{ item.manufacturer|default:"" }} | {{
-item.model|default:"" }} | {{ item.serial_number|default:"" }} | {% endfor %}</p>
-<p>{% for item in appendix_1a.items %} | {{ item.type }} | {{
-item.identifier }} | {{ item.manufacturer }} | {{ item.model }} | {{
-item.serial }} | {% endfor %}</p>
-<hr />
-<h2 id="appendix-1b-delivery-note-from-refurbishment-centre">Appendix 1B
-— Delivery note from refurbishment centre</h2>
-<p>The {{ donor.name }} delivered on {{ circuit_manager.appendix_1b_date }}, to {{
-circuit_manager.appendix_1b_collaborated_entity }}, within the framework of the device
-donation agreement between {{ donor.name }} and the {{
-circuit_manager.user.first_name }}, signed on {{ circuit_manager.agreement.date }}, the materials
-listed below:</p>
-<table>
-<colgroup>
-<col style="width: 12%" />
-<col style="width: 12%" />
-<col style="width: 12%" />
-<col style="width: 12%" />
-<col style="width: 12%" />
-<col style="width: 12%" />
-<col style="width: 12%" />
-<col style="width: 12%" />
-</colgroup>
-<thead>
-<tr>
-<th>DONOR hardware</th>
-<th>Identifier</th>
-<th>Manufacturer</th>
-<th>Model</th>
-<th>Collaborating entity</th>
-<th>Compliance comments</th>
-<th>ID DeviceHub</th>
-<th>Data wipe</th>
-</tr>
-</thead>
-<tbody>
-</tbody>
-</table>
-<p>{% for row in appendix_1b.rows %} | {{ row.type }} | {{
-row.identifier }} | {{ row.manufacturer }} | {{ row.model }} | {{
-row.collaborating_entity }} | {{ row.compliance_comment }} | {{
-row.devicehub_id }} | {{ row.data_wipe_status }} | {% endfor %}</p>
-<hr />
-<h2
-id="appendix-1c-reuserecycling-note-from-refurbishment-centre">Appendix
-1C — Reuse/Recycling note from refurbishment centre</h2>
-<table>
-<colgroup>
-<col style="width: 9%" />
-<col style="width: 9%" />
-<col style="width: 9%" />
-<col style="width: 9%" />
-<col style="width: 9%" />
-<col style="width: 9%" />
-<col style="width: 9%" />
-<col style="width: 9%" />
-<col style="width: 9%" />
-<col style="width: 12%" />
-</colgroup>
-<thead>
-<tr>
-<th>DONOR hardware</th>
-<th>Identifier</th>
-<th>Manufacturer</th>
-<th>Model</th>
-<th>Collaborating entity</th>
-<th>Compliance comments</th>
-<th>ID DeviceHub</th>
-<th>Status</th>
-<th>Receiver entity</th>
-<th style="text-align: right;">Amount paid</th>
-</tr>
-</thead>
-<tbody>
-</tbody>
-</table>
-<p>{% for row in appendix_1c.rows %} | {{ row.type }} | {{
-row.identifier }} | {{ row.manufacturer }} | {{ row.model }} | {{
-row.collaborating_entity }} | {{ row.compliance_comment }} | {{
-row.devicehub_id }} | {{ row.status }} | {{ row.receiver_entity }} | {{
-row.amount_paid }} | {% endfor %}</p>
