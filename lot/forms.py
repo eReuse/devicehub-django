@@ -90,7 +90,7 @@ class BeneficiaryForm(forms.Form):
 
 
 class LotSubscriptionForm(forms.Form):
-    user = forms.CharField()
+    user = forms.CharField(label=_("Email"))
     type = forms.ChoiceField(
         choices=[
             ("circuit_manager", _("Circuit Manager")),
