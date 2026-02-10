@@ -5,6 +5,8 @@ from django.utils.html import format_html, escape
 from django.utils.safestring import mark_safe
 from django.utils.html import format_html
 
+from utils.icons import get_icon_by_type
+
 
 class DeviceTable(tables.Table):
 
@@ -92,26 +94,8 @@ class DeviceTable(tables.Table):
         }
     )
     def render_type(self, value, record):
-        icons = {
-            "Laptop": "bi-laptop",
-            "Netbook": "bi-laptop",
-            "Desktop": "bi-pc-display",
-            "Server": "bi-pc-display",
-            "Motherboard": "bi-motherboard",
-            "GraphicCard": "bi-gpu-card",
-            "HardDrive": "bi-hdd",
-            "SolidStateDrive": "bi-device-ssd",
-            "NetworkAdapter": "bi-pci-card-network",
-            "Processor": "bi-cpu",
-            "RamModule": "bi-memory",
-            "SoundCard": "bi-speaker",
-            "Display": "bi-display",
-            "Battery": "bi-battery",
-            "Camera": "bi-camera"
-        }
-
         safe_value = escape(value)
-        icon_class = icons.get(value, 'bi-question-circle')
+        icon_class = get_icon_by_type(value)
 
         return format_html(
             '<i class="bi {}"></i> {}',

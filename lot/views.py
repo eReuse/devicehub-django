@@ -3,6 +3,7 @@ import logging
 import datetime
 
 from django.db import IntegrityError
+from utils.icons import get_icon_by_type
 from django.urls import reverse_lazy
 from django.shortcuts import get_object_or_404, redirect, Http404, render
 from django.contrib import messages
@@ -774,19 +775,38 @@ class BeneficiaryView(DashboardLotMixing, BeneficiaryAgreementEmail, FormView):
             else:
                 beneficiaries = Beneficiary.objects.filter(lot=self.lot)
 
-        new_devices = {}
-        for d in self.request.session.get("devices", []):
+        devices_to_assign = []
+        devices_already_assigned = []
+        for device_id in self.request.session.get("devices", []):
+            device = Device(id=device_id, owner=self.request.user.institution)
+            device.initial()
+
             d_ben = DeviceBeneficiary.objects.filter(
-                device_id=d,
+                device_id=device_id,
                 beneficiary__lot=self.lot
             ).first()
-            new_devices[d] = d_ben.beneficiary.email if d_ben else ''
+
+            device_info = {
+                'id': device_id,
+                'shortid': device.shortid,
+                'type': device.type or '',
+                'icon': get_icon_by_type(device.type),
+                'manufacturer': device.manufacturer or '',
+                'model': device.model or '',
+            }
+
+            if d_ben:
+                device_info['beneficiary_email'] = d_ben.beneficiary.email
+                devices_already_assigned.append(device_info)
+            else:
+                devices_to_assign.append(device_info)
 
         context.update({
             'lot': self.lot,
             'beneficiaries': beneficiaries,
             "action": _("Add"),
-            "new_devices": new_devices.items()
+            "devices_to_assign": devices_to_assign,
+            "devices_already_assigned": devices_already_assigned,
         })
         return context
 
