@@ -253,3 +253,60 @@ def queryset_SQL_unassigned_count(institution):
     with connection.cursor() as cursor:
         cursor.execute(sql)
         return cursor.fetchall()[0][0]
+
+
+def queryset_SQL_devices_lot(lot, institution, offset=0, limit=None):
+    institution_id = institution.id
+    lot_id = lot.id
+
+    device_lot = f"""
+        select device_id from lot_devicelot as ld left join lot_lot as lot on ld.lot_id=lot.id
+          where lot.owner_id = {institution_id} and lot.id = {lot_id}
+    """
+
+    # Search all values in Systemproperty than not exists in qry3
+    sql = f"""
+        select distinct sp.value from evidence_systemproperty as sp
+        where
+          sp.value in ({device_lot}) and
+          sp.owner_id = {institution_id}
+          order by sp.created desc
+    """
+    if limit:
+        sql += " limit {} offset {}".format(int(limit), int(offset))
+
+    sql += ";"
+
+    annotations = []
+    with connection.cursor() as cursor:
+        cursor.execute(sql)
+        annotations = cursor.fetchall()
+
+    return annotations
+
+
+def queryset_SQL_devices_lot_count(lot, institution, offset=0, limit=None):
+    institution_id = institution.id
+    lot_id = lot.id
+
+    device_lot = f"""
+        select device_id from lot_devicelot as ld left join lot_lot as lot on ld.lot_id=lot.id
+          where lot.owner_id = {institution_id} and lot.id = {lot_id}
+    """
+
+    # Search all values in Systemproperty than not exists in qry3
+    sql = f"""
+        select count(distinct sp.value) from evidence_systemproperty as sp
+        where
+          sp.value in ({device_lot}) and
+          sp.owner_id = {institution_id}
+          order by sp.created desc
+    """
+    if limit:
+        sql += " limit {} offset {}".format(int(limit), int(offset))
+
+    sql += ";"
+
+    with connection.cursor() as cursor:
+        cursor.execute(sql)
+        return cursor.fetchall()[0][0]

@@ -4,27 +4,26 @@ import logging
 from tablib import Dataset
 
 from django.utils.translation import gettext_lazy as _
-from django.views.generic.edit import FormView
-from django.shortcuts import Http404
+from django.shortcuts import get_object_or_404
 from django.utils.dateparse import parse_datetime
 from django.http import HttpResponse
-from dashboard.tables import DeviceTable
+from django.db.models import Q
 
 from django_tables2 import RequestConfig
 from django_tables2.views import SingleTableMixin
-from django_tables2.export.export import TableExport
 from django_tables2.export.views import ExportMixin
 
 from action.models import StateDefinition
-from django.db.models import Q
-
+from dashboard.tables import DeviceTable
 from dashboard.mixins import InventaryMixin, DetailsMixin, DeviceTableMixin
 from evidence.models import SystemProperty
 from evidence.xapian import search
 from device.models import Device
 from lot.models import Lot, LotSubscription, Donor
 
+
 logger = logging.getLogger('django')
+
 
 class UnassignedDevicesView(DeviceTableMixin, InventaryMixin):
     template_name = "unassigned_devices.html"
@@ -46,45 +45,32 @@ class AllDevicesView(DeviceTableMixin, InventaryMixin):
         return Device.get_all(self.request.user.institution, offset, limit)
 
 
-class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMixin):
+class LotDashboardView(ExportMixin, DeviceTableMixin, InventaryMixin, DetailsMixin):
     template_name = "unassigned_devices.html"
     section = "dashboard_lot"
     breadcrumb = f"{_('Lot')} / {_('Devices')}"
-    paginate_by = 10
-    paginate_choices = [10, 20, 50, 100, 0]
-    table_class = DeviceTable
     model = Lot
-    export_formats = ['csv']
-    export_name = 'lot_devices_export'
-    table_pagination = {
-        'per_page': paginate_by,
-        'page': 1
-    }
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        lot = context.get('object')
+        self.lot = context.get('object')
+
         subscriptions = LotSubscription.objects.filter(
-            lot=lot,
+            lot=self.lot,
             user=self.request.user
         )
+
         is_shop = subscriptions.filter(type=LotSubscription.Type.SHOP).first()
         is_circuit_manager = subscriptions.filter(
             type=LotSubscription.Type.CIRCUIT_MANAGER
         ).first()
 
-        donor = Donor.objects.filter(lot=lot).first()
+        donor = Donor.objects.filter(lot=self.lot).first()
 
         context.update({
-            'title': "{} {}".format(_("Lot"), lot.name),
-            'lot': lot,
-            'count': len(self.get_queryset()),
-            'paginate_choices': self.paginate_choices,
-            'state_definitions': self._get_state_definitions(),
-            'limit': int(self.request.GET.get('limit', self.paginate_by)),
-            'search_query': self.request.GET.get('q', ''),
-            'breadcrumb' : _("Lot / {} / Devices").format(
-                lot.name),
+            'title': "{} {}".format(_("Lot"), self.lot.name),
+            'lot': self.lot,
+            'breadcrumb' : _("Lot / {} / Devices").format(self.lot.name),
             'subscripted': subscriptions.first(),
             'is_circuit_manager': is_circuit_manager,
             'is_shop': is_shop,
@@ -92,61 +78,44 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
         })
         return context
 
-    def get_queryset(self):
-        chids = self.object.devicelot_set.all().values_list(
-            "device_id", flat=True
-        ).distinct()
-        search_query = self.request.GET.get('q', '').lower()
+    def get_devices(self, user, offset=0, limit=None):
+        institution = self.request.user.institution
+        devices, count = Device.get_devices_lot(self.object, institution, offset, limit)
+        return [self.build_table_row(device) for device in devices], count
 
-        if search_query:
-            ldevices = []
-            for x in chids:
-                dev = Device(id=x)
-                if dev.matches_query(search_query):
-                    ldevices.append(dev)
-            return ldevices
-
-        owner = self.request.user.institution
-        return [Device(id=x, lot=self.object, owner=owner) for x in chids]
-
-    def get_table_data(self):
-        table_data = []
-        for device in super().get_table_data():
-
-            current_state = device.get_current_state()
-
-            table_data.append({
-                'id': device.pk,
-                'shortid': device.shortid,
-                'type': device.type,
-                'manufacturer': getattr(device, 'manufacturer', ''),
-                'model': getattr(device, 'model', ''),
-                'version': getattr(device, 'version', ''),
-                'cpu': getattr(device, 'cpu', ''),
-                'current_state': current_state.state if current_state else '--',
-                'status_beneficiary': device.status_beneficiary,
-                'last_updated': parse_datetime(device.updated) if device.updated else "--"
-            })
-        return table_data
-
-    def get_table_kwargs(self):
-        kwargs = super().get_table_kwargs()
+    def configure_table(self, context):
+        """Configure and add table to context"""
         limit = int(self.request.GET.get('limit', self.paginate_by))
         page = int(self.request.GET.get('page', 1))
+        offset = (page - 1) * limit
 
-        if limit != 0:
-            self.table_pagination = {
-                'per_page': limit,
-                'page': page
-            }
-        else:
-            self.table_pagination = False
+        table_data, count = self.get_devices(self.request.user, offset, limit)
+        total_pages = (count + limit - 1) // limit if limit != 0 else 1
 
         if not self.object.beneficiary_set.exists():
-            kwargs['exclude'] = ('status_beneficiary',)
+            table = DeviceTable(table_data, exclude =('status_beneficiary', ))
+        else:
+            table = DeviceTable(table_data)
 
-        return kwargs
+        if limit != 0:
+            RequestConfig(self.request, paginate={'page': page, 'per_page': limit}).configure(table)
+        else:
+            RequestConfig(self.request, paginate=False).configure(table)
 
+        state_definitions = StateDefinition.objects.filter(
+            institution=self.request.user.institution
+        ).order_by('order')
+
+        context.update({
+            'table': table,
+            'count': count,
+            'limit': limit,
+            'page': page,
+            'total_pages': total_pages,
+            'paginate_choices': self.paginate_choices,
+            "state_definitions": state_definitions
+        })
+        return context
     def _get_state_definitions(self):
         return StateDefinition.objects.filter(
             institution=self.request.user.institution
@@ -155,7 +124,9 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
     def create_export(self, export_format):
         if export_format in ('csv', 'xlsx'):
 
-            devices = self.get_queryset()
+            institution = self.request.user.institution
+            _, count = Device.get_devices_lot(self.object, institution, 0, 1)
+            devices, _ = Device.get_devices_lot(self.object, institution, 0, count)
 
             headers = [
                 'ID', 'type', 'manufacturer', 'model', 'cpu_model', 'cpu_cores', 'current_state',
@@ -199,6 +170,7 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
             return response
 
         return super().create_export(export_format)
+
 
 class SearchView(DeviceTableMixin, InventaryMixin):
     template_name = "unassigned_devices.html"

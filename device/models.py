@@ -278,6 +278,15 @@ class Device:
         return exclude_lots
 
     @classmethod
+    def queryset_orm_devices_lot(cls, lot, institution):
+        qry4 = cls.queryset_orm(institution)
+        dev_lots = DeviceLot.objects.filter(lot__owner=institution, lot=lot
+                                            ).values_list("device_id", flat=True).distinct()
+
+        # filter devices in the lot
+        return qry4.filter(value__in=dev_lots).distinct()
+
+    @classmethod
     def get_all(cls, institution, offset=0, limit=None):
         # return cls.get_all_sql(institution, offset=offset, limit=limit)
         return cls.get_all_orm(institution, offset=offset, limit=limit)
@@ -286,6 +295,11 @@ class Device:
     def get_unassigned(cls, institution, offset=0, limit=20):
         # return cls.get_unassigned_sql(institution, offset=offset, limit=limit)
         return cls.get_unassigned_orm(institution, offset=offset, limit=limit)
+
+    @classmethod
+    def get_devices_lot(cls, lot, institution, offset=0, limit=20):
+        #return cls.get_devices_lot_sql(lot, institution, offset=offset, limit=limit)
+        return cls.get_devices_lot_orm(lot, institution, offset=offset, limit=limit)
 
     @classmethod
     def get_all_orm(cls, institution, offset=0, limit=None):
@@ -304,6 +318,14 @@ class Device:
         return devices, count
 
     @classmethod
+    def get_devices_lot_orm(cls, lot, institution, offset=0, limit=20):
+        qry = cls.queryset_orm_devices_lot(lot, institution)
+        evs = qry[offset:offset+limit]
+        count = qry.count()
+        devices = [cls(id=x, owner=institution, lot=lot) for x in evs]
+        return devices, count
+
+    @classmethod
     def get_all_sql(cls, institution, offset=0, limit=None):
         evs = q_sql.queryset_SQL(institution, offset=offset, limit=limit)
         count = q_sql.queryset_SQL_count(institution)
@@ -317,6 +339,12 @@ class Device:
         devices = [cls(id=x[0], owner=institution) for x in evs]
         return devices, count
 
+    @classmethod
+    def get_devices_lot_sql(cls, lot, institution, offset=0, limit=20):
+        evs = q_sql.queryset_SQL_devices_lot(lot, institution, offset=offset, limit=limit)
+        count = q_sql.queryset_SQL_devices_lot_count(lot, institution)
+        devices = [cls(id=x[0], owner=institution, lot=lot) for x in evs]
+        return devices, count
 
     @classmethod
     def get_properties_from_uuid(cls, uuid, institution):
