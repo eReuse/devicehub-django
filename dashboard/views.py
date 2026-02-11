@@ -106,7 +106,7 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
                 'cpu': getattr(device, 'cpu', ''),
                 'current_state': current_state.state if current_state else '--',
                 'status_beneficiary': device.status_beneficiary,
-                'last_updated': parse_datetime(device.updated) if device.updated else "--"
+                'created': row.record.created
             }
             row.record.device = instancie
 
