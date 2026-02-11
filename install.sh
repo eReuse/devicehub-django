@@ -356,36 +356,74 @@ docker_wizard__selector() {
 }
 
 docker_wizard() {
-        set +x
-        printf "\nDetected .env file is missing, so let's initialize the config (if you
-want to see again, remove .env file)\n\nPress enter to continue... "
-        read -r enter < /dev/tty
+	set +x
+	printf '\n'
+	printf '╔══════════════════════════════════════════════════════════════════╗\n'
+	printf '║  DEVICEHUB INSTALLATION WIZARD                                   ║\n'
+	printf '╚══════════════════════════════════════════════════════════════════╝\n'
+	printf '\nPress enter to continue... '
+	read -r enter < /dev/tty
 
-        docker_wizard__selector
+	docker_wizard__selector
 
-        docker_wizard__finalize
+	docker_wizard__finalize
+}
+
+check_existing_env() {
+	# Check if .env already exists and ask user what to do
+	if [ -f .env ]; then
+		set +x
+		printf '\n'
+		printf '╔══════════════════════════════════════════════════════════════════╗\n'
+		printf '║  EXISTING CONFIGURATION DETECTED                                 ║\n'
+		printf '╚══════════════════════════════════════════════════════════════════╝\n'
+		printf '\n'
+		printf 'An .env file already exists. What would you like to do?\n'
+		printf '\n'
+		printf '  1) Keep current config and just restart services\n'
+		printf '  2) Configure a new instance of DeviceHub (will backup current .env)\n'
+		printf '\n'
+		printf 'Select option [1]: '
+		read -r env_choice < /dev/tty
+
+		case "${env_choice}" in
+			2|new|configure)
+				backup_file=".env.backup.$(date +%Y%m%d_%H%M%S)"
+				cp .env "${backup_file}"
+				printf '\n✓ Current .env backed up to %s\n' "${backup_file}"
+				rm -f .env
+				return 1  # Signal to run wizard
+				;;
+			*)
+				printf '\n✓ Using existing configuration.\n'
+				return 0  # Signal to skip wizard
+				;;
+		esac
+	fi
+	return 1  # No .env exists, run wizard
 }
 
 main() {
-        [ "${TERM:-}" ] && clear
-        cd "$(dirname "${0}")"
+	[ "${TERM:-}" ] && clear
+	cd "$(dirname "${0}")"
 
-        if [ ! -f .env ]; then
-                docker_wizard
-        fi
-        . ./.env
-        mkdir -p "${DOCKER_DEVICEHUB_DATA_DIR}"
+	if ! check_existing_env; then
+		docker_wizard
+	fi
 
-        if [ "${DEVICEHUB_REMOVE_DATA}" = 'true' ]; then
-                docker compose down -v
-        else
-                docker compose down
-        fi
+	. ./.env
+	mkdir -p "${DOCKER_DEVICEHUB_DATA_DIR}"
 
-        if [ "${DOCKER_ALWAYS_BUILD:-}" = 'true' ]; then
-                docker compose build
-        fi
-        docker compose up -d 
+	if [ "${DEVICEHUB_REMOVE_DATA}" = 'true' ]; then
+		docker compose down -v
+	else
+		docker compose down
+	fi
+
+	if [ "${DOCKER_ALWAYS_BUILD:-}" = 'true' ]; then
+		docker compose build
+	fi
+	docker compose up -d 
 }
 
 main "${@}"
