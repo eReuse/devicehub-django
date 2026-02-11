@@ -123,6 +123,24 @@ proxy_send_timeout 600;
 proxy_read_timeout 600;
 ```
 
+#### Running Devicehub behind an external TLS terminator
+
+If you are using Cloudflare Tunnel, Pangolin, or another reverse proxy that already terminates TLS, run DeviceHub with the reverse proxy profile but use an HTTP-only Nginx template. In this setup, Nginx only speaks HTTP internally and serves static/media files directly.
+
+Use the installer option:
+
+```
+prod_rproxy_external_tls
+```
+
+Or set these in `.env` manually:
+
+```
+COMPOSE_PROFILES=rproxy
+RPROXY_TEMPLATE=/etc/nginx/conf.d/app.http.template
+RPROXY_ENABLE_LETSENCRYPT=false
+```
+
 ## Running from baremetal
 
 ### Baremetal Prerequisites

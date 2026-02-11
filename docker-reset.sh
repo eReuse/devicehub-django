@@ -86,6 +86,11 @@ docker_wizard__finalize() {
         fi
         add_env_var RPROXY_ENABLE_LETSENCRYPT_REQUEST
 
+        if [ -z "${RPROXY_TEMPLATE_REQUEST:-}" ]; then
+                export RPROXY_TEMPLATE_REQUEST='/etc/nginx/conf.d/app.template'
+        fi
+        add_env_var RPROXY_TEMPLATE_REQUEST
+
         if [ "${DEVICEHUB_DEMO_REQUEST}" = 'true' ]; then
                 export DEVICEHUB_DEMO_PREDEFINED_TOKEN_REQUEST='5018dd65-9abd-4a62-8896-80f34ac66150'
         fi
@@ -149,6 +154,7 @@ docker_wizard__custom() {
         docker_profiles_info='Use
   rproxy              if you want to add rproxy (nginx) to docker compose
   rproxy,letsencrypt  for managing a real HTTPS cert
+  rproxy              with RPROXY_TEMPLATE=/etc/nginx/conf.d/app.http.template for TLS terminated externally
 by default does not use rproxy nor letsencrypt'
         use_env_var COMPOSE_PROFILES_REQUEST '' "${docker_profiles_info}"
 
@@ -197,18 +203,27 @@ docker_wizard__prod() {
         # same base as prod_noproxy, just add more containers
         docker_wizard__prod_noproxy
         export COMPOSE_PROFILES_REQUEST='rproxy,letsencrypt'
+        export RPROXY_TEMPLATE_REQUEST='/etc/nginx/conf.d/app.template'
+}
+
+docker_wizard__prod_rproxy_external_tls() {
+        # reverse proxy without TLS: Cloudflare/Pangolin terminates TLS
+        docker_wizard__prod_noproxy
+        export COMPOSE_PROFILES_REQUEST='rproxy'
+        export RPROXY_TEMPLATE_REQUEST='/etc/nginx/conf.d/app.http.template'
 }
 
 docker_wizard__selector() {
         # Initialize the template vars string (used by envsubst)
         # We must ensure this list matches the variables defined in .env.example
-        template_env_vars='$TIME_ZONE_REQUEST $ROOT_DIR_REQUEST $DB_TYPE_REQUEST $REMOVE_DATA_REQUEST $DOCKER_ALWAYS_BUILD_REQUEST $DOCKER_RESTART_POLICY_REQUEST $DEVICEHUB_HOST_REQUEST $DEVICEHUB_PORT_REQUEST $DEVICEHUB_INIT_ORG_REQUEST $DEVICEHUB_INIT_ADMIN_EMAIL_REQUEST $DEVICEHUB_INIT_ADMIN_PASSWORD_SECRET_REQUEST $DEVICEHUB_DEMO_REQUEST $DEVICEHUB_DEBUG_REQUEST $COMPOSE_PROFILES_REQUEST $DEVICEHUB_SECRET_KEY_SECRET_REQUEST $DEVICEHUB_DEMO_PREDEFINED_TOKEN_REQUEST $DEVICEHUB_VOLUME_REQUEST $RPROXY_ENABLE_LETSENCRYPT_REQUEST $IDHUB_DOMAIN_REQUEST $IDHUB_SECRET_KEY_SECRET_REQUEST $IDHUB_VOLUME_REQUEST'
+        template_env_vars='$TIME_ZONE_REQUEST $ROOT_DIR_REQUEST $DB_TYPE_REQUEST $REMOVE_DATA_REQUEST $DOCKER_ALWAYS_BUILD_REQUEST $DOCKER_RESTART_POLICY_REQUEST $DEVICEHUB_HOST_REQUEST $DEVICEHUB_PORT_REQUEST $DEVICEHUB_INIT_ORG_REQUEST $DEVICEHUB_INIT_ADMIN_EMAIL_REQUEST $DEVICEHUB_INIT_ADMIN_PASSWORD_SECRET_REQUEST $DEVICEHUB_DEMO_REQUEST $DEVICEHUB_DEBUG_REQUEST $COMPOSE_PROFILES_REQUEST $DEVICEHUB_SECRET_KEY_SECRET_REQUEST $DEVICEHUB_DEMO_PREDEFINED_TOKEN_REQUEST $DEVICEHUB_VOLUME_REQUEST $RPROXY_ENABLE_LETSENCRYPT_REQUEST $RPROXY_TEMPLATE_REQUEST $IDHUB_DOMAIN_REQUEST $IDHUB_SECRET_KEY_SECRET_REQUEST $IDHUB_VOLUME_REQUEST'
         export COMPOSE_PROFILES_REQUEST=''
 
         while true; do
                 printf '\nPlease select the installation type (by default, custom):\n'
                 printf '  %-12s %s\n'   'custom' 'Answer more detailed questions'
                 printf '  %-12s %s\n'   'prod' 'Production (with Postgres, Reverse Proxy, LetsEncrypt)'
+                printf '  %-12s %s\n'   'prod_rproxy_external_tls' 'Production (with Postgres, Reverse Proxy, TLS terminated externally)'
                 printf '  %-12s %s\n'   'prod_noproxy' 'Production (with Postgres)'
                 printf '  %-12s %s\n\n' 'dev' 'Development (with Sqlite, No Proxy, Reset Data on restart)'
 
@@ -218,6 +233,7 @@ docker_wizard__selector() {
                         custom)       docker_wizard__custom       ; break ;;
                         dev)          docker_wizard__dev          ; break ;;
                         prod)         docker_wizard__prod         ; break ;;
+                        prod_rproxy_external_tls) docker_wizard__prod_rproxy_external_tls ; break ;;
                         prod_noproxy) docker_wizard__prod_noproxy ; break ;;
                         *) ;;
                 esac
