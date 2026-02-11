@@ -62,6 +62,56 @@ docker_wizard__idhub_enabled() {
         fi
 }
 
+configure_smtp() {
+	# Ask user if they want to configure SMTP for sending emails
+	printf '\n'
+	printf '┌──────────────────────────────────────────────────────────────────┐\n'
+	printf '│  EMAIL / SMTP CONFIGURATION                                      │\n'
+	printf '└──────────────────────────────────────────────────────────────────┘\n'
+	printf '\n'
+	printf 'Do you want to configure SMTP for sending emails?\n'
+	printf '(Required for password reset, notifications, etc.)\n'
+	printf '\n'
+	printf '  1) No, skip for now (can configure later in .env)\n'
+	printf '  2) Yes, configure SMTP now\n'
+	printf '\n'
+	printf 'Select option [1]: '
+	read -r smtp_choice < /dev/tty
+
+	case "${smtp_choice}" in
+		2|yes|y)
+			printf '\n'
+			use_env_var DEVICEHUB_EMAIL_HOST_REQUEST 'smtp.example.org' 'SMTP server hostname'
+			use_env_var DEVICEHUB_EMAIL_PORT_REQUEST '587' 'SMTP port (usually 587 for TLS, 465 for SSL, 25 for plain)'
+			use_env_var DEVICEHUB_EMAIL_USE_TLS_REQUEST 'True' 'Use TLS encryption (True/False)'
+			use_env_var DEVICEHUB_EMAIL_HOST_USER_REQUEST '' 'SMTP username (leave empty if not required)'
+			use_env_var DEVICEHUB_EMAIL_HOST_PASSWORD_SECRET_REQUEST '' 'SMTP password (leave empty if not required)'
+			use_env_var DEVICEHUB_DEFAULT_FROM_EMAIL_REQUEST "noreply@${DEVICEHUB_HOST_REQUEST}" 'From email address for outgoing emails'
+			export DEVICEHUB_ENABLE_EMAIL_REQUEST='true'
+			printf '\n✓ SMTP configured. Emails will be enabled.\n'
+			;;
+		*)
+			# Set defaults for disabled email
+			export DEVICEHUB_ENABLE_EMAIL_REQUEST='false'
+			export DEVICEHUB_EMAIL_HOST_REQUEST='smtp.example.org'
+			export DEVICEHUB_EMAIL_PORT_REQUEST='587'
+			export DEVICEHUB_EMAIL_USE_TLS_REQUEST='True'
+			export DEVICEHUB_EMAIL_HOST_USER_REQUEST='smtp_user'
+			export DEVICEHUB_EMAIL_HOST_PASSWORD_SECRET_REQUEST='smtp_passwd'
+			export DEVICEHUB_DEFAULT_FROM_EMAIL_REQUEST='noreply@example.org'
+			printf '\n✓ Skipping SMTP configuration. Emails will be disabled.\n'
+			;;
+	esac
+
+	add_env_var DEVICEHUB_ENABLE_EMAIL_REQUEST
+	add_env_var DEVICEHUB_EMAIL_HOST_REQUEST
+	add_env_var DEVICEHUB_EMAIL_PORT_REQUEST
+	add_env_var DEVICEHUB_EMAIL_USE_TLS_REQUEST
+	add_env_var DEVICEHUB_EMAIL_HOST_USER_REQUEST
+	add_env_var DEVICEHUB_EMAIL_HOST_PASSWORD_SECRET_REQUEST
+	add_env_var DEVICEHUB_DEFAULT_FROM_EMAIL_REQUEST
+}
+
 detect_existing_data() {
 	# Check if there's existing data and ask user what to do
 	# Returns: sets REMOVE_DATA_REQUEST to 'true' if user wants fresh install
@@ -132,6 +182,9 @@ docker_wizard__finalize() {
 
 	# Check for existing data and ask user what to do
 	detect_existing_data
+
+	# Configure SMTP for email
+	configure_smtp
 
 	set -x
 
