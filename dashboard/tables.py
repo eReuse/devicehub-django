@@ -11,7 +11,7 @@ from utils.icons import get_icon_by_type
 class DeviceTable(tables.Table):
 
     devices = tables.CheckBoxColumn(
-        accessor='id',
+        accessor='device.id',
         attrs={
             'th__input': {
                 'id': 'select-all',
@@ -36,7 +36,7 @@ class DeviceTable(tables.Table):
         orderable=True,
     )
     current_state = tables.Column(
-        accessor='current_state',
+        accessor='device.current_state',
         verbose_name=_("Current State"),
         attrs={
             'th': {'class': 'text-center'},
@@ -45,6 +45,7 @@ class DeviceTable(tables.Table):
         default="N/A"
     )
     type = tables.Column(
+        accessor='device.type',
         verbose_name=_("Type"),
         attrs={
             'th': {'class': 'text-center'},
@@ -52,6 +53,7 @@ class DeviceTable(tables.Table):
         }
     )
     manufacturer = tables.Column(
+        accessor='device.manufacturer',
         verbose_name=_("Manufacturer"),
         attrs={
             'th': {'class': 'text-center'},
@@ -59,6 +61,7 @@ class DeviceTable(tables.Table):
         }
     )
     model = tables.Column(
+        accessor='device.model',
         verbose_name=_("Model"),
         attrs={
             'th': {'class': 'text-center'},
@@ -66,6 +69,7 @@ class DeviceTable(tables.Table):
         }
     )
     cpu = tables.Column(
+        accessor='device.cpu',
         verbose_name=_("Cpu"),
         attrs={
             'th': {'class': 'text-center'},
@@ -73,7 +77,7 @@ class DeviceTable(tables.Table):
         }
     )
     status_beneficiary = tables.Column(
-        accessor='status_beneficiary',
+        accessor='device.status_beneficiary',
         verbose_name=_("Status"),
         attrs={
             'th': {'class': 'text-center'},
@@ -82,7 +86,7 @@ class DeviceTable(tables.Table):
     )
     last_updated = tables.DateTimeColumn(
         format="Y-m-d H:i",
-        accessor='last_updated',
+        accessor='device.last_updated',
         verbose_name=_("Evidence last updated"),
         attrs={
             'td': {'class': 'text-center'},
@@ -93,6 +97,7 @@ class DeviceTable(tables.Table):
             }
         }
     )
+
     def render_type(self, value, record):
         safe_value = escape(value)
         icon_class = get_icon_by_type(value)
@@ -124,4 +129,4 @@ class DeviceTable(tables.Table):
                 'class': 'table-light'
             }
         }
-        order_by = ("-last_updated",)
+        order_by = ("-created",)

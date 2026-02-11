@@ -90,6 +90,26 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
             'is_shop': is_shop,
             'donor': donor,
         })
+
+        owner = self.request.user.institution
+        for row in context["table"].paginated_rows:
+            device = Device(id=row.record.value, lot=lot, owner=owner)
+            current_state = device.get_current_state()
+
+            instancie = {
+                'id': device.pk,
+                'shortid': device.shortid,
+                'type': device.type,
+                'manufacturer': getattr(device, 'manufacturer', ''),
+                'model': getattr(device, 'model', ''),
+                'version': getattr(device, 'version', ''),
+                'cpu': getattr(device, 'cpu', ''),
+                'current_state': current_state.state if current_state else '--',
+                'status_beneficiary': device.status_beneficiary,
+                'last_updated': parse_datetime(device.updated) if device.updated else "--"
+            }
+            row.record.device = instancie
+
         return context
 
     def get_queryset(self):
@@ -106,28 +126,11 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
                     ldevices.append(dev)
             return ldevices
 
-        owner = self.request.user.institution
-        return [Device(id=x, lot=self.object, owner=owner) for x in chids]
 
-    def get_table_data(self):
-        table_data = []
-        for device in super().get_table_data():
-
-            current_state = device.get_current_state()
-
-            table_data.append({
-                'id': device.pk,
-                'shortid': device.shortid,
-                'type': device.type,
-                'manufacturer': getattr(device, 'manufacturer', ''),
-                'model': getattr(device, 'model', ''),
-                'version': getattr(device, 'version', ''),
-                'cpu': getattr(device, 'cpu', ''),
-                'current_state': current_state.state if current_state else '--',
-                'status_beneficiary': device.status_beneficiary,
-                'last_updated': parse_datetime(device.updated) if device.updated else "--"
-            })
-        return table_data
+        return SystemProperty.objects.filter(
+            owner=self.request.user.institution,
+            value__in=chids
+        )
 
     def get_table_kwargs(self):
         kwargs = super().get_table_kwargs()
