@@ -62,22 +62,83 @@ docker_wizard__idhub_enabled() {
         fi
 }
 
+detect_existing_data() {
+	# Check if there's existing data and ask user what to do
+	# Returns: sets REMOVE_DATA_REQUEST to 'true' if user wants fresh install
+
+	# Determine data directory path
+	if [ "$(id -u "${USER}")" = 0 ]; then
+		data_root='/opt'
+	else
+		data_root="${HOME}"
+	fi
+	data_dir="${data_root}/ereuse-docker-data/${DEVICEHUB_HOST_REQUEST}"
+	postgres_dir="${data_dir}/devicehub-postgres"
+
+	if [ -d "${postgres_dir}" ]; then
+		printf '\n'
+		printf '╔══════════════════════════════════════════════════════════════════╗\n'
+		printf '║  EXISTING DATA DETECTED                                          ║\n'
+		printf '╠══════════════════════════════════════════════════════════════════╣\n'
+		printf '║  Found existing database at:                                     ║\n'
+		printf '║  %s\n' "${postgres_dir}"
+		printf '╚══════════════════════════════════════════════════════════════════╝\n'
+		printf '\n'
+		printf 'What would you like to do?\n'
+		printf '  1) Keep existing data (admin credentials will NOT be changed)\n'
+		printf '  2) Fresh install (DELETE all existing data and create new admin)\n'
+		printf '\n'
+		printf 'Select option [1]: '
+		read -r data_choice < /dev/tty
+
+		case "${data_choice}" in
+			2|fresh|delete)
+				printf '\n⚠️  WARNING: This will DELETE all existing data!\n'
+				printf 'Type "yes" to confirm: '
+				read -r confirm < /dev/tty
+				if [ "${confirm}" = "yes" ]; then
+					printf 'Removing existing data...\n'
+					rm -rf "${postgres_dir}" 2>/dev/null || {
+						printf '\n❌ Could not remove data directory (permission denied).\n'
+						printf 'Please run manually:\n'
+						printf '  sudo rm -rf %s\n\n' "${postgres_dir}"
+						printf 'Then re-run this script.\n'
+						exit 1
+					}
+					printf '✓ Existing data removed. Will create fresh database.\n'
+					export REMOVE_DATA_REQUEST='true'
+				else
+					printf 'Cancelled. Keeping existing data.\n'
+					export REMOVE_DATA_REQUEST='false'
+				fi
+				;;
+			*)
+				printf '✓ Keeping existing data. Admin credentials will NOT be changed.\n'
+				export REMOVE_DATA_REQUEST='false'
+				;;
+		esac
+	fi
+}
+
 docker_wizard__finalize() {
 
-        # we always need to put at least a domain for IdHub
-        if [ "${IDHUB_ENABLED:-}" = 'true' ]; then
-                docker_wizard__idhub_enabled
-        else
-                export IDHUB_DOMAIN_REQUEST='idhub.example.org'
-                add_env_var IDHUB_DOMAIN_REQUEST
-        fi
+	# we always need to put at least a domain for IdHub
+	if [ "${IDHUB_ENABLED:-}" = 'true' ]; then
+		docker_wizard__idhub_enabled
+	else
+		export IDHUB_DOMAIN_REQUEST='idhub.example.org'
+		add_env_var IDHUB_DOMAIN_REQUEST
+	fi
 
-        set -x
+	# Check for existing data and ask user what to do
+	detect_existing_data
 
-        if echo "${DB_TYPE_REQUEST}" | grep -q 'postgres' ; then
-                echo 'devicehub-postgres docker profile detected, adding to COMPOSE_PROFILES env var'
-                COMPOSE_PROFILES_REQUEST="${COMPOSE_PROFILES_REQUEST},devicehub-postgres"
-        fi
+	set -x
+
+	if echo "${DB_TYPE_REQUEST}" | grep -q 'postgres' ; then
+		echo 'devicehub-postgres docker profile detected, adding to COMPOSE_PROFILES env var'
+		COMPOSE_PROFILES_REQUEST="${COMPOSE_PROFILES_REQUEST},devicehub-postgres"
+	fi
 
         if echo "${COMPOSE_PROFILES_REQUEST}" | grep -q 'letsencrypt' ; then
                 export RPROXY_ENABLE_LETSENCRYPT_REQUEST=enable
