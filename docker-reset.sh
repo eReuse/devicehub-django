@@ -220,21 +220,21 @@ docker_wizard__selector() {
         export COMPOSE_PROFILES_REQUEST=''
 
         while true; do
-                printf '\nPlease select the installation type (by default, custom):\n'
-                printf '  %-12s %s\n'   'custom' 'Answer more detailed questions'
-                printf '  %-12s %s\n'   'prod' 'Production (with Postgres, Reverse Proxy, LetsEncrypt)'
-                printf '  %-12s %s\n'   'prod_rproxy_external_tls' 'Production (with Postgres, Reverse Proxy, TLS terminated externally)'
-                printf '  %-12s %s\n'   'prod_noproxy' 'Production (with Postgres)'
-                printf '  %-12s %s\n\n' 'dev' 'Development (with Sqlite, No Proxy, Reset Data on restart)'
+                printf '\nPlease select the installation type (by default, 1):\n'
+                printf '  %s  %-24s %s\n'  '1)' 'custom' 'Answer more detailed questions'
+                printf '  %s  %-24s %s\n'  '2)' 'prod' 'Production (with Postgres, Reverse Proxy, LetsEncrypt)'
+                printf '  %s  %-24s %s\n'  '3)' 'prod_rproxy_external_tls' 'Production (with Postgres, Reverse Proxy, TLS terminated externally)'
+                printf '  %s  %-24s %s\n'  '4)' 'prod_noproxy' 'Production (with Postgres)'
+                printf '  %s  %-24s %s\n\n' '5)' 'dev' 'Development (with Sqlite, No Proxy, Reset Data on restart)'
 
                 read -p 'Select installation type: ' wizard_choice
 
                 case $wizard_choice in
-                        custom)       docker_wizard__custom       ; break ;;
-                        dev)          docker_wizard__dev          ; break ;;
-                        prod)         docker_wizard__prod         ; break ;;
-                        prod_rproxy_external_tls) docker_wizard__prod_rproxy_external_tls ; break ;;
-                        prod_noproxy) docker_wizard__prod_noproxy ; break ;;
+                        ''|1|custom)       docker_wizard__custom       ; break ;;
+                        2|prod)           docker_wizard__prod         ; break ;;
+                        3|prod_rproxy_external_tls) docker_wizard__prod_rproxy_external_tls ; break ;;
+                        4|prod_noproxy)   docker_wizard__prod_noproxy ; break ;;
+                        5|dev)            docker_wizard__dev          ; break ;;
                         *) ;;
                 esac
         done
