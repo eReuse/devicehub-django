@@ -8,7 +8,7 @@ set -x
 
 generate_webserver() {
         export WEBSERVER_HOST="${1}"
-        export APP_UPSTREAM="${1}"
+        export APP_UPSTREAM="${2}"
 
         if [ "${ENABLE_LETSENCRYPT:-true}" = "true" ]; then
                 export SSL_CERTIFICATE_PATH="/etc/letsencrypt/live/${WEBSERVER_HOST}/fullchain.pem"
@@ -26,9 +26,12 @@ main() {
         # Process the nginx template
         SOURCE_FILE="/etc/nginx/conf.d/app.template"
 
+        # Remove default nginx config
+        rm -f /etc/nginx/conf.d/default.conf
+
         generate_webserver "${DEVICEHUB_HOST}" "${DEVICEHUB_UPSTREAM}"
 
-        if [ "${IDHUB_ENABLE}" = 'true' ]; then
+        if [ "${IDHUB_ENABLED}" = 'true' ]; then
                 generate_webserver "${IDHUB_DOMAIN}" "${IDHUB_UPSTREAM}"
         fi
 
@@ -42,3 +45,4 @@ main() {
 
         exec nginx -g 'worker_processes 2; daemon off;'
 }
+main
