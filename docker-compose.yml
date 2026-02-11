@@ -17,13 +17,13 @@ services:
         # db-files: evidences, index xapian files and sqlite
       - ${DOCKER_DEVICEHUB_DATA_DIR}/devicehub/db-files:${DEVICEHUB_EVIDENCES_DIR:-/evidences/}
       - ${DOCKER_DEVICEHUB_DATA_DIR}/devicehub/backups:${DEVICEHUB_BACKUPS_DIR:-/backups/}
-    ports:
-      - ${DEVICEHUB_PORT:-8000}:${DEVICEHUB_PORT:-8000}
+    # ports:
+    #   - ${DEVICEHUB_PORT:-8000}:${DEVICEHUB_PORT:-8000}
     deploy:
       resources:
         limits:
           cpus: "${DOCKER_DEVICEHUB_CPU_LIMIT:-0.000}"
-          memory: "${DOCKER_DEVICEHUB_MEM_LIMIT:-1G}"
+          memory: "${DOCKER_DEVICEHUB_MEM_LIMIT:-2G}"
   # match debian/django container so dbbackup works
   devicehub-postgres:
     profiles: [devicehub-postgres]
@@ -144,19 +144,20 @@ services:
       #   internal ref https://farga.pangea.org/ereuse/devicehub-django/pulls/58
       - DEVICEHUB_HOST=${DEVICEHUB_HOST}
       # upstream refers how to connect to this service
-      - DEVICEHUB_UPSTREAM=devicehub:${DEVICEHUB_PORT}
+      - DEVICEHUB_UPSTREAM=devicehub-django:${DEVICEHUB_PORT}
       - IDHUB_ENABLED=${IDHUB_ENABLED}
       - IDHUB_DOMAIN=${IDHUB_DOMAIN}
       - IDHUB_UPSTREAM=idhub:${IDHUB_PORT}
     ports:
-      - "80:80"
-      - "443:443"
+      - "8000:80"
+      #- "443:443"
     volumes:
       - type: bind
         source: docker/nginx/app.template
         target: /etc/nginx/conf.d/app.template
-      # TODO static nginx files
-      #- static:/path/to/static/files:ro
+      # Static and Media files
+      - ${DOCKER_DEVICEHUB_DATA_DIR}/devicehub/static:/var/www/static:ro
+      - ${DOCKER_DEVICEHUB_DATA_DIR}/devicehub/media:/var/www/media:ro
       - certbot-www:/var/www/certbot
       - ${DOCKER_DEVICEHUB_DATA_DIR}/certbot/conf:/etc/letsencrypt
     deploy:
