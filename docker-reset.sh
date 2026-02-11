@@ -25,7 +25,7 @@ prompt_env_var() {
                 # show the default in the prompt
                 printf "${info}\n+ Enter value for %s (default is \"%s\"): " "${var_name}" "${default}"
                 # read into a temporary
-                read answer
+                read -r answer < /dev/tty
                 # if they just hit enter, use default
                 if [ -z "${answer}" ]; then
                         answer=${default}
@@ -227,7 +227,8 @@ docker_wizard__selector() {
                 printf '  %s  %-24s %s\n'  '4)' 'prod_noproxy' 'Production (with Postgres)'
                 printf '  %s  %-24s %s\n\n' '5)' 'dev' 'Development (with Sqlite, No Proxy, Reset Data on restart)'
 
-                read -p 'Select installation type: ' wizard_choice
+                printf 'Select installation type: '
+                read -r wizard_choice < /dev/tty
 
                 case $wizard_choice in
                         ''|1|custom)       docker_wizard__custom       ; break ;;
@@ -244,7 +245,7 @@ docker_wizard() {
         set +x
         printf "\nDetected .env file is missing, so let's initialize the config (if you
 want to see again, remove .env file)\n\nPress enter to continue... "
-        read enter
+        read -r enter < /dev/tty
 
         docker_wizard__selector
 
