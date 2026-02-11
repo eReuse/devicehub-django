@@ -148,6 +148,7 @@ services:
       - IDHUB_ENABLED=${IDHUB_ENABLED}
       - IDHUB_DOMAIN=${IDHUB_DOMAIN}
       - IDHUB_UPSTREAM=idhub:${IDHUB_PORT}
+      - RPROXY_TEMPLATE=${RPROXY_TEMPLATE}
     ports:
       - "8000:80"
       #- "443:443"
@@ -155,6 +156,9 @@ services:
       - type: bind
         source: docker/nginx/app.template
         target: /etc/nginx/conf.d/app.template
+      - type: bind
+        source: docker/nginx/app.http.template
+        target: /etc/nginx/conf.d/app.http.template
       # Static and Media files
       - ${DOCKER_DEVICEHUB_DATA_DIR}/devicehub/static:/var/www/static:ro
       - ${DOCKER_DEVICEHUB_DATA_DIR}/devicehub/media:/var/www/media:ro

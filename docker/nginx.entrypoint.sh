@@ -24,7 +24,7 @@ generate_webserver() {
 
 main() {
         # Process the nginx template
-        SOURCE_FILE="/etc/nginx/conf.d/app.template"
+        SOURCE_FILE="${RPROXY_TEMPLATE:-/etc/nginx/conf.d/app.template}"
 
         # Remove default nginx config
         rm -f /etc/nginx/conf.d/default.conf
