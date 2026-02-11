@@ -96,17 +96,17 @@ detect_existing_data() {
 				printf '\n⚠️  WARNING: This will DELETE all existing data!\n'
 				printf 'Type "yes" to confirm: '
 				read -r confirm < /dev/tty
-				if [ "${confirm}" = "yes" ]; then
-					printf 'Removing existing data...\n'
-					rm -rf "${postgres_dir}" 2>/dev/null || {
-						printf '\n❌ Could not remove data directory (permission denied).\n'
-						printf 'Please run manually:\n'
-						printf '  sudo rm -rf %s\n\n' "${postgres_dir}"
-						printf 'Then re-run this script.\n'
-						exit 1
-					}
-					printf '✓ Existing data removed. Will create fresh database.\n'
-					export REMOVE_DATA_REQUEST='true'
+			if [ "${confirm}" = "yes" ]; then
+				printf 'Removing existing data (may require sudo password)...\n'
+				sudo rm -rf "${postgres_dir}" || {
+					printf '\n❌ Could not remove data directory.\n'
+					printf 'Please run manually:\n'
+					printf '  sudo rm -rf %s\n\n' "${postgres_dir}"
+					printf 'Then re-run this script.\n'
+					exit 1
+				}
+				printf '✓ Existing data removed. Will create fresh database.\n'
+				export REMOVE_DATA_REQUEST='true'
 				else
 					printf 'Cancelled. Keeping existing data.\n'
 					export REMOVE_DATA_REQUEST='false'
