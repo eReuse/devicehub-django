@@ -5,11 +5,12 @@ from io import BytesIO
 from django.db import models
 from django.db.models import Subquery, F, Window, Max
 from django.db.models.functions import RowNumber
+from django.utils.dateparse import parse_datetime
 
 from utils import sql_query as q_sql
 from utils.constants import ALGOS
+from utils.icons import ICONS
 from evidence.models import SystemProperty, UserProperty, Evidence, RootAlias
-from django.utils.dateparse import parse_datetime
 from lot.models import DeviceLot, DeviceBeneficiary
 from action.models import State
 
@@ -358,6 +359,11 @@ class Device:
         self.get_last_evidence()
         if self.last_evidence.doc['type'] == "WebSnapshot":
             return self.last_evidence.doc.get("device", {}).get("type", "")
+
+        if self.last_evidence.doc.get("software") == "Workbench":
+            t = self.last_evidence.doc.get("device", {}).get("type", "")
+            if t in ICONS:
+                return t
 
         return self.last_evidence.get_chassis()
 
