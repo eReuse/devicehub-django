@@ -5,6 +5,7 @@ from django.utils.html import format_html, escape
 from django.utils.safestring import mark_safe
 from django.utils.html import format_html
 
+from lot.models import DeviceBeneficiary
 from utils.icons import get_icon_by_type
 
 
@@ -29,7 +30,7 @@ class DeviceTable(tables.Table):
 
     value = tables.Column(
         accessor='value',
-        linkify=("device:details", {"pk": tables.A("id")}),
+        linkify=("device:details", {"pk": tables.A("device.id")}),
         verbose_name=_("Short ID"),
         orderable=True,
         attrs={
@@ -39,14 +40,14 @@ class DeviceTable(tables.Table):
     )
 
     current_state = tables.Column(
-        accessor='device.current_state',
+        accessor='last_state',
         verbose_name=_("Current State"),
         orderable=True,
         attrs={
             'th': {'class': 'text-center'},
             'td': {'class': 'text-muted text-center'}
         },
-        default="N/A"
+        default="--"
     )
 
     type = tables.Column(
@@ -90,14 +91,16 @@ class DeviceTable(tables.Table):
     )
 
     status_beneficiary = tables.Column(
-        accessor='device.status_beneficiary',
+        accessor='last_beneficiary',
         verbose_name=_("Status"),
         orderable=True,
         attrs={
             'th': {'class': 'text-center'},
             'td': {'class': 'text-center'}
-        }
+        },
+        default=DeviceBeneficiary.Status.AVAILABLE.label
     )
+
     created = tables.DateTimeColumn(
         format="Y-m-d H:i",
         accessor='created',
@@ -139,6 +142,9 @@ class DeviceTable(tables.Table):
 
     def render_value(self, value, record):
         return record.shortid
+
+    def render_status_beneficiary(self, value, record):
+        return record.device.status_beneficiary
 
     class Meta:
         attrs = {

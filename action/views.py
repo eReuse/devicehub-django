@@ -9,31 +9,21 @@ from django.utils.translation import gettext_lazy as _
 from dashboard.mixins import DashboardView
 from django.http import HttpResponseRedirect
 from action.models import State, StateDefinition, Note, DeviceLog
-from device.models import Device
 
 
 class ChangeStateView(LoginRequiredMixin, FormView):
     form_class = ChangeStateForm
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["user"] = self.request.user
+        return kwargs
+
     def form_valid(self, form):
         previous_state = form.cleaned_data['previous_state']
         new_state = form.cleaned_data['new_state']
-        snapshot_uuid = form.cleaned_data['snapshot_uuid']
+        form.save()
 
-        State.objects.create(
-            snapshot_uuid=snapshot_uuid,
-            state=new_state,
-            user=self.request.user,
-            institution=self.request.user.institution,
-        )
-
-        message = _("<Created> State '{}'. Previous State: '{}'").format(new_state, previous_state)
-        DeviceLog.objects.create(
-            snapshot_uuid=snapshot_uuid,
-            event=message,
-            user=self.request.user,
-            institution=self.request.user.institution,
-        )
         messages.success(self.request, _("State successfully changed from '{}' to '{}'").format(previous_state, new_state))
         return super().form_valid(form)
 

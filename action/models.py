@@ -1,7 +1,9 @@
-from django.db import models, connection
+from django.db import models
 from django.db.models import Max
-from user.models import User, Institution
 from django.core.exceptions import ValidationError
+from user.models import User, Institution
+from evidence.models import SystemProperty
+
 
 class State(models.Model):
     date = models.DateTimeField(auto_now_add=True)
@@ -10,13 +12,22 @@ class State(models.Model):
 
     state = models.CharField(max_length=50)
     snapshot_uuid = models.UUIDField()
+    system_property = models.ForeignKey(SystemProperty, on_delete=models.SET_NULL, null=True)
 
     def clean(self):
         if not StateDefinition.objects.filter(institution=self.institution, state=self.state).exists():
             raise ValidationError(f"The state '{self.state}' is not valid for the institution '{self.institution.name}'.")
 
+    def set_system_property(self):
+        if not self.system_property:
+            self.system_property = SystemProperty.objects.filter(
+                uuid=self.snapshot_uuid,
+                owner=self.institution
+            ).first()
+
     def save(self, *args, **kwargs):
         self.clean()
+        self.set_system_property()
         super().save(*args, **kwargs)
 
     def __str__(self):

@@ -8,23 +8,25 @@ from django.views.generic.edit import FormView
 from django.shortcuts import Http404
 from django.utils.dateparse import parse_datetime
 from django.http import HttpResponse
-from dashboard.tables import DeviceTable
-
+from django.db.models import OuterRef, Subquery
+from django.db.models import Q
 from django_tables2 import RequestConfig
 from django_tables2.views import SingleTableMixin
 from django_tables2.export.export import TableExport
 from django_tables2.export.views import ExportMixin
 
 from action.models import StateDefinition
-from django.db.models import Q
-
+from dashboard.tables import DeviceTable
 from dashboard.mixins import InventaryMixin, DetailsMixin, DeviceTableMixin
 from evidence.models import SystemProperty
 from evidence.xapian import search
 from device.models import Device
-from lot.models import Lot, LotSubscription, Donor
+from lot.models import Lot, LotSubscription, Donor, DeviceBeneficiary
+from action.models import State
+
 
 logger = logging.getLogger('django')
+
 
 class UnassignedDevicesView(DeviceTableMixin, InventaryMixin):
     template_name = "unassigned_devices.html"
@@ -93,29 +95,14 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
 
         owner = self.request.user.institution
         for row in context["table"].paginated_rows:
-            device = Device(id=row.record.value, lot=lot, owner=owner)
-            current_state = device.get_current_state()
-
-            instancie = {
-                'id': device.pk,
-                'shortid': device.shortid,
-                'type': device.type,
-                'manufacturer': getattr(device, 'manufacturer', ''),
-                'model': getattr(device, 'model', ''),
-                'version': getattr(device, 'version', ''),
-                'cpu': getattr(device, 'cpu', ''),
-                'current_state': current_state.state if current_state else '--',
-                'status_beneficiary': device.status_beneficiary,
-                'created': row.record.created
-            }
-            row.record.device = instancie
-
+            row.record.device = Device(id=row.record.value, lot=lot, owner=owner)
         return context
 
     def get_queryset(self):
         chids = self.object.devicelot_set.all().values_list(
             "device_id", flat=True
         ).distinct()
+
         search_query = self.request.GET.get('q', '').lower()
 
         if search_query:
@@ -126,11 +113,19 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
                     ldevices.append(dev)
             return ldevices
 
+        last_beneficiary = DeviceBeneficiary.objects.filter(
+            device_id=OuterRef('value')
+        ).order_by('-pk').values('status')[:1]
+
+        last_state = State.objects.filter(
+            system_property=OuterRef('pk')
+        ).order_by('-date').values('state')[:1]
 
         return SystemProperty.objects.filter(
             owner=self.request.user.institution,
             value__in=chids
-        )
+        ).annotate(last_state=Subquery(last_state)
+        ).annotate(last_beneficiary=Subquery(last_beneficiary))
 
     def get_table_kwargs(self):
         kwargs = super().get_table_kwargs()
