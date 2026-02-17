@@ -77,12 +77,61 @@
               {% endfor %}
             </div>
           </div>
-	  {% if object.QR %}
-	  <div class="row mb-3">
-            <div class="col-sm-4">
-	      <img width="100px" src="data:image/png;base64,{{ object.QR }}" />
-	    </div>
-            <div class="col-sm-8"></div>
+
+        {% if object.QR %}
+        <style>
+            /* QR print mode */
+            @media print {
+                body.printing-qr > *:not(#qr-print-overlay) {
+                    display: none !important;
+                }
+                #qr-print-overlay {
+                    display: flex !important;
+                    flex-direction: column;
+                    align-items: flex-start;
+                }
+                #qr-print-overlay img {
+                    width: 200px;
+                }
+                #qr-print-overlay p {
+                    width: 200px;
+                    text-align: center;
+                    font-size: 25px;
+                    font-family: monospace;
+                    margin-top: 8px;
+                    font-weight: bold ;
+                }
+            }
+        </style>
+        <script>
+            const printQr = () => {
+                const img = document.getElementById(`qrImg`)
+                var o = document.createElement('div');
+                o.id = 'qr-print-overlay';
+                o.innerHTML = '<img src="' + img.src + '"><p> {{ object.shortid }}</p>';
+                document.body.appendChild(o);
+                document.body.classList.add('printing-qr');
+                window.addEventListener('afterprint',
+                    function h() {
+                        document.body.classList.remove('printing-qr');
+                        o.remove();
+                        window.removeEventListener('afterprint', h);
+                    });
+                window.print();
+            }
+        </script>
+        <div class="row mb-3">
+            <div class="col-sm-4 qr-printable">
+              <img id="qrImg" width="100px" src="data:image/png;base64,{{ object.QR }}" />
+              <span id="qrShortId" hidden>{{ object.shortid }}</span>
+            </div>
+            <div class="col-sm-8">
+              <button type="button" class="btn btn-outline-secondary btn-sm"
+                onclick="printQr()">
+                <i class="bi bi-printer"></i> {% trans "Print QR" %}
+              </button>
+            </div>
           </div>
 	  {% endif %}
       </div>
+
