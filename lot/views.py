@@ -246,7 +246,7 @@ class DelToLotView(DashboardView, View):
 
             if beneficiary:
                 for d in beneficiary:
-                    msg = _("device %s have a beneficiary")
+                    msg = _("Device %s have a beneficiary")
                     messages.error(request, msg % d)
                 return redirect(reverse_lazy('dashboard:lot', kwargs={'pk': lot_id}))
 
