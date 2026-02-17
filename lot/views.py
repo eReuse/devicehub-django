@@ -236,8 +236,22 @@ class DelToLotView(DashboardView, View):
                 id=lot_id,
             ).first()
 
+            beneficiary = []
             for dev in selected_devices:
-                    lot.remove(dev.id)
+                exist = DeviceBeneficiary.objects.filter(
+                    beneficiary__lot_id=lot_id, device_id=dev.id
+                ).exists()
+                if exist:
+                    beneficiary.append(dev.shortid)
+
+            if beneficiary:
+                for d in beneficiary:
+                    msg = _("Device %s have a beneficiary")
+                    messages.error(request, msg % d)
+                return redirect(reverse_lazy('dashboard:lot', kwargs={'pk': lot_id}))
+
+            for dev in selected_devices:
+                lot.remove(dev.id)
             msg = _("Successfully unassigned %d devices from the lot")
             messages.success(request, msg % len(selected_devices))
 
@@ -1083,8 +1097,13 @@ class AddDevicesBeneficiaryView(DashboardView, NotifyEmail, TemplateView):
             for dev in devices:
                 exist = DeviceBeneficiary.objects.filter(device_id=dev).first()
                 if exist:
+                    try:
+                        short_id = dev.split(":")[1][:6].upper()
+                    except Exception:
+                        short_id = dev
+
                     messages.error(self.request, _("Device {} was already assigned to {}").format(
-                        dev[:6].upper(), exist.beneficiary.email
+                        short_id, exist.beneficiary.email
                     ))
                 else:
                     self.beneficiary.add(dev)

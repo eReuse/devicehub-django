@@ -49,7 +49,7 @@ class LotsForm(forms.Form):
 
 
 class BeneficiaryForm(forms.Form):
-    beneficiary = forms.CharField()
+    beneficiary = forms.CharField(label=_("Email"))
 
     def __init__(self, *args, **kwargs):
         self.shop = kwargs.pop("shop")
