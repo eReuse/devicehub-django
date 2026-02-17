@@ -86,10 +86,19 @@
                     display: none !important;
                 }
                 #qr-print-overlay {
-                    display: block !important;
+                    display: flex !important;
+                    flex-direction: column;
+                    align-items: flex-start;
                 }
                 #qr-print-overlay img {
                     width: 300px;
+                }
+                #qr-print-overlay p {
+                    width: 300px;
+                    text-align: center;
+                    font-size: 18px;
+                    font-family: monospace;
+                    margin-top: 8px;
                 }
             }
         </style>
@@ -98,7 +107,7 @@
                 const img = document.getElementById(`qrImg`)
                 var o = document.createElement('div');
                 o.id = 'qr-print-overlay';
-                o.innerHTML = '<img src="' + img.src + '">';
+                o.innerHTML = '<img src="' + img.src + '"><p> {{ object.shortid }}</p>';
                 document.body.appendChild(o);
                 document.body.classList.add('printing-qr');
                 window.addEventListener('afterprint',
@@ -109,11 +118,11 @@
                     });
                 window.print();
             }
-
         </script>
         <div class="row mb-3">
             <div class="col-sm-4 qr-printable">
               <img id="qrImg" width="100px" src="data:image/png;base64,{{ object.QR }}" />
+              <span id="qrShortId" hidden>{{ object.shortid }}</span>
             </div>
             <div class="col-sm-8">
               <button type="button" class="btn btn-outline-secondary btn-sm"
