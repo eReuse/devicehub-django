@@ -11,7 +11,7 @@ def render_pagination(page_number, total_pages, limit=10, search=None, sort=None
     - page_number: number of actual page
     - total_pages: total pages.
 
-    Use it template: {% render_pagination page_number total_pages %}
+    Use it template: {% render_pagination page_number total_pages sort%}
     """
     return {
         'page_number': page_number,
