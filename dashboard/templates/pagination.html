@@ -1,6 +1,7 @@
 {% load i18n %}
 {% load range %}
 
+{% if page_number %}
 <ul class="pagination mb-0">
   {% if page_number > 1 %}
   <li class="page-item">
@@ -39,3 +40,4 @@
     </li>
     {% endif %}
 </ul>
+{% endif %}
