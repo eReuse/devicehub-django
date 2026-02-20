@@ -214,6 +214,15 @@ To clean up the deployment and start fresh, just delete Django's database:
 rm db/*
 ```
 
+### Create demo data
+
+There are existing scripts aimed to create demo data for testing purposes. To run them, just execute:
+
+```bash
+python manage.py add_demo_lots example-org    # 200 by default
+python manage.py add_demo_lots example-org 50
+```
+
 ## License
 
 DeviceHub is released under the [GNU Affero General Public License v3.0](LICENSE).
