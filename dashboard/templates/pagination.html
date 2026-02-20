@@ -5,33 +5,41 @@
 <ul class="pagination mb-0">
   {% if page_number > 1 %}
   <li class="page-item">
-    <a class="page-link" href="?page=1&limit={{ limit }}{% if search %}&search={{ search }}{% endif %}">
-      <i class="bi bi-chevron-double-left"></i>
-    </a>
-  </li>
-  <li class="page-item">
     <a class="page-link" href="?page={{ page_number|add:-1 }}&limit={{ limit }}{% if search %}&search={{ search }}{% endif %}">
-      <i class="bi bi-chevron-left"></i>
+        <span aria-hidden="true">«</span>
+        {% translate "previous" %}
     </a>
   </li>
   {% endif %}
 
+    <!-- First button is shown always-->
+    <li class="page-item {% if 1 == page_number %}active{% endif %}">
+        <a class="page-link" href="?page=1&limit={{ limit }}{% if search %}&search={{ search }}{% endif %}">
+            1
+        </a>
+    </li>
+
   {% if total_pages > 1 %}
-  {% for p in total_pages|range_filter:page_number %}
-  <li class="page-item {% if p == page_number %}active{% endif %}">
-    <a class="page-link"
-       href="{% if p == page_number or p == '...' %}#{% else %}?page={{ p }}&limit={{ limit }}{% if search %}&search={{ search }}{% endif %}{% endif %}">
-      {{ p }}
-    </a>
-  </li>
-  {% endfor %}
+    {% for p in total_pages|range_filter:page_number %}
+        {% if p != total_pages and p != 1 %}
+            <li class="page-item {% if p == page_number %}active{% endif %}">
+            <a class="page-link"
+               href="{% if p == page_number or p == '...' %}#{% else %}?page={{ p }}&limit={{ limit }}{% if search %}&search={{ search }}{% endif %}{% endif %}">
+              {{ p }}
+            </a>
+          </li>
+        {% endif %}
+    {% endfor %}
   {% endif %}
-    {% if page_number < total_pages %}
-    <li class="page-item">
+
+    <!--    Last page button is shown always-->
+    <li class="page-item {% if total_pages == page_number %}active{% endif %}">
         <a class="page-link" href="?page={{ total_pages }}&limit={{ limit }}{% if search %}&search={{ search }}{% endif %}">
             {{ total_pages }}
         </a>
     </li>
+
+    {% if page_number < total_pages %}
     <li class="page-item">
         <a class="page-link" href="?page={{ page_number|add:+1 }}&limit={{ limit }}{% if search %}&search={{ search }}{% endif %}">
             {% translate "next" %}
