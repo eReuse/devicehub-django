@@ -1,5 +1,6 @@
 {% load django_tables2 %}
 {% load i18n static %}
+{% load paginacion %}
 
 {% block table-wrapper %}
   <div class="table-responsive rounded-3 shadow-sm custom-hover-shadow">
@@ -51,46 +52,17 @@
     </table>
     {% endblock table %}
 
-    {% block pagination %}
-    {% if table.page and table.paginator.num_pages > 1 %}
-    <div class="d-flex justify-content-between align-items-center px-3 py-2 bg-light rounded-bottom">
-      <div class="text-muted">
-        {% trans "Showing" %}
-        {{ table.page.start_index }} to {{ table.page.end_index }} of {{ table.paginator.count }}
-      </div>
-      <nav aria-label="Table navigation">
-        <ul class="pagination mb-0">
-          {% if table.page.has_previous %}
-          <li class="page-item">
-            <a class="page-link rounded px-3 py-2"
-               href="{% querystring table.prefixed_page_field=table.page.previous_page_number %}">
-              <i class="bi bi-chevron-left"></i>
-            </a>
-          </li>
-          {% endif %}
-
-          {% for p in table.page|table_page_range:table.paginator %}
-          <li class="page-item {% if p == table.page.number %}active{% endif %}">
-            <a class="page-link rounded px-3 py-2 {% if p == table.page.number %}fw-bold{% endif %}"
-               href="{% if p != '...' %}{% querystring table.prefixed_page_field=p %}{% else %}#{% endif %}">
-              {{ p }}
-            </a>
-          </li>
-          {% endfor %}
-
-          {% if table.page.has_next %}
-          <li class="page-item">
-            <a class="page-link rounded px-3 py-2"
-               href="{% querystring table.prefixed_page_field=table.page.next_page_number %}">
-              <i class="bi bi-chevron-right"></i>
-            </a>
-          </li>
-          {% endif %}
-        </ul>
-      </nav>
+    <!-- Pagination-->
+    <div class="d-flex d-flex flex-column justify-content-center text-muted align-items-center gap-2">
+        <div>
+        {% render_pagination table.page.number table.paginator.num_pages table.paginator.per_page %}
+        </div>
+        <!-- Number of devices info-->
+        <div class="d-flex justify-content-center text-muted align-items-center gap-1">
+            <i class="bi bi-list"></i>{% trans "Showing" %}
+            {{ table.page.start_index }} to {{ table.page.end_index }} of {{ table.paginator.count }}
+        </div>
     </div>
-    {% endif %}
-    {% endblock pagination %}
   </div>
 {% endblock table-wrapper %}
 
@@ -109,19 +81,4 @@
   text-decoration: underline;
 }
 
-.pagination .page-link {
-  color: #4caf50;
-  border: 1px solid #a5d6a7;
-  background-color: #ffffff;
-}
-
-.pagination .page-item.active .page-link {
-  background-color: #4caf50;
-  border-color: #4caf50;
-  color: white;
-}
-
-.pagination .page-link:hover {
-  background-color: #c8e6c9;
-}
 </style>
