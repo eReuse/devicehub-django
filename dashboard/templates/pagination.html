@@ -1,47 +1,41 @@
 {% load i18n %}
 {% load range %}
 
-<ul class="pagination">
+<ul class="pagination mb-0">
   {% if page_number > 1 %}
-  <li class="previous">
-    <a type="button" class="btn btn-grey border border-dark" href="?page=1&limit={{ limit }}{% if search %}&search={{ search }}{% endif %}">
-      &laquo;
+  <li class="page-item">
+    <a class="page-link" href="?page=1&limit={{ limit }}{% if search %}&search={{ search }}{% endif %}">
+      <i class="bi bi-chevron-double-left"></i>
     </a>
   </li>
-  <li class="previous">
-    <a type="button" class="btn btn-grey border border-dark" href="?page={{ page_number|add:-1 }}&limit={{ limit }}{% if search %}&search={{ search }}{% endif %}">
-      {% trans 'Previous' %}
+  <li class="page-item">
+    <a class="page-link" href="?page={{ page_number|add:-1 }}&limit={{ limit }}{% if search %}&search={{ search }}{% endif %}">
+      <i class="bi bi-chevron-left"></i>
     </a>
   </li>
   {% endif %}
 
   {% if total_pages > 1 %}
-
   {% for p in total_pages|range_filter:page_number %}
-    <li {% if p == page_number %}class="active"{% endif %}>
-      <a type="button" class="btn btn-grey{% if p == page_number %}-selected{% endif %}
-                  border border-dark"
-       {% if p == page_number or p == "..." %}
-          href="#">
-       {% else %}
-          href="?page={{ p }}&limit={{ limit }}{% if search %}&search={{ search }}{% endif %}">
-       {% endif %}
-          {{ p }}
-     </a>
-   </li>
-   {% endfor %}
- {% endif %}
-
-  {% if page_number < total_pages %}
-  <li class="previous">
-    <a type="button" class="btn btn-grey border border-dark" href="?page={{ page_number|add:+1 }}&limit={{ limit }}{% if search %}&search={{ search }}{% endif %}">
-      {% trans 'Next' %}
+  <li class="page-item {% if p == page_number %}active{% endif %}">
+    <a class="page-link"
+       href="{% if p == page_number or p == '...' %}#{% else %}?page={{ p }}&limit={{ limit }}{% if search %}&search={{ search }}{% endif %}{% endif %}">
+      {{ p }}
     </a>
   </li>
-  <li class="previous">
-    <a type="button" class="btn btn-grey border border-dark" href="?page={{ total_pages }}&limit={{ limit }}{% if search %}&search={{ search }}{% endif %}">
-      &raquo;
-    </a>
-  </li>
+  {% endfor %}
   {% endif %}
+    {% if page_number < total_pages %}
+    <li class="page-item">
+        <a class="page-link" href="?page={{ total_pages }}&limit={{ limit }}{% if search %}&search={{ search }}{% endif %}">
+            {{ total_pages }}
+        </a>
+    </li>
+    <li class="page-item">
+        <a class="page-link" href="?page={{ page_number|add:+1 }}&limit={{ limit }}{% if search %}&search={{ search }}{% endif %}">
+            {% translate "next" %}
+            <span aria-hidden="true">»</span>
+        </a>
+    </li>
+    {% endif %}
 </ul>

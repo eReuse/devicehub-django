@@ -156,13 +156,15 @@
             </div>
             {% endif %}
         </form>
+        <!--Paginator loaded only if page total_pages limit-->
+        <div class="d-flex justify-content-center text-muted align-items-center">
+            {% render_pagination page total_pages limit %}
+        </div>
         <div class="d-flex flex-wrap align-items-center gap-2 justify-content-end p-2">
+
             <!-- Number of devices info-->
             <div class="d-flex justify-content-center text-muted align-items-center gap-1">
                 <i class="bi bi-laptop"></i> {% if not lot.name %} {% trans "Showing" %} {% endif %} {{count}} {% trans "Device/s" %}
-            </div>
-            <div class="d-flex justify-content-center text-muted align-items-center">
-                {% render_pagination page total_pages limit %}
             </div>
 
             <!-- Device limit per page picker -->
