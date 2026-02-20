@@ -223,6 +223,12 @@ python manage.py add_demo_lots example-org    # 200 by default
 python manage.py add_demo_lots example-org 50
 ```
 
+For lots:
+
+```bash
+python manage.py add_demo_devices example-org user@example.org 200
+```
+
 ## License
 
 DeviceHub is released under the [GNU Affero General Public License v3.0](LICENSE).
