@@ -4,13 +4,14 @@
 {% block content %}
 {% include 'tabs.html' %}
 
-{% if devices_to_assign %}
 <style>
     .assign-device {
         border-left: 4px solid #198754;
         min-width: 250px;
     }
 </style>
+
+{% if devices_to_assign %}
 <div class="mb-4 mt-4">
   <h5 class="mb-3">
     <i class="bi bi-check-circle text-success"></i>
@@ -41,7 +42,7 @@
 {% endif %}
 
 {% if devices_already_assigned %}
-<div class="mb-4">
+<div class="mb-4 mt-4">
   <h5 class="mb-2">
     <i class="bi bi-exclamation-triangle text-warning"></i>
       {{ devices_already_assigned|length }} {% trans 'Devices already assigned' %}
