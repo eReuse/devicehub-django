@@ -96,7 +96,7 @@ class LotSubscriptionForm(forms.Form):
             ("circuit_manager", _("Circuit Manager")),
             ("shop", _("Shop")),
         ],
-        widget=forms.Select(attrs={'class': 'form-control'}),
+        widget=forms.RadioSelect(),
     )
 
     def __init__(self, *args, **kwargs):
