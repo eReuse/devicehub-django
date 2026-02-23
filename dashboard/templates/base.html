@@ -204,12 +204,11 @@
                 </ul>
               </li>
               <li class="nav-item">
-                <a class="admin {% if path == 'lot:tags' or path == 'dashboard:lot' or path in 'dashboard:unassigned' %}active {% endif %}nav-link fw-bold" data-bs-toggle="collapse" data-bs-target="#ul_lots" aria-expanded="false" aria-controls="ul_lots" href="javascript:void()">
+                <a class="admin {% if 'lot:' in path or path == 'dashboard:lot' or path in 'dashboard:unassigned' %}active {% endif %}nav-link fw-bold" data-bs-toggle="collapse" data-bs-target="#ul_lots" aria-expanded="false" aria-controls="ul_lots" href="javascript:void()">
                   <i class="bi bi-database icon_sidebar"></i>
                   {% trans 'Lots' %}
                 </a>
-                <ul class="flex-column mb-2 ul_sidebar accordion-collapse {% if path == 'lot:tags' or path == 'dashboard:lot' or path in 'dashboard:unassigned' %}expanded{% else %}collapse{% endif %}" id="ul_lots" data-bs-parent="#sidebarMenu">
-
+                <ul class="flex-column mb-2 ul_sidebar accordion-collapse {% if 'lot:' in path or path == 'dashboard:lot' or path in 'dashboard:unassigned' %}expanded{% else %}collapse{% endif %}" id="ul_lots" data-bs-parent="#sidebarMenu">
                   {% for tag in lot_tags %}
                   <li class="nav-items">
 		  {% if tag.inbox %}
