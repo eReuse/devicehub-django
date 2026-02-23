@@ -136,6 +136,7 @@ class DeviceTableMixin():
     """Mixin to handle django-tables2 dict-based tables for Devices"""
     paginate_by = 10
     paginate_choices = [10, 20, 50, 100, 0]
+    table_order_by = None
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -172,7 +173,10 @@ class DeviceTableMixin():
         total_pages = (count + limit - 1) // limit if limit != 0 else 1
 
         table_data = self.build_table_data(devices)
-        table = DeviceTable(table_data, exclude =('status_beneficiary', ))
+        kwargs = {'exclude': ('status_beneficiary',)}
+        if self.table_order_by is not None:
+            kwargs['order_by'] = self.table_order_by
+        table = DeviceTable(table_data, **kwargs)
         if limit != 0:
             RequestConfig(self.request, paginate={'page': page, 'per_page': limit}).configure(table)
         else:
