@@ -194,7 +194,7 @@ class LotSubscriptionForm(forms.Form):
 
 
 class AddDonorForm(forms.Form):
-    user = forms.CharField()
+    user = forms.CharField(label=_("Email"))
 
     def __init__(self, *args, **kwargs):
         self.institution = kwargs.pop("institution")
