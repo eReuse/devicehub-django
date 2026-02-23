@@ -3,7 +3,7 @@ from django import template
 register = template.Library()
 
 @register.inclusion_tag('pagination.html')
-def render_pagination(page_number, total_pages, limit=10, search=None):
+def render_pagination(page_number, total_pages, limit=10, search=None, sort=None):
     """
     Template tag for render pagination
 
@@ -18,4 +18,5 @@ def render_pagination(page_number, total_pages, limit=10, search=None):
         'total_pages': total_pages,
         'limit': limit,
         "search": search,
+        "sort": sort,
     }

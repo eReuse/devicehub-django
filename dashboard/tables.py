@@ -42,35 +42,40 @@ class DeviceTable(tables.Table):
             'th': {'class': 'text-center'},
             'td': {'class': 'text-muted text-center'}
         },
-        default="N/A"
+        default="N/A",
+        orderable=True,
     )
     type = tables.Column(
         verbose_name=_("Type"),
         attrs={
             'th': {'class': 'text-center'},
             'td': {'class': 'text-center'}
-        }
+        },
+        orderable=False,
     )
     manufacturer = tables.Column(
         verbose_name=_("Manufacturer"),
         attrs={
             'th': {'class': 'text-center'},
             'td': {'class': 'text-center'}
-        }
+        },
+        orderable=False,
     )
     model = tables.Column(
         verbose_name=_("Model"),
         attrs={
             'th': {'class': 'text-center'},
             'td': {'class': 'text-center'}
-        }
+        },
+        orderable=False,
     )
     cpu = tables.Column(
         verbose_name=_("Cpu"),
         attrs={
             'th': {'class': 'text-center'},
             'td': {'class': 'text-center'}
-        }
+        },
+        orderable=False,
     )
     status_beneficiary = tables.Column(
         accessor='status_beneficiary',
@@ -78,7 +83,8 @@ class DeviceTable(tables.Table):
         attrs={
             'th': {'class': 'text-center'},
             'td': {'class': 'text-center'}
-        }
+        },
+        orderable=True,
     )
     last_updated = tables.DateTimeColumn(
         format="Y-m-d H:i",
@@ -91,7 +97,8 @@ class DeviceTable(tables.Table):
                 'data-type': 'date',
                 'data-format': 'YYYY-MM-DD HH:mm'
             }
-        }
+        },
+        orderable=True,
     )
     def render_type(self, value, record):
         safe_value = escape(value)
@@ -118,6 +125,7 @@ class DeviceTable(tables.Table):
         return safe_value
 
     class Meta:
+        template_name = "custom_table.html"
         attrs = {
             'class': 'table table-hover table-bordered',
             'thead': {
