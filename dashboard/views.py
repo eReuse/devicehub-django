@@ -1,5 +1,6 @@
 import json
 import logging
+import re
 
 from tablib import Dataset
 
@@ -325,23 +326,25 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
 
         return super().create_export(export_format)
 
+
 class SearchView(DeviceTableMixin, InventaryMixin):
     template_name = "unassigned_devices.html"
     section = _("Search")
     title = _("Search Devices")
     breadcrumb = f"{_('All Devices')} / {_('Search')}"
+    table_order_by = ()  # override DeviceTable.Meta order_by=("-last_updated",) to preserve relevance order
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         search_params = self.request.GET.urlencode(),
-        search =  self.request.GET.get("search")
+        search = self.request.GET.get("search")
         if search:
             context.update({
                 'search_params': search_params,
                 'search': search
             })
 
-        return self.configure_table(context)
+        return context
 
     def get_devices(self, user, offset, limit):
         query = dict(self.request.GET).get("search")
@@ -349,60 +352,125 @@ class SearchView(DeviceTableMixin, InventaryMixin):
         if not query:
             return [], 0
 
-        count = search(
-            self.request.user.institution,
-            query[0],
-            0,
-            9999
-        ).size()
+        query_str = query[0]
 
-        if count > 0:
-            matches = search(
-                self.request.user.institution,
-                query[0],
-                offset,
-                limit
-            )
+        # 1. Shortid search (DB only, no JSON)
+        sp_ids = self._search_shortid_ids(query_str)
+        sp_count = len(sp_ids)
 
-            devices = []
-            dev_id = set()
+        # 2. Xapian: count (no JSON) + page (JSON only for page documents)
+        sp_page = sp_ids[offset:offset + limit]
+        xapian_needed = limit - len(sp_page)
+        xapian_offset = max(0, offset - sp_count)
+        xapian_count = self._get_xapian_count(query_str)
+        xapian_page = self._search_xapian_page(
+            query_str, xapian_offset, xapian_needed
+        )
+        total = sp_count + xapian_count
 
-            for x in matches:
-                # devices.append(self.get_annotations(x))
-                try:
-                    dev = self.get_properties(x)
-                    if dev.id not in dev_id:
-                        devices.append(dev)
-                        dev_id.add(dev.id)
-                except Exception as err:
-                    logger.error("Error: {}".format(err))
-                    continue
-            # TODO fix of pagination, the count is not correct
-            return devices, len(dev_id)
+        page_ids = sp_page + xapian_page
+        devices = [Device(id=x) for x in page_ids]
 
-        return self.search_hids(query, offset, limit)
+        return devices, total
 
-    def get_properties(self, xp):
-        snap = json.loads(xp.document.get_data())
-        if snap.get("credentialSubject"):
-            uuid = snap["credentialSubject"]["uuid"]
-        else:
-            uuid = snap["uuid"]
+    def _search_shortid_ids(self, query_str):
+        """Search SystemProperty by shortid. Returns a list of canonical device
+        IDs sorted by relevance (exact shortid match first, partial second)."""
+        terms = [t for t in query_str.split() if t]
+        if not terms:
+            return []
 
-        return Device.get_properties_from_uuid(uuid, self.request.user.institution)
+        institution = self.request.user.institution
 
-    def search_hids(self, query, offset, limit):
-        qry = Q()
+        # Query 1: term starts at position 0 of the hash (highest relevance)
+        exact_qry = Q()
+        for term in terms:
+            exact_qry |= Q(value__iregex=r'^[^:]+:' + re.escape(term))
 
-        for i in query[0].split(" "):
-            if i:
-                qry |= Q(value__contains=i)
+        exact_values = list(
+            SystemProperty.objects.filter(owner=institution)
+            .filter(exact_qry)
+            .values_list("value", flat=True)
+            .distinct()
+        )
 
-        chids = SystemProperty.objects.filter(
-            owner=self.request.user.institution
-        ).filter(
-            qry
-        ).values_list("value", flat=True).distinct()
-        chids_page = chids[offset:offset+limit]
+        # Query 2: term appears within the shortid but NOT at position 0
+        partial_values = []
+        partial_qry = Q()
+        for term in terms:
+            max_offset = 6 - len(term)
+            if max_offset > 0:
+                rqry = r'^[^:]+:[^:]{1,' + str(max_offset) + r'}' + re.escape(term)
+                partial_qry |= Q(value__iregex=rqry)
 
-        return [Device(id=x) for x in chids_page], chids.count()
+        if partial_qry:
+            seen_exact = set(exact_values)
+            partial_values = [
+                v for v in SystemProperty.objects.filter(owner=institution)
+                .filter(partial_qry)
+                .values_list("value", flat=True)
+                .distinct()
+                if v not in seen_exact
+            ]
+
+        values = exact_values + partial_values
+
+        if not values:
+            return []
+
+        # Resolve aliases to root values in bulk
+        alias_map = dict(
+            RootAlias.objects.filter(owner=institution, alias__in=values)
+            .values_list("alias", "root")
+        )
+
+        seen = set()
+        ids = []
+        for value in values:
+            canonical = alias_map.get(value, value)
+            if canonical not in seen:
+                seen.add(canonical)
+                ids.append(canonical)
+
+        return ids
+
+    def _get_xapian_count(self, query_str):
+        """Return the number of xapian document matches (no JSON parsing)."""
+        matches = search(self.request.user.institution, query_str, 0, 9999)
+        if not matches:
+            return 0
+        return matches.size()
+
+    def _search_xapian_page(self, query_str, offset, limit):
+        """Fetch one page of xapian results. JSON is parsed only for the
+        documents in this page. No deduplication: one xapian document = one result."""
+        if limit <= 0:
+            return []
+
+        institution = self.request.user.institution
+        matches = search(institution, query_str, offset, limit)
+        if not matches or matches.size() == 0:
+            return []
+
+        uuids = []
+        for x in matches:
+            try:
+                snap = json.loads(x.document.get_data())
+                if snap.get("credentialSubject"):
+                    uuid = snap["credentialSubject"]["uuid"]
+                else:
+                    uuid = snap["uuid"]
+                uuids.append(uuid)
+            except Exception as err:
+                logger.error("Error: {}".format(err))
+
+        if not uuids:
+            return []
+
+        props = SystemProperty.objects.filter(
+            owner=institution,
+            uuid__in=uuids,
+        ).values_list("uuid", "value")
+        uuid_to_value = {str(u): v for u, v in props}
+
+        return [uuid_to_value[uuid] for uuid in uuids if uuid in uuid_to_value]
