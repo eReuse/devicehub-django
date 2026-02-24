@@ -176,10 +176,6 @@
                             <option value="{{ choice }}" {% if limit == choice %}selected{% endif %}>
                                 {{ choice }}
                             </option>
-                            {% elif lot.name %}
-                            <option value="{{ choice }}" {% if limit == choice %}selected{% endif %}>
-                                {% trans "All" %}
-                            </option>
                             {% endif %}
                             {% endfor %}
                         </select>
