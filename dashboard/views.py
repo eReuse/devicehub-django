@@ -370,8 +370,7 @@ class SearchView(DeviceTableMixin, InventaryMixin):
         total = sp_count + xapian_count
 
         page_ids = sp_page + xapian_page
-        devices = [Device(id=x) for x in page_ids]
-        # devices = [Device(id=x, owner=user.institution) for x in page_ids]
+        devices = [Device(id=x, owner=user.institution) for x in page_ids]
 
         return devices, total
 
