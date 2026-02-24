@@ -6,15 +6,6 @@
 
 <div class="row mt-1">
   <div class="tab-pane fade show active" id="details">
-    <div class="d-flex justify-content-end mt-1 mb-3">
-      <a href="{% url 'lot:add_property' lot.pk %}" class="btn btn-green-admin d-flex align-items-center">
-
-        <i class="bi bi-plus"></i>
-        Add new lot Property
-        <span class="caret"></span>
-      </a>
-    </div>
-
     <h5 class="card-title mt-2">Properties</h5>
     <table class="table table-hover table-bordered table-responsive align-middle">
       <thead class="table-light">
@@ -99,4 +90,11 @@
     </table>
   </div>
 </div>
+<div class="mt-4">
+      <a href="{% url 'lot:add_property' lot.pk %}" class="btn btn-green-admin">
+        <i class="bi bi-plus"></i>
+        Add Lot Property
+        <span class="caret"></span>
+      </a>
+  </div>
 {% endblock %}

@@ -384,8 +384,8 @@ class DashboardLotMixing(DashboardView):
 
 class LotPropertiesView(DashboardLotMixing, TemplateView):
     template_name = "properties.html"
-    title = _("New Lot Property")
-    breadcrumb = "Lot / New property"
+    title = _("Properties")
+    breadcrumb = "Lot / Properties"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -448,8 +448,8 @@ class LotEnvironmentalImpactView(DashboardLotMixing, TemplateView):
 
 class AddLotPropertyView(DashboardView, CreateView):
     template_name = "new_property.html"
-    title = _("New Lot Property")
-    breadcrumb = "Device / New property"
+    title = _("Properties")
+    breadcrumb = "Device / Properties"
     success_url = reverse_lazy('dashboard:unassigned_devices')
     model = LotProperty
     fields = ("key", "value")
@@ -543,8 +543,8 @@ class DeleteLotPropertyView(DashboardView, DeleteView):
 
 class SubscriptLotView(DashboardLotMixing, SubscriptionEmail, FormView):
     template_name = "subscription.html"
-    title = _("Subscription")
-    breadcrumb = "Lot / Subscription"
+    title = _("Subscriptions")
+    breadcrumb = "Lot / Subscriptions"
     form_class = LotSubscriptionForm
     lot = None
 
@@ -611,7 +611,7 @@ class UnsubscriptLotView(DashboardView, TemplateView):
 
 class ParticipantsView(DashboardLotMixing, TemplateView):
     template_name = "participants.html"
-    title = _("Participants un this lot")
+    title = _("Participants")
     breadcrumb = "Lot / Participants"
 
 
@@ -767,7 +767,7 @@ class AcceptDonorView(TemplateView, NotifyEmail):
 class BeneficiaryView(DashboardLotMixing, BeneficiaryAgreementEmail, FormView):
     template_name = "beneficiaries.html"
     title = _("Beneficiaries")
-    breadcrumb = "Lot / Beneficiary"
+    breadcrumb = "Lot / Beneficiaries"
     form_class = BeneficiaryForm
     lot = None
 

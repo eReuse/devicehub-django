@@ -131,13 +131,13 @@
                     {% if lot.name and not lot.archived %}
                     <button id="remove-button" class="btn btn-danger flex-shrink-0 gap-2" type="submit" disabled
                             value="{% url 'lot:del_devices' lot.id %}" name="url">
-                        <i class="bi bi-folder-minus"></i> {% trans 'Unassign lot' %}
+                        <i class="bi bi-folder-minus"></i> {% trans 'Unassign from lot' %}
                     </button>
                     {% endif %}
 
                     {% if lot and is_shop %}
                     <button id="add-beneficiary-button"  name="url" value="{% url 'lot:beneficiary' lot.id %}" class="btn btn-primary" disabled>
-                        {% trans 'Add beneficiary' %}
+                        {% trans 'Add to beneficiary' %}
                     </button>
                     {% endif %}
                 </div>
