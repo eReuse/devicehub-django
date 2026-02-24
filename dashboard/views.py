@@ -131,27 +131,28 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
     def get_queryset(self):
         chids = self._get_chids_qs()
         search_query = self.request.GET.get('q', '').lower()
+        owner = self.request.user.institution
 
         if search_query:
             ldevices = []
             for x in chids:
-                dev = Device(id=x)
+                dev = Device(id=x, lot=self.object, owner=owner)
                 if dev.matches_query(search_query):
                     ldevices.append(dev)
             return ldevices
 
-        owner = self.request.user.institution
         return [Device(id=x, lot=self.object, owner=owner) for x in chids]
 
     def get_table_data(self):
         institution = self.request.user.institution
         search_query = self.request.GET.get('q', '').lower()
         chids = self._get_chids_qs()
+        owner = self.request.user.institution
 
         if search_query:
             devices = []
             for x in chids:
-                dev = Device(id=x)
+                dev = Device(id=x, lot=self.object, owner=owner)
                 if dev.matches_query(search_query):
                     devices.append(dev)
             self._search_count = len(devices)
@@ -370,6 +371,7 @@ class SearchView(DeviceTableMixin, InventaryMixin):
 
         page_ids = sp_page + xapian_page
         devices = [Device(id=x) for x in page_ids]
+        # devices = [Device(id=x, owner=user.institution) for x in page_ids]
 
         return devices, total
 
