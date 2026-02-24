@@ -81,7 +81,7 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
 
         donor = Donor.objects.filter(lot=lot).first()
 
-        # Enrich only the current page rows with full Device data
+        # Enrich the current page rows (already SQL-paginated) with Device data
         table = context['table']
         owner = self.request.user.institution
         for row in table.paginated_rows:
@@ -100,14 +100,13 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
             })
 
         limit = int(self.request.GET.get('limit', self.paginate_by))
-        if table.page:
-            count = table.paginator.count
-            page = table.page.number
-            total_pages = table.paginator.num_pages
+        page = int(self.request.GET.get('page', 1))
+        search_query = self.request.GET.get('q', '')
+        if search_query:
+            count = getattr(self, '_search_count', len(list(table.rows)))
         else:
-            count = len(table.data)
-            page = 1
-            total_pages = 1
+            count = getattr(self, '_total_count', 0)
+        total_pages = (count + limit - 1) // limit if limit else 1
 
         context.update({
             'title': "{} {}".format(_("Lot"), lot.name),
@@ -173,68 +172,100 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
                 })
             return table_data
 
-        # Non-search: one annotated query for all devices in the lot.
-        # Provides sort values for shortid, current_state and last_updated so
-        # django-tables2 can sort the full list before paginating.
-        sp_subq = SystemProperty.objects.filter(
-            value=OuterRef('device_id'),
-            owner=institution,
-        ).order_by('-created').values('created')[:1]
+        # Non-search: batch queries + Python sort, no correlated subqueries.
+        # Correlated subqueries force SQLite to evaluate all N rows even with
+        # LIMIT because DISTINCT + ORDER BY requires a full scan first.
 
-        sp_uuid_subq = SystemProperty.objects.filter(
-            value=OuterRef(OuterRef('device_id')),
-            owner=institution,
-        ).order_by('-created').values('uuid')[:1]
+        # Phase 1: all device_ids for the lot
+        device_ids = list(chids)
+        self._total_count = len(device_ids)
+        if not device_ids:
+            return []
 
-        state_subq = State.objects.filter(
-            snapshot_uuid=Subquery(sp_uuid_subq)
-        ).order_by('-date').values('state')[:1]
+        # Phase 2: batch-fetch sort keys with simple IN queries
+        # last_updated + latest uuid per device (one pass over SystemProperty)
+        sp_info = {}  # device_id -> {'date': datetime, 'uuid': uuid}
+        for sp in SystemProperty.objects.filter(
+            owner=institution, value__in=device_ids
+        ).order_by('-created').values('value', 'uuid', 'created'):
+            if sp['value'] not in sp_info:
+                sp_info[sp['value']] = {'date': sp['created'], 'uuid': sp['uuid']}
 
-        beneficiary_status_subq = DeviceBeneficiary.objects.filter(
-            device_id=OuterRef('device_id'),
-            beneficiary__lot=self.object,
-        ).values('status')[:1]
+        # current_state: latest state per device via UUID
+        device_uuids = [info['uuid'] for info in sp_info.values()]
+        state_by_uuid = {}
+        for state in State.objects.filter(
+            snapshot_uuid__in=device_uuids
+        ).order_by('-date').values('snapshot_uuid', 'state'):
+            key = str(state['snapshot_uuid'])
+            if key not in state_by_uuid:
+                state_by_uuid[key] = state['state']
 
-        rows = list(
-            DeviceLot.objects.filter(lot=self.object)
-            .values('device_id')
-            .annotate(
-                sort_last_updated=Subquery(sp_subq),
-                sort_current_state=Subquery(state_subq),
-                sort_status_beneficiary=Subquery(beneficiary_status_subq),
-            )
-            .distinct()
-        )
+        # beneficiary status per device
+        beneficiary_statuses = {
+            row['device_id']: row['status']
+            for row in DeviceBeneficiary.objects.filter(
+                device_id__in=device_ids,
+                beneficiary__lot=self.object,
+            ).values('device_id', 'status')
+        }
 
-        # Batch-load RootAliases to compute shortid correctly (same logic as Device.get_shortid)
-        device_ids = [row['device_id'] for row in rows]
+        # Phase 3: sort in Python
+        sort_param = self.request.GET.get('sort', '-last_updated')
+        reverse = sort_param.startswith('-')
+        sort_field = sort_param.lstrip('-')
+
+        def get_sort_val(did):
+            if sort_field == 'last_updated':
+                info = sp_info.get(did)
+                return info['date'] if info else None
+            if sort_field == 'current_state':
+                info = sp_info.get(did)
+                uuid = info['uuid'] if info else None
+                return state_by_uuid.get(str(uuid)) if uuid else None
+            if sort_field == 'status_beneficiary':
+                return beneficiary_statuses.get(did, 0)
+            return did  # shortid fallback
+
+        none_ids = [did for did in device_ids if get_sort_val(did) is None]
+        val_ids  = [did for did in device_ids if get_sort_val(did) is not None]
+        sorted_ids = sorted(val_ids, key=get_sort_val, reverse=reverse) + none_ids
+
+        # Phase 4: paginate
+        limit = int(self.request.GET.get('limit', self.paginate_by))
+        page  = int(self.request.GET.get('page', 1))
+        offset = (page - 1) * limit if limit else 0
+        page_ids = sorted_ids[offset:offset + limit] if limit else sorted_ids
+
+        # Phase 5: batch RootAlias only for current page
         root_aliases = {
             ra.alias: ra.root
-            for ra in RootAlias.objects.filter(owner=institution, alias__in=device_ids)
+            for ra in RootAlias.objects.filter(owner=institution, alias__in=page_ids)
         }
 
         return [
             {
-                'id': row['device_id'],
-                'shortid': root_aliases.get(row['device_id'], row['device_id']).split(':')[1][:6].upper(),
-                'current_state': row['sort_current_state'] or '--',
-                'last_updated': row['sort_last_updated'],
-                # status_beneficiary stores the integer for sorting; enriched with label in get_context_data
-                'status_beneficiary': row['sort_status_beneficiary'] if row['sort_status_beneficiary'] is not None else 0,
-                # Remaining fields are populated in get_context_data for the current page only
+                'id': did,
+                'shortid': root_aliases.get(did, did).split(':')[1][:6].upper(),
+                'current_state': (
+                    state_by_uuid.get(str(sp_info[did]['uuid']))
+                    if did in sp_info else None
+                ) or '--',
+                'last_updated': sp_info.get(did, {}).get('date'),
+                'status_beneficiary': beneficiary_statuses.get(did, 0),
                 'type': '',
                 'manufacturer': '',
                 'model': '',
                 'version': '',
                 'cpu': '',
             }
-            for row in rows
+            for did in page_ids
         ]
 
     def get_table_kwargs(self):
         kwargs = super().get_table_kwargs()
-        limit = int(self.request.GET.get('limit', self.paginate_by))
-        self.table_pagination = {'per_page': limit} if limit != 0 else False
+        # Pagination is handled at SQL level; disable django-tables2 pagination
+        self.table_pagination = False
 
         if not self.object.beneficiary_set.exists():
             kwargs['exclude'] = ('status_beneficiary',)

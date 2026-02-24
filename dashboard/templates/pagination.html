@@ -4,12 +4,12 @@
 <ul class="pagination">
   {% if page_number > 1 %}
   <li class="previous">
-    <a type="button" class="btn btn-grey border border-dark" href="?page=1&limit={{ limit }}{% if search %}&search={{ search }}{% endif %}">
+    <a type="button" class="btn btn-grey border border-dark" href="?page=1&limit={{ limit }}{% if search %}&search={{ search }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">
       &laquo;
     </a>
   </li>
   <li class="previous">
-    <a type="button" class="btn btn-grey border border-dark" href="?page={{ page_number|add:-1 }}&limit={{ limit }}{% if search %}&search={{ search }}{% endif %}">
+    <a type="button" class="btn btn-grey border border-dark" href="?page={{ page_number|add:-1 }}&limit={{ limit }}{% if search %}&search={{ search }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">
       {% trans 'Previous' %}
     </a>
   </li>
@@ -24,7 +24,7 @@
        {% if p == page_number or p == "..." %}
           href="#">
        {% else %}
-          href="?page={{ p }}&limit={{ limit }}{% if search %}&search={{ search }}{% endif %}">
+          href="?page={{ p }}&limit={{ limit }}{% if search %}&search={{ search }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">
        {% endif %}
           {{ p }}
      </a>
@@ -34,12 +34,12 @@
 
   {% if page_number < total_pages %}
   <li class="previous">
-    <a type="button" class="btn btn-grey border border-dark" href="?page={{ page_number|add:+1 }}&limit={{ limit }}{% if search %}&search={{ search }}{% endif %}">
+    <a type="button" class="btn btn-grey border border-dark" href="?page={{ page_number|add:+1 }}&limit={{ limit }}{% if search %}&search={{ search }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">
       {% trans 'Next' %}
     </a>
   </li>
   <li class="previous">
-    <a type="button" class="btn btn-grey border border-dark" href="?page={{ total_pages }}&limit={{ limit }}{% if search %}&search={{ search }}{% endif %}">
+    <a type="button" class="btn btn-grey border border-dark" href="?page={{ total_pages }}&limit={{ limit }}{% if search %}&search={{ search }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">
       &raquo;
     </a>
   </li>
