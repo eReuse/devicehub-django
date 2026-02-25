@@ -290,7 +290,7 @@ EMAIL_PORT = config('DEVICEHUB_EMAIL_PORT', default=25, cast=int)
 EMAIL_USE_TLS = config('DEVICEHUB_EMAIL_USE_TLS', default=False, cast=bool)
 EMAIL_BACKEND = config('DEVICEHUB_EMAIL_BACKEND', default='django.core.mail.backends.smtp.EmailBackend')
 EMAIL_FILE_PATH = config('DEVICEHUB_EMAIL_FILE_PATH', default='/tmp/app-messages')
-ENABLE_EMAIL = config('DEVICEHUB_ENABLE_EMAIL', default=True, cast=bool)
+ENABLE_EMAIL = config('DEVICEHUB_EMAIL_ENABLED', default=True, cast=bool)
 
 # ALGORITHM
 DEVICEHUB_ALGORITHM_DEVICE=config('DEVICEHUB_ALGORITHM_DEVICE', default="ereuse24")

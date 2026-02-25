@@ -73,59 +73,9 @@ Now, just run the following command to start the application:
 docker-compose up -d
 ```
 
-#### Running Devicehub with HTTPS
-
-The recommended way to run DeviceHub with HTTPS is using a reverse proxy. The following example uses Nginx, but you can use any other reverse proxy. Here there is an example of how to run DeviceHub with HTTPS using Nginx:
-
-```nginx
-server {
-  root /var/www/html;
-  index index.html index.htm;
-
-  listen 443;
-  server_name YOUR_FQDN;
-
-#  include tls_params;
-  client_max_body_size 10G;
-  client_body_buffer_size 400M;
-
-  location / {
-    proxy_pass http://INTERNAL_DEVICEHUB_IP:8001;
-    include proxy_params;
-  }
-
-    ssl_certificate /etc/letsencrypt/live/YOUR_FQDN/fullchain.pem; # managed by Certbot
-    ssl_certificate_key /etc/letsencrypt/live/YOUR_FQDN/privkey.pem; # managed by Certbot
-}
-
-server {
-    if ($host = YOUR_FQDN) {
-        return 301 https://$host$request_uri;
-    } # managed by Certbot
-
-  listen 80;
-  server_name YOUR_FQDN;
-  return 404; # managed by Certbot
-}
-```
-
-Note that `proxy_params` contains:
-
-```nginx
-proxy_set_header Host $http_host;
-proxy_set_header X-Real-IP $remote_addr;
-proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-proxy_set_header X-Forwarded-Proto $scheme;
-proxy_set_header X-Robots-Tag "noindex, nofollow, nosnippet, noarchive";
-proxy_set_header X-Permitted-Cross-Domain-Policies "none";
-proxy_connect_timeout 600;
-proxy_send_timeout 600;
-proxy_read_timeout 600;
-```
-
 #### Running Devicehub behind an external TLS terminator
 
-If you are using Cloudflare Tunnel, Pangolin, or another reverse proxy that already terminates TLS, run DeviceHub with the reverse proxy profile but use an HTTP-only Nginx template. In this setup, Nginx only speaks HTTP internally and serves static/media files directly.
+If you are using Cloudflare Tunnel, Pangolin, or another reverse proxy that already terminates TLS, run DeviceHub with the reverse proxy profile but use an HTTP-only Nginx template. In this setup, Nginx only speaks HTTP internally and serves static/media files directly. You may need to allow a self-signed origin certificate on the external proxy.
 
 Use the installer option:
 
