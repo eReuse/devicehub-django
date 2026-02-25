@@ -374,19 +374,32 @@ class SearchView(DeviceTableMixin, InventaryMixin):
 
         return devices, total
 
+    def _build_shortid_qry(self, terms, field):
+        exact_qry = Q()
+        for term in terms:
+            exact_qry |= Q(**{f"{field}__iregex": r'^[^:]+:' + re.escape(term)})
+
+        partial_qry = Q()
+        for term in terms:
+            max_offset = 6 - len(term)
+            if max_offset > 0:
+                rqry = r'^[^:]+:[^:]{1,' + str(max_offset) + r'}' + re.escape(term)
+                partial_qry |= Q(**{f"{field}__iregex": rqry})
+
+        return exact_qry, partial_qry
+
     def _search_shortid_ids(self, query_str):
-        """Search SystemProperty by shortid. Returns a list of canonical device
-        IDs sorted by relevance (exact shortid match first, partial second)."""
+        """Search SystemProperty by shortid and RootAlias by root shortid.
+        Returns a list of canonical device IDs sorted by relevance
+        (exact shortid match first, partial second)."""
         terms = [t for t in query_str.split() if t]
         if not terms:
             return []
 
         institution = self.request.user.institution
 
-        # Query 1: term starts at position 0 of the hash (highest relevance)
-        exact_qry = Q()
-        for term in terms:
-            exact_qry |= Q(value__iregex=r'^[^:]+:' + re.escape(term))
+        # Search in SystemProperty.value
+        exact_qry, partial_qry = self._build_shortid_qry(terms, "value")
 
         exact_values = list(
             SystemProperty.objects.filter(owner=institution)
@@ -395,17 +408,9 @@ class SearchView(DeviceTableMixin, InventaryMixin):
             .distinct()
         )
 
-        # Query 2: term appears within the shortid but NOT at position 0
+        seen_exact = set(exact_values)
         partial_values = []
-        partial_qry = Q()
-        for term in terms:
-            max_offset = 6 - len(term)
-            if max_offset > 0:
-                rqry = r'^[^:]+:[^:]{1,' + str(max_offset) + r'}' + re.escape(term)
-                partial_qry |= Q(value__iregex=rqry)
-
         if partial_qry:
-            seen_exact = set(exact_values)
             partial_values = [
                 v for v in SystemProperty.objects.filter(owner=institution)
                 .filter(partial_qry)
@@ -415,9 +420,6 @@ class SearchView(DeviceTableMixin, InventaryMixin):
             ]
 
         values = exact_values + partial_values
-
-        if not values:
-            return []
 
         # Resolve aliases to root values in bulk
         alias_map = dict(
@@ -432,6 +434,32 @@ class SearchView(DeviceTableMixin, InventaryMixin):
             if canonical not in seen:
                 seen.add(canonical)
                 ids.append(canonical)
+
+        # Search RootAlias.root directly by shortid
+        exact_root_qry, partial_root_qry = self._build_shortid_qry(terms, "root")
+
+        exact_roots = list(
+            RootAlias.objects.filter(owner=institution)
+            .filter(exact_root_qry)
+            .values_list("root", flat=True)
+            .distinct()
+        )
+        for root in exact_roots:
+            if root not in seen:
+                seen.add(root)
+                ids.append(root)
+
+        if partial_root_qry:
+            partial_roots = [
+                v for v in RootAlias.objects.filter(owner=institution)
+                .filter(partial_root_qry)
+                .values_list("root", flat=True)
+                .distinct()
+                if v not in seen
+            ]
+            for root in partial_roots:
+                seen.add(root)
+                ids.append(root)
 
         return ids
 
