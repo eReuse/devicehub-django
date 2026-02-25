@@ -23,7 +23,7 @@ services:
       resources:
         limits:
           cpus: "${DOCKER_DEVICEHUB_CPU_LIMIT:-0.000}"
-          memory: "${DOCKER_DEVICEHUB_MEM_LIMIT:-2G}"
+          memory: "${DOCKER_DEVICEHUB_MEM_LIMIT:-1G}"
   # match debian/django container so dbbackup works
   devicehub-postgres:
     profiles: [devicehub-postgres]
