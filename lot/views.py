@@ -868,6 +868,18 @@ class BeneficiaryView(DashboardLotMixing, BeneficiaryAgreementEmail, FormView):
             self.send_email(c.user)
 
 
+class ClearBeneficiaryDevicesView(DashboardLotMixing, View):
+    def get(self, request, *args, **kwargs):
+        pk = self.kwargs.get("pk")
+        device_id = request.GET.get("device_id")
+        if device_id:
+            devices = request.session.get("devices", [])
+            request.session["devices"] = [d for d in devices if d != device_id]
+        else:
+            request.session["devices"] = []
+        return redirect(reverse_lazy("lot:beneficiary", kwargs={"pk": pk}))
+
+
 class DeleteBeneficiaryView(DashboardView, TemplateView):
 
     def get(self, *args, **kwargs):

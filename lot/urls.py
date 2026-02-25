@@ -23,6 +23,7 @@ urlpatterns = [
     path("<int:pk>/donor/<uuid:id>", views.DonorView.as_view(), name="web_donor"),
     path("<int:pk>/donor/<uuid:id>/accept", views.AcceptDonorView.as_view(), name="accept_donor"),
     path("<int:pk>/beneficiary", views.BeneficiaryView.as_view(), name="beneficiary"),
+    path("<int:pk>/beneficiary/clear", views.ClearBeneficiaryDevicesView.as_view(), name="clear_beneficiary_devices"),
     path("<int:pk>/beneficiary/<uuid:id>/del", views.DeleteBeneficiaryView.as_view(), name="del_beneficiary"),
     path("<int:pk>/beneficiary/<uuid:id>/devices", views.ListDevicesBeneficiaryView.as_view(), name="devices_beneficiary"),
     path("<int:pk>/beneficiary/<uuid:id>/devices/<str:dev_id>/del", views.DelDeviceBeneficiaryView.as_view(), name="del_device_beneficiary"),
