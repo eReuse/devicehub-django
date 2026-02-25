@@ -1,6 +1,15 @@
-La cesión del equipo del {{ site_name }} ha sido confirmada procederemos al envio del mismo.
+{% extends "base_email.html" %}
 
-Puedes ver el estado de tus equipos en:
-{{ web_beneficiary }}
+{% block content %}
+<p style="margin:0 0 16px 0;">
+  La cesi&oacute;n del equipo del <strong>{{ site_name }}</strong> ha sido confirmada.
+  Procederemos al env&iacute;o del mismo.
+</p>
+<p style="margin:0 0 8px 0;">Puedes ver el estado de tus equipos en:</p>
+<p style="margin:0 0 24px 0;">
+  <a href="{{ web_beneficiary }}" style="color:#2e6b4f;font-weight:bold;word-break:break-all;">{{ web_beneficiary }}</a>
+</p>
+<p style="margin:0;">Un cordial saludo</p>
+{% endblock %}
 
-Un cordial saludo
+{% block footer %}{% include "_legal_footer.html" %}{% endblock %}

@@ -1,2 +1,9 @@
-El lote de entrada {{ lot.name }} ha sido confirmado y aceptado por el donor.
-Ya se pueden ofrecer estos dispositivos.
+{% extends "base_email.html" %}
+
+{% block content %}
+<p style="margin:0 0 16px 0;">
+  El lote de entrada <strong>{{ lot.name }}</strong> ha sido confirmado y aceptado por el donor.
+</p>
+<p style="margin:0 0 24px 0;">Ya se pueden ofrecer estos dispositivos.</p>
+<p style="margin:0;">Un cordial saludo</p>
+{% endblock %}

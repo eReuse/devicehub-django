@@ -1,4 +1,16 @@
-El beneficiario {{ beneficiary.email }} ha confirmado los siguientes equipos del lote {{ lot.name }}:
-{% for d in beneficiary.devicebeneficiary_set.filter %}
- {{ d.id }}
-{% endfor %}
+{% extends "base_email.html" %}
+
+{% block content %}
+<p style="margin:0 0 16px 0;">
+  El beneficiario <strong>{{ beneficiary.email }}</strong> ha confirmado los siguientes
+  equipos del lote <strong>{{ lot.name }}</strong>:
+</p>
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 24px 0;">
+  <tr>
+    <td style="background-color:#f8f8f8;border:1px solid #e0e0e0;padding:14px 20px;font-size:14px;color:#333333;font-family:monospace,monospace;line-height:1.8;">
+      {% for d in beneficiary.devicebeneficiary_set.filter %}{{ d.device_id }}<br>{% endfor %}
+    </td>
+  </tr>
+</table>
+<p style="margin:0;">Un cordial saludo</p>
+{% endblock %}

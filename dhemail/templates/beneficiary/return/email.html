@@ -1,3 +1,13 @@
-Te recordamos que si quieres devolver o reciclar los equipos puedes indicarnoslo en la pagina: {{ web_beneficiary }}.
+{% extends "base_email.html" %}
 
-Un cordial saludo
+{% block content %}
+<p style="margin:0 0 16px 0;">
+  Te recordamos que si quieres devolver o reciclar los equipos puedes indic&aacute;rnoslo en la p&aacute;gina:
+</p>
+<p style="margin:0 0 24px 0;">
+  <a href="{{ web_beneficiary }}" style="color:#2e6b4f;font-weight:bold;word-break:break-all;">{{ web_beneficiary }}</a>
+</p>
+<p style="margin:0;">Un cordial saludo</p>
+{% endblock %}
+
+{% block footer %}{% include "_legal_footer.html" %}{% endblock %}

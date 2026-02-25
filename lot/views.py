@@ -749,6 +749,7 @@ class AcceptDonorView(TemplateView, NotifyEmail):
         )
         self.object.reconciliation = datetime.datetime.now()
         self.object.save()
+        self.lot = self.object.lot
         self.get_templates_email()
         subscriptors = LotSubscription.objects.filter(
             lot_id=pk,
@@ -978,7 +979,9 @@ class ListDevicesBeneficiaryView(DashboardLotMixing, BeneficiaryEmail, FormView)
             'beneficiary': self.beneficiary,
             'new_devices': new_devices,
             'devices': devices,
-            'returned': returned
+            'returned': returned,
+            'email_institution': self.lot.owner.users.first().email,
+            "user": self.request.user
         })
 
         return context
@@ -1000,14 +1003,23 @@ class ListDevicesBeneficiaryView(DashboardLotMixing, BeneficiaryEmail, FormView)
         response = super().form_valid(form)
 
         if form.changed_objects:
+            devs_transfer = []
             devs_confirmed = []
             devs_delivered = []
             for ff in form.changed_objects:
                 f = ff[0]
+                if f.status == f.Status.TRANSFER:
+                    devs_transfer.append(f.device_id)
                 if f.status == f.Status.CONFIRMED:
                     devs_confirmed.append(f.device_id)
                 if f.status == f.Status.DELIVERED:
                     devs_delivered.append(f.device_id)
+
+            if devs_transfer:
+                self.email_template_subject = 'beneficiary/transfer/subject.txt'
+                self.email_template = 'beneficiary/transfer/email.txt'
+                self.email_template_html = 'beneficiary/transfer/email.html'
+                self.send_email(self.beneficiary)
 
             if devs_confirmed:
                 self.email_template_subject = 'beneficiary/confirm/subject.txt'

@@ -1,1 +1,10 @@
-Se te envia este email porque el administrador del dominio {{ site_name }} te ha añadido al lote {{ lot.name }} para que puedas gestionar la oferta de los items que en el residen.
+{% extends "base_email.html" %}
+
+{% block content %}
+<p style="margin:0 0 16px 0;">
+  Se te env&iacute;a este email porque el administrador del dominio <strong>{{ site_name }}</strong>
+  te ha a&ntilde;adido al lote <strong>{{ lot.name }}</strong> para que puedas gestionar
+  la oferta de los items que en &eacute;l residen.
+</p>
+<p style="margin:0;">Un cordial saludo</p>
+{% endblock %}

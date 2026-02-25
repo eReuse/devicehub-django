@@ -1,0 +1,15 @@
+{% extends "base_email.html" %}
+
+{% block content %}
+<p style="margin:0 0 16px 0;">Hola,</p>
+<p style="margin:0 0 16px 0;">Gr&agrave;cies per la r&agrave;pida resposta i per retornar el conveni signat.</p>
+<p style="margin:0 0 16px 0;">
+  Adjuntem la factura corresponent a l'equip reacondicionat. Feu el pagament el m&eacute;s aviat possible
+  i envieu-nos el comprovant de pagament. Un cop rebut us assignarem torn de recollida i
+  us donarem un codi per recollir l'equip.
+</p>
+<p style="margin:0 0 24px 0;">Quedem a l'espera,</p>
+<p style="margin:0;">Moltes gr&agrave;cies,<br>Salutacions,<br><strong>L'Equip de Pangea</strong></p>
+{% endblock %}
+
+{% block footer %}{% include "_legal_footer.html" %}{% endblock %}

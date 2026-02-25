@@ -1,4 +1,15 @@
-El beneficiario {{ beneficiary.email }} tiene interes en los dispositivos:
-{% for dev in beneficiary.devicebeneficiary_set.filter %}
-  {{ dev.device_id }}
-{% endfor %}
+{% extends "base_email.html" %}
+
+{% block content %}
+<p style="margin:0 0 16px 0;">
+  El beneficiario <strong>{{ beneficiary.email }}</strong> tiene inter&eacute;s en los dispositivos:
+</p>
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 24px 0;">
+  <tr>
+    <td style="background-color:#f8f8f8;border:1px solid #e0e0e0;padding:14px 20px;font-size:14px;color:#333333;font-family:monospace,monospace;line-height:1.8;">
+      {% for dev in beneficiary.devicebeneficiary_set.filter %}{{ dev.device_id }}<br>{% endfor %}
+    </td>
+  </tr>
+</table>
+<p style="margin:0;">Un cordial saludo</p>
+{% endblock %}

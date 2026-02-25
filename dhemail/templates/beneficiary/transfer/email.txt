@@ -1,19 +1,18 @@
-Bon dia,
+Hola,
 
-Gràcies per la ràpida resposta.
+Gràcies per la ràpida resposta  i per retornar el conveni signat.
 
-Completeu amb les vostres dades i *signeu el conveni adjunt*, i
-retorneu-nos-el per correu electrònic a {{ user.email }}.
+Adjuntem la factura corresponent a l'equip reacondicionat, feu el
+pagament el més aviat possible i envieu-nos el comprovant de pagament.
+Un cop rebut us assignarem torn de recollida i us donarem un codi per
+recollir l'equip.
 
-Un cop el rebem, us prepararem i enviarem la factura, i un cop hagueu
-fet el pagament se us donaran els dies i hores disponibles per a que els
-passeu a recollir pels tallers de {{ lot.owner.name }}.
+Quedem a l'espera,
 
 Moltes gràcies,
 
 Salutacions,
 L'Equip de Pangea
-
 
 --
 Pangea-Suport

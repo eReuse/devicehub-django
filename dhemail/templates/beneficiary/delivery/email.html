@@ -1,3 +1,46 @@
-El envio de los equipos de {{ site_name }} se ha realizado
+{% extends "base_email.html" %}
 
-Un cordial saludo
+{% block content %}
+<p style="margin:0 0 16px 0;">Hola,</p>
+<p style="margin:0 0 16px 0;">
+  Us comuniquem que a partir de dimecres 5 de Novembre ja podreu
+  <strong>passar a recollir el vostre equip</strong> pels tallers de {{ lot.owner.name }}.
+</p>
+
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 24px 0;">
+  <tr>
+    <td style="background-color:#f0f7f3;border-left:4px solid #2e6b4f;padding:16px 20px;font-size:14px;color:#333333;line-height:1.7;">
+      <p style="margin:0 0 6px 0;"><strong>Adre&ccedil;a:</strong> {{ lot.owner.location }}</p>
+      <p style="margin:0 0 6px 0;"><strong>Horari:</strong> De dilluns a divendres, de 9 a 14h</p>
+      <p style="margin:0;"><strong>Transport p&uacute;blic:</strong> Tram l&iacute;nia 3, aut&oacute;bus: 157, X30, 65</p>
+    </td>
+  </tr>
+</table>
+
+<p style="margin:0 0 16px 0;">
+  Heu de <strong>portar aquest correu electr&ograve;nic i indicar el codi ID DEVICEHUB</strong>
+  del vostre equip que us facilitem a continuaci&oacute;:
+</p>
+
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 24px 0;">
+  <tr>
+    <td style="background-color:#f8f8f8;border:1px solid #e0e0e0;padding:14px 20px;font-size:15px;color:#333333;">
+      <strong>ID DEVICEHUB:</strong>
+    </td>
+  </tr>
+</table>
+
+<p style="margin:0 0 16px 0;">
+  <strong>Abans d'anar a recollir-lo</strong>, envieu un correu a
+  <a href="mailto:{{ email_institution }}" style="color:#2e6b4f;text-decoration:none;">{{ email_institution }}</a>
+  que &eacute;s qui gestionar&agrave; l'entrega del vostre equip,
+  indicant-li quin dia passareu i l'ID DEVICEHUB del vostre equip.
+</p>
+<p style="margin:0 0 24px 0;">
+  Esperem que l'equip que acolliu us doni un molt bon servei.
+  Gr&agrave;cies per apostar pels equips reacondicionats!
+</p>
+<p style="margin:0;">Salutacions,<br><strong>L'Equip de Pangea</strong></p>
+{% endblock %}
+
+{% block footer %}{% include "_legal_footer.html" %}{% endblock %}

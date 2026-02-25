@@ -1,5 +1,20 @@
-Te enviamos este email porque has mostrado interes por unos equipos en {{ site_name }}.
-Para proceder es necesario que firmes un convenio de traspaso.
-Para ello tienes que acceder a la siguiente pagina {{ web_beneficiary }}
+{% extends "base_email.html" %}
 
-Un cordial saludo
+{% block content %}
+<p style="margin:0 0 16px 0;">Bon dia,</p>
+<p style="margin:0 0 16px 0;">Gr&agrave;cies per la r&agrave;pida resposta.</p>
+<p style="margin:0 0 16px 0;">
+  Completeu amb les vostres dades i <strong>signeu el conveni adjunt</strong>, i
+  retorneu-nos-el per correu electr&ograve;nic a
+  <a href="mailto:{{ user.email }}" style="color:#2e6b4f;text-decoration:none;">{{ user.email }}</a>.
+</p>
+<p style="margin:0 0 16px 0;">
+  Un cop el rebem, us prepararem i enviarem la factura, i un cop hagueu
+  fet el pagament se us donaran els dies i hores disponibles per a que els
+  passeu a recollir pels tallers de {{ lot.owner.name }}.
+</p>
+<p style="margin:0 0 16px 0;">Moltes gr&agrave;cies,</p>
+<p style="margin:0;">Salutacions,<br><strong>L'Equip de Pangea</strong></p>
+{% endblock %}
+
+{% block footer %}{% include "_legal_footer.html" %}{% endblock %}

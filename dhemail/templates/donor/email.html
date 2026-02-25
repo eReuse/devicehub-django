@@ -1,4 +1,16 @@
-Te enviamos este email porque el administrador del dominio {{ site_name }} ha terminado de procesar los equipos que le has ofrecido y ahora puedes confirmar que lo que se le envió corresponde con lo que él ha procesado.
-Para ello visite la página: {{ web_donor }}
+{% extends "base_email.html" %}
 
-Un cordial saludo
+{% block content %}
+<p style="margin:0 0 16px 0;">
+  Te enviamos este email porque el administrador del dominio <strong>{{ site_name }}</strong>
+  ha terminado de procesar los equipos que le has ofrecido y ahora puedes confirmar que
+  lo que se le envi&oacute; corresponde con lo que &eacute;l ha procesado.
+</p>
+<p style="margin:0 0 8px 0;">Para ello visita la p&aacute;gina:</p>
+<p style="margin:0 0 24px 0;">
+  <a href="{{ web_donor }}" style="color:#2e6b4f;font-weight:bold;word-break:break-all;">{{ web_donor }}</a>
+</p>
+<p style="margin:0;">Un cordial saludo</p>
+{% endblock %}
+
+{% block footer %}{% include "_legal_footer.html" %}{% endblock %}

@@ -159,9 +159,10 @@ class DeviceBeneficiary(models.Model):
     class Status(models.IntegerChoices):
         AVAILABLE = 0, _("Available")
         INTEREST = 1, _("Interest")
-        CONFIRMED = 2, _("Confirmed")
-        DELIVERED = 3, _("Delivered")
-        RETURNED = 4, _("Returned")
+        TRANSFER = 2, _("Transfer")
+        CONFIRMED = 3, _("Confirmed")
+        DELIVERED = 4, _("Delivered")
+        RETURNED = 5, _("Returned")
 
     beneficiary = models.ForeignKey("Beneficiary", on_delete=models.CASCADE)
     device_id = models.CharField(max_length=STR_EXTEND_SIZE, blank=False, null=False)

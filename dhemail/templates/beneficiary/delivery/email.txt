@@ -1,3 +1,33 @@
-El envio de los equipos de {{ site_name }} se ha realizado
+Hola,
 
-Un cordial saludo
+Us comuniquem que a partir de dimecres 5 de Novembre ja podreu *passar a
+recollir el vostre equip* pels tallers de {{ lot.owner.name }}.
+
+Els taller de {{ lot.owner.name }} estan ubicats al carrer {{ lot.owner.location }}
+
+Podeu passar de dilluns a divendres de 9 a 14
+
+Heu de*portar aquest correu electrònic i indicar el codi ID DEVICEHUB*
+del vostre equip que us facilitem a continuació:
+
+ID DEVICEHUB:
+
+*Abans d'anar a recollir-lo*, envieu un correu a
+<{{ email_institution }}> que és qui gestionarà l'entrega del vostre
+equip indicant-li quin dia passareu i l'ID DEVICEHUB del vostre equip.
+
+Per si us ajuda, el transport públic proper als tallers de {{ lot.owner.name }} es:
+Tram: línia 3 , autobús: 157 , X30, 65
+
+Esperem que l'equip que acolliu us doni un molt bon servei.
+Gràcies per apostar pels equips reacondicionats !
+
+Salutacions,
+L'Equip de Pangea
+
+--
+Pangea-Suport
+-----------------
+AVÍS LEGAL - Aquesta informació és privada i confidencial, i està dirigida únicament al seu destinatari. Si vostè no és el destinatari original d’aquest missatge i, malgrat tot ha pogut accedir a l’esmentada informació, si us plau elimini aquest missatge.
+AVISO LEGAL - Esta información es privada y confidencial, y está dirigida únicamente a su destinatario. Si usted no es el destinatario original de este mensaje y, a pesar de ello ha podido acceder a dicha información, por favor elimine este mensaje.
+LEGAL NOTICE - This information is private and confidential, and intended for the recipient only. If you are not the intended recipient of this message, and you have been able to access its content, please delete this message.
