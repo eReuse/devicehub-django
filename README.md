@@ -87,6 +87,7 @@ Or set these in `.env` manually:
 
 ```
 COMPOSE_PROFILES=rproxy
+RPROXY_TEMPLATE_NAME=app.http.template
 RPROXY_TEMPLATE=/etc/nginx/conf.d/app.http.template
 RPROXY_ENABLE_LETSENCRYPT=false
 ```

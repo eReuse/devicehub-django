@@ -154,11 +154,8 @@ services:
       #- "443:443"
     volumes:
       - type: bind
-        source: docker/nginx/app.template
-        target: /etc/nginx/conf.d/app.template
-      - type: bind
-        source: docker/nginx/app.http.template
-        target: /etc/nginx/conf.d/app.http.template
+        source: docker/nginx/${RPROXY_TEMPLATE_NAME}
+        target: /etc/nginx/conf.d/${RPROXY_TEMPLATE_NAME}
       # Static and Media files
       - ${DOCKER_DEVICEHUB_DATA_DIR}/devicehub/static:/var/www/static:ro
       - ${DOCKER_DEVICEHUB_DATA_DIR}/devicehub/media:/var/www/media:ro
