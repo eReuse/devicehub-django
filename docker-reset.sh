@@ -332,8 +332,13 @@ main() {
                 docker_wizard
         fi
 
-        . ./.env
-        mkdir -p "${DOCKER_DEVICEHUB_DATA_DIR}"
+	. ./.env
+
+	if [ -z "${RPROXY_TEMPLATE_NAME:-}" ] && [ -n "${RPROXY_TEMPLATE:-}" ]; then
+		RPROXY_TEMPLATE_NAME="${RPROXY_TEMPLATE##*/}"
+		export RPROXY_TEMPLATE_NAME
+	fi
+	mkdir -p "${DOCKER_DEVICEHUB_DATA_DIR}"
 
         if [ "${DEVICEHUB_REMOVE_DATA}" = 'true' ]; then
                 docker compose down -v
