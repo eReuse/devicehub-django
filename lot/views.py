@@ -47,7 +47,7 @@ from dhemail.views import (
     NotifyEmail,
     SubscriptionEmail,
     DonorEmail,
-    BeneficiaryAgreementEmail,
+    BeneficiaryInterestedEmail,
     BeneficiaryEmail,
 )
 
@@ -764,7 +764,7 @@ class AcceptDonorView(TemplateView, NotifyEmail):
         self.email_template_subject = 'subscription/incoming_lot_ready_subject.txt'
 
 
-class BeneficiaryView(DashboardLotMixing, BeneficiaryAgreementEmail, FormView):
+class BeneficiaryView(DashboardLotMixing, BeneficiaryInterestedEmail, FormView):
     template_name = "beneficiaries.html"
     title = _("Beneficiaries")
     breadcrumb = "Lot / Beneficiaries"
@@ -860,9 +860,9 @@ class BeneficiaryView(DashboardLotMixing, BeneficiaryAgreementEmail, FormView):
         return response
 
     def send_email_subscriptors(self):
-        self.email_template_html = 'subscription/interest_beneficiary_email.html'
-        self.email_template = 'subscription/interest_beneficiary_email.txt'
-        self.email_template_subject = 'subscription/interest_beneficiary_subject.txt'
+        self.email_template_html = 'subscription/interested_beneficiary_email.html'
+        self.email_template = 'subscription/interested_beneficiary_email.txt'
+        self.email_template_subject = 'subscription/interested_beneficiary_subject.txt'
         self.get_lot()
         for c in self.lot.lotsubscription_set.filter():
             self.send_email(c.user)
@@ -1010,32 +1010,32 @@ class ListDevicesBeneficiaryView(DashboardLotMixing, BeneficiaryEmail, FormView)
                     devs_delivered.append(f.device_id)
 
             if devs_confirmed:
-                self.email_template_subject = 'beneficiary/confirm/subject.txt'
-                self.email_template = 'beneficiary/confirm/email.txt'
-                self.email_template_html = 'beneficiary/confirm/email.html'
+                self.email_template_subject = 'beneficiary/confirmed/subject.txt'
+                self.email_template = 'beneficiary/confirmed/email.txt'
+                self.email_template_html = 'beneficiary/confirmed/email.html'
                 self.send_email(self.beneficiary)
 
-                self.email_template_html = 'subscription/confirm_beneficiary_email.html'
-                self.email_template = 'subscription/confirm_beneficiary_email.txt'
-                self.email_template_subject = 'subscription/confirm_beneficiary_subject.txt'
+                self.email_template_html = 'subscription/confirmed_beneficiary_email.html'
+                self.email_template = 'subscription/confirmed_beneficiary_email.txt'
+                self.email_template_subject = 'subscription/confirmed_beneficiary_subject.txt'
 
                 for c in self.get_subscriptors():
                     self.send_email(c.user)
 
             if devs_delivered:
-                self.email_template_subject = 'beneficiary/delivery/subject.txt'
-                self.email_template = 'beneficiary/delivery/email.txt'
-                self.email_template_html = 'beneficiary/delivery/email.html'
+                self.email_template_subject = 'beneficiary/delivered/subject.txt'
+                self.email_template = 'beneficiary/delivered/email.txt'
+                self.email_template_html = 'beneficiary/delivered/email.html'
                 self.send_email(self.beneficiary)
 
-                self.email_template_subject = 'beneficiary/return/subject.txt'
-                self.email_template = 'beneficiary/return/email.txt'
-                self.email_template_html = 'beneficiary/return/email.html'
+                self.email_template_subject = 'beneficiary/returned/subject.txt'
+                self.email_template = 'beneficiary/returned/email.txt'
+                self.email_template_html = 'beneficiary/returned/email.html'
                 self.send_email(self.beneficiary)
 
-                self.email_template_html = 'subscription/delivery_beneficiary_email.html'
-                self.email_template = 'subscription/delivery_beneficiary_email.txt'
-                self.email_template_subject = 'subscription/delivery_beneficiary_subject.txt'
+                self.email_template_html = 'subscription/delivered_beneficiary_email.html'
+                self.email_template = 'subscription/delivered_beneficiary_email.txt'
+                self.email_template_subject = 'subscription/delivered_beneficiary_subject.txt'
 
                 for c in self.get_subscriptors():
                     self.send_email(c.user)
@@ -1115,9 +1115,9 @@ class AddDevicesBeneficiaryView(DashboardView, NotifyEmail, TemplateView):
         return redirect(self.success_url)
 
     def send_email_subscriptors(self):
-        self.email_template_html = 'subscription/interest_beneficiary_email.html'
-        self.email_template = 'subscription/interest_beneficiary_email.txt'
-        self.email_template_subject = 'subscription/interest_beneficiary_subject.txt'
+        self.email_template_html = 'subscription/interested_beneficiary_email.html'
+        self.email_template = 'subscription/interested_beneficiary_email.txt'
+        self.email_template_subject = 'subscription/interested_beneficiary_subject.txt'
         pk = self.kwargs.get('pk')
         if not pk:
             return
@@ -1233,9 +1233,9 @@ class AgreementBeneficiaryView(TemplateView):
 
 class AcceptBeneficiaryView(TemplateView, NotifyEmail):
     template_name = "beneficiary_agreement.html"
-    email_template_html = 'subscription/accept_conditions_beneficiary_email.html'
-    email_template = 'subscription/accept_conditions_beneficiary_email.txt'
-    email_template_subject = 'subscription/accept_conditions_beneficiary_subject.txt'
+    email_template_html = 'subscription/accepted_conditions_beneficiary_email.html'
+    email_template = 'subscription/accepted_conditions_beneficiary_email.txt'
+    email_template_subject = 'subscription/accepted_conditions_beneficiary_subject.txt'
 
     def get(self, *args, **kwargs):
         super().get(*args, **kwargs)

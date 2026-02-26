@@ -147,7 +147,7 @@ class Beneficiary(models.Model):
         DeviceBeneficiary.objects.create(
             beneficiary=self,
             device_id=v,
-            status=DeviceBeneficiary.Status.INTEREST
+            status=DeviceBeneficiary.Status.INTERESTED
         )
 
     def remove(self, v):
@@ -158,7 +158,7 @@ class Beneficiary(models.Model):
 class DeviceBeneficiary(models.Model):
     class Status(models.IntegerChoices):
         AVAILABLE = 0, _("Available")
-        INTEREST = 1, _("Interest")
+        INTERESTED = 1, _("Interested")
         CONFIRMED = 2, _("Confirmed")
         DELIVERED = 3, _("Delivered")
         RETURNED = 4, _("Returned")

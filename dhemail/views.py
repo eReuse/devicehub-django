@@ -140,25 +140,25 @@ class BeneficiaryEmail(NotifyEmail):
         return context
 
 
-class BeneficiaryAgreementEmail(BeneficiaryEmail):
-    email_template_subject = 'beneficiary/agreement/subject.txt'
-    email_template = 'beneficiary/agreement/email.txt'
-    email_template_html = 'beneficiary/agreement/email.html'
+class BeneficiaryInterestedEmail(BeneficiaryEmail):
+    email_template_subject = 'beneficiary/interested/subject.txt'
+    email_template = 'beneficiary/interested/email.txt'
+    email_template_html = 'beneficiary/interested/email.html'
 
 
-class BeneficiaryConfirmEmail(BeneficiaryEmail):
-    email_template_subject = 'beneficiary/confirm/subject.txt'
-    email_template = 'beneficiary/confirm/email.txt'
-    email_template_html = 'beneficiary/confirm/email.html'
+class BeneficiaryConfirmedEmail(BeneficiaryEmail):
+    email_template_subject = 'beneficiary/confirmed/subject.txt'
+    email_template = 'beneficiary/confirmed/email.txt'
+    email_template_html = 'beneficiary/confirmed/email.html'
 
 
-class BeneficiaryDeliveryEmail(BeneficiaryEmail):
-    email_template_subject = 'beneficiary/delivery/subject.txt'
-    email_template = 'beneficiary/delivery/email.txt'
-    email_template_html = 'beneficiary/delivery/email.html'
+class BeneficiaryDeliveredEmail(BeneficiaryEmail):
+    email_template_subject = 'beneficiary/delivered/subject.txt'
+    email_template = 'beneficiary/delivered/email.txt'
+    email_template_html = 'beneficiary/delivered/email.html'
 
 
-class BeneficiaryReturnEmail(BeneficiaryEmail):
-    email_template_subject = 'beneficiary/return/subject.txt'
-    email_template = 'beneficiary/return/email.txt'
-    email_template_html = 'beneficiary/return/email.html'
+class BeneficiaryReturnedEmail(BeneficiaryEmail):
+    email_template_subject = 'beneficiary/returned/subject.txt'
+    email_template = 'beneficiary/returned/email.txt'
+    email_template_html = 'beneficiary/returned/email.html'
