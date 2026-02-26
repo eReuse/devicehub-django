@@ -157,6 +157,15 @@
           tab.show()
         }
       }
+      // Handle clicks: add listeners on all tabs
+      const tabElList = document.querySelectorAll('a[data-bs-toggle="tab"]')
+      tabElList.forEach(tabEl => {
+        tabEl.addEventListener('shown.bs.tab', function (event) {
+          const targetId = event.target.getAttribute('data-bs-target')
+          // Update URL
+          history.pushState(null, null, targetId)
+        })
+      })
     })
   </script>
 {% endblock %}
