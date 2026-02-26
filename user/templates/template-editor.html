@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>{{ subtitle }}</h2>
+
+<p>This form is experimental and it might disappear in future.</p>
+
+<p>The objective is to improve email responses</p>
+
+<p>Editing files directly in: <code>dhemail/templates/</code></p>
+
+<hr>
+
+{% for file in files_data %}
+<div style="margin-bottom: 25px; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="rel_path" value="{{ file.path }}">
+
+        <h2>{{ file.path }}</h2>
+
+        {% if "subject" in file.path %}
+            <div style="display: flex; gap: 5px;">
+                <input class="form-control" type="text" name="content" value="{{ file.content }}" style="flex-grow: 1; margin: 5px 0;">
+            </div>
+            <div style="text-align: left;">
+                <button class="btn btn-green-admin px-4" type="submit">Save</button>
+            </div>
+        {% else %}
+            <textarea class="form-control font-code" name="content" rows="6" style="width: 100%; font-family: monospace; margin: 5px 0;">{{ file.content }}</textarea>
+            <div style="text-align: left;">
+                <button class="btn btn-green-admin px-4" type="submit">Save</button>
+            </div>
+        {% endif %}
+    </form>
+</div>
+{% endfor %}
+
+{% endblock %}
