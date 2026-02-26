@@ -6,6 +6,7 @@ app_name = 'user'
 urlpatterns = [
     path("panel/", views.PanelView.as_view(), name="panel"),
     path("settings/", views.SettingsView.as_view(), name="settings"),
+    path("template-editor/", views.TemplateEditorView.as_view(), name="template-editor"),
     path('<int:pk>/', views.UserProfileView.as_view(), name='profile'),
     path('v1/tokens/', views.TokenView.as_view(), name='tokens'),
     path('v1/tokens/new', views.TokenNewView.as_view(), name='new_token'),
