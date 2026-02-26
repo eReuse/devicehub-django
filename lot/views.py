@@ -360,7 +360,7 @@ class DashboardLotMixing(DashboardView):
         context.update({
             'lot': self.lot,
             'breadcrumb': self.breadcrumb,
-            "title": "{} - {}".format(self.lot.name, self.title),
+            "title": "{} {} - {}".format(_("Lot"), self.lot.name, self.title),
             'subscripted': self.subscriptions.first(),
             'is_circuit_manager': self.is_circuit_manager,
             'is_shop': self.is_shop,

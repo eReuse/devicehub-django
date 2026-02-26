@@ -109,7 +109,7 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
         total_pages = (count + limit - 1) // limit if limit else 1
 
         context.update({
-            'title': "{} {}".format(_("Lot"), lot.name),
+            'title': "{} {} - {}".format(_("Lot"), lot.name, _("Devices")),
             'lot': lot,
             'count': count,
             'page': page,
