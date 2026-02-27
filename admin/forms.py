@@ -51,6 +51,15 @@ class InstitutionSettingsForm(forms.ModelForm):
         widget=forms.CheckboxSelectMultiple,
         required=False,
         label=_("Properties to Print")
+    schema_config_json = forms.CharField(
+        label=_("Schema Configuration (JSON)"),
+        widget=forms.Textarea(attrs={
+            'rows': 5,
+            'class': 'form-control font-monospace',
+            'placeholder': '{"dpp": "dpp_v1.json", "traceability": "trace_v1.json"}'
+        }),
+        help_text=_("Map credential types to schema filenames. Must be valid JSON."),
+        required=False
     )
 
     class Meta:
@@ -71,6 +80,11 @@ class InstitutionSettingsForm(forms.ModelForm):
             'signing_auth_token',
             'device_dpp_schema',
             'untp_drf_schema'
+            'algorithm',
+            'issuer_did',
+            'api_base_url',
+            'signing_auth_token',
+            # 'schema_config' is handled by schema_config_json
         ]
         widgets = {
             'qr_content_type': forms.RadioSelect,
@@ -85,3 +99,26 @@ class InstitutionSettingsForm(forms.ModelForm):
 
     def clean_qr_printed_properties(self):
         return self.cleaned_data.get('qr_printed_properties', [])
+        # If the instance exists and has config, load it into the text field
+        if self.instance and self.instance.pk and self.instance.schema_config:
+            self.fields['schema_config_json'].initial = json.dumps(self.instance.schema_config, indent=2)
+
+    def clean_schema_config_json(self):
+        """Validate that the text input is actually valid JSON"""
+        data = self.cleaned_data.get('schema_config_json')
+        if not data:
+            return {}
+        try:
+            json_data = json.loads(data)
+            if not isinstance(json_data, dict):
+                raise forms.ValidationError(_("Configuration must be a JSON object (dictionary)."))
+            return json_data
+        except json.JSONDecodeError:
+            raise forms.ValidationError(_("Invalid JSON format. Please check syntax."))
+
+    def save(self, commit=True):
+        instance = super(InstitutionSettingsForm, self).save(commit=False)
+        instance.schema_config = self.cleaned_data['schema_config_json']
+        if commit:
+            instance.save()
+        return instance

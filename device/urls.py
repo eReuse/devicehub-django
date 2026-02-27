@@ -17,4 +17,5 @@ urlpatterns = [
     path("<str:device_id>/issue-dpp/", views.IssueDigitalPassportView.as_view(), name="issue_dpp"),
     path('<str:pk>/label/print', views.DeviceBulkLabelView.as_view(), name='single_label'),
     path('labels/print', views.DeviceBulkLabelView.as_view(), name='bulk_labels'),
+    path("<str:device_id>/complete-dpp/", views.DeviceFullDPPView.as_view(), name="full_dpp"),
 ]
