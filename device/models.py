@@ -6,7 +6,7 @@ from django.db.models.functions import RowNumber
 from django.utils.translation import gettext_lazy as _
 
 from utils.constants import ALGOS
-from evidence.models import SystemProperty, UserProperty, Evidence, RootAlias
+from evidence.models import CredentialProperty, SystemProperty, UserProperty, Evidence, RootAlias
 from django.utils.dateparse import parse_datetime
 from lot.models import DeviceLot, DeviceBeneficiary
 from action.models import State
@@ -33,6 +33,17 @@ class Device:
         SWITCH = "Switch"
         ROUTER = "Router"
         ROUTERWIFI = "RouterWifi"
+
+        # --- Raw Materials (Dismantling Outputs) ---
+        PLASTIC = "Plastic"
+        ALUMINIUM = "Aluminium"
+        COPPER = "Copper"
+        STEEL = "Steel"
+        GLASS = "Glass"
+        GOLD = "Gold"
+        LITHIUM = "Lithium"
+        PCB = "PCB"
+        MIXED_EWASTE = "MixedEwaste"
 
     def __init__(self, *args, **kwargs):
         # the id is the chid of the device
@@ -139,6 +150,17 @@ class Device:
         for a in self.get_properties():
             if a.uuid not in self.uuids:
                 self.uuids.append(a.uuid)
+
+    @property
+    def did(self):
+        did_document = CredentialProperty.objects.filter(
+            uuid__in=self.uuids,
+            key="DID_DOCUMENT"
+        ).order_by("created").first()
+
+
+        return getattr( did_document, "value", "")
+
 
     def get_hids(self):
         properties = self.get_properties()

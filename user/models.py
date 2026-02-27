@@ -124,9 +124,20 @@ class Institution(models.Model):
     )
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     def __str__(self):
         return self.name
 =======
+=======
+    facility_id_uri = models.URLField(
+        _("Facility ID (URI)"),
+        max_length=500,
+        blank=True, null=True,
+        validators=[URLValidator(schemes=['http', 'https', 'did'])],
+        help_text=_("Globally unique URI.")
+    )
+
+>>>>>>> c9d78b20 (dismantling, did qr,)
     street_address = models.CharField(_("Street Address"), max_length=255, blank=True, null=True)
     postal_code = models.CharField(_("Postal Code"), max_length=20, blank=True, null=True)
     location = models.CharField(_("City/Locality"), max_length=100, blank=True, null=True)
@@ -148,6 +159,7 @@ class InstitutionSettings(models.Model):
     institution = models.OneToOneField(
         Institution,
         on_delete=models.CASCADE,
+<<<<<<< HEAD
         related_name='settings',
 <<<<<<< HEAD
         verbose_name=_("Institution"),
@@ -155,6 +167,9 @@ class InstitutionSettings(models.Model):
 =======
         verbose_name=_("Institution")
 >>>>>>> 0c6ecef2 (updated institution model and added config)
+=======
+        related_name='settings'
+>>>>>>> c9d78b20 (dismantling, did qr,)
     )
 
     # --- QR Settings ---
@@ -227,19 +242,11 @@ class InstitutionSettings(models.Model):
         return f"Settings for {self.institution.name}"
 =======
     # --- IDHub  Settings ---
-    issuer_did = models.CharField(
-        _("Issuer DID"),
-        max_length=255,
-        blank=True,
-        null=True,
-        help_text=_("The W3C DID (e.g., did:web:example.com) that is used on the idhub service.")
+    api_base_url = models.URLField(
+        _("Signing Service Base URL"),
+        help_text=_("The root URL of the IdHub instance (e.g., https://idhub.example.com/api/v1/)")
     )
-    signing_service_domain = models.URLField(
-        _("Signing Service URL"),
-        blank=True,
-        null=True,
-        help_text=_("Idhub endpoint where the credential will be signed.")
-    )
+
     signing_auth_token = models.CharField(
         _("Signing API Token"),
         max_length=1024,
@@ -247,27 +254,45 @@ class InstitutionSettings(models.Model):
         null=True,
         help_text=_("Bearer token for the signing service.")
     )
-    device_dpp_schema = models.CharField(
-        _("Device schema name"),
+
+    issuer_did = models.CharField(
+        _("Issuer DID"),
         max_length=255,
-        blank=True,
-        null=True,
-        help_text=_("Filename of the dpp credential schema found on your idhub provider.")
+        blank=True, null=True,
+        validators=[RegexValidator(r'^did:[a-z0-9]+:.+', _("Invalid DID format"))],
+        help_text=_("The DID used by this client on the signing service.")
     )
-    untp_drf_schema = models.CharField(
-        _("UNTP's Digital Facility Record schema name"),
-        max_length=255,
+
+    # {
+    #    "dpp": "product_passport_v1.json",
+    #    "traceability": "traceability_event_v0.6.json",
+    #    "facility": "facility_record_v2.json"
+    # }
+    schema_config = models.JSONField(
+        _("Schema Mapping"),
+        default=dict,
         blank=True,
-        null=True,
-        help_text=_("Filename of the drf schema found on your idhub provider.")
+        help_text=_("Map 'credential_type' (keys) to 'schema_filename' (values).")
     )
+
+    algorithm = models.CharField(
+        _("Algorithm"),
+        max_length=30,
+        default='ereuse24',
+        help_text=_("The default algorithm used for device aggregation."),
+        choices=ALGORITHMS,
+    )
+
+    def get_service_url(self, endpoint: str) -> str:
+        base = self.api_base_url.rstrip('/')
+        path = endpoint.lstrip('/')
+        return f"{base}/{path}/"
+
+    def get_schema_for_type(self, type_key: str) -> str:
+        return self.schema_config.get(type_key, 'default_schema.json')
 
     def __str__(self):
-        return f"Settings for {self.institution.name}"
-
-    class Meta:
-        verbose_name = _("Institution Settings")
-        verbose_name_plural = _("Institution Settings")
+        return f"Config: {self.institution.name} ({self.api_base_url})"
 
 >>>>>>> 0c6ecef2 (updated institution model and added config)
 
