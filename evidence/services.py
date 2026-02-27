@@ -3,8 +3,8 @@
 import requests
 import logging
 from django.db import IntegrityError
-from evidence.models import CredentialProperty
 from user.models import InstitutionSettings
+from evidence.models import CredentialProperty
 
 logger = logging.getLogger(__name__)
 
@@ -17,61 +17,88 @@ class CredentialService:
         except InstitutionSettings.DoesNotExist:
             self.settings = None
 
-    def issue_credential(self, schema_name, credential_subject, service_endpoint,
-                         credential_key, uuid=None, description=None):
-        """
-        Args:
-            schema_name (str): Filename of the schema (e.g. 'passport.json')
-            credential_subject (dict): The actual data content.
-            service_endpoint (str): Where the credential points to (e.g. evidence URL).
-            credential_key (str): The DB key (e.g. 'DigitalProductPassport').
-            uuid (UUID, optional): Link to a device. None if linking to Institution.
-            description (str, optional): Human readable description.
-
-        Returns:
-            tuple: (credential_object, error_message)
-            - If success: (CredentialProperty instance, None)
-            - If fail: (None, "Error string for the user")
-        """
+    def issue_credential(self, credential_type_key, credential_subject,
+                         credential_db_key, service_endpoint=None, uuid=None,
+                         description=None, did_suffix=None):
         if not self.settings:
             return None, "Institution settings are missing."
 
-        api_endpoint = getattr(self.settings, "signing_service_domain", "")
-        api_key = getattr(self.settings, "signing_auth_token", "")
+        api_token = self.settings.signing_auth_token
+        api_base = self.settings.api_base_url
+        issuer_did = self.settings.issuer_did
 
-        if not api_key or not api_endpoint:
-            return None, "Signing API configuration is incomplete."
+        if not api_token or not api_base:
+            return None, "Signing API configuration (Token or URL) is incomplete."
 
-        payload = {
-            "schema_name": schema_name,
-            "create_did": True,
-            "credentialSubject": credential_subject,
-            "service_endpoint": service_endpoint
-        }
+        schema_name = self.settings.schema_config.get(credential_type_key)
+        if not schema_name:
+            return None, f"No schema configured for type '{credential_type_key}'. Check Institution Settings."
 
         headers = {
-            'Authorization': f'Bearer {api_key}',
+            'Authorization': f'Bearer {api_token}',
             'Content-Type': 'application/json'
         }
 
+        base_payload = {
+            "schema_name": schema_name,
+        }
+        base_payload["issuer_did"] = issuer_did
+
         try:
+            if credential_type_key == 'traceability':
+                endpoint = self._get_full_url(api_base, "issue-traceability/")
+                payload = {
+                    **base_payload,
+                    "credentialSubject": credential_subject
+                }
+
+            elif credential_type_key == 'facility':
+                if not service_endpoint:
+                    return None, "Service Endpoint is required for Facility issuance."
+
+                endpoint = self._get_full_url(api_base, "issue-facility/")
+                payload = {
+                    **base_payload,
+                    "create_did": True,
+                    "subject_did_suffix": did_suffix,
+                    "credentialSubject": credential_subject,
+                    "service_endpoint": service_endpoint
+                }
+
+            else:
+                if not service_endpoint:
+                    return None, "Service Endpoint is required for DPP issuance."
+
+                endpoint = self._get_full_url(api_base, "issue-dpp/")
+                payload = {
+                    **base_payload,
+                    "create_did": True,
+                    "subject_did_suffix": did_suffix,
+                    "credentialSubject": credential_subject,
+                    "service_endpoint": service_endpoint
+                }
+
             response = requests.post(
-                api_endpoint, json=payload, headers=headers,
-                timeout=15, verify=False, allow_redirects=False
+                endpoint, json=payload, headers=headers,
+                timeout=30, verify=False
             )
             response.raise_for_status()
 
-            signed_credential = response.json()
+            response_data = response.json()
+            signed_credential = response_data.get("credential")
+
+            if not signed_credential:
+                 if "id" in response_data and "@context" in response_data:
+                     signed_credential = response_data
+                 else:
+                    return None, "API success but response format was invalid (missing 'credential' key)."
+
             credential_id = signed_credential.get('id')
 
-            if not credential_id:
-                return None, "API success but no ID returned."
-
-            # Save to DB
             cred_prop = CredentialProperty.objects.create(
                 uuid=uuid,
                 owner=self.institution,
-                key=credential_key,
+                key=credential_db_key,
                 value=credential_id,
                 credential=signed_credential,
                 user=self.user,
@@ -82,21 +109,36 @@ class CredentialService:
         except requests.exceptions.HTTPError as e:
             return None, self._parse_api_error(e.response)
         except (requests.exceptions.ConnectionError, requests.exceptions.Timeout):
-            logger.error(f"Connection error to {api_endpoint}")
+            logger.error(f"Connection error to {endpoint}")
             return None, "Network error: Could not reach signing service."
         except IntegrityError:
-            return None, f"A credential of type '{credential_key}' already exists for this item."
+            return None, f"A credential of type '{db_key}' already exists for this item."
         except Exception as e:
             logger.exception("Unexpected error issuing credential")
             return None, f"Unexpected error: {str(e)}"
 
+    def _validate_config(self, type_key):
+        """Helper to ensure API configuration is valid before proceeding."""
+        if not self.settings:
+            return "Institution settings are missing."
+        if not self.settings.signing_auth_token or not self.settings.api_base_url:
+            return "Signing API configuration (Token or URL) is incomplete."
+        if not self.settings.schema_config.get(type_key):
+            return f"No schema configured for type '{type_key}'."
+        return None
+
+    def _get_full_url(self, base, path):
+        return f"{base.rstrip('/')}/{path.lstrip('/')}"
+
     def _parse_api_error(self, response):
-        """Helper to format API error messages cleanly."""
         try:
             data = response.json()
-            msg = f"API Error: {data.get('error', 'Unknown')}"
-            if data.get('details'):
-                msg += f" - {data.get('details')}"
+            error_msg = data.get('error')
+            details = data.get('details')
+
+            msg = f"API Error: {error_msg}" if error_msg else f"API Error ({response.status_code})"
+            if details:
+                msg += f" - Validation: {details}" if isinstance(details, list) else f" - {details}"
             return msg
         except:
             return f"API Error ({response.status_code})"
