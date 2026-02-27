@@ -14,8 +14,14 @@ from django.http import HttpResponseRedirect
 from action.models import State, StateDefinition, Note, DeviceLog
 from device.models import Device
 from .models import State, DeviceLog
+from device.forms import DeviceFormSet
 from evidence.models import Evidence
 from evidence.services import CredentialService
+
+from django import forms
+from utils.device import create_property, create_doc, create_index
+from utils.save_snapshots import move_json, save_in_disk
+from evidence.models import RootAlias
 
 class ChangeStateView(LoginRequiredMixin, FormView):
     form_class = ChangeStateForm
@@ -29,10 +35,6 @@ class ChangeStateView(LoginRequiredMixin, FormView):
 
         if not device.last_evidence:
             return super().form_invalid(form)
-
-        dpp_endpoint = self.request.build_absolute_uri(
-            reverse('evidence:credential_by_evidence', kwargs={'uuid': snapshot_uuid})
-        )
 
         State.objects.create(
             snapshot_uuid=snapshot_uuid,
@@ -49,29 +51,29 @@ class ChangeStateView(LoginRequiredMixin, FormView):
             institution=self.request.user.institution,
         )
 
-
         service = CredentialService(self.request.user)
-        TRACEABILITY_SCHEMA = getattr(service.settings, "traceability_schema", "untp-dte-schema-0.6.0.json")
 
         components = device.components_export()
         manufacturer = components.get('manufacturer') or "Unknown"
         model = components.get('model') or "Device"
         clean_name = f"{manufacturer} {model}"
 
-        device_uri = f"urn:ereuse:device:{device.id}"
-        facility_uri = self.request.user.institution.facility_id_uri or f"urn:uuid:{self.request.user.institution.id}"
-        event_id = f"urn:uuid:{uuid.uuid4()}"
+        device_uri = f"{device.id}"
+
+        inst_facility_uri = getattr(self.request.user.institution, 'facility_id_uri', None)
+        facility_uri = inst_facility_uri or f"urn:uuid:{self.request.user.institution.id}"
+
+        event_id = f"{device.pk}"
         event_time = timezone.now().isoformat()
 
         transformation_event = {
-            "type": ["TransformationEvent"],
+            "type": ["TransformationEvent", "Event"],
             "id": event_id,
             "eventTime": event_time,
             "action": "observe",
             "processType": "StatusChange",
-            "disposition": f"urn:ereuse:status:{new_state}",
+            "disposition": f"{device.id}:{previous_state}to{new_state}",
             "bizLocation": facility_uri,
-
             "inputEPCList": [{
                 "type": ["Item"],
                 "id": device_uri,
@@ -84,14 +86,16 @@ class ChangeStateView(LoginRequiredMixin, FormView):
             }]
         }
 
+        # 4. Issue Credential using New Service Architecture
+        # Note: We wrap transformation_event in a LIST [] because this is a traceability batch
         credential, error = service.issue_credential(
-            schema_name=TRACEABILITY_SCHEMA,
-            credential_subject=transformation_event,
-            service_endpoint=dpp_endpoint,
-            credential_key="DigitalTraceabilityEvent",
+            credential_type_key='traceability',
+            credential_subject=[transformation_event], # MUST be a list
+            credential_db_key="DigitalTraceabilityEvent",
             uuid=snapshot_uuid,
             description=f"State Change: {previous_state} -> {new_state}"
         )
+
         if error:
             messages.warning(self.request, _("State changed, but credential failed: {}").format(error))
         else:
@@ -105,6 +109,174 @@ class ChangeStateView(LoginRequiredMixin, FormView):
 
     def get_success_url(self):
         return self.request.META.get('HTTP_REFERER') or reverse_lazy('device:details')
+
+
+
+BULK_MATERIALS = ['Plastic', 'Aluminium', 'Copper', 'Steel', 'Glass', 'Gold', 'Lithium', 'MixedEwaste']
+
+class DismantleDeviceView(LoginRequiredMixin, FormView):
+    template_name = "dismantle_form.html"
+    form_class = DeviceFormSet
+
+    def get_success_url(self):
+        return reverse('device:details', kwargs={'pk': self.kwargs['pk']})
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Use objects.get to ensure we fetch the existing instance properly
+        context['device'] = Device(id=self.kwargs['pk'])
+        return context
+
+    def form_valid(self, formset):
+        user = self.request.user
+        institution = user.institution
+        parent_device_id = self.kwargs['pk']
+
+        try:
+            device_wrapper = Device(id=parent_device_id, owner=institution)
+            device_wrapper.initial()
+            parent_uuid = device_wrapper.last_evidence.uuid
+            parent_shortid = getattr(device_wrapper, 'did', None) or device_wrapper.id
+        except Exception as e:
+            messages.error(self.request, f"Could not resolve parent device: {e}")
+            return self.form_invalid(formset)
+
+        parent_uri = f"urn:ereuse:device:{parent_device_id}"
+
+        if getattr(institution, 'facility_id_uri', None):
+            facility_uri = institution.facility_id_uri
+        else:
+            facility_uri = f"urn:ereuse:facility:{institution.id}"
+
+        output_items = []
+        output_quantities = []
+
+        for form in formset:
+            data = form.cleaned_data
+            if not data or not data.get('type'):
+                continue
+
+            part_type = data['type']
+            amount = float(data.get("amount", 1))
+            part_name = data.get("name") or f"{part_type} from {parent_device_id[:6]}"
+
+            if part_type in BULK_MATERIALS:
+                output_quantities.append({
+                    "type": ["QuantityElement"],
+                    "quantity": amount,
+                    "uom": "KGM",
+                    "productId": f"urn:ereuse:class:{part_type.lower()}",
+                    "productName": part_name
+                })
+                continue
+
+            row = {
+                "type": part_type,
+                "amount": 1,
+                "name": part_name,
+                "parent_id": parent_device_id,
+                "manufactured_date": timezone.now().isoformat()
+            }
+            if data.get("custom_id"):
+                row['CUSTOM_ID'] = data["custom_id"]
+
+            doc = create_doc(row)
+            path_name = save_in_disk(doc, institution.name, place="placeholder")
+            create_index(doc, user)
+            create_property(doc, user, commit=True)
+            move_json(path_name, institution.name, place="placeholder")
+
+            if data.get("custom_id"):
+                RootAlias.objects.create(
+                    owner=institution, user=user,
+                    root=f"custom_id:{data['custom_id']}",
+                    alias=doc["WEB_ID"]
+                )
+
+            subpart_system_id = doc["WEB_ID"]
+            subpart_uri = f"urn:ereuse:device:{subpart_system_id}"
+
+            output_items.append({
+                "type": ["Item"],
+                "id": subpart_uri,
+                "name": part_name
+            })
+
+        if not output_items and not output_quantities:
+            messages.warning(self.request, "No valid subparts to process.")
+            return self.form_invalid(formset)
+
+        event_id = f"urn:uuid:{uuid.uuid4()}"
+        event_time = timezone.now().isoformat()
+
+        ilmd_data = None
+        if output_items:
+            ilmd_data = {
+                "ereuse:recoveryDate": event_time,
+                "ereuse:processFacility": institution.name,
+                "ereuse:parentDevice": parent_uri
+            }
+
+        transformation_event = {
+            "type": ["TransformationEvent", "Event"],
+            "id": event_id,
+            "eventTime": event_time,
+            "eventTimeZoneOffset": "+00:00",
+            "processType": "Dismantling",
+
+            "bizStep": "urn:epcglobal:cbv:bizstep:dismantling",
+
+            "disposition": "urn:epcglobal:cbv:disp:active",
+
+            "bizLocation": facility_uri,
+
+            "inputEPCList": [{
+                "type": ["Item"],
+                "id": parent_uri,
+                "name": "Parent Device"
+            }],
+            "outputEPCList": output_items,
+            "outputQuantityList": output_quantities,
+            "ilmd": ilmd_data
+        }
+        cleaned_event = {
+            k: v for k, v in transformation_event.items()
+            if v is not None and (not isinstance(v, list) or len(v) > 0)
+        }
+
+        service = CredentialService(user)
+
+        desc = f"Dismantled into {len(output_items)} components and {len(output_quantities)} material batches."
+
+        credential, error = service.issue_credential(
+            credential_type_key='traceability',
+            credential_subject=[cleaned_event],
+            credential_db_key="DigitalTraceabilityEvent",
+            uuid=parent_uuid,
+            did_suffix=parent_shortid,
+            description=desc
+        )
+
+        if error:
+            messages.error(self.request, f"Dismantle failed during credential issuance: {error}")
+            return self.form_invalid(formset)
+
+        State.objects.create(
+            snapshot_uuid=parent_uuid,
+            state="Dismantled",
+            user=user,
+            institution=institution,
+        )
+
+        DeviceLog.objects.create(
+            snapshot_uuid=parent_uuid,
+            event=f"<Dismantled> {desc}",
+            user=user,
+            institution=institution,
+        )
+
+        messages.success(self.request, "Device dismantled successfully. Traceability Record issued.")
+        return redirect('device:details', pk=parent_device_id)
 
 
 class BulkStateChangeView(DashboardView, View):

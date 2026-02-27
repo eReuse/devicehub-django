@@ -2,7 +2,7 @@ import json
 import os
 
 from django.contrib import messages
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.utils.translation import gettext_lazy as _
 from django.shortcuts import get_object_or_404, redirect, Http404
 from django.views.generic.base import TemplateView
@@ -231,8 +231,42 @@ class PhotoEvidenceView(DashboardView, TemplateView):
 
 class CredentialDetailView(DetailView):
     model = CredentialProperty
-    template_name = 'credential_details.html'
     context_object_name = 'credential_prop'
+
+    def render_to_response(self, context, **response_kwargs):
+        """
+        Overridden to handle ?format=json for direct downloads.
+        """
+        if self.request.GET.get('format') == 'json':
+            credential_data = self.object.credential or {}
+
+            cred_id = credential_data.get('id', '').split(':')[-1]
+            filename = f"credential_{cred_id or self.object.pk}.json"
+
+            response = JsonResponse(credential_data, json_dumps_params={'indent': 2})
+            response['Content-Disposition'] = f'attachment; filename="{filename}"'
+            return response
+
+        # Otherwise, render the HTML template as normal
+        return super().render_to_response(context, **response_kwargs)
+
+    def get_template_names(self):
+        obj = self.get_object()
+        credential = obj.credential or {}
+
+        subject = credential.get('credentialSubject', {})
+        types = credential.get('type', [])
+
+        if isinstance(subject, list):
+            return ["traceability_credential.html"]
+
+        if 'facility' in subject or 'DigitalFacilityRecord' in types:
+            return ["facility_credential.html"]
+
+        if 'product' in subject or 'DigitalProductPassport' in types:
+            return ["dpp_credential.html"]
+
+        return ["credential_base.html"]
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
