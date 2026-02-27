@@ -19,6 +19,17 @@ DEVICE_TYPES = [
     ("Display", "Display"),
     ("Battery", "Battery"),
     ("Camera", "Camera"),
+
+#TODO:TEST FOR DISMANTLING
+    ("Plastic", "Plastic (Recycled)"),
+    ("Aluminium", "Aluminium"),
+    ("Copper", "Copper"),
+    ("Steel", "Steel"),
+    ("Glass", "Glass"),
+    ("Gold", "Gold (Recovery)"),
+    ("Lithium", "Lithium"),
+    ("PCB", "Printed Circuit Board (Scrap)"),
+    ("MixedEwaste", "Mixed E-Waste"),
 ]
 
 

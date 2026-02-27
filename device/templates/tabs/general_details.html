@@ -77,12 +77,36 @@
               {% endfor %}
             </div>
           </div>
-	  {% if object.QR %}
-	  <div class="row mb-3">
-            <div class="col-sm-4">
-	      <img width="100px" src="data:image/png;base64,{{ object.QR }}" />
-	    </div>
-            <div class="col-sm-8"></div>
+
+          {% if object.QR %}
+          <div class="row mb-3">
+            <div class="col-sm-4 text-muted fw-bold">
+              {% trans 'Phid QR' %}
+            </div>
+            <div class="col-sm-8">
+              <img width="100px" src="data:image/png;base64,{{ object.QR }}" alt="Device QR" />
+            </div>
           </div>
-	  {% endif %}
+          {% endif %}
+
+          <div class="row mb-3 pt-3">
+            <div class="col-sm-4 text-muted fw-bold">{% trans 'DID' %}
+            </div>
+            <div class="col-sm-8">
+                <div>{{ object.did|default:'None' }}
+                </div>
+            </div>
+          </div>
+
+          {% if object.did_QR %}
+          <div class="row mb-3">
+            <div class="col-sm-4 text-muted fw-bold">
+              {% trans 'DID QR' %}
+            </div>
+            <div class="col-sm-8">
+              <img width="100px" src="data:image/png;base64,{{ object.did_QR }}" alt="DID QR" />
+            </div>
+          </div>
+          {% endif %}
+
       </div>

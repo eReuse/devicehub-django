@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 {% load i18n %}
 
-
 {% block content %}
 
-<div class="row mb-4">
+<div class="row mb-4 g-4">
+
   <div class="col-md-6">
     <div class="card h-100 shadow-sm border-0">
       <div class="card-body d-flex flex-column">
@@ -47,43 +47,77 @@
     <div class="card h-100 shadow-sm border-0">
       <div class="card-body d-flex flex-column">
         <h5 class="card-title mb-3">
-          <i class="bi bi-sliders me-2"></i>{% translate "Digital Facility Record" %}
+          <i class="bi bi-patch-check me-2"></i>{% translate "Digital Facility Record" %}
         </h5>
         <p class="card-text flex-grow-1">
           {% translate "Manage the Verifiable Credential for your facility." %}
         </p>
-        <div class="d-flex justify-content-end gap-2">
 
-          <a href="{% url 'admin:institution_dfr_issue' user.institution.pk%}" class="btn btn-outline-info ms-2">
-            <i class="bi bi-passport"></i>
-            {% trans "Issue Record" %}
-        </a>
+        <div class="d-flex justify-content-end align-items-center gap-2">
 
-        {% with record=user.institution.latest_facility_credential %}
+            <form id="dfr-issue-form" method="post" action="{% url 'admin:institution_dfr_issue' user.institution.pk %}">
+                {% csrf_token %}
+                <input type="hidden" name="latitude">
+                <input type="hidden" name="longitude">
 
-        {% if record %}
-              <a href="{% url 'evidence:credential_detail' pk=record.pk %}"
-                class="btn btn-info text-white btn-sm d-inline-flex align-items-center">
-                <i class="bi bi-eye me-2"></i>
-                <span>{% translate 'View' %}</span>
-              </a>
+                <button type="submit"
+                        class="btn btn-success btn-sm d-inline-flex align-items-center"
+                        onclick="locateAndSubmit(event, this)">
+                    <span>{% translate 'Issue' %}</span>
+                </button>
+            </form>
 
-              <a href="#"
-                class="btn btn-outline-danger btn-sm d-inline-flex align-items-center">
-                <i class="bi bi-trash me-2"></i>
-                <span>{% translate 'Delete' %}</span>
-              </a>
-            {% else %}
-              <button class="btn btn-secondary btn-sm d-inline-flex align-items-center" disabled>
-                <i class="bi bi-eye me-2"></i> {% translate 'View' %}
-              </button>
-            {% endif %}
+            {% with record=user.institution.latest_facility_credential %}
+                {% if record %}
+                    <a href="{% url 'evidence:credential_detail' pk=record.pk %}" class="btn btn-outline-dark btn-sm d-inline-flex align-items-center">
+                        <span class="me-2">{% translate 'View' %}</span>
+                        <i class="bi bi-arrow-right"></i>
+                    </a>
+                {% else %}
+                    <button class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center" disabled>
+                        <span class="me-2">{% translate 'View' %}</span>
+                        <i class="bi bi-eye-slash"></i>
+                    </button>
+                {% endif %}
+            {% endwith %}
 
-        {% endwith %}
+        </div>
       </div>
     </div>
   </div>
 
-
 </div>
+
+<script>
+    /**
+     * Minimal JS to handle location injection and button state
+     * keeping UX smooth and preventing layout shifts.
+     */
+    function locateAndSubmit(e, btn) {
+        e.preventDefault();
+        const form = document.getElementById('dfr-issue-form');
+
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>{% translate "Locating..." %}';
+
+        const doSubmit = () => form.submit();
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    form.querySelector('[name="latitude"]').value = pos.coords.latitude;
+                    form.querySelector('[name="longitude"]').value = pos.coords.longitude;
+                    doSubmit();
+                },
+                (err) => {
+                    console.warn("Location check failed, submitting without coords.");
+                    doSubmit();
+                },
+                { timeout: 4000 }
+            );
+        } else {
+            doSubmit();
+        }
+    }
+</script>
 {% endblock %}

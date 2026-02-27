@@ -12,6 +12,7 @@ from django.views.generic.edit import (
     UpdateView,
     DeleteView,
 )
+from openlocationcode import openlocationcode as olc
 from django.utils.translation import gettext_lazy as _
 from django.db import IntegrityError,   transaction
 from dashboard.mixins import DashboardView, Http403
@@ -382,9 +383,31 @@ class UpdateStateDefinitionView(AdminView, UpdateView):
 
 
 class IssueDigitalFacilityRecordView(AdminView, View):
-    def get(self, request, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
         service = CredentialService(request.user)
         institution = request.user.institution
+
+        geo_data = None
+        try:
+            raw_lat = request.POST.get('latitude')
+            raw_lon = request.POST.get('longitude')
+
+            if raw_lat and raw_lon:
+                lat = float(raw_lat)
+                lon = float(raw_lon)
+
+                plus_code = olc.encode(lat, lon, 11)
+                plus_code_url = f"https://plus.codes/{plus_code}"
+
+                geo_data = {
+                    "plusCode": plus_code_url,
+                    "geoLocation": {
+                        "type": "Point",
+                        "coordinates": [lon, lat]
+                    }
+                }
+        except (ValueError, TypeError):
+            pass
 
         address_data = {
             "type": ["Address"],
@@ -396,9 +419,10 @@ class IssueDigitalFacilityRecordView(AdminView, View):
         }
         address_data = {k: v for k, v in address_data.items() if v}
 
-        # Schema requires URIs. If facility_id_uri is missing, we generate a URN.
+        # Determine URI (This might become the DID if create_did=True is used with this value)
         facility_uri = institution.facility_id_uri or f"urn:uuid:{uuid.uuid4()}"
 
+        # Construct Facility Payload
         facility_data = {
             "type": ["Facility"],
             "id": facility_uri,
@@ -406,31 +430,33 @@ class IssueDigitalFacilityRecordView(AdminView, View):
             "description": institution.facility_description,
             "countryOfOperation": institution.country,
             "address": address_data,
-            # Schema requires 'operatedByParty' with at least id and name
             "operatedByParty": {
-                "id": facility_uri,
+                "id": facility_uri, # Usually same as facility for self-operated
                 "name": institution.name,
                 "registeredId": str(institution.id)
-            }
+            },
+            "locationInformation": geo_data
         }
-        # Clean empty values
         facility_data = {k: v for k, v in facility_data.items() if v}
 
-        # 4. Construct Credential Subject
+        # Construct Credential Subject
         credential_subject = {
             "type": ["FacilityRecord"],
-            "id": f"urn:uuid:{uuid.uuid4()}",
+            # If creating a DID, the server will overwrite this ID with the new DID.
+            # If passing a specific 'did' to the service, it will use that.
+            "id": facility_uri,
             "facility": facility_data
         }
 
-        schema = getattr(service.settings, "untp_drf_schema", "default_drf.json")
         credential, error = service.issue_credential(
-            schema_name=schema,
+            credential_type_key="facility",
             credential_subject=credential_subject,
+            credential_db_key="DigitalFacilityRecord",
             service_endpoint=request.build_absolute_uri('/'),
-            credential_key="DigitalFacilityRecord",
-            uuid=None,
-            description="Facility Sustainability Record"
+            uuid=None, # Not linked to a specific device UUID
+            description="Facility Sustainability Record",
+            # Optional: If you want to force a specific DID string
+            # did="did:web:example.com:facility:123"
         )
 
         if error:
@@ -438,4 +464,4 @@ class IssueDigitalFacilityRecordView(AdminView, View):
         else:
             messages.success(request, "Facility Record issued successfully!")
 
-        return redirect('admin:settings', pk=institution.pk)
+        return redirect('admin:panel')

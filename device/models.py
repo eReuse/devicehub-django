@@ -8,7 +8,7 @@ from django.db.models.functions import RowNumber
 
 from utils import sql_query as q_sql
 from utils.constants import ALGOS
-from evidence.models import SystemProperty, UserProperty, Evidence, RootAlias
+from evidence.models import CredentialProperty, SystemProperty, UserProperty, Evidence, RootAlias
 from django.utils.dateparse import parse_datetime
 from lot.models import DeviceLot, DeviceBeneficiary
 from action.models import State
@@ -30,6 +30,16 @@ class Device:
         DISPLAY = "Display"
         BATTERY = "Battery"
         CAMERA = "Camera"
+        # --- Raw Materials (Dismantling Outputs) ---
+        PLASTIC = "Plastic"
+        ALUMINIUM = "Aluminium"
+        COPPER = "Copper"
+        STEEL = "Steel"
+        GLASS = "Glass"
+        GOLD = "Gold"
+        LITHIUM = "Lithium"
+        PCB = "PCB"
+        MIXED_EWASTE = "MixedEwaste"
 
     def __init__(self, *args, **kwargs):
         # the id is the chid of the device
@@ -114,6 +124,17 @@ class Device:
         for a in self.get_properties():
             if a.uuid not in self.uuids:
                 self.uuids.append(a.uuid)
+
+    @property
+    def did(self):
+        did_document = CredentialProperty.objects.filter(
+            uuid__in=self.uuids,
+            key="DID_DOCUMENT"
+        ).order_by("created").first()
+
+
+        return getattr( did_document, "value", "")
+
 
     def get_hids(self):
         properties = self.get_properties()
@@ -514,3 +535,29 @@ class Device:
         img.save(buffer, format="PNG")
         self.img_qr = base64.b64encode(buffer.getvalue()).decode('utf-8')
         return self.img_qr
+
+    @property
+    def did_QR(self):
+        if hasattr(self, "img_did_qr"):
+            return self.img_did_qr
+
+        if not self.did:
+            return None
+
+        qr = qrcode.QRCode(
+            version=1,            # Size of QR 1 to 40
+            error_correction=qrcode.constants.ERROR_CORRECT_L, # Level of correct errors
+            box_size=10,          # Pixels for every box of QR
+            border=1,             # Size of border
+        )
+
+        qr.add_data(self.did)
+        qr.make(fit=True)
+
+        # Custom colors with names or hexa
+        img = qr.make_image(fill_color="black", back_color="white")
+
+        buffer = BytesIO()
+        img.save(buffer, format="PNG")
+        self.img_did_qr = base64.b64encode(buffer.getvalue()).decode('utf-8')
+        return self.img_did_qr
