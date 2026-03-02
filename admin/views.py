@@ -419,10 +419,7 @@ class IssueDigitalFacilityRecordView(AdminView, View):
         }
         address_data = {k: v for k, v in address_data.items() if v}
 
-        # Determine URI (This might become the DID if create_did=True is used with this value)
         facility_uri = institution.facility_id_uri or f"urn:uuid:{uuid.uuid4()}"
-
-        # Construct Facility Payload
         facility_data = {
             "type": ["Facility"],
             "id": facility_uri,
@@ -431,34 +428,27 @@ class IssueDigitalFacilityRecordView(AdminView, View):
             "countryOfOperation": institution.country,
             "address": address_data,
             "operatedByParty": {
-                "id": facility_uri, # Usually same as facility for self-operated
+                "id": facility_uri,
                 "name": institution.name,
                 "registeredId": str(institution.id)
             },
             "locationInformation": geo_data
         }
+        #delete empty fields jic
         facility_data = {k: v for k, v in facility_data.items() if v}
 
-        # Construct Credential Subject
         credential_subject = {
             "type": ["FacilityRecord"],
-            # If creating a DID, the server will overwrite this ID with the new DID.
-            # If passing a specific 'did' to the service, it will use that.
             "id": facility_uri,
             "facility": facility_data
         }
 
-        credential, error = service.issue_credential(
-            credential_type_key="facility",
+        credential, error = service.issue_facility_credential(
             credential_subject=credential_subject,
             credential_db_key="DigitalFacilityRecord",
-            service_endpoint=request.build_absolute_uri('/'),
-            uuid=None, # Not linked to a specific device UUID
             description="Facility Sustainability Record",
-            # Optional: If you want to force a specific DID string
-            # did="did:web:example.com:facility:123"
+            uuid=None
         )
-
         if error:
             messages.error(request, error)
         else:

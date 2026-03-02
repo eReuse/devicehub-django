@@ -349,8 +349,7 @@ class IssueDigitalPassportView(DeviceLogMixin, View):
         pk = self.kwargs.get('device_id')
         try:
             device = Device(id=pk, owner=request.user.institution)
-            if not device.components:
-                device.initial()
+            device.initial()
         except Exception:
              messages.error(request, "Device not found.")
              return redirect('device:list')
@@ -361,6 +360,13 @@ class IssueDigitalPassportView(DeviceLogMixin, View):
             return redirect('device:details', pk=pk)
 
         service = CredentialService(request.user)
+        dpp_endpoint = request.build_absolute_uri(
+            reverse('device:full_dpp', kwargs={'device_id': device.id})
+        )
+        did_error = service.ensure_device_did(device, service_endpoint=dpp_endpoint)
+        if did_error:
+            messages.error(request, f"Failed to issue Passport. DID configuration error: {did_error}")
+            return redirect('device:details', pk=pk)
 
         def convert_ram_to_mb(ram_string):
             if not isinstance(ram_string, str): return 0
@@ -407,17 +413,13 @@ class IssueDigitalPassportView(DeviceLogMixin, View):
             "traceabilityInformation": traceability_info
         }
 
-        dpp_endpoint = request.build_absolute_uri(
-            reverse('device:full_dpp', kwargs={'device_id': device.id})
-        )
-        credential, error = service.issue_credential(
+        credential, error = service.issue_device_credential(
             credential_type_key='dpp',
             credential_subject=credential_subject,
             credential_db_key='DigitalProductPassport',
-            service_endpoint=dpp_endpoint,
+            device=device,
             uuid=last_evidence.uuid,
-            description="Digital Product Passport",
-            did_suffix= device.shortid
+            description="Digital Product Passport"
         )
 
         if error:

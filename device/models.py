@@ -132,7 +132,6 @@ class Device:
             key="DID_DOCUMENT"
         ).order_by("created").first()
 
-
         return getattr( did_document, "value", "")
 
 
