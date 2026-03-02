@@ -11,45 +11,74 @@
   <div class="col text-end">
     <div class="btn-group" role="group" aria-label="Actions">
 
-      <!-- change state button -->
-      {% if state_definitions %}
-      <div class="dropdown ms-2">
-        <a class="btn btn-green-admin dropdown-toggle" id="addStateDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-          {% trans "Change state" %}
-          {% if device_states %}
-            ({{ device_states.0.state }})
-          {% else %}
-            ( {% trans "None" %} )
+     {% if state_definitions %}
+        <div class="dropdown ms-2">
+          <a class="btn btn-green-admin dropdown-toggle" id="addStateDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+            {% trans "Change state" %}
+            {% if device_states %}
+              ({{ device_states.0.state }})
+            {% else %}
+              ( {% trans "None" %} )
             {% endif %}
-        </a>
-        <ul class="dropdown-menu" aria-labelledby="addStateDropdown" style="width: 100%;">
-          {% for state in state_definitions %}
-            <li style="width: 100%;">
-              <form id="changeStateForm{{ state.id }}" method="post" action="{% url 'action:change_state' %}">
-                {% csrf_token %}
-                <input type="hidden" name="previous_state" value="{{ device_states.0.state|default:"nil" }}">
-                <input type="hidden" name="snapshot_uuid" value="{{ object.last_uuid }}">
-                <input type="hidden" name="device_id" value="{{ object.pk }}">
-                <input type="hidden" name="new_state" value="{{ state.state }}">
-
-                <a class="dropdown-item d-flex justify-content-between align-items-center" href="#" onclick="document.getElementById('changeStateForm{{ state.id }}').submit(); return false;">
+          </a>
+          <ul class="dropdown-menu" aria-labelledby="addStateDropdown" style="width: 100%;">
+            {% for state in state_definitions %}
+              <li style="width: 100%;">
+                <a class="dropdown-item d-flex justify-content-between align-items-center" href="#"
+                  data-bs-toggle="modal"
+                  data-bs-target="#changeStateModal"
+                  data-state="{{ state.state }}"
+                  data-previous="{{ device_states.0.state|default:'nil' }}">
                   <span class="font-monospace">{{ state.state }}</span>
                   <span class="badge bg-secondary rounded-pill-sm">{{ forloop.counter }}</span>
                 </a>
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+
+        <div class="modal fade" id="changeStateModal" tabindex="-1" aria-labelledby="changeStateModalLabel" aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <form method="post" action="{% url 'action:change_state' %}">
+                {% csrf_token %}
+                <input type="hidden" name="previous_state" id="modalPrevStateInput" value="">
+                <input type="hidden" name="new_state" id="modalNewStateInput" value="">
+                <input type="hidden" name="snapshot_uuid" value="{{ object.last_uuid }}">
+                <input type="hidden" name="device_id" value="{{ object.pk }}">
+
+                <div class="modal-header">
+                  <h5 class="modal-title" id="changeStateModalLabel">
+                    {% trans "Change State to" %} <strong id="stateNameDisplay" class="text-primary"></strong>
+                  </h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body">
+                  <div class="mb-3">
+                    <label for="stateComment" class="form-label">{% trans "Comment (Optional)" %}</label>
+                    <textarea class="form-control" id="stateComment" name="comment" rows="3" placeholder="{% trans 'Leave a note about why this state is changing...' %}"></textarea>
+                  </div>
+                </div>
+
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+                  <button type="submit" class="btn btn-success">{% trans "Confirm & Issue Record" %}</button>
+                </div>
               </form>
-            </li>
-          {% endfor %}
-        </ul>
-      </div>
-      {% else %}
-        <button class="btn btn-green-admin" type="button" disabled>
-          <i class="bi bi-plus"></i> {% trans "Change state" %}
-          {% if device_states %}
-            ({{ device_states.0.state }})
-          {% endif %}
-        </button>
-      {% endif %}
-      <!-- Add note button -->
+            </div>
+          </div>
+        </div>
+        {% else %}
+          <button class="btn btn-green-admin" type="button" disabled>
+            <i class="bi bi-plus"></i> {% trans "Change state" %}
+            {% if device_states %}
+              ({{ device_states.0.state }})
+            {% endif %}
+          </button>
+        {% endif %}
+
+    <!-- Add note button -->
       <button class="btn btn-yellow ms-2" type="button" data-bs-toggle="modal" data-bs-target="#addNoteModal">
         <i class="bi bi-sticky"></i> {% trans "Add a note" %}
       </button>
@@ -163,5 +192,24 @@
         }
       }
     })
+
+    document.addEventListener('DOMContentLoaded', function () {
+        var changeStateModal = document.getElementById('changeStateModal');
+
+        if (changeStateModal) {
+            changeStateModal.addEventListener('show.bs.modal', function (event) {
+                var button = event.relatedTarget;
+
+                var newState = button.getAttribute('data-state');
+                var prevState = button.getAttribute('data-previous');
+
+                changeStateModal.querySelector('#stateNameDisplay').textContent = newState;
+                changeStateModal.querySelector('#modalNewStateInput').value = newState;
+                changeStateModal.querySelector('#modalPrevStateInput').value = prevState;
+
+                changeStateModal.querySelector('#stateComment').value = '';
+            });
+        }
+    });
   </script>
 {% endblock %}
