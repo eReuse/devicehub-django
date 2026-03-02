@@ -32,6 +32,7 @@ class ChangeStateView(LoginRequiredMixin, FormView):
         snapshot_uuid = form.cleaned_data['snapshot_uuid']
         device_id = form.cleaned_data['device_id']
         device = Device(id=device_id)
+        device.initial()
 
         if not device.last_evidence:
             return super().form_invalid(form)
@@ -52,46 +53,50 @@ class ChangeStateView(LoginRequiredMixin, FormView):
         )
 
         service = CredentialService(self.request.user)
+        did_error = service.ensure_device_did(device)
+        if did_error:
+            messages.warning(self.request, _("State changed, but DID configuration failed"))
+            return super().form_valid(form)
 
         components = device.components_export()
         manufacturer = components.get('manufacturer') or "Unknown"
         model = components.get('model') or "Device"
         clean_name = f"{manufacturer} {model}"
 
-        device_uri = f"{device.id}"
-
+        device_uri = device.did
         inst_facility_uri = getattr(self.request.user.institution, 'facility_id_uri', None)
         facility_uri = inst_facility_uri or f"urn:uuid:{self.request.user.institution.id}"
 
-        event_id = f"{device.pk}"
-        event_time = timezone.now().isoformat()
+        traceability_event = {
+            "type": ["ObjectEvent", "Event"],
+            #unique id for each transformation event
+            "id": f"urn:uuid:{uuid.uuid4()}",
+            "eventTime": timezone.now().isoformat(),
+            "eventTimeZoneOffset": "+00:00",
 
-        transformation_event = {
-            "type": ["TransformationEvent", "Event"],
-            "id": event_id,
-            "eventTime": event_time,
             "action": "observe",
-            "processType": "StatusChange",
-            "disposition": f"{device.id}:{previous_state}to{new_state}",
+            "processType": new_state,
+            #TODO map specific bizstep to maybe pre-loaded states?
+            "bizStep": "urn:epcglobal:cbv:bizstep:other",
+            "disposition": "urn:epcglobal:cbv:disp:active",
             "bizLocation": facility_uri,
-            "inputEPCList": [{
+
+            "epcList": [{
                 "type": ["Item"],
                 "id": device_uri,
                 "name": clean_name
             }],
-            "outputEPCList": [{
-                "type": ["Item"],
-                "id": device_uri,
-                "name": clean_name
-            }]
+
+            "ereuse:deviceState": new_state,
+            "ereuse:previousState": previous_state,
+            "ereuse:lastUpdate": timezone.now().isoformat()
         }
 
-        # 4. Issue Credential using New Service Architecture
-        # Note: We wrap transformation_event in a LIST [] because this is a traceability batch
-        credential, error = service.issue_credential(
+        credential, error = service.issue_device_credential(
             credential_type_key='traceability',
-            credential_subject=[transformation_event], # MUST be a list
+            credential_subject=[traceability_event],
             credential_db_key="DigitalTraceabilityEvent",
+            device=device,
             uuid=snapshot_uuid,
             description=f"State Change: {previous_state} -> {new_state}"
         )
@@ -111,7 +116,6 @@ class ChangeStateView(LoginRequiredMixin, FormView):
         return self.request.META.get('HTTP_REFERER') or reverse_lazy('device:details')
 
 
-
 BULK_MATERIALS = ['Plastic', 'Aluminium', 'Copper', 'Steel', 'Glass', 'Gold', 'Lithium', 'MixedEwaste']
 
 class DismantleDeviceView(LoginRequiredMixin, FormView):
@@ -123,7 +127,6 @@ class DismantleDeviceView(LoginRequiredMixin, FormView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Use objects.get to ensure we fetch the existing instance properly
         context['device'] = Device(id=self.kwargs['pk'])
         return context
 
@@ -133,20 +136,21 @@ class DismantleDeviceView(LoginRequiredMixin, FormView):
         parent_device_id = self.kwargs['pk']
 
         try:
-            device_wrapper = Device(id=parent_device_id, owner=institution)
-            device_wrapper.initial()
-            parent_uuid = device_wrapper.last_evidence.uuid
-            parent_shortid = getattr(device_wrapper, 'did', None) or device_wrapper.id
+            device = Device(id=parent_device_id, owner=institution)
+            device.initial()
+            parent_uuid = device.last_evidence.uuid
         except Exception as e:
             messages.error(self.request, f"Could not resolve parent device: {e}")
             return self.form_invalid(formset)
 
-        parent_uri = f"urn:ereuse:device:{parent_device_id}"
+        service = CredentialService(user)
+        did_error = service.ensure_device_did(device)
+        if did_error:
+            messages.error(self.request, f"Cannot dismantle: Parent DID configuration failed: {did_error}")
+            return self.form_invalid(formset)
 
-        if getattr(institution, 'facility_id_uri', None):
-            facility_uri = institution.facility_id_uri
-        else:
-            facility_uri = f"urn:ereuse:facility:{institution.id}"
+        parent_uri = device.did
+        facility_uri = getattr(institution, 'facility_id_uri', None) or f"urn:ereuse:facility:{institution.id}"
 
         output_items = []
         output_quantities = []
@@ -170,6 +174,7 @@ class DismantleDeviceView(LoginRequiredMixin, FormView):
                 })
                 continue
 
+            # Create Local Item Record
             row = {
                 "type": part_type,
                 "amount": 1,
@@ -206,6 +211,7 @@ class DismantleDeviceView(LoginRequiredMixin, FormView):
             messages.warning(self.request, "No valid subparts to process.")
             return self.form_invalid(formset)
 
+        # 3. Build Transformation Payload
         event_id = f"urn:uuid:{uuid.uuid4()}"
         event_time = timezone.now().isoformat()
 
@@ -222,10 +228,9 @@ class DismantleDeviceView(LoginRequiredMixin, FormView):
             "id": event_id,
             "eventTime": event_time,
             "eventTimeZoneOffset": "+00:00",
+
             "processType": "Dismantling",
-
             "bizStep": "urn:epcglobal:cbv:bizstep:dismantling",
-
             "disposition": "urn:epcglobal:cbv:disp:active",
 
             "bizLocation": facility_uri,
@@ -237,23 +242,24 @@ class DismantleDeviceView(LoginRequiredMixin, FormView):
             }],
             "outputEPCList": output_items,
             "outputQuantityList": output_quantities,
-            "ilmd": ilmd_data
-        }
-        cleaned_event = {
-            k: v for k, v in transformation_event.items()
-            if v is not None and (not isinstance(v, list) or len(v) > 0)
+            "ilmd": ilmd_data,
+
+            # Custom State extensions
+            "ereuse:deviceState": "Dismantled",
         }
 
-        service = CredentialService(user)
+        # Sanitize empty lists for strict schema
+        cleaned_event = {k: v for k, v in transformation_event.items() if v is not None and (not isinstance(v, list) or len(v) > 0)}
 
+        # 4. Issue Traceability Credential
         desc = f"Dismantled into {len(output_items)} components and {len(output_quantities)} material batches."
 
-        credential, error = service.issue_credential(
+        credential, error = service.issue_device_credential(
             credential_type_key='traceability',
             credential_subject=[cleaned_event],
             credential_db_key="DigitalTraceabilityEvent",
+            device=device,
             uuid=parent_uuid,
-            did_suffix=parent_shortid,
             description=desc
         )
 
@@ -261,6 +267,7 @@ class DismantleDeviceView(LoginRequiredMixin, FormView):
             messages.error(self.request, f"Dismantle failed during credential issuance: {error}")
             return self.form_invalid(formset)
 
+        # 5. Finalize Local State
         State.objects.create(
             snapshot_uuid=parent_uuid,
             state="Dismantled",
@@ -277,7 +284,6 @@ class DismantleDeviceView(LoginRequiredMixin, FormView):
 
         messages.success(self.request, "Device dismantled successfully. Traceability Record issued.")
         return redirect('device:details', pk=parent_device_id)
-
 
 class BulkStateChangeView(DashboardView, View):
     #DashboardView will redirect to a GET method

@@ -17,71 +17,107 @@ class CredentialService:
         except InstitutionSettings.DoesNotExist:
             self.settings = None
 
-    def issue_credential(self, credential_type_key, credential_subject,
-                         credential_db_key, service_endpoint=None, uuid=None,
-                         description=None, did_suffix=None):
+    def ensure_device_did(self, device, service_endpoint=None):
         if not self.settings:
-            return None, "Institution settings are missing."
+            return "Institution settings are missing."
+        target_suffix = getattr(device, 'shortid', str(device.id))
 
-        api_token = self.settings.signing_auth_token
-        api_base = self.settings.api_base_url
-        issuer_did = self.settings.issuer_did
+        if not device.did:
+            did_str, did_doc, err = self._create_object_did(target_suffix, service_endpoint)
+            if err: return err
 
-        if not api_token or not api_base:
-            return None, "Signing API configuration (Token or URL) is incomplete."
+            CredentialProperty.objects.create(
+                uuid=device.last_evidence.uuid,
+                key="DID_DOCUMENT",
+                defaults={
+                    'owner': self.institution,
+                    'value': did_str,
+                    'credential': did_doc,
+                    'user': self.user,
+                    'description': f"DID Document for {device.id}"
+                }
+            )
+        else:
+            if service_endpoint:
+                err = self._update_object_did(device.did, service_endpoint)
+                if err: return err
 
-        schema_name = self.settings.schema_config.get(credential_type_key)
-        if not schema_name:
-            return None, f"No schema configured for type '{credential_type_key}'. Check Institution Settings."
+        return None
 
-        headers = {
-            'Authorization': f'Bearer {api_token}',
-            'Content-Type': 'application/json'
-        }
-
-        base_payload = {
-            "schema_name": schema_name,
-        }
-        base_payload["issuer_did"] = issuer_did
+    def _create_object_did(self, suffix, service_endpoint):
+        headers = self._get_auth_headers()
+        endpoint = self._get_full_url(self.settings.api_base_url, "object-did/create/")
+        payload = {"suffix_did_id": str(suffix)}
+        if service_endpoint: payload["service_endpoint"] = service_endpoint
 
         try:
-            if credential_type_key == 'traceability':
-                endpoint = self._get_full_url(api_base, "issue-traceability/")
-                payload = {
-                    **base_payload,
-                    "credentialSubject": credential_subject
-                }
+            res = requests.post(endpoint, json=payload, headers=headers, timeout=30, verify=False)
+            res.raise_for_status()
+            data = res.json()
+            return data.get("did"), data.get("did_document"), None
+        except requests.exceptions.HTTPError as e:
+            return None, None, self._parse_api_error(e.response)
+        except Exception as e:
+            logger.exception("Unexpected error creating DID")
+            return None, None, f"Unexpected error: {str(e)}"
 
-            elif credential_type_key == 'facility':
-                if not service_endpoint:
-                    return None, "Service Endpoint is required for Facility issuance."
+    def _update_object_did(self, did_str, service_endpoint):
+        headers = self._get_auth_headers()
+        endpoint = self._get_full_url(self.settings.api_base_url, "object-did/update/")
+        payload = {"did": did_str, "service_endpoint": service_endpoint}
 
-                endpoint = self._get_full_url(api_base, "issue-facility/")
-                payload = {
-                    **base_payload,
-                    "create_did": True,
-                    "subject_did_suffix": did_suffix,
-                    "credentialSubject": credential_subject,
-                    "service_endpoint": service_endpoint
-                }
+        try:
+            res = requests.post(endpoint, json=payload, headers=headers, timeout=30, verify=False)
+            res.raise_for_status()
+            return None
+        except requests.exceptions.HTTPError as e:
+            return self._parse_api_error(e.response)
+        except Exception as e:
+            logger.exception("Unexpected error updating DID endpoint")
+            return f"Unexpected error: {str(e)}"
 
-            else:
-                if not service_endpoint:
-                    return None, "Service Endpoint is required for DPP issuance."
+    # -------------------------------------------------------------------------
+    def issue_device_credential(self, credential_type_key, credential_subject,
+                                credential_db_key, device, description=None, uuid=None):
 
-                endpoint = self._get_full_url(api_base, "issue-dpp/")
-                payload = {
-                    **base_payload,
-                    "create_did": True,
-                    "subject_did_suffix": did_suffix,
-                    "credentialSubject": credential_subject,
-                    "service_endpoint": service_endpoint
-                }
+        error_msg = self._validate_config(credential_type_key)
+        if error_msg: return None, error_msg
 
-            response = requests.post(
-                endpoint, json=payload, headers=headers,
-                timeout=30, verify=False
-            )
+        if not device or not device.did:
+            return None, "Device DID is missing. Call `ensure_device_did` before issuing credentials."
+
+        if isinstance(credential_subject, dict) and not credential_subject.get('id'):
+            credential_subject['id'] = device.did
+
+        path = "issue-traceability/" if credential_type_key == 'traceability' else "issue-dpp/"
+        endpoint = self._get_full_url(self.settings.api_base_url, path)
+
+        payload = {
+            "schema_name": self.settings.schema_config.get(credential_type_key),
+            "issuer_did": self.settings.issuer_did,
+            "credentialSubject": credential_subject
+        }
+
+        return self._execute_issuance(endpoint, payload, credential_db_key, description, uuid)
+
+    def issue_facility_credential(self, credential_subject, credential_db_key, description=None, uuid=None):
+        error_msg = self._validate_config('facility')
+        if error_msg: return None, error_msg
+
+        endpoint = self._get_full_url(self.settings.api_base_url, "issue-facility/")
+        payload = {
+            "schema_name": self.settings.schema_config.get('facility'),
+            "issuer_did": self.settings.issuer_did,
+            "credentialSubject": credential_subject
+        }
+
+        return self._execute_issuance(endpoint, payload, credential_db_key, description, uuid)
+
+    # -------------------------------------------------------------------------
+    def _execute_issuance(self, endpoint, payload, db_key, description, uuid):
+        headers = self._get_auth_headers()
+        try:
+            response = requests.post(endpoint, json=payload, headers=headers, timeout=30, verify=False)
             response.raise_for_status()
 
             response_data = response.json()
@@ -91,15 +127,13 @@ class CredentialService:
                  if "id" in response_data and "@context" in response_data:
                      signed_credential = response_data
                  else:
-                    return None, "API success but response format was invalid (missing 'credential' key)."
-
-            credential_id = signed_credential.get('id')
+                    return None, "API success but response format was invalid."
 
             cred_prop = CredentialProperty.objects.create(
                 uuid=uuid,
                 owner=self.institution,
-                key=credential_db_key,
-                value=credential_id,
+                key=db_key,
+                value=signed_credential.get('id'),
                 credential=signed_credential,
                 user=self.user,
                 description=description
@@ -117,12 +151,17 @@ class CredentialService:
             logger.exception("Unexpected error issuing credential")
             return None, f"Unexpected error: {str(e)}"
 
+    def _get_auth_headers(self):
+        return {
+            'Authorization': f'Bearer {self.settings.signing_auth_token}',
+            'Content-Type': 'application/json'
+        }
+
     def _validate_config(self, type_key):
-        """Helper to ensure API configuration is valid before proceeding."""
         if not self.settings:
             return "Institution settings are missing."
         if not self.settings.signing_auth_token or not self.settings.api_base_url:
-            return "Signing API configuration (Token or URL) is incomplete."
+            return "Signing API configuration is incomplete."
         if not self.settings.schema_config.get(type_key):
             return f"No schema configured for type '{type_key}'."
         return None
