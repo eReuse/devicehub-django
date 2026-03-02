@@ -90,25 +90,7 @@
     </style>
   </head>
   <body>
-    <div class="container custom-container">
-      <h1 class="text-center mb-4" style="color: #545f71;">{% trans 'Agreement' %}</h1>
-
-      <div class="row mt-4">
-        <div class="col">
-	  Convenio
-	</div>
-      </div>
-
-      {% if not object.sign_conditions %}
-      <div class="row mt-4">
-        <div class="col">
-          <div class="form-actions-no-box">
-            <a class="btn btn-secondary" href="{% url 'lot:accept_beneficiary' object.lot.id object.id %}">{% trans 'Accept' %}</a>
-          </div>
-        </div>
-      </div>
-      {% endif %}
-    </div>
+    {% include "beneficiary_agreement_detail.html" %}
     <footer>
       <p>
       </p>

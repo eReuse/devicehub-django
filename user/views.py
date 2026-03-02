@@ -1,5 +1,6 @@
 from decouple import config
 from django.urls import reverse, reverse_lazy
+from django.conf import settings
 from django.contrib import messages
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
@@ -92,50 +93,49 @@ class UserProfileView(DashboardView, DetailView):
 # Define exactly which files you want to edit here
 EDITABLE_FILES = [
     # Beneficiary Statuses
-    ('ben_int_sub', 'beneficiary/interested/subject.txt'),
-    ('ben_int_txt', 'beneficiary/interested/email.txt'),
-    ('ben_int_html', 'beneficiary/interested/email.html'),
-    ('ben_conf_sub', 'beneficiary/confirmed/subject.txt'),
-    ('ben_conf_txt', 'beneficiary/confirmed/email.txt'),
-    ('ben_conf_html', 'beneficiary/confirmed/email.html'),
-    ('ben_deliv_sub', 'beneficiary/delivered/subject.txt'),
-    ('ben_deliv_txt', 'beneficiary/delivered/email.txt'),
-    ('ben_deliv_html', 'beneficiary/delivered/email.html'),
-    ('ben_ret_sub', 'beneficiary/returned/subject.txt'),
-    ('ben_ret_txt', 'beneficiary/returned/email.txt'),
-    ('ben_ret_html', 'beneficiary/returned/email.html'),
+    ('ben_int_sub', 'dhemail/templates/beneficiary/interested/subject.txt'),
+    ('ben_int_txt', 'dhemail/templates/beneficiary/interested/email.txt'),
+    ('ben_int_html', 'dhemail/templates/beneficiary/interested/email.html'),
+    ('ben_conf_sub', 'dhemail/templates/beneficiary/confirmed/subject.txt'),
+    ('ben_conf_txt', 'dhemail/templates/beneficiary/confirmed/email.txt'),
+    ('ben_conf_html', 'dhemail/templates/beneficiary/confirmed/email.html'),
+    ('ben_deliv_sub', 'dhemail/templates/beneficiary/delivered/subject.txt'),
+    ('ben_deliv_txt', 'dhemail/templates/beneficiary/delivered/email.txt'),
+    ('ben_deliv_html', 'dhemail/templates/beneficiary/delivered/email.html'),
+    ('ben_ret_sub', 'dhemail/templates/beneficiary/returned/subject.txt'),
+    ('ben_ret_txt', 'dhemail/templates/beneficiary/returned/email.txt'),
+    ('ben_ret_html', 'dhemail/templates/beneficiary/returned/email.html'),
     # Circuit manager
-    ('cm_ret_sub', 'circuit_manager/subscription_subject.txt'),
-    ('cm_ret_txt', 'circuit_manager/subscription_email.txt'),
-    ('cm_ret_html', 'circuit_manager/subscription_email.html'),
+    ('cm_ret_sub', 'dhemail/templates/circuit_manager/subscription_subject.txt'),
+    ('cm_ret_txt', 'dhemail/templates/circuit_manager/subscription_email.txt'),
+    ('cm_ret_html', 'dhemail/templates/circuit_manager/subscription_email.html'),
     # Donor
-    ('donor_sub', 'donor/subject.txt'),
-    ('donor_txt', 'donor/email.txt'),
-    ('donor_html', 'donor/email.html'),
+    ('donor_sub', 'dhemail/templates/donor/subject.txt'),
+    ('donor_txt', 'dhemail/templates/donor/email.txt'),
+    ('donor_html', 'dhemail/templates/donor/email.html'),
     # Shop
-    ('shop_sub', 'shop/subscription_subject.txt'),
-    ('shop_txt', 'shop/subscription_email.txt'),
-    ('shop_html', 'shop/subscription_email.html'),
+    ('shop_sub', 'dhemail/templates/shop/subscription_subject.txt'),
+    ('shop_txt', 'dhemail/templates/shop/subscription_email.txt'),
+    ('shop_html', 'dhemail/templates/shop/subscription_email.html'),
     # Subscriptions
-    ('sub_acc_sub', 'subscription/accepted_conditions_beneficiary_subject.txt'),
-    ('sub_acc_txt', 'subscription/accepted_conditions_beneficiary_email.txt'),
-    ('sub_acc_html', 'subscription/accepted_conditions_beneficiary_email.html'),
-    ('sub_con_sub', 'subscription/confirmed_beneficiary_subject.txt'),
-    ('sub_con_txt', 'subscription/confirmed_beneficiary_email.txt'),
-    ('sub_con_html', 'subscription/confirmed_beneficiary_email.html'),
-    ('sub_del_sub', 'subscription/delivered_beneficiary_subject.txt'),
-    ('sub_del_txt', 'subscription/delivered_beneficiary_email.txt'),
-    ('sub_del_html', 'subscription/delivered_beneficiary_email.html'),
-    ('sub_ready_sub', 'subscription/incoming_lot_ready_subject.txt'),
-    ('sub_ready_txt', 'subscription/incoming_lot_ready_email.txt'),
-    ('sub_ready_html', 'subscription/incoming_lot_ready_email.html'),
-    ('sub_int_sub', 'subscription/interested_beneficiary_subject.txt'),
-    ('sub_int_txt', 'subscription/interested_beneficiary_email.txt'),
-    ('sub_int_html', 'subscription/interested_beneficiary_email.html'),
+    ('sub_acc_sub', 'dhemail/templates/subscription/accepted_conditions_beneficiary_subject.txt'),
+    ('sub_acc_txt', 'dhemail/templates/subscription/accepted_conditions_beneficiary_email.txt'),
+    ('sub_acc_html', 'dhemail/templates/subscription/accepted_conditions_beneficiary_email.html'),
+    ('sub_con_sub', 'dhemail/templates/subscription/confirmed_beneficiary_subject.txt'),
+    ('sub_con_txt', 'dhemail/templates/subscription/confirmed_beneficiary_email.txt'),
+    ('sub_con_html', 'dhemail/templates/subscription/confirmed_beneficiary_email.html'),
+    ('sub_del_sub', 'dhemail/templates/subscription/delivered_beneficiary_subject.txt'),
+    ('sub_del_txt', 'dhemail/templates/subscription/delivered_beneficiary_email.txt'),
+    ('sub_del_html', 'dhemail/templates/subscription/delivered_beneficiary_email.html'),
+    ('sub_ready_sub', 'dhemail/templates/subscription/incoming_lot_ready_subject.txt'),
+    ('sub_ready_txt', 'dhemail/templates/subscription/incoming_lot_ready_email.txt'),
+    ('sub_ready_html', 'dhemail/templates/subscription/incoming_lot_ready_email.html'),
+    ('sub_int_sub', 'dhemail/templates/subscription/interested_beneficiary_subject.txt'),
+    ('sub_int_txt', 'dhemail/templates/subscription/interested_beneficiary_email.txt'),
+    ('sub_int_html', 'dhemail/templates/subscription/interested_beneficiary_email.html'),
+    # Beneficiary agreement
+    ('ben_agree', 'lot/templates/beneficiary_agreement_detail.html'),
 ]
-
-def get_template_path_root():
-    return Path(__file__).resolve().parent.parent / "dhemail" / "templates"
 
 class TemplateEditorView(DashboardView, TemplateView):
     template_name = "template-editor.html"
@@ -145,7 +145,7 @@ class TemplateEditorView(DashboardView, TemplateView):
         files_data = []
         for fid, rel_path in EDITABLE_FILES:
             # Assumes get_template_path logic from before
-            full_path = get_template_path_root() / rel_path
+            full_path = settings.BASE_DIR / rel_path
             content = full_path.read_text(encoding='utf-8') if full_path.exists() else ""
             files_data.append({'fid': fid, 'path': rel_path, 'content': content})
 
@@ -157,7 +157,7 @@ class TemplateEditorView(DashboardView, TemplateView):
         content = request.POST.get('content', '')
 
         if rel_path:
-            full_path = get_template_path_root() / rel_path
+            full_path = settings.BASE_DIR / rel_path
             full_path.parent.mkdir(parents=True, exist_ok=True)
 
             # Normalize: No ^M, exactly one trailing newline
