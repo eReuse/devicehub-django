@@ -29,13 +29,11 @@ class CredentialService:
             CredentialProperty.objects.create(
                 uuid=device.last_evidence.uuid,
                 key="DID_DOCUMENT",
-                defaults={
-                    'owner': self.institution,
-                    'value': did_str,
-                    'credential': did_doc,
-                    'user': self.user,
-                    'description': f"DID Document for {device.id}"
-                }
+                owner= self.institution,
+                value= did_str,
+                credential= did_doc,
+                user= self.user,
+                description= f"DID Document for {device.id}"
             )
         else:
             if service_endpoint:
@@ -175,9 +173,10 @@ class CredentialService:
             error_msg = data.get('error')
             details = data.get('details')
 
-            msg = f"API Error: {error_msg}" if error_msg else f"API Error ({response.status_code})"
+            msg = f"[{response.status_code}] API Error: {error_msg}" if error_msg else f"[{response.status_code}] API Error"
+
             if details:
                 msg += f" - Validation: {details}" if isinstance(details, list) else f" - {details}"
             return msg
         except:
-            return f"API Error ({response.status_code})"
+            return f"[{response.status_code}] API Error"

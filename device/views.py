@@ -364,9 +364,14 @@ class IssueDigitalPassportView(DeviceLogMixin, View):
             reverse('device:full_dpp', kwargs={'device_id': device.id})
         )
         did_error = service.ensure_device_did(device, service_endpoint=dpp_endpoint)
+        did_warning_message = None
         if did_error:
-            messages.error(request, f"Failed to issue Passport. DID configuration error: {did_error}")
-            return redirect('device:details', pk=pk)
+            error_lower = did_error.lower()
+            if  "[404]" in error_lower:
+                did_warning_message = "Passport issued but service endpoint not modified given that you don't own the DID."
+            else:
+                messages.error(request, f"Failed to issue Passport. DID configuration error: {did_error}")
+                return redirect('device:details', pk=pk)
 
         def convert_ram_to_mb(ram_string):
             if not isinstance(ram_string, str): return 0
@@ -425,9 +430,13 @@ class IssueDigitalPassportView(DeviceLogMixin, View):
         if error:
             messages.error(request, error)
         else:
-            messages.success(request, "Digital Product Passport issued successfully!")
+            if did_warning_message:
+                messages.warning(request, did_warning_message)
+            else:
+                messages.success(request, "Digital Product Passport issued successfully!")
 
         return redirect('device:details', pk=pk)
+
 
     def _get_facility_info(self, device):
         facility_cred_prop = CredentialProperty.objects.filter(
