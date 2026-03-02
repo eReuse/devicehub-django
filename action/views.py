@@ -31,6 +31,7 @@ class ChangeStateView(LoginRequiredMixin, FormView):
         new_state = form.cleaned_data['new_state']
         snapshot_uuid = form.cleaned_data['snapshot_uuid']
         device_id = form.cleaned_data['device_id']
+        comment = form.cleaned_data.get('comment', '').strip()
         device = Device(id=device_id)
         device.initial()
 
@@ -91,6 +92,9 @@ class ChangeStateView(LoginRequiredMixin, FormView):
             "ereuse:previousState": previous_state,
             "ereuse:lastUpdate": timezone.now().isoformat()
         }
+
+        if comment:
+            traceability_event["ereuse:operatorComment"] = comment
 
         credential, error = service.issue_device_credential(
             credential_type_key='traceability',
