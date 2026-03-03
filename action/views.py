@@ -135,6 +135,8 @@ class DismantleDeviceView(LoginRequiredMixin, FormView):
         return context
 
     def form_valid(self, formset):
+        import json # Ensure json is imported
+
         user = self.request.user
         institution = user.institution
         parent_device_id = self.kwargs['pk']
@@ -143,17 +145,32 @@ class DismantleDeviceView(LoginRequiredMixin, FormView):
             device = Device(id=parent_device_id, owner=institution)
             device.initial()
             parent_uuid = device.last_evidence.uuid
+            parent_components = getattr(device, 'components', [])
         except Exception as e:
             messages.error(self.request, f"Could not resolve parent device: {e}")
             return self.form_invalid(formset)
 
-        service = CredentialService(user)
-        did_error = service.ensure_device_did(device)
-        if did_error:
-            messages.error(self.request, f"Cannot dismantle: Parent DID configuration failed: {did_error}")
-            return self.form_invalid(formset)
+        if isinstance(parent_components, str):
+            try:
+                parent_components = json.loads(parent_components)
+            except json.JSONDecodeError:
+                parent_components = []
 
-        parent_uri = device.did
+        available_components = {}
+        if isinstance(parent_components, list):
+            for comp in parent_components:
+                comp_type = comp.get('type')
+                if not comp_type: continue
+
+                if comp_type == 'RamModule' and not comp.get('size'): continue
+                if comp_type == 'Storage' and not comp.get('size'): continue
+                if 'no module installed' in str(comp.get('interface', '')).lower(): continue
+
+                if comp_type not in available_components:
+                    available_components[comp_type] = []
+                available_components[comp_type].append(comp)
+
+        parent_uri = getattr(device, 'did', None) or f"urn:ereuse:device:{parent_device_id}"
         facility_uri = getattr(institution, 'facility_id_uri', None) or f"urn:ereuse:facility:{institution.id}"
 
         output_items = []
@@ -166,7 +183,7 @@ class DismantleDeviceView(LoginRequiredMixin, FormView):
 
             part_type = data['type']
             amount = float(data.get("amount", 1))
-            part_name = data.get("name") or f"{part_type} from {parent_device_id[:6]}"
+            part_name = data.get("name")
 
             if part_type in BULK_MATERIALS:
                 output_quantities.append({
@@ -178,14 +195,29 @@ class DismantleDeviceView(LoginRequiredMixin, FormView):
                 })
                 continue
 
-            # Create Local Item Record
             row = {
                 "type": part_type,
                 "amount": 1,
-                "name": part_name,
-                "parent_id": parent_device_id,
-                "manufactured_date": timezone.now().isoformat()
             }
+
+            if part_type in available_components and available_components[part_type]:
+                real_data = available_components[part_type].pop(0)
+
+                if not part_name:
+                    mfg = real_data.get('manufacturer', '')
+                    mod = real_data.get('model', '')
+                    size = real_data.get('size', real_data.get('installedRam', ''))
+
+                    smart_name = " ".join([str(p) for p in [mfg, mod, size] if p]).strip()
+                    part_name = smart_name if smart_name else part_type
+
+                for key, value in real_data.items():
+                    if key.lower() not in ['type', 'name']:
+                        if value:
+                            row[key] = str(value)
+
+            row["name"] = part_name or f"{part_type} from {parent_device_id[:6]}"
+
             if data.get("custom_id"):
                 row['CUSTOM_ID'] = data["custom_id"]
 
@@ -202,25 +234,23 @@ class DismantleDeviceView(LoginRequiredMixin, FormView):
                     alias=doc["WEB_ID"]
                 )
 
-            subpart_system_id = doc["WEB_ID"]
-            subpart_uri = f"urn:ereuse:device:{subpart_system_id}"
-
+            subpart_uri = f"urn:ereuse:device:{doc['WEB_ID']}"
             output_items.append({
                 "type": ["Item"],
                 "id": subpart_uri,
-                "name": part_name
+                "name": row["name"]
             })
 
         if not output_items and not output_quantities:
             messages.warning(self.request, "No valid subparts to process.")
             return self.form_invalid(formset)
 
-        # 3. Build Transformation Payload
         event_id = f"urn:uuid:{uuid.uuid4()}"
         event_time = timezone.now().isoformat()
 
         ilmd_data = None
         if output_items:
+            # Instance/Lot master data (ILMD) https://ref.gs1.org/epcis/ILMD
             ilmd_data = {
                 "ereuse:recoveryDate": event_time,
                 "ereuse:processFacility": institution.name,
@@ -252,12 +282,12 @@ class DismantleDeviceView(LoginRequiredMixin, FormView):
             "ereuse:deviceState": "Dismantled",
         }
 
-        # Sanitize empty lists for strict schema
+        # Sanitize empty list
         cleaned_event = {k: v for k, v in transformation_event.items() if v is not None and (not isinstance(v, list) or len(v) > 0)}
 
-        # 4. Issue Traceability Credential
         desc = f"Dismantled into {len(output_items)} components and {len(output_quantities)} material batches."
 
+        service = CredentialService(self.request.user)
         credential, error = service.issue_device_credential(
             credential_type_key='traceability',
             credential_subject=[cleaned_event],
