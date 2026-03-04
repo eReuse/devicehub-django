@@ -96,6 +96,7 @@ class LotSubscriptionForm(forms.Form):
             ("circuit_manager", _("Circuit Manager")),
             ("shop", _("Shop")),
         ],
+        required=True,
         widget=forms.RadioSelect(),
     )
 
