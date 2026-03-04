@@ -10,6 +10,7 @@ from utils.icons import get_icon_by_type
 
 class DeviceTable(tables.Table):
 
+    hide_count = True
     devices = tables.CheckBoxColumn(
         accessor='id',
         attrs={
