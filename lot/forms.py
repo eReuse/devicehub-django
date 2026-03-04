@@ -111,15 +111,29 @@ class LotSubscriptionForm(forms.Form):
 
         self._user = User.objects.filter(email=self.form_user).first()
         if self._user and self._user.institution != self.institution:
-            txt = _("This user is from another institution")
-            raise ValidationError(txt)
-        slot = LotSubscription.objects.filter(
-                user=self._user,
-                lot_id=self.lot_pk,
-        )
-        if slot:
-            txt = _("This user is already subscripted")
-            raise ValidationError(txt)
+            raise ValidationError(_("This user is from another institution"))
+
+        existing = LotSubscription.objects.filter(
+            user=self._user,
+            lot_id=self.lot_pk,
+        ).first()
+
+        if existing:
+            type_display = dict(self.fields["type"].choices).get(self._type, self._type)
+            existing_display = existing.get_type_display()
+            if existing.type == LotSubscription.Type[self._type.upper()]:
+                raise ValidationError(
+                    _("This user is already subscribed as %(type)s"),
+                    params={"type": type_display},
+                )
+            else:
+                raise ValidationError(
+                    _(
+                        "This user is already subscribed as %(existing_type)s"
+                        " and cannot also subscribe as %(new_type)s"
+                    ),
+                    params={"existing_type": existing_display, "new_type": type_display},
+                )
 
         return
 
