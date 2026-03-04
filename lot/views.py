@@ -334,7 +334,7 @@ class DashboardLotMixing(DashboardView):
     lot = None
 
     def get_context_data(self, **kwargs):
-        self.pk = kwargs.get('pk')
+        self.pk = self.kwargs.get('pk')
         context = super().get_context_data(**kwargs)
         self.get_lot()
 
