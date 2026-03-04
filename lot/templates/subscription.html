@@ -41,8 +41,11 @@
     <div class="collapse mt-3 {% if form.errors %} show{% endif %}" id="subscribe">
         <div class="card card-body">
             <h5 class="card-title">
-                {% trans 'Add an email and select a type of subscription for add a new user' %}.
+                {% trans 'Add new user subscription' %}.
             </h5>
+            <p class="card-text">
+                {% trans 'To create a new user subscription for this lot add user email and its subscription type' %}.
+            </p>
             {% load django_bootstrap5 %}
             <form role="form" method="post">
                 {% csrf_token %}
