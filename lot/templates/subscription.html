@@ -38,30 +38,25 @@
     {% trans 'Add Subscription' %}
   </button>
 
-  <div class="collapse mt-3" id="subscribe">
-    <div class="card card-body">
-       {% trans 'Add an email and select a type of subscription for add a new user' %}.
-    </div>
-    {% load django_bootstrap5 %}
-    <form role="form" method="post">
-      {% csrf_token %}
-      {% if form.errors %}
-      <div class="alert alert-danger alert-icon alert-icon-border alert-dismissible" role="alert">
-        <div class="icon"><span class="mdi mdi-close-circle-o"></span></div>
-        <div class="message">
-          {% for field, error in form.errors.items %}
-            {{ error }}<br />
-          {% endfor %}
-          <button class="btn-close" type="button" data-dismiss="alert" aria-label="Close"></button>
+    <div class="collapse mt-3 {% if form.errors %} show{% endif %}" id="subscribe">
+        <div class="card card-body">
+            <h5 class="card-title">
+                {% trans 'Add new user subscription' %}.
+            </h5>
+            <p class="card-text">
+                {% trans 'To create a new user subscription for this lot add user email and its subscription type' %}.
+            </p>
+            {% load django_bootstrap5 %}
+            <form role="form" method="post">
+                {% csrf_token %}
+                {% bootstrap_form form %}
+                <div class="form-actions-no-box">
+                    <a class="btn btn-grey" href="{% url 'dashboard:lot' lot.id %}">{% translate "Cancel" %}</a>
+                    <input class="btn btn-green-admin" type="submit" name="submit" value="{{ action }}" />
+                </div>
+            </form>
         </div>
-      </div>
-      {% endif %}
-      {% bootstrap_form form %}
-      <div class="form-actions-no-box">
-        <a class="btn btn-grey" href="{% url 'dashboard:lot' lot.id %}">{% translate "Cancel" %}</a>
-        <input class="btn btn-green-admin" type="submit" name="submit" value="{{ action }}" />
-      </div>
-    </form>
-  </div>
+    </div>
+
 </div>
 {% endblock %}

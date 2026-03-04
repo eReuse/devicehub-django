@@ -96,7 +96,8 @@ class LotSubscriptionForm(forms.Form):
             ("circuit_manager", _("Circuit Manager")),
             ("shop", _("Shop")),
         ],
-        widget=forms.Select(attrs={'class': 'form-control'}),
+        required=True,
+        widget=forms.RadioSelect(),
     )
 
     def __init__(self, *args, **kwargs):
@@ -110,15 +111,29 @@ class LotSubscriptionForm(forms.Form):
 
         self._user = User.objects.filter(email=self.form_user).first()
         if self._user and self._user.institution != self.institution:
-            txt = _("This user is from another institution")
-            raise ValidationError(txt)
-        slot = LotSubscription.objects.filter(
-                user=self._user,
-                lot_id=self.lot_pk,
-        )
-        if slot:
-            txt = _("This user is already subscripted")
-            raise ValidationError(txt)
+            raise ValidationError(_("This user is from another institution"))
+
+        existing = LotSubscription.objects.filter(
+            user=self._user,
+            lot_id=self.lot_pk,
+        ).first()
+
+        if existing:
+            type_display = dict(self.fields["type"].choices).get(self._type, self._type)
+            existing_display = existing.get_type_display()
+            if existing.type == LotSubscription.Type[self._type.upper()]:
+                raise ValidationError(
+                    _("%(user) is already subscribed as %(type)s"),
+                    params={"user": self._user, "type": type_display},
+                )
+            else:
+                raise ValidationError(
+                    _(
+                        "%(user)s can't be a %(existing_type)s"
+                        " and %(new_type)s at the same time"
+                    ),
+                    params={"user": self._user, "existing_type": existing_display, "new_type": type_display},
+                )
 
         return
 
