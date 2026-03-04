@@ -55,8 +55,9 @@
     <!-- Pagination-->
     <div class="d-flex d-flex flex-column justify-content-center text-muted align-items-center gap-2">
         <div>
-        {% render_pagination table.page.number table.paginator.num_pages table.paginator.per_page %}
+        {% render_pagination table.page.number table.paginator.num_pages table.paginator.per_page sort=sort%}
         </div>
+        {% if not table.hide_count %}
         <!-- Number of devices info-->
         <div class="d-flex justify-content-center text-muted align-items-center gap-1">
             <i class="bi bi-list"></i>
@@ -64,6 +65,7 @@
             Showing {{ start }} to {{ end }} of {{ total }}
             {% endblocktrans %}
         </div>
+        {% endif %}
     </div>
   </div>
 {% endblock table-wrapper %}
