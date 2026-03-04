@@ -59,8 +59,10 @@
         </div>
         <!-- Number of devices info-->
         <div class="d-flex justify-content-center text-muted align-items-center gap-1">
-            <i class="bi bi-list"></i>{% trans "Showing" %}
-            {{ table.page.start_index }} to {{ table.page.end_index }} of {{ table.paginator.count }}
+            <i class="bi bi-list"></i>
+            {% blocktrans with start=table.page.start_index end=table.page.end_index total=table.paginator.count %}
+            Showing {{ start }} to {{ end }} of {{ total }}
+            {% endblocktrans %}
         </div>
     </div>
   </div>
