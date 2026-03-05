@@ -12,6 +12,7 @@ from user.models import InstitutionSettings, LabelVersion, QRContentType
 from django.utils.translation import gettext_lazy as _
 
 class Device:
+    # This Types is used only for environmental_impact
     class Types(models.TextChoices):
         DESKTOP = "Desktop"
         LAPTOP = "Laptop"
