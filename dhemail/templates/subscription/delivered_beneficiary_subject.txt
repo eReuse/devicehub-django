@@ -1,1 +1,1 @@
-Delivery devices from lot {{ lot.name }}
+Delivery products from lot {{ lot.name }}

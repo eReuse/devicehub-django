@@ -12,7 +12,7 @@
       {% for lot in lots %}
         <div class="card shadow-sm mb-3 border-top-0">
           <span class="badge fs-6 {% if lot.devices.count > 0 %} bg-danger {% else %} bg-secondary {% endif %} border-bottom-0">
-            {{ lot.devices.count }} {% trans "device/s" %}
+            {{ lot.devices.count }} {% trans "product/s" %}
           </span>
 
           <div class="card-header bg-light d-flex justify-content-between align-items-center">
@@ -74,12 +74,12 @@
       {% if lots_with_devices %}
         <div class="alert alert-danger d-flex align-items-center justify-content-center" role="alert">
           <i class="bi bi-exclamation-circle-fill me-2"></i>
-          {% trans "All associated devices will be deassigned." %}
+          {% trans "All associated products will be deassigned." %}
         </div>
       {% else %}
         <div class="alert alert-info d-flex align-items-center justify-content-center" role="alert">
           <i class="bi bi-info-circle-fill me-2"></i>
-          {% trans "No devices are associated with these lots." %}
+          {% trans "No products are associated with these lots." %}
         </div>
       {% endif %}
 

@@ -43,7 +43,7 @@
               <div class="col-md-8">
                 <h5 class="card-title">{% trans 'Total Carbon Footprint (Use Phase)' %}</h5>
                 <p class="text-muted mb-0">
-                  {% trans 'Total CO2 emissions from all devices in this lot during their use phase.' %}
+                  {% trans 'Total CO2 emissions from all products in this lot during their use phase.' %}
                 </p>
               </div>
               <div class="col-md-4 text-md-end">
@@ -60,7 +60,7 @@
               <div class="col-md-8">
                 <h5 class="card-title">{% trans 'Total Reuse Time' %}</h5>
                 <p class="text-muted mb-0">
-                  {% trans 'Total hours of reuse (second life) accumulated by devices in this lot.' %}
+                  {% trans 'Total hours of reuse (second life) accumulated by products in this lot.' %}
                 </p>
               </div>
               <div class="col-md-4 text-md-end">
@@ -129,22 +129,22 @@
         <div class="alert alert-warning" role="alert">
           <h6><i class="bi bi-exclamation-triangle"></i> {% trans 'Environmental Impact Data Unavailable' %}</h6>
           <p>
-            {% trans 'Environmental impact calculation is not available for this lot. This may be due to insufficient device data.' %}
+            {% trans 'Environmental impact calculation is not available for this lot. This may be due to insufficient product data.' %}
           </p>
           <p>
             <strong>{% trans 'Possible reasons:' %}</strong>
           </p>
           <ul>
             <li>
-              {% trans 'There are no devices in this lot' %}
+              {% trans 'There are no products in this lot' %}
             </li>
             <li>
-              {% trans 'Devices have no usage time data (e.g. power-on hours)' %}
+              {% trans 'Products have no usage time data (e.g. power-on hours)' %}
             </li>
           </ul>
           <p class="mb-0">
             <strong>{% trans 'What to do:' %}</strong>
-            {% trans 'Ensure devices in this lot have been properly inventoried with complete evidence data, including power-on hours and storage information.' %}
+            {% trans 'Ensure products in this lot have been properly inventoried with complete evidence data, including power-on hours and storage information.' %}
           </p>
         </div>
       </div>

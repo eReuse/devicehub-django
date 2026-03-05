@@ -1,1 +1,1 @@
-New interest for devices in lot {{ lot.name }}
+New interest for products in lot {{ lot.name }}

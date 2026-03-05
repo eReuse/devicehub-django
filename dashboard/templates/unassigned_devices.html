@@ -18,7 +18,7 @@
                 type="text"
                 name="q"
                 class="form-control"
-                placeholder="{% trans 'Search devices within lot (append :field for filters)' %}"
+                placeholder="{% trans 'Search products within lot (append :field for filters)' %}"
                 value="{{ search_query }}">
             <div class="input-group-append">
                 <button type="submit" class="btn btn-outline-secondary h-100" style="border-radius: 0 4px 4px 0;">
@@ -63,7 +63,7 @@
                     <small class="text-muted ps-1"> {% trans "open" %}</small>
                     {% endif %}
                     {% else %}
-                    <i class="bi bi-devices"></i> {% trans "Device Management" %}
+                    <i class="bi bi-devices"></i> {% trans "Product Management" %}
                     {% endif %}
                 </h5>
 
@@ -152,7 +152,7 @@
             {% else %}
             <div class="text-center text-muted py-5">
                 <i class="bi bi-inbox h1"></i>
-                <p class="mt-2">{% trans "No devices found" %}</p>
+                <p class="mt-2">{% trans "No products found" %}</p>
             </div>
             {% endif %}
         </form>
@@ -160,7 +160,7 @@
         <div class="d-flex flex-wrap align-items-center gap-2 justify-content-end p-2">
           <!-- Number of devices info-->
             <div class="d-flex justify-content-center text-muted align-items-center gap-1">
-                <i class="bi bi-laptop"></i> {% if not lot.name %} {% trans "Showing" %} {% endif %} {{count}} {% trans "Device/s" %}
+                <i class="bi bi-laptop"></i> {% if not lot.name %} {% trans "Showing" %} {% endif %} {{count}} {% trans "Product/s" %}
             </div>
 
             <!-- Device limit per page picker -->
@@ -177,7 +177,7 @@
                             {% endif %}
                             {% endfor %}
                         </select>
-                        <label class="input-group-text" for="limit">{% trans "devices" %}</label>
+                        <label class="input-group-text" for="limit">{% trans "products" %}</label>
                     </div>
                     {% for key, value in request.GET.items %}
                     {% if key != 'limit' %}
