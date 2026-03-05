@@ -1,128 +1,138 @@
 {% load i18n %}
 
 <style>
-  /* Remove bullets from all sidebar <ul> */
-  #sidebarMenu ul {
-      list-style: none;
-      padding-left: 0;
-      margin: 0;
-  }
+    /* Remove bullets from all sidebar <ul> */
+    #sidebarMenu ul {
+        list-style: none;
+        padding-left: 0;
+        margin: 0;
+    }
 
-  /* Optional: adjust nested ul spacing */
-  #sidebarMenu ul ul {
-      padding-left: 2.25rem;
-  }
+    /* Optional: adjust nested ul spacing */
+    #sidebarMenu ul ul {
+        padding-left: 2.25rem;
+    }
 
-  /* Make sidebar scrollable */
-  #sidebarMenu {
-      height: calc(100vh - 48px);
-      overflow-y: auto;
-      position: sticky;
-      top: 48px;
-  }
+    /* Make sidebar scrollable */
+    #sidebarMenu {
+        height: calc(100vh - 48px);
+        overflow-y: auto;
+        position: sticky;
+    }
+
+    /* On small screens: overlay content instead of pushing it */
+    @media (max-width: 767.98px) {
+        #sidebarMenu {
+            position: fixed;
+            top: 84px;
+            left: 0;
+            z-index: 1030;
+            width: 200px;
+            max-width: 200px;
+            height: 100%;
+        }
+    }
 </style>
 
 <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse collapse-horizontal" style="max-width: 200px;">
-  <div class="pt-md-5">
     <ul class="nav flex-column">
-      {% if user.is_admin %}
-      <li class="nav-item">
-        <a class="admin {% if path in 'admin:panel admin:users admin:states_panel admin:tag_panel admin:edit_user admin:delete_user admin:new_user admin:institution' %}active {% endif %}nav-link fw-bold" data-bs-toggle="collapse" data-bs-target="#ul_admin" aria-expanded="false" aria-controls="ul_admin" href="javascript:void()">
-          <i class="bi bi-person-fill-gear icon_sidebar"></i>
-          {% trans 'Admin' %}
-        </a>
-        <ul class="flex-column mb-2 ul_sidebar accordion-collapse {% if path in 'admin:panel admin:users admin:tag_panel admin:states_panel admin:institution' %}expanded{% else %}collapse{% endif %}" id="ul_admin" data-bs-parent="#sidebarMenu">
-          <li class="nav-item">
-            <a class="nav-link{% if path in 'admin:panel admin:institution' %} active2{% endif %}" href="{% url 'admin:panel' %}">
-              {% trans 'Panel' %}
+        {% if user.is_admin %}
+        <li class="nav-item">
+            <a class="admin {% if path in 'admin:panel admin:users admin:states_panel admin:tag_panel admin:edit_user admin:delete_user admin:new_user admin:institution' %}active {% endif %}nav-link fw-bold" data-bs-toggle="collapse" data-bs-target="#ul_admin" aria-expanded="false" aria-controls="ul_admin" href="javascript:void()">
+                <i class="bi bi-person-fill-gear icon_sidebar"></i>
+                {% trans 'Admin' %}
             </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link{% if path in 'admin:users admin:edit_user admin:new_user admin:delete_user' %} active2{% endif %}" href="{% url 'admin:users' %}">
-              {% trans 'Users' %}
+            <ul class="flex-column mb-2 ul_sidebar accordion-collapse {% if path in 'admin:panel admin:users admin:tag_panel admin:states_panel admin:institution' %}expanded{% else %}collapse{% endif %}" id="ul_admin" data-bs-parent="#sidebarMenu">
+                <li class="nav-item">
+                    <a class="nav-link{% if path in 'admin:panel admin:institution' %} active2{% endif %}" href="{% url 'admin:panel' %}">
+                        {% trans 'Panel' %}
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link{% if path in 'admin:users admin:edit_user admin:new_user admin:delete_user' %} active2{% endif %}" href="{% url 'admin:users' %}">
+                        {% trans 'Users' %}
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link{% if path == 'admin:states_panel' %} active2{% endif %}" href="{% url 'admin:states_panel' %}">
+                        {% trans 'States' %}
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link{% if path == 'admin:tag_panel' %} active2{% endif %}" href="{% url 'admin:tag_panel' %}">
+                        {% trans 'Lot Groups' %}
+                    </a>
+                </li>
+            </ul>
+        </li>
+        {% endif %}
+        <li class="nav-item">
+            <a class="admin {% if 'device:' in path or path in 'dashboard:all_device' %}active {% endif %}nav-link fw-bold" href="{% url 'dashboard:all_device' %}">
+                <i class="bi bi-laptop icon_sidebar"></i>
+                {% trans 'Devices' %}
             </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link{% if path == 'admin:states_panel' %} active2{% endif %}" href="{% url 'admin:states_panel' %}">
-              {% trans 'States' %}
+            <ul class="flex-column mb-2 ul_sidebar accordion-collapse {% if 'device:' in path or path == 'dashboard:all_device' %}expanded{% else %}collapse{% endif %}" id="ul_device" data-bs-parent="#sidebarMenu">
+                <li class="nav-item">
+                    <a class="nav-link{% if 'device:' in path or path in 'dashboard:all_device' %} active2{% endif %}" href="javascript:void()">
+                        {% trans 'All' %}
+                    </a>
+                </li>
+            </ul>
+        </li>
+        <li class="nav-item">
+            <a class="admin {% if 'lot:' in path or path == 'dashboard:lot' or path in 'dashboard:unassigned' %}active {% endif %}nav-link fw-bold" data-bs-toggle="collapse" data-bs-target="#ul_lots" aria-expanded="false" aria-controls="ul_lots" href="javascript:void()">
+                <i class="bi bi-database icon_sidebar"></i>
+                {% trans 'Lots' %}
             </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link{% if path == 'admin:tag_panel' %} active2{% endif %}" href="{% url 'admin:tag_panel' %}">
-              {% trans 'Lot Groups' %}
+            <ul class="flex-column mb-2 ul_sidebar accordion-collapse {% if 'lot:' in path or path == 'dashboard:lot' or path in 'dashboard:unassigned' %}expanded{% else %}collapse{% endif %}" id="ul_lots" data-bs-parent="#sidebarMenu">
+                {% for tag in lot_tags %}
+                <li class="nav-items">
+                    {% if tag.inbox %}
+                    <a class="nav-link{% if path == 'dashboard:unassigned' %} active2{% endif %}" href="{% url 'dashboard:unassigned' %}">
+                        <i>
+                            {{ tag.name }}
+                        </i>
+                        {% else %}
+                        <a class="nav-link{% if path == 'lot:tags' and tag.id == selected_tag_id %} active2{% endif %}" href="{% url 'lot:tags' tag.id %}">
+                            {{ tag.name }}
+                            {% endif %}
+                        </a>
+                </li>
+                {% endfor %}
+            </ul>
+        </li>
+        <li class="nav-item">
+            <a class="admin {% if 'evidence:' in path or path == 'device:add' %}active {% endif %}nav-link fw-bold" data-bs-toggle="collapse" data-bs-target="#ul_evidences" aria-expanded="false" aria-controls="ul_evidences" href="javascript:void()">
+                <i class="bi bi-usb-drive icon_sidebar"></i>
+                {% trans 'Evidences' %}
             </a>
-          </li>
-        </ul>
-      </li>
-      {% endif %}
-      <li class="nav-item">
-          <a class="admin {% if 'device:' in path or path in 'dashboard:all_device' %}active {% endif %}nav-link fw-bold" href="{% url 'dashboard:all_device' %}">
-            <i class="bi bi-laptop icon_sidebar"></i>
-          {% trans 'Devices' %}
-          </a>
-          <ul class="flex-column mb-2 ul_sidebar accordion-collapse {% if 'device:' in path or path == 'dashboard:all_device' %}expanded{% else %}collapse{% endif %}" id="ul_device" data-bs-parent="#sidebarMenu">
-          <li class="nav-item">
-            <a class="nav-link{% if 'device:' in path or path in 'dashboard:all_device' %} active2{% endif %}" href="javascript:void()">
-              {% trans 'All' %}
-            </a>
-          </li>
-        </ul>
-      </li>
-      <li class="nav-item">
-        <a class="admin {% if 'lot:' in path or path == 'dashboard:lot' or path in 'dashboard:unassigned' %}active {% endif %}nav-link fw-bold" data-bs-toggle="collapse" data-bs-target="#ul_lots" aria-expanded="false" aria-controls="ul_lots" href="javascript:void()">
-          <i class="bi bi-database icon_sidebar"></i>
-          {% trans 'Lots' %}
-        </a>
-        <ul class="flex-column mb-2 ul_sidebar accordion-collapse {% if 'lot:' in path or path == 'dashboard:lot' or path in 'dashboard:unassigned' %}expanded{% else %}collapse{% endif %}" id="ul_lots" data-bs-parent="#sidebarMenu">
-          {% for tag in lot_tags %}
-          <li class="nav-items">
-          {% if tag.inbox %}
-            <a class="nav-link{% if path == 'dashboard:unassigned' %} active2{% endif %}" href="{% url 'dashboard:unassigned' %}">
-              <i>
-                {{ tag.name }}
-              </i>
-          {% else %}
-            <a class="nav-link{% if path == 'lot:tags' and tag.id == selected_tag_id %} active2{% endif %}" href="{% url 'lot:tags' tag.id %}">
-              {{ tag.name }}
-          {% endif %}
-            </a>
-          </li>
-          {% endfor %}
-        </ul>
-      </li>
-      <li class="nav-item">
-        <a class="admin {% if 'evidence:' in path or path == 'device:add' %}active {% endif %}nav-link fw-bold" data-bs-toggle="collapse" data-bs-target="#ul_evidences" aria-expanded="false" aria-controls="ul_evidences" href="javascript:void()">
-          <i class="bi bi-usb-drive icon_sidebar"></i>
-          {% trans 'Evidences' %}
-        </a>
-        <ul class="flex-column mb-2 ul_sidebar accordion-collapse {% if 'evidence:' in path or path == 'device:add' %}expanded{% else %}collapse{% endif %}" id="ul_evidences" data-bs-parent="#sidebarMenu">
-          <li class="nav-item">
-            <a class="nav-link{% if path in 'evidence:list evidence:details' %} active2{% endif %}" href="{% url 'evidence:list' %}">
-              {% trans 'List of evidences' %}
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link{% if path == 'evidence:upload' %} active2{% endif %}" href="{% url 'evidence:upload' %}">
-              {% trans 'Upload JSON file' %}
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link{% if path == 'evidence:import' %} active2{% endif %}" href="{% url 'evidence:import' %}">
-              {% trans 'Upload Spreadsheet' %}
-            </a>
-          </li>
-          <li class="nav-item">
-              <a class="nav-link{% if path == 'evidence:photo' %} active2{% endif %}" href="{% url 'evidence:photo' %}">
-                  {% trans 'Upload Photo' %}
-              </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link{% if path == 'device:add' %} active2{% endif %}" href="{% url 'device:add' %}">
-              {% trans 'Upload Web Form' %}
-            </a>
-          </li>
-        </ul>
-      </li>
+            <ul class="flex-column mb-2 ul_sidebar accordion-collapse {% if 'evidence:' in path or path == 'device:add' %}expanded{% else %}collapse{% endif %}" id="ul_evidences" data-bs-parent="#sidebarMenu">
+                <li class="nav-item">
+                    <a class="nav-link{% if path in 'evidence:list evidence:details' %} active2{% endif %}" href="{% url 'evidence:list' %}">
+                        {% trans 'List of evidences' %}
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link{% if path == 'evidence:upload' %} active2{% endif %}" href="{% url 'evidence:upload' %}">
+                        {% trans 'Upload JSON file' %}
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link{% if path == 'evidence:import' %} active2{% endif %}" href="{% url 'evidence:import' %}">
+                        {% trans 'Upload Spreadsheet' %}
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link{% if path == 'evidence:photo' %} active2{% endif %}" href="{% url 'evidence:photo' %}">
+                        {% trans 'Upload Photo' %}
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link{% if path == 'device:add' %} active2{% endif %}" href="{% url 'device:add' %}">
+                        {% trans 'Upload Web Form' %}
+                    </a>
+                </li>
+            </ul>
+        </li>
     </ul>
-  </div>
 </nav>
