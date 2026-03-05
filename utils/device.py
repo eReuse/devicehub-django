@@ -4,6 +4,8 @@ import hashlib
 import datetime
 import logging
 
+from django.conf import settings
+
 from django.core.exceptions import ValidationError
 from evidence.xapian import index
 from evidence.models import SystemProperty
@@ -60,7 +62,7 @@ def create_doc(data):
     if doc:
         doc["uuid"] = _uuid
         doc["endTime"] = date
-        doc["software"] = "DeviceHub"
+        doc["software"] = settings.APP_NAME
         doc["WEB_ID"] = web_id
         doc["type"] = "WebSnapshot"
 

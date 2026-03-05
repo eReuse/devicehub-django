@@ -380,7 +380,7 @@ class PhotoForm(forms.Form):
             'uuid': self.uuid,
             'type': algo_key,
             'endTime': datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
-            'software': 'DeviceHub',
+            'software': settings.APP_NAME,
             'photo': self.photo_data,
             'ocr': {
                 'text': processing_result.get('ocr_text'),

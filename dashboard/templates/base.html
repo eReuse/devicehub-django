@@ -11,7 +11,7 @@
     <meta name="description" content="">
     <meta name="author" content="Pangea">
     {% endblock %}
-    <title>{% block title %}{% if title %}{{ title }} – {% endif %}DeviceHub{% endblock %}</title>
+    <title>{% block title %}{% if title %}{{ title }} – {% endif %}{{ APP_NAME }}{% endblock %}</title>
 
     <!-- Bootstrap core CSS -->
     {% block style %}
@@ -94,12 +94,12 @@
           <i class="bi bi-list"></i>
       </button>
       <div id="navbar-brand-sm" class="d-sm-none px-3">
-          <a class="navbar-brand " href="#">DEVICEHUB</a>
+          <a class="navbar-brand " href="#">{{ APP_NAME|upper }}</a>
           <div class="navbar-nav navbar-sub-brand text-truncate" style="max-width: 200px;">
               {{ user.institution.name|upper }}
           </div>
       </div>
-      <a class="d-none d-sm-block navbar-brand col-md-3 col-lg-2 me-0 px-3" href="#">DEVICEHUB</a>
+      <a class="d-none d-sm-block navbar-brand col-md-3 col-lg-2 me-0 px-3" href="#">{{ APP_NAME|upper }}</a>
       <div class="d-none d-sm-block navbar-nav navbar-sub-brand text-truncate ms-auto" style="max-width: 200px;">
           {{ user.institution.name|upper }}
       </div>
