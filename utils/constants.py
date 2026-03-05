@@ -43,20 +43,15 @@ ALGOS = {
 }
 
 
+# utils/icons.py is the source of true about types of devices
 CHASSIS_DH = {
-    'Desktop': {'tower', 'desktop', 'low-profile', 'tower', 'server', 'low profile desktop'},
-    'Docking': {'docking'},
-    'AllInOne': {'all-in-one'},
-    'Microtower': {'mini-tower', 'space-saving', 'mini'},
-    'PizzaBox': {'pizzabox'},
-    'Lunchbox': {'lunchbox'},
-    'Stick': {'stick'},
-    'Handheld': {'handheld'},
-    'Laptop': {'portable', 'laptop', 'notebook', 'sub-notebook', 'netbook'},
-    'Convertible': {'convertible'},
-    'Detachable': {'detachable'},
-    'Tablet': {'tablet'},
-    'Virtual': {'_virtual'},
+    'Desktop': {'desktop', 'low-profile', 'tower', 'all-in-one',
+                'mini-tower', 'space-saving', 'mini', 'pizzabox',
+                'lunchbox', 'stick', 'docking', '_virtual'},
+    'Laptop':  {'portable', 'laptop', 'convertible', 'detachable',
+                'tablet', 'handheld', 'notebook', 'sub-notebook',
+                'netbook'},
+    'Server':  {'server'},
 }
 
 
