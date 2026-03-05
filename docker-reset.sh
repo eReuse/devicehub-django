@@ -52,7 +52,7 @@ use_env_var() {
 }
 
 docker_wizard__idhub_enabled() {
-        add_env_var IDHUB_DOMAIN_REQUEST 'idhub.example.org'
+        use_env_var IDHUB_DOMAIN_REQUEST 'idhub.example.org'
 
         export COMPOSE_PROFILES="${COMPOSE_PROFILES},idhub"
 
@@ -65,9 +65,9 @@ docker_wizard__idhub_enabled() {
 configure_smtp() {
         # Ask user if they want to configure SMTP for sending emails
         printf '\n'
-        printf '┌──────────────────────────────────────────────────────────────────┐\n'
-        printf '│  EMAIL / SMTP CONFIGURATION                                      │\n'
-        printf '└──────────────────────────────────────────────────────────────────┘\n'
+        printf '--------------------------------------------------------------------\n'
+        printf '  EMAIL / SMTP CONFIGURATION\n'
+        printf '--------------------------------------------------------------------\n'
         printf '\n'
         printf 'Do you want to configure SMTP for sending emails?\n'
         printf '(Required for password reset, notifications, etc.)\n'
@@ -313,9 +313,9 @@ docker_wizard__selector() {
 docker_wizard() {
         set +x
         printf '\n'
-        printf '╔══════════════════════════════════════════════════════════════════╗\n'
-        printf '║  DEVICEHUB INSTALLATION WIZARD                                   ║\n'
-        printf '╚══════════════════════════════════════════════════════════════════╝\n'
+        printf '--------------------------------------------------------------------\n'
+        printf '  DEVICEHUB INSTALLATION WIZARD\n'
+        printf '--------------------------------------------------------------------\n'
         printf '\nPress enter to continue... '
         read -r enter </dev/tty
 

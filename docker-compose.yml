@@ -17,8 +17,8 @@ services:
         # db-files: evidences, index xapian files and sqlite
       - ${DOCKER_DEVICEHUB_DATA_DIR}/devicehub/db-files:${DEVICEHUB_EVIDENCES_DIR:-/evidences/}
       - ${DOCKER_DEVICEHUB_DATA_DIR}/devicehub/backups:${DEVICEHUB_BACKUPS_DIR:-/backups/}
-    # ports:
-    #   - ${DEVICEHUB_PORT:-8000}:${DEVICEHUB_PORT:-8000}
+    ports:
+      - ${DEVICEHUB_PORT:-8000}:${DEVICEHUB_PORT:-8000}
     deploy:
       resources:
         limits:
@@ -150,12 +150,12 @@ services:
       - IDHUB_UPSTREAM=idhub:${IDHUB_PORT}
       - RPROXY_TEMPLATE=${RPROXY_TEMPLATE}
     ports:
-      - "8000:80"
-      #- "443:443"
+      - "80:80"
+      - "443:443"
     volumes:
       - type: bind
-        source: docker/nginx/${RPROXY_TEMPLATE_NAME}
-        target: /etc/nginx/conf.d/${RPROXY_TEMPLATE_NAME}
+        source: docker/nginx/${RPROXY_TEMPLATE_NAME:-app.template}
+        target: /etc/nginx/conf.d/${RPROXY_TEMPLATE_NAME:-app.template}
       # Static and Media files
       - ${DOCKER_DEVICEHUB_DATA_DIR}/devicehub/static:/var/www/static:ro
       - ${DOCKER_DEVICEHUB_DATA_DIR}/devicehub/media:/var/www/media:ro
