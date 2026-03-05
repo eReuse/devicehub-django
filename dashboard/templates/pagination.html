@@ -1,7 +1,7 @@
 {% load i18n %}
 {% load range %}
 
-{% if page_number %}
+{% if page_number and total_pages > 1%}
 <ul class="pagination mb-0">
   {% if page_number > 1 %}
   <li class="page-item">
@@ -32,14 +32,12 @@
     {% endfor %}
   {% endif %}
 
-    <!--    Last page button is shown always (if more than 1)-->
-    {% if total_pages > 1 %}
+    <!--    Last page button is shown always -->
     <li class="page-item {% if total_pages == page_number %}active{% endif %}">
         <a class="page-link" href="?page={{ total_pages }}&limit={{ limit }}{% if search %}&search={{ search }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">
             {{ total_pages }}
         </a>
     </li>
-    {% endif %}
 
     {% if page_number < total_pages %}
     <li class="page-item">
