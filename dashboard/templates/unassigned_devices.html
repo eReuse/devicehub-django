@@ -65,7 +65,7 @@
                     <small class="text-muted ps-1"> {% trans "open" %}</small>
                     {% endif %}
                     {% else %}
-                    <i class="bi bi-devices"></i> {% trans "Device Management" %}
+                    <i class="bi bi-devices"></i> {% trans "Product Management" %}
                     {% endif %}
                 </h5>
 
@@ -186,7 +186,7 @@
         <div class="d-flex flex-wrap align-items-center gap-2 justify-content-end p-2">
           <!-- Number of devices info-->
             <div class="d-flex justify-content-center text-muted align-items-center gap-1">
-                <i class="bi bi-laptop"></i> {% if not lot.name %} {% trans "Showing" %} {% endif %} {{count}} {% trans "Device/s" %}
+                <i class="bi bi-laptop"></i> {% if not lot.name %} {% trans "Showing" %} {% endif %} {{count}} {% trans "Product/s" %}
             </div>
 
             <!-- Device limit per page picker -->
@@ -203,7 +203,7 @@
                             {% endif %}
                             {% endfor %}
                         </select>
-                        <label class="input-group-text" for="limit">{% trans "devices" %}</label>
+                        <label class="input-group-text" for="limit">{% trans "products" %}</label>
                     </div>
                     {% for key, value in request.GET.items %}
                     {% if key != 'limit' %}
