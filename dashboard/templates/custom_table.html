@@ -64,7 +64,7 @@
         </div>
         {% if not table.hide_count %}
         <!-- Number of devices info-->
-        <div class="d-flex justify-content-center text-muted align-items-center gap-1">
+        <div class="d-flex justify-content-center text-muted align-items-center gap-1 mb-4">
             <i class="bi bi-list"></i>
             {% blocktrans with start=table.page.start_index end=table.page.end_index total=table.paginator.count %}
             Showing {{ start }} to {{ end }} of {{ total }}
