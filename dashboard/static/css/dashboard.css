@@ -13,33 +13,33 @@ body {
  */
 
 .sidebar {
-  position: fixed;
-  top: 0;
+  /*position: fixed;*/
+  /*top: 0;*/
   /* rtl:raw:
   right: 0;
   */
-  bottom: 0;
+  /*bottom: 0;*/
   /* rtl:remove */
-  left: 0;
+  /*left: 0;*/
   z-index: 100; /* Behind the navbar */
   box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
 }
 
-@media (max-width: 767.98px) {
+@media (max-width: 768px) {
   .sidebar {
-    top: 5rem;
+    /*top: 5rem;*/
     padding: 15px 0 0;
   }
 }
 
-.sidebar-sticky {
-  position: relative;
-  top: 0;
-  height: calc(100vh - 48px);
-  padding-top: .5rem;
-  overflow-x: hidden;
-  overflow-y: auto; /* Scrollable contents if viewport is shorter than content. */
-}
+/*.sidebar-sticky {*/
+/*  position: relative;*/
+/*  top: 0;*/
+/*  height: calc(100vh - 48px);*/
+/*  padding-top: .5rem;*/
+/*  overflow-x: hidden;*/
+/*  overflow-y: auto; !* Scrollable contents if viewport is shorter than content. *!*/
+/*}*/
 
 .sidebar .nav-link {
   font-weight: 300;

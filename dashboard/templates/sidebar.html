@@ -17,19 +17,13 @@
     #sidebarMenu {
         height: calc(100vh - 48px);
         overflow-y: auto;
-        position: sticky;
+        min-height: 100%;
     }
 
     /* On small screens: overlay content instead of pushing it */
-    @media (max-width: 767.98px) {
+    @media (max-width: 768px) {
         #sidebarMenu {
-            position: fixed;
-            top: 84px;
-            left: 0;
-            z-index: 1030;
-            width: 200px;
-            max-width: 200px;
-            height: 100%;
+            position: absolute;
         }
     }
 </style>
