@@ -449,7 +449,7 @@ class LotEnvironmentalImpactView(DashboardLotMixing, TemplateView):
 class AddLotPropertyView(DashboardView, CreateView):
     template_name = "new_property.html"
     title = _("Properties")
-    breadcrumb = "Device / Properties"
+    breadcrumb = "Product / Properties"
     success_url = reverse_lazy('dashboard:unassigned_devices')
     model = LotProperty
     fields = ("key", "value")
@@ -911,7 +911,7 @@ class DeleteBeneficiaryView(DashboardView, TemplateView):
 class ListDevicesBeneficiaryView(DashboardLotMixing, BeneficiaryEmail, FormView):
     template_name = "beneficiaries_devices.html"
     title = _("Beneficiaries")
-    breadcrumb = "Lot / Beneficiary / Devices"
+    breadcrumb = "Lot / Beneficiary / Products"
     lot = None
 
     def get(self, *args, **kwargs):

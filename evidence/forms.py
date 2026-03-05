@@ -205,7 +205,7 @@ class ImportForm(forms.Form):
             for k, v in data_pd[n].items():
                 if k.lower() == "type":
                     if v not in Device.Types.values:
-                        raise ValidationError("{} is not a valid device".format(v))
+                        raise ValidationError("{} is not a valid product".format(v))
 
             self.rows.append(data_pd[n])
 
