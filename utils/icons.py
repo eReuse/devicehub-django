@@ -15,7 +15,8 @@ ICONS = {
     "SoundCard": "bi-speaker",
     "Display": "bi-display",
     "Battery": "bi-battery",
-    "Camera": "bi-camera"
+    "Camera": "bi-camera",
+    "Server": "bi-hdd-stack",
 }
 
 def get_icon_by_type(value):
