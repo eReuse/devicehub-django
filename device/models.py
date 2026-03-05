@@ -15,6 +15,7 @@ from action.models import State
 
 
 class Device:
+    # This Types is used only for environmental_impact
     class Types(models.TextChoices):
         DESKTOP = "Desktop"
         LAPTOP = "Laptop"

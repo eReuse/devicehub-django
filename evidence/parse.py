@@ -5,7 +5,8 @@ import logging
 from evidence import legacy_parse
 from evidence import old_parse
 from evidence import normal_parse
-from evidence.parse_details import ParseSnapshot
+from evidence import universal_parse
+from evidence.parse_details import _has_inxi
 
 from evidence.models import SystemProperty
 from evidence.xapian import index
@@ -26,17 +27,19 @@ def get_mac(inxi):
         if get_inxi(n, "port"):
             return get_inxi(iface, 'mac')
 
+
 class Build:
     def __init__(self, evidence_json, user, check=False):
         """
         This Build do the save in xapian as document, in Annotations and do
         register in dlt if is configured for that.
 
-        We have 4 cases for parser diferents snapshots than come from workbench.
+        We have 5 cases for parser diferents snapshots than come from workbench.
         1) worbench 11 is old_parse.
         2) legacy is the worbench-script when create a snapshot for devicehub-teal
         3) some snapshots come as a credential. In this case is parsed as normal_parse
         4) normal snapshot from worbench-script is the most basic and is parsed as normal_parse
+        5) workbench-script snapshot without inxi (e.g. Windows): universal_parse (dmidecode + smartctl)
         """
         self.evidence = evidence_json.copy()
         self.uuid = self.evidence.get('uuid')
@@ -45,10 +48,12 @@ class Build:
         if evidence_json.get("credentialSubject"):
             self.build = normal_parse.Build(evidence_json)
             self.uuid = evidence_json.get("credentialSubject", {}).get("uuid")
-        elif evidence_json.get("data",{}).get("lshw"):
+        elif evidence_json.get("data", {}).get("lshw"):
             self.build = legacy_parse.Build(evidence_json)
         elif evidence_json.get("software") != "workbench-script":
             self.build = old_parse.Build(evidence_json)
+        elif not _has_inxi(evidence_json):
+            self.build = universal_parse.Build(evidence_json)
         else:
             self.build = normal_parse.Build(evidence_json)
 

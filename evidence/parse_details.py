@@ -3,36 +3,52 @@ import logging
 from evidence import (
     legacy_parse_details,
     normal_parse_details,
-    old_parse_details
+    old_parse_details,
+    universal_parse_details,
 )
 
 
 logger = logging.getLogger('django')
 
 
+def _has_inxi(snapshot):
+    """Returns True if the snapshot contains inxi data (normal or credential format)."""
+    if snapshot.get("data", {}).get("inxi"):
+        return True
+    for ev in snapshot.get("evidence", []):
+        if ev.get("operation") == "inxi" and ev.get("output"):
+            return True
+    return False
+
+
 class ParseSnapshot:
     def __init__(self, snapshot, default="n/a"):
-       if snapshot.get("credentialSubject"):
-           self.build = normal_parse_details.ParseSnapshot(
-               snapshot,
-               default=default
-           )
-       elif snapshot.get("software") != "workbench-script":
-           self.build = old_parse_details.ParseSnapshot(
-               snapshot,
-               default=default
-           )
-       elif snapshot.get("data",{}).get("lshw"):
-           self.build = legacy_parse_details.ParseSnapshot(
-               snapshot,
-               default=default
-           )
-       else:
-           self.build = normal_parse_details.ParseSnapshot(
-               snapshot,
-               default=default
-           )
+        if snapshot.get("credentialSubject"):
+            self.build = normal_parse_details.ParseSnapshot(
+                snapshot,
+                default=default
+            )
+        elif snapshot.get("software") != "workbench-script":
+            self.build = old_parse_details.ParseSnapshot(
+                snapshot,
+                default=default
+            )
+        elif snapshot.get("data", {}).get("lshw"):
+            self.build = legacy_parse_details.ParseSnapshot(
+                snapshot,
+                default=default
+            )
+        elif not _has_inxi(snapshot):
+            self.build = universal_parse_details.ParseSnapshot(
+                snapshot,
+                default=default
+            )
+        else:
+            self.build = normal_parse_details.ParseSnapshot(
+                snapshot,
+                default=default
+            )
 
-       self.default = default
-       self.device = self.build.snapshot_json.get("device")
-       self.components = self.build.snapshot_json.get("components")
+        self.default = default
+        self.device = self.build.snapshot_json.get("device")
+        self.components = self.build.snapshot_json.get("components")

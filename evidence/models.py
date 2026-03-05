@@ -1,5 +1,6 @@
 import json
 import hashlib
+import re
 
 from dmidecode import DMIParse
 from django.db import models
@@ -138,15 +139,18 @@ class Evidence:
                 if "dmidecode" == ev.get("operation"):
                     dmidecode_raw = ev["output"]
                     if dmidecode_raw:
+                        dmidecode_raw = re.sub(r'\n{3,}', '\n\n', dmidecode_raw)  # normalize triple newlines
                         self.dmi = DMIParse(dmidecode_raw)
                 if "inxi" == ev.get("operation"):
                     self.inxi = ev["output"]
                     if isinstance(ev["output"], str):
                         self.inxi = json.loads(ev["output"])
         else:
-            dmidecode_raw = self.doc["data"]["dmidecode"]
+            dmidecode_raw = self.doc["data"].get("dmidecode", "")
             inxi_raw = self.doc.get("data", {}).get("inxi")
-            self.dmi = DMIParse(dmidecode_raw)
+            if dmidecode_raw:
+                dmidecode_raw = re.sub(r'\n{3,}', '\n\n', dmidecode_raw)  # normalize triple newlines
+                self.dmi = DMIParse(dmidecode_raw)
             try:
                 self.inxi = json.loads(inxi_raw)
             except Exception:
@@ -254,7 +258,10 @@ class Evidence:
         if self.inxi:
             return self.device_version
 
-        return ""
+        try:
+            return self.dmi.get("System")[0].get("Version", "").strip()
+        except Exception:
+            return ""
 
     def get_alias(self):
         aliases = [ x.value for x in self.properties ]
