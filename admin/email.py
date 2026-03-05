@@ -37,6 +37,7 @@ class NotifyActivateUserByEmail:
             'user': user,
             'token': token,
             'protocol': protocol,
+            'APP_NAME': settings.APP_NAME,
         }
         return context
 

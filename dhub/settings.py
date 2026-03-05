@@ -32,6 +32,7 @@ SECRET_KEY = config('DEVICEHUB_SECRET_KEY_SECRET')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEVICEHUB_DEBUG', default=False, cast=bool)
 DEMO = config('DEVICEHUB_DEMO', default=False, cast=bool)
+APP_NAME = config('DEVICEHUB_APP_NAME', default='DeviceHub')
 
 DEVICEHUB_HOST = config("DEVICEHUB_HOST")
 assert DEVICEHUB_HOST not in [None, ''], "DEVICEHUB_HOST var is MANDATORY"
@@ -111,6 +112,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "django.template.context_processors.i18n",
+                "dashboard.context_processors.app_name",
             ],
 
             'libraries':{

@@ -1,8 +1,6 @@
 {% load i18n %}{% autoescape off %}
 
-{% trans "DeviceHub" as site %}
-
-{% blocktrans %}You're receiving this email because your user account at {{site}} has been activated.{% endblocktrans %}
+{% blocktrans with site=APP_NAME %}You're receiving this email because your user account at {{site}} has been activated.{% endblocktrans %}
 
 {% trans "Your username is:" %} {{ user.username }}
 
@@ -14,6 +12,6 @@
 
 {% trans "Thanks for using our site!" %}
 
-{% blocktrans %}The {{site}} team{% endblocktrans %}
+{% blocktrans with site=APP_NAME %}The {{site}} team{% endblocktrans %}
 
 {% endautoescape %}
