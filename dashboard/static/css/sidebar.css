@@ -1,0 +1,73 @@
+/* Remove bullets from all sidebar <ul> */
+#sidebarMenu ul {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+}
+
+/* Optional: adjust nested ul spacing */
+#sidebarMenu ul ul {
+    padding-left: 2.25rem;
+}
+
+/* Make sidebar scrollable */
+#sidebarMenu {
+    height: calc(100vh - 48px);
+    overflow-y: auto;
+    min-height: 100%;
+    z-index: 100; /* Behind the navbar */
+    box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+}
+
+/* On small screens: overlay content instead of pushing it */
+@media (max-width: 768px) {
+    #sidebarMenu {
+        position: absolute;
+    }
+}
+
+.sidebar .nav-link.active2 {
+    font-weight: 500;
+    color: #000;
+}
+
+
+.icon_sidebar {
+    font-size: 1.5em;
+    margin-right: .5rem;
+    position: relative;
+}
+
+.ul_sidebar {
+    margin-left: 2.5rem;
+}
+
+
+.sidebar .nav-link {
+    font-weight: 300;
+    font-size: 1.2em;
+    color: #333;
+}
+
+.sidebar .nav-link .feather {
+    margin-right: 4px;
+    color: #727272;
+}
+
+.sidebar .nav-link.active {
+    color: #9cc666;
+}
+
+.sidebar .admin.nav-link.active {
+    color: #56beac;
+}
+
+.sidebar .nav-link:hover .feather,
+.sidebar .nav-link.active .feather {
+    color: inherit;
+}
+
+.sidebar-heading {
+    font-size: .75rem;
+    text-transform: uppercase;
+}
