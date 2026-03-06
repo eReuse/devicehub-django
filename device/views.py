@@ -24,8 +24,7 @@ from dashboard.mixins import DashboardView, Http403
 from environmental_impact.algorithms.algorithm_factory import FactoryEnvironmentImpactAlgorithm
 from evidence.models import UserProperty, SystemProperty, Evidence, RootAlias
 from lot.models import LotTag
-from device.models import Device
-from evidence.models import SystemProperty, RootAlias
+from device.models import Device, DeviceType
 from device.forms import DeviceAttributeFormSet, DeviceMainForm, DEVICE_ATTRIBUTE_SUGGESTIONS
 
 from evidence.tables import EvidenceTable
@@ -91,6 +90,15 @@ class NewDeviceView(DashboardView, FormView):
         context['subtitle'] = self.title
         return context
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        db_types = DeviceType.objects.filter(
+            institution=self.request.user.institution
+        ).order_by('order')
+        if db_types.exists():
+            kwargs['device_types'] = [(dt.name, dt.name) for dt in db_types]
+        return kwargs
+
     def form_valid(self, form):
         context = self.get_context_data()
         attribute_formset = context['attribute_formset']
@@ -116,7 +124,7 @@ class EditDeviceView(DashboardView, UpdateView):
             pk=pk,
             owner=self.request.user.institution
         )
-        self.success_url = reverse_lazy('device:details', args=[pk])
+        self.success_url = reverse_lazy('product:details', args=[pk])
         kwargs = super().get_form_kwargs()
         return kwargs
 
@@ -135,7 +143,7 @@ class DetailsView(DashboardView, TemplateView ):
         ).first()
 
         if root and root.root != self.pk:
-            return redirect(reverse_lazy('device:details', args=[root.root]))
+            return redirect(reverse_lazy('product:details', args=[root.root]))
 
         self.object = Device(id=self.pk, owner=self.request.user.institution)
         if not self.object.last_evidence:
@@ -335,7 +343,7 @@ class AddUserPropertyView(DeviceLogMixin, CreateView):
 
     def get_success_url(self):
         pk = self.kwargs.get('pk')
-        return reverse_lazy('device:details', args=[pk]) + "#user_properties"
+        return reverse_lazy('product:details', args=[pk]) + "#user_properties"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -387,7 +395,7 @@ class UpdateUserPropertyView(DeviceLogMixin, UpdateView):
 
     def get_success_url(self):
         pk = self.kwargs.get('device_id')
-        return reverse_lazy('device:details', args=[pk]) + "#user_properties"
+        return reverse_lazy('product:details', args=[pk]) + "#user_properties"
 
 
 class DeleteUserPropertyView(DeviceLogMixin, DeleteView):
@@ -419,7 +427,7 @@ class DeleteUserPropertyView(DeviceLogMixin, DeleteView):
 
     def get_success_url(self):
         pk = self.kwargs.get('device_id')
-        return reverse_lazy('device:details', args=[pk]) + "#user_properties"
+        return reverse_lazy('product:details', args=[pk]) + "#user_properties"
 
 
 class DeviceBulkLabelView(DashboardView, ListView):
@@ -463,4 +471,4 @@ class DeviceBulkLabelView(DashboardView, ListView):
         return context
 
     def get_success_url(self):
-        return self.request.META.get('HTTP_REFERER') or reverse_lazy('device:details')
+        return self.request.META.get('HTTP_REFERER') or reverse_lazy('product:details')
