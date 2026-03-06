@@ -70,7 +70,7 @@ class EvidenceTable(tables.Table):
             if device_id.startswith("photo"):
                 raise Exception
 
-            url = reverse('device:details', kwargs={'pk': device_id})
+            url = reverse('product:details', kwargs={'pk': device_id})
             return format_html(
                 '<a href="{}" class="text-decoration-none link-primary">{}</a>',
                 url,
@@ -126,7 +126,7 @@ class EvidenceTable(tables.Table):
                     title="View DID Document">
                 <i class="bi bi-file-earmark-lock me-2"></i>{}
                 </a>''',
-                did_url, 
+                did_url,
                 _("DID document")
             )
         except Exception as e:

@@ -1,7 +1,7 @@
 from django.urls import path
 from device import views
 
-app_name = 'device'
+app_name = 'product'
 
 urlpatterns = [
     path("add/", views.NewDeviceView.as_view(), name="add"),
