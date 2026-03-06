@@ -20,7 +20,7 @@ from dashboard.mixins import DashboardView, Http403
 from environmental_impact.algorithms.algorithm_factory import FactoryEnvironmentImpactAlgorithm
 from evidence.models import UserProperty, SystemProperty, Evidence
 from lot.models import LotTag
-from device.models import Device
+from device.models import Device, DeviceType
 from device.forms import DeviceFormSet
 from evidence.models import SystemProperty
 from evidence.tables import EvidenceTable
@@ -50,6 +50,15 @@ class NewDeviceView(DashboardView, FormView):
     success_url = reverse_lazy('dashboard:unassigned')
     form_class = DeviceFormSet
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        db_types = DeviceType.objects.filter(
+            institution=self.request.user.institution
+        ).order_by('order')
+        if db_types.exists():
+            kwargs['device_types'] = [(dt.name, dt.name) for dt in db_types]
+        return kwargs
+
     def form_valid(self, form):
         form.save(self.request.user)
         response = super().form_valid(form)
@@ -74,7 +83,7 @@ class EditDeviceView(DashboardView, UpdateView):
             pk=pk,
             owner=self.request.user.institution
         )
-        self.success_url = reverse_lazy('device:details', args=[pk])
+        self.success_url = reverse_lazy('product:details', args=[pk])
         kwargs = super().get_form_kwargs()
         return kwargs
 
@@ -263,7 +272,7 @@ class AddUserPropertyView(DeviceLogMixin, CreateView):
 
     def get_success_url(self):
         pk = self.kwargs.get('pk')
-        return reverse_lazy('device:details', args=[pk]) + "#user_properties"
+        return reverse_lazy('product:details', args=[pk]) + "#user_properties"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -312,7 +321,7 @@ class UpdateUserPropertyView(DeviceLogMixin, UpdateView):
 
     def get_success_url(self):
         pk = self.kwargs.get('device_id')
-        return reverse_lazy('device:details', args=[pk]) + "#user_properties"
+        return reverse_lazy('product:details', args=[pk]) + "#user_properties"
 
 
 class DeleteUserPropertyView(DeviceLogMixin, DeleteView):
@@ -340,4 +349,4 @@ class DeleteUserPropertyView(DeviceLogMixin, DeleteView):
 
     def get_success_url(self):
         pk = self.kwargs.get('device_id')
-        return reverse_lazy('device:details', args=[pk]) + "#user_properties"
+        return reverse_lazy('product:details', args=[pk]) + "#user_properties"

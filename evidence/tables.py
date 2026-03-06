@@ -73,7 +73,7 @@ class EvidenceTable(tables.Table):
                 )
 
             device_id = ev.get_alias()
-            url = reverse('device:details', kwargs={'pk': device_id})
+            url = reverse('product:details', kwargs={'pk': device_id})
             return format_html(
                 '<a href="{}" class="text-decoration-none link-primary">{}</a>',
                 url,

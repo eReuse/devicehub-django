@@ -10,7 +10,7 @@ class PublicDeviceWebViewTests(TestCase):
     def setUp(self):
         self.client = Client()
         self.test_id = "custom_id:test123"
-        self.test_url = reverse('device:device_web',
+        self.test_url = reverse('product:device_web',
                                 kwargs={'pk': self.test_id})
         self.institution = Institution.objects.create(
             name="Test Institution"
@@ -22,7 +22,7 @@ class PublicDeviceWebViewTests(TestCase):
         )
 
     def test_url_resolves_correctly(self):
-        url = reverse('device:device_web', kwargs={'pk': self.test_id})
+        url = reverse('product:device_web', kwargs={'pk': self.test_id})
         self.assertEqual(url, f'/device/{self.test_id}/public/')
 
     @patch('device.views.Device')

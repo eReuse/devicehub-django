@@ -28,7 +28,7 @@ class DeviceTable(tables.Table):
         exclude_from_export=True
     )
     shortid = tables.Column(
-        linkify=("device:details", {"pk": tables.A("id")}),
+        linkify=("product:details", {"pk": tables.A("id")}),
         verbose_name=_("Short ID"),
         attrs={
             'th': {'class': 'text-center'},
