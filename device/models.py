@@ -7,9 +7,9 @@ from evidence.models import SystemProperty, UserProperty, Evidence, RootAlias
 from django.utils.dateparse import parse_datetime
 from lot.models import DeviceLot, DeviceBeneficiary
 from action.models import State
-from user.models import InstitutionSettings, LabelVersion, QRContentType
-
+from user.models import InstitutionSettings, LabelVersion, QRContentType, Institution
 from django.utils.translation import gettext_lazy as _
+
 
 class Device:
     class Types(models.TextChoices):
@@ -703,6 +703,39 @@ class Device:
             'include_logo': settings.qr_include_logo,
             'logo_url': self.owner.logo if settings.qr_include_logo and self.owner.logo else None,
         }
+
+
+class DeviceType(models.Model):
+    institution = models.ForeignKey(Institution, on_delete=models.CASCADE)
+    name = models.CharField(max_length=50)
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ['order']
+        constraints = [
+            models.UniqueConstraint(fields=['institution', 'name'],
+                                    name='unique_institution_device_type')
+        ]
+
+    def save(self, *args, **kwargs):
+        if not self.pk:
+            max_order = DeviceType.objects.filter(
+                institution=self.institution
+            ).aggregate(Max('order'))['order__max']
+            self.order = (max_order or 0) + 1
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        institution = self.institution
+        order = self.order
+        super().delete(*args, **kwargs)
+        DeviceType.objects.filter(
+            institution=institution, order__gt=order
+        ).update(order=models.F('order') - 1)
+
+    def __str__(self):
+        return f"{self.institution.name} - {self.name}"
+
 
 # Registers the ProductCache ORM model under the `device` app. Django only
 # auto-imports `<app>.models`, so the read model defined in device/product_cache.py
