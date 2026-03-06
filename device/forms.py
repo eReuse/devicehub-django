@@ -23,14 +23,27 @@ DEVICE_TYPES = [
 
 
 class DeviceForm(forms.Form):
-    type = forms.ChoiceField(choices = DEVICE_TYPES, required=False)
+    type = forms.ChoiceField(choices=[], required=False)
     amount = forms.IntegerField(required=False, initial=1)
     custom_id = forms.CharField(required=False)
     name = forms.CharField(required=False)
     value = forms.CharField(required=False)
 
+    def __init__(self, *args, **kwargs):
+        device_types = kwargs.pop('device_types', DEVICE_TYPES)
+        super().__init__(*args, **kwargs)
+        self.fields['type'].choices = device_types
+
 
 class BaseDeviceFormSet(forms.BaseFormSet):
+    def __init__(self, *args, **kwargs):
+        self.device_types = kwargs.pop('device_types', DEVICE_TYPES)
+        super().__init__(*args, **kwargs)
+
+    def _construct_form(self, i, **kwargs):
+        kwargs['device_types'] = self.device_types
+        return super()._construct_form(i, **kwargs)
+
     def clean(self):
         for x in self.cleaned_data:
             if x.get("amount"):

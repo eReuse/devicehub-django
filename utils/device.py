@@ -9,7 +9,6 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from evidence.xapian import index
 from evidence.models import SystemProperty
-from device.models import Device
 
 
 logger = logging.getLogger('django')
@@ -34,9 +33,6 @@ def create_doc(data):
             continue
 
         if k.lower() == "type":
-            if v not in Device.Types.values:
-                raise ValidationError("{} is not a valid device".format(v))
-
             device["type"] = v
 
         elif k.lower() == "amount":

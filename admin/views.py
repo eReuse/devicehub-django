@@ -21,6 +21,7 @@ from admin.email import NotifyActivateUserByEmail
 from admin.tables import UserTable
 from action.models import StateDefinition
 from lot.models import LotTag
+from device.models import DeviceType
 
 
 class AdminView(DashboardView):
@@ -356,6 +357,106 @@ class UpdateStateDefinitionView(AdminView, UpdateView):
             return response
         except IntegrityError:
             messages.error(self.request, _("State is already defined."))
+            return self.form_invalid(form)
+
+    def form_invalid(self, form):
+        super().form_invalid(form)
+        return redirect(self.get_success_url())
+
+
+class DeviceTypeContextMixin(ContextMixin):
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({
+            "device_types": DeviceType.objects.filter(
+                institution=self.request.user.institution
+            ).order_by('order'),
+        })
+        return context
+
+
+class DeviceTypesPanelView(AdminView, DeviceTypeContextMixin, TemplateView):
+    template_name = "device_types_panel.html"
+    title = _("Product Types Panel")
+    breadcrumb = _("admin / Product Types Panel") + " /"
+
+
+class AddDeviceTypeView(AdminView, DeviceTypeContextMixin, CreateView):
+    template_name = "device_types_panel.html"
+    title = _("New Product Type")
+    breadcrumb = "Admin / New product type"
+    success_url = reverse_lazy('admin:devicetypes_panel')
+    model = DeviceType
+    fields = ('name',)
+
+    def form_valid(self, form):
+        form.instance.institution = self.request.user.institution
+        try:
+            with transaction.atomic():
+                response = super().form_valid(form)
+            messages.success(self.request, _("Product type successfully added."))
+            return response
+        except IntegrityError:
+            messages.error(self.request, _("Product type is already defined."))
+            return redirect(self.success_url)
+
+    def form_invalid(self, form):
+        return redirect(self.success_url)
+
+
+class DeleteDeviceTypeView(AdminView, DeviceTypeContextMixin, SuccessMessageMixin, DeleteView):
+    model = DeviceType
+    success_url = reverse_lazy('admin:devicetypes_panel')
+
+    def get_success_message(self, cleaned_data):
+        return f'Product type: {self.object.name}, has been deleted'
+
+    def form_valid(self, form):
+        if not self.object.institution == self.request.user.institution:
+            raise Http404
+        return super().form_valid(form)
+
+
+class UpdateDeviceTypeOrderView(AdminView, TemplateView):
+    success_url = reverse_lazy('admin:devicetypes_panel')
+
+    def post(self, request, *args, **kwargs):
+        form = OrderingStateForm(request.POST)
+
+        if form.is_valid():
+            ordered_ids = form.cleaned_data["ordering"].split(',')
+
+            with transaction.atomic():
+                current_order = 1
+                for lookup_id in ordered_ids:
+                    device_type = DeviceType.objects.get(id=lookup_id)
+                    device_type.order = current_order
+                    device_type.save()
+                    current_order += 1
+
+            messages.success(self.request, _("Order changed successfully."))
+            return redirect(self.success_url)
+        else:
+            return Http404
+
+
+class UpdateDeviceTypeView(AdminView, UpdateView):
+    model = DeviceType
+    template_name = 'device_types_panel.html'
+    fields = ['name']
+    success_url = reverse_lazy('admin:devicetypes_panel')
+    pk_url_kwarg = 'pk'
+
+    def get_queryset(self):
+        return DeviceType.objects.filter(institution=self.request.user.institution)
+
+    def form_valid(self, form):
+        try:
+            response = super().form_valid(form)
+            messages.success(self.request, _("Product type updated successfully."))
+            return response
+        except IntegrityError:
+            messages.error(self.request, _("Product type is already defined."))
             return self.form_invalid(form)
 
     def form_invalid(self, form):

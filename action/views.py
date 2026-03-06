@@ -42,7 +42,7 @@ class ChangeStateView(LoginRequiredMixin, FormView):
         return redirect(self.get_success_url())
 
     def get_success_url(self):
-        return self.request.META.get('HTTP_REFERER') or reverse_lazy('device:details')
+        return self.request.META.get('HTTP_REFERER') or reverse_lazy('product:details')
 
 
 class BulkStateChangeView(DashboardView, View):
@@ -114,7 +114,7 @@ class AddNoteView(LoginRequiredMixin, FormView):
         return redirect(self.get_success_url())
 
     def get_success_url(self):
-        return self.request.META.get('HTTP_REFERER') or reverse_lazy('device:details')
+        return self.request.META.get('HTTP_REFERER') or reverse_lazy('product:details')
 
 
 class UpdateNoteView(LoginRequiredMixin, UpdateView):
@@ -146,7 +146,7 @@ class UpdateNoteView(LoginRequiredMixin, UpdateView):
         return redirect(self.get_success_url())
 
     def get_success_url(self):
-        return self.request.META.get('HTTP_REFERER', reverse_lazy('device:details'))
+        return self.request.META.get('HTTP_REFERER', reverse_lazy('product:details'))
 
 
 class DeleteNoteView(LoginRequiredMixin, View):

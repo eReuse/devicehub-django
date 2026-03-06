@@ -20,4 +20,9 @@ urlpatterns = [
     path("lot/delete/<int:pk>", views.DeleteLotTagView.as_view(), name='delete_lot_tag'),
     path("lot/edit/<int:pk>/", views.UpdateLotTagView.as_view(), name='edit_lot_tag'),
     path("lot/update_order/", views.UpdateLotTagOrderView.as_view(), name='update_lot_tag_order'),
+    path("devicetypes/", views.DeviceTypesPanelView.as_view(), name="devicetypes_panel"),
+    path("devicetypes/add", views.AddDeviceTypeView.as_view(), name="add_device_type"),
+    path("devicetypes/delete/<int:pk>", views.DeleteDeviceTypeView.as_view(), name='delete_device_type'),
+    path("devicetypes/update_order/", views.UpdateDeviceTypeOrderView.as_view(), name='update_device_type_order'),
+    path("devicetypes/edit/<int:pk>/", views.UpdateDeviceTypeView.as_view(), name='edit_device_type'),
 ]
