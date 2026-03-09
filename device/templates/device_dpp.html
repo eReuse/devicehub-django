@@ -1,0 +1,290 @@
+{% load i18n %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% trans "DPP Evidence" %}: {{ device.id }}</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
+    <style>
+      :root {
+        --ekoa-green: #7a9f4f;
+        --ekoa-light-green: #9cc666;
+        --trust-blue: #545f71;
+      }
+      body {
+        font-size: 0.875rem;
+        background-color: #f4f7f6;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+        color: #333;
+      }
+      .custom-container {
+        background-color: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        padding: 40px;
+        margin-top: 2rem;
+        flex-grow: 1;
+      }
+      .section-title {
+        color: var(--ekoa-green);
+        border-bottom: 2px solid var(--ekoa-light-green);
+        padding-bottom: 8px;
+        margin-bottom: 24px;
+        font-size: 1.4rem;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+      }
+      .hash-value {
+        word-break: break-all;
+        background-color: #f8f9fa;
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-family: 'SFMono-Regular', Consolas, monospace;
+        font-size: 0.85em;
+        border: 1px solid #dee2e6;
+        color: var(--trust-blue);
+      }
+      .component-card {
+        background-color: #ffffff;
+        border: 1px solid #e9ecef;
+        border-left: 4px solid var(--ekoa-light-green);
+        transition: transform 0.2s ease;
+      }
+      .component-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      }
+      /* Timeline Styling for DTEs */
+      .event-list {
+        position: relative;
+        padding-left: 32px;
+        border-left: 2px dashed #ced4da;
+        margin-left: 12px;
+      }
+      .event-card {
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        position: relative;
+        background: white;
+      }
+      .event-card::before {
+        content: '';
+        position: absolute;
+        left: -41px;
+        top: 20px;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background-color: var(--ekoa-light-green);
+        border: 3px solid #fff;
+        box-shadow: 0 0 0 2px var(--ekoa-light-green);
+      }
+      .badge-signed {
+        background-color: #e8f5e9;
+        color: #2e7d32;
+        border: 1px solid #a5d6a7;
+        font-weight: 500;
+      }
+      footer {
+        background-color: var(--trust-blue);
+        color: #ffffff;
+        padding: 20px 0;
+        margin-top: 40px;
+      }
+    </style>
+  </head>
+  <body>
+
+    <div class="container custom-container">
+      <div class="d-flex justify-content-between align-items-start mb-5 border-bottom pb-4">
+        <div>
+           <span class="badge bg-secondary mb-2 text-uppercase letter-spacing-1">{% trans "Digital Product Passport" %}</span>
+           <h1 class="display-6 fw-bold mb-2">
+                {% if dpp_data and dpp_data.name %}{{ dpp_data.name }}{% else %}{% trans "Device Asset" %} {{ device.id|truncatechars:8 }}{% endif %}
+           </h1>
+           <div class="d-flex align-items-center">
+             <span class="text-muted small me-2">DID:</span>
+             <code class="hash-value">{{ device.id }}</code>
+           </div>
+        </div>
+
+        <div class="d-flex gap-2">
+            <a href="{% url 'device:details' pk=device.id %}" class="btn btn-light border">
+                <i class="bi bi-arrow-left me-1"></i> {% trans "Exit View" %}
+            </a>
+            {% if dpp_meta %}
+            <a href="{% url 'evidence:download_dpp' pk=dpp_meta.pk %}" class="btn btn-dark">
+                <i class="bi bi-filetype-json me-1"></i> {% trans "Download latest DPP (JSON)" %}
+            </a>
+            {% endif %}
+        </div>
+      </div>
+
+      <div class="row g-4">
+        <div class="col-lg-6">
+          <h2 class="section-title"><i class="bi bi-info-circle-fill me-2"></i>{% trans "Identity & Core Data" %}</h2>
+          {% if dpp_data %}
+              <div class="mb-4">
+                  <p class="text-muted mb-3">{{ dpp_data.description|default:"No description provided." }}</p>
+
+                  <div class="row mb-2">
+                    <div class="col-4 fw-bold text-secondary">{% trans "Manufacturer" %}</div>
+                    <div class="col-8">{{ dpp_data.producedByParty.name|default:"-" }}</div>
+                  </div>
+
+                  {% if dpp_data.serialNumber %}
+                  <div class="row mb-2">
+                    <div class="col-4 fw-bold text-secondary">{% trans "Serial Number" %}</div>
+                    <div class="col-8 font-monospace">{{ dpp_data.serialNumber }}</div>
+                  </div>
+                  {% endif %}
+
+                  <div class="row mb-2">
+                    <div class="col-4 fw-bold text-secondary">{% trans "Model Reference" %}</div>
+                    <div class="col-8">{{ dpp_data.model|default:"-" }}</div>
+                  </div>
+              </div>
+          {% else %}
+               <div class="alert alert-light border text-center">
+                   {% trans "No active lifecycle data found for this asset." %}
+               </div>
+          {% endif %}
+        </div>
+
+        <div class="col-lg-6">
+          <h2 class="section-title"><i class="bi bi-fingerprint me-2"></i>{% trans "Cryptographic Integrity" %}</h2>
+          {% if dpp_meta %}
+              <div class="card bg-light border-0">
+                  <div class="card-body p-3">
+                      <div class="mb-3">
+                        <label class="small text-uppercase text-muted d-block">{% trans "Digital Signature Authority" %}</label>
+                        <span class="fw-bold">{{ dpp_meta.credential.issuer.name }}</span>
+                      </div>
+
+                      <div class="mb-3">
+                        <label class="small text-uppercase text-muted d-block">{% trans "Issuer Decentralized ID" %}</label>
+                        <code class="hash-value small">{{ dpp_meta.credential.issuer.id }}</code>
+                      </div>
+
+                      <div class="d-flex justify-content-between align-items-center mt-3">
+                        <span class="text-muted small">{% trans "Timestamp" %}: {{ dpp_meta.created|date:"Y-m-d H:i" }}</span>
+                        <a href="{% url 'evidence:credential_detail' pk=dpp_meta.pk %}" class="btn btn-sm btn-link text-decoration-none">
+                            {% trans "Inspect Proof" %} <i class="bi bi-chevron-right"></i>
+                        </a>
+                      </div>
+                  </div>
+              </div>
+          {% else %}
+              <p class="text-muted italic">{% trans "Cryptographic metadata not linked." %}</p>
+          {% endif %}
+        </div>
+      </div>
+
+      {% if dpp_data and dpp_data.characteristics %}
+      <h2 class="section-title mt-5"><i class="bi bi-cpu-fill me-2"></i>{% trans "Audit-Based Characteristics" %}</h2>
+      <p class="text-muted small mb-4">{% trans "Captured automatically via non-manual hardware scanning tools." %}</p>
+      <div class="row row-cols-1 row-cols-md-3 g-3">
+        {% for key, value in dpp_data.characteristics.items %}
+        <div class="col">
+          <div class="card component-card h-100 shadow-sm border-0">
+            <div class="card-body py-3">
+              <h6 class="card-subtitle mb-1 text-muted text-uppercase" style="font-size: 0.7rem;">{{ key }}</h6>
+              <p class="card-text fw-bold mb-0">{{ value }}</p>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <h2 class="section-title mt-5"><i class="bi bi-arrow-repeat me-2"></i>{% trans "Traceability Audit Trail" %}</h2>
+      {% if events %}
+      <div class="event-list">
+        {% for event in events %}
+        <div class="event-card shadow-sm">
+            <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-light rounded-top">
+                <div class="d-flex align-items-center">
+                    <span class="fw-bold text-dark me-2">{{ event.processType|default:"Lifecycle Step" }}</span>
+                    <span class="badge rounded-pill {% if event.processType == 'StatusChange' %}bg-warning text-dark{% else %}bg-primary{% endif %}">
+                        {{ event.action }}
+                    </span>
+                </div>
+                <div class="text-end lh-1">
+                    <div class="fw-bold">{{ event.parsed_date|date:"Y-m-d" }}</div>
+                    <small class="text-muted" style="font-size: 0.75rem;">{{ event.parsed_date|date:"H:i" }}</small>
+                </div>
+            </div>
+
+            <div class="p-3">
+                <div class="row mb-3">
+                    <div class="col-sm-6">
+                        <label class="small text-muted text-uppercase d-block mb-1">{% trans "System State" %}</label>
+                        <span class="fw-semibold">{{ event.disposition|default:"-" }}</span>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="small text-muted text-uppercase d-block mb-1">{% trans "Facility Location" %}</label>
+                        <span class="text-truncate d-block small"><i class="bi bi-geo-alt me-1"></i>{{ event.bizLocation|default:"-" }}</span>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
+                    <span class="text-muted font-monospace small">CID: {{ event.id }}</span>
+                    <div class="d-flex align-items-center">
+                          <a href="{% url 'evidence:credential_detail' pk=event.meta_verified_pk %}" class="btn btn-sm btn-outline-secondary">
+                            {% trans "View Proof" %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+        <div class="text-center py-5 bg-light rounded">
+            <i class="bi bi-layers text-muted opacity-50" style="font-size: 3rem;"></i>
+            <p class="mt-2 text-muted">{% trans "No individual traceability events documented." %}</p>
+        </div>
+      {% endif %}
+
+    {% if facility_meta %}
+    <h2 class="section-title mt-5"><i class="bi bi-building-check me-2"></i>{% trans "Responsible Processing Unit" %}</h2>
+    <div class="card border-0 shadow-sm bg-white overflow-hidden mb-5">
+        <div class="row g-0">
+            <div class="col-md-8 p-4">
+                <h4 class="fw-bold mb-1">{{ facility_data.name|default:"Registered Facility" }}</h4>
+                <p class="text-muted small">{{ facility_data.description|truncatechars:120 }}</p>
+                <div class="d-flex align-items-center text-muted small mt-2">
+                    <i class="bi bi-key me-2"></i>
+                    <code class="text-dark">{{ facility_meta.credential.id|truncatechars:35 }}</code>
+                </div>
+            </div>
+            <div class="col-md-4 bg-light p-4 d-flex flex-column justify-content-center align-items-md-end">
+                <span class="badge bg-white text-dark border mb-3 p-2">
+                    <i class="bi bi-pin-map-fill text-danger me-1"></i> {{ facility_data.countryOfOperation }}
+                </span>
+                <a href="{% url 'evidence:credential_detail' pk=facility_meta.pk %}" class="btn btn-primary btn-sm">
+                    {% trans "Facility Identity" %} <i class="bi bi-arrow-right ms-1"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    </div>
+
+    <footer>
+      <div class="container text-center">
+        <p class="mb-0 small opacity-75">
+      <p>&copy; {% now 'Y' %} eReuse. {% trans "All rights reserved." %}</p>
+        </p>
+      </div>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>
