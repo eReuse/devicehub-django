@@ -360,10 +360,7 @@ class IssueDigitalPassportView(DeviceLogMixin, View):
             return redirect('device:details', pk=pk)
 
         service = CredentialService(request.user)
-        dpp_endpoint = request.build_absolute_uri(
-            reverse('device:full_dpp', kwargs={'device_id': device.id})
-        )
-        did_error = service.ensure_device_did(device, service_endpoint=dpp_endpoint)
+        did_error = service.ensure_device_did(device)
         did_warning_message = None
         if did_error:
             error_lower = did_error.lower()
@@ -404,6 +401,8 @@ class IssueDigitalPassportView(DeviceLogMixin, View):
 
         device_uri = device.did if device.did else f"ereuse:{device.id}"
         traceability_info = self._get_traceability_info(device, request)
+        facility_info = self._get_facility_info(device, request)
+
         credential_subject = {
             "type": ["ProductPassport"],
             "id": device_uri,
@@ -413,7 +412,8 @@ class IssueDigitalPassportView(DeviceLogMixin, View):
                 "name": f"{components.get('manufacturer', 'Unknown')} {components.get('model', 'Unknown')}",
                 "description": "A personal refurbished computing device.",
                 "serialNumber": components.get('serial'),
-                "characteristics": characteristics
+                "characteristics": characteristics,
+                "producedByParty": facility_info,
             },
             "traceabilityInformation": traceability_info
         }
@@ -427,6 +427,20 @@ class IssueDigitalPassportView(DeviceLogMixin, View):
             description="Digital Product Passport"
         )
 
+        #TODO: better DID handling on dpp issuance
+        dpp_url = self.request.build_absolute_uri(
+            reverse('evidence:credential_detail', kwargs={'pk': credential.id})
+        )
+        did_error = service.ensure_device_did(device, service_endpoint=dpp_url)
+        did_warning_message = None
+        if did_error:
+            error_lower = did_error.lower()
+            if  "[404]" in error_lower:
+                did_warning_message = "Passport issued but service endpoint not modified given that you don't own the DID."
+            else:
+                messages.error(request, f"Failed to issue Passport. DID configuration error: {did_error}")
+                return redirect('device:details', pk=pk)
+
         if error:
             messages.error(request, error)
         else:
@@ -438,7 +452,7 @@ class IssueDigitalPassportView(DeviceLogMixin, View):
         return redirect('device:details', pk=pk)
 
 
-    def _get_facility_info(self, device):
+    def _get_facility_info(self, device, request):
         facility_cred_prop = CredentialProperty.objects.filter(
             owner=device.owner,
             key='DigitalFacilityRecord'
@@ -450,8 +464,12 @@ class IssueDigitalPassportView(DeviceLogMixin, View):
         subject = facility_cred_prop.credential.get('credentialSubject', {})
         facility_data = subject.get('facility', subject)
 
+        fac_url = self.request.build_absolute_uri(
+            reverse('evidence:credential_detail', kwargs={'pk': facility_cred_prop.id})
+        )
+
         return {
-            "id": facility_data.get("id"),
+            "id": fac_url,
             "name": facility_data.get("name"),
             "registeredId": facility_data.get("registeredId", ""),
             "idScheme": {
