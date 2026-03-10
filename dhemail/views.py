@@ -1,7 +1,7 @@
 import logging
 
 from django.conf import settings
-from django.template import loader
+from django.template import loader, Template, Context
 from django.urls import reverse_lazy
 from django.core.mail import EmailMultiAlternatives
 from django.contrib.auth.tokens import default_token_generator
@@ -9,6 +9,13 @@ from django.contrib.sites.shortcuts import get_current_site
 
 
 logger = logging.getLogger(__name__)
+
+
+def _render_fresh(template_name, context):
+    path = loader.get_template(template_name).origin.name
+    with open(path, encoding='utf-8') as f:
+        source = f.read()
+    return Template(source).render(Context(context))
 
 
 class NotifyEmail:
@@ -38,16 +45,16 @@ class NotifyEmail:
         Send a email when a user is activated.
         """
         context = self.get_email_context(user)
-        subject = loader.render_to_string(self.email_template_subject, context)
+        subject = _render_fresh(self.email_template_subject, context)
         # Email subject *must not* contain newlines
         subject = ''.join(subject.splitlines())
-        body = loader.render_to_string(self.email_template, context)
+        body = _render_fresh(self.email_template, context)
         from_email = settings.DEFAULT_FROM_EMAIL
         to_email = user.email
 
         email_message = EmailMultiAlternatives(
             subject, body, from_email, [to_email])
-        html_email = loader.render_to_string(self.email_template_html, context)
+        html_email = _render_fresh(self.email_template_html, context)
         email_message.attach_alternative(html_email, 'text/html')
         try:
             if settings.ENABLE_EMAIL:
