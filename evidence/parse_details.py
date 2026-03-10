@@ -17,13 +17,13 @@ class ParseSnapshot:
                snapshot,
                default=default
            )
-       elif snapshot.get("software") != "workbench-script":
-           self.build = old_parse_details.ParseSnapshot(
+       elif snapshot.get("data",{}).get("lshw"):
+           self.build = legacy_parse_details.ParseSnapshot(
                snapshot,
                default=default
            )
-       elif snapshot.get("data",{}).get("lshw"):
-           self.build = legacy_parse_details.ParseSnapshot(
+       elif snapshot.get("software") != "workbench-script":
+           self.build = old_parse_details.ParseSnapshot(
                snapshot,
                default=default
            )
@@ -35,4 +35,4 @@ class ParseSnapshot:
 
        self.default = default
        self.device = self.build.snapshot_json.get("device")
-       self.components = self.build.snapshot_json.get("components")
+       self.components = self.build.snapshot_json.get("components", [])

@@ -44,16 +44,15 @@ ALGOS = {
 
 
 CHASSIS_DH = {
-    'Tower': {'desktop', 'low-profile', 'tower', 'server'},
+    'Desktop': {'tower', 'desktop', 'low-profile', 'tower', 'server', 'low profile desktop'},
     'Docking': {'docking'},
     'AllInOne': {'all-in-one'},
     'Microtower': {'mini-tower', 'space-saving', 'mini'},
     'PizzaBox': {'pizzabox'},
     'Lunchbox': {'lunchbox'},
     'Stick': {'stick'},
-    'Netbook': {'notebook', 'sub-notebook'},
     'Handheld': {'handheld'},
-    'Laptop': {'portable', 'laptop'},
+    'Laptop': {'portable', 'laptop', 'notebook', 'sub-notebook', 'netbook'},
     'Convertible': {'convertible'},
     'Detachable': {'detachable'},
     'Tablet': {'tablet'},
