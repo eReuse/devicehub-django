@@ -128,22 +128,6 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
         })
         return context
 
-    def get_queryset_count(self):
-        chids = self.object.devicelot_set.all().values_list(
-            "device_id", flat=True
-        ).distinct()
-        search_query = self.request.GET.get('q', '').lower()
-
-        if search_query:
-            ldevices = []
-            for x in chids:
-                dev = Device(id=x)
-                if dev.matches_query(search_query):
-                    ldevices.append(dev)
-            return len(ldevices)
-
-        return chids.count()
-
     def get_queryset(self):
         chids = self._get_chids_qs()
         search_query = self.request.GET.get('q', '').lower()
