@@ -57,9 +57,9 @@
         <div>
 <!--            This fixes devices table that pre-paginates data so uses different context-->
             {% if table.context.total_pages %}
-                {% render_pagination table.context.page table.context.total_pages table.context.limit sort=table.context.sort %}
+                {% render_pagination table.context.page table.context.total_pages table.context.limit table.context.search sort=table.context.sort %}
             {% else %}
-                {% render_pagination table.page.number table.paginator.num_pages table.paginator.per_page sort=table.context.sort %}
+                {% render_pagination table.page.number table.paginator.num_pages table.paginator.per_page table.paginator.search sort=table.context.sort %}
             {% endif %}
         </div>
         {% if not table.hide_count %}
