@@ -1,4 +1,5 @@
 import logging
+import threading
 
 from django.conf import settings
 from django.template import loader, Template, Context
@@ -55,18 +56,20 @@ class NotifyEmail:
         email_message = EmailMultiAlternatives(
             subject, body, from_email, [to_email])
         html_email = _render_fresh(self.email_template_html, context)
-        email_message.attach_alternative(html_email, 'text/html')
-        try:
-            if settings.ENABLE_EMAIL:
-                email_message.send()
-                return
+        if html_email.strip():
+            email_message.attach_alternative(html_email, 'text/html')
+        if settings.ENABLE_EMAIL:
+            def send():
+                try:
+                    email_message.send()
+                except Exception as err:
+                    logger.error("Failed to send email to %s: %s", to_email, err)
 
+            thread = threading.Thread(target=send, daemon=True)
+            thread.start()
+        else:
             logger.warning(to_email)
             logger.warning(body)
-
-        except Exception as err:
-            logger.error(err)
-            return
 
 
 class NotifyActivateUserByEmail(NotifyEmail):
