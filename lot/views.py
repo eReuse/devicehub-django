@@ -234,6 +234,7 @@ class DelToLotView(DashboardView, View):
         try:
             lot = Lot.objects.filter(
                 id=lot_id,
+                owner=self.request.user.institution,
             ).first()
 
             beneficiary = []

@@ -110,7 +110,7 @@ class EditUserView(AdminView, UpdateView):
 
     def get_form_kwargs(self):
         pk = self.kwargs.get('pk')
-        self.object = get_object_or_404(self.model, pk=pk)
+        self.object = get_object_or_404(self.model, pk=pk, institution=self.request.user.institution)
         #self.object.set_password(self.object.password)
         kwargs = super().get_form_kwargs()
         return kwargs

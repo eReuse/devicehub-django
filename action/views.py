@@ -122,6 +122,13 @@ class UpdateNoteView(LoginRequiredMixin, UpdateView):
     fields = ['description']
     pk_url_kwarg = 'pk'
 
+    def get_object(self, queryset=None):
+        return get_object_or_404(
+            Note,
+            pk=self.kwargs['pk'],
+            institution=self.request.user.institution,
+        )
+
     def form_valid(self, form):
         old_description = self.get_object().description
         new_description = self.object.description
