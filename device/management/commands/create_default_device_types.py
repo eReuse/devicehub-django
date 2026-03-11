@@ -8,7 +8,7 @@ logger = logging.getLogger('django')
 
 
 class Command(BaseCommand):
-    help = 'Create default DeviceTypes for a given institution.'
+    help = 'Create default ProductTypes for a given institution.'
 
     def add_arguments(self, parser):
         parser.add_argument('institution_name', type=str, help='The name of the institution')
@@ -47,4 +47,4 @@ class Command(BaseCommand):
             if created:
                 self.stdout.write(self.style.SUCCESS(f'Successfully created device type: {type_name}'))
             else:
-                self.stdout.write(self.style.WARNING(f'Device type already exists: {type_name}'))
+                self.stdout.write(self.style.WARNING(f'Product type already exists: {type_name}'))
