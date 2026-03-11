@@ -259,7 +259,7 @@ class DelToLotView(DashboardView, View):
 
             if beneficiary:
                 for d in beneficiary:
-                    msg = _("Device %s have a beneficiary")
+                    msg = _("Product %s have a beneficiary")
                     messages.error(request, msg % d)
                 return redirect(reverse_lazy('dashboard:lot', kwargs={'pk': lot_id}))
 
@@ -1263,7 +1263,7 @@ class AddDevicesBeneficiaryView(DashboardView, NotifyEmail, TemplateView):
 
                     messages.error(
                         self.request,
-                        _("Device {} cannot be assigned. It is currently actively assigned to {} in lot '{}' and must be RETURNED first.").format(
+                        _("Product {} cannot be assigned. It is currently actively assigned to {} in lot '{}' and must be RETURNED first.").format(
                             short_id, conflict_ben.email, conflict_ben.lot.name
                         )
                     )
