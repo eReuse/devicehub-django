@@ -48,7 +48,7 @@ class UsersView(AdminView, SingleTableView):
     table_class = UserTable
 
     def get_queryset(self):
-        return User.objects.filter()
+        return User.objects.filter(institution=self.request.user.institution)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
