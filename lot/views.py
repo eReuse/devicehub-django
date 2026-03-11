@@ -246,7 +246,7 @@ class DelToLotView(DashboardView, View):
 
             if beneficiary:
                 for d in beneficiary:
-                    msg = _("Device %s have a beneficiary")
+                    msg = _("Product %s have a beneficiary")
                     messages.error(request, msg % d)
                 return redirect(reverse_lazy('dashboard:lot', kwargs={'pk': lot_id}))
 
@@ -1114,7 +1114,7 @@ class AddDevicesBeneficiaryView(DashboardView, NotifyEmail, TemplateView):
                     except Exception:
                         short_id = dev
 
-                    messages.error(self.request, _("Device {} was already assigned to {}").format(
+                    messages.error(self.request, _("Product {} was already assigned to {}").format(
                         short_id, exist.beneficiary.email
                     ))
                 else:
