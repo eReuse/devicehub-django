@@ -95,8 +95,7 @@ class NewDeviceView(DashboardView, FormView):
         db_types = DeviceType.objects.filter(
             institution=self.request.user.institution
         ).order_by('order')
-        if db_types.exists():
-            kwargs['device_types'] = [(dt.name, dt.name) for dt in db_types]
+        kwargs['device_types'] = [(dt.name, dt.name) for dt in db_types]
         return kwargs
 
     def form_valid(self, form):
@@ -112,21 +111,21 @@ class NewDeviceView(DashboardView, FormView):
 
 class EditDeviceView(DashboardView, UpdateView):
     template_name = "new_device.html"
-    title = _("Update Device")
-    breadcrumb = [(_("Device"), reverse_lazy("dashboard:all_device")), (_("Update Device"), None)]
+    title = _("Update Product")
+    breadcrumb = [(_("Device"), reverse_lazy("dashboard:all_device")), (_("Update Product"), None)]
     success_url = reverse_lazy('dashboard:unassigned_devices')
     model = SystemProperty
 
-    def get_form_kwargs(self):
-        pk = self.kwargs.get('pk')
-        self.object = get_object_or_404(
-            self.model,
-            pk=pk,
-            owner=self.request.user.institution
-        )
-        self.success_url = reverse_lazy('product:details', args=[pk])
-        kwargs = super().get_form_kwargs()
-        return kwargs
+#     def get_form_kwargs(self):
+#         pk = self.kwargs.get('pk')
+#         self.object = get_object_or_404(
+#             self.model,
+#             pk=pk,
+#             owner=self.request.user.institution
+#         )
+#         self.success_url = reverse_lazy('product:details', args=[pk])
+#         kwargs = super().get_form_kwargs()
+#         return kwargs
 
 
 class DetailsView(DashboardView, TemplateView ):
