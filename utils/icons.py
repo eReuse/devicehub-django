@@ -19,4 +19,4 @@ ICONS = {
 }
 
 def get_icon_by_type(value):
-    return ICONS.get(value, 'bi-question-circle')
+    return ICONS.get(value, 'bi-box')
