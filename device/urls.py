@@ -5,7 +5,7 @@ app_name = 'product'
 
 urlpatterns = [
     path("add/", views.NewDeviceView.as_view(), name="add"),
-    path("edit/<str:pk>/", views.EditDeviceView.as_view(), name="edit"),
+    # path("edit/<str:pk>/", views.EditDeviceView.as_view(), name="edit"),
     path("<str:pk>/", views.DetailsView.as_view(), name="details"),
     path("<str:pk>/user_property/add",
          views.AddUserPropertyView.as_view(), name="add_user_property"),

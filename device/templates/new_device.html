@@ -27,12 +27,17 @@
 {% load django_bootstrap5 %}
 <form role="form" method="post">
   {% csrf_token %}
-  {% if form.errors %}
+  {% if form.non_form_errors or form.errors %}
   <div class="alert alert-danger alert-icon alert-icon-border alert-dismissible" role="alert">
     <div class="icon"><span class="mdi mdi-close-circle-o"></span></div>
     <div class="message">
-      {% for field, error in form.errors.items %}
+      {% for error in form.non_form_errors %}
         {{ error }}<br />
+      {% endfor %}
+      {% for form_errors in form.errors %}
+        {% for field, errors in form_errors.items %}
+          {{ errors }}<br />
+        {% endfor %}
       {% endfor %}
       <button class="btn-close" type="button" data-dismiss="alert" aria-label="Close"></button>
     </div>

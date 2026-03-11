@@ -1,4 +1,6 @@
 from django import forms
+from django.core.exceptions import ValidationError
+from django.utils.translation import gettext_lazy as _
 from utils.device import create_property, create_doc, create_index
 from utils.save_snapshots import move_json, save_in_disk
 from evidence.models import RootAlias
@@ -27,6 +29,10 @@ class BaseDeviceFormSet(forms.BaseFormSet):
         return super()._construct_form(i, **kwargs)
 
     def clean(self):
+        if not self.device_types:
+            msg = _("You need select one type of product")
+            raise ValidationError(msg)
+
         for x in self.cleaned_data:
             if x.get("amount"):
                 return True
