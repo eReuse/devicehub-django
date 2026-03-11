@@ -336,7 +336,7 @@ class Device:
     @property
     def last_user_evidence(self):
         self.get_last_evidence()
-        return self.last_evidence.doc['kv'].items()
+        return self.last_evidence.doc.get('kv', {}).items()
 
     @property
     def manufacturer(self):
