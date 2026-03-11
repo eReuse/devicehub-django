@@ -4,24 +4,6 @@ from utils.save_snapshots import move_json, save_in_disk
 from evidence.models import RootAlias
 
 
-DEVICE_TYPES = [
-    ("Desktop", "Desktop"),
-    ("Laptop", "Laptop"),
-    ("Server", "Server"),
-    ("GraphicCard", "GraphicCard"),
-    ("HardDrive", "HardDrive"),
-    ("SolidStateDrive", "SolidStateDrive"),
-    ("Motherboard", "Motherboard"),
-    ("NetworkAdapter", "NetworkAdapter"),
-    ("Processor", "Processor"),
-    ("RamModule", "RamModule"),
-    ("SoundCard", "SoundCard"),
-    ("Display", "Display"),
-    ("Battery", "Battery"),
-    ("Camera", "Camera"),
-]
-
-
 class DeviceForm(forms.Form):
     type = forms.ChoiceField(choices=[], required=False)
     amount = forms.IntegerField(required=False, initial=1)
@@ -30,14 +12,14 @@ class DeviceForm(forms.Form):
     value = forms.CharField(required=False)
 
     def __init__(self, *args, **kwargs):
-        device_types = kwargs.pop('device_types', DEVICE_TYPES)
+        device_types = kwargs.pop('device_types', [])
         super().__init__(*args, **kwargs)
         self.fields['type'].choices = device_types
 
 
 class BaseDeviceFormSet(forms.BaseFormSet):
     def __init__(self, *args, **kwargs):
-        self.device_types = kwargs.pop('device_types', DEVICE_TYPES)
+        self.device_types = kwargs.pop('device_types', [])
         super().__init__(*args, **kwargs)
 
     def _construct_form(self, i, **kwargs):
