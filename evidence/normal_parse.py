@@ -1,6 +1,7 @@
 import json
 import logging
 
+from dmidecode import DMIParse
 from evidence.mixin_parse import BuildMix
 from evidence.normal_parse_details import get_inxi_key, get_inxi, ParseSnapshot
 
@@ -33,6 +34,14 @@ class Build(BuildMix):
         except Exception:
             logger.error("No inxi in snapshot %s", self.uuid)
             return ""
+
+        dmidecode_raw = self.json["data"].get('dmidecode', '')
+        self.chassis = ''
+        if dmidecode_raw:
+            dmi = DMIParse(dmidecode_raw)
+            chassis = dmi.get('Chassis')
+            self.chassis = chassis[0].get('Type', '').lower() if chassis else ''
+            self.type = self.chassis
 
         machine = get_inxi_key(self.inxi, 'Machine')
         for m in machine:
