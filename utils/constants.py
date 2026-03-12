@@ -17,6 +17,13 @@ EREUSE24 = [
     "mac"
 ]
 
+EREUSE26 = [
+    "manufacturer",
+    "model",
+    "serial_number",
+    "mac"
+]
+
 # EREUSE22 is used for build the chid of DPP
 EREUSE22 = [
     "manufacturer",
@@ -38,6 +45,7 @@ PHOTO25 = {
 
 ALGOS = {
     "ereuse24": EREUSE24,
+    "ereuse26": EREUSE26,
     "ereuse22": EREUSE22,
     "photo25": PHOTO25
 }
