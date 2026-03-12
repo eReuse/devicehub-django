@@ -1,6 +1,7 @@
 import json
 import logging
 
+from dmidecode import DMIParse
 from evidence.mixin_parse import BuildMix
 from evidence.normal_parse_details import get_inxi_key, get_inxi, ParseSnapshot
 
@@ -34,6 +35,14 @@ class Build(BuildMix):
             logger.error("No inxi in snapshot %s", self.uuid)
             return ""
 
+        dmidecode_raw = self.json["data"].get('dmidecode', '')
+        self.chassis = ''
+        if dmidecode_raw:
+            dmi = DMIParse(dmidecode_raw)
+            chassis = dmi.get('Chassis')
+            self.chassis = chassis[0].get('Type', '').lower() if chassis else ''
+            self.type = self.chassis
+
         machine = get_inxi_key(self.inxi, 'Machine')
         for m in machine:
             system = get_inxi(m, "System")
@@ -41,8 +50,9 @@ class Build(BuildMix):
                 self.manufacturer = system
                 self.model = get_inxi(m, "product")
                 self.serial_number = get_inxi(m, "serial")
-                self.type = get_inxi(m, "Type")
-                self.chassis = self.type
+                if not self.chassis:
+                    self.type = get_inxi(m, "Type")
+                    self.chassis = self.type
                 self.version = get_inxi(m, "v")
             else:
                 self.sku = get_inxi(m, "part-nu")
