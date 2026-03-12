@@ -2,6 +2,8 @@ import json
 import logging
 
 from dmidecode import DMIParse
+from django.conf import settings
+
 from evidence.mixin_parse import BuildMix
 from evidence.normal_parse_details import get_inxi_key, get_inxi, ParseSnapshot
 
@@ -54,6 +56,13 @@ class Build(BuildMix):
             system = get_inxi(m, "System")
             if system:
                 self.type = get_inxi(m, "Type")
+                if settings.DEVICEHUB_ALGORITHM_DEVICE == "ereuse24":
+                    self.manufacturer = system
+                    self.type = get_inxi(m, "Type")
+                    self.model = get_inxi(m, "product")
+                    self.serial_number = get_inxi(m, "serial")
+                    self.chassis = self.type
+
                 self.version = get_inxi(m, "v")
             else:
                 self.sku = get_inxi(m, "part-nu")
