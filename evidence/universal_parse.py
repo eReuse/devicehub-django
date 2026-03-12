@@ -102,7 +102,7 @@ class Build(BuildMix):
         self.serial_number = dmi.serial_number().strip()
 
         chassis = dmi.get('Chassis')
-        self.chassis = chassis[0].get('Type', '') if chassis else ''
+        self.chassis = chassis[0].get('Type', '').lower() if chassis else ''
 
         system = dmi.get('System')
         if system:
