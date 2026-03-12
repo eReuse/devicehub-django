@@ -623,7 +623,6 @@ class DonorMixing(DashboardLotMixing, FormView):
 
     def get_form_kwargs(self):
         self.pk = self.kwargs.get('pk')
-        self.success_url = reverse_lazy('dashboard:lot', args=[self.pk])
         self.get_lot()
         self.get_donor()
         cmanager = LotSubscription.objects.filter(
@@ -641,6 +640,9 @@ class DonorMixing(DashboardLotMixing, FormView):
         if self.donor:
             kwargs["initial"] = {"user": self.donor.email}
             kwargs["donor"] = self.donor
+            self.success_url = reverse_lazy('lot:add_donor', args=[self.pk])
+        else:
+            self.success_url = reverse_lazy('lot:del_donor', args=[self.pk])
         return kwargs
 
 
@@ -666,7 +668,7 @@ class AddDonorView(DonorMixing, DonorEmail):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["action"] = _("Add")
+        context["action"] = _("Add Donor")
         return context
 
 

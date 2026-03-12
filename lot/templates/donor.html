@@ -5,13 +5,6 @@
 {% include 'tabs.html' %}
 
 {% load django_bootstrap5 %}
-{% if donor %}
-    <div class="d-flex justify-content-end mt-1">
-      <a href="{% url 'lot:web_donor' lot.id donor.id %}" class="btn btn-green-admin d-flex align-items-center">
-	{% trans "Donor web" %}
-      </a>
-    </div>
-{% endif %}
 
 <form role="form" method="post">
 {% csrf_token %}
@@ -27,16 +20,22 @@
 </div>
 {% endif %}
 {% bootstrap_form form %}
-<div class="form-actions-no-box">
-  <a class="btn btn-grey" href="{% url 'dashboard:lot' lot.id %}">{% translate "Cancel" %}</a>
-  {% if path == 'lot:del_donor' %}
+<div class="form-actions-no-box d-flex flex-wrap gap-2 mt-3">
+  {% if donor %}
+    <a href="{% url 'lot:web_donor' lot.id donor.id %}" class="btn btn-green-admin d-flex align-items-center">
+      <i class="bi bi-box-arrow-up-right me-2"></i> {% trans "Donor's web" %}
+    </a>
+  {% endif %}
 
-  <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#delete">
-     <i class="bi bi-trash me-1"></i>
-     {% trans 'Delete' %}
+  {% if path == 'lot:del_donor' %}
+  <button type="button" class="btn btn-outline-danger d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#delete">
+     <i class="bi bi-trash me-2"></i>
+     {% trans 'Delete donor' %}
   </button>
   {% else %}
-  <input class="btn btn-green-admin" type="submit" name="submit" value="{{ action }}" />
+  <button type="submit" name="submit" class="btn btn-green-admin d-flex align-items-center">
+    <i class="bi bi-plus me-2"></i> {{ action }}
+  </button>
   {% endif %}
 </div>
 
