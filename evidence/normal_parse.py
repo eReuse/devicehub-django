@@ -23,6 +23,12 @@ def get_mac(inxi):
             return get_inxi(iface, 'mac')
 
 
+def clean(msg):
+    if not isinstance(msg, str):
+        return msg
+    return msg.lower().strip().replace(" ", "_")
+
+
 class Build(BuildMix):
 
     def get_details(self):
@@ -36,23 +42,18 @@ class Build(BuildMix):
             return ""
 
         dmidecode_raw = self.json["data"].get('dmidecode', '')
-        self.chassis = ''
-        if dmidecode_raw:
-            dmi = DMIParse(dmidecode_raw)
-            chassis = dmi.get('Chassis')
-            self.chassis = chassis[0].get('Type', '').lower() if chassis else ''
-            self.type = self.chassis
+        dmi = DMIParse(dmidecode_raw)
+        chassis = dmi.get('Chassis')
+        self.chassis = clean(chassis[0].get('Type', '')) if chassis else ''
+        self.manufacturer = clean(dmi.manufacturer())
+        self.model = clean(dmi.model())
+        self.serial_number = clean(dmi.serial_number())
 
         machine = get_inxi_key(self.inxi, 'Machine')
         for m in machine:
             system = get_inxi(m, "System")
             if system:
-                self.manufacturer = system
-                self.model = get_inxi(m, "product")
-                self.serial_number = get_inxi(m, "serial")
-                if not self.chassis:
-                    self.type = get_inxi(m, "Type")
-                    self.chassis = self.type
+                self.type = get_inxi(m, "Type")
                 self.version = get_inxi(m, "v")
             else:
                 self.sku = get_inxi(m, "part-nu")
