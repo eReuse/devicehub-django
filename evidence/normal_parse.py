@@ -28,7 +28,7 @@ def get_mac(inxi):
 def clean(msg):
     if not isinstance(msg, str):
         return msg
-    return msg.lower().strip().replace(" ", "_")
+    return msg.lower().strip().replace(" ", "")
 
 
 class Build(BuildMix):
