@@ -7,15 +7,27 @@ from django.urls import reverse_lazy
 from django.core.mail import EmailMultiAlternatives
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.shortcuts import get_current_site
+from dhemail.models import InstitutionTemplate
 
 
 logger = logging.getLogger(__name__)
 
 
-def _render_fresh(template_name, context):
-    path = loader.get_template(template_name).origin.name
-    with open(path, encoding='utf-8') as f:
-        source = f.read()
+def _render_fresh(template_name, context, institution=None):
+    source = None
+    if institution:
+        tmpl = InstitutionTemplate.objects.filter(
+            institution=institution,
+            template_name=template_name,
+        ).first()
+        if tmpl:
+            source = tmpl.content
+
+    if source is None:
+        path = loader.get_template(template_name).origin.name
+        with open(path, encoding='utf-8') as f:
+            source = f.read()
+
     return Template(source).render(Context(context))
 
 
@@ -46,16 +58,17 @@ class NotifyEmail:
         Send a email when a user is activated.
         """
         context = self.get_email_context(user)
-        subject = _render_fresh(self.email_template_subject, context)
+        institution = user.institution
+        subject = _render_fresh(self.email_template_subject, context, institution)
         # Email subject *must not* contain newlines
         subject = ''.join(subject.splitlines())
-        body = _render_fresh(self.email_template, context)
+        body = _render_fresh(self.email_template, context, institution)
         from_email = settings.DEFAULT_FROM_EMAIL
         to_email = user.email
 
         email_message = EmailMultiAlternatives(
             subject, body, from_email, [to_email])
-        html_email = _render_fresh(self.email_template_html, context)
+        html_email = _render_fresh(self.email_template_html, context, institution)
         if html_email.strip():
             email_message.attach_alternative(html_email, 'text/html')
         if settings.ENABLE_EMAIL:

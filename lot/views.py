@@ -3,6 +3,7 @@ import logging
 import datetime
 
 from django.db import IntegrityError
+from django.utils.safestring import mark_safe
 from utils.icons import get_icon_by_type
 from django.urls import reverse_lazy
 from django.shortcuts import get_object_or_404, redirect, Http404, render
@@ -49,6 +50,7 @@ from dhemail.views import (
     DonorEmail,
     BeneficiaryInterestedEmail,
     BeneficiaryEmail,
+    _render_fresh,
 )
 
 
@@ -729,6 +731,14 @@ class DonorView(WebMixing):
     template_name = "donor_web.html"
     model = Donor
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        institution = self.object.lot.owner
+        context['detail_html'] = mark_safe(
+            _render_fresh('donor_web_detail.html', context, institution)
+        )
+        return context
+
     def get_chids(self):
         return self.object.lot.devicelot_set.all().values_list(
             "device_id", flat=True
@@ -1242,6 +1252,10 @@ class AgreementBeneficiaryView(TemplateView):
         context.update({
             'object': beneficiary,
         })
+        institution = beneficiary.lot.owner
+        context['detail_html'] = mark_safe(
+            _render_fresh('beneficiary_agreement_detail.html', context, institution)
+        )
         return context
 
 

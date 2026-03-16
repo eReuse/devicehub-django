@@ -22,6 +22,17 @@ from django.utils.html import format_html
 
 from pathlib import Path
 
+from dhemail.models import InstitutionTemplate
+
+
+def _template_name(rel_path):
+    """'app/templates/foo/bar.txt' → 'foo/bar.txt'"""
+    parts = rel_path.split('/', 2)
+    if len(parts) == 3 and parts[1] == 'templates':
+        return parts[2]
+    return rel_path
+
+
 class PanelView(DashboardView, TemplateView):
     template_name = "panel.html"
     title = _("User")
@@ -166,14 +177,25 @@ class TemplateEditorView(DashboardView, TemplateView):
                for gid, glabel, _ in EDITABLE_GROUPS]
 
         # Files for the active group
+        institution = self.request.user.institution
         files_data = []
         for gid, glabel, files in EDITABLE_GROUPS:
             if gid == group_id:
                 for item in files:
                     fid, rel_path = item[0], item[1]
                     section = item[2] if len(item) > 2 else None
-                    full_path = settings.BASE_DIR / rel_path
-                    content = full_path.read_text(encoding='utf-8') if full_path.exists() else ""
+                    tmpl_name = _template_name(rel_path)
+                    tmpl = InstitutionTemplate.objects.filter(
+                        institution=institution,
+                        template_name=tmpl_name,
+                    ).first()
+
+                    if tmpl:
+                        content = tmpl.content
+                    else:
+                        full_path = settings.BASE_DIR / rel_path
+                        content = full_path.read_text(encoding='utf-8') if full_path.exists() else ""
+
                     files_data.append({
                         'fid': fid,
                         'path': rel_path,
@@ -193,13 +215,12 @@ class TemplateEditorView(DashboardView, TemplateView):
         group_id = self.kwargs.get('group_id', EDITABLE_GROUPS[0][0])
 
         if rel_path:
-            full_path = settings.BASE_DIR / rel_path
-            full_path.parent.mkdir(parents=True, exist_ok=True)
-
-            # Normalize: No ^M, exactly one trailing newline
             clean = content.replace('\r\n', '\n').replace('\r', '\n').rstrip() + '\n'
-            full_path.write_text(clean, encoding='utf-8')
-
+            InstitutionTemplate.objects.update_or_create(
+                institution=request.user.institution,
+                template_name=_template_name(rel_path),
+                defaults={'content': clean},
+            )
             messages.success(request, f"Saved: {rel_path}")
 
         return redirect(reverse('user:template-editor', kwargs={'group_id': group_id}))
