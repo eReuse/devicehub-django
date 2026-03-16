@@ -58,7 +58,7 @@ class NotifyEmail:
         Send a email when a user is activated.
         """
         context = self.get_email_context(user)
-        institution = user.institution
+        institution = user.lot.owner
         subject = _render_fresh(self.email_template_subject, context, institution)
         # Email subject *must not* contain newlines
         subject = ''.join(subject.splitlines())

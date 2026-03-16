@@ -65,6 +65,25 @@
         </div>
       </div>
     </div>
+
+    {% if user.is_admin or user.is_shop %}
+    <div class="col-md-6">
+      <div class="card h-100 shadow-sm border-0">
+        <div class="card-body d-flex flex-column">
+          <h5 class="card-title mb-3">
+            <i class="bi bi-envelope-paper me-2"></i> {% translate 'Template Editor' %}
+          </h5>
+          <p class="card-text flex-grow-1">{% translate 'Customize email and document templates for your institution.' %}</p>
+          <div class="text-end">
+            <a href="{% url 'user:template-editor' 'ben_interested' %}" class="btn btn-outline-dark btn-sm d-inline-flex align-items-center">
+              <span class="me-2">{% translate 'Go' %}</span>
+              <i class="bi bi-arrow-right"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
   </div>
 
 {% endblock %}

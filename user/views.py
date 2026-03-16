@@ -168,6 +168,11 @@ class TemplateEditorView(DashboardView, TemplateView):
     title = _("Template Editor")
     breadcrumb = "User / Template Editor"
 
+    def dispatch(self, request, *args, **kwargs):
+        if not (request.user.is_admin or request.user.is_shop):
+            raise Http403
+        return super().dispatch(request, *args, **kwargs)
+
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         group_id = self.kwargs.get('group_id', EDITABLE_GROUPS[0][0])
