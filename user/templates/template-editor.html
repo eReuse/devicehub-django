@@ -1,38 +1,54 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>{{ subtitle }}</h2>
 
 <p>This form is experimental and it might disappear in future.</p>
-
 <p>The objective is to improve email responses</p>
 
-<p>Editing files directly in: <code>dhemail/templates/</code></p>
-
-<hr>
-
-{% for file in files_data %}
-<div style="margin-bottom: 25px; border-bottom: 1px solid #eee; padding-bottom: 10px;">
-    <form method="post">
-        {% csrf_token %}
-        <input type="hidden" name="rel_path" value="{{ file.path }}">
-
-        <h2>{{ file.path }}</h2>
-
-        {% if "subject" in file.path %}
-            <div style="display: flex; gap: 5px;">
-                <input class="form-control" type="text" name="content" value="{{ file.content }}" style="flex-grow: 1; margin: 5px 0;">
-            </div>
-            <div style="text-align: left;">
-                <button class="btn btn-green-admin px-4" type="submit">Save</button>
-            </div>
-        {% else %}
-            <textarea class="form-control font-code" name="content" rows="6" style="width: 100%; font-family: monospace; margin: 5px 0;">{{ file.content }}</textarea>
-            <div style="text-align: left;">
-                <button class="btn btn-green-admin px-4" type="submit">Save</button>
-            </div>
-        {% endif %}
-    </form>
+<div class="row">
+  <div class="col">
+    <ul class="nav nav-tabs nav-tabs-bordered">
+      {% for tab in nav %}
+      <li class="nav-item">
+        <a href="{% url 'user:template-editor' tab.id %}"
+           class="nav-link {% if tab.active %}active{% endif %}">{{ tab.label }}</a>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
 </div>
-{% endfor %}
+
+<div class="pt-4">
+  {% for file in files_data %}
+
+  {% if file.section %}
+  <h6 class="text-muted mt-3 mb-2">{{ file.section }}</h6>
+  {% endif %}
+
+  <form method="post" class="mb-3">
+    {% csrf_token %}
+    <input type="hidden" name="rel_path" value="{{ file.path }}">
+
+    <p class="text-muted small mb-1">{{ file.path }}</p>
+
+    {% if "subject" in file.path %}
+      <div class="d-flex gap-2">
+        <input class="form-control" type="text" name="content" value="{{ file.content }}">
+        <button class="btn btn-green-admin px-4" type="submit">Save</button>
+      </div>
+    {% elif "html" in file.path %}
+      <textarea class="form-control font-code" name="content" rows="15">{{ file.content }}</textarea>
+      <div class="mt-1">
+        <button class="btn btn-green-admin px-4" type="submit">Save</button>
+      </div>
+    {% else %}
+      <textarea class="form-control font-code" name="content" rows="6">{{ file.content }}</textarea>
+      <div class="mt-1">
+        <button class="btn btn-green-admin px-4" type="submit">Save</button>
+      </div>
+    {% endif %}
+  </form>
+
+  {% endfor %}
+</div>
 
 {% endblock %}

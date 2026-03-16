@@ -90,71 +90,107 @@ class UserProfileView(DashboardView, DetailView):
             context['title'] = f"{user.first_name or user.email}'s Profile"
             return context
 
-# Define exactly which files you want to edit here
-EDITABLE_FILES = [
-    # Beneficiary Statuses
-    ('ben_int_sub', 'dhemail/templates/beneficiary/interested/subject.txt'),
-    ('ben_int_txt', 'dhemail/templates/beneficiary/interested/email.txt'),
-    ('ben_int_html', 'dhemail/templates/beneficiary/interested/email.html'),
-    ('ben_conf_sub', 'dhemail/templates/beneficiary/confirmed/subject.txt'),
-    ('ben_conf_txt', 'dhemail/templates/beneficiary/confirmed/email.txt'),
-    ('ben_conf_html', 'dhemail/templates/beneficiary/confirmed/email.html'),
-    ('ben_deliv_sub', 'dhemail/templates/beneficiary/delivered/subject.txt'),
-    ('ben_deliv_txt', 'dhemail/templates/beneficiary/delivered/email.txt'),
-    ('ben_deliv_html', 'dhemail/templates/beneficiary/delivered/email.html'),
-    ('ben_ret_sub', 'dhemail/templates/beneficiary/returned/subject.txt'),
-    ('ben_ret_txt', 'dhemail/templates/beneficiary/returned/email.txt'),
-    ('ben_ret_html', 'dhemail/templates/beneficiary/returned/email.html'),
-    # Circuit manager
-    ('cm_ret_sub', 'dhemail/templates/circuit_manager/subscription_subject.txt'),
-    ('cm_ret_txt', 'dhemail/templates/circuit_manager/subscription_email.txt'),
-    ('cm_ret_html', 'dhemail/templates/circuit_manager/subscription_email.html'),
-    # Donor
-    ('donor_sub', 'dhemail/templates/donor/subject.txt'),
-    ('donor_txt', 'dhemail/templates/donor/email.txt'),
-    ('donor_html', 'dhemail/templates/donor/email.html'),
-    # Shop
-    ('shop_sub', 'dhemail/templates/shop/subscription_subject.txt'),
-    ('shop_txt', 'dhemail/templates/shop/subscription_email.txt'),
-    ('shop_html', 'dhemail/templates/shop/subscription_email.html'),
-    # Subscriptions
-    ('sub_acc_sub', 'dhemail/templates/subscription/accepted_conditions_beneficiary_subject.txt'),
-    ('sub_acc_txt', 'dhemail/templates/subscription/accepted_conditions_beneficiary_email.txt'),
-    ('sub_acc_html', 'dhemail/templates/subscription/accepted_conditions_beneficiary_email.html'),
-    ('sub_con_sub', 'dhemail/templates/subscription/confirmed_beneficiary_subject.txt'),
-    ('sub_con_txt', 'dhemail/templates/subscription/confirmed_beneficiary_email.txt'),
-    ('sub_con_html', 'dhemail/templates/subscription/confirmed_beneficiary_email.html'),
-    ('sub_del_sub', 'dhemail/templates/subscription/delivered_beneficiary_subject.txt'),
-    ('sub_del_txt', 'dhemail/templates/subscription/delivered_beneficiary_email.txt'),
-    ('sub_del_html', 'dhemail/templates/subscription/delivered_beneficiary_email.html'),
-    ('sub_ready_sub', 'dhemail/templates/subscription/incoming_lot_ready_subject.txt'),
-    ('sub_ready_txt', 'dhemail/templates/subscription/incoming_lot_ready_email.txt'),
-    ('sub_ready_html', 'dhemail/templates/subscription/incoming_lot_ready_email.html'),
-    ('sub_int_sub', 'dhemail/templates/subscription/interested_beneficiary_subject.txt'),
-    ('sub_int_txt', 'dhemail/templates/subscription/interested_beneficiary_email.txt'),
-    ('sub_int_html', 'dhemail/templates/subscription/interested_beneficiary_email.html'),
-    # Beneficiary agreement
-    ('ben_agree', 'lot/templates/beneficiary_agreement_detail.html'),
+# (tab_id, tab_label, [(fid, rel_path), ...])
+# For subscriptions, a 3rd element in the file tuple marks a sub-section header.
+EDITABLE_GROUPS = [
+    ('ben_interested', 'Ben: Interested', [
+        ('ben_int_sub', 'dhemail/templates/beneficiary/interested/subject.txt'),
+        ('ben_int_txt', 'dhemail/templates/beneficiary/interested/email.txt'),
+        ('ben_int_html', 'dhemail/templates/beneficiary/interested/email.html'),
+    ]),
+    ('ben_confirmed', 'Ben: Confirmed', [
+        ('ben_conf_sub', 'dhemail/templates/beneficiary/confirmed/subject.txt'),
+        ('ben_conf_txt', 'dhemail/templates/beneficiary/confirmed/email.txt'),
+        ('ben_conf_html', 'dhemail/templates/beneficiary/confirmed/email.html'),
+    ]),
+    ('ben_delivered', 'Ben: Delivered', [
+        ('ben_deliv_sub', 'dhemail/templates/beneficiary/delivered/subject.txt'),
+        ('ben_deliv_txt', 'dhemail/templates/beneficiary/delivered/email.txt'),
+        ('ben_deliv_html', 'dhemail/templates/beneficiary/delivered/email.html'),
+    ]),
+    ('ben_returned', 'Ben: Returned', [
+        ('ben_ret_sub', 'dhemail/templates/beneficiary/returned/subject.txt'),
+        ('ben_ret_txt', 'dhemail/templates/beneficiary/returned/email.txt'),
+        ('ben_ret_html', 'dhemail/templates/beneficiary/returned/email.html'),
+    ]),
+    ('circuit_manager', 'Circuit Manager', [
+        ('cm_sub', 'dhemail/templates/circuit_manager/subscription_subject.txt'),
+        ('cm_txt', 'dhemail/templates/circuit_manager/subscription_email.txt'),
+        ('cm_html', 'dhemail/templates/circuit_manager/subscription_email.html'),
+    ]),
+    ('donor', 'Donor', [
+        ('donor_sub', 'dhemail/templates/donor/subject.txt'),
+        ('donor_txt', 'dhemail/templates/donor/email.txt'),
+        ('donor_html', 'dhemail/templates/donor/email.html'),
+        ('donor_web', 'lot/templates/donor_web_detail.html'),
+    ]),
+    ('shop', 'Shop', [
+        ('shop_sub', 'dhemail/templates/shop/subscription_subject.txt'),
+        ('shop_txt', 'dhemail/templates/shop/subscription_email.txt'),
+        ('shop_html', 'dhemail/templates/shop/subscription_email.html'),
+    ]),
+    ('subscriptions', 'Subscriptions', [
+        ('sub_acc_sub', 'dhemail/templates/subscription/accepted_conditions_beneficiary_subject.txt', 'Accepted conditions'),
+        ('sub_acc_txt', 'dhemail/templates/subscription/accepted_conditions_beneficiary_email.txt'),
+        ('sub_acc_html', 'dhemail/templates/subscription/accepted_conditions_beneficiary_email.html'),
+        ('sub_con_sub', 'dhemail/templates/subscription/confirmed_beneficiary_subject.txt', 'Confirmed'),
+        ('sub_con_txt', 'dhemail/templates/subscription/confirmed_beneficiary_email.txt'),
+        ('sub_con_html', 'dhemail/templates/subscription/confirmed_beneficiary_email.html'),
+        ('sub_del_sub', 'dhemail/templates/subscription/delivered_beneficiary_subject.txt', 'Delivered'),
+        ('sub_del_txt', 'dhemail/templates/subscription/delivered_beneficiary_email.txt'),
+        ('sub_del_html', 'dhemail/templates/subscription/delivered_beneficiary_email.html'),
+        ('sub_ready_sub', 'dhemail/templates/subscription/incoming_lot_ready_subject.txt', 'Lot ready'),
+        ('sub_ready_txt', 'dhemail/templates/subscription/incoming_lot_ready_email.txt'),
+        ('sub_ready_html', 'dhemail/templates/subscription/incoming_lot_ready_email.html'),
+        ('sub_int_sub', 'dhemail/templates/subscription/interested_beneficiary_subject.txt', 'Interested'),
+        ('sub_int_txt', 'dhemail/templates/subscription/interested_beneficiary_email.txt'),
+        ('sub_int_html', 'dhemail/templates/subscription/interested_beneficiary_email.html'),
+    ]),
+    ('agreement', 'Agreement', [
+        ('ben_agree', 'lot/templates/beneficiary_agreement_detail.html'),
+    ]),
 ]
+
 
 class TemplateEditorView(DashboardView, TemplateView):
     template_name = "template-editor.html"
+    title = _("Template Editor")
+    breadcrumb = "User / Template Editor"
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        files_data = []
-        for fid, rel_path in EDITABLE_FILES:
-            # Assumes get_template_path logic from before
-            full_path = settings.BASE_DIR / rel_path
-            content = full_path.read_text(encoding='utf-8') if full_path.exists() else ""
-            files_data.append({'fid': fid, 'path': rel_path, 'content': content})
+        group_id = self.kwargs.get('group_id', EDITABLE_GROUPS[0][0])
 
+        # Nav: all groups with active flag
+        nav = [{'id': gid, 'label': glabel, 'active': gid == group_id}
+               for gid, glabel, _ in EDITABLE_GROUPS]
+
+        # Files for the active group
+        files_data = []
+        for gid, glabel, files in EDITABLE_GROUPS:
+            if gid == group_id:
+                for item in files:
+                    fid, rel_path = item[0], item[1]
+                    section = item[2] if len(item) > 2 else None
+                    full_path = settings.BASE_DIR / rel_path
+                    content = full_path.read_text(encoding='utf-8') if full_path.exists() else ""
+                    files_data.append({
+                        'fid': fid,
+                        'path': rel_path,
+                        'content': content,
+                        'section': section,
+                    })
+                break
+
+        ctx['nav'] = nav
         ctx['files_data'] = files_data
+        ctx['group_id'] = group_id
         return ctx
 
     def post(self, request, *args, **kwargs):
         rel_path = request.POST.get('rel_path')
         content = request.POST.get('content', '')
+        group_id = self.kwargs.get('group_id', EDITABLE_GROUPS[0][0])
 
         if rel_path:
             full_path = settings.BASE_DIR / rel_path
@@ -165,4 +201,5 @@ class TemplateEditorView(DashboardView, TemplateView):
             full_path.write_text(clean, encoding='utf-8')
 
             messages.success(request, f"Saved: {rel_path}")
-        return redirect('user:template-editor')
+
+        return redirect(reverse('user:template-editor', kwargs={'group_id': group_id}))
