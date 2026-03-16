@@ -90,53 +90,7 @@
     </style>
   </head>
   <body>
-    <div class="container custom-container">
-      <h1 class="text-center mb-4" style="color: #545f71;">{{ object.email }}</h1>
-
-      <div class="row mt-4">
-        <div class="col">
-	  <table class="table table-hover table-bordered align-middel">
-	    <thead class="table-light">
-              <tr>
-                <th scope="col">ID</th>
-                <th scope="col" width="15%" class="text-center">{% trans "Manufacturer" %}
-                <th scope="col" width="15%" class="text-center">{% trans "Model" %}
-                <th scope="col" width="15%" class="text-center">{% trans "Serial Number" %}
-                </th>
-              </tr>
-	    </thead>
-	    <tbody>
-	      {% for dev in devices %}
-	      <tr>
-		<td class="font-monospace">{{ dev.shortid }}</td>
-		<td class="font-monospace">{{ dev.manufacturer }}</td>
-		<td class="font-monospace">{{ dev.model }}</td>
-		<td class="font-monospace">{{ dev.serial_number }}</td>
-	      </tr>
-	      {% endfor %}
-	    </tbody>
-	  </table>
-        </div>
-      </div>
-
-      {% if not object.reconciliation %}
-      <div class="row mt-4">
-        <div class="col">
-          <div class="form-actions-no-box">
-            <a class="btn btn-secondary" href="{% url 'lot:accept_donor' object.lot.id object.id %}">{% trans 'Accept' %}</a>
-          </div>
-        </div>
-      </div>
-      {% else %}
-      <div class="row mt-4">
-        <div class="col">
-          <div class="form-actions-no-box">
-            <a class="btn btn-secondary" href="{# url 'lot:impact_doc_donor' object.lot.id object.id #}" onclick="alert('This feature is not implemented yet.');">{% trans 'Impact Report' %}</a>
-          </div>
-        </div>
-      </div>
-      {% endif %}
-    </div>
+    {% include "donor_web_detail.html" %}
     <footer>
       <p>
       </p>
