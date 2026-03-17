@@ -44,6 +44,8 @@ from lot.models import (
     Donor,
     DeviceBeneficiary
 )
+from django.conf import settings
+from django.urls import reverse
 from dhemail.views import (
     NotifyEmail,
     SubscriptionEmail,
@@ -52,6 +54,9 @@ from dhemail.views import (
     BeneficiaryEmail,
     _render_fresh,
 )
+from dhemail.models import InstitutionTemplate, LotTemplate
+from dashboard.mixins import Http403
+from user.views import EDITABLE_GROUPS, _template_name, _allowed_template_names
 
 
 logger = logging.getLogger(__name__)
@@ -735,7 +740,7 @@ class DonorView(WebMixing):
         context = super().get_context_data(**kwargs)
         institution = self.object.lot.owner
         context['detail_html'] = mark_safe(
-            _render_fresh('donor_web_detail.html', context, institution)
+            _render_fresh('donor_web_detail.html', context, institution, self.object.lot)
         )
         return context
 
@@ -1254,7 +1259,7 @@ class AgreementBeneficiaryView(TemplateView):
         })
         institution = beneficiary.lot.owner
         context['detail_html'] = mark_safe(
-            _render_fresh('beneficiary_agreement_detail.html', context, institution)
+            _render_fresh('beneficiary_agreement_detail.html', context, institution, beneficiary.lot)
         )
         return context
 
@@ -1296,3 +1301,91 @@ class AcceptBeneficiaryView(TemplateView, NotifyEmail):
         context = super().get_email_context(user)
         context['beneficiary'] = self.beneficiary
         return context
+
+
+class LotTemplateEditorView(DashboardLotMixing, TemplateView):
+    template_name = "lot-template-editor.html"
+    title = _("Template Editor")
+    breadcrumb = "Lot / Template Editor"
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return super().dispatch(request, *args, **kwargs)
+        if not (request.user.is_admin or request.user.is_shop):
+            raise Http403
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        group_id = self.kwargs.get('group_id', EDITABLE_GROUPS[0][0])
+
+        nav = [{'id': gid, 'label': glabel, 'active': gid == group_id}
+               for gid, glabel, _ in EDITABLE_GROUPS]
+
+        institution = self.request.user.institution
+        lot = self.lot
+        files_data = []
+        for gid, glabel, files in EDITABLE_GROUPS:
+            if gid == group_id:
+                for item in files:
+                    fid, rel_path = item[0], item[1]
+                    section = item[2] if len(item) > 2 else None
+                    tmpl_name = _template_name(rel_path)
+
+                    lot_tmpl = LotTemplate.objects.filter(
+                        lot=lot, template_name=tmpl_name).first()
+                    if lot_tmpl:
+                        content = lot_tmpl.content
+                        level = 'lot'
+                    else:
+                        inst_tmpl = InstitutionTemplate.objects.filter(
+                            institution=institution, template_name=tmpl_name).first()
+                        if inst_tmpl:
+                            content = inst_tmpl.content
+                            level = 'institution'
+                        else:
+                            full_path = settings.BASE_DIR / rel_path
+                            content = full_path.read_text(encoding='utf-8') if full_path.exists() else ""
+                            level = 'default'
+
+                    files_data.append({
+                        'fid': fid,
+                        'path': rel_path,
+                        'content': content,
+                        'section': section,
+                        'level': level,
+                    })
+                break
+
+        ctx['nav'] = nav
+        ctx['files_data'] = files_data
+        ctx['group_id'] = group_id
+        return ctx
+
+    def post(self, request, *args, **kwargs):
+        self.pk = self.kwargs.get('pk')
+        self.get_lot()
+        rel_path = request.POST.get('rel_path')
+        content = request.POST.get('content', '')
+        group_id = self.kwargs.get('group_id', EDITABLE_GROUPS[0][0])
+
+        if rel_path:
+            tmpl_name = _template_name(rel_path)
+            if tmpl_name not in _allowed_template_names():
+                messages.error(request, "Invalid template path.")
+                return redirect(reverse('lot:template-editor', kwargs={
+                    'pk': self.lot.id,
+                    'group_id': group_id,
+                }))
+            clean = content.replace('\r\n', '\n').replace('\r', '\n').rstrip() + '\n'
+            LotTemplate.objects.update_or_create(
+                lot=self.lot,
+                template_name=tmpl_name,
+                defaults={'content': clean},
+            )
+            messages.success(request, f"Saved: {rel_path}")
+
+        return redirect(reverse('lot:template-editor', kwargs={
+            'pk': self.lot.id,
+            'group_id': group_id,
+        }))

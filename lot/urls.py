@@ -31,4 +31,5 @@ urlpatterns = [
     path("<int:pk>/beneficiary/<uuid:id>/", views.WebBeneficiaryView.as_view(), name="web_beneficiary"),
     path("<int:pk>/beneficiary/<uuid:id>/agreement", views.AgreementBeneficiaryView.as_view(), name="agreement_beneficiary"),
     path("<int:pk>/beneficiary/<uuid:id>/accept", views.AcceptBeneficiaryView.as_view(), name="accept_beneficiary"),
+    path("<int:pk>/template-editor/<str:group_id>/", views.LotTemplateEditorView.as_view(), name="template-editor"),
 ]

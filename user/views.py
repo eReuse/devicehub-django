@@ -33,6 +33,11 @@ def _template_name(rel_path):
     return rel_path
 
 
+def _allowed_template_names():
+    """Set of valid template_names as defined in EDITABLE_GROUPS."""
+    return {_template_name(item[1]) for _, _, files in EDITABLE_GROUPS for item in files}
+
+
 class PanelView(DashboardView, TemplateView):
     template_name = "panel.html"
     title = _("User")
@@ -169,6 +174,8 @@ class TemplateEditorView(DashboardView, TemplateView):
     breadcrumb = "User / Template Editor"
 
     def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return super().dispatch(request, *args, **kwargs)
         if not (request.user.is_admin or request.user.is_shop):
             raise Http403
         return super().dispatch(request, *args, **kwargs)
@@ -220,10 +227,14 @@ class TemplateEditorView(DashboardView, TemplateView):
         group_id = self.kwargs.get('group_id', EDITABLE_GROUPS[0][0])
 
         if rel_path:
+            tmpl_name = _template_name(rel_path)
+            if tmpl_name not in _allowed_template_names():
+                messages.error(request, "Invalid template path.")
+                return redirect(reverse('user:template-editor', kwargs={'group_id': group_id}))
             clean = content.replace('\r\n', '\n').replace('\r', '\n').rstrip() + '\n'
             InstitutionTemplate.objects.update_or_create(
                 institution=request.user.institution,
-                template_name=_template_name(rel_path),
+                template_name=tmpl_name,
                 defaults={'content': clean},
             )
             messages.success(request, f"Saved: {rel_path}")

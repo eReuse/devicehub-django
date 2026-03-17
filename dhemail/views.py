@@ -7,15 +7,23 @@ from django.urls import reverse_lazy
 from django.core.mail import EmailMultiAlternatives
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.shortcuts import get_current_site
-from dhemail.models import InstitutionTemplate
+from dhemail.models import InstitutionTemplate, LotTemplate
 
 
 logger = logging.getLogger(__name__)
 
 
-def _render_fresh(template_name, context, institution=None):
+def _render_fresh(template_name, context, institution=None, lot=None):
     source = None
-    if institution:
+    if lot:
+        tmpl = LotTemplate.objects.filter(
+            lot=lot,
+            template_name=template_name,
+        ).first()
+        if tmpl:
+            source = tmpl.content
+
+    if source is None and institution:
         tmpl = InstitutionTemplate.objects.filter(
             institution=institution,
             template_name=template_name,
@@ -58,17 +66,20 @@ class NotifyEmail:
         Send a email when a user is activated.
         """
         context = self.get_email_context(user)
-        institution = user.lot.owner
-        subject = _render_fresh(self.email_template_subject, context, institution)
+        lot = self.lot
+        # user can be a donor, beneficiary -> without institution
+        # or can be shop, circuit_manager -> with institution
+        institution = lot.owner if lot else getattr(user, 'institution', None)
+        subject = _render_fresh(self.email_template_subject, context, institution, lot)
         # Email subject *must not* contain newlines
         subject = ''.join(subject.splitlines())
-        body = _render_fresh(self.email_template, context, institution)
+        body = _render_fresh(self.email_template, context, institution, lot)
         from_email = settings.DEFAULT_FROM_EMAIL
         to_email = user.email
 
         email_message = EmailMultiAlternatives(
             subject, body, from_email, [to_email])
-        html_email = _render_fresh(self.email_template_html, context, institution)
+        html_email = _render_fresh(self.email_template_html, context, institution, lot)
         if html_email.strip():
             email_message.attach_alternative(html_email, 'text/html')
         if settings.ENABLE_EMAIL:

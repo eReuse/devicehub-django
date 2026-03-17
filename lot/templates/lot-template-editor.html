@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block content %}
+{% include "tabs.html" with path="lot:template-editor" %}
+
+<p class="mt-3">This form is experimental and it might disappear in future.</p>
+<p>The objective is to improve email responses</p>
+
+<div class="row">
+  <div class="col">
+    <ul class="nav nav-tabs nav-tabs-bordered">
+      {% for tab in nav %}
+      <li class="nav-item">
+        <a href="{% url 'lot:template-editor' lot.id tab.id %}"
+           class="nav-link {% if tab.active %}active{% endif %}">{{ tab.label }}</a>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+
+<div class="pt-4">
+  {% for file in files_data %}
+
+  {% if file.section %}
+  <h6 class="text-muted mt-3 mb-2">{{ file.section }}</h6>
+  {% endif %}
+
+  <form method="post" class="mb-3">
+    {% csrf_token %}
+    <input type="hidden" name="rel_path" value="{{ file.path }}">
+
+    <p class="text-muted small mb-1">
+      {{ file.path }}
+      {% if file.level == 'lot' %}
+        <span class="badge bg-success ms-1">lot</span>
+      {% elif file.level == 'institution' %}
+        <span class="badge bg-warning text-dark ms-1">institution</span>
+      {% else %}
+        <span class="badge bg-secondary ms-1">default</span>
+      {% endif %}
+    </p>
+
+    {% if "subject" in file.path %}
+      <div class="d-flex gap-2">
+        <input class="form-control" type="text" name="content" value="{{ file.content }}">
+        <button class="btn btn-green-admin px-4" type="submit">Save</button>
+      </div>
+    {% elif "html" in file.path %}
+      <textarea class="form-control font-code" name="content" rows="15">{{ file.content }}</textarea>
+      <div class="mt-1">
+        <button class="btn btn-green-admin px-4" type="submit">Save</button>
+      </div>
+    {% else %}
+      <textarea class="form-control font-code" name="content" rows="6">{{ file.content }}</textarea>
+      <div class="mt-1">
+        <button class="btn btn-green-admin px-4" type="submit">Save</button>
+      </div>
+    {% endif %}
+  </form>
+
+  {% endfor %}
+</div>
+
+{% endblock %}

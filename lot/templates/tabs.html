@@ -38,6 +38,13 @@
 	  {% trans 'Environmental Impact' %}
 	</a>
       </li>
+      {% if request.user.is_admin or request.user.is_shop %}
+      <li class="nav-item">
+        <a href="{% url 'lot:template-editor' lot.id 'ben_interested' %}" class="nav-link {% if path == 'lot:template-editor' %}active{% endif %}">
+          {% trans 'Templates' %}
+        </a>
+      </li>
+      {% endif %}
     </ul>
   </div>
 </div>
