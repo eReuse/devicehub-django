@@ -103,12 +103,15 @@
             {% csrf_token %}
             <div class="d-flex flex-wrap-reverse flex-sm-wrap justify-content-end align-items-center gap-2">
                 <!-- Select all checkbox -->
+                {% if count > 0 %}
                 <div class="d-flex align-items-center gap-1 flex-shrink-0 ">
                     <input type="checkbox" id="select-all" class="form-check-input mt-0">
                     <label class="form-check-label text-muted " for="select-all">
                         {% trans "Select all" %}
                     </label>
                 </div>
+                {% endif %}
+
                 <!-- Second row first cell-->
                 <div class="d-flex flex-wrap align-items-center gap-2">
                     <!-- Change state dropdown -->
