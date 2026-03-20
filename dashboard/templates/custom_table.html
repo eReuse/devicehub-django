@@ -3,15 +3,14 @@
 {% load paginacion %}
 
 {% block table-wrapper %}
-  <div class="table-responsive rounded-3 shadow-sm custom-hover-shadow">
+  <div class="table-responsive rounded-3 shadow-sm custom-hover-shadow custom_table">
     {% block table %}
     <table {% render_attrs table.attrs class="table table-hover table-bordered align-middle" %}>
       {% block table.thead %}
       <thead class="text-center">
         <tr>
           {% for column in table.columns %}
-          <th {{ column.attrs.th.as_html }} scope="col"
-              class="ps-3 py-2 fw-semibold fs-7 border-bottom">
+          <th {{ column.attrs.th.as_html }} scope="col">
             {% if column.orderable %}
               <a href="{% querystring table.prefixed_order_by_field=column.order_by_alias.next %}"
                  class="text-decoration-none text-dark d-flex align-items-center justify-content-center gap-2">

@@ -1,0 +1,16 @@
+
+/* Remove horizontal lines and add "air" */
+.custom_table table {
+    border-collapse: separate;
+    border-spacing: 0; /* delete space between rows */
+    border: none;
+}
+
+.custom_table thead th {
+    border: none;
+    padding: 1rem 1rem;
+}
+
+.custom_table tbody td {
+    border: none;
+}
