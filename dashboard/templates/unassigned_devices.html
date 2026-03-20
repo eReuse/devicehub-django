@@ -44,6 +44,7 @@
     </div>
     {% endif %}
 
+    {% if count > 0 %}
     <!-- Main Table Section -->
     <div class="mb-4">
         <form method="post" id="devices-form">
@@ -152,19 +153,12 @@
                     {% endif %}
                 </div>
             </div>
-    </div>
+        </div>
 
             <!-- Table and pagination -->
-            {% if count > 0 %}
             <div class="table-responsive">
                 {% render_table table %}
             </div>
-            {% else %}
-            <div class="text-center text-muted py-5">
-                <i class="bi bi-inbox h1"></i>
-                <p class="mt-2">{% trans "No devices found" %}</p>
-            </div>
-            {% endif %}
         </form>
 
         <div class="d-flex flex-wrap align-items-center gap-2 justify-content-end p-2">
@@ -196,10 +190,15 @@
                     {% endfor %}
                 </form>
             </div>
-
         </div>
-
     </div>
+
+    {% else %}
+    <div class="text-center text-muted py-5">
+        <i class="bi bi-inbox h1"></i>
+        <p class="mt-2">{% trans "No devices found" %}</p>
+    </div>
+    {% endif %}
 
 
     <script>
