@@ -15,14 +15,13 @@ class DeviceTable(tables.Table):
         accessor='id',
         attrs={
             'th__input': {
-                'id': 'select-all',
-                'class': 'form-check-input'
+                'class': 'd-none'
             },
             'td__input': {
                 'class': 'select-checkbox form-check-input'
             },
-            'th': {'class': 'text-center'},
-            'td': {'class': 'text-center'}
+            'th': {'class': 'text-center p-0'},
+            'td': {'class': 'text-center pe-0'}
         },
         orderable=False,
         exclude_from_export=True
@@ -31,8 +30,8 @@ class DeviceTable(tables.Table):
         linkify=("device:details", {"pk": tables.A("id")}),
         verbose_name=_("Short ID"),
         attrs={
-            'th': {'class': 'text-center'},
-            'td': {'class': 'text-center'}
+            'th': {'class': 'text-center ps-0'},
+            'td': {'class': 'text-center ps-0'}
         },
         orderable=True,
     )
