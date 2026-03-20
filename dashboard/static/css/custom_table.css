@@ -13,4 +13,5 @@
 
 .custom_table tbody td {
     border: none;
+    padding: .75rem .5rem;
 }

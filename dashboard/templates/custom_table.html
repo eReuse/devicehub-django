@@ -3,7 +3,7 @@
 {% load paginacion %}
 
 {% block table-wrapper %}
-  <div class="table-responsive rounded-3 shadow-sm custom-hover-shadow custom_table">
+  <div class="table-responsive custom-hover-shadow custom_table">
     {% block table %}
     <table {% render_attrs table.attrs class="table table-hover table-bordered align-middle" %}>
       {% block table.thead %}
