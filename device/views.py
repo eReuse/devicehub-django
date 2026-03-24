@@ -6,7 +6,7 @@ from collections import defaultdict
 from dateutil.parser import isoparse
 from django.http import JsonResponse
 from django.conf import settings
-from django.db import IntegrityError
+from django.db import IntegrityError, models
 from django.urls import reverse_lazy, resolve
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect, Http404
@@ -45,6 +45,12 @@ from dateutil.parser import isoparse
 
 logger = logging.getLogger(__name__)
 
+
+class CosmeticGrade(models.TextChoices):
+    GRADE_A = 'GradeA', _('Grade A - Excellent (Like New)')
+    GRADE_B = 'GradeB', _('Grade B - Good (Minor Scratches)')
+    GRADE_C = 'GradeC', _('Grade C - Fair (Noticeable Wear)')
+    GRADE_D = 'GradeD', _('Grade D - Poor (Heavy Wear/Damaged)')
 
 class DeviceLogMixin(DashboardView):
 
@@ -441,7 +447,7 @@ class DeviceBulkLabelView(DashboardView, ListView):
 
 
 class IssueDigitalPassportView(DeviceLogMixin, View):
-    def get(self, request, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
         pk = self.kwargs.get('device_id')
         try:
             device = Device(id=pk, owner=request.user.institution)
@@ -465,6 +471,13 @@ class IssueDigitalPassportView(DeviceLogMixin, View):
             else:
                 messages.error(request, f"Failed to issue Passport. DID configuration error: {did_error}")
                 return redirect('device:details', pk=pk)
+
+        warranty_months = request.POST.get('warranty_months', '').strip()
+        raw_grade = request.POST.get('cosmetic_grade', '').strip()
+        warranty_url = request.POST.get('warranty_url', '').strip()
+        repair_guide = request.POST.get('repair_guide', '').strip()
+        operator_notes = request.POST.get('operator_notes', '').strip()
+        facility_info = self._get_facility_info(device, request)
 
         def convert_ram_to_mb(ram_string):
             if not isinstance(ram_string, str): return 0
@@ -497,22 +510,64 @@ class IssueDigitalPassportView(DeviceLogMixin, View):
 
         device_uri = device.did if device.did else f"ereuse:{device.id}"
         traceability_info = self._get_traceability_info(device, request)
-        facility_info = self._get_facility_info(device, request)
+
 
         credential_subject = {
             "type": ["ProductPassport"],
             "id": device_uri,
+            "granularityLevel": "item",
             "product": {
                 "type": ["Product"],
                 "id": device_uri,
                 "name": f"{components.get('manufacturer', 'Unknown')} {components.get('model', 'Unknown')}",
                 "description": "A personal refurbished computing device.",
-                "serialNumber": components.get('serial'),
                 "characteristics": characteristics,
-                "producedByParty": facility_info,
             },
             "traceabilityInformation": traceability_info
         }
+
+        if raw_grade in CosmeticGrade.values:
+            credential_subject["product"]["characteristics"]["itemCondition"] = raw_grade
+
+        serial = components.get('serial')
+        if serial and str(serial).upper() != "NA":
+            credential_subject["product"]["serialNumber"] = str(serial)
+
+        if facility_info:
+            credential_subject["product"]["producedAtFacility"] = {
+                "id": facility_info["id"],
+                "name": facility_info["name"]
+            }
+            if facility_info.get("registeredId"):
+                credential_subject["product"]["producedAtFacility"]["registeredId"] = str(facility_info["registeredId"])
+
+
+        if repair_guide:
+            credential_subject["circularityScorecard"] = {
+                "type": ["CircularityPerformance"],
+                "repairInformation": {
+                    "type": ["Link"],
+                    "linkURL": repair_guide,
+                    "linkName": "Device Repair Guide"
+                }
+            }
+
+        if raw_grade:
+            credential_subject["product"]["characteristics"]["itemCondition"] = raw_grade
+
+        if warranty_months or warranty_url:
+            warranty_obj = {}
+            if warranty_months:
+                try:
+                    warranty_obj["durationMonths"] = int(warranty_months)
+                except ValueError:
+                    pass
+            if warranty_url:
+                warranty_obj["termsOfService"] = warranty_url
+            credential_subject["product"]["characteristics"]["warrantyPromise"] = warranty_obj
+
+        if operator_notes:
+            credential_subject["product"]["characteristics"]["operatorNotes"] = operator_notes
 
         credential, error = service.issue_device_credential(
             credential_type_key='dpp',
@@ -523,27 +578,23 @@ class IssueDigitalPassportView(DeviceLogMixin, View):
             description="Digital Product Passport"
         )
 
-        #TODO: better DID handling on dpp issuance
+        if error:
+            messages.error(request, error)
+            return redirect('device:details', pk=pk)
+        else:
+            messages.success(request, "Digital Product Passport issued successfully!")
+
         dpp_url = self.request.build_absolute_uri(
             reverse('evidence:credential_detail', kwargs={'pk': credential.id})
         )
         did_error = service.ensure_device_did(device, service_endpoint=dpp_url)
-        did_warning_message = None
+
         if did_error:
             error_lower = did_error.lower()
-            if  "[404]" in error_lower:
-                did_warning_message = "Passport issued but service endpoint not modified given that you don't own the DID."
+            if  "[404]" in error_lower or "[403]" in error_lower:
+                messages.warning(request, "Passport issued but service endpoint not modified given that you don't own the DID.")
             else:
-                messages.error(request, f"Failed to issue Passport. DID configuration error: {did_error}")
-                return redirect('device:details', pk=pk)
-
-        if error:
-            messages.error(request, error)
-        else:
-            if did_warning_message:
-                messages.warning(request, did_warning_message)
-            else:
-                messages.success(request, "Digital Product Passport issued successfully!")
+                messages.error(request, f"DID configuration error during endpoint update: {did_error}")
 
         return redirect('device:details', pk=pk)
 
@@ -602,8 +653,7 @@ class IssueDigitalPassportView(DeviceLogMixin, View):
                 link_obj = {
                     "type": ["SecureLink", "Link"],
                     "linkURL": cred_url,
-                    "linkName": f"Traceability Event - {process_name}",
-                    "linkType": "application/json",
+                    "linkName": f"Traceability Event - {process_name}"
                 }
 
                 grouped[process_name].append(link_obj)
