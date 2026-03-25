@@ -49,7 +49,7 @@
           onclick="window.location.href='?{% if search_query %}q={{ search_query }}&{% endif %}show_archived=false'"
           {% if show_archived == 'false' %}checked{% endif %}>
         <label class="btn btn-outline-secondary d-flex align-items-center h-100" for="filterActive">
-          <i class="bi bi-filter me-2"></i>
+          <i class="bi bi-folder-check me-2"></i>
           {% trans 'Active' %} ({{ active_count }})
         </label>
 
@@ -62,7 +62,7 @@
           onclick="window.location.href='?{% if search_query %}q={{ search_query }}&{% endif %}show_archived=true'"
           {% if show_archived == 'true' %}checked{% endif %}>
         <label class="btn btn-outline-secondary d-flex align-items-center h-100" for="filterArchived">
-          <i class="bi bi-filter me-2"></i>
+          <i class="bi bi-archive me-2"></i>
           {% trans 'Archived' %} ({{ archived_count }})
         </label>
 
@@ -79,6 +79,7 @@
           {% trans 'All Lots' %} ({{ total_count }})
         </label>
       </div>
+
         <button type="submit" class="btn btn-outline-danger d-none me-3" id="delete-selected">
             <i class="bi bi-trash"></i>
             {% trans 'Delete Selected' %}
