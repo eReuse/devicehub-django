@@ -8,12 +8,13 @@ class LotTable(tables.Table):
         accessor='id',
         attrs={
             'th__input': {
-                'id': 'select-all',
-                'class': 'form-check-input'
+                'class': 'd-none'
             },
             'td__input': {
                 'class': 'select-checkbox form-check-input'
             },
+            'th': {'class': 'p-0'},
+            'td': {'class': 'pe-0'}
         },
         orderable=False
     )
@@ -32,6 +33,10 @@ class LotTable(tables.Table):
     )
     archived = tables.Column(
         verbose_name=_("Status"),
+        attrs={
+            'th': {'class': 'ps-0'},
+            'td': {'class': 'ps-0'}
+        }
     )
     device_count = tables.Column(
         verbose_name=_("Devices"),

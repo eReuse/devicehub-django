@@ -28,13 +28,17 @@
   <!-- Delete and filter buttons -->
   <form method="get" action="{% url 'lot:delete' %}" id="bulk-action-form">
     {% csrf_token %}
-    <div class="d-flex justify-content-end align-items-center mb-4">
+    <div class="d-flex justify-content-start align-items-center mb-4 gap-4">
 
-      <button type="submit" class="btn btn-outline-danger d-none me-3" id="delete-selected">
-        <i class="bi bi-trash"></i>
-        {% trans 'Delete Selected' %}
-      </button>
-
+        <!-- Select all checkbox -->
+        {% if total_count > 0 %}
+        <div class="d-flex align-items-center gap-1 flex-shrink-0 ">
+            <input type="checkbox" id="select-all" class="form-check-input mt-0">
+            <label class="form-check-label text-muted " for="select-all">
+                {% trans "Select all" %}
+            </label>
+        </div>
+        {% endif %}
       <div class="btn-group" role="group" aria-label="Filter Options">
         <input
           type="radio"
@@ -75,6 +79,10 @@
           {% trans 'All Lots' %} ({{ total_count }})
         </label>
       </div>
+        <button type="submit" class="btn btn-outline-danger d-none me-3" id="delete-selected">
+            <i class="bi bi-trash"></i>
+            {% trans 'Delete Selected' %}
+        </button>
   </div>
 
   <h3>{{ subtitle }}</h3>
