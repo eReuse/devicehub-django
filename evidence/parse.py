@@ -5,6 +5,7 @@ import logging
 from evidence import legacy_parse
 from evidence import old_parse
 from evidence import normal_parse
+from evidence import openwrt_parse
 from evidence.parse_details import ParseSnapshot
 
 from evidence.models import SystemProperty
@@ -45,6 +46,8 @@ class Build:
         if evidence_json.get("credentialSubject"):
             self.build = normal_parse.Build(evidence_json)
             self.uuid = evidence_json.get("credentialSubject", {}).get("uuid")
+        elif evidence_json.get("software") == "workbench-script-openwrt":
+            self.build = openwrt_parse.Build(evidence_json)
         elif evidence_json.get("data",{}).get("lshw"):
             self.build = legacy_parse.Build(evidence_json)
         elif evidence_json.get("software") != "workbench-script":

@@ -3,7 +3,8 @@ import logging
 from evidence import (
     legacy_parse_details,
     normal_parse_details,
-    old_parse_details
+    old_parse_details,
+    openwrt_parse_details
 )
 
 
@@ -14,6 +15,11 @@ class ParseSnapshot:
     def __init__(self, snapshot, default="n/a"):
        if snapshot.get("credentialSubject"):
            self.build = normal_parse_details.ParseSnapshot(
+               snapshot,
+               default=default
+           )
+       elif snapshot.get("software") == "workbench-script-openwrt":
+           self.build = openwrt_parse_details.ParseSnapshot(
                snapshot,
                default=default
            )
