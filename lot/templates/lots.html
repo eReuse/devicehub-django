@@ -28,63 +28,74 @@
   <!-- Delete and filter buttons -->
   <form method="get" action="{% url 'lot:delete' %}" id="bulk-action-form">
     {% csrf_token %}
-    <div class="d-flex justify-content-start align-items-center mb-4 gap-4">
+    <div class="row align-items-center mb-4 g-2">
 
-        <!-- Select all checkbox -->
-        {% if total_count > 0 %}
-        <div class="d-flex align-items-center gap-1 flex-shrink-0 ">
-            <input type="checkbox" id="select-all" class="form-check-input mt-0">
-            <label class="form-check-label text-muted " for="select-all">
-                {% trans "Select all" %}
+      <!-- Filter buttons: full-width on mobile (scrollable), auto width on desktop (order-2) -->
+      <div class="col-12 col-lg-auto order-lg-2">
+        <div style="overflow-x: auto;">
+          <div class="btn-group my-2" role="group" aria-label="Filter Options" style="min-width: max-content;">
+            <input
+              type="radio"
+              class="btn-check"
+              name="filterOptions"
+              id="filterActive"
+              autocomplete="off"
+              onclick="window.location.href='?{% if search_query %}q={{ search_query }}&{% endif %}show_archived=false'"
+              {% if show_archived == 'false' %}checked{% endif %}>
+            <label class="btn btn-outline-secondary d-flex align-items-center h-100" for="filterActive">
+              <i class="bi bi-folder-check me-2"></i>
+              {% trans 'Active' %} ({{ active_count }})
             </label>
+
+            <input
+              type="radio"
+              class="btn-check"
+              name="filterOptions"
+              id="filterArchived"
+              autocomplete="off"
+              onclick="window.location.href='?{% if search_query %}q={{ search_query }}&{% endif %}show_archived=true'"
+              {% if show_archived == 'true' %}checked{% endif %}>
+            <label class="btn btn-outline-secondary d-flex align-items-center h-100" for="filterArchived">
+              <i class="bi bi-archive me-2"></i>
+              {% trans 'Archived' %} ({{ archived_count }})
+            </label>
+
+            <input
+              type="radio"
+              class="btn-check"
+              name="filterOptions"
+              id="filterAll"
+              autocomplete="off"
+              onclick="window.location.href='?{% if search_query %}q={{ search_query }}&{% endif %}show_archived=both'"
+              {% if show_archived == 'both' %}checked{% endif %}>
+            <label class="btn btn-outline-secondary d-flex align-items-center h-100" for="filterAll">
+              <i class="bi bi-filter me-2"></i>
+              {% trans 'All Lots' %} ({{ total_count }})
+            </label>
+          </div>
         </div>
-        {% endif %}
-      <div class="btn-group" role="group" aria-label="Filter Options">
-        <input
-          type="radio"
-          class="btn-check"
-          name="filterOptions"
-          id="filterActive"
-          autocomplete="off"
-          onclick="window.location.href='?{% if search_query %}q={{ search_query }}&{% endif %}show_archived=false'"
-          {% if show_archived == 'false' %}checked{% endif %}>
-        <label class="btn btn-outline-secondary d-flex align-items-center h-100" for="filterActive">
-          <i class="bi bi-folder-check me-2"></i>
-          {% trans 'Active' %} ({{ active_count }})
-        </label>
-
-        <input
-          type="radio"
-          class="btn-check"
-          name="filterOptions"
-          id="filterArchived"
-          autocomplete="off"
-          onclick="window.location.href='?{% if search_query %}q={{ search_query }}&{% endif %}show_archived=true'"
-          {% if show_archived == 'true' %}checked{% endif %}>
-        <label class="btn btn-outline-secondary d-flex align-items-center h-100" for="filterArchived">
-          <i class="bi bi-archive me-2"></i>
-          {% trans 'Archived' %} ({{ archived_count }})
-        </label>
-
-        <input
-          type="radio"
-          class="btn-check"
-          name="filterOptions"
-          id="filterAll"
-          autocomplete="off"
-          onclick="window.location.href='?{% if search_query %}q={{ search_query }}&{% endif %}show_archived=both'"
-          {% if show_archived == 'both' %}checked{% endif %}>
-        <label class="btn btn-outline-secondary d-flex align-items-center h-100" for="filterAll">
-          <i class="bi bi-filter me-2"></i>
-          {% trans 'All Lots' %} ({{ total_count }})
-        </label>
       </div>
 
-        <button type="submit" class="btn btn-outline-danger d-none me-3" id="delete-selected">
-            <i class="bi bi-trash"></i>
-            {% trans 'Delete Selected' %}
+      <!-- Select all: below filters on mobile (DOM order), first on desktop (order-md-1) -->
+      {% if total_count > 0 %}
+      <div class="col-auto order-lg-1">
+        <div class="d-flex align-items-center gap-1">
+          <input type="checkbox" id="select-all" class="form-check-input mt-0">
+          <label class="form-check-label text-muted" for="select-all">
+            {% trans "Select all" %}
+          </label>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Delete button: next to select-all on mobile, pushed to far right on desktop (order-md-3) -->
+      <div class="col-auto order-lg-3 ms-auto ms-lg-2">
+        <button type="submit" class="btn btn-outline-danger d-none" id="delete-selected">
+          <i class="bi bi-trash"></i>
+          {% trans 'Delete Selected' %}
         </button>
-  </div>
+      </div>
+    </div>
 
   <h3>{{ subtitle }}</h3>
   {% render_table table %}
