@@ -3,7 +3,8 @@ import logging
 from evidence import (
     legacy_parse_details,
     normal_parse_details,
-    old_parse_details
+    old_parse_details,
+    openwrt_parse_details
 )
 
 
@@ -17,13 +18,18 @@ class ParseSnapshot:
                snapshot,
                default=default
            )
-       elif snapshot.get("data",{}).get("lshw"):
-           self.build = legacy_parse_details.ParseSnapshot(
+       elif snapshot.get("software") == "workbench-script-openwrt":
+           self.build = openwrt_parse_details.ParseSnapshot(
                snapshot,
                default=default
            )
        elif snapshot.get("software") != "workbench-script":
            self.build = old_parse_details.ParseSnapshot(
+               snapshot,
+               default=default
+           )
+       elif snapshot.get("data",{}).get("lshw"):
+           self.build = legacy_parse_details.ParseSnapshot(
                snapshot,
                default=default
            )

@@ -42,8 +42,9 @@ class BuildMix:
 
         dmidecode_raw = data.get("dmidecode")
         inxi_raw = data.get("inxi")
+        openwrt_board = data.get("board")
         device = self.json.get("device")
-        if not dmidecode_raw and not inxi_raw and not device:
+        if not dmidecode_raw and not inxi_raw and not device and not openwrt_board:
             txt = "snapshot without dmidecode and inxi datas"
             logger.error(txt)
             raise Exception(txt)
