@@ -133,6 +133,25 @@ class Evidence:
         if self.is_legacy():
             return
 
+        if self.is_openwrt():
+            data = self.doc.get("data", {})
+            board = data.get("board", {})
+            device_tree = data.get("device_tree", {})
+
+            model_full = board.get("model", "") or device_tree.get("model", "")
+            if model_full:
+                parts = model_full.split()
+                self.device_manufacturer = parts[0] if parts else ""
+                self.device_model = model_full
+            else:
+                self.device_manufacturer = ""
+                self.device_model = ""
+
+            self.device_serial_number = board.get("board_name", "")
+            self.device_chassis = "Router"
+            self.device_version = board.get("release", {}).get("version", "")
+            return
+
         if self.doc.get("credentialSubject"):
             for ev in self.doc["evidence"]:
                 if "dmidecode" == ev.get("operation"):
@@ -193,6 +212,9 @@ class Evidence:
         if self.is_legacy():
             return self.doc.get('device', {}).get('manufacturer', '')
 
+        if self.is_openwrt():
+            return getattr(self, 'device_manufacturer', '')
+
         if self.inxi:
             return self.device_manufacturer
 
@@ -211,6 +233,9 @@ class Evidence:
         if self.is_legacy():
             return self.doc.get('device', {}).get('model', '')
 
+        if self.is_openwrt():
+            return getattr(self, 'device_model', '')
+
         if self.inxi:
             return self.device_model
 
@@ -222,6 +247,9 @@ class Evidence:
     def get_chassis(self):
         if self.is_legacy():
             return self.doc.get('device', {}).get('model', '')
+
+        if self.is_openwrt():
+            return getattr(self, 'device_chassis', 'Router')
 
         if self.inxi:
             return self.device_chassis
@@ -242,6 +270,9 @@ class Evidence:
         if self.is_legacy():
             return self.doc.get('device', {}).get('serialNumber', '')
 
+        if self.is_openwrt():
+            return getattr(self, 'device_serial_number', '')
+
         if self.inxi:
             return self.device_serial_number
 
@@ -251,6 +282,9 @@ class Evidence:
             return ''
 
     def get_version(self):
+        if self.is_openwrt():
+            return getattr(self, 'device_version', '')
+
         if self.inxi:
             return self.device_version
 
@@ -295,7 +329,13 @@ class Evidence:
         if self.doc.get("credentialSubject"):
             return False
 
+        if self.is_openwrt():
+            return False
+
         return self.doc.get("software") != "workbench-script"
+
+    def is_openwrt(self):
+        return self.doc.get("software") == "workbench-script-openwrt"
 
     def is_web_snapshot(self):
         return self.doc.get("type") == "WebSnapshot"
