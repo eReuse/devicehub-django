@@ -578,8 +578,9 @@ class SubscriptLotView(DashboardLotMixing, SubscriptionEmail, FormView):
 
     def form_valid(self, form):
         form.save()
-        self.template_subscriptor(form)
-        self.send_email(form._user)
+        if form._type != "refurbish":
+            self.template_subscriptor(form)
+            self.send_email(form._user)
         response = super().form_valid(form)
         return response
 
@@ -754,7 +755,7 @@ class AcceptDonorView(TemplateView, NotifyEmail):
         self.get_templates_email()
         subscriptors = LotSubscription.objects.filter(
             lot_id=pk,
-        )
+        ).exclude(type=LotSubscription.Type.REFURBISH)
         for s in subscriptors:
             self.send_email(s.user)
 
@@ -866,7 +867,7 @@ class BeneficiaryView(DashboardLotMixing, BeneficiaryInterestedEmail, FormView):
         self.email_template = 'subscription/interested_beneficiary_email.txt'
         self.email_template_subject = 'subscription/interested_beneficiary_subject.txt'
         self.get_lot()
-        for c in self.lot.lotsubscription_set.filter():
+        for c in self.lot.lotsubscription_set.exclude(type=LotSubscription.Type.REFURBISH):
             self.send_email(c.user)
 
 
@@ -1051,7 +1052,7 @@ class ListDevicesBeneficiaryView(DashboardLotMixing, BeneficiaryEmail, FormView)
                 self.email_template = 'subscription/delivered_beneficiary_email.txt'
                 self.email_template_subject = 'subscription/delivered_beneficiary_subject.txt'
 
-                for c in self.get_subscriptors():
+                for c in self.get_subscriptors().exclude(type=LotSubscription.Type.REFURBISH):
                     self.send_email(c.user)
 
         return response
@@ -1138,7 +1139,7 @@ class AddDevicesBeneficiaryView(DashboardView, NotifyEmail, TemplateView):
 
         subscriptors = LotSubscription.objects.filter(
             lot=self.beneficiary.lot,
-        )
+        ).exclude(type=LotSubscription.Type.REFURBISH)
 
         for c in subscriptors:
             self.send_email(c.user)
@@ -1273,7 +1274,7 @@ class AcceptBeneficiaryView(TemplateView, NotifyEmail):
 
         subscriptors = LotSubscription.objects.filter(
             lot=self.beneficiary.lot,
-        )
+        ).exclude(type=LotSubscription.Type.REFURBISH)
 
         for c in subscriptors:
             self.send_email(c.user)
