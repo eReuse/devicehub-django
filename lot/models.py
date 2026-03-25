@@ -96,6 +96,7 @@ class LotSubscription(models.Model):
     class Type(models.IntegerChoices):
         CIRCUIT_MANAGER = 0, _("Circuit Manager")
         SHOP = 1, _("Shop")
+        REFURBISH = 2, _("Refurbish")
 
     lot = models.ForeignKey(Lot, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=False, blank=False)
@@ -114,6 +115,10 @@ class LotSubscription(models.Model):
     @property
     def is_shop(self):
         return self.type == self.Type.SHOP
+
+    @property
+    def is_refurbish(self):
+        return self.type == self.Type.REFURBISH
 
 
 class Donor(models.Model):

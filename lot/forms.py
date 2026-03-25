@@ -95,6 +95,7 @@ class LotSubscriptionForm(forms.Form):
         choices=[
             ("circuit_manager", _("Circuit Manager")),
             ("shop", _("Shop")),
+            ("refurbish", _("Refurbish")),
         ],
         required=True,
         widget=forms.RadioSelect(),
@@ -180,6 +181,21 @@ class LotSubscriptionForm(forms.Form):
                 type=LotSubscription.Type.SHOP
             )
 
+        if self._type == "refurbish":
+            slot = LotSubscription.objects.filter(
+                    user=self._user,
+                    lot_id=self.lot_pk,
+                    type=LotSubscription.Type.REFURBISH
+            )
+            if slot:
+                return
+
+            LotSubscription.objects.create(
+                user=self._user,
+                lot_id=self.lot_pk,
+                type=LotSubscription.Type.REFURBISH
+            )
+
     def remove(self):
         if not self._user:
             return
@@ -196,6 +212,13 @@ class LotSubscriptionForm(forms.Form):
                 user=self._user,
                 lot_id=self.lot_pk,
                 type=LotSubscription.Type.SHOP
+            )
+
+        elif self._type == "refurbish":
+            lot_subscription = LotSubscription.objects.filter(
+                user=self._user,
+                lot_id=self.lot_pk,
+                type=LotSubscription.Type.REFURBISH
             )
 
         else:
