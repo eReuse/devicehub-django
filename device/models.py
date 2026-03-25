@@ -30,6 +30,8 @@ class Device:
         DISPLAY = "Display"
         BATTERY = "Battery"
         CAMERA = "Camera"
+        ROUTER = "Router"
+        WIFIACCESSPOINT = "WiFiAccessPoint"
 
     def __init__(self, *args, **kwargs):
         # the id is the chid of the device

@@ -57,6 +57,7 @@ CHASSIS_DH = {
     'Detachable': {'detachable'},
     'Tablet': {'tablet'},
     'Virtual': {'_virtual'},
+    'Router': {'router', 'access-point', 'network-device'},
 }
 
 
