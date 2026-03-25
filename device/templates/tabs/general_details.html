@@ -78,7 +78,7 @@
             </div>
           </div>
 
-        {% if object.QR %}
+   {% if object.QR or object.did_QR %}
         <style>
             /* QR print mode */
             @media print {
@@ -96,19 +96,20 @@
                 #qr-print-overlay p {
                     width: 200px;
                     text-align: center;
-                    font-size: 25px;
+                    font-size: 16px;
                     font-family: monospace;
                     margin-top: 8px;
-                    font-weight: bold ;
+                    font-weight: bold;
+                    word-wrap: break-word;
                 }
             }
         </style>
         <script>
-            const printQr = () => {
-                const img = document.getElementById(`qrImg`)
+            const printGenericQr = (imgId, labelText) => {
+                const img = document.getElementById(imgId);
                 var o = document.createElement('div');
                 o.id = 'qr-print-overlay';
-                o.innerHTML = '<img src="' + img.src + '"><p> {{ object.shortid }}</p>';
+                o.innerHTML = '<img src="' + img.src + '"><p>' + labelText + '</p>';
                 document.body.appendChild(o);
                 document.body.classList.add('printing-qr');
                 window.addEventListener('afterprint',
@@ -119,7 +120,14 @@
                     });
                 window.print();
             }
+
+            const printQr = () => {
+                printGenericQr('qrImg', '{{ object.shortid|escapejs }}');
+            }
         </script>
+        {% endif %}
+
+        {% if object.QR %}
         <div class="row mb-3">
             <div class="col-sm-4 qr-printable">
               <img id="qrImg" width="100px" src="data:image/png;base64,{{ object.QR }}" />
@@ -138,21 +146,25 @@
             <div class="col-sm-4 text-muted fw-bold">{% trans 'DID' %}
             </div>
             <div class="col-sm-8">
-                <div>{{ object.did|default:'None' }}
+                <div class="text-break">{{ object.did|default:'None' }}
                 </div>
             </div>
           </div>
 
-          {% if object.did_QR %}
-          <div class="row mb-3">
-            <div class="col-sm-4 text-muted fw-bold">
-              {% trans 'DID QR' %}
+
+        {% if object.did_QR %}
+        <div class="row mb-3">
+            <div class="col-sm-4 qr-printable">
+              <img id="qrImg" width="100px" src="data:image/png;base64,{{ object.did_QR }}" />
+              <span id="qrShortId" hidden>{{ object.did }}</span>
             </div>
             <div class="col-sm-8">
-              <img width="100px" src="data:image/png;base64,{{ object.did_QR }}" alt="DID QR" />
+              <button type="button" class="btn btn-outline-secondary btn-sm"
+                onclick="printQr()">
+                <i class="bi bi-printer"></i> {% trans "Print DID" %}
+              </button>
             </div>
           </div>
           {% endif %}
 
       </div>
-
