@@ -3,13 +3,13 @@
 # This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
-#, fuzzy
+#: lot/tables.py:50 user/views.py:61
 msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-20 12:56-0300\n"
-"PO-Revision-Date: 2025-03-13 12:02-0300\n"
+"POT-Creation-Date: 2026-03-26 01:30-0300\n"
+"PO-Revision-Date: 2026-03-26 01:32-0300\n"
 "Last-Translator: Leandro Navarro <leandro@ac.upc.edu>\n"
 "Language-Team: \n"
 "Language: es\n"
@@ -51,154 +51,360 @@ msgstr "PARA DONACIÓN"
 msgid "DISMANTLE"
 msgstr "DESMANTELAR"
 
-#: action/views.py:28
-msgid "<Created> State '{}'. Previous State: '{}'"
-msgstr "<Created>Estado '{}'. Estado anterior: '{}'"
+#: action/templates/dismantle_form.html:11
+msgid "Dismantle Device"
+msgstr "Desmantelar dispositivo"
 
-#: action/views.py:35
-msgid "State successfully changed from '{}' to '{}'"
-msgstr "El estado se cambió correctamente de '{}' a '{}'"
+#: action/templates/dismantle_form.html:17
+msgid ""
+"Please correct the errors below to proceed with the dismantling process."
+msgstr ""
+"Por favor, corrija los errores a continuación para proceder con el proceso de desmantelamiento."
 
-#: action/views.py:39 action/views.py:70
-msgid "There was an error with your submission."
-msgstr "Hubo un error con tu envío."
+#: action/templates/dismantle_form.html:43 dashboard/tables.py:50
+#: device/templates/tabs/credentials.html:131
+#: device/templates/tabs/general_details.html:25 evidence/tables.py:33
+#: evidence/templates/ev_details.html:129
+msgid "Type"
+msgstr "Tipo"
 
-#: action/views.py:59
-msgid "<Created> Note: '{}'"
-msgstr "<Created>Nota: '{}'"
+#: action/templates/dismantle_form.html:46
+#: device/templates/tabs/credentials.html:123
+#: device/templates/tabs/credentials.html:136
+msgid "Amount"
+msgstr "Cantidad"
 
-#: action/views.py:66
-msgid "Note has been added"
-msgstr "Se ha añadido una nota"
+#: action/templates/dismantle_form.html:49
+msgid "Name / Description"
+msgstr "Nombre/Descripción"
 
-#: action/views.py:88
-msgid "<Updated> Note. Old Description: '{}'. New Description: '{}'"
-msgstr "<Updated>Nota. Descripción anterior: '{}'. Nueva descripción: '{}'"
-
-#: action/views.py:101
-msgid "Note cannot be empty."
-msgstr "La nota no puede estar vacía."
-
-#: action/views.py:127
-msgid "You do not have permission to delete this note."
-msgstr "No tienes permiso para eliminar esta nota."
-
-#: action/views.py:130
-msgid "<Deleted> Note. Description: '{}'. "
-msgstr "<Deleted>Nota. Descripción: '{}'. "
-
-#: action/views.py:137
-msgid "Note '{}' deleted successfully."
-msgstr "Nota '{}' eliminada correctamente."
-
-#: admin/templates/admin_panel.html:14
-msgid "Institution"
-msgstr "Institución"
-
-#: admin/templates/admin_users.html:10
-msgid "Add new user"
-msgstr "Añadir nuevo usuario"
-
-#: admin/templates/delete_user.html:33 admin/templates/institution.html:27
-#: admin/templates/lot_tag_panel.html:117
-#: admin/templates/lot_tag_panel.html:155 admin/templates/states_panel.html:145
-#: admin/templates/states_panel.html:185 admin/templates/user.html:27
-#: api/templates/new_token.html:27 device/templates/details.html:130
-#: device/templates/new_device.html:81
+#: action/templates/dismantle_form.html:59 admin/templates/institution.html:40
+#: admin/templates/lot_tag_panel.html:142
+#: admin/templates/lot_tag_panel.html:192 admin/templates/states_panel.html:145
+#: admin/templates/states_panel.html:185 admin/templates/user.html:34
+#: api/templates/new_token.html:33 device/templates/details.html:80
+#: device/templates/details.html:176 device/templates/new_device.html:81
 #: device/templates/new_user_property.html:39
+#: device/templates/tabs/credentials.html:71
 #: device/templates/tabs/user_properties.html:83
 #: device/templates/tabs/user_properties.html:121
-#: evidence/templates/ev_details.html:110 evidence/templates/upload.html:25
-#: lot/templates/delete_lots.html:95 lot/templates/new_lot.html:30
-#: lot/templates/new_property.html:39 lot/templates/properties.html:71
-#: lot/templates/properties.html:91 user/templates/settings.html:27
+#: evidence/templates/ev_details.html:213 evidence/templates/upload.html:77
+#: lot/templates/beneficiaries.html:160 lot/templates/beneficiaries.html:198
+#: lot/templates/delete_lots.html:95 lot/templates/donor.html:55
+#: lot/templates/new_lot.html:30 lot/templates/new_property.html:39
+#: lot/templates/properties.html:58 lot/templates/properties.html:78
+#: lot/templates/subscription.html:54 user/templates/settings.html:27
+#: user/templates/user_profile.html:150
 msgid "Cancel"
 msgstr "Cancelar"
 
-#: admin/templates/delete_user.html:34 admin/templates/lot_tag_panel.html:49
-#: admin/templates/lot_tag_panel.html:159
-#: admin/templates/lot_tag_panel.html:163 admin/templates/states_panel.html:67
-#: admin/templates/states_panel.html:188 api/tables.py:29
-#: device/templates/tabs/user_properties.html:47
-#: device/templates/tabs/user_properties.html:87
-#: evidence/templates/ev_details.html:115 lot/templates/delete_lots.html:99
-#: lot/templates/properties.html:46 lot/templates/properties.html:94
-msgid "Delete"
-msgstr "Eliminar"
+#: action/templates/dismantle_form.html:63
+#: device/templates/tabs/credentials.html:151
+msgid "Confirm Dismantle"
+msgstr "Confirmar el desmantelamiento"
 
-#: admin/templates/institution.html:28 admin/templates/user.html:28
-#: api/templates/new_token.html:28 device/templates/new_device.html:82
+#: action/views.py:48 action/views.py:335
+msgid "<Created> State '{}'. Previous State: '{}'"
+msgstr "<Created>Estado '{}'. Estado anterior: '{}'"
+
+#: action/views.py:59
+msgid "State changed, but DID configuration failed"
+msgstr "Estado cambiado, pero falló la configuración del DID"
+
+#: action/views.py:109
+msgid "State changed, but credential failed: {}"
+msgstr "Estado cambiado, pero falló la credencial: {}"
+
+#: action/views.py:111
+msgid "State changed and credential issued successfully from '{}' to '{}'"
+msgstr "El estado y credencial se cambió correctamente de '{}' a '{}'"
+
+#: action/views.py:116 action/views.py:387
+msgid "There was an error with your submission."
+msgstr "Hubo un error con tu envío."
+
+#: action/views.py:330 lot/views.py:232
+msgid "No devices selected"
+msgstr "No se seleccionaron dispositivos"
+
+#: action/views.py:335 device/templates/details.html:36 user/models.py:237
+msgid "None"
+msgstr "Ninguno"
+
+#: action/views.py:350
+msgid "State changed Successfully"
+msgstr "Estado cambiado correctamente."
+
+#: action/views.py:355
+#, python-format
+msgid "Error changing state on devices: %s"
+msgstr "Error al cambiar el estado en los dispositivos: %s"
+
+#: action/views.py:376
+msgid "<Created> Note: '{}'"
+msgstr "<Created>Nota: '{}'"
+
+#: action/views.py:383
+msgid "Note has been added"
+msgstr "Se ha añadido una nota"
+
+#: action/views.py:405
+msgid "<Updated> Note. Old Description: '{}'. New Description: '{}'"
+msgstr "<Updated>Nota. Descripción anterior: '{}'. Nueva descripción: '{}'"
+
+#: action/views.py:418
+msgid "Note cannot be empty."
+msgstr "La nota no puede estar vacía."
+
+#: action/views.py:444
+msgid "You do not have permission to delete this note."
+msgstr "No tienes permiso para eliminar esta nota."
+
+#: action/views.py:447
+msgid "<Deleted> Note. Description: '{}'. "
+msgstr "<Deleted>Nota. Descripción: '{}'. "
+
+#: action/views.py:454
+msgid "Note '{}' deleted successfully."
+msgstr "Nota '{}' eliminada correctamente."
+
+#: admin/forms.py:47
+msgid "Schema Configuration (JSON)"
+msgstr "Configuración de Esquema (JSON)"
+
+#: admin/forms.py:53
+msgid "Map credential types to schema filenames. Must be valid JSON."
+msgstr "Mapear tipos de credenciales a nombres de archivos de esquema. Debe ser un JSON válido."
+
+#: admin/forms.py:93
+msgid "Configuration must be a JSON object (dictionary)."
+msgstr "La configuración debe ser un objeto JSON (diccionario)."
+
+#: admin/forms.py:96
+msgid "Invalid JSON format. Please check syntax."
+msgstr "Formato JSON no válido. Por favor, verifique la sintaxis."
+
+#: admin/tables.py:14
+msgid "User ID"
+msgstr "Usuario ID"
+
+#: admin/tables.py:23 dashboard/tables.py:83 lot/tables.py:34
+#: lot/templates/beneficiaries_devices.html:26
+#: lot/templates/beneficiary_web.html:108 user/templates/user_profile.html:38
+msgid "Status"
+msgstr "Estado"
+
+#: admin/tables.py:32 lot/models.py:124 lot/models.py:135 user/models.py:189
+msgid "Email address"
+msgstr "Dirección de correo electrónico"
+
+#: admin/tables.py:36
+msgid "Last Login"
+msgstr "Último Login"
+
+#: admin/tables.py:50
+msgid "No user records found"
+msgstr "No se encontraron registros."
+
+#: admin/tables.py:60
+msgid "Error loading email"
+msgstr "Error al cargar el correo electrónico"
+
+#: admin/tables.py:67 admin/views.py:40 dashboard/templates/base.html:167
+msgid "Admin"
+msgstr "Admin"
+
+#: admin/tables.py:67 admin/views.py:64 device/templates/tabs/log.html:10
+#: user/views.py:24
+msgid "User"
+msgstr "Usuario"
+
+#: admin/tables.py:73 user/templates/user_profile.html:40
+msgid "Inactive"
+msgstr "Inactivo"
+
+#: admin/tables.py:82 evidence/templates/facility_credential.html:12
+msgid "N/A"
+msgstr "N/A"
+
+#: admin/tables.py:84
+msgid "Error checking status"
+msgstr "Error al verificar el estado"
+
+#: admin/tables.py:86 evidence/tables.py:185 lot/tables.py:46
+msgid "Unknown"
+msgstr "Desconocido"
+
+#: admin/tables.py:92 evidence/tables.py:191
+msgid "An error occurred"
+msgstr "Ha ocurrido un error"
+
+#: admin/tables.py:96 evidence/tables.py:195 evidence/tables.py:288
+msgid "Error"
+msgstr "Error"
+
+#: admin/templates/admin_panel.html:12 evidence/tables.py:270
+msgid "Organization"
+msgstr "Organización"
+
+#: admin/templates/admin_panel.html:15
+msgid "Edit your organization's details."
+msgstr "Edite los detalles de su organización."
+
+#: admin/templates/admin_panel.html:19 admin/templates/admin_panel.html:38
+#: admin/templates/lot_tag_panel.html:58 admin/templates/states_panel.html:60
+#: device/templates/tabs/user_properties.html:40
+#: lot/templates/lot_actions.html:5 lot/templates/properties.html:29
+#: user/templates/user_profile.html:58 user/templates/user_profile.html:60
+msgid "Edit"
+msgstr "Editar"
+
+#: admin/templates/admin_panel.html:31
+msgid "Settings"
+msgstr "Preferencias"
+
+#: admin/templates/admin_panel.html:34
+msgid "Manage your organization's settings."
+msgstr "Gestione la configuración de su organización."
+
+#: admin/templates/admin_panel.html:50
+msgid "Digital Facility Record"
+msgstr "Registro Digital de Instalación (DFR)"
+
+#: admin/templates/admin_panel.html:53
+msgid "Manage the Verifiable Credential for your facility."
+msgstr "Gestione la Credencial Verificable de su instalación."
+
+#: admin/templates/admin_panel.html:66
+msgid "Issue"
+msgstr "Emitir"
+
+#: admin/templates/admin_panel.html:73 admin/templates/admin_panel.html:78
+#: evidence/tables.py:74 evidence/tables.py:283
+msgid "View"
+msgstr "Ver"
+
+#: admin/templates/admin_panel.html:101
+msgid "Locating..."
+msgstr "Ubicando..."
+
+#: admin/templates/admin_users.html:13
+msgid "List of Users"
+msgstr "Lista de usuarios"
+
+#: admin/templates/admin_users.html:18
+msgid "New user"
+msgstr "Añadir nuevo usuario"
+
+#: admin/templates/institution.html:41 admin/templates/user.html:35
+#: api/templates/new_token.html:35 device/templates/new_device.html:82
 #: device/templates/new_user_property.html:40
-#: evidence/templates/ev_details.html:111 evidence/templates/upload.html:26
-#: lot/templates/new_lot.html:34 lot/templates/new_property.html:40
-#: user/templates/settings.html:28
+#: evidence/templates/ev_details.html:214
+#: lot/templates/beneficiaries_devices.html:63
+#: lot/templates/beneficiary_web.html:159 lot/templates/new_lot.html:34
+#: lot/templates/new_property.html:40 user/templates/settings.html:28
 msgid "Save"
 msgstr "Guardar"
 
 #: admin/templates/lot_tag_panel.html:11 admin/templates/states_panel.html:11
+#: lot/views.py:823
 msgid "Add"
 msgstr "Agregar"
 
-#: admin/templates/lot_tag_panel.html:21
+#: admin/templates/lot_tag_panel.html:20
+msgid "Inbox order CANNOT be changed"
+msgstr "El orden de la bandeja de entrada NO puede modificarse"
+
+#: admin/templates/lot_tag_panel.html:28
 msgid "Lot Group Name"
 msgstr "Nombre del grupo de lotes"
 
-#: admin/templates/lot_tag_panel.html:23 admin/templates/states_panel.html:30
-#: device/templates/tabs/user_properties.html:21
+#: admin/templates/lot_tag_panel.html:30 admin/templates/states_panel.html:30
+#: device/templates/tabs/user_properties.html:21 evidence/tables.py:229
 msgid "Actions"
 msgstr "Acciones"
 
-#: admin/templates/lot_tag_panel.html:42 admin/templates/states_panel.html:60
-#: device/templates/tabs/user_properties.html:40
-#: lot/templates/lot_actions.html:5 lot/templates/properties.html:42
-msgid "Edit"
-msgstr "Editar"
+#: admin/templates/lot_tag_panel.html:66 admin/templates/lot_tag_panel.html:196
+#: admin/templates/lot_tag_panel.html:200 admin/templates/states_panel.html:67
+#: admin/templates/states_panel.html:188
+#: device/templates/tabs/user_properties.html:47
+#: device/templates/tabs/user_properties.html:87
+#: evidence/templates/ev_details.html:218 lot/templates/delete_lots.html:99
+#: lot/templates/donor.html:46 lot/templates/properties.html:33
+#: lot/templates/properties.html:81 user/tables.py:29
+msgid "Delete"
+msgstr "Eliminar"
 
-#: admin/templates/lot_tag_panel.html:61
+#: admin/templates/lot_tag_panel.html:78 admin/templates/states_panel.html:79
+msgid "Update Order"
+msgstr "Actualizar orden"
+
+#: admin/templates/lot_tag_panel.html:83
 msgid "No Lot Groups found on current organization"
 msgstr "No se encontraron grupos de lotes en la organización actual"
 
-#: admin/templates/lot_tag_panel.html:72
+#: admin/templates/lot_tag_panel.html:94
 msgid "Add Lot Group"
 msgstr "Agregar grupo de lotes"
 
-#: admin/templates/lot_tag_panel.html:80 admin/templates/lot_tag_panel.html:110
-#: api/tables.py:52 evidence/forms.py:68 evidence/templates/ev_details.html:53
+#: admin/templates/lot_tag_panel.html:102
+#: admin/templates/lot_tag_panel.html:132 user/tables.py:52
 msgid "Tag"
 msgstr "Etiqueta"
 
-#: admin/templates/lot_tag_panel.html:82 admin/templates/lot_tag_panel.html:112
-#: admin/templates/states_panel.html:106 admin/templates/states_panel.html:139
+#: admin/templates/lot_tag_panel.html:104
+#: admin/templates/lot_tag_panel.html:134 admin/templates/states_panel.html:106
+#: admin/templates/states_panel.html:139
 msgid "Maximum 50 characters."
 msgstr "Máximo 50 caracteres."
 
-#: admin/templates/lot_tag_panel.html:85 admin/templates/lot_tag_panel.html:106
-#: admin/templates/lot_tag_panel.html:136 admin/templates/states_panel.html:109
+#: admin/templates/lot_tag_panel.html:107
+#: admin/templates/lot_tag_panel.html:128
+#: admin/templates/lot_tag_panel.html:161 admin/templates/states_panel.html:109
 #: admin/templates/states_panel.html:130 admin/templates/states_panel.html:164
-#: device/templates/details.html:119 lot/templates/properties.html:57
-#: lot/templates/properties.html:85
+#: device/templates/details.html:165 device/templates/tabs/credentials.html:28
+#: evidence/templates/credential_base.html:35
+#: lot/templates/beneficiaries.html:153 lot/templates/donor.html:47
+#: lot/templates/properties.html:44 lot/templates/properties.html:72
+#: user/templates/user_profile.html:128
 msgid "Close"
 msgstr "Cerrar"
 
-#: admin/templates/lot_tag_panel.html:86
+#: admin/templates/lot_tag_panel.html:108
 msgid "Add Lot tag"
 msgstr "Agregar etiqueta de lote"
 
-#: admin/templates/lot_tag_panel.html:104
+#: admin/templates/lot_tag_panel.html:126
 msgid "Edit Lot Group"
 msgstr "Editar grupo de lotes"
 
-#: admin/templates/lot_tag_panel.html:118 admin/templates/states_panel.html:146
+#: admin/templates/lot_tag_panel.html:136
+msgid "INBOX can only be edited, not deleted."
+msgstr "La BANDEJA DE ENTRADA solo se puede editar, no eliminar."
+
+#: admin/templates/lot_tag_panel.html:143 admin/templates/states_panel.html:146
 msgid "Save Changes"
 msgstr "Guardar cambios"
 
-#: admin/templates/lot_tag_panel.html:134
+#: admin/templates/lot_tag_panel.html:159
 msgid "Delete Lot Group"
 msgstr "Eliminar grupo de lotes"
 
-#: admin/templates/lot_tag_panel.html:141
-msgid "Failed to remove Lot Group, it is not empty"
-msgstr "No se pudo eliminar el grupo de lotes, no está vacío"
+#: admin/templates/lot_tag_panel.html:167
+msgid "This lot group has"
+msgstr "Este grupo de lotes tiene"
+
+#: admin/templates/lot_tag_panel.html:167
+msgid "lot/s."
+msgstr "lote/s."
+
+#: admin/templates/lot_tag_panel.html:171
+msgid "Are you sure you want to delete this lot group?"
+msgstr "¿Confirma que desea eliminar este grupo de lotes?"
+
+#: admin/templates/lot_tag_panel.html:181
+msgid "This lot group is not empty and therefore cannot be deleted."
+msgstr "Este grupo de lotes no está vacío y, por lo tanto, no se puede eliminar."
 
 #: admin/templates/states_panel.html:20
 msgid "Move and drag state definitions to reorder"
@@ -207,10 +413,6 @@ msgstr "Mueva y arrastre las definiciones de estados para reordenar"
 #: admin/templates/states_panel.html:28
 msgid "State Definition"
 msgstr "Definición de estado"
-
-#: admin/templates/states_panel.html:79
-msgid "Update Order"
-msgstr "Actualizar orden"
 
 #: admin/templates/states_panel.html:85
 msgid "No states found on current organization"
@@ -241,7 +443,7 @@ msgstr ""
 
 #: admin/templates/states_panel.html:142 admin/templates/states_panel.html:177
 msgid "Any changes in order will not be saved."
-msgstr "Cualquier cambio en el pedido no se guardará."
+msgstr "Cualquier cambio en el orden no se guardará."
 
 #: admin/templates/states_panel.html:162
 msgid "Delete State Definition"
@@ -254,326 +456,544 @@ msgstr ""
 "Los dispositivos con un estado de esta descripción no verán alterado su "
 "estado"
 
-#: admin/views.py:34 dashboard/templates/base.html:87
-msgid "Admin"
-msgstr "Admin"
+#: admin/templates/user.html:30
+msgid "System admin privileges will always remain for this user"
+msgstr "Los privilegios de administrador del sistema siempre se mantendrán para este usuario"
 
-#: admin/views.py:35
+#: admin/views.py:41 admin/views.py:65 user/templates/panel.html:11
 msgid "admin"
 msgstr "admin"
 
-#: admin/views.py:44 dashboard/templates/base.html:97
+#: admin/views.py:50 dashboard/templates/base.html:177
 msgid "Users"
 msgstr "Usuarios"
 
-#: admin/views.py:45
+#: admin/views.py:51
 msgid "admin / Users"
 msgstr "admin / Usuarios"
 
-#: admin/views.py:57 device/templates/tabs/log.html:10 user/views.py:18
-msgid "User"
-msgstr "Usuario"
+#: admin/views.py:65
+msgid "new user"
+msgstr "nuevo usuario"
 
-#: admin/views.py:58
-msgid "admin / User"
-msgstr "admin / Usuario"
-
-#: admin/views.py:82
+#: admin/views.py:89
 msgid "Delete user"
 msgstr "Borrar usuario"
 
-#: admin/views.py:99
+#: admin/views.py:106
 msgid "Edit user"
 msgstr "Editar usuario"
 
-#: admin/views.py:118
+#: admin/views.py:125
 msgid "Lot Groups Panel"
 msgstr "Panel de grupos de lotes"
 
-#: admin/views.py:119
+#: admin/views.py:126
 msgid "admin / Lot Groups Panel"
-msgstr "admin /grupos de lotes"
+msgstr "admin / Panel de grupos de lotes"
 
-#: admin/views.py:132
+#: admin/views.py:139
 msgid "New lot group Definition"
 msgstr "Definición de nuevo grupo de lotes"
 
-#: admin/views.py:143 admin/views.py:199
-#, python-brace-format
-msgid "The name '{name}' exist."
-msgstr "El nombre '{name}' existe."
-
-#: admin/views.py:148
+#: admin/views.py:155
 msgid "Lot Group successfully added."
 msgstr "Grupo de lotes agregado correctamente."
 
-#: admin/views.py:165
+#: admin/views.py:172
 msgid "This group have lots. Impossible to delete."
-msgstr "Este grupo tiene muchos. Imposible eliminarlo."
+msgstr "Este grupo contiene lotes. Imposible eliminarlo."
 
-#: admin/views.py:176
+#: admin/views.py:183
 msgid "Lot Group has been deleted."
 msgstr "El grupo de lotes ha sido eliminado."
 
-#: admin/views.py:204
+#: admin/views.py:211
 msgid "Lot Group updated successfully."
 msgstr "Grupo de lotes actualizado correctamente."
 
-#: admin/views.py:211 admin/views.py:213
+#: admin/views.py:239
+msgid "Order changed successfully."
+msgstr "Orden modificado correctamente."
+
+#: admin/views.py:247 admin/views.py:250
 msgid "Edit institution"
 msgstr "Editar institución"
 
-#: admin/views.py:236
+#: admin/views.py:249
+msgid "Manage physical facility and address information"
+msgstr "Gestionar instalación física e información de dirección"
+
+#: admin/views.py:256
+msgid "Institution information updated successfully."
+msgstr "Información de la institución actualizada correctamente."
+
+#: admin/views.py:268
+msgid "Configuration & Signing"
+msgstr "Configuración y Firmas"
+
+#: admin/views.py:269
+msgid "Manage technical settings and signing credentials"
+msgstr "Gestionar configuraciones técnicas y credenciales de firma"
+
+#: admin/views.py:273
+msgid "Configuration updated successfully."
+msgstr "Configuración actualizada correctamente."
+
+#: admin/views.py:287
 msgid "State definitions are the custom finite states that a device can be in."
 msgstr ""
 "Las definiciones de estado son los estados finitos personalizados en los que "
 "puede estar un dispositivo."
 
-#: admin/views.py:243
+#: admin/views.py:294
 msgid "States Panel"
 msgstr "Panel de Estados"
 
-#: admin/views.py:244
+#: admin/views.py:295
 msgid "admin / States Panel"
 msgstr "admin / Panel de Estados"
 
-#: admin/views.py:249
+#: admin/views.py:300
 msgid "New State Definition"
 msgstr "Nueva definición de estado"
 
-#: admin/views.py:260
+#: admin/views.py:311
 msgid "State definition successfully added."
 msgstr "Definición de estado agregada correctamente."
 
-#: admin/views.py:263 admin/views.py:326
+#: admin/views.py:314 admin/views.py:377
 msgid "State is already defined."
 msgstr "El estado ya está definido."
 
-#: admin/views.py:304
+#: admin/views.py:355
 msgid "Order changed succesfuly."
-msgstr "Pedido cambiado correctamente."
+msgstr "Orden modificado correctamente."
 
-#: admin/views.py:323
+#: admin/views.py:374
 msgid "State definition updated successfully."
 msgstr "Definición de estado actualizada correctamente."
 
-#: api/tables.py:51
-msgid "Token"
-msgstr "Token"
+#: api/templates/token.html:15
+msgid "New token"
+msgstr "Nuevo token"
 
-#: api/templates/custom_table.html:65 dashboard/templates/pagination.html:13
-msgid "Previous"
-msgstr "Anterior"
-
-#: api/templates/custom_table.html:91 dashboard/templates/pagination.html:38
-msgid "Next"
-msgstr "Siguiente"
-
-#: api/templates/token.html:13
-msgid "Generate a new token"
-msgstr "Generar un nuevo token"
-
-#: api/views.py:147 api/views.py:181 api/views.py:199
+#: api/views.py:147 api/views.py:182 api/views.py:200
 msgid "Credential management"
 msgstr "Gestión de credenciales"
 
-#: api/views.py:149
-msgid "Managament Tokens"
-msgstr "Gestion de Tokens"
+#: api/views.py:149 dashboard/templates/base.html:120
+msgid "My Tokens"
+msgstr "Mis Tokens"
 
-#: api/views.py:183 api/views.py:201
+#: api/views.py:184 api/views.py:202
 msgid "New Tokens"
 msgstr "Nuevos Tokens"
 
-#: dashboard/mixins.py:16
+#: dashboard/mixins.py:19
 msgid "Permission denied. User is not authenticated"
 msgstr "Permiso denegado. El usuario no está autenticado"
 
-#: dashboard/templates/base.html:92
+#: dashboard/tables.py:32
+msgid "Short ID"
+msgstr "ID Corto"
+
+#: dashboard/tables.py:41
+msgid "Current State"
+msgstr "Estado Actual"
+
+#: dashboard/tables.py:58 device/templates/device_dpp.html:136
+#: device/templates/tabs/general_details.html:42
+#: evidence/templates/dpp_credential.html:98
+#: lot/templates/beneficiaries_devices.html:23
+#: lot/templates/beneficiary_web.html:105 lot/templates/donor_web.html:102
+msgid "Manufacturer"
+msgstr "Fabricante"
+
+#: dashboard/tables.py:66 device/templates/tabs/general_details.html:49
+#: lot/templates/beneficiaries_devices.html:24
+#: lot/templates/beneficiary_web.html:106 lot/templates/donor_web.html:103
+msgid "Model"
+msgstr "Modelo"
+
+#: dashboard/tables.py:74
+msgid "Cpu"
+msgstr "CPU"
+
+#: dashboard/tables.py:93
+msgid "Evidence last updated"
+msgstr "Evidencia actualizada por última vez"
+
+#: dashboard/templates/base.html:115
+msgid "Profile"
+msgstr "Perfil"
+
+#: dashboard/templates/base.html:125 user/templates/panel.html:40
+msgid "Settings File"
+msgstr "Archivo de configuración"
+
+#: dashboard/templates/base.html:134
+msgid "Admin Panel"
+msgstr "Panel de Administración"
+
+#: dashboard/templates/base.html:139
+msgid "Manage Users"
+msgstr "Gestionar Usuarios"
+
+#: dashboard/templates/base.html:147
+msgid "Help"
+msgstr "Ayuda"
+
+#: dashboard/templates/base.html:152
+msgid "Logout"
+msgstr "Cerrar sesión"
+
+#: dashboard/templates/base.html:172
 msgid "Panel"
 msgstr "Panel"
 
-#: dashboard/templates/base.html:102
+#: dashboard/templates/base.html:182
 msgid "States"
 msgstr "Estados"
 
-#: dashboard/templates/base.html:107
+#: dashboard/templates/base.html:187
 msgid "Lot Groups"
 msgstr "Grupos de lotes"
 
-#: dashboard/templates/base.html:116 lot/tables.py:46
+#: dashboard/templates/base.html:196 dashboard/views.py:34
+#: dashboard/views.py:44 dashboard/views.py:53 dashboard/views.py:113
+#: lot/tables.py:37 lot/templates/beneficiaries.html:104
+#: lot/templates/beneficiaries.html:127 lot/templates/tabs.html:7
 msgid "Devices"
 msgstr "Dispositivos"
 
-#: dashboard/templates/base.html:121
+#: dashboard/templates/base.html:201 dashboard/views.py:42
+#: dashboard/views.py:44
 msgid "All"
 msgstr "Todos"
 
-#: dashboard/templates/base.html:129 device/templates/details.html:70
-#: lot/views.py:238
+#: dashboard/templates/base.html:209 device/templates/details.html:114
+#: lot/views.py:307
 msgid "Lots"
 msgstr "Lotes"
 
-#: dashboard/templates/base.html:152 device/templates/details.html:76
-#: evidence/views.py:29 evidence/views.py:88 evidence/views.py:149
+#: dashboard/templates/base.html:231 device/templates/details.html:120
+#: evidence/views.py:36 evidence/views.py:114 evidence/views.py:383
 msgid "Evidences"
 msgstr "Evidencias"
 
-#: dashboard/templates/base.html:157 device/templates/tabs/evidences.html:5
+#: dashboard/templates/base.html:236
 msgid "List of evidences"
 msgstr "Lista de evidencias"
 
-#: dashboard/templates/base.html:162
+#: dashboard/templates/base.html:241
 msgid "Upload JSON file"
 msgstr "Subir archivo JSON"
 
-#: dashboard/templates/base.html:167
+#: dashboard/templates/base.html:246
 msgid "Upload Spreadsheet"
 msgstr "Subir hoja de cálculo"
 
-#: dashboard/templates/base.html:172
+#: dashboard/templates/base.html:251
+msgid "Upload Photo"
+msgstr "Subir foto"
+
+#: dashboard/templates/base.html:256
 msgid "Upload Web Form"
 msgstr "Subir formulario web"
 
-#: dashboard/templates/base.html:203
+#: dashboard/templates/base.html:287
 msgid "Search your device"
 msgstr "Buscar dispositivos"
 
-#: dashboard/templates/inventory_dashboard.html:13
-msgid "Total Devices"
-msgstr "Total de dispositivos"
-
-#: dashboard/templates/inventory_dashboard.html:21
-msgid "Assigned"
-msgstr "Asignado"
-
-#: dashboard/templates/inventory_dashboard.html:29
-msgid "Unassigned"
-msgstr "Sin asignar"
-
-#: dashboard/templates/inventory_dashboard.html:38
-msgid "States Distribution"
-msgstr "Distribución de estados"
-
-#: dashboard/templates/inventory_dashboard.html:40 lot/templates/lots.html:49
-msgid "Active"
-msgstr "Activo"
-
-#: dashboard/templates/inventory_dashboard.html:41
-msgid "Repair"
-msgstr "Reparar"
-
-#: dashboard/templates/inventory_dashboard.html:42
-msgid "Discarded"
-msgstr "Descartado"
-
-#: dashboard/templates/unassigned_devices.html:14
-msgid "Exports"
-msgstr "Exportar"
-
-#: dashboard/templates/unassigned_devices.html:19
-msgid "properties"
-msgstr "propiedades"
-
-#: dashboard/templates/unassigned_devices.html:30
-msgid "Lot Actions"
-msgstr "Acciones de lote"
-
-#: dashboard/templates/unassigned_devices.html:30
-msgid " Add"
-msgstr "Agregar"
-
-#: dashboard/templates/unassigned_devices.html:30
-msgid "Remove"
-msgstr "Eliminar"
-
-#: dashboard/templates/unassigned_devices.html:36
-msgid "select"
-msgstr "Seleccionar"
-
-#: dashboard/templates/unassigned_devices.html:39
-msgid "shortid"
-msgstr "ID"
-
-#: dashboard/templates/unassigned_devices.html:42
-msgid "type"
-msgstr "Tipo"
-
-#: dashboard/templates/unassigned_devices.html:45
-msgid "manufacturer"
-msgstr "Fabricante"
-
-#: dashboard/templates/unassigned_devices.html:48
-msgid "model"
-msgstr "Modelo"
-
-#: dashboard/templates/unassigned_devices.html:51
-msgid "updated"
-msgstr "Actualizado"
-
-#: dashboard/views.py:18
-msgid "Inbox"
+#: dashboard/templates/custom_table.html:69
+#, python-format
+msgid ""
+"\n"
+"            Showing %(start)s to %(end)s of %(total)s\n"
+"            "
 msgstr ""
+"\n"
+"            Mostrando %(start)s a %(end)s de %(total)s\n"
+"            "
 
-#: dashboard/views.py:27
-msgid "All Devices"
-msgstr "Todos los dispositivos"
+#: dashboard/templates/pagination.html:10
+msgid "previous"
+msgstr "anterior"
 
-#: dashboard/views.py:37
-msgid "Lot Devices"
-msgstr "Lote de dispositivos"
+#: dashboard/templates/pagination.html:45
+msgid "next"
+msgstr "siguiente"
 
-#: dashboard/views.py:71
-msgid "Search Devices"
-msgstr "Buscar dispositivos"
+#: dashboard/templates/unassigned_devices.html:21
+msgid "Search devices within lot (append :field for filters)"
+msgstr "Buscar dispositivos dentro del lote (añadir :campo para filtros)"
 
-#: device/templates/details.html:17 device/templates/details.html:44
+#: dashboard/templates/unassigned_devices.html:31
+msgid "Available filters:"
+msgstr "Filtros disponibles:"
+
+#: dashboard/templates/unassigned_devices.html:38
+msgid "for example i5:cpu "
+msgstr "por ejemplo i5:cpu "
+
+#: dashboard/templates/unassigned_devices.html:60
+#: device/templates/tabs/lots.html:24
+msgid "archived"
+msgstr "archivado"
+
+#: dashboard/templates/unassigned_devices.html:63
+#: device/templates/tabs/lots.html:24
+msgid "open"
+msgstr "abierto"
+
+#: dashboard/templates/unassigned_devices.html:66
+msgid "Device Management"
+msgstr "Gestión de dispositivos"
+
+#: dashboard/templates/unassigned_devices.html:78
+msgid "Export filtered"
+msgstr "Exportar filtrados"
+
+#: dashboard/templates/unassigned_devices.html:80
+msgid "Export All"
+msgstr "Exportar todo"
+
+#: dashboard/templates/unassigned_devices.html:87
+msgid ".csv"
+msgstr ".csv"
+
+#: dashboard/templates/unassigned_devices.html:93
+msgid ".xlsx"
+msgstr ".xlsx"
+
+#: dashboard/templates/unassigned_devices.html:110
+#: device/templates/details.html:32 device/templates/details.html:89
 msgid "Change state"
 msgstr "Cambiar estado"
 
-#: device/templates/details.html:21
-msgid "None"
-msgstr "Ninguno"
+#: dashboard/templates/unassigned_devices.html:126
+#: device/templates/details.html:24
+msgid "Assign to lot"
+msgstr "Asignar a lote"
 
-#: device/templates/details.html:52
+#: dashboard/templates/unassigned_devices.html:134
+msgid "Unassign from lot"
+msgstr "Desasignar de lote"
+
+#: dashboard/templates/unassigned_devices.html:140
+msgid "Add to beneficiary"
+msgstr "Añadir a beneficiario"
+
+#: dashboard/templates/unassigned_devices.html:155
+msgid "No devices found"
+msgstr "No se encontraron dispositivos"
+
+#: dashboard/templates/unassigned_devices.html:163
+msgid "Showing"
+msgstr "Mostrando"
+
+#: dashboard/templates/unassigned_devices.html:163
+msgid "Device/s"
+msgstr "Dispositivo/s"
+
+#: dashboard/templates/unassigned_devices.html:170
+msgid "Show"
+msgstr "Mostrar"
+
+#: dashboard/templates/unassigned_devices.html:180
+msgid "devices"
+msgstr "dispositivos"
+
+#: dashboard/views.py:32 dashboard/views.py:33 dashboard/views.py:34
+msgid "Inbox"
+msgstr "Bandeja de entrada"
+
+#: dashboard/views.py:43 dashboard/views.py:335
+msgid "All Devices"
+msgstr "Todos los dispositivos"
+
+#: dashboard/views.py:53 dashboard/views.py:113 lot/views.py:363
+msgid "Lot"
+msgstr "Lote"
+
+#: dashboard/views.py:123
+msgid "Lot / {} / Devices"
+msgstr "Lote / {} / Dispositivos"
+
+#: dashboard/views.py:333 dashboard/views.py:335
+msgid "Search"
+msgstr "Buscar"
+
+#: dashboard/views.py:334
+msgid "Search Devices"
+msgstr "Buscar dispositivos"
+
+#: device/templates/details.html:16
 msgid "Add a note"
 msgstr "Añadir una nota"
 
-#: device/templates/details.html:64
+#: device/templates/details.html:67
+msgid "Change State to"
+msgstr "Cambiar estado a"
+
+#: device/templates/details.html:74
+msgid "Comment (Optional)"
+msgstr "Comentario (opcional)"
+
+#: device/templates/details.html:75
+msgid "Leave a note about why this state is changing..."
+msgstr "Deje una nota sobre por qué cambia este estado..."
+
+#: device/templates/details.html:81
+msgid "Confirm & Issue Record"
+msgstr "Confirmar y emitir registro"
+
+#: device/templates/details.html:105
 msgid "General details"
 msgstr "Detalles generales"
 
-#: device/templates/details.html:67
+#: device/templates/details.html:108 lot/templates/tabs.html:10
+#: lot/views.py:387 lot/views.py:451
 msgid "Properties"
 msgstr "Propiedades"
 
-#: device/templates/details.html:73
+#: device/templates/details.html:111 device/templates/tabs/credentials.html:9
+msgid "Digital Credentials"
+msgstr "Credenciales digitales"
+
+#: device/templates/details.html:117
 msgid "Components"
 msgstr "Componentes"
 
-#: device/templates/details.html:80
+#: device/templates/details.html:124
 msgid "Dpps"
 msgstr "PDPs"
 
-#: device/templates/details.html:87
+#: device/templates/details.html:131
 msgid "Log"
 msgstr "Registro"
 
-#: device/templates/details.html:90
+#: device/templates/details.html:134
 msgid "Environmental impact"
 msgstr "Impacto Ambiental"
 
-#: device/templates/details.html:118
+#: device/templates/details.html:164
 msgid "Add a Note"
 msgstr "Añadir una Nota"
 
-#: device/templates/details.html:126
+#: device/templates/details.html:172
 msgid "Note"
 msgstr "Nota"
 
-#: device/templates/details.html:131
+#: device/templates/details.html:177
 msgid "Save Note"
 msgstr "Guardar Nota"
+
+#: device/templates/device_dpp.html:7
+msgid "DPP Evidence"
+msgstr "Evidencia del DPP"
+
+#: device/templates/device_dpp.html:106
+msgid "Digital Product Passport"
+msgstr "Pasaporte Digital de Producto"
+
+#: device/templates/device_dpp.html:108
+msgid "Device Asset"
+msgstr "Activo de dispositivo"
+
+#: device/templates/device_dpp.html:118
+msgid "Exit View"
+msgstr "Salir de la vista"
+
+#: device/templates/device_dpp.html:122
+msgid "Download latest DPP (JSON)"
+msgstr "Descargar último DPP (JSON)"
+
+#: device/templates/device_dpp.html:130
+msgid "Identity & Core Data"
+msgstr "Identidad y datos principales"
+
+#: device/templates/device_dpp.html:142
+#: device/templates/tabs/general_details.html:63
+#: evidence/templates/dpp_credential.html:58
+#: lot/templates/beneficiaries_devices.html:25
+#: lot/templates/beneficiary_web.html:107 lot/templates/donor_web.html:104
+msgid "Serial Number"
+msgstr "Número de serie"
+
+#: device/templates/device_dpp.html:148
+msgid "Model Reference"
+msgstr "Referencia de modelo"
+
+#: device/templates/device_dpp.html:154
+msgid "No active lifecycle data found for this asset."
+msgstr "No se encontraron datos de ciclo de vida activos para este activo."
+
+#: device/templates/device_dpp.html:160
+msgid "Cryptographic Integrity"
+msgstr "Integridad criptográfica"
+
+#: device/templates/device_dpp.html:165
+msgid "Digital Signature Authority"
+msgstr "Autoridad de firma digital"
+
+#: device/templates/device_dpp.html:170
+msgid "Issuer Decentralized ID"
+msgstr "ID Descentralizado del emisor"
+
+#: device/templates/device_dpp.html:175
+msgid "Timestamp"
+msgstr "Marca de tiempo"
+
+#: device/templates/device_dpp.html:177
+msgid "Inspect Proof"
+msgstr "Inspeccionar prueba"
+
+#: device/templates/device_dpp.html:183
+msgid "Cryptographic metadata not linked."
+msgstr "Metadatos criptográficos no vinculados."
+
+#: device/templates/device_dpp.html:189
+msgid "Audit-Based Characteristics"
+msgstr "Características basadas en auditoría"
+
+#: device/templates/device_dpp.html:190
+msgid "Captured automatically via non-manual hardware scanning tools."
+msgstr "Capturado automáticamente vía herramientas de escaneo de hardware no manuales."
+
+#: device/templates/device_dpp.html:205
+msgid "Traceability Audit Trail"
+msgstr "Registro de auditoría de trazabilidad"
+
+#: device/templates/device_dpp.html:226
+msgid "System State"
+msgstr "Estado del sistema"
+
+#: device/templates/device_dpp.html:230
+msgid "Facility Location"
+msgstr "Ubicación de la instalación"
+
+#: device/templates/device_dpp.html:239
+msgid "View Proof"
+msgstr "Ver prueba"
+
+#: device/templates/device_dpp.html:250
+msgid "No individual traceability events documented."
+msgstr "No hay eventos individuales de trazabilidad documentados."
+
+#: device/templates/device_dpp.html:255
+msgid "Responsible Processing Unit"
+msgstr "Unidad de procesamiento responsable"
+
+#: device/templates/device_dpp.html:271
+msgid "Facility Identity"
+msgstr "Identidad de la instalación"
+
+#: device/templates/device_dpp.html:283
+#: evidence/templates/credential_base.html:192
+msgid "All rights reserved."
+msgstr "Todos los derechos reservados."
 
 #: device/templates/new_device.html:60
 msgid "Component details"
@@ -583,9 +1003,114 @@ msgstr "Detalles del componente"
 msgid "Add component"
 msgstr "Añadir componente"
 
-#: device/templates/tabs/components.html:5
-msgid "Components last evidence"
-msgstr "Última evidencia de componentes"
+#: device/templates/tabs/components.html:4
+msgid "Components from last evidence"
+msgstr "Componentes de la última evidencia"
+
+#: device/templates/tabs/components.html:17
+msgid "Empty memory Slot"
+msgstr "Ranura de memoria vacía"
+
+#: device/templates/tabs/credentials.html:15
+msgid "Issue DPP"
+msgstr "Emitir DPP"
+
+#: device/templates/tabs/credentials.html:26
+msgid "Issue Digital Product Passport"
+msgstr "Emitir Pasaporte Digital de Producto"
+
+#: device/templates/tabs/credentials.html:34
+msgid ""
+"You are about to cryptographically sign and issue a Digital Product "
+"Passport. Attach optional public metadata below."
+msgstr "Estás a punto de firmar criptográficamente y emitir un Pasaporte Digital de Producto. Adjunta metadatos públicos opcionales a continuación."
+
+#: device/templates/tabs/credentials.html:39
+msgid "Cosmetic Condition"
+msgstr "Condición estética"
+
+#: device/templates/tabs/credentials.html:41
+msgid "Not specified"
+msgstr "No especificado"
+
+#: device/templates/tabs/credentials.html:42 device/views.py:46
+#: evidence/templates/dpp_credential.html:151
+msgid "Grade A - Excellent (Like New)"
+msgstr "Grado A - Excelente (Como nuevo)"
+
+#: device/templates/tabs/credentials.html:43 device/views.py:47
+#: evidence/templates/dpp_credential.html:153
+msgid "Grade B - Good (Minor Scratches)"
+msgstr "Grado B - Bueno (Arañazos menores)"
+
+#: device/templates/tabs/credentials.html:44 device/views.py:48
+#: evidence/templates/dpp_credential.html:155
+msgid "Grade C - Fair (Noticeable Wear)"
+msgstr "Grado C - Aceptable (Desgaste notable)"
+
+#: device/templates/tabs/credentials.html:45 device/views.py:49
+#: evidence/templates/dpp_credential.html:157
+msgid "Grade D - Poor (Heavy Wear/Damaged)"
+msgstr "Grado D - Pobre (Desgaste intenso/Dañado)"
+
+#: device/templates/tabs/credentials.html:49
+msgid "Warranty (Months)"
+msgstr "Garantía (Meses)"
+
+#: device/templates/tabs/credentials.html:54
+msgid "Repair Guide URL"
+msgstr "URL de guía de reparación"
+
+#: device/templates/tabs/credentials.html:59
+msgid "Warranty Terms URL"
+msgstr "URL de términos de garantía"
+
+#: device/templates/tabs/credentials.html:64
+#: evidence/templates/dpp_credential.html:126
+msgid "Operator Notes"
+msgstr "Notas del operador"
+
+#: device/templates/tabs/credentials.html:65
+msgid "e.g., Device fully sanitized and stress-tested."
+msgstr "ej., Dispositivo completamente desinfectado y testeado bajo estrés."
+
+#: device/templates/tabs/credentials.html:73
+msgid "Confirm & Issue Passport"
+msgstr "Confirmar y emitir pasaporte"
+
+#: device/templates/tabs/credentials.html:86
+msgid ""
+"Manage Verifiable Credentials issued for this device, including Product "
+"Passports and Traceability Events."
+msgstr "Administra las Credenciales Verificables emitidas para este dispositivo, incluyendo Pasaportes de Producto y Eventos de Trazabilidad."
+
+#: device/templates/tabs/credentials.html:96
+msgid "No credentials have been issued for this device yet."
+msgstr "Aún no se han emitido credenciales para este dispositivo."
+
+#: device/templates/tabs/credentials.html:98
+msgid "Issue First Credential"
+msgstr "Emitir primera credencial"
+
+#: device/templates/tabs/credentials.html:108
+msgid "Issue Dismantle Traceability Event"
+msgstr "Emitir Evento de Trazabilidad de Desmantelamiento"
+
+#: device/templates/tabs/credentials.html:114
+msgid ""
+"Select the materials or components recovered from this device. This will "
+"issue a Traceability Event, a new item to the inventory, and permanently "
+"update the device state."
+msgstr "Selecciona los materiales o componentes recuperados de este dispositivo. Esto emitirá un Evento de Trazabilidad, un nuevo artículo al inventario y actualizará permanentemente el estado del dispositivo."
+
+#: device/templates/tabs/credentials.html:122
+msgid "Component Type"
+msgstr "Tipo de componente"
+
+#: device/templates/tabs/credentials.html:124
+#: device/templates/tabs/credentials.html:141
+msgid "Description / Name"
+msgstr "Descripción / Nombre"
 
 #: device/templates/tabs/dpps.html:4
 msgid "List of dpps"
@@ -595,74 +1120,127 @@ msgstr "Lista de PDPs"
 msgid "Environmental Impact Details"
 msgstr "Detalles del impacto ambiental"
 
-#: device/templates/tabs/environmental_impact.html:7
-msgid "While device is being used"
-msgstr "Mientras el dispositivo está en uso"
+#: device/templates/tabs/environmental_impact.html:17
+#: lot/templates/lot_environmental_impact.html:115
+msgid "Algorithm Information"
+msgstr "Información del algoritmo"
 
-#: device/templates/tabs/environmental_impact.html:11
-msgid "CO2 Emissions"
-msgstr "Emisiones CO2"
+#: device/templates/tabs/environmental_impact.html:18
+#: lot/templates/lot_environmental_impact.html:116
+msgid "Show details"
+msgstr "Mostrar detalles"
 
-#: device/templates/tabs/environmental_impact.html:19
-msgid "Algorithm Selector"
-msgstr "Seleccionador de algoritmo"
-
-#: device/templates/tabs/environmental_impact.html:22
-msgid "Dummy Algorithm"
-msgstr "Algoritmo simple"
-
-#: device/templates/tabs/environmental_impact.html:25
-msgid "Advanced Algorithm"
-msgstr "Algoritmo avanzado"
+#: device/templates/tabs/environmental_impact.html:26
+#: device/templates/tabs/environmental_impact.html:82
+#: lot/templates/lot_environmental_impact.html:203
+msgid "Relevant Input Data"
+msgstr "Datos de entrada relevantes"
 
 #: device/templates/tabs/environmental_impact.html:33
-msgid "Read about the algorithm insights"
-msgstr "Lee más acerca del algoritmo "
+#: device/templates/tabs/environmental_impact.html:89
+#: lot/templates/lot_environmental_impact.html:210
+msgid "Input Parameter"
+msgstr "Parámetro de entrada"
 
-#: device/templates/tabs/evidences.html:12 device/templates/tabs/log.html:8
-#: evidence/templates/ev_details.html:68
-msgid "Date"
-msgstr "Fecha"
+#: device/templates/tabs/environmental_impact.html:36
+#: device/templates/tabs/environmental_impact.html:92
+#: device/templates/tabs/user_properties.html:19
+#: device/templates/tabs/user_properties.html:116
+#: evidence/templates/traceability_credential.html:180
+#: lot/templates/lot_environmental_impact.html:213
+#: lot/templates/properties.html:14 lot/templates/properties.html:54
+msgid "Value"
+msgstr "Valor"
+
+#: device/templates/tabs/environmental_impact.html:49
+#: device/templates/tabs/environmental_impact.html:105
+#: lot/templates/lot_environmental_impact.html:226
+msgid "No relevant input data available"
+msgstr "No hay datos de entrada relevantes disponibles"
+
+#: device/templates/tabs/environmental_impact.html:61
+#: lot/templates/lot_environmental_impact.html:130
+msgid "Environmental Impact Data Unavailable"
+msgstr "Datos de impacto ambiental no disponibles"
+
+#: device/templates/tabs/environmental_impact.html:63
+msgid ""
+"Environmental impact calculation is not available for this device. This may "
+"be due to insufficient device data or configuration issues."
+msgstr "El cálculo de impacto ambiental no está disponible para este dispositivo. Esto puede deberse a datos insuficientes del dispositivo o problemas de configuración."
+
+#: device/templates/tabs/environmental_impact.html:66
+#: lot/templates/lot_environmental_impact.html:135
+msgid "Possible reasons:"
+msgstr "Posibles razones:"
+
+#: device/templates/tabs/environmental_impact.html:70
+msgid "Device has no usage time data (power-on hours)"
+msgstr "El dispositivo no tiene datos de tiempo de uso (horas de encendido)"
+
+#: device/templates/tabs/environmental_impact.html:73
+msgid "Device evidence is missing or incomplete"
+msgstr "Falta la evidencia del dispositivo o está incompleta"
+
+#: device/templates/tabs/environmental_impact.html:76
+msgid "Storage component information is not available"
+msgstr "La información del componente de almacenamiento no está disponible"
+
+#: device/templates/tabs/evidences.html:11 evidence/templates/evidences.html:16
+#: user/templates/user_profile.html:96
+msgid "Uploaded Evidences"
+msgstr "Evidencias subidas"
+
+#: device/templates/tabs/evidences.html:14 evidence/templates/evidences.html:19
+#: user/templates/user_profile.html:99
+msgid "evidences"
+msgstr "evidencias"
+
+#: device/templates/tabs/evidences.html:28
+msgid "No evidences found for this device"
+msgstr "No se encontraron evidencias para este dispositivo"
 
 #: device/templates/tabs/general_details.html:6
+#: evidence/templates/credential_base.html:58
 msgid "Details"
 msgstr "Detalles"
 
-#: device/templates/tabs/general_details.html:10
+#: device/templates/tabs/general_details.html:9
 msgid "Phid"
 msgstr "Phid"
 
-#: device/templates/tabs/general_details.html:18
+#: device/templates/tabs/general_details.html:17
 msgid "Is an erase server"
 msgstr "Es un servidor de borrado"
 
-#: device/templates/tabs/general_details.html:20
+#: device/templates/tabs/general_details.html:19
+#: evidence/templates/dpp_credential.html:319
 msgid "Yes"
 msgstr "Sí"
 
-#: device/templates/tabs/general_details.html:26
-msgid "Type"
-msgstr "Tipo"
-
-#: device/templates/tabs/general_details.html:43
-msgid "Manufacturer"
-msgstr "Fabricante"
-
-#: device/templates/tabs/general_details.html:50
-msgid "Model"
-msgstr "Modelo"
-
-#: device/templates/tabs/general_details.html:58
+#: device/templates/tabs/general_details.html:57
 msgid "Version"
 msgstr "Versión"
 
-#: device/templates/tabs/general_details.html:64
-msgid "Serial Number"
-msgstr "Número de serie"
+#: device/templates/tabs/general_details.html:71
+msgid "Alias Identifiers"
+msgstr "Identificadores de alias"
 
-#: device/templates/tabs/general_details.html:72
-msgid "Identifiers"
-msgstr "Identificadores"
+#: device/templates/tabs/general_details.html:139
+msgid "Print Label"
+msgstr "Imprimir etiqueta"
+
+#: device/templates/tabs/general_details.html:146
+msgid "DID"
+msgstr "DID"
+
+#: device/templates/tabs/general_details.html:164
+msgid "Print DID"
+msgstr "Imprimir DID"
+
+#: device/templates/tabs/log.html:8 evidence/templates/ev_details.html:181
+msgid "Date"
+msgstr "Fecha"
 
 #: device/templates/tabs/log.html:9
 msgid "Event"
@@ -671,6 +1249,16 @@ msgstr "Evento"
 #: device/templates/tabs/log.html:22
 msgid "No logs recorded."
 msgstr "No se registraron registros."
+
+#: device/templates/tabs/lots.html:29
+#: evidence/templates/credential_base.html:178
+#: lot/templates/delete_lots.html:59
+msgid "Created"
+msgstr "Creado el"
+
+#: device/templates/tabs/lots.html:40
+msgid "This device is not assigned to any lots"
+msgstr "Este dispositivo no está asignado a ningún lote"
 
 #: device/templates/tabs/user_properties.html:9
 msgid "New user property"
@@ -682,22 +1270,17 @@ msgstr "Propiedades del usuario"
 
 #: device/templates/tabs/user_properties.html:18
 #: device/templates/tabs/user_properties.html:111
-#: lot/templates/properties.html:26 lot/templates/properties.html:63
+#: lot/templates/properties.html:13 lot/templates/properties.html:50
 msgid "Key"
 msgstr "Clave"
 
-#: device/templates/tabs/user_properties.html:19
-#: device/templates/tabs/user_properties.html:116
-#: lot/templates/properties.html:27 lot/templates/properties.html:67
-msgid "Value"
-msgstr "Valor"
-
 #: device/templates/tabs/user_properties.html:20
-#: lot/templates/properties.html:28
+#: lot/templates/properties.html:15
 msgid "Created on"
 msgstr "Creado el"
 
 #: device/templates/tabs/user_properties.html:63
+#: user/templates/user_profile.html:155
 msgid "Confirm Deletion"
 msgstr "Confirmar la eliminación"
 
@@ -718,198 +1301,880 @@ msgid "Edit User Property"
 msgstr "Editar propiedad de usuario"
 
 #: device/templates/tabs/user_properties.html:123
-#: lot/templates/properties.html:72
+#: lot/templates/properties.html:59
 msgid "Save changes"
 msgstr "Guardar cambios"
 
-#: device/views.py:42
+#: device/views.py:63
 msgid "New Device"
 msgstr "Nuevo dispositivo"
 
-#: device/views.py:59
+#: device/views.py:80
 msgid "Update Device"
 msgstr "Actualizar dispositivo"
 
-#: device/views.py:78 evidence/templates/ev_details.html:50
+#: device/views.py:99 evidence/tables.py:34
+#: evidence/templates/ev_details.html:74
 msgid "Device"
 msgstr "Dispositivo"
 
-#: device/views.py:192
+#: device/views.py:253
 msgid "New User Property"
 msgstr "Nueva propiedad de usuario"
 
-#: device/views.py:205 lot/views.py:301
+#: device/views.py:266 lot/views.py:464
 msgid "Property successfully added."
 msgstr "Propiedad agregada correctamente."
 
-#: device/views.py:206
+#: device/views.py:267
 msgid "<Created> UserProperty: {}: {}"
 msgstr "<Created>Propiedad del usuario: {}: {}"
 
-#: device/views.py:214 device/views.py:269 lot/views.py:304 lot/views.py:350
+#: device/views.py:275 device/views.py:330 lot/views.py:467 lot/views.py:517
 msgid "Property is already defined."
 msgstr "La propiedad ya está definida."
 
-#: device/views.py:239
+#: device/views.py:300
 msgid "Update User Property"
 msgstr "Actualizar propiedad del usuario"
 
-#: device/views.py:258 lot/views.py:347
+#: device/views.py:319 lot/views.py:514
 msgid "Property updated successfully."
 msgstr "Propiedad actualizada correctamente."
 
-#: device/views.py:259
+#: device/views.py:320
 msgid "<Updated> UserProperty: {}: {} to {}: {}"
 msgstr "<Updated>Propiedad del usuario: {}: {} a {}: {}"
 
-#: device/views.py:295
+#: device/views.py:356
 msgid "<Deleted> User Property: {}:{}"
 msgstr "<Deleted>Propiedad del usuario: {}:{}"
 
-#: device/views.py:300
+#: device/views.py:361
 msgid "User property deleted successfully."
 msgstr "Propiedad del usuario eliminada correctamente."
 
-#: evidence/forms.py:17
-msgid "File"
-msgstr "﻿Archivo"
+#: evidence/forms.py:31
+msgid "No snapshot selected"
+msgstr "No se seleccionó captura de pantalla"
 
-#: evidence/forms.py:40
+#: evidence/forms.py:50
 msgid "The snapshot already exists"
 msgstr "La evidencia ya existe"
 
-#: evidence/forms.py:47
+#: evidence/forms.py:57
 #, python-format
 msgid "Error on '%(file_name)s': %(error)s"
 msgstr "Error en '%(file_name)s': %(error)s"
 
-#: evidence/forms.py:106
-msgid "<Deleted> Evidence Tag. Old Value: '{}'"
-msgstr "<Deleted>Etiqueta de evidencia. Valor anterior: '{}'"
+#: evidence/forms.py:78 evidence/templates/ev_details.html:78
+msgid "Alias"
+msgstr "Alias"
 
-#: evidence/forms.py:112
-msgid "<Updated> Evidence Tag. Old Value: '{}'. New Value: '{}'"
-msgstr ""
-"<Updated>Etiqueta de evidencia. Valor anterior: '{}'. Nuevo valor: '{}'"
+#: evidence/forms.py:110
+msgid "This alias is the same as the current evidence."
+msgstr "Este alias es el mismo que la evidencia actual."
 
-#: evidence/forms.py:114
-msgid "<Created> Evidence Tag. Value: '{}'"
-msgstr "<Created>Etiqueta de evidencia. Valor: '{}'"
+#: evidence/forms.py:115
+msgid ""
+"To prevent loops, current evidence cannot be linked to another Alias "
+"Identifier because it is already linked by other evidences."
+msgstr "Para evitar bucles, la evidencia actual no puede ser vinculada a otro Identificador de Alias porque ya está vinculada por otras evidencias."
 
-#: evidence/forms.py:132
-msgid "File to import"
-msgstr "Archivo a importar"
+#: evidence/forms.py:138
+msgid "<Created> Evidence alias. Value: '{}'"
+msgstr "<Created> Alias de evidencia. Valor: '{}'"
 
-#: evidence/forms.py:150
+#: evidence/forms.py:149
+msgid "<Updated> Evidence alias. Old Value: '{}'. New Value: '{}'"
+msgstr "<Updated> Alias de evidencia. Valor anterior: '{}'. Nuevo valor: '{}'"
+
+#: evidence/forms.py:190
 #, python-format
 msgid "Error on '%(file_name)s': Invalid File"
 msgstr "Error en '%(file_name)s': Archivo no válido"
 
-#: evidence/forms.py:159
+#: evidence/forms.py:199
 msgid "The file you try to import is empty!"
 msgstr "¡El archivo que intentas importar está vacío!"
 
-#: evidence/forms.py:195
+#: evidence/forms.py:235
 msgid "Is a Erase Server"
 msgstr "Es un servidor de borrado"
 
-#: evidence/templates/ev_details.html:8
+#: evidence/forms.py:311
+msgid "No photo selected"
+msgstr "No se seleccionó foto"
+
+#: evidence/forms.py:318
+msgid "File size exceeds 10MB limit"
+msgstr "El tamaño del archivo excede el límite de 10MB"
+
+#: evidence/forms.py:326
+msgid "Invalid file type. Only JPEG, PNG, GIF, and WebP images are allowed"
+msgstr "Tipo de archivo no válido. Solo se permiten imágenes JPEG, PNG, GIF y WebP"
+
+#: evidence/forms.py:334
+msgid ""
+"Invalid file extension. Only .jpg, .jpeg, .png, .gif, and .webp are allowed"
+msgstr "Extensión de archivo no válida. Solo se permiten .jpg, .jpeg, .png, .gif y .webp"
+
+#: evidence/tables.py:16
+msgid "UUID"
+msgstr "UUID"
+
+#: evidence/tables.py:22
+msgid "Upload Date"
+msgstr "Fecha de subida"
+
+#: evidence/tables.py:26
+msgid "Uploaded by"
+msgstr "Subido por"
+
+#: evidence/tables.py:31
+msgid "DID Document"
+msgstr "Documento DID"
+
+#: evidence/tables.py:32 evidence/tables.py:162
+msgid "Legacy"
+msgstr "Heredado"
+
+#: evidence/tables.py:35
+msgid "Digital Passport"
+msgstr "Pasaporte digital"
+
+#: evidence/tables.py:47
+msgid "No evidence records found"
+msgstr "No se encontraron registros de evidencia"
+
+#: evidence/tables.py:84
+msgid "Photo evidence - device not linked yet"
+msgstr "Evidencia fotográfica - dispositivo aún no vinculado"
+
+#: evidence/tables.py:85
+msgid "Not linked"
+msgstr "No vinculado"
+
+#: evidence/tables.py:96
+msgid "Error loading device"
+msgstr "Error al cargar el dispositivo"
+
+#: evidence/tables.py:112
+msgid "Error loading UUID"
+msgstr "Error al cargar el UUID"
+
+#: evidence/tables.py:118
+msgid "System"
+msgstr "Sistema"
+
+#: evidence/tables.py:127
+msgid "Error loading uploader"
+msgstr "Error al cargar al remitente"
+
+#: evidence/tables.py:133
+msgid "N/A (Evidence not found)"
+msgstr "N/A (Evidencia no encontrada)"
+
+#: evidence/tables.py:137
+msgid "Not available"
+msgstr "No disponible"
+
+#: evidence/tables.py:146
+msgid "DID document"
+msgstr "Documento DID"
+
+#: evidence/tables.py:149
+msgid "Error rendering DID"
+msgstr "Error al renderizar el DID"
+
+#: evidence/tables.py:162
+msgid "Modern"
+msgstr "Moderno"
+
+#: evidence/tables.py:165
+msgid "Error checking legacy status"
+msgstr "Error al verificar el estado de herencia"
+
+#: evidence/tables.py:177
+msgid "Photographic evidence"
+msgstr "Evidencia fotográfica"
+
+#: evidence/tables.py:178 evidence/templates/ev_details.html:67
+msgid "Photo"
+msgstr "Foto"
+
+#: evidence/tables.py:181
+msgid "N/A (Type not found)"
+msgstr "N/A (Tipo no encontrado)"
+
+#: evidence/tables.py:183
+msgid "Error rendering evidence type"
+msgstr "Error al renderizar el tipo de evidencia"
+
+#: evidence/tables.py:202
+msgid "Issued Date"
+msgstr "Fecha de emisión"
+
+#: evidence/tables.py:207
+msgid "Credential Type"
+msgstr "Tipo de credencial"
+
+#: evidence/tables.py:212 evidence/templates/dpp_credential.html:18
+#: evidence/templates/facility_credential.html:24 lot/tables.py:27
+#: lot/templates/delete_lots.html:42
+msgid "Description"
+msgstr "Descripción"
+
+#: evidence/tables.py:217
+msgid "Issued To"
+msgstr "Emitido a"
+
+#: evidence/tables.py:223
+msgid "Issuer"
+msgstr "Emisor"
+
+#: evidence/tables.py:244
+msgid "No credentials issued yet."
+msgstr "No se han emitido credenciales aún."
+
+#: evidence/tables.py:273
+msgid "Error loading target"
+msgstr "Error al cargar el objetivo"
+
+#: evidence/templates/credential_base.html:7
+msgid "Digital Credential Viewer"
+msgstr "Visor de credenciales digitales"
+
+#: evidence/templates/credential_base.html:44
+msgid "Credential Details"
+msgstr "Detalles de la credencial"
+
+#: evidence/templates/credential_base.html:48
+msgid "Download JSON"
+msgstr "Descargar JSON"
+
+#: evidence/templates/credential_base.html:51
+msgid "Validate"
+msgstr "Validar"
+
+#: evidence/templates/credential_base.html:60
+msgid "Credential ID"
+msgstr "ID de la credencial"
+
+#: evidence/templates/credential_base.html:68
+msgid "Credential Types"
+msgstr "Tipos de credencial"
+
+#: evidence/templates/credential_base.html:79
+msgid "Issuer Information"
+msgstr "Información del emisor"
+
+#: evidence/templates/credential_base.html:81
+msgid "Issuer Name"
+msgstr "Nombre del emisor"
+
+#: evidence/templates/credential_base.html:85 user/models.py:87
+msgid "Issuer DID"
+msgstr "DID del emisor"
+
+#: evidence/templates/credential_base.html:90
+msgid "Issuer Type"
+msgstr "Tipo de emisor"
+
+#: evidence/templates/credential_base.html:99
+msgid "Valid From"
+msgstr "Válido desde"
+
+#: evidence/templates/credential_base.html:104
+msgid "Valid Until"
+msgstr "Válido hasta"
+
+#: evidence/templates/credential_base.html:116
+msgid "Credential Status"
+msgstr "Estado de la credencial"
+
+#: evidence/templates/credential_base.html:119
+msgid "Status ID"
+msgstr "ID del estado"
+
+#: evidence/templates/credential_base.html:123
+msgid "Status Type"
+msgstr "Tipo de estado"
+
+#: evidence/templates/credential_base.html:128
+msgid "Revocation Index"
+msgstr "Índice de revocación"
+
+#: evidence/templates/credential_base.html:133
+msgid "No specific status endpoint defined."
+msgstr "No se definió ningún endpoint de estado específico."
+
+#: evidence/templates/credential_base.html:138
+msgid "Schema"
+msgstr "Esquema"
+
+#: evidence/templates/credential_base.html:141
+msgid "Schema ID"
+msgstr "ID del esquema"
+
+#: evidence/templates/credential_base.html:150
+msgid "Validator Type"
+msgstr "Tipo de validador"
+
+#: evidence/templates/credential_base.html:155
+msgid "Defined via JSON-LD Context."
+msgstr "Definido a través de Contexto JSON-LD."
+
+#: evidence/templates/credential_base.html:160
+msgid "Cryptographic Proof"
+msgstr "Prueba criptográfica"
+
+#: evidence/templates/credential_base.html:164
+msgid "Signature Type"
+msgstr "Tipo de firma"
+
+#: evidence/templates/credential_base.html:169
+msgid "Proof Purpose"
+msgstr "Propósito de la prueba"
+
+#: evidence/templates/credential_base.html:174
+msgid "Verification Method"
+msgstr "Método de verificación"
+
+#: evidence/templates/credential_base.html:183
+msgid "JWS Signature"
+msgstr "Firma JWS"
+
+#: evidence/templates/dpp_credential.html:4
+msgid "DPP Credential Viewer"
+msgstr "Visor de credencial DPP"
+
+#: evidence/templates/dpp_credential.html:6
+msgid "Digital Product Passport (DPP)"
+msgstr "Pasaporte Digital de Producto (DPP)"
+
+#: evidence/templates/dpp_credential.html:9
+#: evidence/templates/facility_credential.html:10
+msgid "Not Provided"
+msgstr "No provisto"
+
+#: evidence/templates/dpp_credential.html:10
+#: evidence/templates/facility_credential.html:11
+msgid "No description available."
+msgstr "Sin descripción disponible."
+
+#: evidence/templates/dpp_credential.html:14
+msgid "Product Name"
+msgstr "Nombre del producto"
+
+#: evidence/templates/dpp_credential.html:22
+msgid "Product ID"
+msgstr "ID del producto"
+
+#: evidence/templates/dpp_credential.html:27
+msgid "Granularity"
+msgstr "Granularidad"
+
+#: evidence/templates/dpp_credential.html:38
+msgid "Categories"
+msgstr "Categorías"
+
+#: evidence/templates/dpp_credential.html:54
+msgid "Product Specifications"
+msgstr "Especificaciones del producto"
+
+#: evidence/templates/dpp_credential.html:62
+msgid "Batch Number"
+msgstr "Número de lote"
+
+#: evidence/templates/dpp_credential.html:67
+msgid "Dimensions"
+msgstr "Dimensiones"
+
+#: evidence/templates/dpp_credential.html:72
+msgid "Weight"
+msgstr "Peso"
+
+#: evidence/templates/dpp_credential.html:78
+msgid "Volume"
+msgstr "Volumen"
+
+#: evidence/templates/dpp_credential.html:84
+msgid "L x W x H"
+msgstr "L x A x A"
+
+#: evidence/templates/dpp_credential.html:94
+msgid "Manufacturing Origin"
+msgstr "Origen de fabricación"
+
+#: evidence/templates/dpp_credential.html:102
+#: evidence/templates/facility_credential.html:20
+msgid "Facility ID"
+msgstr "ID de instalación"
+
+#: evidence/templates/dpp_credential.html:106
+#: evidence/templates/facility_credential.html:28
+msgid "Country"
+msgstr "País"
+
+#: evidence/templates/dpp_credential.html:118
+msgid "Device Characteristics"
+msgstr "Características del dispositivo"
+
+#: evidence/templates/dpp_credential.html:127
+msgid "Condition"
+msgstr "Condición"
+
+#: evidence/templates/dpp_credential.html:128
+msgid "Warranty"
+msgstr "Garantía"
+
+#: evidence/templates/dpp_credential.html:135
+msgid "Months"
+msgstr "Meses"
+
+#: evidence/templates/dpp_credential.html:137
+msgid "Included"
+msgstr "Incluido"
+
+#: evidence/templates/dpp_credential.html:143
+msgid "Terms"
+msgstr "Términos"
+
+#: evidence/templates/dpp_credential.html:179
+msgid "Traceability Information"
+msgstr "Información de trazabilidad"
+
+#: evidence/templates/dpp_credential.html:191
+msgid "Verified Ratio"
+msgstr "Ratio verificado"
+
+#: evidence/templates/dpp_credential.html:201
+msgid "Linked Events"
+msgstr "Eventos vinculados"
+
+#: evidence/templates/dpp_credential.html:226 lot/templates/tabs.html:38
+#: lot/views.py:406
+msgid "Environmental Impact"
+msgstr "Impacto ambiental"
+
+#: evidence/templates/dpp_credential.html:232
+msgid "Emissions Scorecard"
+msgstr "Tarjeta de puntuación de emisiones"
+
+#: evidence/templates/dpp_credential.html:235
+msgid "Carbon Footprint"
+msgstr "Huella de carbono"
+
+#: evidence/templates/dpp_credential.html:239
+msgid "Operational Scope"
+msgstr "Alcance operativo"
+
+#: evidence/templates/dpp_credential.html:243
+msgid "Primary Sourced Ratio"
+msgstr "Ratio de fuente primaria"
+
+#: evidence/templates/dpp_credential.html:256
+msgid "Circularity Scorecard"
+msgstr "Tarjeta de puntuación de circularidad"
+
+#: evidence/templates/dpp_credential.html:259
+msgid "Material Circularity Indicator (MCI)"
+msgstr "Indicador de circularidad de material (MCI)"
+
+#: evidence/templates/dpp_credential.html:263
+msgid "Recyclable Content"
+msgstr "Contenido reciclable"
+
+#: evidence/templates/dpp_credential.html:267
+msgid "Recycled Content"
+msgstr "Contenido reciclado"
+
+#: evidence/templates/dpp_credential.html:271
+msgid "Utility Factor"
+msgstr "Factor de utilidad"
+
+#: evidence/templates/dpp_credential.html:277
+msgid "Repair Documentation"
+msgstr "Documentación de reparación"
+
+#: evidence/templates/dpp_credential.html:279
+msgid "View Guide"
+msgstr "Ver guía"
+
+#: evidence/templates/dpp_credential.html:296
+msgid "Materials Provenance"
+msgstr "Procedencia de los materiales"
+
+#: evidence/templates/dpp_credential.html:301
+msgid "Material Name"
+msgstr "Nombre del material"
+
+#: evidence/templates/dpp_credential.html:302
+msgid "Origin"
+msgstr "Origen"
+
+#: evidence/templates/dpp_credential.html:303
+msgid "Mass"
+msgstr "Masa"
+
+#: evidence/templates/dpp_credential.html:304
+msgid "Mass Fraction"
+msgstr "Fracción de masa"
+
+#: evidence/templates/dpp_credential.html:305
+msgid "Recycled Fraction"
+msgstr "Fracción reciclada"
+
+#: evidence/templates/dpp_credential.html:306
+msgid "Hazardous"
+msgstr "Peligroso"
+
+#: evidence/templates/dpp_credential.html:321
+msgid "No"
+msgstr "No"
+
+#: evidence/templates/dpp_credential.html:336
+msgid "Conformity Claims & Due Diligence"
+msgstr "Declaraciones de conformidad y debida diligencia"
+
+#: evidence/templates/dpp_credential.html:342
+msgid "Due Diligence Declaration Available:"
+msgstr "Declaración de debida diligencia disponible:"
+
+#: evidence/templates/dpp_credential.html:356
+#: evidence/templates/facility_credential.html:109
+msgid "Conformant"
+msgstr "Conforme"
+
+#: evidence/templates/dpp_credential.html:358
+#: evidence/templates/facility_credential.html:111
+msgid "Non-Conformant"
+msgstr "No conforme"
+
+#: evidence/templates/dpp_credential.html:367
+#: evidence/templates/facility_credential.html:120
+msgid "Assessment Date"
+msgstr "Fecha de evaluación"
+
+#: evidence/templates/dpp_credential.html:372
+#: evidence/templates/facility_credential.html:125
+msgid "Standard"
+msgstr "Estándar"
+
+#: evidence/templates/dpp_credential.html:381
+#: evidence/templates/facility_credential.html:140
+msgid "Evidence"
+msgstr "Evidencia"
+
+#: evidence/templates/dpp_credential.html:384
+#: evidence/templates/facility_credential.html:143
+msgid "View File"
+msgstr "Ver archivo"
+
+#: evidence/templates/ev_details.html:11
+msgid "Uploaded by "
+msgstr "Subido por "
+
+#: evidence/templates/ev_details.html:17
+msgid "ISO date"
+msgstr "Fecha ISO"
+
+#: evidence/templates/ev_details.html:25
 msgid "Download File"
 msgstr "Descargar archivo"
 
-#: evidence/templates/ev_details.html:24
+#: evidence/templates/ev_details.html:41
 msgid "Erase Server"
 msgstr "Servidor de borrado"
 
-#: evidence/templates/ev_details.html:36
+#: evidence/templates/ev_details.html:52
 msgid "It is an erase server"
 msgstr "Es un servidor de borrado"
 
-#: evidence/templates/ev_details.html:38
+#: evidence/templates/ev_details.html:54
 msgid "It is not an erase server"
 msgstr "No es un servidor de borrado"
 
-#: evidence/templates/ev_details.html:66
+#: evidence/templates/ev_details.html:70
+msgid "OCR & Barcodes"
+msgstr "OCR y Códigos de Barras"
+
+#: evidence/templates/ev_details.html:88
+msgid "Photo Evidence"
+msgstr "Evidencia fotográfica"
+
+#: evidence/templates/ev_details.html:97
+msgid "Evidence photo"
+msgstr "Foto de la evidencia"
+
+#: evidence/templates/ev_details.html:101
+msgid "Original filename:"
+msgstr "Nombre de archivo original:"
+
+#: evidence/templates/ev_details.html:102
+msgid "Hash (SHA256):"
+msgstr "Hash (SHA256):"
+
+#: evidence/templates/ev_details.html:103
+msgid "File size:"
+msgstr "Tamaño del archivo:"
+
+#: evidence/templates/ev_details.html:104
+msgid "MIME type:"
+msgstr "Tipo MIME:"
+
+#: evidence/templates/ev_details.html:109
+msgid "Photo data not available"
+msgstr "Datos de la foto no disponibles"
+
+#: evidence/templates/ev_details.html:117
+msgid "Extracted Data"
+msgstr "Datos extraídos"
+
+#: evidence/templates/ev_details.html:122
+msgid "Barcodes"
+msgstr "Códigos de barras"
+
+#: evidence/templates/ev_details.html:130
+msgid "Data"
+msgstr "Datos"
+
+#: evidence/templates/ev_details.html:144
+msgid "Barcode Error:"
+msgstr "Error de código de barras:"
+
+#: evidence/templates/ev_details.html:147
+msgid "No barcodes detected"
+msgstr "No se detectaron códigos de barras"
+
+#: evidence/templates/ev_details.html:155
+msgid "OCR Text"
+msgstr "Texto OCR"
+
+#: evidence/templates/ev_details.html:162
+msgid "OCR Error:"
+msgstr "Error OCR:"
+
+#: evidence/templates/ev_details.html:165
+msgid "No text detected"
+msgstr "No se detectó texto"
+
+#: evidence/templates/ev_details.html:179 user/models.py:107
 msgid "Algorithm"
 msgstr "Algoritmo"
 
-#: evidence/templates/ev_details.html:67
+#: evidence/templates/ev_details.html:180
 msgid "Device ID"
 msgstr "ID del Dispositivo"
 
-#: evidence/views.py:45
+#: evidence/templates/evidences.html:33
+msgid "No evidences found"
+msgstr "No se encontraron evidencias"
+
+#: evidence/templates/facility_credential.html:4
+msgid "DFR Credential Viewer"
+msgstr "Visor de credenciales DFR"
+
+#: evidence/templates/facility_credential.html:6
+msgid "Digital Facility Record (DFR)"
+msgstr "Registro digital de instalación (DFR)"
+
+#: evidence/templates/facility_credential.html:16
+msgid "Facility Name"
+msgstr "Nombre de la instalación"
+
+#: evidence/templates/facility_credential.html:39
+msgid "Facility Operator"
+msgstr "Operador de la instalación"
+
+#: evidence/templates/facility_credential.html:41
+msgid "Operator Name"
+msgstr "Nombre del operador"
+
+#: evidence/templates/facility_credential.html:45
+msgid "Registered ID"
+msgstr "ID Registrado"
+
+#: evidence/templates/facility_credential.html:53
+msgid "Process Categories"
+msgstr "Categorías de proceso"
+
+#: evidence/templates/facility_credential.html:65
+msgid "Location & Address"
+msgstr "Ubicación y dirección"
+
+#: evidence/templates/facility_credential.html:67
+msgid "Physical Address"
+msgstr "Dirección física"
+
+#: evidence/templates/facility_credential.html:78
+msgid "Plus Code"
+msgstr "Plus Code"
+
+#: evidence/templates/facility_credential.html:88
+msgid "Coordinates"
+msgstr "Coordenadas"
+
+#: evidence/templates/facility_credential.html:101
+msgid "Conformity Claims"
+msgstr "Reclamaciones de conformidad"
+
+#: evidence/templates/facility_credential.html:131
+msgid "Regulation"
+msgstr "Regulación"
+
+#: evidence/templates/facility_credential.html:148
+msgid "Evidence Hash"
+msgstr "Hash de evidencia"
+
+#: evidence/templates/traceability_credential.html:4
+msgid "DTE Credential Viewer"
+msgstr "Visor de credenciales DTE"
+
+#: evidence/templates/traceability_credential.html:6
+msgid "Digital Traceability Event (DTE)"
+msgstr "Evento de trazabilidad digital (DTE)"
+
+#: evidence/templates/traceability_credential.html:11
+msgid "Total Events Recorded"
+msgstr "Eventos totales registrados"
+
+#: evidence/templates/traceability_credential.html:14
+msgid "Events"
+msgstr "Eventos"
+
+#: evidence/templates/traceability_credential.html:23
+msgid "Event Timeline"
+msgstr "Línea de tiempo de eventos"
+
+#: evidence/templates/traceability_credential.html:31
+msgid "Extended Event Information"
+msgstr "Información de evento extendida"
+
+#: evidence/templates/traceability_credential.html:74
+msgid "Event ID"
+msgstr "ID de evento"
+
+#: evidence/templates/traceability_credential.html:78
+msgid "Event Time"
+msgstr "Hora del evento"
+
+#: evidence/templates/traceability_credential.html:82
+msgid "Business Step"
+msgstr "Paso de negocio"
+
+#: evidence/templates/traceability_credential.html:88
+msgid "Disposition"
+msgstr "Disposición"
+
+#: evidence/templates/traceability_credential.html:92
+msgid "Business Location"
+msgstr "Ubicación del negocio"
+
+#: evidence/templates/traceability_credential.html:101
+msgid "Inputs"
+msgstr "Entradas"
+
+#: evidence/templates/traceability_credential.html:105
+#: evidence/templates/traceability_credential.html:126
+#: evidence/templates/traceability_credential.html:147
+msgid "EPC Item:"
+msgstr "Elemento EPC:"
+
+#: evidence/templates/traceability_credential.html:111
+#: evidence/templates/traceability_credential.html:132
+#: evidence/templates/traceability_credential.html:153
+msgid "Class:"
+msgstr "Clase:"
+
+#: evidence/templates/traceability_credential.html:122
+msgid "Outputs"
+msgstr "Salidas"
+
+#: evidence/templates/traceability_credential.html:143
+msgid "Items Involved"
+msgstr "Elementos involucrados"
+
+#: evidence/templates/traceability_credential.html:165
+msgid "Sensor Readings"
+msgstr "Lecturas del sensor"
+
+#: evidence/templates/traceability_credential.html:171
+msgid "Device:"
+msgstr "Dispositivo:"
+
+#: evidence/templates/traceability_credential.html:179
+msgid "Time"
+msgstr "Tiempo"
+
+#: evidence/templates/traceability_credential.html:181
+msgid "UOM"
+msgstr "Unidad de medida"
+
+#: evidence/templates/traceability_credential.html:198
+msgid "Integrity Proof"
+msgstr "Prueba de integridad"
+
+#: evidence/templates/upload.html:41
+msgid "Drag and drop here, or click to select manually"
+msgstr "Arrastre y suelte aquí, o haga clic para seleccionar manualmente"
+
+#: evidence/templates/upload.html:79
+msgid "Upload"
+msgstr "Subir"
+
+#: evidence/views.py:47
 msgid "Upload Evidence"
 msgstr "Adjuntar evidencia"
 
-#: evidence/views.py:52
+#: evidence/views.py:54
 msgid "Evidence uploaded successfully."
 msgstr "Evidencia cargada correctamente."
 
-#: evidence/views.py:64
+#: evidence/views.py:66
 msgid "Import Evidence"
 msgstr "Importar evidencia"
 
-#: evidence/views.py:76
+#: evidence/views.py:78
 msgid "Evidence imported successfully."
 msgstr "Evidencia importada correctamente."
 
-#: evidence/views.py:201
-msgid "<Deleted> Evidence Tag: {}"
-msgstr "<Deleted>Etiqueta de evidencia: {}"
+#: evidence/views.py:90
+msgid "Import Photo Evidence"
+msgstr "Importar evidencia fotográfica"
 
-#: evidence/views.py:210
-msgid "Evicende Tag deleted successfully."
-msgstr "Etiqueta de evidencia eliminada correctamente."
+#: evidence/views.py:102
+msgid "Photo evidence uploaded successfully."
+msgstr "Evidencia fotográfica subida exitosamente."
 
-#: login/templates/2fadmin.html:8
-msgid "Two-factor Authentication"
-msgstr "Autenticación de doble factor"
+#: evidence/views.py:308
+#, python-brace-format
+msgid "Error: Credential with ID {pk} not found in the database."
+msgstr "Error: Credencial con ID {pk} no encontrada en la base de datos."
 
-#: login/templates/2fadmin.html:15
-msgid "We have sent you an email with a link that you have to click to log in."
-msgstr ""
-"Le hemos enviado un correo electrónico con un enlace que debe hacer clic "
-"para iniciar sesión."
+#: evidence/views.py:318
+msgid "DPP Validation Successful! Cryptography and Schema checks passed."
+msgstr "¡Validación del DPP exitosa! Los controles de criptografía y esquema han sido aprobados."
 
-#: login/templates/2fadmin_email.html:3 login/templates/2fadmin_email.txt:2
-#, python-format
-msgid "You're receiving this email because you tried to access %(site_name)s."
-msgstr ""
-"Ha recibido este correo electrónico porque ha intentado acceder a "
-"%(site_name)s."
+#: evidence/views.py:322
+#, python-brace-format
+msgid ""
+"DPP Validation Failed. Cryptography Status: {crypto_status}. Schema Status: "
+"{schema_status}."
+msgstr "La validación del DPP falló. Estado de la criptografía: {crypto_status}. Estado del esquema: {schema_status}."
 
-#: login/templates/2fadmin_email.html:7 login/templates/2fadmin_email.txt:4
-msgid "Please go to the following page"
-msgstr "Por favor vaya a la siguiente página"
+#: evidence/views.py:435
+msgid "<Deleted> Evidence alias: {}"
+msgstr "<Deleted> Alias de evidencia: {}"
 
-#: login/templates/2fadmin_email.html:19 login/templates/2fadmin_email.txt:10
-#: login/templates/activate_user_email.html:24
-#: login/templates/activate_user_email.txt:15
-#: login/templates/password_reset_email.html:23
-#: login/templates/password_reset_email.txt:10
-msgid "Thanks for using our site!"
-msgstr "¡Gracias por utilizar nuestro sitio!"
-
-#: login/templates/2fadmin_email.html:23 login/templates/2fadmin_email.txt:12
-#: login/templates/password_reset_email.html:27
-#: login/templates/password_reset_email.txt:12
-#, python-format
-msgid "The %(site_name)s team"
-msgstr "El equipo de %(site_name)s"
-
-#: login/templates/2fadmin_email.txt:8
-#: login/templates/password_reset_email.html:19
-#: login/templates/password_reset_email.txt:8
-msgid "Your username, in case you've forgotten:"
-msgstr "Su nombre de usuario, en caso de que lo haya olvidado:"
-
-#: login/templates/2fadmin_email_subject.txt:2
-#, python-format
-msgid "Authentication in %(site_name)s"
-msgstr "Autenticación en %(site_name)s"
+#: evidence/views.py:444
+msgid "Evicende alias deleted successfully."
+msgstr "Alias de evidencia eliminado exitosamente."
 
 #: login/templates/activate_user_email.html:2
 #: login/templates/activate_user_email.txt:3
+#: login/templates/activate_user_subject.txt:2
 msgid "DeviceHub"
 msgstr "DeviceHub"
 
@@ -933,15 +2198,18 @@ msgstr "Tu nombre de usuario es:"
 msgid "Please go to the following page and choose a password:"
 msgstr "Por favor, vaya a la siguiente página y elija una contraseña:"
 
+#: login/templates/activate_user_email.html:24
+#: login/templates/activate_user_email.txt:15
+#: login/templates/password_reset_email.html:23
+#: login/templates/password_reset_email.txt:10
+msgid "Thanks for using our site!"
+msgstr "¡Gracias por utilizar nuestro sitio!"
+
 #: login/templates/activate_user_email.html:28
 #: login/templates/activate_user_email.txt:17
 #, python-format
 msgid "The %(site)s team"
 msgstr "El equipo %(site)s"
-
-#: login/templates/activate_user_subject.txt:2
-msgid "IdHub"
-msgstr "IdHub"
 
 #: login/templates/activate_user_subject.txt:3
 #, python-format
@@ -953,7 +2221,7 @@ msgid "Sign in"
 msgstr "Iniciar sesión"
 
 #: login/templates/login.html:41
-#: login/templates/password_reset_complete.html:11 login/views.py:19
+#: login/templates/password_reset_complete.html:11 login/views.py:20
 msgid "Login"
 msgstr "Iniciar sesión"
 
@@ -1066,42 +2334,181 @@ msgstr ""
 msgid "Please go to the following page and choose a new password:"
 msgstr "Vaya a la siguiente página y elija una nueva contraseña:"
 
+#: login/templates/password_reset_email.html:19
+#: login/templates/password_reset_email.txt:8
+msgid "Your username, in case you've forgotten:"
+msgstr "Su nombre de usuario, en caso de que lo haya olvidado:"
+
+#: login/templates/password_reset_email.html:27
+#: login/templates/password_reset_email.txt:12
+#, python-format
+msgid "The %(site_name)s team"
+msgstr "El equipo de %(site_name)s"
+
 #: login/templates/password_reset_subject.txt:2
 #, python-format
 msgid "Password reset on %(site_name)s"
 msgstr "Restablecimiento de contraseña en %(site_name)s"
 
-#: login/views.py:44
+#: login/views.py:45
 msgid "Login error. Check credentials."
 msgstr "Error al iniciar sesión. Verifique sus credenciales."
 
-#: lot/tables.py:24
+#: lot/forms.py:52 lot/forms.py:93 lot/forms.py:212
+#: user/templates/user_profile.html:24
+msgid "Email"
+msgstr "Correo electrónico"
+
+#: lot/forms.py:96 lot/models.py:97
+msgid "Circuit Manager"
+msgstr "Gestor de circuito"
+
+#: lot/forms.py:97 lot/models.py:98 lot/templates/beneficiaries.html:102
+msgid "Shop"
+msgstr "Tienda"
+
+#: lot/forms.py:114
+msgid "This user is from another institution"
+msgstr "Este usuario es de otra institución"
+
+#: lot/forms.py:126
+#, python-format
+msgid "%(user) is already subscribed as %(type)s"
+msgstr "%(user) ya está suscrito como %(type)s"
+
+#: lot/forms.py:132
+#, python-format
+msgid "%(user)s can't be a %(existing_type)s and %(new_type)s at the same time"
+msgstr "%(user)s no puede ser un %(existing_type)s y %(new_type)s al mismo tiempo"
+
+#: lot/forms.py:248
+msgid "Place to returned"
+msgstr "Lugar a devolver"
+
+#: lot/models.py:121
+msgid "Reconciliation"
+msgstr "Conciliación"
+
+#: lot/models.py:131
+msgid "Conditions"
+msgstr "Condiciones"
+
+#: lot/models.py:160
+msgid "Available"
+msgstr "Disponible"
+
+#: lot/models.py:161
+msgid "Interested"
+msgstr "Interesado"
+
+#: lot/models.py:162
+msgid "Confirmed"
+msgstr "Confirmado"
+
+#: lot/models.py:163
+msgid "Delivered"
+msgstr "Entregado"
+
+#: lot/models.py:164 lot/templates/beneficiaries_devices.html:28
+#: lot/templates/beneficiary_web.html:110
+msgid "Returned"
+msgstr "Devuelto"
+
+#: lot/tables.py:22
 msgid "Lot Name"
 msgstr "Nombre del grupo de lotes"
 
-#: lot/tables.py:31 lot/templates/delete_lots.html:42
-msgid "Description"
-msgstr "Descripción"
-
-#: lot/tables.py:32
+#: lot/tables.py:28
 msgid "No description"
 msgstr "No hay descripción"
 
-#: lot/tables.py:39
-msgid "Status"
-msgstr "Estado"
-
-#: lot/tables.py:55
+#: lot/tables.py:42
 msgid "Created On"
 msgstr "Creado el"
 
-#: lot/tables.py:62
+#: lot/tables.py:45
 msgid "Created By"
 msgstr "Creado por"
 
-#: lot/tables.py:63
-msgid "Unknown"
-msgstr "N/A"
+#: lot/templates/beneficiaries.html:22
+msgid "Devices ready to assign"
+msgstr "Dispositivos listos para asignar"
+
+#: lot/templates/beneficiaries.html:24
+msgid ""
+"Choose a beneficiary from the list and click \"Assign\" to link these "
+"devices."
+msgstr "Elija un beneficiario de la lista y haga clic en \"Asignar\" para vincular estos dispositivos."
+
+#: lot/templates/beneficiaries.html:34 lot/templates/beneficiaries.html:71
+#: lot/views.py:686
+msgid "Remove"
+msgstr "Eliminar"
+
+#: lot/templates/beneficiaries.html:54
+msgid "Devices already assigned"
+msgstr "Dispositivos ya asignados"
+
+#: lot/templates/beneficiaries.html:56
+msgid ""
+"These devices are already assigned to a beneficiary and cannot be reassigned."
+msgstr "Estos dispositivos ya están asignados a un beneficiario y no pueden ser reasignados."
+
+#: lot/templates/beneficiaries.html:90
+msgid "Clear selection"
+msgstr "Borrar selección"
+
+#: lot/templates/beneficiaries.html:101 lot/templates/participants.html:42
+msgid "Beneficiary"
+msgstr "Beneficiario"
+
+#: lot/templates/beneficiaries.html:103
+msgid "Accepted terms"
+msgstr "Términos aceptados"
+
+#: lot/templates/beneficiaries.html:132
+msgid "web"
+msgstr "web"
+
+#: lot/templates/beneficiaries.html:138 lot/templates/list_lots.html:69
+msgid "Assign"
+msgstr "Asignar"
+
+#: lot/templates/beneficiaries.html:144 lot/templates/beneficiaries.html:163
+#: lot/templates/beneficiaries_devices.html:46
+msgid "Deallocate"
+msgstr "Desasignar"
+
+#: lot/templates/beneficiaries.html:152
+msgid "Deallocate Beneficiary"
+msgstr "Desasignar beneficiario"
+
+#: lot/templates/beneficiaries.html:156
+msgid "Are you sure you want to deallocate this beneficiary?"
+msgstr "¿Está seguro de que desea desasignar a este beneficiario?"
+
+#: lot/templates/beneficiaries.html:178
+msgid "Add Beneficiary"
+msgstr "Añadir beneficiario"
+
+#: lot/templates/beneficiaries_devices.html:22
+msgid "ShortId"
+msgstr "ID corto"
+
+#: lot/templates/beneficiaries_devices.html:59
+msgid "Add Devices"
+msgstr "Añadir dispositivos"
+
+#: lot/templates/beneficiary_agreement.html:9
+#: lot/templates/beneficiary_agreement.html:94
+#: lot/templates/beneficiary_web.html:136
+msgid "Agreement"
+msgstr "Acuerdo"
+
+#: lot/templates/beneficiary_agreement.html:106
+#: lot/templates/donor_web.html:126
+msgid "Accept"
+msgstr "Aceptar"
 
 #: lot/templates/delete_lots.html:9
 msgid "Are you sure you want to delete the following lot/s?"
@@ -1131,17 +2538,13 @@ msgstr "Dueño"
 msgid "Created by"
 msgstr "Creado por"
 
-#: lot/templates/delete_lots.html:56 lot/views.py:237
+#: lot/templates/delete_lots.html:56 lot/views.py:306
 msgid "Lot Group"
 msgstr "Grupo de lotes"
 
-#: lot/templates/delete_lots.html:59
-msgid "Created"
-msgstr "Creado el"
-
 #: lot/templates/delete_lots.html:63
 msgid "Last Updated"
-msgstr "Apellido"
+msgstr "Última actualización"
 
 #: lot/templates/delete_lots.html:77
 msgid "All associated devices will be deassigned."
@@ -1151,11 +2554,116 @@ msgstr "Todos los dispositivos asociados serán deasignados."
 msgid "No devices are associated with these lots."
 msgstr "No hay dispositivos asociados a estos lotes."
 
+#: lot/templates/donor.html:26
+msgid "Donor's web"
+msgstr "Web del donante"
+
+#: lot/templates/donor.html:33
+msgid "Delete donor"
+msgstr "Borrar donante"
+
+#: lot/templates/donor.html:51
+msgid "Are you sure you want to delete this Donor?"
+msgstr "¿Está seguro de que desea borrar este donante?"
+
+#: lot/templates/donor_web.html:134
+msgid "Impact Report"
+msgstr "Informe de impacto"
+
+#: lot/templates/list_lots.html:40
+msgid "open Lot/s"
+msgstr "Lote/s abierto/s"
+
+#: lot/templates/list_lots.html:69
+msgid "Deassign"
+msgstr "Desasignar"
+
+#: lot/templates/lot_environmental_impact.html:44
+msgid "Total Carbon Footprint (Use Phase)"
+msgstr "Huella de carbono total (Fase de uso)"
+
+#: lot/templates/lot_environmental_impact.html:46
+msgid ""
+"Total CO2 emissions from all devices in this lot during their use phase."
+msgstr "Emisiones totales de CO2 de todos los dispositivos en este lote durante su fase de uso."
+
+#: lot/templates/lot_environmental_impact.html:61
+msgid "Total Reuse Time"
+msgstr "Tiempo total de reutilización"
+
+#: lot/templates/lot_environmental_impact.html:63
+msgid "Total hours of reuse (second life) accumulated by devices in this lot."
+msgstr "Horas totales de reutilización (segunda vida) acumuladas por dispositivos en este lote."
+
+#: lot/templates/lot_environmental_impact.html:67
+msgid "hours"
+msgstr "horas"
+
+#: lot/templates/lot_environmental_impact.html:74
+msgid "Equivalent To"
+msgstr "Equivalente a"
+
+#: lot/templates/lot_environmental_impact.html:79
+msgid "Kilometers driven by car"
+msgstr "Kilómetros conducidos en coche"
+
+#: lot/templates/lot_environmental_impact.html:87
+msgid "Trees needed (1 year)"
+msgstr "Árboles necesarios (1 año)"
+
+#: lot/templates/lot_environmental_impact.html:95
+msgid "Energy consumed (kWh)"
+msgstr "Energía consumida (kWh)"
+
+#: lot/templates/lot_environmental_impact.html:107
+msgid "Lifecycle Phase Breakdown"
+msgstr "Desglose de la fase del ciclo de vida"
+
+#: lot/templates/lot_environmental_impact.html:132
+msgid ""
+"Environmental impact calculation is not available for this lot. This may be "
+"due to insufficient device data."
+msgstr "El cálculo de impacto ambiental no está disponible para este lote. Esto puede deberse a datos insuficientes de los dispositivos."
+
+#: lot/templates/lot_environmental_impact.html:139
+msgid "There are no devices in this lot"
+msgstr "No hay dispositivos en este lote"
+
+#: lot/templates/lot_environmental_impact.html:142
+msgid "Devices have no usage time data (e.g. power-on hours)"
+msgstr "Los dispositivos no tienen datos de tiempo de uso (ej. horas de encendido)"
+
+#: lot/templates/lot_environmental_impact.html:146
+msgid "What to do:"
+msgstr "Qué hacer:"
+
+#: lot/templates/lot_environmental_impact.html:147
+msgid ""
+"Ensure devices in this lot have been properly inventoried with complete "
+"evidence data, including power-on hours and storage information."
+msgstr "Asegúrese de que los dispositivos en este lote hayan sido inventariados correctamente con datos de evidencia completos, incluyendo horas de encendido e información de almacenamiento."
+
+#: lot/templates/lot_environmental_impact.html:175
+msgid "Raw material (A)"
+msgstr "Materia prima (A)"
+
+#: lot/templates/lot_environmental_impact.html:175
+msgid "Production (B)"
+msgstr "Producción (B)"
+
+#: lot/templates/lot_environmental_impact.html:175
+msgid "Use (C)"
+msgstr "Uso (C)"
+
+#: lot/templates/lot_environmental_impact.html:175
+msgid "EoLT (D)"
+msgstr "Fin de vida útil (D)"
+
 #: lot/templates/lots.html:14
 msgid "Search by name or description..."
 msgstr "Buscar por nombre o descripción"
 
-#: lot/templates/lots.html:24 lot/views.py:44
+#: lot/templates/lots.html:24 lot/views.py:81
 msgid "New lot"
 msgstr "Nuevo lote"
 
@@ -1163,144 +2671,329 @@ msgstr "Nuevo lote"
 msgid "Delete Selected"
 msgstr "Borrar seleccionado"
 
+#: lot/templates/lots.html:49 user/templates/user_profile.html:40
+msgid "Active"
+msgstr "Activo"
+
 #: lot/templates/lots.html:75
 msgid "All Lots"
 msgstr "Todos"
 
-#: lot/templates/properties.html:56
+#: lot/templates/participants.html:27 lot/templates/tabs.html:18
+#: lot/templates/tabs.html:22
+msgid "Donor"
+msgstr "Donante"
+
+#: lot/templates/properties.html:43
 msgid "Edit Property"
 msgstr "Editar propiedad"
 
-#: lot/templates/properties.html:84
+#: lot/templates/properties.html:71
 msgid "Delete Property"
 msgstr "Eliminar propiedad"
 
-#: lot/templates/properties.html:88
+#: lot/templates/properties.html:75
 msgid "Are you sure you want to delete this property?"
 msgstr "¿Confirma que desea eliminar esta propiedad?"
 
-#: lot/views.py:68
+#: lot/templates/subscription.html:25
+msgid "Unsubscribe"
+msgstr "Cancelar suscripción"
+
+#: lot/templates/subscription.html:38
+msgid "Add Subscription"
+msgstr "Añadir suscripción"
+
+#: lot/templates/subscription.html:44
+msgid "Add new user subscription"
+msgstr "Añadir nueva suscripción de usuario"
+
+#: lot/templates/subscription.html:47
+msgid ""
+"To create a new user subscription for this lot add user email and its "
+"subscription type"
+msgstr "Para crear una nueva suscripción de usuario para este lote, añada el correo electrónico del usuario y su tipo de suscripción"
+
+#: lot/templates/tabs.html:13 lot/views.py:546
+msgid "Subscriptions"
+msgstr "Suscripciones"
+
+#: lot/templates/tabs.html:28 lot/views.py:771 lot/views.py:915
+msgid "Beneficiaries"
+msgstr "Beneficiarios"
+
+#: lot/templates/tabs.html:33 lot/views.py:614
+msgid "Participants"
+msgstr "Participantes"
+
+#: lot/views.py:105
 msgid "Lot created successfully."
 msgstr "Grupo de lotes actualizado correctamente."
 
-#: lot/views.py:72
+#: lot/views.py:109
 msgid "Lot name is already defined."
 msgstr "El nombre del lote ya está definido."
 
-#: lot/views.py:78
+#: lot/views.py:115
 msgid "Delete lot/s"
 msgstr "Borrar lote/s"
 
-#: lot/views.py:84 lot/views.py:103
+#: lot/views.py:121 lot/views.py:140
 msgid "No lots selected for deletion."
 msgstr "No existen lotes seleccionados para eliminar."
 
-#: lot/views.py:113
+#: lot/views.py:150
 msgid "Lots succesfully deleted"
 msgstr "Lotes eliminados correctamente."
 
-#: lot/views.py:119
+#: lot/views.py:156
 msgid "Edit lot"
 msgstr "Editar lote"
 
-#: lot/views.py:149
+#: lot/views.py:186
 msgid "Lot edited succesfully."
 msgstr "Grupo de lotes actualizado correctamente."
 
-#: lot/views.py:156
+#: lot/views.py:193
 msgid "Add to lots"
 msgstr "Añadir a los lotes"
 
-#: lot/views.py:185
-msgid "Remove from lots"
-msgstr "Retirar de los lotes"
+#: lot/views.py:218
+msgid "Devices assigned to Lot."
+msgstr "Dispositivos asignados al lote."
 
-#: lot/views.py:197
+#: lot/views.py:249
+#, python-format
+msgid "Device %s have a beneficiary"
+msgstr "El dispositivo %s tiene un beneficiario"
+
+#: lot/views.py:255
+#, python-format
+msgid "Successfully unassigned %d devices from the lot"
+msgstr "Se desasignaron exitosamente %d dispositivos del lote"
+
+#: lot/views.py:261
+#, python-format
+msgid "Error unassigning devices: %s"
+msgstr "Error al desasignar dispositivos: %s"
+
+#: lot/views.py:268
 msgid "Lot group"
 msgstr "Grupos de lotes"
 
-#: lot/views.py:198
+#: lot/views.py:269
 msgid "lots"
 msgstr "lotes"
 
-#: lot/views.py:265 lot/views.py:288
-msgid "New Lot Property"
-msgstr "Propiedad de lote nuevo"
-
-#: lot/views.py:322
+#: lot/views.py:489
 msgid "Update lot Property"
 msgstr "Actualizar propiedad de lote"
 
-#: lot/views.py:370
+#: lot/views.py:537
 msgid "Lot property deleted successfully."
 msgstr "Propiedad de lote eliminada correctamente."
 
-#: user/models.py:12
+#: lot/views.py:560
+msgid "Subscribe"
+msgstr "Suscribirse"
+
+#: lot/views.py:660 lot/views.py:671
+msgid "Add Donor"
+msgstr "Añadir donante"
+
+#: lot/views.py:676
+msgid "Remove Donor"
+msgstr "Eliminar donante"
+
+#: lot/views.py:1119
+msgid "Device {} was already assigned to {}"
+msgstr "El dispositivo {} ya estaba asignado a {}"
+
+#: user/models.py:14 user/templates/user_profile.html:17
 msgid "Name"
 msgstr "Nombre"
 
-#: user/models.py:18
-msgid "Logo"
-msgstr "Logotipo"
+#: user/models.py:17
+msgid "Official registered name of the organization."
+msgstr "Nombre oficial registrado de la organización."
 
 #: user/models.py:19
-msgid "Location"
-msgstr "Ubicación"
+msgid "Logo URL"
+msgstr "URL del logo"
 
 #: user/models.py:21
-msgid "Responsable"
-msgstr "Responsable"
+msgid "Responsable Person"
+msgstr "Persona responsable"
 
-#: user/models.py:27
+#: user/models.py:22
 msgid "Supervisor"
 msgstr "Supervisor"
 
-#: user/models.py:70
-msgid "Email address"
-msgstr "Dirección de correo electrónico"
+#: user/models.py:25 user/models.py:45
+msgid "Facility ID (URI)"
+msgstr "ID de la instalación (URI)"
+
+#: user/models.py:29
+msgid "Globally unique URI for this facility (e.g. https://...)"
+msgstr "URI globalmente única para esta instalación (ej. https://...)"
+
+#: user/models.py:32
+msgid "Facility Description"
+msgstr "Descripción de la instalación"
+
+#: user/models.py:37
+msgid "Country of Operation"
+msgstr "País de operación"
+
+#: user/models.py:41
+msgid "Must be a 2-letter uppercase ISO code (e.g. AU, DE)"
+msgstr "Debe ser un código ISO de 2 letras en mayúscula (ej. AR, ES)"
+
+#: user/models.py:42
+msgid "ISO 3166-1 alpha-2 code."
+msgstr "Código ISO 3166-1 alfa-2."
+
+#: user/models.py:49
+msgid "Globally unique URI."
+msgstr "URI globalmente única."
+
+#: user/models.py:51
+msgid "Street Address"
+msgstr "Dirección de la calle"
+
+#: user/models.py:52
+msgid "Postal Code"
+msgstr "Código postal"
+
+#: user/models.py:53
+msgid "City/Locality"
+msgstr "Ciudad/Localidad"
+
+#: user/models.py:54
+msgid "State/Region"
+msgstr "Estado/Región"
 
 #: user/models.py:74
+msgid "Signing Service Base URL"
+msgstr "URL base del servicio de firma"
+
+#: user/models.py:75
+msgid ""
+"The root URL of the IdHub instance (e.g., https://idhub.example.com/api/v1/)"
+msgstr "La URL raíz de la instancia IdHub (ej., https://idhub.example.com/api/v1/)"
+
+#: user/models.py:79
+msgid "Signing API Token"
+msgstr "Token de API de firma"
+
+#: user/models.py:83
+msgid "Bearer token for the signing service."
+msgstr "Token Bearer para el servicio de firma."
+
+#: user/models.py:90
+msgid "Invalid DID format"
+msgstr "Formato de DID inválido"
+
+#: user/models.py:91
+msgid "The DID used by this client on the signing service."
+msgstr "El DID utilizado por este cliente en el servicio de firma."
+
+#: user/models.py:100
+msgid "Schema Mapping"
+msgstr "Mapeo de esquema"
+
+#: user/models.py:103
+msgid "Map 'credential_type' (keys) to 'schema_filename' (values)."
+msgstr "Asignar 'credential_type' (claves) a 'schema_filename' (valores)."
+
+#: user/models.py:110
+msgid "The default algorithm used for device aggregation."
+msgstr "El algoritmo por defecto utilizado para la agregación de dispositivos."
+
+#: user/models.py:193
 msgid "is active"
 msgstr "es activo"
 
-#: user/models.py:75
+#: user/models.py:194
 msgid "is admin"
 msgstr "es admin"
 
-#: user/models.py:76
+#: user/models.py:195
+msgid "is circuitmanager"
+msgstr "es gestor de circuito"
+
+#: user/models.py:196
+msgid "is shop"
+msgstr "es tienda"
+
+#: user/models.py:197
 msgid "First name"
 msgstr "Nombre"
 
-#: user/models.py:77
+#: user/models.py:198
 msgid "Last name"
 msgstr "Apellido"
 
-#: user/templates/panel.html:17
-msgid "Admin your Tokens"
-msgstr "Administra tus tokens"
+#: user/tables.py:51
+msgid "Token"
+msgstr "Token"
 
-#: user/templates/panel.html:22
-msgid "Download a settings file"
-msgstr "Descargar un archivo de configuración"
+#: user/templates/panel.html:13
+msgid "user"
+msgstr "usuario"
 
-#: user/views.py:25
+#: user/templates/panel.html:23
+msgid "Token Management"
+msgstr "Gestión de tokens"
+
+#: user/templates/panel.html:25
+msgid "Manage your personal tokens for using Devicehub."
+msgstr "Administre sus tokens personales para usar Devicehub."
+
+#: user/templates/panel.html:28 user/templates/panel.html:45
+msgid "Go"
+msgstr "Ir"
+
+#: user/templates/panel.html:42
+msgid "Download a settings file for your Workbench."
+msgstr "Descargue un archivo de configuración para su entorno de trabajo."
+
+#: user/templates/panel.html:59
+msgid "Language"
+msgstr "Idioma"
+
+#: user/templates/panel.html:61
+msgid "Click below to select your preferred language."
+msgstr "Haga clic a continuación para seleccionar su idioma preferido."
+
+#: user/templates/user_profile.html:31
+msgid "Institution"
+msgstr "Institución"
+
+#: user/templates/user_profile.html:52
+msgid "Back to Users"
+msgstr "Volver a Usuarios"
+
+#: user/templates/user_profile.html:67
+msgid "User #1 cannot be deleted"
+msgstr "El usuario #1 no puede ser eliminado"
+
+#: user/templates/user_profile.html:113
+msgid "No evidences found for this user"
+msgstr "No se encontraron evidencias para este usuario"
+
+#: user/templates/user_profile.html:126
+msgid "Delete User Account"
+msgstr "Eliminar cuenta de usuario"
+
+#: user/templates/user_profile.html:132
+msgid "This will permanently delete the user account."
+msgstr "Esto eliminará permanentemente la cuenta del usuario."
+
+#: user/templates/user_profile.html:138
+msgid "Administrator"
+msgstr "Administrador"
+
+#: user/views.py:31
 msgid "Download Settings"
 msgstr "Descargar preferencias"
-
-#~ msgid "Unassigned Devices"
-#~ msgstr "Dispositivos no asignados"
-
-#~ msgid "Identificator"
-#~ msgstr "Identificador"
-
-#~ msgid "Data"
-#~ msgstr "Datos"
-
-#~ msgid "Show active lots"
-#~ msgstr "Mostrar lotes activos"
-
-#~ msgid "Show archived lots"
-#~ msgstr "Mostrar lotes archivados"
-
-#~ msgid "Add new lot"
-#~ msgstr "Añadir nuevo lote"
