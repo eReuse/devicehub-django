@@ -89,6 +89,13 @@ class NewLotView(LotSuccessUrlMixin, DashboardView, CreateView):
         "archived",
     )
 
+    def get_initial(self):
+        initial = super().get_initial()
+        type_pk = self.request.GET.get('type')
+        if type_pk:
+            initial['type'] = type_pk
+        return initial
+
     def get_form(self):
         form = super().get_form()
         form.fields["type"].queryset = LotTag.objects.filter(

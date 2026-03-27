@@ -20,7 +20,7 @@
       </div>
     </form>
 
-    <a href="{% url 'lot:add' %}" class="btn btn-success d-flex align-items-center" style="white-space: nowrap;">
+    <a href="{% url 'lot:add' %}{% if selected_tag_id %}?type={{ selected_tag_id }}{% endif %}" class="btn btn-success d-flex align-items-center" style="white-space: nowrap;">
       <span>{% trans 'New lot' %}</span>
     </a>
   </div>
