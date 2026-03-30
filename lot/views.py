@@ -18,13 +18,12 @@ from django.views.generic.edit import (
     UpdateView,
     FormView,
 )
-from django_tables2 import SingleTableView
+from django_tables2 import SingleTableView, RequestConfig
 from dashboard.mixins import DashboardView
 from environmental_impact.models import EnvironmentalImpact
-from lot.tables import LotTable
+from lot.tables import LotTable, BeneficiaryTable
 from device.models import Device
 from evidence.models import SystemProperty
-from lot.tables import LotTable
 from environmental_impact.algorithms.algorithm_factory import FactoryEnvironmentImpactAlgorithm
 from lot.forms import (
     LotsForm,
@@ -817,9 +816,14 @@ class BeneficiaryView(DashboardLotMixing, BeneficiaryInterestedEmail, FormView):
             else:
                 devices_to_assign.append(device_info)
 
+        table = BeneficiaryTable(beneficiaries)
+        table.lot_id = self.lot.id
+        RequestConfig(self.request, paginate={'per_page': 25}).configure(table)
+
         context.update({
             'lot': self.lot,
             'beneficiaries': beneficiaries,
+            'table': table,
             "action": _("Add"),
             "devices_to_assign": devices_to_assign,
             "devices_already_assigned": devices_already_assigned,
