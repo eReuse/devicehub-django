@@ -2,6 +2,7 @@ import logging
 
 from evidence.mixin_parse import BuildMix
 from evidence.legacy_parse import get_mac
+from utils.constants import CHASSIS_DH
 
 logger = logging.getLogger('django')
 
@@ -16,7 +17,12 @@ class Build(BuildMix):
         self.device = self.json.get('device', {})
         self.manufacturer = self.device.get("manufacturer", '')
         self.model = self.device.get("model", '')
-        self.chassis = self.device.get("chassis", '')
+        raw_chassis = self.device.get("chassis", '') or ''
+        self.chassis = raw_chassis
+        for k, v in CHASSIS_DH.items():
+            if raw_chassis.lower() in v:
+                self.chassis = k
+                break
         self.serial_number = self.device.get("serialNumber", '')
         self.sku = self.device.get("sku", '')
         self.type = self.device.get("type", '')
