@@ -1,4 +1,5 @@
 import django_tables2 as tables
+from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from lot.models import Lot, Beneficiary
 from django.utils.safestring import mark_safe
@@ -80,26 +81,39 @@ class BeneficiaryTable(tables.Table):
         orderable=True,
         default=None,
     )
-    devices = tables.TemplateColumn(
-        template_name="beneficiary_devices_link.html",
+    devices = tables.Column(
         verbose_name=_("Devices"),
         orderable=False,
+        empty_values=(),
+        linkify=lambda record, table: reverse('lot:devices_beneficiary', args=[table.lot_id, record.id]),
     )
-    web = tables.TemplateColumn(
-        template_name="beneficiary_web_link.html",
+    web = tables.Column(
         verbose_name=_("Web"),
         orderable=False,
+        empty_values=(),
+        linkify=lambda record, table: reverse('lot:web_beneficiary', args=[table.lot_id, record.id]),
     )
-    assign = tables.TemplateColumn(
-        template_name="beneficiary_assign_button.html",
+    assign = tables.Column(
         verbose_name=_(""),
         orderable=False,
+        empty_values=(),
+        linkify=lambda record, table: reverse('lot:add_device_beneficiary', args=[table.lot_id, record.id]),
+        attrs={"a": {"class": "btn btn-sm btn-outline-primary align-items-center"}},
     )
     deallocate = tables.TemplateColumn(
         template_name="beneficiary_deallocate_button.html",
         verbose_name=_(""),
         orderable=False,
     )
+
+    def render_devices(self, record):
+        return _("Devices")
+
+    def render_web(self, record):
+        return _("web")
+
+    def render_assign(self, record):
+        return mark_safe(f'<i class="bi bi-plus-circle me-1"></i> {_("Assign")}')
 
     def render_sign_conditions(self, value):
         if value:
