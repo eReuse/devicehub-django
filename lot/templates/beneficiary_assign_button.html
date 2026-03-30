@@ -1,0 +1,5 @@
+{% load i18n %}
+<a href="{% url 'lot:add_device_beneficiary' table.lot_id record.id %}"
+   class="btn btn-sm btn-outline-primary align-items-center">
+  <i class="bi bi-plus-circle me-1"></i>{% trans "Assign" %}
+</a>

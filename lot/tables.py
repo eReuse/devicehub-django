@@ -81,59 +81,22 @@ class BeneficiaryTable(tables.Table):
         default=None,
     )
     devices = tables.TemplateColumn(
-        template_code=(
-            '{% load i18n %}'
-            '<a href="{% url \'lot:devices_beneficiary\' table.lot_id record.id %}">'
-            '{% trans "Devices" %}</a>'
-        ),
+        template_name="beneficiary_devices_link.html",
         verbose_name=_("Devices"),
         orderable=False,
     )
     web = tables.TemplateColumn(
-        template_code=(
-            '{% load i18n %}'
-            '<a href="{% url \'lot:web_beneficiary\' table.lot_id record.id %}">'
-            '{% trans "web" %}</a>'
-        ),
+        template_name="beneficiary_web_link.html",
         verbose_name=_("Web"),
         orderable=False,
     )
     assign = tables.TemplateColumn(
-        template_code=(
-            '{% load i18n %}'
-            '<a href="{% url \'lot:add_device_beneficiary\' table.lot_id record.id %}"'
-            '   class="btn btn-sm btn-outline-primary align-items-center">'
-            '  <i class="bi bi-plus-circle me-1"></i>{% trans "Assign" %}'
-            '</a>'
-        ),
+        template_name="beneficiary_assign_button.html",
         verbose_name=_(""),
         orderable=False,
     )
     deallocate = tables.TemplateColumn(
-        template_code=(
-            '{% load i18n %}'
-            '<button type="button" class="btn btn-sm btn-outline-danger d-flex align-items-center"'
-            '        data-bs-toggle="modal" data-bs-target="#deleteModal{{ record.id }}">'
-            '  <i class="bi bi-trash me-1"></i>{% trans "Deallocate" %}'
-            '</button>'
-            '<div class="modal fade" id="deleteModal{{ record.id }}" tabindex="-1" aria-hidden="true">'
-            '  <div class="modal-dialog">'
-            '    <div class="modal-content">'
-            '      <div class="modal-header">'
-            '        <h5 class="modal-title">{% trans "Deallocate Beneficiary" %}</h5>'
-            '        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>'
-            '      </div>'
-            '      <div class="modal-body">'
-            '        <p>{% trans "Are you sure you want to deallocate this beneficiary?" %}</p>'
-            '      </div>'
-            '      <div class="modal-footer">'
-            '        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>'
-            '        <a class="btn btn-danger" href="{% url \'lot:del_beneficiary\' table.lot_id record.id %}">{% trans "Deallocate" %}</a>'
-            '      </div>'
-            '    </div>'
-            '  </div>'
-            '</div>'
-        ),
+        template_name="beneficiary_deallocate_button.html",
         verbose_name=_(""),
         orderable=False,
     )

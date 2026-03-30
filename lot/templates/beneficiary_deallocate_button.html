@@ -1,0 +1,23 @@
+{% load i18n %}
+<button type="button" class="btn btn-sm btn-outline-danger d-flex align-items-center"
+        data-bs-toggle="modal" data-bs-target="#deleteModal{{ record.id }}">
+  <i class="bi bi-trash me-1"></i>{% trans "Deallocate" %}
+</button>
+
+<div class="modal fade" id="deleteModal{{ record.id }}" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{% trans "Deallocate Beneficiary" %}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p>{% trans "Are you sure you want to deallocate this beneficiary?" %}</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+        <a class="btn btn-danger" href="{% url 'lot:del_beneficiary' table.lot_id record.id %}">{% trans "Deallocate" %}</a>
+      </div>
+    </div>
+  </div>
+</div>
