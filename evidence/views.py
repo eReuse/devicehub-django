@@ -52,14 +52,23 @@ class UploadView(DashboardView, FormView):
 
     def form_valid(self, form):
         form.save(self.request.user)
-        messages.success(self.request, _("Evidence uploaded successfully."))
-        response = super().form_valid(form)
-        return response
+
+        if hasattr(form, 'evidences') and form.evidences:
+            count = len(form.evidences)
+            messages.success(
+                self.request,
+                _("Successfully processed %(count)d evidence file(s).") % {'count': count}
+            )
+
+        if hasattr(form, 'skipped_errors') and form.skipped_errors:
+            for error_msg in form.skipped_errors:
+                messages.warning(self.request, error_msg)
+
+        return super().form_valid(form)
 
     def form_invalid(self, form):
-        response = super().form_invalid(form)
-        return response
-
+        messages.error(self.request, _("Upload failed. Please check the errors below."))
+        return super().form_invalid(form)
 
 class ImportView(DashboardView, FormView):
     template_name = "upload.html"
