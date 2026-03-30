@@ -22,7 +22,9 @@ class UploadForm(forms.Form):
 
     def clean_evidence_file(self):
         self.evidences = []
+        self.skipped_errors = []  # We will store individual file errors here
         data = self.cleaned_data.get('evidence_file')
+
         if not data:
             raise ValidationError(
                 _("No snapshot selected"),
@@ -33,7 +35,8 @@ class UploadForm(forms.Form):
             file_name = f.name
             file_data = f.read()
             if not file_name or not file_data:
-                return False
+                self.skipped_errors.append(f"File '{file_name}' is empty or invalid.")
+                continue
 
             try:
                 file_json = json.loads(file_data)
@@ -43,21 +46,23 @@ class UploadForm(forms.Form):
                 ).first()
 
                 if exists_property:
-                    raise ValidationError(
-                        _("The snapshot already exists"),
-                        code="duplicate_snapshot",
-                    )
+                    self.skipped_errors.append(f"The snapshot '{file_name}' already exists.")
+                    continue
 
-            #Catch any error and display it as Validation Error so the Form handles it
+                self.evidences.append((file_name, file_json))
+
             except Exception as e:
-                raise ValidationError(
-                    _("Error on '%(file_name)s': %(error)s"),
-                    code="error",
-                    params={"file_name": file_name, "error": getattr(e, 'message', str(e))},
-                )
-            self.evidences.append((file_name, file_json))
+                error_msg = getattr(e, 'message', str(e))
+                self.skipped_errors.append(f"Error on '{file_name}': {error_msg}")
+                continue
 
-        return True
+        if not self.evidences and self.skipped_errors:
+            raise ValidationError(
+                _("All uploaded files failed to process. Please check your files."),
+                code="all_failed"
+            )
+
+        return data
 
     def save(self, user, commit=True):
         if not commit or not user:
@@ -69,7 +74,6 @@ class UploadForm(forms.Form):
             file_json = ev[1]
             build(file_json, user)
             move_json(path_name, user.institution.name)
-
 
 class UserAliasForm(forms.Form):
     root = forms.CharField(label=_("Alias"), required=True)
