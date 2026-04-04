@@ -107,7 +107,9 @@ class DeviceTable(tables.Table):
             "SoundCard": "bi-speaker",
             "Display": "bi-display",
             "Battery": "bi-battery",
-            "Camera": "bi-camera"
+            "Camera": "bi-camera",
+            "Router": "bi-router",
+            "WiFiAccessPoint": "bi-wifi"
         }
 
         safe_value = escape(value)

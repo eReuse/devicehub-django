@@ -246,7 +246,6 @@ class ParseSnapshot:
                 "speed": band_info,
                 "interface": "Wireless",
                 "mode": iface.get("mode", ""),
-                "ssid": iface.get("ssid", ""),
                 "channel": iface.get("channel", 0),
             })
 
