@@ -11,7 +11,7 @@ def move_json(path_name, user, place="snapshots"):
         place = "placeholders"
 
     tmp_snapshots = settings.EVIDENCES_DIR
-    path_dir = os.path.join(tmp_snapshots, user, place)
+    path_dir = os.path.join(tmp_snapshots, str(user), place)
 
     if os.path.isfile(path_name):
         shutil.copy(path_name, path_dir)
@@ -34,11 +34,10 @@ def save_in_disk(data, user, place="snapshots"):
         place = "placeholders"
 
     name_file = f"{year}-{month}-{day}-{hour}-{minutes}_{uuid}.json"
-    path_dir = os.path.join(tmp_snapshots, user, place, "errors")
+    path_dir = os.path.join(tmp_snapshots, str(user), place, "errors")
     path_name = os.path.join(path_dir, name_file)
 
-    if not os.path.isdir(path_dir):
-        os.system(f'mkdir -p {path_dir}')
+    os.makedirs(path_dir, exist_ok=True)
 
     with open(path_name, 'w') as snapshot_file:
         snapshot_file.write(json.dumps(data))

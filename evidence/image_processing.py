@@ -69,12 +69,12 @@ def process_photo_upload(photo_data, user=None, algo_key='photo25'):
         raise ValueError("User instance required for processing photo.")
 
     # Save image file
-    file_path = save_photo_in_disk(photo_data, user.institution.name)
+    file_path = save_photo_in_disk(photo_data, user.institution.uuid)
     doc = build_json(photo_data, file_path)
 
-    path_name = save_in_disk(doc, user.institution.name)
+    path_name = save_in_disk(doc, user.institution.uuid)
     create_index(doc, user)
-    move_json(path_name, user.institution.name)
+    move_json(path_name, user.institution.uuid)
 
     # Create SystemProperty with key='photo25' so photo appears in evidence list
     # Using photo hash as the value (similar to device CHID for snapshots)

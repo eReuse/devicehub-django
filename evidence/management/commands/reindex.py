@@ -27,7 +27,7 @@ class Command(BaseCommand):
             if not os.path.isdir(filepath):
                 continue
 
-            institution = Institution.objects.filter(name=filename).first()
+            institution = Institution.objects.filter(uuid=filename).first()
 
             if not institution:
                 continue
@@ -38,18 +38,14 @@ class Command(BaseCommand):
                 logger.warning(txt, institution.name)
                 continue
 
-            snapshots_path = os.path.join(filepath, "snapshots")
-            placeholders_path = os.path.join(filepath, "placeholders")
-
-            for f in os.listdir(snapshots_path):
-                f_path = os.path.join(snapshots_path, f)
-                if f_path[-5:] == ".json" and os.path.isfile(f_path):
-                    self.process(f_path, user)
-
-            for f in os.listdir(placeholders_path):
-                f_path = os.path.join(placeholders_path, f)
-                if f_path[-5:] == ".json" and os.path.isfile(f_path):
-                    self.process(f_path, user)
+            for subdir in ["snapshots", "placeholders"]:
+                subdir_path = os.path.join(filepath, subdir)
+                if not os.path.isdir(subdir_path):
+                    continue
+                for f in os.listdir(subdir_path):
+                    f_path = os.path.join(subdir_path, f)
+                    if f_path[-5:] == ".json" and os.path.isfile(f_path):
+                        self.process(f_path, user)
 
     def process(self, filepath, user):
         try:

@@ -1,3 +1,5 @@
+import uuid
+
 from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.core.validators import (
@@ -50,6 +52,7 @@ class Institution(models.Model):
         unique=True,
         help_text=_("Official registered name of the organization.")
     )
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False)
     logo = models.CharField(
         _("Logo URL"),
         max_length=255,

@@ -146,10 +146,10 @@ def save_device_data(main_data, attribute_formset, user, commit=True):
     if not commit:
         return doc
 
-    path_name = save_in_disk(doc, user.institution.name, place="placeholder")
+    path_name = save_in_disk(doc, user.institution.uuid, place="placeholder")
     create_index(doc, user)
     prop = create_property(doc, user, commit=commit)
-    move_json(path_name, user.institution.name, place="placeholder")
+    move_json(path_name, user.institution.uuid, place="placeholder")
 
     return doc, prop
 

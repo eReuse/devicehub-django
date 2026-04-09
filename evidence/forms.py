@@ -65,11 +65,11 @@ class UploadForm(forms.Form):
             return
 
         for ev in self.evidences:
-            path_name = save_in_disk(ev[1], user.institution.name)
+            path_name = save_in_disk(ev[1], user.institution.uuid)
             build = Build
             file_json = ev[1]
             build(file_json, user)
-            move_json(path_name, user.institution.name)
+            move_json(path_name, user.institution.uuid)
 
 
 class UserAliasForm(forms.Form):
@@ -247,11 +247,11 @@ class ImportForm(forms.Form):
 
         if commit:
             for doc, cred in table:
-                path_name = save_in_disk(doc, self.user.institution.name, place="placeholder")
+                path_name = save_in_disk(doc, self.user.institution.uuid, place="placeholder")
 
                 create_index(doc, self.user)
                 cred.save()
-                move_json(path_name, self.user.institution.name, place="placeholder")
+                move_json(path_name, self.user.institution.uuid, place="placeholder")
             return table
 
         return
@@ -348,7 +348,7 @@ class BasePhotoMixin(forms.Form):
 
         # Check if photo already exists based on hash
         photo_path = os.path.join(
-            get_photos_dir(self.user.institution.name),
+            get_photos_dir(self.user.institution.uuid),
             name,
         )
         if os.path.exists(photo_path):

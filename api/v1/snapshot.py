@@ -53,7 +53,7 @@ def NewSnapshot(request, data: dict = Body(..., description="Paste the raw workb
         return 400, {"error": "Invalid JSON format", "details": str(e)}
 
     try:
-        path_name = save_in_disk(data, user.institution.name)
+        path_name = save_in_disk(data, user.institution.uuid)
     except Exception as e:
         logger.error("Failed to save snapshot to disk: %s", str(e))
         return 500, {
@@ -118,7 +118,7 @@ def NewSnapshot(request, data: dict = Body(..., description="Paste the raw workb
     url_public_args = reverse("product:device_web", args=(prop.value,))
     url_public = request.build_absolute_uri(url_public_args)
 
-    move_json(path_name, user.institution.name)
+    move_json(path_name, user.institution.uuid)
     response = {
         "status": "success",
         "dhid": Device.get_shortid_for(prop.value, prop.owner),
