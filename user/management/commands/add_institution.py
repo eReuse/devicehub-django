@@ -1,3 +1,5 @@
+import os
+
 from django.core.management.base import BaseCommand
 from django.conf import settings
 
@@ -13,10 +15,17 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         self.institution = Institution.objects.create(name=kwargs['name'])
+        self.create_directory_structure()
         # create lot groups "Entrada, Temporal, Salida" (TODO in English?)
         self.create_lot_tags()
         if settings.DEMO:
             self.create_demo_lots()
+
+    def create_directory_structure(self):
+        base = os.path.join(settings.EVIDENCES_DIR, str(self.institution.uuid))
+        for subdir in ["snapshots", "snapshots/errors", "placeholders", "placeholders/errors"]:
+            os.makedirs(os.path.join(base, subdir), exist_ok=True)
+        self.stdout.write(f"Created directory structure for '{self.institution.name}' ({self.institution.uuid})")
 
     def create_lot_tags(self):
         LotTag.objects.create(

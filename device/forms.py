@@ -58,10 +58,10 @@ class BaseDeviceFormSet(forms.BaseFormSet):
         if not commit:
             return doc
 
-        path_name = save_in_disk(doc, self.user.institution.name, place="placeholder")
+        path_name = save_in_disk(doc, self.user.institution.uuid, place="placeholder")
         create_index(doc, self.user)
         create_property(doc, user, commit=commit)
-        move_json(path_name, self.user.institution.name, place="placeholder")
+        move_json(path_name, self.user.institution.uuid, place="placeholder")
         if d.get("custom_id"):
             RootAlias.objects.create(
                 owner=self.user.institution,

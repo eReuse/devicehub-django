@@ -17,19 +17,18 @@ User = get_user_model()
 
 class Command(BaseCommand):
     help = "Insert Snapshots"
-    snapshots = []
-    files = []
-    devices = []
 
     def add_arguments(self, parser):
         parser.add_argument('path', type=str, help='Path to snapshots')
         parser.add_argument('email', type=str, help='Email of user')
 
-
     def handle(self, *args, **kwargs):
         path = kwargs['path']
         email = kwargs['email']
         self.user = User.objects.get(email=email)
+        self.snapshots = []
+        self.files = []
+        self.devices = []
 
         if os.path.isfile(path):
             self.open(path)
@@ -49,7 +48,7 @@ class Command(BaseCommand):
         try:
             with open(filepath, 'r') as file:
                 content = json.loads(file.read())
-                path_name = save_in_disk(content, self.user.institution.name)
+                path_name = save_in_disk(content, self.user.institution.uuid)
 
                 self.snapshots.append((content, path_name))
 
@@ -60,7 +59,7 @@ class Command(BaseCommand):
         for s, p in self.snapshots:
             try:
                 self.devices.append(Build(s, self.user))
-                move_json(p, self.user.institution.name)
+                move_json(p, self.user.institution.uuid)
             except Exception as e:
                 snapshot_id = s.get("uuid", "")
                 txt = "Could not parse snapshot %s: %s"

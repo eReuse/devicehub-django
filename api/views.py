@@ -78,7 +78,7 @@ class NewSnapshotView(ApiMixing):
             return JsonResponse({'error': 'Invalid JSON'}, status=500)
 
         # Process snapshot
-        path_name = save_in_disk(data, self.tk.owner.institution.name)
+        path_name = save_in_disk(data, self.tk.owner.institution.uuid)
 
         # try:
         #     Build(data, None, check=True)
@@ -137,7 +137,7 @@ class NewSnapshotView(ApiMixing):
             # TODO replace with public_url when available
             "public_url": url
         }
-        move_json(path_name, self.tk.owner.institution.name)
+        move_json(path_name, self.tk.owner.institution.uuid)
 
         return JsonResponse(response, status=200)
 

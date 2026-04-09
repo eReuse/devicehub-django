@@ -76,8 +76,8 @@ class Command(BaseCommand):
         total_deleted = 0
         total_kept = 0
 
-        for institution_name in os.listdir(evidences_dir):
-            institution_path = os.path.join(evidences_dir, institution_name)
+        for institution_uuid in os.listdir(evidences_dir):
+            institution_path = os.path.join(evidences_dir, institution_uuid)
             snapshots_path = os.path.join(institution_path, "snapshots")
 
             if not os.path.isdir(snapshots_path):
@@ -86,10 +86,10 @@ class Command(BaseCommand):
             duplicates = find_duplicates(snapshots_path)
 
             if not duplicates:
-                self.stdout.write(f"[{institution_name}] No duplicates found.")
+                self.stdout.write(f"[{institution_uuid}] No duplicates found.")
                 continue
 
-            self.stdout.write(f"[{institution_name}] {len(duplicates)} UUIDs with duplicates:")
+            self.stdout.write(f"[{institution_uuid}] {len(duplicates)} UUIDs with duplicates:")
 
             for uuid, entries in duplicates.items():
                 kept_date, kept_path = entries[0]

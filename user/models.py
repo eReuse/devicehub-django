@@ -1,3 +1,5 @@
+import uuid
+
 from django.db import models
 from django.db.models import ProtectedError
 from django.utils.translation import gettext_lazy as _
@@ -18,6 +20,7 @@ class Institution(models.Model):
     )
     logo = models.CharField(_("Logo"), max_length=255, blank=True, null=True)
     location = models.CharField(_("Location"), max_length=255, blank=True, null=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False)
     responsable_person = models.CharField(
         _("Responsable"),
         max_length=255,

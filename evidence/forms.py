@@ -67,11 +67,11 @@ class UploadForm(forms.Form):
             return
 
         for ev in self.evidences:
-            path_name = save_in_disk(ev[1], user.institution.name)
+            path_name = save_in_disk(ev[1], user.institution.uuid)
             build = Build
             file_json = ev[1]
             build(file_json, user)
-            move_json(path_name, user.institution.name)
+            move_json(path_name, user.institution.uuid)
 
 
 class UserAliasForm(forms.Form):
@@ -221,11 +221,11 @@ class ImportForm(forms.Form):
 
         if commit:
             for doc, cred in table:
-                path_name = save_in_disk(doc, self.user.institution.name, place="placeholder")
+                path_name = save_in_disk(doc, self.user.institution.uuid, place="placeholder")
 
                 cred.save()
                 create_index(doc, self.user)
-                move_json(path_name, self.user.institution.name, place="placeholder")
+                move_json(path_name, self.user.institution.uuid, place="placeholder")
             return table
 
         return
@@ -343,7 +343,7 @@ class PhotoForm(forms.Form):
 
         # Check if photo already exists based on hash
         photo_path = os.path.join(
-            get_photos_dir(self.user.institution.name),
+            get_photos_dir(self.user.institution.uuid),
             name,
         )
         if os.path.exists(photo_path):
@@ -365,7 +365,7 @@ class PhotoForm(forms.Form):
         if not commit or not self.user or not self.photo_data:
             return
 
-        file_path = save_photo_in_disk(self.photo_data, self.user.institution.name)
+        file_path = save_photo_in_disk(self.photo_data, self.user.institution.uuid)
 
         # Process image for OCR and barcode detection
         processing_result = process_image(file_path)
@@ -391,9 +391,9 @@ class PhotoForm(forms.Form):
         }
 
         # Save JSON snapshot to disk
-        path_name = save_in_disk(doc, self.user.institution.name)
+        path_name = save_in_disk(doc, self.user.institution.uuid)
         create_index(doc, self.user)
-        move_json(path_name, self.user.institution.name)
+        move_json(path_name, self.user.institution.uuid)
 
         # Create SystemProperty with key='photo25' so photo appears in evidence list
         # Using photo hash as the value (similar to device CHID for snapshots)

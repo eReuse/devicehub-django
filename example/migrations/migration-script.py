@@ -24,7 +24,6 @@ User = get_user_model()
 
 SEPARATOR = ";"
 QUOTA = '"'
-PATH_SNAPSHOTS = "examples/snapshots"
 USER_ID = "cac4a45a-71a9-4a57-8d08-4032fc0bee2c"
 
 
@@ -105,10 +104,10 @@ def create_placeholder(row, user):
     dhid = row.pop("dhid", '').lower()
     created = row.pop("created", None)
     doc = create_doc(row)
-    # path_name = save_in_disk(doc, user.institution.name, place="placeholder")
+    # path_name = save_in_disk(doc, user.institution.uuid, place="placeholder")
     create_index(doc, user)
     sp = create_property(doc, user, commit=True)
-    # move_json(path_name, user.institution.name, place="placeholder")
+    # move_json(path_name, user.institution.uuid, place="placeholder")
 
     root_alias = RootAlias.objects.filter(
         owner=user.institution,
@@ -153,9 +152,9 @@ def migrate_snapshots(snap_path, user):
         return
 
     # insert snapshot
-    path_name = save_in_disk(snapshot, user.institution.name)
+    path_name = save_in_disk(snapshot, user.institution.uuid)
     build = Build(snapshot, user)
-    move_json(path_name, user.institution.name)
+    move_json(path_name, user.institution.uuid)
 
     for s in SystemProperty.objects.filter(owner=user.institution, uuid=build.uuid):
         timestamp = snapshot.get("timestamp") or snapshot.get("endTime")
@@ -289,9 +288,8 @@ def main():
     user = User.objects.get(email=args.email)
 
     if args.snapshots:
-        global PATH_SNAPTHOPS
         PATH_SNAPSHOTS = args.snapshots
-        for p in os.listdir(args.snapshots):
+        for p in os.listdir(PATH_SNAPSHOTS):
             if p[-4:] == "json":
                 snap = f"{PATH_SNAPSHOTS}/{p}"
                 try:
