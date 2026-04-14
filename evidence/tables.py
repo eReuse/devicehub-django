@@ -9,6 +9,8 @@ from django.conf import settings
 from evidence.models import Evidence
 import logging
 
+from pyvckit.did import resolve_did_url
+
 
 logger = logging.getLogger('django')
 
@@ -274,7 +276,11 @@ class CredentialTable(tables.Table):
 
     def render_actions(self, record):
         try:
-            url = reverse('evidence:credential_detail', kwargs={'pk': record.pk})
+            if record.key == "DID_DOCUMENT":
+                url = resolve_did_url(record.value)
+            else:
+                url = reverse('evidence:credential_detail', kwargs={'pk': record.pk})
+
             return format_html(
                 '''<a href="{}" class="btn btn-sm btn-outline-primary d-inline-flex align-items-center">
                     <i class="bi bi-eye me-2"></i>{}
