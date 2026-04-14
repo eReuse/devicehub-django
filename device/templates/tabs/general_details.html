@@ -78,7 +78,7 @@
             </div>
           </div>
 
-   {% if object.QR or object.did_QR %}
+{% if object.QR or object.did_QR %}
         <style>
             /* QR print mode */
             @media print {
@@ -120,22 +120,18 @@
                     });
                 window.print();
             }
-
-            const printQr = () => {
-                printGenericQr('qrImg', '{{ object.shortid|escapejs }}');
-            }
         </script>
         {% endif %}
 
         {% if object.QR %}
         <div class="row mb-3">
             <div class="col-sm-4 qr-printable">
-              <img id="qrImg" width="100px" src="data:image/png;base64,{{ object.QR }}" />
+              <img id="deviceQrImg" width="100px" src="data:image/png;base64,{{ object.QR }}" />
               <span id="qrShortId" hidden>{{ object.shortid }}</span>
             </div>
             <div class="col-sm-8">
               <button type="button" class="btn btn-outline-secondary btn-sm"
-                onclick="printQr()">
+                onclick="printGenericQr('deviceQrImg', '{{ object.shortid|escapejs }}')">
                 <i class="bi bi-printer"></i> {% trans "Print Label" %}
               </button>
             </div>
@@ -151,16 +147,15 @@
             </div>
           </div>
 
-
         {% if object.did_QR %}
         <div class="row mb-3">
             <div class="col-sm-4 qr-printable">
-              <img id="qrImg" width="100px" src="data:image/png;base64,{{ object.did_QR }}" />
-              <span id="qrShortId" hidden>{{ object.did }}</span>
+              <img id="didQrImg" width="100px" src="data:image/png;base64,{{ object.did_QR }}" />
+              <span hidden>{{ object.did }}</span>
             </div>
             <div class="col-sm-8">
               <button type="button" class="btn btn-outline-secondary btn-sm"
-                onclick="printQr()">
+                onclick="printGenericQr('didQrImg', '{{ object.did|escapejs }}')">
                 <i class="bi bi-printer"></i> {% trans "Print DID" %}
               </button>
             </div>
