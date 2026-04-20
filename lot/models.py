@@ -9,7 +9,7 @@ from utils.constants import (
 )
 
 from user.models import User, Institution
-from evidence.models import Property
+from evidence.models import Property, RootAlias
 # from device.models import Device
 
 
@@ -65,8 +65,14 @@ class Lot(models.Model):
         DeviceLot.objects.create(lot=self, device_id=v)
 
     def remove(self, v):
-        for d in DeviceLot.objects.filter(lot=self, device_id=v):
-            d.delete()
+        DeviceLot.objects.filter(lot=self, device_id=v).delete()
+        if v.startswith('custom_id:'):
+            alias_ids = list(
+                RootAlias.objects.filter(root=v, owner=self.owner)
+                .values_list('alias', flat=True)
+            )
+            if alias_ids:
+                DeviceLot.objects.filter(lot=self, device_id__in=alias_ids).delete()
 
     @property
     def devices(self):
@@ -151,8 +157,14 @@ class Beneficiary(models.Model):
         )
 
     def remove(self, v):
-        for d in DeviceBeneficiary.objects.filter(beneficiary=self, device_id=v):
-            d.delete()
+        DeviceBeneficiary.objects.filter(beneficiary=self, device_id=v).delete()
+        if v.startswith('custom_id:'):
+            alias_ids = list(
+                RootAlias.objects.filter(root=v, owner=self.lot.owner)
+                .values_list('alias', flat=True)
+            )
+            if alias_ids:
+                DeviceBeneficiary.objects.filter(beneficiary=self, device_id__in=alias_ids).delete()
 
 
 class DeviceBeneficiary(models.Model):

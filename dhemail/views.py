@@ -6,6 +6,7 @@ from django.urls import reverse_lazy
 from django.core.mail import EmailMultiAlternatives
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.shortcuts import get_current_site
+from device.models import Device
 
 
 logger = logging.getLogger(__name__)
@@ -136,6 +137,18 @@ class BeneficiaryEmail(NotifyEmail):
         context['web_beneficiary'] = web_beneficiary
         context["beneficiary"] = self.beneficiary
         context["lot"] = self.lot
+
+        owner = self.beneficiary.lot.owner
+        deduped_qs = Device.filter_valid_ids(
+            self.beneficiary.devicebeneficiary_set.all(),
+            'device_id',
+            owner,
+            deduplicate=True,
+        )
+        context['devices'] = [
+            Device(id=db.device_id, owner=owner).shortid
+            for db in deduped_qs
+        ]
 
         return context
 

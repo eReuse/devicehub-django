@@ -1,4 +1,4 @@
 El beneficiario {{ beneficiary.email }} tiene interes en los dispositivos:
-{% for dev in beneficiary.devicebeneficiary_set.filter %}
-  {{ dev.device_id }}
+{% for d in devices %}
+  {{ d }}
 {% endfor %}

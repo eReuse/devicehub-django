@@ -42,7 +42,7 @@
           <td class="font-monospace">{{ f.instance.returned_place|default:"" }}</td>
 	  {% endif %}
           <td class="font-monospace">
-	    <a href="{% url 'lot:del_device_beneficiary' lot.id beneficiary.id f.device.id %}">
+	    <a href="{% url 'lot:del_device_beneficiary' lot.id beneficiary.id f.device.link_pk %}">
 	       {% trans 'Deallocate' %}
 	    </a>
 	  </td>

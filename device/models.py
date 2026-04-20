@@ -3,12 +3,12 @@ import base64
 
 from io import BytesIO
 from django.db import models
-from django.db.models import Subquery, F, Window, Max
+from django.db.models import Subquery, F, Window, Max, Q, Exists, OuterRef
 from django.db.models.functions import RowNumber
 
 from utils import sql_query as q_sql
 from utils.constants import ALGOS
-from evidence.models import SystemProperty, UserProperty, Evidence, RootAlias
+from evidence.models import SystemProperty, UserProperty, Evidence, RootAlias, get_custom_id_uuid
 from django.utils.dateparse import parse_datetime
 from lot.models import DeviceLot, DeviceBeneficiary
 from action.models import State
@@ -104,8 +104,19 @@ class Device:
         if not self.uuids:
             self.get_uuids()
 
+        uuids = list(self.uuids)
+
+        # Include the stable custom_id UUID so properties stored directly on the
+        # custom_id entity are always found, regardless of which aliases exist.
+        if self.id.startswith("custom_id:") and self.owner:
+            uuids.append(get_custom_id_uuid(self.owner.pk, self.id))
+        elif self.owner:
+            ali = RootAlias.objects.filter(alias=self.id, owner=self.owner).first()
+            if ali and ali.root.startswith("custom_id:"):
+                uuids.append(get_custom_id_uuid(self.owner.pk, ali.root))
+
         user_properties = UserProperty.objects.filter(
-            uuid__in=self.uuids,
+            uuid__in=uuids,
             owner=self.owner,
             type=UserProperty.Type.USER,
         )
@@ -172,25 +183,39 @@ class Device:
         else:
             self.get_uuids()
 
-        return self.uuids[0]
+        return self.uuids[0] if self.uuids else None
 
     def get_current_state(self):
         uuid = self.last_uuid()
+        if not uuid:
+            return None
         return State.objects.filter(snapshot_uuid=uuid).order_by('-date').first()
 
     def get_lots(self):
-        device_id = self.id
-        if self.id.startswith("custom_id:"):
-            ra = RootAlias.objects.filter(root=self.id, owner=self.owner
-                                             ).order_by("-created").first()
-            if ra:
-                device_id = ra.alias
+        # Build the set of device_ids to look up in DeviceLot.
+        # New records store the custom_id directly; old records may use an ereuse24
+        # alias — we include all aliases for backward compatibility.
+        device_ids = [self.id]
 
-        self.lots = [
-            x.lot for x in DeviceLot.objects.filter(device_id=device_id)
-            .select_related('lot__type')
-            .order_by('-lot__type__name', '-lot__created')
-        ]
+        if self.id.startswith("custom_id:") and self.owner:
+            for ra in RootAlias.objects.filter(root=self.id, owner=self.owner):
+                device_ids.append(ra.alias)
+        elif self.owner:
+            ali = RootAlias.objects.filter(alias=self.id, owner=self.owner).first()
+            if ali and ali.root.startswith("custom_id:"):
+                device_ids.append(ali.root)
+                for ra in RootAlias.objects.filter(root=ali.root, owner=self.owner):
+                    device_ids.append(ra.alias)
+
+        seen = set()
+        lots = []
+        for dl in DeviceLot.objects.filter(device_id__in=device_ids).select_related(
+            'lot__type'
+        ).order_by('-lot__type__name', '-lot__created'):
+            if dl.lot_id not in seen:
+                seen.add(dl.lot_id)
+                lots.append(dl.lot)
+        self.lots = lots
 
     def matches_query(self, query):
         if not query:
@@ -233,6 +258,51 @@ class Device:
                 return True
 
         return False
+
+    @staticmethod
+    def filter_valid_ids(queryset, device_id_field, owner, deduplicate=False):
+        """Filter a queryset excluding orphaned custom_id devices.
+
+        An orphaned custom_id is one that no longer has any RootAlias pointing
+        to it (i.e. the alias was deleted). Regular non-custom_id devices are
+        always kept.
+
+        When deduplicate=True, entries that share the same canonical custom_id
+        root are collapsed to one (keeping the first seen). Returns a queryset
+        filtered by PK.
+
+        Usage:
+            Device.filter_valid_ids(DeviceLot.objects.all(), 'device_id', owner)
+            Device.filter_valid_ids(qs, 'device_id', owner, deduplicate=True)
+        """
+        has_alias = RootAlias.objects.filter(
+            root=OuterRef(device_id_field), owner=owner
+        )
+        valid_qs = queryset.annotate(
+            _has_alias=Exists(has_alias)
+        ).filter(
+            Q(_has_alias=True) | ~Q(**{f'{device_id_field}__startswith': 'custom_id:'})
+        )
+
+        if not deduplicate:
+            return valid_qs
+
+        entries = list(valid_qs.values('pk', device_id_field))
+        raw_ids = [e[device_id_field] for e in entries]
+        alias_map = dict(
+            RootAlias.objects.filter(owner=owner, alias__in=raw_ids)
+            .values_list('alias', 'root')
+        )
+        seen = set()
+        keep_pks = []
+        for entry in entries:
+            did = entry[device_id_field]
+            canonical = alias_map.get(did, did)
+            if canonical not in seen:
+                seen.add(canonical)
+                keep_pks.append(entry['pk'])
+
+        return queryset.filter(pk__in=keep_pks)
 
     @classmethod
     def queryset_orm(cls, institution):
@@ -415,15 +485,22 @@ class Device:
         if not self.lot:
             return ''
 
-        device_id = self.id
-        if self.id.startswith("custom_id:"):
-            ra = RootAlias.objects.filter(root=self.id, owner=self.owner
-                                             ).order_by("-created").first()
-            if ra:
-                device_id = ra.alias
+        # New records store the custom_id directly; old records may use an ereuse24
+        # alias — check all possibilities for backward compatibility.
+        device_ids = [self.id]
+
+        if self.id.startswith("custom_id:") and self.owner:
+            for ra in RootAlias.objects.filter(root=self.id, owner=self.owner):
+                device_ids.append(ra.alias)
+        elif self.owner:
+            ali = RootAlias.objects.filter(alias=self.id, owner=self.owner).first()
+            if ali and ali.root.startswith("custom_id:"):
+                device_ids.append(ali.root)
+                for ra in RootAlias.objects.filter(root=ali.root, owner=self.owner):
+                    device_ids.append(ra.alias)
 
         dev = DeviceBeneficiary.objects.filter(
-            device_id=device_id,
+            device_id__in=device_ids,
             beneficiary__lot=self.lot
         ).first()
 

@@ -18,7 +18,7 @@ from django.views.generic.base import TemplateView
 from action.models import StateDefinition, State, DeviceLog, Note
 from dashboard.mixins import DashboardView, Http403
 from environmental_impact.algorithms.algorithm_factory import FactoryEnvironmentImpactAlgorithm
-from evidence.models import UserProperty, SystemProperty, Evidence, RootAlias
+from evidence.models import UserProperty, SystemProperty, Evidence, RootAlias, get_custom_id_uuid
 from lot.models import LotTag
 from device.models import Device
 from device.forms import DeviceFormSet
@@ -264,20 +264,19 @@ class AddUserPropertyView(DeviceLogMixin, CreateView):
         pk = self.kwargs.get('pk')
         institution = self.request.user.institution
 
-        if 'custom_id' in pk:
-            alias = RootAlias.objects.filter(
-                root=pk,
-                owner=institution
-            ).first()
-
-            if not alias:
+        if pk.startswith("custom_id:"):
+            # Use a stable synthetic UUID anchored to the custom_id entity so
+            # that UserProperties survive alias additions/deletions.
+            has_alias = RootAlias.objects.filter(root=pk, owner=institution).exists()
+            if not has_alias:
                 raise Http404
-            pk = alias.alias
-
-        self.property = SystemProperty.objects.filter(
-            owner=institution, value=pk).first()
-        if not self.property:
-            raise Http404
+            stable_uuid = get_custom_id_uuid(institution.pk, pk)
+            self.property = type('_CustomIdProperty', (), {'uuid': stable_uuid})()
+        else:
+            self.property = SystemProperty.objects.filter(
+                owner=institution, value=pk).first()
+            if not self.property:
+                raise Http404
 
         return super().get_form_kwargs()
 

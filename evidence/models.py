@@ -1,4 +1,5 @@
 import json
+import uuid
 import hashlib
 
 from dmidecode import DMIParse
@@ -11,6 +12,20 @@ from evidence.xapian import search
 from evidence.parse_details import ParseSnapshot
 from evidence.normal_parse_details import get_inxi, get_inxi_key
 from user.models import User, Institution
+
+# Fixed namespace for generating stable UUIDs for custom_id entities
+# TODO cayop when institution have a UUID in PR 157 pass to main, then is
+# better use institution.uuid instead of _CUSTOM_ID_UUID_NAMESPACE
+_CUSTOM_ID_UUID_NAMESPACE = uuid.UUID('b5a4bcde-1234-5678-abcd-ef0123456789')
+
+
+def get_custom_id_uuid(institution_pk, custom_id_str):
+    """Return a stable, deterministic UUID for a custom_id + institution pair.
+
+    Used to anchor UserProperty directly to the custom_id entity,
+    independent of which ereuse24 aliases are linked at any given time.
+    """
+    return uuid.uuid5(_CUSTOM_ID_UUID_NAMESPACE, f"{institution_pk}:{custom_id_str}")
 
 
 class Property(models.Model):

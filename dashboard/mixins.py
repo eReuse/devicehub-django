@@ -56,24 +56,19 @@ class DashboardView(LoginRequiredMixin):
         dev_ids = self.request.session.pop("devices", [])
 
         self._devices = []
+        institution = self.request.user.institution
 
         custom_ids = [d for d in dev_ids if d.startswith("custom_id:")]
         regular_ids = [d for d in dev_ids if not d.startswith("custom_id:")]
 
-        if custom_ids:
-            root_aliases = RootAlias.objects.filter(
-                root__in=custom_ids,
-                owner=self.request.user.institution
-            ).order_by("-created")
-            seen_roots = set()
-            for ra in root_aliases:
-                if ra.root not in seen_roots:
-                    seen_roots.add(ra.root)
-                    regular_ids.append(ra.alias)
+        # Keep custom_id devices as-is so that lots/beneficiaries/properties are
+        # stored directly under the custom_id rather than a transient ereuse24 alias.
+        for custom_id in custom_ids:
+            if RootAlias.objects.filter(root=custom_id, owner=institution).exists():
+                self._devices.append(Device(id=custom_id, owner=institution))
 
-        dev_ids_list = SystemProperty.objects.filter(value__in=regular_ids)
-        dev_org = dev_ids_list.filter(owner=self.request.user.institution)
-        dev_org_set = set(x.value for x in dev_org)
+        dev_ids_list = SystemProperty.objects.filter(owner=institution, value__in=regular_ids)
+        dev_org_set = set(x.value for x in dev_ids_list)
         for x in dev_org_set:
             self._devices.append(Device(id=x))
         return self._devices
@@ -171,7 +166,7 @@ class DeviceTableMixin():
         current_state = device.get_current_state()
 
         return {
-            'id': device.pk,
+            'id': device.link_pk,
             'link_pk': device.link_pk,
             'shortid': device.shortid,
             'type': device.type,

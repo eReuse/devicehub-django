@@ -17,7 +17,7 @@ from django_tables2.export.export import TableExport
 from django_tables2.export.views import ExportMixin
 
 from action.models import StateDefinition, State
-from django.db.models import Q, Subquery, OuterRef
+from django.db.models import Q, Subquery, OuterRef, Exists
 
 from dashboard.mixins import InventaryMixin, DetailsMixin, DeviceTableMixin
 from evidence.models import SystemProperty, RootAlias
@@ -71,9 +71,16 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
     }
 
     def _get_chids_qs(self):
-        return self.object.devicelot_set.all().values_list(
-            "device_id", flat=True
-        ).distinct()
+        owner = self.request.user.institution
+        deduped = Device.filter_valid_ids(
+            self.object.devicelot_set.all(), 'device_id', owner, deduplicate=True
+        )
+        raw_ids = list(deduped.values_list('device_id', flat=True))
+        alias_map = dict(
+            RootAlias.objects.filter(owner=owner, alias__in=raw_ids)
+            .values_list('alias', 'root')
+        )
+        return [alias_map.get(did, did) for did in raw_ids]
 
     def get_context_data(self, **kwargs):
         # super() creates and paginates the table via SingleTableMixin
@@ -95,6 +102,10 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
         owner = self.request.user.institution
         for row in table.paginated_rows:
             device = Device(id=row.record['id'], lot=lot, owner=owner)
+            row.record['id'] = device.link_pk
+            if not device.last_evidence:
+                # custom_id whose aliases were all removed — skip enrichment
+                continue
             current_state = device.get_current_state()
             row.record.update({
                 'shortid': device.shortid,
@@ -170,7 +181,7 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
             for device in devices:
                 current_state = device.get_current_state()
                 table_data.append({
-                    'id': device.pk,
+                    'id': device.link_pk,
                     'link_pk': device.link_pk,
                     'shortid': device.shortid,
                     'type': device.type,
@@ -316,6 +327,9 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
 
             for device in devices:
                 row_data = device.components_export()
+                last_updated = row_data['last_updated']
+                if hasattr(last_updated, 'tzinfo') and last_updated.tzinfo:
+                    last_updated = last_updated.replace(tzinfo=None)
                 row_values = [
                     row_data['ID'],
                     row_data['type'],
@@ -332,7 +346,7 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
                     row_data['gpu_model'],
                     row_data['user_properties'],
                     row_data['serial'],
-                    row_data['last_updated']
+                    last_updated,
                 ]
                 data.append(row_values)
 

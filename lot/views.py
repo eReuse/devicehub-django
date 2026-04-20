@@ -9,7 +9,8 @@ from django.shortcuts import get_object_or_404, redirect, Http404, render
 from django.contrib import messages
 from django.core.cache import cache
 from django.utils.translation import gettext_lazy as _
-from django.db.models import Q, Count, Case, When, IntegerField
+from django.db.models import Q, Count, Case, When, IntegerField, Exists, Subquery, OuterRef, F
+from django.db.models.functions import Coalesce
 from django.views.generic.base import TemplateView, View
 from django.forms import modelformset_factory, Select
 from django.views.generic.edit import (
@@ -23,7 +24,7 @@ from dashboard.mixins import DashboardView
 from environmental_impact.models import EnvironmentalImpact
 from lot.tables import LotTable
 from device.models import Device
-from evidence.models import SystemProperty
+from evidence.models import SystemProperty, RootAlias
 from lot.tables import LotTable
 from environmental_impact.algorithms.algorithm_factory import FactoryEnvironmentImpactAlgorithm
 from lot.forms import (
@@ -41,7 +42,8 @@ from lot.models import (
     LotSubscription,
     Beneficiary,
     Donor,
-    DeviceBeneficiary
+    DeviceBeneficiary,
+    DeviceLot,
 )
 from dhemail.views import (
     NotifyEmail,
@@ -238,9 +240,17 @@ class DelToLotView(DashboardView, View):
             ).first()
 
             beneficiary = []
+            owner = self.request.user.institution
             for dev in selected_devices:
+                ids_to_check = [dev.link_pk]
+                if dev.link_pk.startswith('custom_id:'):
+                    alias_ids = list(
+                        RootAlias.objects.filter(root=dev.link_pk, owner=owner)
+                        .values_list('alias', flat=True)
+                    )
+                    ids_to_check.extend(alias_ids)
                 exist = DeviceBeneficiary.objects.filter(
-                    beneficiary__lot_id=lot_id, device_id=dev.id
+                    beneficiary__lot_id=lot_id, device_id__in=ids_to_check
                 ).exists()
                 if exist:
                     beneficiary.append(dev.shortid)
@@ -252,7 +262,7 @@ class DelToLotView(DashboardView, View):
                 return redirect(reverse_lazy('dashboard:lot', kwargs={'pk': lot_id}))
 
             for dev in selected_devices:
-                lot.remove(dev.id)
+                lot.remove(dev.link_pk)
             msg = _("Successfully unassigned %d devices from the lot")
             messages.success(request, msg % len(selected_devices))
 
@@ -279,8 +289,32 @@ class LotsTagsView(DashboardView, SingleTableView):
         self.show_archived = self.request.GET.get('show_archived', 'false')
         self.search_query = self.request.GET.get('q', '').strip()
 
-        queryset = Lot.objects.filter(owner=self.request.user.institution, type=self.tag).annotate(
-            device_count=Count('devicelot')
+        institution = self.request.user.institution
+        # Count unique canonical device IDs per lot.
+        # Each DeviceLot entry is annotated with its canonical ID: if the stored
+        # device_id is an alias in RootAlias, use the root; otherwise use device_id.
+        # Orphaned custom_id entries (no RootAlias pointing to them) are excluded.
+        # Counting DISTINCT canonical IDs ensures two entries sharing the same alias
+        # (e.g. ereuse24:A and ereuse24:B both → custom_id:SAME) count as one.
+        alias_root = RootAlias.objects.filter(
+            alias=OuterRef('device_id'), owner=institution
+        ).values('root')[:1]
+
+        valid_device_lots = (
+            DeviceLot.objects.filter(lot=OuterRef('pk'))
+            .annotate(
+                canonical_id=Coalesce(Subquery(alias_root), F('device_id')),
+                has_ra=Exists(
+                    RootAlias.objects.filter(root=OuterRef('device_id'), owner=institution)
+                ),
+            )
+            .filter(Q(has_ra=True) | ~Q(device_id__startswith='custom_id:'))
+            .values('lot')
+            .annotate(n=Count('canonical_id', distinct=True))
+            .values('n')
+        )
+        queryset = Lot.objects.filter(owner=institution, type=self.tag).annotate(
+            device_count=Coalesce(Subquery(valid_device_lots, output_field=IntegerField()), 0)
         )
 
         if self.show_archived == 'true':
@@ -961,7 +995,13 @@ class ListDevicesBeneficiaryView(DashboardLotMixing, BeneficiaryEmail, FormView)
             id=self.id
         )
 
-        kwargs["queryset"] = self.beneficiary.devicebeneficiary_set.filter()
+        owner = self.request.user.institution
+        kwargs["queryset"] = Device.filter_valid_ids(
+            self.beneficiary.devicebeneficiary_set.all(),
+            'device_id',
+            owner,
+            deduplicate=True,
+        )
         return kwargs
 
     def get_context_data(self, **kwargs):
@@ -1073,14 +1113,20 @@ class DelDeviceBeneficiaryView(DashboardView, TemplateView):
             user=self.request.user
         ).first()
 
-        device = DeviceBeneficiary.objects.filter(
-            beneficiary_id=id,
-            device_id=dev_id
-        ).first()
+        owner = self.request.user.institution
+        ids_to_check = [dev_id]
+        if dev_id.startswith('custom_id:'):
+            alias_ids = list(
+                RootAlias.objects.filter(root=dev_id, owner=owner)
+                .values_list('alias', flat=True)
+            )
+            ids_to_check.extend(alias_ids)
 
         if subscriptor or self.request.user.is_admin:
-            if device:
-                device.delete()
+            DeviceBeneficiary.objects.filter(
+                beneficiary_id=id,
+                device_id__in=ids_to_check
+            ).delete()
             # TODO
             # self.send_email()
 
