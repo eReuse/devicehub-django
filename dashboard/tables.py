@@ -12,7 +12,7 @@ class DeviceTable(tables.Table):
 
     hide_count = True
     devices = tables.CheckBoxColumn(
-        accessor='id',
+        accessor='link_pk',
         attrs={
             'th__input': {
                 'class': 'd-none'
