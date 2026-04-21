@@ -51,18 +51,49 @@ class Device:
         self.evidences = []
         self.lots = []
         self.last_evidence = None
+        self._canonical_cache = None
+        self._physicals_cache = None
         self.get_shortid()
         self.get_last_evidence()
 
+    def _canonical_id(self):
+        """Resolve self.id to its canonical device ID via RootAlias.
+
+        Thanks to the Phase 1 invariant (every SystemProperty.value has a
+        RootAlias row with alias=value), any physical ID resolves through one
+        lookup; a custom_id or unknown ID falls back to itself.
+        """
+        if self._canonical_cache is not None:
+            return self._canonical_cache
+        if not self.owner:
+            self._canonical_cache = self.id
+            return self._canonical_cache
+
+        self.alias = RootAlias.objects.filter(
+            owner=self.owner, alias=self.id
+        ).first()
+        self._canonical_cache = self.alias.root if self.alias else self.id
+        return self._canonical_cache
+
+    def _physical_ids(self):
+        """All physical IDs that share the same canonical device."""
+        if self._physicals_cache is not None:
+            return self._physicals_cache
+        if not self.owner:
+            self._physicals_cache = [self.id]
+            return self._physicals_cache
+
+        canonical = self._canonical_id()
+        ids = list(
+            RootAlias.objects.filter(owner=self.owner, root=canonical)
+            .values_list("alias", flat=True)
+        )
+        self._physicals_cache = ids or [self.id]
+        return self._physicals_cache
+
     def get_shortid(self):
-        self.shortid = self.pk.split(":")[1][:6].upper()
-        if self.owner:
-            self.alias = RootAlias.objects.filter(
-                owner=self.owner,
-                alias=self.pk
-            ).first()
-            if self.alias:
-                self.shortid = self.alias.root.split(":")[1][:6].upper()
+        canonical = self._canonical_id()
+        self.shortid = canonical.split(":")[1][:6].upper()
 
     def initial(self):
         self.get_properties()
@@ -76,20 +107,9 @@ class Device:
             return self.properties
 
         if self.owner:
-            # if hid exist as root
-            roots = [x.alias for x in RootAlias.objects.filter(root=self.id, owner=self.owner)]
-            roots.append(self.id)
-            # if hid exist as alias
-            ali = RootAlias.objects.filter(alias=self.id).first()
-            if ali:
-                roots.append(ali.root)
-                for x in RootAlias.objects.filter(root=ali.root, owner=self.owner):
-                    if x.alias not in roots:
-                        roots.append(x.alias)
-
             self.properties = SystemProperty.objects.filter(
                 owner=self.owner,
-                value__in=roots
+                value__in=self._physical_ids(),
             ).order_by("-created")
         else:
             # Is good not filter from owner for public view of device
@@ -182,19 +202,26 @@ class Device:
         return State.objects.filter(snapshot_uuid=uuid).order_by('-date').first()
 
     def get_lots(self):
-        device_ids = [self.id]
-        if self.id.startswith("custom_id:"):
-            # ra = RootAlias.objects.filter(root=self.id, owner=self.owner
-            #                                  ).order_by("-created").first()
-            # if ra:
-            device_ids = self.hids
+        # A lot row may have been stored with either the physical ID or the
+        # canonical root. Look up all IDs that belong to this logical device
+        # and deduplicate by lot.
+        device_ids = self._physical_ids()
+        canonical = self._canonical_id()
+        if canonical not in device_ids:
+            device_ids = [*device_ids, canonical]
 
-        self.lots = [
-            x.lot for x in DeviceLot.objects.filter(device_id__in=device_ids)
-            .distinct()
-            .select_related('lot__type')
-            .order_by('-lot__type__name', '-lot__created')
-        ]
+        seen = set()
+        lots = []
+        for dl in (
+            DeviceLot.objects.filter(device_id__in=device_ids)
+            .select_related("lot__type")
+            .order_by("-lot__type__name", "-lot__created")
+        ):
+            if dl.lot_id in seen:
+                continue
+            seen.add(dl.lot_id)
+            lots.append(dl.lot)
+        self.lots = lots
 
     def matches_query(self, query):
         if not query:
@@ -419,16 +446,14 @@ class Device:
         if not self.lot:
             return ''
 
-        device_id = self.id
-        if self.id.startswith("custom_id:"):
-            ra = RootAlias.objects.filter(root=self.id, owner=self.owner
-                                             ).order_by("-created").first()
-            if ra:
-                device_id = ra.alias
+        device_ids = self._physical_ids()
+        canonical = self._canonical_id()
+        if canonical not in device_ids:
+            device_ids = [*device_ids, canonical]
 
         dev = DeviceBeneficiary.objects.filter(
-            device_id=device_id,
-            beneficiary__lot=self.lot
+            device_id__in=device_ids,
+            beneficiary__lot=self.lot,
         ).first()
 
         status = DeviceBeneficiary.Status.AVAILABLE.label
@@ -448,9 +473,10 @@ class Device:
 
     @property
     def link_pk(self):
-        if self.alias and self.alias.root.startswith("custom_id:"):
-            return self.alias.root
-        return self.pk
+        # Always link to the canonical ID. The canonical root may be a
+        # custom_id, a different algorithm's hash (e.g. ereuse26) or the
+        # device's own physical ID when it has no alias.
+        return self._canonical_id()
 
     def components_export(self):
         self.get_last_evidence()

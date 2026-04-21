@@ -101,10 +101,13 @@ class UserAliasForm(forms.Form):
         cleaned_data = super().clean()
         self.root_alias = self.cleaned_data.get('root', '').lower()
 
+        # Exclude the self-referential entry (alias=value, root=value) that the
+        # SystemProperty post_save signal always creates; it is not a real
+        # incoming alias for this evidence.
         alias = RootAlias.objects.filter(
             owner=self.user.institution,
-            root=self.sysprop.value
-        )
+            root=self.sysprop.value,
+        ).exclude(alias=self.sysprop.value)
 
         if self.root_alias == self.sysprop.value:
             txt = _("This alias is the same as the current evidence.")
@@ -129,10 +132,13 @@ class UserAliasForm(forms.Form):
             root_alias = "custom_id:{}".format(self.root_alias)
 
         if not self.instance:
-            self.instance = RootAlias.objects.create(
+            # The post_save signal on SystemProperty has already created a
+            # self-referential RootAlias entry for this value; update it so
+            # the unique constraint on (owner, alias) is not violated.
+            self.instance, _ra_created = RootAlias.objects.update_or_create(
                 owner=self.sysprop.owner,
                 alias=self.sysprop.value,
-                root=root_alias
+                defaults={"root": root_alias},
             )
 
             message =_("<Created> Evidence alias. Value: '{}'").format(root_alias)

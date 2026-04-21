@@ -23,8 +23,14 @@ class PublicDeviceWebViewTests(TestCase):
             ("d1", "d2"),
         ]
 
+        # Every SystemProperty already has a self-referential RootAlias row
+        # created by the post_save signal; use update_or_create so that the
+        # unique (owner, alias) constraint is respected when setting a real
+        # alias over the pre-existing self-reference.
         for ali, root in alias:
-            RootAlias.objects.create(owner=i, alias=ali, root=root)
+            RootAlias.objects.update_or_create(
+                owner=i, alias=ali, defaults={"root": root}
+            )
 
     def test_queryset_all(self):
         result_orm = [x for x in Device.queryset_orm(self.institution)]

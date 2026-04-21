@@ -3,6 +3,8 @@ import hashlib
 
 from dmidecode import DMIParse
 from django.db import models
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 
 from django.db.models import Q
@@ -77,6 +79,27 @@ class RootAlias(models.Model):
     @property
     def root_hid(self):
         return self.root.split(":")[1]
+
+
+@receiver(post_save, sender=SystemProperty)
+def ensure_root_alias_self_reference(sender, instance, created, **kwargs):
+    """Keep RootAlias as the canonical catalog of devices (Option 5).
+
+    Whenever a SystemProperty is created, guarantee there is a self-referential
+    RootAlias row (alias=value, root=value) for the same owner. This makes
+    ``SELECT DISTINCT root FROM RootAlias`` a complete listing of every device
+    known to the institution, and ``RootAlias.get(alias=X)`` a total function.
+    """
+    if not created:
+        return
+    RootAlias.objects.get_or_create(
+        owner=instance.owner,
+        alias=instance.value,
+        defaults={
+            "root": instance.value,
+            "user": instance.user,
+        },
+    )
 
 
 class Evidence:
