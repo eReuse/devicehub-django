@@ -304,7 +304,7 @@
                             {% else %}
                                 {{ label|capfirst }}
                             {% endif %}
-                            {% if not forloop.last %} / {% endif %}
+                            {% if not forloop.last or breadcrumb|length == 1 %} / {% endif %}
                         {% endfor %}
                     {% endif %}
                 </i></small>

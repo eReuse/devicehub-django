@@ -267,7 +267,7 @@ class DelToLotView(DashboardView, View):
 class LotsTagsView(DashboardView, SingleTableView):
     template_name = "lots.html"
     title = _("Lot group")
-    breadcrumb = [(_("lots") + " /", None)]
+    breadcrumb = [(_("lots"), None)]
     success_url = reverse_lazy('dashboard:unassigned')
     model = Lot
     table_class = LotTable

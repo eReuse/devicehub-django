@@ -33,7 +33,7 @@ class AdminView(DashboardView):
 class PanelView(AdminView, TemplateView):
     template_name = "admin_panel.html"
     title = _("Admin")
-    breadcrumb = [(_("admin") + " /", None)]
+    breadcrumb = [(_("admin"), None)]
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
