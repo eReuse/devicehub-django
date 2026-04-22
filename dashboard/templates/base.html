@@ -299,7 +299,12 @@
                 <small style="color:#899bbd"><i>
                     {% if breadcrumb %}
                         {% for label, url in breadcrumb %}
-                            {% if url %}<a href="{{ url }}">{{ label }}</a>{% else %}{{ label }}{% endif %}{% if not forloop.last %} / {% endif %}
+                            {% if url %}
+                                <a href="{{ url }}">{{ label|capfirst }}</a>
+                            {% else %}
+                                {{ label|capfirst }}
+                            {% endif %}
+                            {% if not forloop.last %} / {% endif %}
                         {% endfor %}
                     {% endif %}
                 </i></small>
