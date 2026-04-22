@@ -22,14 +22,14 @@ from django.utils.html import format_html
 class PanelView(DashboardView, TemplateView):
     template_name = "panel.html"
     title = _("User")
-    breadcrumb = "User / Panel"
+    breadcrumb = [(_("User"), None), (_("Panel"), None)]
     subtitle = "User panel"
 
 
 class SettingsView(DashboardView, FormView):
     template_name = "settings.html"
     title = _("Download Settings")
-    breadcrumb = "user / workbench / settings"
+    breadcrumb = [(_("User"), reverse_lazy("user:panel")), (_("Workbench"), None), (_("Settings"), None)]
     form_class = SettingsForm
 
     def form_valid(self, form):
@@ -59,7 +59,7 @@ class UserProfileView(DashboardView, DetailView):
         template_name = 'user_profile.html'
         model = User
         title = _("")
-        breadcrumb = "User / profile"
+        breadcrumb = [(_("User"), reverse_lazy("user:panel")), (_("Profile"), None)]
         context_object_name = 'profile_user'
         slug_field = 'pk'
         slug_url_kwarg = 'user_id'

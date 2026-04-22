@@ -296,7 +296,13 @@
 
           <div class="row border-bottom mb-3">
             <div class="col">
-              <small style="color:#899bbd"><i>{{ breadcrumb }}</i></small>
+                <small style="color:#899bbd"><i>
+                    {% if breadcrumb %}
+                        {% for label, url in breadcrumb %}
+                            {% if url %}<a href="{{ url }}">{{ label }}</a>{% else %}{{ label }}{% endif %}{% if not forloop.last %} / {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                </i></small>
             </div>
             <div class="btn-toolbar mb-2 mb-md-0">
             </div>

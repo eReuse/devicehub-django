@@ -4,7 +4,7 @@ import datetime
 
 from django.db import IntegrityError
 from utils.icons import get_icon_by_type
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
 from django.shortcuts import get_object_or_404, redirect, Http404, render
 from django.contrib import messages
 from django.core.cache import cache
@@ -79,7 +79,7 @@ class LotSuccessUrlMixin():
 class NewLotView(LotSuccessUrlMixin, DashboardView, CreateView):
     template_name = "new_lot.html"
     title = _("New lot")
-    breadcrumb = "lot / New lot"
+    breadcrumb = [("lot", None), ("New lot", None)]
     model = Lot
     fields = (
         "type",
@@ -113,7 +113,7 @@ class NewLotView(LotSuccessUrlMixin, DashboardView, CreateView):
 class DeleteLotsView(LotSuccessUrlMixin, DashboardView, TemplateView ):
     template_name = "delete_lots.html"
     title = _("Delete lot/s")
-    breadcrumb = "lots / Delete"
+    breadcrumb = [(_("Lots"), None), (_("Delete"), None)]
 
     def get(self, request, *args, **kwargs):
         selected_ids = request.GET.getlist('select')
@@ -155,7 +155,7 @@ class DeleteLotsView(LotSuccessUrlMixin, DashboardView, TemplateView ):
 class EditLotView(LotSuccessUrlMixin, DashboardView, UpdateView):
     template_name = "new_lot.html"
     title = _("Edit lot")
-    breadcrumb = "Lot / Edit lot"
+    breadcrumb = [(_("Lot"), None), (_("Edit lot"), None)]
     model = Lot
     fields = (
         "type",
@@ -192,7 +192,7 @@ class EditLotView(LotSuccessUrlMixin, DashboardView, UpdateView):
 class AddToLotView(DashboardView, FormView):
     template_name = "list_lots.html"
     title = _("Add to lots")
-    breadcrumb = "lot / add to lots"
+    breadcrumb = [(_("Lot"), None), (_("Add to lots"), None)]
     success_url = reverse_lazy('dashboard:unassigned')
     form_class = LotsForm
 
@@ -267,7 +267,7 @@ class DelToLotView(DashboardView, View):
 class LotsTagsView(DashboardView, SingleTableView):
     template_name = "lots.html"
     title = _("Lot group")
-    breadcrumb = _("lots") + " /"
+    breadcrumb = [(_("lots") + " /", None)]
     success_url = reverse_lazy('dashboard:unassigned')
     model = Lot
     table_class = LotTable
@@ -305,7 +305,7 @@ class LotsTagsView(DashboardView, SingleTableView):
 
         context.update({
             'title': _("Lot Group") + " - " + self.tag.name,
-            'breadcrumb': _("Lots") + " / " + self.tag.name,
+            'breadcrumb': [(_("Lots"), None), (self.tag.name, None)],
             'show_archived': self.show_archived,
             'search_query': self.search_query,
             'archived_count': counts['archived_count'],
@@ -386,7 +386,6 @@ class DashboardLotMixing(DashboardView):
 class LotPropertiesView(DashboardLotMixing, TemplateView):
     template_name = "properties.html"
     title = _("Properties")
-    breadcrumb = "Lot / Properties"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -397,6 +396,10 @@ class LotPropertiesView(DashboardLotMixing, TemplateView):
         )
         context.update({
             'properties': properties,
+            'breadcrumb': [
+                (self.lot.name, reverse("dashboard:lot", args=[self.lot.pk])),
+                (_("Properties"), None),
+            ],
         })
 
         return context
@@ -405,7 +408,6 @@ class LotPropertiesView(DashboardLotMixing, TemplateView):
 class LotEnvironmentalImpactView(DashboardLotMixing, TemplateView):
     template_name = "lot_environmental_impact.html"
     title = _("Environmental Impact")
-    breadcrumb = "Lot / Environmental Impact"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -421,6 +423,10 @@ class LotEnvironmentalImpactView(DashboardLotMixing, TemplateView):
             'impact': env_impact,
             'device_count': len(devices),
             'devices_with_evidence': len(devices_with_evidence),
+            'breadcrumb': [
+                (self.lot.name, reverse("dashboard:lot", args=[self.lot.pk])),
+                (_("Environmental Impact"), None),
+            ],
         })
         return context
 
@@ -450,7 +456,6 @@ class LotEnvironmentalImpactView(DashboardLotMixing, TemplateView):
 class AddLotPropertyView(DashboardView, CreateView):
     template_name = "new_property.html"
     title = _("Properties")
-    breadcrumb = "Device / Properties"
     success_url = reverse_lazy('dashboard:unassigned_devices')
     model = LotProperty
     fields = ("key", "value")
@@ -479,6 +484,11 @@ class AddLotPropertyView(DashboardView, CreateView):
         context = super().get_context_data(**kwargs)
         context['lot_id'] = self.lot.id
         context["title"] = "{} - {}".format(self.title, self.lot.name)
+        context['breadcrumb'] = [
+            (self.lot.name, reverse("dashboard:lot", args=[self.lot.pk])),
+            (_("Properties"), reverse("lot:properties", args=[self.lot.pk])),
+            (_("New property"), None),
+        ]
         return context
 
     def get_success_url(self):
@@ -488,7 +498,6 @@ class AddLotPropertyView(DashboardView, CreateView):
 class UpdateLotPropertyView(DashboardView, UpdateView):
     template_name = "properties.html"
     title = _("Update lot Property")
-    breadcrumb = "Lot / Update Property"
     model = LotProperty
     fields = ("key", "value")
 
@@ -503,11 +512,21 @@ class UpdateLotPropertyView(DashboardView, UpdateView):
         if not lot_property:
             raise Http404
 
-        lot_pk = lot_property.lot.pk
-        self.success_url = reverse_lazy('lot:properties', args=[lot_pk])
+        self._lot = lot_property.lot
+        self.success_url = reverse_lazy('lot:properties', args=[self._lot.pk])
         kwargs = super().get_form_kwargs()
         kwargs['instance'] = lot_property
         return kwargs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if hasattr(self, '_lot'):
+            context['breadcrumb'] = [
+                (self._lot.name, reverse("dashboard:lot", args=[self._lot.pk])),
+                (_("Properties"), reverse("lot:properties", args=[self._lot.pk])),
+                (_("Update property"), None),
+            ]
+        return context
 
     def form_valid(self, form):
         try:
@@ -545,7 +564,6 @@ class DeleteLotPropertyView(DashboardView, DeleteView):
 class SubscriptLotView(DashboardLotMixing, SubscriptionEmail, FormView):
     template_name = "subscription.html"
     title = _("Subscriptions")
-    breadcrumb = "Lot / Subscriptions"
     form_class = LotSubscriptionForm
     lot = None
 
@@ -558,7 +576,11 @@ class SubscriptLotView(DashboardLotMixing, SubscriptionEmail, FormView):
         context.update({
             'lot': self.lot,
             'subscriptors': self.subscriptions,
-            "action": _("Subscribe")
+            "action": _("Subscribe"),
+            'breadcrumb': [
+                (self.lot.name, reverse("dashboard:lot", args=[self.lot.pk])),
+                (_("Subscriptions"), None),
+            ],
         })
         return context
 
@@ -613,7 +635,14 @@ class UnsubscriptLotView(DashboardView, TemplateView):
 class ParticipantsView(DashboardLotMixing, TemplateView):
     template_name = "participants.html"
     title = _("Participants")
-    breadcrumb = "Lot / Participants"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['breadcrumb'] = [
+            (self.lot.name, reverse("dashboard:lot", args=[self.lot.pk])),
+            (_("Participants"), None),
+        ]
+        return context
 
 
 class DonorMixing(DashboardLotMixing, FormView):
@@ -659,7 +688,6 @@ class DonorMixing(DashboardLotMixing, FormView):
 
 class AddDonorView(DonorMixing, DonorEmail):
     title = _("Add Donor")
-    breadcrumb = "Lot / {}".format(title)
 
     def form_valid(self, form):
         form.save()
@@ -670,12 +698,15 @@ class AddDonorView(DonorMixing, DonorEmail):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["action"] = _("Add Donor")
+        context['breadcrumb'] = [
+            (self.lot.name, reverse("dashboard:lot", args=[self.lot.pk])),
+            (_("Add Donor"), None),
+        ]
         return context
 
 
 class DelDonorView(DonorMixing):
     title = _("Remove Donor")
-    breadcrumb = "Lot / {}".format(title)
 
     def form_valid(self, form):
         form.remove()
@@ -685,6 +716,10 @@ class DelDonorView(DonorMixing):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["action"] = _("Remove")
+        context['breadcrumb'] = [
+            (self.lot.name, reverse("dashboard:lot", args=[self.lot.pk])),
+            (_("Remove Donor"), None),
+        ]
         return context
 
 
@@ -770,7 +805,6 @@ class AcceptDonorView(TemplateView, NotifyEmail):
 class BeneficiaryView(DashboardLotMixing, BeneficiaryInterestedEmail, FormView):
     template_name = "beneficiaries.html"
     title = _("Beneficiaries")
-    breadcrumb = "Lot / Beneficiaries"
     form_class = BeneficiaryForm
     lot = None
 
@@ -824,6 +858,10 @@ class BeneficiaryView(DashboardLotMixing, BeneficiaryInterestedEmail, FormView):
             "action": _("Add"),
             "devices_to_assign": devices_to_assign,
             "devices_already_assigned": devices_already_assigned,
+            'breadcrumb': [
+                (self.lot.name, reverse("dashboard:lot", args=[self.lot.pk])),
+                (_("Beneficiaries"), None),
+            ],
         })
         return context
 
@@ -914,7 +952,6 @@ class DeleteBeneficiaryView(DashboardView, TemplateView):
 class ListDevicesBeneficiaryView(DashboardLotMixing, BeneficiaryEmail, FormView):
     template_name = "beneficiaries_devices.html"
     title = _("Beneficiaries")
-    breadcrumb = "Lot / Beneficiary / Devices"
     lot = None
 
     def get(self, *args, **kwargs):
@@ -993,7 +1030,12 @@ class ListDevicesBeneficiaryView(DashboardLotMixing, BeneficiaryEmail, FormView)
             'beneficiary': self.beneficiary,
             'new_devices': new_devices,
             'devices': devices,
-            'returned': returned
+            'returned': returned,
+            'breadcrumb': [
+                (self.lot.name, reverse("dashboard:lot", args=[self.lot.pk])),
+                (_("Beneficiaries"), reverse("lot:beneficiary", args=[self.lot.pk])),
+                (self.beneficiary.email, None),
+            ],
         })
 
         return context
