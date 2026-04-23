@@ -15,7 +15,7 @@ from utils.save_snapshots import move_json, save_in_disk
 from utils.device import create_property, create_doc, create_index
 from evidence.parse import Build
 from evidence.models import SystemProperty, RootAlias
-from lot.models import Lot, LotTag, DeviceLot
+from lot.models import Lot, LotTag
 
 
 logger = logging.getLogger(__name__)
@@ -77,25 +77,18 @@ def create_dhid(row, user):
         logger.error("DHID: %s no exist the snapshot uuid: %s", dhid, uuid)
         return
 
-    root_alias = RootAlias.objects.filter(
-        owner=user.institution,
-        alias=sp.value
-    ).first()
-
-    if root_alias:
-        if root_alias.root != f"custom_id:{dhid}":
-            logger.error("RootAlias Duplicate %s - %s", root_alias.root, dhid)
-        return
-
     dcreated = datetime.strptime(created+"00", "%Y-%m-%d %H:%M:%S.%f%z")
 
-    RootAlias.objects.create(
-        created=dcreated,
-        alias=sp.value,
-        root="custom_id:{}".format(dhid),
-        owner=user.institution,
-        user=user
-    )
+    try:
+        RootAlias.set_alias(
+            owner=user.institution,
+            alias=sp.value,
+            new_root="custom_id:{}".format(dhid),
+            user=user,
+        )
+    except ValueError as err:
+        logger.error("RootAlias set_alias failed for DHID %s: %s", dhid, err)
+        return
 
     sp.created = dcreated
     sp.save()
@@ -110,25 +103,18 @@ def create_placeholder(row, user):
     sp = create_property(doc, user, commit=True)
     # move_json(path_name, user.institution.name, place="placeholder")
 
-    root_alias = RootAlias.objects.filter(
-        owner=user.institution,
-        alias=sp.value
-    ).first()
-
-    if root_alias:
-        if root_alias.root != f"custom_id:{dhid}":
-            logger.error("RootAlias Duplicate %s - %s", root_alias.root, dhid)
-        return
-
     dcreated = datetime.strptime(created+"00", "%Y-%m-%d %H:%M:%S.%f%z")
 
-    RootAlias.objects.create(
-        created=dcreated,
-        alias=sp.value,
-        root="custom_id:{}".format(dhid),
-        owner=user.institution,
-        user=user
-    )
+    try:
+        RootAlias.set_alias(
+            owner=user.institution,
+            alias=sp.value,
+            new_root="custom_id:{}".format(dhid),
+            user=user,
+        )
+    except ValueError as err:
+        logger.error("RootAlias set_alias failed for placeholder DHID %s: %s", dhid, err)
+        return
 
     sp.created = dcreated
     sp.save()
@@ -222,20 +208,7 @@ def add_device_in_lot(row, user):
         logger.error("Not exist %s in RootAlias", dhid)
         return
 
-    dev = SystemProperty.objects.filter(
-        value=alias.alias,
-        owner=user.institution,
-    ).first()
-
-    if not dev:
-        logger.warning("Not exist dhid %s in Systemproperty", dhid)
-        return
-
-    if DeviceLot.objects.filter(lot=lot, device_id=dhid).exists():
-        return
-
-    if not DeviceLot.objects.filter(lot=lot, device_id=dev.value).first():
-        DeviceLot.objects.create(lot=lot, device_id=dev.value)
+    lot.add(alias.alias)
 
 ### end migration lots ###
 

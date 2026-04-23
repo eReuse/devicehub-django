@@ -2,8 +2,8 @@ import uuid
 from django.test import TestCase
 from device.models import Device
 from user.models import Institution
-from utils import sql_query as q_sql
 from evidence.models import SystemProperty, RootAlias
+from lot.models import Lot, LotTag
 
 
 class PublicDeviceWebViewTests(TestCase):
@@ -32,12 +32,26 @@ class PublicDeviceWebViewTests(TestCase):
                 owner=i, alias=ali, defaults={"root": root}
             )
 
-    def test_queryset_all(self):
-        result_orm = [x for x in Device.queryset_orm(self.institution)]
-        result_sql = [x[0] for x in q_sql.queryset_SQL(self.institution)]
-        self.assertEqual(result_orm, result_sql)
+    def test_queryset_all_returns_canonical_roots(self):
+        """Phase 6.1 semantic: one canonical root per logical device.
 
-    def test_queryset_unassigned(self):
-        result_orm = [x for x in Device.queryset_orm_unassigned(self.institution)]
-        result_sql = [x[0] for x in q_sql.queryset_SQL_unassigned(self.institution)]
-        self.assertEqual(result_orm, result_sql)
+        Expected roots: a2, b2, c2, d2 (four groups collapsed by alias).
+        """
+        result = {r["root"] for r in Device.queryset_orm(self.institution)}
+        self.assertEqual(result, {"a2", "b2", "c2", "d2"})
+
+    def test_queryset_unassigned_excludes_devices_in_lots(self):
+        """Roots stored in DeviceLot must not appear as unassigned."""
+        tag = LotTag.objects.create(name="default", owner=self.institution)
+        lot = Lot.objects.create(
+            name="lot-a", owner=self.institution, type=tag
+        )
+        # b2 is a canonical root with no SystemProperty row; adding any of
+        # its physical aliases stores the root (Phase 2).
+        lot.add("b1")
+
+        result = {
+            r["root"]
+            for r in Device.queryset_orm_unassigned(self.institution)
+        }
+        self.assertEqual(result, {"a2", "c2", "d2"})

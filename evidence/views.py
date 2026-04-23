@@ -288,7 +288,16 @@ class DeleteEvidenceAliasView(DashboardView, DeleteView):
             user=self.request.user,
             institution=self.request.user.institution
         )
-        self.object.delete()
+        # Reset to self-reference instead of deleting. Keeping the row
+        # preserves the RootAlias catalog invariant (every SP.value has a
+        # row) and lets ``set_alias`` migrate any lot/beneficiary
+        # membership back to the device's own identity.
+        RootAlias.set_alias(
+            owner=self.object.owner,
+            alias=self.object.alias,
+            new_root=self.object.alias,
+            user=self.request.user,
+        )
 
         messages.info(self.request, _("Evicende alias deleted successfully."))
         return self.handle_success()

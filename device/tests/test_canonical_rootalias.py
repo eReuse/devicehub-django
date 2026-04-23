@@ -2,11 +2,10 @@ import uuid
 
 from django.test import TestCase
 from django.db import IntegrityError, transaction
+from django.utils import timezone
 
 from user.models import Institution
 from evidence.models import SystemProperty, RootAlias
-from device.models import Device
-from utils import sql_query as q_sql
 
 
 class RootAliasSelfReferenceTests(TestCase):
@@ -48,10 +47,13 @@ class RootAliasSelfReferenceTests(TestCase):
     def test_self_reference_respects_existing_alias(self):
         """If a user alias is created first (hypothetical), a later
         SystemProperty for the same value must not overwrite the root."""
+        now = timezone.now()
         RootAlias.objects.create(
             owner=self.institution,
             alias="ereuse24:A",
             root="custom_id:SAME",
+            created=now,
+            updated=now,
         )
         self._new_sp("ereuse24:A")
         ra = RootAlias.objects.get(owner=self.institution, alias="ereuse24:A")
@@ -113,26 +115,3 @@ class RootAliasSelfReferenceTests(TestCase):
             qs = RootAlias.objects.filter(owner=self.institution, alias=v)
             self.assertEqual(qs.count(), 1, msg=f"alias={v}")
 
-    def test_sql_and_orm_still_agree(self):
-        """Regression: the pre-existing test in test_root_alias.py."""
-        values = ["a1", "a2", "a3", "b1", "b3", "c1", "d1", "d2"]
-        for v in values:
-            self._new_sp(v)
-
-        for ali, root in [
-            ("a1", "a2"),
-            ("a3", "a2"),
-            ("b1", "b2"),
-            ("b3", "b2"),
-            ("c1", "c2"),
-            ("d1", "d2"),
-        ]:
-            RootAlias.objects.update_or_create(
-                owner=self.institution,
-                alias=ali,
-                defaults={"root": root},
-            )
-
-        orm = list(Device.queryset_orm(self.institution))
-        sql = [x[0] for x in q_sql.queryset_SQL(self.institution)]
-        self.assertEqual(orm, sql)

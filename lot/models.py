@@ -9,7 +9,7 @@ from utils.constants import (
 )
 
 from user.models import User, Institution
-from evidence.models import Property
+from evidence.models import Property, RootAlias
 # from device.models import Device
 
 
@@ -60,13 +60,16 @@ class Lot(models.Model):
         ]
 
     def add(self, v):
-        if DeviceLot.objects.filter(lot=self, device_id=v).exists():
+        aliases = RootAlias.physical_aliases(self.owner, v)
+        if DeviceLot.objects.filter(lot=self, device_id__in=aliases).exists():
             return
-        DeviceLot.objects.create(lot=self, device_id=v)
+        DeviceLot.objects.create(
+            lot=self, device_id=RootAlias.resolve_root(self.owner, v)
+        )
 
     def remove(self, v):
-        for d in DeviceLot.objects.filter(lot=self, device_id=v):
-            d.delete()
+        aliases = RootAlias.physical_aliases(self.owner, v)
+        DeviceLot.objects.filter(lot=self, device_id__in=aliases).delete()
 
     @property
     def devices(self):
@@ -137,8 +140,9 @@ class Beneficiary(models.Model):
     )
 
     def add(self, v):
+        aliases = RootAlias.physical_aliases(self.lot.owner, v)
         exist = DeviceBeneficiary.objects.filter(
-            beneficiary__lot=self.lot, device_id=v
+            beneficiary__lot=self.lot, device_id__in=aliases
         ).exists()
 
         if exist:
@@ -146,13 +150,15 @@ class Beneficiary(models.Model):
 
         DeviceBeneficiary.objects.create(
             beneficiary=self,
-            device_id=v,
+            device_id=RootAlias.resolve_root(self.lot.owner, v),
             status=DeviceBeneficiary.Status.INTERESTED
         )
 
     def remove(self, v):
-        for d in DeviceBeneficiary.objects.filter(beneficiary=self, device_id=v):
-            d.delete()
+        aliases = RootAlias.physical_aliases(self.lot.owner, v)
+        DeviceBeneficiary.objects.filter(
+            beneficiary=self, device_id__in=aliases
+        ).delete()
 
 
 class DeviceBeneficiary(models.Model):

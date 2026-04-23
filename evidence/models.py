@@ -5,6 +5,7 @@ from dmidecode import DMIParse
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.utils import timezone
 
 
 from django.db.models import Q
@@ -52,18 +53,36 @@ class UserProperty(Property):
         USER = 1, "User"
         ERASE_SERVER = 2, "EraseServer"
 
-    uuid = models.UUIDField()
+    uuid = models.UUIDField(null=True, blank=True)
+    device_id = models.CharField(max_length=STR_EXTEND_SIZE, null=True, blank=True)
     type = models.SmallIntegerField(choices=Type, default=Type.USER)
 
     class Meta:
         constraints = [
+            # USER properties are keyed by (key, device_id, owner); uuid is unused.
             models.UniqueConstraint(
-                fields=["key", "uuid"], name="userproperty_unique_type_key_uuid")
+                fields=["key", "device_id", "owner"],
+                condition=Q(type=1),
+                name="userproperty_unique_user_key_device_owner",
+            ),
+            # ERASE_SERVER properties keep the original (key, uuid) uniqueness.
+            models.UniqueConstraint(
+                fields=["key", "uuid"],
+                condition=Q(type=2),
+                name="userproperty_unique_eraseserver_key_uuid",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["owner", "device_id"], name="userproperty_owner_device_idx"),
         ]
 
 
 class RootAlias(models.Model):
-    created = models.DateTimeField(auto_now_add=True)
+    """All SystemProperty.value have one RootAlias.alias and no more than one
+       RootAlias.root is editable but RootAlias.alias is not possible
+    """
+    created = models.DateTimeField()
+    updated = models.DateTimeField()
     owner = models.ForeignKey(Institution, on_delete=models.CASCADE)
     user = models.ForeignKey(
         User, on_delete=models.SET_NULL, null=True, blank=True)
@@ -75,10 +94,204 @@ class RootAlias(models.Model):
             models.UniqueConstraint(
                 fields=["owner", "alias"], name="rootalias_unique")
         ]
+        indexes = [
+            models.Index(fields=["owner", "updated"], name="evidence_ro_owner_upd_idx"),
+        ]
 
     @property
     def root_hid(self):
         return self.root.split(":")[1]
+
+    @classmethod
+    def resolve_root(cls, owner, v):
+        """Resolve ``v`` to its canonical root for ``owner``.
+
+        After Phase 1, every SystemProperty.value has a RootAlias row with
+        ``alias=value``; the ``root`` is the canonical id (self-reference
+        for devices with no custom alias, or the user/custom alias
+        otherwise). Falls back to ``v`` itself when no row exists (legacy
+        data or ids not owned by this institution) so callers are safe to
+        pass arbitrary strings.
+        """
+        row = cls.objects.filter(owner=owner, alias=v).values("root").first()
+        return row["root"] if row else v
+
+    @classmethod
+    def physical_aliases(cls, owner, v):
+        """All ids known to belong to the same canonical device as ``v``.
+
+        Suitable for ``device_id__in=...`` filters against tables that
+        store a device identity as a plain CharField (DeviceLot,
+        DeviceBeneficiary). It covers rows stored with a previous value
+        of the canonical root (e.g. inserted before the user aliased the
+        device, or left over from a later re-aliasing): every sibling
+        alias sharing the resolved root is included, plus ``v`` and the
+        root itself as defensive fallbacks.
+        """
+        root = cls.resolve_root(owner, v)
+        aliases = set(
+            cls.objects.filter(owner=owner, root=root)
+            .values_list("alias", flat=True)
+        )
+        aliases.add(root)
+        aliases.add(v)
+        return list(aliases)
+
+    # -- depth-1 invariant helpers -------------------------------------
+
+    @classmethod
+    def is_terminal_root(cls, owner, new_root):
+        """True if pointing an alias to ``new_root`` does not create a chain.
+
+        A target is terminal when either:
+        - no ``RootAlias`` row exists with ``alias=new_root`` (fresh
+          custom_id not backed by a SystemProperty), or
+        - the existing row is self-referential (``alias == root``).
+
+        If instead the target has ``alias != root``, ``new_root`` is itself
+        aliased to something else and using it as a root would create a
+        two-hop chain ``A -> new_root -> X``.
+        """
+        target = cls.objects.filter(owner=owner, alias=new_root).first()
+        return target is None or target.root == target.alias
+
+    @classmethod
+    def has_dependents(cls, owner, alias):
+        """True if other aliases already use ``alias`` as their root.
+
+        Re-pointing ``alias`` when it is someone else's root would leave
+        those dependents with a stale root (they'd point at a value that
+        is itself now aliased elsewhere).
+        """
+        return (
+            cls.objects.filter(owner=owner, root=alias)
+            .exclude(alias=alias)
+            .exists()
+        )
+
+    @classmethod
+    def set_alias(cls, owner, alias, new_root, user=None):
+        """Write ``alias -> new_root`` enforcing the depth-1 invariant.
+
+        Raises ``ValueError`` if the target is not terminal or the source
+        already has external dependents. When ``new_root == alias`` the
+        call is a self-reset (the "empty" state of an alias) and both
+        checks are skipped since a self-reference never creates a chain
+        nor orphans dependents. After the edge is stored,
+        DeviceLot/DeviceBeneficiary rows are collapsed/migrated so the
+        canonical invariant holds (same logic as migration 0012).
+        """
+        existing = cls.objects.filter(owner=owner, alias=alias).first()
+        old_root = existing.root if existing else None
+
+        if new_root != alias:
+            if not cls.is_terminal_root(owner, new_root):
+                raise ValueError(
+                    f"target {new_root!r} is not a terminal root"
+                )
+            if cls.has_dependents(owner, alias):
+                raise ValueError(
+                    f"{alias!r} cannot be re-rooted: other aliases depend on it"
+                )
+
+        if existing:
+            if existing.root != new_root or existing.user != user:
+                cls.objects.filter(pk=existing.pk).update(
+                    root=new_root, user=user,
+                )
+            obj = cls.objects.get(pk=existing.pk)
+        else:
+            now = timezone.now()
+            obj = cls.objects.create(
+                owner=owner, alias=alias, root=new_root, user=user,
+                created=now, updated=now,
+            )
+        if old_root != new_root:
+            cls._sync_memberships(owner, alias, new_root, old_root=old_root)
+        return obj
+
+    @classmethod
+    def _sync_memberships(cls, owner, alias, new_root, old_root=None):
+        """Keep DeviceLot/DeviceBeneficiary canonical after an edge change.
+
+        Any row whose ``device_id`` is one of the new canonical family's
+        physical aliases is rewritten to ``new_root`` and deduplicated
+        (one per lot for DeviceLot, one per beneficiary for
+        DeviceBeneficiary).
+
+        If ``old_root`` is no longer a canonical root of anyone after the
+        change (i.e. ``alias`` was its last child), its lot/beneficiary
+        rows would be orphaned; migrate them to ``new_root`` so the
+        device keeps its membership under its new identity.
+        """
+        # Lazy imports to avoid a circular dependency at module load time
+        # (lot.models imports from evidence.models).
+        from lot.models import DeviceLot, DeviceBeneficiary
+
+        physicals = set(cls.physical_aliases(owner, alias))
+
+        if old_root and old_root != new_root:
+            old_still_canonical = cls.objects.filter(
+                owner=owner, root=old_root
+            ).exists()
+            if not old_still_canonical:
+                physicals.add(old_root)
+
+        physicals = list(physicals)
+
+        seen = set()
+        for dl in (
+            DeviceLot.objects
+            .filter(lot__owner=owner, device_id__in=physicals)
+            .order_by("pk")
+        ):
+            key = (dl.lot_id, new_root)
+            if key in seen:
+                dl.delete()
+                continue
+            seen.add(key)
+            if dl.device_id != new_root:
+                DeviceLot.objects.filter(pk=dl.pk).update(
+                    device_id=new_root
+                )
+
+        seen = set()
+        for db in (
+            DeviceBeneficiary.objects
+            .filter(
+                beneficiary__lot__owner=owner,
+                device_id__in=physicals,
+            )
+            .order_by("pk")
+        ):
+            key = (db.beneficiary_id, new_root)
+            if key in seen:
+                db.delete()
+                continue
+            seen.add(key)
+            if db.device_id != new_root:
+                DeviceBeneficiary.objects.filter(pk=db.pk).update(
+                    device_id=new_root
+                )
+
+        # Migrate UserProperty(type=USER) to the new canonical root.
+        # Process newest-first: the first row seen for each key is the winner
+        # and gets rewritten to new_root (if not already there). All later
+        # rows for the same key are older duplicates and are deleted.
+        # This order avoids a unique-constraint violation: we never UPDATE a
+        # row to new_root while another row with the same key is still there.
+        seen = set()  # keys already claimed by the winning row
+        for up in (
+            UserProperty.objects
+            .filter(owner=owner, device_id__in=physicals, type=UserProperty.Type.USER)
+            .order_by("-created", "-pk")
+        ):
+            if up.key in seen:
+                UserProperty.objects.filter(pk=up.pk).delete()
+                continue
+            seen.add(up.key)
+            if up.device_id != new_root:
+                UserProperty.objects.filter(pk=up.pk).update(device_id=new_root)
 
 
 @receiver(post_save, sender=SystemProperty)
@@ -92,14 +305,22 @@ def ensure_root_alias_self_reference(sender, instance, created, **kwargs):
     """
     if not created:
         return
-    RootAlias.objects.get_or_create(
-        owner=instance.owner,
-        alias=instance.value,
-        defaults={
-            "root": instance.value,
-            "user": instance.user,
-        },
-    )
+    existing = RootAlias.objects.filter(
+        owner=instance.owner, alias=instance.value,
+    ).first()
+    if existing is None:
+        RootAlias.objects.create(
+            owner=instance.owner,
+            alias=instance.value,
+            root=instance.value,
+            user=instance.user,
+            created=instance.created,
+            updated=instance.created,
+        )
+    elif instance.created > existing.updated:
+        RootAlias.objects.filter(pk=existing.pk).update(
+            updated=instance.created,
+        )
 
 
 class Evidence:
@@ -302,7 +523,7 @@ class Evidence:
         aliases = [ x.value for x in self.properties ]
         alias_obj = RootAlias.objects.filter(
             alias__in = aliases,
-        ).order_by("-created")
+        ).order_by("-updated")
 
         if alias_obj:
             return alias_obj[0].root

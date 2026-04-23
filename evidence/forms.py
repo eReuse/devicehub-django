@@ -88,7 +88,9 @@ class UserAliasForm(forms.Form):
                 alias=self.sysprop.value
             ).first()
 
-        if self.instance:
+        if self.instance and self.instance.root != self.instance.alias:
+            # self-reference (alias==root) is the "empty" state; show the
+            # field blank so the user can type a fresh alias.
             root = self.instance.root
             if "custom_id" == root.split(":")[0]:
                 root = root.split(":")[1]
@@ -101,60 +103,60 @@ class UserAliasForm(forms.Form):
         cleaned_data = super().clean()
         self.root_alias = self.cleaned_data.get('root', '').lower()
 
-        # Exclude the self-referential entry (alias=value, root=value) that the
-        # SystemProperty post_save signal always creates; it is not a real
-        # incoming alias for this evidence.
-        alias = RootAlias.objects.filter(
-            owner=self.user.institution,
-            root=self.sysprop.value,
-        ).exclude(alias=self.sysprop.value)
-
         if self.root_alias == self.sysprop.value:
             txt = _("This alias is the same as the current evidence.")
             self.add_error('', txt)
             return cleaned_data
 
-        if alias.first():
+        # Resolve the final root id (fall through to custom_id if the typed
+        # value is not itself a SystemProperty).
+        sp = SystemProperty.objects.filter(owner=self.sysprop.owner)
+        if sp.filter(value=self.root_alias).first():
+            resolved_root = self.root_alias
+        else:
+            resolved_root = "custom_id:{}".format(self.root_alias)
+
+        # Depth-1 invariant, rule 2: current evidence cannot be re-rooted
+        # if other aliases already depend on it as root.
+        if RootAlias.has_dependents(self.user.institution, self.sysprop.value):
             txt = _("To prevent loops, current evidence cannot be linked to another Alias Identifier because it is already linked by other evidences.")
             self.add_error('', txt)
             return cleaned_data
 
+        # Depth-1 invariant, rule 1: target must itself be terminal.
+        if not RootAlias.is_terminal_root(self.user.institution, resolved_root):
+            txt = _("Target alias '{}' is not a terminal root; pick one that is not itself aliased.").format(resolved_root)
+            self.add_error('', txt)
+            return cleaned_data
+
+        self._resolved_root = resolved_root
         return True
 
     def save(self, commit=True):
         if not commit:
             return
 
-        root_alias = self.root_alias
-        sp = SystemProperty.objects.filter(owner=self.sysprop.owner)
+        root_alias = self._resolved_root
+        old_value = self.instance.root if self.instance else None
 
-        if not sp.filter(value=self.root_alias).first():
-            root_alias = "custom_id:{}".format(self.root_alias)
+        self.instance = RootAlias.set_alias(
+            owner=self.sysprop.owner,
+            alias=self.sysprop.value,
+            new_root=root_alias,
+            user=self.instance.user if self.instance else None,
+        )
 
-        if not self.instance:
-            # The post_save signal on SystemProperty has already created a
-            # self-referential RootAlias entry for this value; update it so
-            # the unique constraint on (owner, alias) is not violated.
-            self.instance, _ra_created = RootAlias.objects.update_or_create(
-                owner=self.sysprop.owner,
-                alias=self.sysprop.value,
-                defaults={"root": root_alias},
-            )
-
-            message =_("<Created> Evidence alias. Value: '{}'").format(root_alias)
+        if old_value is None:
+            message = _("<Created> Evidence alias. Value: '{}'").format(root_alias)
             self.log(message)
             return self.instance
 
-        old_value = self.instance.root
-        if old_value == self.root_alias:
+        if old_value == root_alias:
             return
 
-        self.instance.root = root_alias
-        self.instance.save()
-        if old_value != self.root_alias:
-            message=_("<Updated> Evidence alias. Old Value: '{}'. New Value: '{}'").format(
-                old_value, root_alias
-            )
+        message = _("<Updated> Evidence alias. Old Value: '{}'. New Value: '{}'").format(
+            old_value, root_alias
+        )
         self.log(message)
 
     def log(self, message):
