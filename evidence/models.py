@@ -275,23 +275,30 @@ class RootAlias(models.Model):
                 )
 
         # Migrate UserProperty(type=USER) to the new canonical root.
-        # Process newest-first: the first row seen for each key is the winner
-        # and gets rewritten to new_root (if not already there). All later
-        # rows for the same key are older duplicates and are deleted.
-        # This order avoids a unique-constraint violation: we never UPDATE a
-        # row to new_root while another row with the same key is still there.
-        seen = set()  # keys already claimed by the winning row
+        # Two-phase to avoid UNIQUE(key, device_id, owner_id) violations:
+        # 1. Identify the winning pk per key (newest row wins).
+        # 2. Delete all non-winners first, then bulk-update survivors to new_root.
+        #    Deleting before updating ensures no collision when two devices share
+        #    the same key and one of them already has device_id=new_root.
+        winner_pks = {}  # key -> pk of newest row
         for up in (
             UserProperty.objects
             .filter(owner=owner, device_id__in=physicals, type=UserProperty.Type.USER)
             .order_by("-created", "-pk")
+            .values("pk", "key")
         ):
-            if up.key in seen:
-                UserProperty.objects.filter(pk=up.pk).delete()
-                continue
-            seen.add(up.key)
-            if up.device_id != new_root:
-                UserProperty.objects.filter(pk=up.pk).update(device_id=new_root)
+            if up["key"] not in winner_pks:
+                winner_pks[up["key"]] = up["pk"]
+
+        # Phase 1: delete duplicates
+        UserProperty.objects.filter(
+            owner=owner, device_id__in=physicals, type=UserProperty.Type.USER,
+        ).exclude(pk__in=winner_pks.values()).delete()
+
+        # Phase 2: point all survivors at the canonical root
+        UserProperty.objects.filter(
+            pk__in=winner_pks.values(),
+        ).exclude(device_id=new_root).update(device_id=new_root)
 
 
 @receiver(post_save, sender=SystemProperty)
