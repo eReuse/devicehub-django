@@ -10,10 +10,10 @@ def _alias_to_root_map(RootAlias):
 
 
 def resolve_device_ids_to_root(apps, schema_editor):
-    """Phase 2.1 — rewrite DeviceLot.device_id and DeviceBeneficiary.device_id
+    """rewrite DeviceLot.device_id and DeviceBeneficiary.device_id
     to the canonical root for each institution, and deduplicate collisions.
 
-    After Phase 1 every SystemProperty.value has a RootAlias row whose root
+    Every SystemProperty.value has a RootAlias row whose root
     is the canonical id (self-ref or user-chosen). This migration uses that
     table to replace any physical id stored in DeviceLot/DeviceBeneficiary
     with its canonical root, merging duplicates that collapse together.

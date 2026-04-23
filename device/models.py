@@ -57,7 +57,7 @@ class Device:
     def _canonical_id(self):
         """Resolve self.id to its canonical device ID via RootAlias.
 
-        Thanks to the Phase 1 invariant (every SystemProperty.value has a
+        Thanks to invariant (every SystemProperty.value has a
         RootAlias row with alias=value), any physical ID resolves through one
         lookup; a custom_id or unknown ID falls back to itself.
         """
@@ -265,7 +265,7 @@ class Device:
     def _roots_queryset(cls, institution):
         """Canonical roots owned by ``institution`` ordered by last activity.
 
-        Phase 1 invariant: every ``SystemProperty.value`` has a
+        Every ``SystemProperty.value`` has a
         ``RootAlias`` row with ``alias=value``. Therefore the set of
         logical devices equals ``DISTINCT RootAlias.root`` for the owner.
         ``RootAlias.updated`` caches the timestamp of the latest
@@ -280,12 +280,8 @@ class Device:
         )
 
     @classmethod
-    def queryset_orm(cls, institution):
-        return cls._roots_queryset(institution)
-
-    @classmethod
     def queryset_orm_unassigned(cls, institution):
-        # Phase 2 invariant: DeviceLot.device_id stores the canonical root,
+        # DeviceLot.device_id stores the canonical root,
         # so excluding ``root IN assigned_roots`` is enough.
         assigned = DeviceLot.objects.filter(
             lot__owner=institution

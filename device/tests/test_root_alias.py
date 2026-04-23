@@ -37,7 +37,7 @@ class PublicDeviceWebViewTests(TestCase):
 
         Expected roots: a2, b2, c2, d2 (four groups collapsed by alias).
         """
-        result = {r["root"] for r in Device.queryset_orm(self.institution)}
+        result = {r["root"] for r in Device._roots_queryset(self.institution)}
         self.assertEqual(result, {"a2", "b2", "c2", "d2"})
 
     def test_queryset_unassigned_excludes_devices_in_lots(self):

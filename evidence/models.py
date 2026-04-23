@@ -106,7 +106,7 @@ class RootAlias(models.Model):
     def resolve_root(cls, owner, v):
         """Resolve ``v`` to its canonical root for ``owner``.
 
-        After Phase 1, every SystemProperty.value has a RootAlias row with
+        Every SystemProperty.value has a RootAlias row with
         ``alias=value``; the ``root`` is the canonical id (self-reference
         for devices with no custom alias, or the user/custom alias
         otherwise). Falls back to ``v`` itself when no row exists (legacy
@@ -206,6 +206,7 @@ class RootAlias(models.Model):
                 owner=owner, alias=alias, root=new_root, user=user,
                 created=now, updated=now,
             )
+
         if old_root != new_root:
             cls._sync_memberships(owner, alias, new_root, old_root=old_root)
         return obj
@@ -303,7 +304,7 @@ class RootAlias(models.Model):
 
 @receiver(post_save, sender=SystemProperty)
 def ensure_root_alias_self_reference(sender, instance, created, **kwargs):
-    """Keep RootAlias as the canonical catalog of devices (Option 5).
+    """Keep RootAlias as the canonical catalog of devices.
 
     Whenever a SystemProperty is created, guarantee there is a self-referential
     RootAlias row (alias=value, root=value) for the same owner. This makes
