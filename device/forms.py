@@ -19,6 +19,9 @@ DEVICE_TYPES = [
     ("Display", "Display"),
     ("Battery", "Battery"),
     ("Camera", "Camera"),
+    ("Switch", "Switch"),
+    ("Router", "Router"),
+    ("RouterWifi", "RouterWifi"),
 ]
 
 
