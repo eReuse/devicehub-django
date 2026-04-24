@@ -8,6 +8,8 @@ set -u
 set -x
 
 main() {
+        echo 'WARNING! This is going to delete all data to restore it with a previous one'
+        sleep 10
         docker compose exec devicehub-django \
                sh -c 'gosu $(cat /app_user) ./manage.py dbrestore --noinput && ./manage.py evidence_restore'
 }
