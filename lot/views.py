@@ -79,7 +79,7 @@ class LotSuccessUrlMixin():
 class NewLotView(LotSuccessUrlMixin, DashboardView, CreateView):
     template_name = "new_lot.html"
     title = _("New lot")
-    breadcrumb = [("lot", None), ("New lot", None)]
+    breadcrumb = [("lot", reverse_lazy("dashboard:unassigned")), ("New lot", None)]
     model = Lot
     fields = (
         "type",
@@ -113,7 +113,7 @@ class NewLotView(LotSuccessUrlMixin, DashboardView, CreateView):
 class DeleteLotsView(LotSuccessUrlMixin, DashboardView, TemplateView ):
     template_name = "delete_lots.html"
     title = _("Delete lot/s")
-    breadcrumb = [(_("Lots"), None), (_("Delete"), None)]
+    breadcrumb = [(_("Lots"), reverse_lazy("dashboard:unassigned")), (_("Delete"), None)]
 
     def get(self, request, *args, **kwargs):
         selected_ids = request.GET.getlist('select')
@@ -155,7 +155,7 @@ class DeleteLotsView(LotSuccessUrlMixin, DashboardView, TemplateView ):
 class EditLotView(LotSuccessUrlMixin, DashboardView, UpdateView):
     template_name = "new_lot.html"
     title = _("Edit lot")
-    breadcrumb = [(_("Lot"), None), (_("Edit lot"), None)]
+    breadcrumb = [(_("Lot"), reverse_lazy("dashboard:unassigned")), (_("Edit lot"), None)]
     model = Lot
     fields = (
         "type",
@@ -192,7 +192,7 @@ class EditLotView(LotSuccessUrlMixin, DashboardView, UpdateView):
 class AddToLotView(DashboardView, FormView):
     template_name = "list_lots.html"
     title = _("Add to lots")
-    breadcrumb = [(_("Lot"), None), (_("Add to lots"), None)]
+    breadcrumb = [(_("Lot"), reverse_lazy("dashboard:unassigned")), (_("Add to lots"), None)]
     success_url = reverse_lazy('dashboard:unassigned')
     form_class = LotsForm
 
@@ -305,7 +305,7 @@ class LotsTagsView(DashboardView, SingleTableView):
 
         context.update({
             'title': _("Lot Group") + " - " + self.tag.name,
-            'breadcrumb': [(_("Lots"), None), (self.tag.name, None)],
+            'breadcrumb': [(_("Lots"), reverse("dashboard:unassigned")), (self.tag.name, None)],
             'show_archived': self.show_archived,
             'search_query': self.search_query,
             'archived_count': counts['archived_count'],
@@ -397,6 +397,8 @@ class LotPropertiesView(DashboardLotMixing, TemplateView):
         context.update({
             'properties': properties,
             'breadcrumb': [
+                (_("Lots"), reverse("dashboard:unassigned")),
+                (self.lot.type.name, reverse("lot:tags", args=[self.lot.type.pk])),
                 (self.lot.name, reverse("dashboard:lot", args=[self.lot.pk])),
                 (_("Properties"), None),
             ],
@@ -424,6 +426,8 @@ class LotEnvironmentalImpactView(DashboardLotMixing, TemplateView):
             'device_count': len(devices),
             'devices_with_evidence': len(devices_with_evidence),
             'breadcrumb': [
+                (_("Lots"), reverse("dashboard:unassigned")),
+                (self.lot.type.name, reverse("lot:tags", args=[self.lot.type.pk])),
                 (self.lot.name, reverse("dashboard:lot", args=[self.lot.pk])),
                 (_("Environmental Impact"), None),
             ],
@@ -485,6 +489,8 @@ class AddLotPropertyView(DashboardView, CreateView):
         context['lot_id'] = self.lot.id
         context["title"] = "{} - {}".format(self.title, self.lot.name)
         context['breadcrumb'] = [
+            (_("Lots"), reverse("dashboard:unassigned")),
+            (self.lot.type.name, reverse("lot:tags", args=[self.lot.type.pk])),
             (self.lot.name, reverse("dashboard:lot", args=[self.lot.pk])),
             (_("Properties"), reverse("lot:properties", args=[self.lot.pk])),
             (_("New property"), None),
@@ -522,6 +528,8 @@ class UpdateLotPropertyView(DashboardView, UpdateView):
         context = super().get_context_data(**kwargs)
         if hasattr(self, '_lot'):
             context['breadcrumb'] = [
+                (_("Lots"), reverse("dashboard:unassigned")),
+                (self._lot.type.name, reverse("lot:tags", args=[self._lot.type.pk])),
                 (self._lot.name, reverse("dashboard:lot", args=[self._lot.pk])),
                 (_("Properties"), reverse("lot:properties", args=[self._lot.pk])),
                 (_("Update property"), None),
@@ -578,6 +586,8 @@ class SubscriptLotView(DashboardLotMixing, SubscriptionEmail, FormView):
             'subscriptors': self.subscriptions,
             "action": _("Subscribe"),
             'breadcrumb': [
+                (_("Lots"), reverse("dashboard:unassigned")),
+                (self.lot.type.name, reverse("lot:tags", args=[self.lot.type.pk])),
                 (self.lot.name, reverse("dashboard:lot", args=[self.lot.pk])),
                 (_("Subscriptions"), None),
             ],
@@ -639,6 +649,8 @@ class ParticipantsView(DashboardLotMixing, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['breadcrumb'] = [
+            (_("Lots"), reverse("dashboard:unassigned")),
+            (self.lot.type.name, reverse("lot:tags", args=[self.lot.type.pk])),
             (self.lot.name, reverse("dashboard:lot", args=[self.lot.pk])),
             (_("Participants"), None),
         ]
@@ -699,6 +711,8 @@ class AddDonorView(DonorMixing, DonorEmail):
         context = super().get_context_data(**kwargs)
         context["action"] = _("Add Donor")
         context['breadcrumb'] = [
+            (_("Lots"), reverse("dashboard:unassigned")),
+            (self.lot.type.name, reverse("lot:tags", args=[self.lot.type.pk])),
             (self.lot.name, reverse("dashboard:lot", args=[self.lot.pk])),
             (_("Add Donor"), None),
         ]
@@ -717,6 +731,8 @@ class DelDonorView(DonorMixing):
         context = super().get_context_data(**kwargs)
         context["action"] = _("Remove")
         context['breadcrumb'] = [
+            (_("Lots"), reverse("dashboard:unassigned")),
+            (self.lot.type.name, reverse("lot:tags", args=[self.lot.type.pk])),
             (self.lot.name, reverse("dashboard:lot", args=[self.lot.pk])),
             (_("Remove Donor"), None),
         ]
@@ -859,6 +875,8 @@ class BeneficiaryView(DashboardLotMixing, BeneficiaryInterestedEmail, FormView):
             "devices_to_assign": devices_to_assign,
             "devices_already_assigned": devices_already_assigned,
             'breadcrumb': [
+                (_("Lots"), reverse("dashboard:unassigned")),
+                (self.lot.type.name, reverse("lot:tags", args=[self.lot.type.pk])),
                 (self.lot.name, reverse("dashboard:lot", args=[self.lot.pk])),
                 (_("Beneficiaries"), None),
             ],
@@ -1032,6 +1050,8 @@ class ListDevicesBeneficiaryView(DashboardLotMixing, BeneficiaryEmail, FormView)
             'devices': devices,
             'returned': returned,
             'breadcrumb': [
+                (_("Lots"), reverse("dashboard:unassigned")),
+                (self.lot.type.name, reverse("lot:tags", args=[self.lot.type.pk])),
                 (self.lot.name, reverse("dashboard:lot", args=[self.lot.pk])),
                 (_("Beneficiaries"), reverse("lot:beneficiary", args=[self.lot.pk])),
                 (self.beneficiary.email, None),

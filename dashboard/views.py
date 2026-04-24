@@ -32,7 +32,7 @@ class UnassignedDevicesView(DeviceTableMixin, InventaryMixin):
     template_name = "unassigned_devices.html"
     section = _("Inbox")
     title = _("Inbox")
-    breadcrumb = [(_('Devices'), None), (_('Inbox'), None)]
+    breadcrumb = [(_('Devices'), reverse_lazy("dashboard:all_device")), (_('Inbox'), None)]
 
     def get_devices(self, user, offset=0, limit=None):
         return Device.get_unassigned(self.request.user.institution, offset, limit)
@@ -46,7 +46,7 @@ class AllDevicesView(DeviceTableMixin, InventaryMixin):
     template_name = "unassigned_devices.html"
     section = _("All")
     title = _("All Devices")
-    breadcrumb = [(_('Devices'), None), (_('All'), None)]
+    breadcrumb = [(_('Devices'), reverse_lazy("dashboard:all_device")), (_('All'), None)]
 
     def get_devices(self, user, offset=0, limit=None):
         return Device.get_all(self.request.user.institution, offset, limit)
@@ -59,7 +59,7 @@ class AllDevicesView(DeviceTableMixin, InventaryMixin):
 class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMixin):
     template_name = "unassigned_devices.html"
     section = "dashboard_lot"
-    breadcrumb = [(_('Devices'), None), (_('Devices'), None)]
+    breadcrumb = [(_('Devices'), reverse_lazy("dashboard:all_device")), (_('Devices'), None)]
     paginate_by = 10
     paginate_choices = [10, 20, 50, 100, 0]
     table_class = DeviceTable
@@ -131,6 +131,7 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
             'search_query': self.request.GET.get('q', ''),
             'sort': self.request.GET.get('sort', ''),
             'breadcrumb': [
+                (_("Lots"), reverse_lazy("dashboard:unassigned")),
                 (lot.type.name, reverse_lazy("lot:tags", args=[lot.type.pk])),
                 (lot.name, None),
             ],

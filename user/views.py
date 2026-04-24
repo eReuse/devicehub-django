@@ -22,14 +22,14 @@ from django.utils.html import format_html
 class PanelView(DashboardView, TemplateView):
     template_name = "panel.html"
     title = _("User")
-    breadcrumb = [(_("User"), None), (_("Panel"), None)]
+    breadcrumb = [(_("User"), reverse_lazy("user:panel")), (_("Panel"), None)]
     subtitle = "User panel"
 
 
 class SettingsView(DashboardView, FormView):
     template_name = "settings.html"
     title = _("Download Settings")
-    breadcrumb = [(_("User"), reverse_lazy("user:panel")), (_("Workbench"), None), (_("Settings"), None)]
+    breadcrumb = [(_("User"), reverse_lazy("user:panel")), (_("Settings"), None)]
     form_class = SettingsForm
 
     def form_valid(self, form):
