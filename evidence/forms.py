@@ -397,10 +397,11 @@ class PhotoForm(forms.Form):
 
         # Create SystemProperty with key='photo25' so photo appears in evidence list
         # Using photo hash as the value (similar to device CHID for snapshots)
+        photo_id  = "{}:{}".format(algo_key, self.photo_data['hash'])
         SystemProperty.objects.create(
             uuid=self.uuid,
             key=algo_key,
-            value=self.photo_data['hash'],
+            value=photo_id,
             owner=self.user.institution,
             user=self.user
         )
