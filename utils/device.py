@@ -37,13 +37,6 @@ def create_doc(data):
 
             device["type"] = v
 
-        elif k.lower() == "amount":
-            try:
-                amount = int(v)
-                device["amount"] = amount
-            except Exception:
-                pass
-
         else:
             kv[k] = v
 

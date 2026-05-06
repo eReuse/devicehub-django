@@ -158,18 +158,32 @@ class Device:
 
     def get_last_evidence(self):
         if self.last_evidence:
-            return
+            return self.last_evidence
+
+        latest_photo = None
 
         if self.uuid:
-            self.last_evidence = Evidence(self.uuid)
-            return
+            uuid_evidence = Evidence(self.uuid)
+            if not uuid_evidence.is_photo_evidence():
+               self.last_evidence = uuid_evidence
+               return self.last_evidence
+            else:
+                latest_photo = uuid_evidence
 
-        properties = self.get_properties()
-        if not properties.count():
-            return
-        prop = properties.first()
+        self.get_evidences()
+        for evidence in reversed(self.evidences):
+            if not evidence.is_photo_evidence():
+                self.last_evidence = evidence
+                return self.last_evidence
 
-        self.last_evidence = Evidence(prop.uuid)
+            if latest_photo is None or evidence != latest_photo:
+                latest_photo = evidence
+
+        if latest_photo:
+            self.last_evidence = latest_photo
+            return self.last_evidence
+
+        return None
 
     def is_eraseserver(self):
         if not self.uuids:
@@ -358,7 +372,7 @@ class Device:
     @property
     def type(self):
         self.get_last_evidence()
-        if self.last_evidence.doc['type'] == "WebSnapshot":
+        if self.last_evidence and self.last_evidence.doc.get("type", "") == "WebSnapshot":
             return self.last_evidence.doc.get("device", {}).get("type", "")
 
         return self.last_evidence.get_chassis()
@@ -370,20 +384,13 @@ class Device:
 
     @property
     def cpu(self):
-        cpu_component = next(
-            (c for c in self.components if c.get('type') == 'Processor'),
-            None
-        )
-        cpu_model = cpu_component.get('model', '') if cpu_component else ""
-        return cpu_model
+        self.get_last_evidence()
+        return self.last_evidence.get_cpu()
 
     @property
-    def total_ram(self):
-        ram_component = next(
-            (c for c in self.components if c.get('type') == 'RamModule'),
-            None
-        )
-        return ram_component.get('total_ram', '') if ram_component else ""
+    def ram(self):
+        self.get_last_evidence()
+        return self.last_evidence.get_ram()
 
     @property
     def version(self):
