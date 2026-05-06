@@ -432,6 +432,8 @@ class Evidence:
                     self.inxi = ev["output"]
                     if isinstance(ev["output"], str):
                         self.inxi = json.loads(ev["output"])
+        elif self.doc.get("WEB_ID"):
+            self.get_components()
         else:
             dmidecode_raw = self.doc["data"]["dmidecode"]
             inxi_raw = self.doc.get("data", {}).get("inxi")
@@ -479,10 +481,7 @@ class Evidence:
 
     def get_manufacturer(self):
         if self.is_web_snapshot():
-            kv = self.doc.get('kv', {})
-            if len(kv) < 1:
-                return ""
-            return list(self.doc.get('kv').values())[0]
+            return self.components.get("manufacturer", "")
 
         if self.inxi or self.is_beta():
             return getattr(self, 'device_manufacturer', '')
@@ -497,10 +496,7 @@ class Evidence:
 
     def get_model(self):
         if self.is_web_snapshot():
-            kv = self.doc.get('kv', {})
-            if len(kv) < 2:
-                return ""
-            return list(self.doc.get('kv').values())[1]
+            return self.components.get("model", "")
 
         if self.inxi or self.is_beta():
             return getattr(self, 'device_model', '')
@@ -516,6 +512,16 @@ class Evidence:
             return ''
 
     def get_chassis(self):
+        #TODO: does this make sense?
+        if self.is_web_snapshot():
+            return "Websnapshot"
+
+        if self.is_photo_evidence():
+            return "Image"
+
+        if self.is_legacy():
+            return self.doc.get('device', {}).get('model', '')
+
         if self.inxi or self.is_beta():
             return getattr(self, 'device_chassis', '')
 
@@ -698,12 +704,38 @@ class Evidence:
         ).order_by("-created").distinct()
 
     def set_components(self):
+        if self.is_web_snapshot():
+            self.components = self.doc.get("kv", {})
+            return
         self.components = ParseSnapshot(self.doc).components
 
     def is_beta(self):
         return self.doc.get("version") == '2022.12.2-beta'
 
+    def get_cpu(self):
+        if self.is_web_snapshot():
+            return self.components.get("cpu", "")
+
+        cpu_component = next(
+            (c for c in self.components if c.get('type') == 'Processor'),
+            None
+        )
+        cpu_model = cpu_component.get('model', '') if cpu_component else ""
+        return cpu_model
+
+    def get_ram(self):
+        if self.is_web_snapshot():
+            return self.components.get("ram", "")
+
+        ram_component = next(
+            (c for c in self.components if c.get('type') == 'RamModule'),
+            None
+        )
+        return ram_component.get('total_ram', '') if ram_component else ""
+
     def is_legacy(self):
+        if self.is_web_snapshot():
+            return False
         if self.doc.get("credentialSubject"):
             return False
 
