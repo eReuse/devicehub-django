@@ -182,15 +182,16 @@ class Device:
         return State.objects.filter(snapshot_uuid=uuid).order_by('-date').first()
 
     def get_lots(self):
-        device_id = self.id
+        device_ids = [self.id]
         if self.id.startswith("custom_id:"):
-            ra = RootAlias.objects.filter(root=self.id, owner=self.owner
-                                             ).order_by("-created").first()
-            if ra:
-                device_id = ra.alias
+            # ra = RootAlias.objects.filter(root=self.id, owner=self.owner
+            #                                  ).order_by("-created").first()
+            # if ra:
+            device_ids = self.hids
 
         self.lots = [
-            x.lot for x in DeviceLot.objects.filter(device_id=device_id)
+            x.lot for x in DeviceLot.objects.filter(device_id__in=device_ids)
+            .distinct()
             .select_related('lot__type')
             .order_by('-lot__type__name', '-lot__created')
         ]
