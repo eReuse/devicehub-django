@@ -4,7 +4,7 @@ import logging
 
 from evidence import legacy_parse
 from evidence import old_parse
-from evidence import normal_parse
+from evidence import normal_parse, image_processing, display_parse, disk_parse
 from evidence.parse_details import ParseSnapshot
 
 from evidence.models import SystemProperty
@@ -49,6 +49,12 @@ class Build:
             self.build = legacy_parse.Build(evidence_json)
         elif evidence_json.get("software") != "workbench-script":
             self.build = old_parse.Build(evidence_json)
+        elif evidence_json.get("data",{}).get("snapshot_type") == "Image":
+            self.build = image_processing.Build(evidence_json)
+        elif evidence_json.get("data",{}).get("snapshot_type") == "Display":
+            self.build = display_parse.Build(evidence_json)
+        elif evidence_json.get("data",{}).get("snapshot_type") == "Disk":
+            self.build = disk_parse.Build(evidence_json)
         else:
             self.build = normal_parse.Build(evidence_json)
 
@@ -59,7 +65,7 @@ class Build:
             return
 
         self.index()
-        self.create_annotations()
+        self.create_properties()
         if settings.DPP:
             self.register_device_dlt()
 
@@ -67,7 +73,7 @@ class Build:
         snap = json.dumps(self.evidence)
         index(self.user.institution, self.uuid, snap)
 
-    def create_annotations(self):
+    def create_properties(self):
         prop = SystemProperty.objects.filter(
                 uuid=self.uuid,
                 owner=self.user.institution,

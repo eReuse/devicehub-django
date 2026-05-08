@@ -3,10 +3,11 @@ import hashlib
 
 from dmidecode import DMIParse
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 
 from django.db.models import Q
-from utils.constants import STR_EXTEND_SIZE, CHASSIS_DH
+from utils.constants import STR_EXTEND_SIZE, CHASSIS_DH, EMPTY_SHA3_256_HASH
 from evidence.xapian import search
 from evidence.parse_details import ParseSnapshot
 from evidence.normal_parse_details import get_inxi, get_inxi_key
@@ -88,6 +89,9 @@ class Evidence:
         self.created = None
         self.dmi = None
         self.inxi = None
+        self.edid_hex = None
+        self.edid_decode = None
+        self.smartctl = None
         self.properties = []
         self.components = []
         self.default = "n/a"
@@ -114,6 +118,18 @@ class Evidence:
             self.get_doc()
 
         return hashlib.sha3_256(json.dumps(self.doc)).hexdigest()
+
+    def get_custom_id(self):
+        return next(
+            (item.value for item in self.properties if item.key == "CUSTOM_ID"),
+            None
+        )
+
+    def is_nil_chid(self):
+        if self.get_custom_id() is not None:
+            return False
+
+        return any(item.value == EMPTY_SHA3_256_HASH for item in self.properties)
 
     def get_doc(self):
         self.doc = {}
@@ -155,6 +171,31 @@ class Evidence:
                     self.inxi = ev["output"]
                     if isinstance(ev["output"], str):
                         self.inxi = json.loads(ev["output"])
+
+        elif self.doc.get("data", {}).get("snapshot_type") == "Display":
+            self.edid_hex = self.doc["data"]["edid_hex"]
+            data = self.get_components() or []
+            flat = {k: v for d in data for k, v in d.items()}
+
+            self.device_manufacturer = flat.get("Manufacturer", "")
+            self.device_model = flat.get("Model", "")
+            self.device_serial_number = flat.get("Serial Number", "")
+            self.device_version = flat.get("Manufacture Date", "")
+            self.device_resolution = flat.get("Native Resolution", "")
+            self.device_chassis = flat.get("Device Type","")
+
+        elif self.doc.get("data", {}).get("snapshot_type") == "Disk":
+            self.smartctl = self.doc["data"]["smartctl"]
+            data = self.get_components() or []
+            flat = {k: v for d in data for k, v in d.items()}
+
+            self.device_manufacturer = flat.get(_("Manufacturer"), "")
+            self.device_model = flat.get(_("Model"), "")
+            self.device_serial_number = flat.get(_("Serial Number"), "")
+            self.device_version = flat.get(_("Firmware Version"), "")
+            #Either HDD or SSD
+            self.device_chassis = flat.get(_("Device Type"),"")
+
         else:
             dmidecode_raw = self.doc["data"]["dmidecode"]
             inxi_raw = self.doc.get("data", {}).get("inxi")
@@ -192,6 +233,8 @@ class Evidence:
     def get_components(self):
         if self.is_beta():
             return self.components
+        if self.is_legacy():
+            return self.doc.get('components', [])
 
         self.set_components()
         return self.components
@@ -209,6 +252,9 @@ class Evidence:
         if self.is_legacy():
             return self.doc.get('device', {}).get('manufacturer', '')
 
+        if self.inxi or self.edid_hex or self.smartctl:
+            return self.device_manufacturer
+
         try:
             return self.dmi.manufacturer().strip()
         except Exception:
@@ -221,7 +267,7 @@ class Evidence:
                 return ""
             return list(self.doc.get('kv').values())[1]
 
-        if self.inxi or self.is_beta():
+        if self.inxi or self.is_beta() or self.edid_hex or self.smartctl:
             return self.device_model
 
         if self.is_legacy():
@@ -235,7 +281,7 @@ class Evidence:
             return ''
 
     def get_chassis(self):
-        if self.inxi or self.is_beta():
+        if self.inxi or self.edid_hex or self.is_beta() or self.smartctl:
             return self.device_chassis
 
         if self.is_legacy():
@@ -258,7 +304,7 @@ class Evidence:
         return ""
 
     def get_serial_number(self):
-        if self.inxi or self.is_beta():
+        if self.inxi or self.is_beta() or self.edid_hex or self.smartctl:
             return self.device_serial_number
 
         if self.is_legacy():
@@ -270,7 +316,7 @@ class Evidence:
             return ''
 
     def get_version(self):
-        if self.inxi or self.is_beta():
+        if self.inxi or self.is_beta() or self.edid_hex or self.smartctl:
             return self.device_version
 
         return ""
