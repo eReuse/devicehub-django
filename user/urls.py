@@ -7,4 +7,5 @@ urlpatterns = [
     path("panel/", views.PanelView.as_view(), name="panel"),
     path("settings/", views.SettingsView.as_view(), name="settings"),
     path('<int:pk>/', views.UserProfileView.as_view(), name='profile'),
+    path("panel/dashboard", views.CustomizeDashboardView.as_view(), name='customize_dashboard'),
 ]

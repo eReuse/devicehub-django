@@ -1,6 +1,8 @@
 import django_tables2 as tables
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
+from lot.models import Lot
+from action.models import StateDefinition
 
 from api.models import Token
 
@@ -83,3 +85,83 @@ class TokensTable(tables.Table):
         template_name = "custom_table.html"
         fields = ("tag", "token",  "edit_token")
         sequence = ("tag", "token",  "edit_token")
+
+class LotSelectionTable(tables.Table):
+    # Declare columns for ordering, but 'select' will be overridden
+    select = tables.CheckBoxColumn(accessor="pk")
+    name = tables.Column(verbose_name=_("Lot Name"))
+
+    def __init__(self, *args, checked_pks=None, **kwargs):
+        if checked_pks is None:
+            checked_pks = set()
+
+        # Re-declare the 'select' column, passing checked_pks to its constructor
+        extra_columns = [
+            ("select", tables.CheckBoxColumn(
+                accessor="pk",
+                checked_pks=checked_pks,  # <-- Pass it to the constructor
+                attrs={"th__input": {"onclick": "toggle(this)"}}
+            ))
+        ]
+
+        # Pass them to super() using the extra_columns kwarg
+        kwargs["extra_columns"] = extra_columns
+        super().__init__(*args, **kwargs)
+
+        # We must explicitly set the column order now
+        self.sequence = ("select", "name")
+
+    class Meta:
+        model = Lot
+        fields = ("select", "name")
+        # Ensure your custom template correctly renders column attributes
+        template_name = "custom_table.html"
+        row_attrs = {"data-id": lambda record: record.pk}
+
+
+class LotSelectionTable(tables.Table):
+    select = tables.CheckBoxColumn(
+        accessor="pk",
+        attrs={"th__input": {"onclick": "toggle(this)"}}
+    )
+    name = tables.Column(verbose_name=_("Lot Name"))
+
+    def render_select(self, record):
+        is_checked = record.pk in getattr(self, "checked_pks", set())
+        checked_attr = "checked" if is_checked else ""
+
+        return format_html(
+            '<input type="checkbox" name="select_lot" value="{}" class="form-check-input" {}>',
+            record.pk,
+            checked_attr
+        )
+
+    class Meta:
+        model = Lot
+        fields = ("select", "name")
+        template_name = "custom_table.html"
+        row_attrs = {"data-id": lambda record: record.pk}
+
+
+class StateSelectionTable(tables.Table):
+    select = tables.CheckBoxColumn(
+        accessor="pk",
+        attrs={"th__input": {"onclick": "toggle(this)"}}
+    )
+    state = tables.Column(verbose_name=_("State Name"), accessor="state")
+
+    def render_select(self, record):
+        is_checked = record.pk in getattr(self, "checked_pks", set())
+        checked_attr = "checked" if is_checked else ""
+
+        return format_html(
+            '<input type="checkbox" name="select_state" value="{}" class="form-check-input" {}>',
+            record.pk,
+            checked_attr
+        )
+
+    class Meta:
+        model = StateDefinition
+        fields = ("select", "state")
+        template_name = "custom_table.html"
+        row_attrs = {"data-id": lambda record: record.pk}
