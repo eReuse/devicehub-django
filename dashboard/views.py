@@ -5,25 +5,34 @@ import re
 from tablib import Dataset
 
 from django.utils.translation import gettext_lazy as _
-from django.views.generic.edit import FormView
-from django.shortcuts import Http404, get_object_or_404
+from django.shortcuts import get_object_or_404
 from django.utils.dateparse import parse_datetime
+from django.utils import timezone
+from django.shortcuts import redirect
+from django.contrib import messages
 from django.http import HttpResponse
 from dashboard.tables import DeviceTable
+from django.core.cache import cache
+from collections import Counter
 
-from django_tables2 import RequestConfig
 from django_tables2.views import SingleTableMixin
-from django_tables2.export.export import TableExport
 from django_tables2.export.views import ExportMixin
-
-from action.models import StateDefinition, State
-from django.db.models import Q, Subquery, OuterRef
+from django.views.generic import TemplateView
 
 from dashboard.mixins import InventaryMixin, DetailsMixin, DeviceTableMixin
 from evidence.models import SystemProperty, RootAlias
+from action.models import StateDefinition
+from django.db.models import Q, Subquery, OuterRef
+from lot.models import DeviceLot
+from user.models import UserProfile
+from django.views.generic import TemplateView
+
+from dashboard.mixins import DashboardView, InventaryMixin, DetailsMixin, DeviceTableMixin
+from evidence.models import SystemProperty
 from evidence.xapian import search
 from device.models import Device
 from lot.models import Lot, LotSubscription, Donor, DeviceLot, DeviceBeneficiary
+from action.models import StateDefinition, State
 
 logger = logging.getLogger('django')
 
@@ -90,7 +99,6 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
 
         donor = Donor.objects.filter(lot=lot).first()
 
-        # Enrich the current page rows (already SQL-paginated) with Device data
         table = context['table']
         owner = self.request.user.institution
         for row in table.paginated_rows:
@@ -153,6 +161,7 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
         return [Device(id=x, lot=self.object, owner=owner) for x in chids]
 
     def get_table_data(self):
+        #TODO: check later on soft reset to main
         institution = self.request.user.institution
         search_query = self.request.GET.get('q', '').lower()
         chids = self._get_chids_qs()
@@ -165,7 +174,7 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
                 if dev.matches_query(search_query):
                     devices.append(dev)
             self._search_count = len(devices)
-            # Return full records immediately for search (Device objects already created)
+            # return full records immediately for search (Device objects already created)
             table_data = []
             for device in devices:
                 current_state = device.get_current_state()
@@ -309,31 +318,24 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
             devices = self.get_queryset()
 
             headers = [
-                'ID', 'type', 'manufacturer', 'model', 'cpu_model', 'cpu_cores', 'current_state',
-                'ram_total', 'ram_type', 'ram_slots', 'slots_used', 'drive', 'gpu_model', 'user_properties','serial', 'last_updated',
+                'ID', 'type', 'manufacturer', 'model', 'serial',
+                'current_state', 'last_updated',
+                'cpu_model', 'cpu_cores', 'ram_total', 'ram_type',
+                'ram_slots', 'slots_used', 'gpu_model',
+
+                # Disk fields
+                'drive', 'disk_capacity', 'disk_interface', 'disk_health',
+
+                # Display fields
+                'native_resolution', 'screen_size', 'gamma', 'color_format',
+
+                'user_properties',
             ]
             data = Dataset(headers=headers)
 
             for device in devices:
                 row_data = device.components_export()
-                row_values = [
-                    row_data['ID'],
-                    row_data['type'],
-                    row_data['manufacturer'],
-                    row_data['model'],
-                    row_data['cpu_model'],
-                    row_data['cpu_cores'],
-                    row_data['current_state'],
-                    row_data['ram_total'],
-                    row_data['ram_type'],
-                    row_data['ram_slots'],
-                    row_data['slots_used'],
-                    row_data['drive'],
-                    row_data['gpu_model'],
-                    row_data['user_properties'],
-                    row_data['serial'],
-                    row_data['last_updated']
-                ]
+                row_values = [row_data.get(h, '') for h in headers]
                 data.append(row_values)
 
             content_types = {
@@ -527,3 +529,192 @@ class SearchView(DeviceTableMixin, InventaryMixin):
         uuid_to_value = {str(u): v for u, v in props}
 
         return [uuid_to_value[uuid] for uuid in uuids if uuid in uuid_to_value]
+
+
+class InventoryOverviewView(DashboardView, TemplateView):
+    template_name = 'inventory_overview.html'
+    section = _("Inbox")
+    title = _("Overview")
+    breadcrumb = f"{_('Devices')} / {_('Overview')}"
+
+    def get(self, request, *args, **kwargs):
+        if request.user.is_admin and request.GET.get('refresh') == 'true':
+            if hasattr(request.user, 'institution'):
+                institution = request.user.institution
+                cache_key = f"dashboard_stats_institution_{institution.id}"
+                cache.delete(cache_key)
+                messages.success(request, _("Cache has been cleared. Data is refreshing."))
+
+            return redirect('dashboard:overview')
+        return super().get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        if not hasattr(self.request.user, 'institution'):
+            context['error'] = 'User is not associated with an institution.'
+            return context
+
+        institution = self.request.user.institution
+        cache_key = f"dashboard_stats_institution_{institution.id}"
+        cached_data = cache.get(cache_key)
+
+        if not cached_data:
+
+            all_device_ids_list, _ = Device.get_all(institution, limit=None)
+            unassigned_device_ids_list, _ = Device.get_unassigned(institution, limit=None)
+            unassigned_ids_set = {d.id for d in unassigned_device_ids_list}
+            total_devices = len(all_device_ids_list)
+
+            # Get State Map
+            latest_prop_created_sq = SystemProperty.objects.filter(value=OuterRef('value'), owner=institution).order_by('-created')
+            latest_uuid_sq = SystemProperty.objects.filter(value=OuterRef('value'), created=Subquery(latest_prop_created_sq.values('created')[:1])).values('uuid')[:1]
+            latest_state_name_sq = State.objects.filter(snapshot_uuid=OuterRef('latest_uuid')).order_by('-date')
+            device_state_qset = SystemProperty.objects.filter(
+                owner=institution
+            ).values('value').distinct().annotate(
+                latest_uuid=Subquery(latest_uuid_sq),
+                current_state_name=Subquery(latest_state_name_sq.values('state')[:1])
+            ).values('value', 'current_state_name')
+            device_id_to_state_map = {
+                item['value']: item.get('current_state_name') or 'Unknown'
+                for item in device_state_qset
+            }
+
+            # Get Lot Map
+            device_id_to_lot_map = {}
+            all_device_lots = DeviceLot.objects.filter(
+                lot__owner=institution,
+                lot__archived=False
+            ).select_related('lot')
+            for dl in all_device_lots:
+                device_id_to_lot_map.setdefault(dl.device_id, []).append(dl.lot)
+
+            # process in Batches
+            total_types_counter = Counter()
+            assigned_types_counter = Counter()
+            unassigned_types_counter = Counter()
+            states_breakdown = {}
+            lots_breakdown = {}
+            batch_size = 500
+
+            for i in range(0, total_devices, batch_size):
+                batch_id_objects = all_device_ids_list[i:i + batch_size]
+                batch_devices = [Device(id=d.id) for d in batch_id_objects]
+
+                for d in batch_devices:
+                    device_type = d.type or 'Unknown'
+                    total_types_counter[device_type] += 1
+                    is_assigned = d.id not in unassigned_ids_set
+
+                    if is_assigned:
+                        assigned_types_counter[device_type] += 1
+                    else:
+                        unassigned_types_counter[device_type] += 1
+
+                    state_name = device_id_to_state_map.get(d.id, 'Unknown')
+                    states_breakdown.setdefault(state_name, {'total': 0, 'types': Counter()})['total'] += 1
+                    states_breakdown[state_name]['types'][device_type] += 1
+
+                    if is_assigned:
+                        lots_for_device = device_id_to_lot_map.get(d.id, [])
+                        for lot in lots_for_device:
+                            lots_breakdown.setdefault(lot.pk, {'name': lot.name, 'total': 0, 'types': Counter()})['total'] += 1
+                            lots_breakdown[lot.pk]['types'][device_type] += 1
+
+            total_types_summary = dict(total_types_counter.most_common(4))
+            assigned_types_summary = dict(assigned_types_counter.most_common(3))
+            unassigned_types_summary = dict(unassigned_types_counter.most_common(3))
+
+            states_summary = []
+            for name, data in states_breakdown.items():
+                states_summary.append({
+                    'state': name,
+                    'count': data['total'],
+                    'types': dict(data['types'].most_common(3))
+                })
+
+            states_summary = sorted(states_summary, key=lambda x: x['count'], reverse=True)
+
+            lots_summary = []
+            for pk, data in lots_breakdown.items():
+                lots_summary.append({
+                    'pk': pk,
+                    'name': data['name'],
+                    'count': data['total'],
+                    'types': dict(data['types'].most_common(3))
+                })
+            lots_summary = sorted(lots_summary, key=lambda x: x['count'], reverse=True)
+
+            unassigned_devices = len(unassigned_ids_set)
+            assigned_devices = total_devices - unassigned_devices
+
+            cached_data = {
+                'last_updated': timezone.now(),
+                'total_devices': total_devices,
+                'total_types_summary': total_types_summary,
+                'unassigned_devices': unassigned_devices,
+                'unassigned_types_summary': unassigned_types_summary,
+                'assigned_devices': assigned_devices,
+                'assigned_types_summary': assigned_types_summary,
+                'lots_summary': lots_summary,
+                'states_summary': states_summary,
+            }
+            cache.set(cache_key, cached_data, timeout=14400)
+
+
+        final_context = cached_data.copy()
+        profile, created = UserProfile.objects.get_or_create(user=self.request.user)
+
+        pinned_lot_pks = set(profile.pinned_lots.values_list('pk', flat=True))
+        pinned_state_pks = set(profile.pinned_states.values_list('pk', flat=True))
+        has_pinned_lots = bool(pinned_lot_pks)
+        has_pinned_states = bool(pinned_state_pks)
+
+        if has_pinned_lots:
+            cached_lots_map = {lot['pk']: lot for lot in cached_data['lots_summary']}
+            user_lots_summary = []
+
+            all_pinned_lots = Lot.objects.filter(pk__in=pinned_lot_pks)
+
+            for lot in all_pinned_lots:
+                if lot.pk in cached_lots_map:
+                    user_lots_summary.append(cached_lots_map[lot.pk])
+                else:
+                    user_lots_summary.append({
+                        'pk': lot.pk,
+                        'name': lot.name,
+                        'count': 0,
+                        'types': {}
+                    })
+            final_context['lots_summary'] = sorted(user_lots_summary, key=lambda x: x['name'])
+        else:
+            final_context['lots_summary'] = cached_data['lots_summary'][:10]
+
+
+        if has_pinned_states:
+            cached_states_map = {state['state']: state for state in cached_data['states_summary']}
+            user_states_summary = []
+
+            all_pinned_states = StateDefinition.objects.filter(pk__in=pinned_state_pks)
+
+            for state_def in all_pinned_states:
+                state_name = state_def.state
+                if state_name in cached_states_map:
+                    # State is pinned AND has devices
+                    user_states_summary.append(cached_states_map[state_name])
+                else:
+                    user_states_summary.append({
+                        'state': state_name,
+                        'count': 0,
+                        'types': {}
+                    })
+            final_context['states_summary'] = sorted(user_states_summary, key=lambda x: x['state'])
+        else:
+            final_context['states_summary'] = cached_data['states_summary']
+
+        final_context['has_pinned_lots'] = has_pinned_lots
+        final_context['has_pinned_states'] = has_pinned_states
+
+        context.update(final_context)
+        return context
