@@ -14,8 +14,8 @@ from django.views.generic.edit import (
 )
 from django.db import IntegrityError,   transaction
 from dashboard.mixins import DashboardView, Http403
-from admin.forms import OrderingStateForm
-from user.models import User, Institution
+from admin.forms import OrderingStateForm, InstitutionSettingsForm, InstitutionForm
+from user.models import User, Institution, InstitutionSettings
 from admin.email import NotifyActivateUserByEmail
 from admin.tables import UserTable
 from action.models import StateDefinition
@@ -244,14 +244,7 @@ class InstitutionView(AdminView, UpdateView):
     subtitle = _('Edit institution')
     model = Institution
     success_url = reverse_lazy('admin:panel')
-    fields = (
-        "name",
-        "logo",
-        "location",
-        "responsable_person",
-        "supervisor_person",
-        "algorithm"
-    )
+    form_class = InstitutionForm
 
     def get_form_kwargs(self):
         self.object = self.request.user.institution
@@ -360,3 +353,27 @@ class UpdateStateDefinitionView(AdminView, UpdateView):
     def form_invalid(self, form):
         super().form_invalid(form)
         return redirect(self.get_success_url())
+
+
+class InstitutionQRCustomizationView(AdminView, UpdateView):
+    model = InstitutionSettings
+    form_class = InstitutionSettingsForm
+    template_name = 'institution.html'
+    success_url = reverse_lazy('admin:panel')
+    breadcrumb = "Admin / Label customization"
+    title = _("Edit Label")
+    section = "admin"
+    subtitle = _('Edit Label information')
+
+    def get_object(self, queryset=None):
+        institution = self.request.user.institution
+        settings, created = InstitutionSettings.objects.get_or_create(institution=institution)
+        return settings
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+    def form_valid(self, form):
+        messages.success(self.request, _("QR printing preferences saved successfully."))
+        return super().form_valid(form)

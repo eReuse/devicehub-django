@@ -1,32 +1,56 @@
 {% extends "base.html" %}
 {% load i18n %}
+{% load django_bootstrap5 %}
 
 {% block content %}
-<div class="row">
-  <div class="col">
-    <h3>{{ subtitle }}</h3>
-  </div>
-</div>
+<div class="container-fluid py-3 px-0">
 
-{% load django_bootstrap5 %}
-<form role="form" method="post">
-{% csrf_token %}
-{% if form.errors %}
-<div class="alert alert-danger alert-icon alert-icon-border alert-dismissible" role="alert">
-  <div class="icon"><span class="mdi mdi-close-circle-o"></span></div>
-  <div class="message">
-    {% for field, error in form.errors.items %}
-      {{ error }}<br />
-    {% endfor %}
-    <button class="btn-close" type="button" data-dismiss="alert" aria-label="Close"></button>
-  </div>
-</div>
-{% endif %}
-{% bootstrap_form form %}
-<div class="form-actions-no-box">
-  <a class="btn btn-grey" href="{% url 'admin:panel' %}">{% translate "Cancel" %}</a>
-  <input class="btn btn-green-admin" type="submit" name="submit" value="{% translate 'Save' %}" />
-</div>
+    {% if form.errors %}
+    <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+        <div class="d-flex align-items-center">
+            <i class="bi bi-exclamation-triangle-fill fs-4 me-3"></i>
+            <div>
+                <strong>{% translate "Please correct the errors below:" %}</strong>
+                <ul class="mb-0 mt-1">
+                    {% for field, error in form.errors.items %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        <button class="btn-close" type="button" data-bs-dismiss="alert" aria-label="{% translate 'Close' %}"></button>
+    </div>
+    {% endif %}
 
-</form>
+    <div class="card shadow-sm border-0 rounded-3">
+        <div class="card-body p-4">
+            <form role="form" method="post" novalidate>
+                {% csrf_token %}
+
+                <div class="row g-4">
+                    {% for field in form %}
+                        {% if field.is_hidden %}
+                            {{ field }}
+                        {% else %}
+                            <div class="col-12 col-lg-6">
+                                {% bootstrap_field field layout="floating" %}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+
+                <hr class="my-4 text-muted">
+
+                <div class="d-flex justify-content-end align-items-center gap-3">
+                    <a class="btn btn-light text-secondary fw-semibold px-4" href="{% url 'admin:panel' %}">
+                        {% translate "Cancel" %}
+                    </a>
+                    <button class="btn btn-green-admin px-5 fw-semibold shadow-sm" type="submit" name="submit">
+                        <i class="bi bi-save me-1"></i> {% translate 'Save Changes' %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 {% endblock %}
