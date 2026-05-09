@@ -1,5 +1,6 @@
 from django.db import models
 from django.db.models import ProtectedError
+from django.core.validators import RegexValidator, URLValidator
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser
 from utils.constants import ALGOS
@@ -7,30 +8,98 @@ from utils.constants import ALGOS
 
 ALGORITHMS = [(x, x) for x in ALGOS.keys()]
 
+class QRContentType(models.TextChoices):
+    DEVICE_ID = 'INTERNAL', _("Internal Device ID")
+    DEVICE_INVENTORY = 'INVENTORY', _("Device inventory URL")
+    PUBLIC_VIEW = 'PUBLIC', _("Public Device View")
+    #DPP_VIEW = 'DPP', _("DPP view else ")
+
+def default_printed_properties():
+    return ["model", "serial_number"]
 
 class Institution(models.Model):
     name = models.CharField(
         _("Name"),
         max_length=255,
-        blank=False,
-        null=False,
-        unique=True
+        unique=True,
+        help_text=_("Official registered name of the organization.")
     )
-    logo = models.CharField(_("Logo"), max_length=255, blank=True, null=True)
-    location = models.CharField(_("Location"), max_length=255, blank=True, null=True)
-    responsable_person = models.CharField(
-        _("Responsable"),
-        max_length=255,
+    logo = models.CharField(_("Logo URL"), max_length=255, blank=True, null=True)
+
+    responsable_person = models.CharField(_("Responsable Person"), max_length=255, blank=True, null=True)
+    supervisor_person = models.CharField(_("Supervisor"), max_length=255, blank=True, null=True)
+
+    facility_id_uri = models.URLField(
+        _("Facility ID (URI)"),
+        max_length=500,
+        blank=True,
+        null=True,
+        help_text=_("Globally unique URI for this facility (e.g. https://...)")
+    )
+    facility_description = models.TextField(
+        _("Facility Description"),
         blank=True,
         null=True
     )
-    supervisor_person = models.CharField(
-        _("Supervisor"),
-        max_length=255,
+    country = models.CharField(
+        _("Country of Operation"),
+        max_length=2,
         blank=True,
-        null=True
+        null=True,
+        validators=[RegexValidator(r'^[A-Z]{2}$', _("Must be a 2-letter uppercase ISO code (e.g. AU, DE)"))],
+        help_text=_("ISO 3166-1 alpha-2 code.")
     )
-    algorithm = models.CharField(max_length=30, choices=ALGORITHMS, default='ereuse24')
+    facility_id_uri = models.URLField(
+        _("Facility ID (URI)"),
+        max_length=500,
+        blank=True, null=True,
+        validators=[URLValidator(schemes=['http', 'https', 'did'])],
+        help_text=_("Globally unique URI.")
+    )
+    street_address = models.CharField(_("Street Address"), max_length=255, blank=True, null=True)
+    postal_code = models.CharField(_("Postal Code"), max_length=20, blank=True, null=True)
+    location = models.CharField(_("City/Locality"), max_length=100, blank=True, null=True)
+    region = models.CharField(_("State/Region"), max_length=100, blank=True, null=True)
+
+    algorithm = models.CharField(
+        _("Algorithm"),
+        max_length=30,
+        default='ereuse24',
+        help_text=_("The default algorithm used for device aggregation."),
+        choices=ALGORITHMS,
+    )
+
+
+class InstitutionSettings(models.Model):
+    institution = models.OneToOneField(
+        Institution,
+        on_delete=models.CASCADE,
+        related_name='settings'
+    )
+    qr_content_type = models.CharField(
+        _("QR Code Content"),
+        max_length=20,
+        choices=QRContentType.choices,
+        default=QRContentType.DEVICE_ID,
+        help_text=_("Determines what data is embedded inside the QR code.")
+    )
+    qr_printed_properties = models.JSONField(
+        _("Properties to Print"),
+        default=default_printed_properties,
+        blank=True,
+        help_text=_("List of device properties (e.g., 'ram', 'cpu', 'storage') to print alongside the QR code.")
+    )
+    qr_include_logo = models.BooleanField(
+        _("Print Institution Logo"),
+        default=True,
+    )
+    qr_label_header = models.CharField(
+        _("Label Header Text"),
+        max_length=100,
+        default="Property of {institution}",
+        blank=True,
+        help_text=_("Text printed at the top of the label.")
+    )
 
 
 class UserManager(BaseUserManager):
