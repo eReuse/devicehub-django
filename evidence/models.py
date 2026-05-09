@@ -3,21 +3,20 @@ import hashlib
 
 from dmidecode import DMIParse
 from django.db import models
-
+from django.conf import settings
 
 from django.db.models import Q
 from utils.constants import STR_EXTEND_SIZE, CHASSIS_DH
 from evidence.xapian import search
 from evidence.parse_details import ParseSnapshot
 from evidence.normal_parse_details import get_inxi, get_inxi_key
-from user.models import User, Institution
 
 
 class Property(models.Model):
     created = models.DateTimeField(auto_now_add=True)
-    owner = models.ForeignKey(Institution, on_delete=models.CASCADE)
+    owner = models.ForeignKey('user.Institution', on_delete=models.CASCADE)
     user = models.ForeignKey(
-        User, on_delete=models.SET_NULL, null=True, blank=True)
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
     key = models.CharField(max_length=STR_EXTEND_SIZE)
     value = models.CharField(max_length=STR_EXTEND_SIZE)
 
@@ -62,9 +61,9 @@ class UserProperty(Property):
 
 class RootAlias(models.Model):
     created = models.DateTimeField(auto_now_add=True)
-    owner = models.ForeignKey(Institution, on_delete=models.CASCADE)
+    owner = models.ForeignKey('user.Institution', on_delete=models.CASCADE)
     user = models.ForeignKey(
-        User, on_delete=models.SET_NULL, null=True, blank=True)
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
     alias = models.CharField(max_length=STR_EXTEND_SIZE)
     root = models.CharField(max_length=STR_EXTEND_SIZE)
 
