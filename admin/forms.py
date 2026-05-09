@@ -63,7 +63,7 @@ class InstitutionSettingsForm(forms.ModelForm):
         widgets = {
             'qr_content_type': forms.RadioSelect,
             'qr_include_logo': forms.CheckboxInput(attrs={'class': 'form-check-input', 'role': 'switch'}),
-            'qr_label_header': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Property of {institution}'}),
+            'qr_label_header': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Property of...'}),
         }
 
     def clean_qr_printed_properties(self):

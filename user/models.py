@@ -39,9 +39,9 @@ class Institution(models.Model):
         null=True,
         help_text=_("The primary person responsible for the operations at this facility.")
     )
-    supervisor_person = models.CharField(
-        _("Supervisor"),
-        max_length=255,
+    country = models.CharField(
+        _("Country of Operation"),
+        max_length=2,
         blank=True,
         null=True,
         help_text=_("The person supervising this facility or organization.")
