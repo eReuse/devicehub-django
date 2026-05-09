@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+        background: #f0f0f0;
+        font-family: 'Courier New', Courier, monospace;
+        padding: 16px;
+    }
+
+    .label-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+    .label-card {
+        border: 1px solid #222;
+        background: #fff;
+        padding: 7px;
+        page-break-inside: avoid;
+        break-inside: avoid;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .label-top {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-center;
+        border-bottom: 1px solid #333;
+        padding-bottom: 4px;
+        gap: 3px;
+    }
+
+    .label-logo {
+        max-height: 28px;
+        max-width: 100%;
+        width: auto;
+        height: auto;
+        object-fit: contain;
+        display: block;
+    }
+
+    .label-header {
+        font-weight: 700;
+        font-size: 0.75rem;
+        line-height: 1.2;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        width: 100%;
+    }
+
+    .label-body {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 7px;
+    }
+
+    .qr-col {
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .qr-box {
+        width: 110px;
+        height: 110px;
+        flex-shrink: 0;
+    }
+
+    .qr-box canvas,
+    .qr-box img {
+        display: block;
+        width: 110px !important;
+        height: 110px !important;
+    }
+
+    .info-col {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+    }
+
+    .label-logo {
+        max-height: 28px;
+        max-width: 100%;
+        width: auto;
+        height: auto;
+        object-fit: contain;
+        margin-bottom: 4px;
+        display: block;
+    }
+
+    .label-header {
+        font-weight: 700;
+        font-size: 0.75rem;
+        line-height: 1.2;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        border-bottom: 1px solid #333;
+        padding-bottom: 3px;
+        margin-bottom: 4px;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .properties-box {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+    }
+
+    .property-item {
+        font-size: 0.67rem;
+        line-height: 1.3;
+        word-break: break-word;
+    }
+
+    .property-item strong {
+        font-weight: 700;
+    }
+
+    @media print {
+        .no-print,
+        .navbar,
+        .btn { display: none !important; }
+
+        body {
+            background: white;
+            margin: 0;
+            padding: 0;
+        }
+
+        .label-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+            max-width: 100%;
+        }
+
+        .label-card {
+            border: 0.5pt solid #000;
+            gap: 6px;
+            padding: 6px;
+        }
+
+        .qr-box {
+            width: 110px;
+            height: 110px;
+        }
+
+        .qr-box canvas,
+        .qr-box img {
+            width: 110px !important;
+            height: 110px !important;
+        }
+
+        .label-header {
+            font-size: 0.72rem;
+        }
+
+        .property-item {
+            font-size: 0.63rem;
+            white-space: normal;
+            overflow: visible;
+            text-overflow: unset;
+        }
+
+        @page {
+            size: A4 portrait;
+            margin: 0.7cm;
+        }
+    }
+</style>
+</head>
+<body>
+
+<div class="label-grid">
+    {% for label in labels_data %}
+    <div class="label-card">
+
+        <div class="label-top">
+            {% if label.include_logo and label.logo_url %}
+                <img class="label-logo" src="{{ label.logo_url }}" alt="Logo">
+            {% endif %}
+            <div class="label-header">{{ header }}</div>
+        </div>
+
+        <div class="label-body">
+            <div class="qr-col">
+                <div class="qr-box qrcode-element" data-payload="{{ label.payload }}"></div>
+            </div>
+            <div class="info-col">
+                <div class="properties-box">
+                    {% for prop in label.properties %}
+                        <div class="property-item">
+                            <strong>{{ prop.name }}:</strong> {{ prop.value }}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+    </div>
+    {% endfor %}
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+    document.querySelectorAll('.qrcode-element').forEach(el => {
+        new QRCode(el, {
+            text: el.dataset.payload,
+            width: 110,
+            height: 110,
+            correctLevel: QRCode.CorrectLevel.L
+        });
+    });
+
+    setTimeout(function() {
+        window.print();
+    }, 500);
+
+    window.onafterprint = function() {
+        setTimeout(function() {
+            window.history.back();
+        }, 1000);
+    };
+</script>
+</body>
+</html>

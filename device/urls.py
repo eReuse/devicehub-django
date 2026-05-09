@@ -14,4 +14,6 @@ urlpatterns = [
     path("<str:device_id>/user_property/<int:pk>/update",
          views.UpdateUserPropertyView.as_view(), name="update_user_property"),
     path("<str:pk>/public/", views.PublicDeviceWebView.as_view(), name="device_web"),
+    path('<str:pk>/label/print', views.DeviceBulkLabelView.as_view(), name='single_label'),
+    path('labels/print', views.DeviceBulkLabelView.as_view(), name='bulk_labels'),
 ]

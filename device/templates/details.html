@@ -23,6 +23,9 @@
                 <i class="bi bi-folder-symlink"></i> {% trans 'Assign to lot' %}
             </button>
         </form>
+      <a href="{% url 'device:single_label' object.id %}" class="btn btn-outline-dark">
+          <i class="bi bi-qr-code"></i> {% trans "Print Label" %}
+      </a>
 
 
         <!-- Change state -->
