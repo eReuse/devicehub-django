@@ -120,6 +120,10 @@
                 <div class="col-md-8 info-value">{{ object.serial_number|default:'' }}</div>
               </div>
             {% endif %}
+            <div class="info-row row">
+              <div class="col-md-4 info-label">Last Snapshot</div>
+              <div class="col-md-8 info-value">{{ object.updated_datetime|date:"Y-m-d H:i"|default:'' }}</div>
+            </div>
           {% endif %}
         </div>
 

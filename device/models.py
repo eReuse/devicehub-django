@@ -365,6 +365,12 @@ class Device:
         return self.last_evidence.get_time_created()
 
     @property
+    def updated_datetime(self):
+        self.get_last_evidence()
+        last_prop = self.last_evidence.properties.last()
+        return last_prop.created if last_prop else None
+
+    @property
     def serial_number(self):
         self.get_last_evidence()
         return self.last_evidence.get_serial_number()
