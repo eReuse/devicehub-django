@@ -360,7 +360,7 @@ class InstitutionQRCustomizationView(AdminView, UpdateView):
     form_class = InstitutionSettingsForm
     template_name = 'institution.html'
     success_url = reverse_lazy('admin:panel')
-    breadcrumb = "Admin / Label customization"
+    breadcrumb = "Admin / Label settings"
     title = _("Edit Label")
     section = "admin"
     subtitle = _('Edit Label information')
