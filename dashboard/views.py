@@ -7,6 +7,7 @@ from tablib import Dataset
 from django.utils.translation import gettext_lazy as _
 from django.views.generic.edit import FormView
 from django.shortcuts import Http404, get_object_or_404
+from django.urls import reverse_lazy
 from django.utils.dateparse import parse_datetime
 from django.http import HttpResponse
 from dashboard.tables import DeviceTable
@@ -31,7 +32,7 @@ class UnassignedDevicesView(DeviceTableMixin, InventaryMixin):
     template_name = "unassigned_devices.html"
     section = _("Inbox")
     title = _("Inbox")
-    breadcrumb = f"{_('Devices')} / {_('Inbox')}"
+    breadcrumb = [(_('Devices'), reverse_lazy("dashboard:all_device")), (_('Inbox'), None)]
 
     def get_devices(self, user, offset=0, limit=None):
         return Device.get_unassigned(self.request.user.institution, offset, limit)
@@ -45,7 +46,7 @@ class AllDevicesView(DeviceTableMixin, InventaryMixin):
     template_name = "unassigned_devices.html"
     section = _("All")
     title = _("All Devices")
-    breadcrumb = f"{_('Devices')} / {_('All')}"
+    breadcrumb = [(_('Devices'), reverse_lazy("dashboard:all_device")), (_('All'), None)]
 
     def get_devices(self, user, offset=0, limit=None):
         return Device.get_all(self.request.user.institution, offset, limit)
@@ -58,7 +59,7 @@ class AllDevicesView(DeviceTableMixin, InventaryMixin):
 class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMixin):
     template_name = "unassigned_devices.html"
     section = "dashboard_lot"
-    breadcrumb = f"{_('Lot')} / {_('Devices')}"
+    breadcrumb = [(_('Devices'), reverse_lazy("dashboard:all_device")), (_('Devices'), None)]
     paginate_by = 10
     paginate_choices = [10, 20, 50, 100, 0]
     table_class = DeviceTable
@@ -129,7 +130,11 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
             'limit': limit,
             'search_query': self.request.GET.get('q', ''),
             'sort': self.request.GET.get('sort', ''),
-            'breadcrumb': _("Lot / {} / Devices").format(lot.name),
+            'breadcrumb': [
+                (_("Lots"), reverse_lazy("dashboard:unassigned")),
+                (lot.type.name, reverse_lazy("lot:tags", args=[lot.type.pk])),
+                (lot.name, None),
+            ],
             'subscripted': subscriptions.first(),
             'is_circuit_manager': is_circuit_manager,
             'is_shop': is_shop,
@@ -356,7 +361,7 @@ class SearchView(DeviceTableMixin, InventaryMixin):
     template_name = "unassigned_devices.html"
     section = _("Search")
     title = _("Search Devices")
-    breadcrumb = f"{_('All Devices')} / {_('Search')}"
+    breadcrumb = [(_("All Devices"), reverse_lazy("dashboard:all_device")), (_("Search"), None)]
     table_order_by = ()  # override DeviceTable.Meta order_by=("-last_updated",) to preserve relevance order
 
     def get_context_data(self, **kwargs):

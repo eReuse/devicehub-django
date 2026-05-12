@@ -31,7 +31,7 @@ class ListEvidencesView(DashboardView, SingleTableView):
     section = "evidences"
     table_class = EvidenceTable
     title = _("Evidences")
-    breadcrumb = "Evidences"
+    breadcrumb = [(_("Evidences"), None)]
     paginate_by = 13
 
     def get_queryset(self):
@@ -42,7 +42,7 @@ class UploadView(DashboardView, FormView):
     template_name = "upload.html"
     section = "evidences"
     title = _("Upload Evidence")
-    breadcrumb = "Evidences / Upload"
+    breadcrumb = [(_("Evidences"), reverse_lazy("evidence:list")), (_("Upload"), None)]
     success_url = reverse_lazy('evidence:list')
     form_class = UploadForm
 
@@ -61,7 +61,7 @@ class ImportView(DashboardView, FormView):
     template_name = "upload.html"
     section = "evidences"
     title = _("Import Evidence")
-    breadcrumb = "Evidences / Import"
+    breadcrumb = [(_("Evidences"), reverse_lazy("evidence:list")), (_("Import"), None)]
     success_url = reverse_lazy('evidence:list')
     form_class = ImportForm
 
@@ -85,7 +85,7 @@ class ImportPhotoView(DashboardView, FormView):
     template_name = "upload.html"
     section = "evidences"
     title = _("Import Photo Evidence")
-    breadcrumb = "Evidences / Photo"
+    breadcrumb = [(_("Evidences"), reverse_lazy("evidence:list")), (_("Photo"), None)]
     success_url = reverse_lazy('evidence:list')
     form_class = PhotoForm
 
@@ -109,7 +109,7 @@ class EvidenceView(DashboardView, FormView):
     template_name = "ev_details.html"
     section = "evidences"
     title = _("Evidences")
-    breadcrumb = "Evidences / Details"
+    breadcrumb = [(_("Evidences"), reverse_lazy("evidence:list")), (_("Details"), None)]
     success_url = reverse_lazy('evidence:list')
     form_class = UserAliasForm
 
@@ -230,7 +230,7 @@ class EraseServerView(DashboardView, FormView):
     template_name = "ev_details.html"
     section = "evidences"
     title = _("Evidences")
-    breadcrumb = "Evidences / Details"
+    breadcrumb = [(_("Evidences"), reverse_lazy("evidence:list")), (_("Details"), None)]
     success_url = reverse_lazy('evidence:list')
     form_class = EraseServerForm
 

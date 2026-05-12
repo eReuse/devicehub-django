@@ -29,7 +29,7 @@ class Http403(PermissionDenied):
 class DashboardView(LoginRequiredMixin):
     login_url = "/login/"
     template_name = "dashboard.html"
-    breadcrumb = ""
+    breadcrumb = None # Tuple of string and link. Link can be None
     title = ""
     subtitle = ""
     section = ""

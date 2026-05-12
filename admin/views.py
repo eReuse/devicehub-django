@@ -12,7 +12,6 @@ from django.views.generic.edit import (
     UpdateView,
     DeleteView,
 )
-from django.core.exceptions import ValidationError
 from django.db import IntegrityError,   transaction
 from dashboard.mixins import DashboardView, Http403
 from admin.forms import OrderingStateForm
@@ -34,7 +33,7 @@ class AdminView(DashboardView):
 class PanelView(AdminView, TemplateView):
     template_name = "admin_panel.html"
     title = _("Admin")
-    breadcrumb = _("admin") + " /"
+    breadcrumb = [(_("admin"), None)]
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -44,7 +43,7 @@ class PanelView(AdminView, TemplateView):
 class UsersView(AdminView, SingleTableView):
     template_name = "admin_users.html"
     title = _("Users")
-    breadcrumb = _("admin / Users") + " /"
+    breadcrumb = [(_("Admin"), reverse_lazy("admin:panel")), (_("Users"), None)]
     table_class = UserTable
 
     def get_queryset(self):
@@ -58,7 +57,7 @@ class UsersView(AdminView, SingleTableView):
 class CreateUserView(AdminView, NotifyActivateUserByEmail, CreateView):
     template_name = "user.html"
     title = _("User")
-    breadcrumb = _("admin") + " / " + _("new user")
+    breadcrumb = [(_("Admin"), reverse_lazy("admin:panel")), (_("Users"), reverse_lazy("admin:users")), (_("New user"), None)]
     success_url = reverse_lazy('admin:users')
     model = User
     fields = (
@@ -83,7 +82,7 @@ class CreateUserView(AdminView, NotifyActivateUserByEmail, CreateView):
 class DeleteUserView(AdminView, DeleteView):
     template_name = "delete_user.html"
     title = _("Delete user")
-    breadcrumb = "admin / Delete user"
+    breadcrumb = [(_("Admin"), reverse_lazy("admin:panel")), (_("Users"), reverse_lazy("admin:users")), (_("Delete user"), None)]
     success_url = reverse_lazy('admin:users')
     model = User
     fields = (
@@ -100,7 +99,7 @@ class DeleteUserView(AdminView, DeleteView):
 class EditUserView(AdminView, UpdateView):
     template_name = "user.html"
     title = _("Edit user")
-    breadcrumb = "admin / Edit user"
+    breadcrumb = [(_("Admin"), reverse_lazy("admin:panel")), (_("Users"), reverse_lazy("admin:users")), (_("Edit user"), None)]
     success_url = reverse_lazy('admin:users')
     model = User
     fields = (
@@ -119,7 +118,7 @@ class EditUserView(AdminView, UpdateView):
 class LotTagPanelView(AdminView, TemplateView):
     template_name = "lot_tag_panel.html"
     title = _("Lot Groups Panel")
-    breadcrumb = _("admin / Lot Groups Panel")
+    breadcrumb = [(_("Admin"), reverse_lazy("admin:panel")), (_("Lot Groups"), None)]
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -133,7 +132,7 @@ class LotTagPanelView(AdminView, TemplateView):
 class AddLotTagView(AdminView, CreateView):
     template_name = "lot_tag_panel.html"
     title = _("New lot group Definition")
-    breadcrumb = "Admin / New lot tag"
+    breadcrumb = [(_("Admin"), reverse_lazy("admin:panel")), (_("Lot Groups"), reverse_lazy("admin:tag_panel")), (_("New lot tag"), None)]
     success_url = reverse_lazy('admin:tag_panel')
     model = LotTag
     fields = ('name',)
@@ -273,13 +272,13 @@ class StateDefinitionContextMixin(ContextMixin):
 class StatesPanelView(AdminView, StateDefinitionContextMixin, TemplateView):
     template_name = "states_panel.html"
     title = _("States Panel")
-    breadcrumb = _("admin / States Panel") + " /"
+    breadcrumb = [(_("Admin"), reverse_lazy("admin:panel")), (_("States"), None)]
 
 
 class AddStateDefinitionView(AdminView, StateDefinitionContextMixin, CreateView):
     template_name = "states_panel.html"
     title = _("New State Definition")
-    breadcrumb = "Admin / New state"
+    breadcrumb = [(_("Admin"), reverse_lazy("admin:panel")), (_("States"), reverse_lazy("admin:states_panel")), (_("New state"), None)]
     success_url = reverse_lazy('admin:states_panel')
     model = StateDefinition
     fields = ('state',)
