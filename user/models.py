@@ -15,7 +15,7 @@ class QRContentType(models.TextChoices):
     #DPP_VIEW = 'DPP', _("DPP view else ")
 
 def default_printed_properties():
-    return ["model", "serial_number"]
+    return ["shortid"]
 
 class Institution(models.Model):
     name = models.CharField(
@@ -24,22 +24,42 @@ class Institution(models.Model):
         unique=True,
         help_text=_("Official registered name of the organization.")
     )
-    logo = models.CharField(_("Logo URL"), max_length=255, blank=True, null=True)
+    logo = models.CharField(
+        _("Logo URL"),
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text=_("A public URL pointing to the organization's logo image.")
+    )
 
-    responsable_person = models.CharField(_("Responsable Person"), max_length=255, blank=True, null=True)
-    supervisor_person = models.CharField(_("Supervisor"), max_length=255, blank=True, null=True)
+    responsable_person = models.CharField(
+        _("Responsible Person"),
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text=_("The primary person responsible for the operations at this facility.")
+    )
+    supervisor_person = models.CharField(
+        _("Supervisor"),
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text=_("The person supervising this facility or organization.")
+    )
 
     facility_id_uri = models.URLField(
         _("Facility ID (URI)"),
         max_length=500,
         blank=True,
         null=True,
-        help_text=_("Globally unique URI for this facility (e.g. https://...)")
+        validators=[URLValidator(schemes=['http', 'https', 'did'])],
+        help_text=_("Globally unique URI for this facility (e.g., did:web:example.com).")
     )
     facility_description = models.TextField(
         _("Facility Description"),
         blank=True,
-        null=True
+        null=True,
+        help_text=_("A detailed description of the facility's main activities and scope.")
     )
     country = models.CharField(
         _("Country of Operation"),
@@ -47,34 +67,56 @@ class Institution(models.Model):
         blank=True,
         null=True,
         validators=[RegexValidator(r'^[A-Z]{2}$', _("Must be a 2-letter uppercase ISO code (e.g. AU, DE)"))],
-        help_text=_("ISO 3166-1 alpha-2 code.")
+        help_text=_("ISO 3166-1 alpha-2 code (e.g., AU, US, DE).")
     )
-    facility_id_uri = models.URLField(
-        _("Facility ID (URI)"),
-        max_length=500,
-        blank=True, null=True,
-        validators=[URLValidator(schemes=['http', 'https', 'did'])],
-        help_text=_("Globally unique URI.")
+
+    street_address = models.CharField(
+        _("Street Address"),
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text=_("The physical street address of the facility.")
     )
-    street_address = models.CharField(_("Street Address"), max_length=255, blank=True, null=True)
-    postal_code = models.CharField(_("Postal Code"), max_length=20, blank=True, null=True)
-    location = models.CharField(_("City/Locality"), max_length=100, blank=True, null=True)
-    region = models.CharField(_("State/Region"), max_length=100, blank=True, null=True)
+    postal_code = models.CharField(
+        _("Postal Code"),
+        max_length=20,
+        blank=True,
+        null=True,
+        help_text=_("The postal or ZIP code.")
+    )
+    location = models.CharField(
+        _("City/Locality"),
+        max_length=100,
+        blank=True,
+        null=True,
+        help_text=_("The city, town, or locality name.")
+    )
+    region = models.CharField(
+        _("State/Region"),
+        max_length=100,
+        blank=True,
+        null=True,
+        help_text=_("The state, province, or geographic region.")
+    )
 
     algorithm = models.CharField(
         _("Algorithm"),
         max_length=30,
         default='ereuse24',
-        help_text=_("The default algorithm used for device aggregation."),
         choices=ALGORITHMS,
+        help_text=_("The default algorithm used for device aggregation."),
     )
 
+    def __str__(self):
+        return self.name
 
 class InstitutionSettings(models.Model):
     institution = models.OneToOneField(
         Institution,
         on_delete=models.CASCADE,
-        related_name='settings'
+        related_name='settings',
+        verbose_name=_("Institution"),
+        help_text=_("The institution these settings belong to.")
     )
     qr_content_type = models.CharField(
         _("QR Code Content"),
@@ -92,15 +134,18 @@ class InstitutionSettings(models.Model):
     qr_include_logo = models.BooleanField(
         _("Print Institution Logo"),
         default=True,
+        help_text=_("Check to include the institution's logo (if exists) on printed QR labels.")
     )
     qr_label_header = models.CharField(
         _("Label Header Text"),
         max_length=100,
-        default="Property of {institution}",
+        default="Property of ...",
         blank=True,
         help_text=_("Text printed at the top of the label.")
     )
 
+    def __str__(self):
+        return f"Settings for {self.institution.name}"
 
 class UserManager(BaseUserManager):
     def create_user(self, email, institution, password=None, commit=True):

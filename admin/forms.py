@@ -28,27 +28,19 @@ class InstitutionForm(forms.ModelForm):
             'street_address', 'postal_code', 'location', 'region'
         ]
         widgets = {
-            'facility_description': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
-            'country': forms.TextInput(attrs={
-                'placeholder': 'e.g. US, ES (2 letters)',
-                'maxlength': '2',
-                'class': 'form-control'
-            }),
-            'logo': forms.TextInput(attrs={
-                'placeholder': 'https://example.com/logo.png',
-                'class': 'form-control'
-            }),
-            'facility_id_uri': forms.URLInput(attrs={
-                'placeholder': 'https://:',
-                'class': 'form-control'
-            }),
-            'name': forms.TextInput(attrs={'class': 'form-control'}),
-            'responsable_person': forms.TextInput(attrs={'class': 'form-control'}),
-            'supervisor_person': forms.TextInput(attrs={'class': 'form-control'}),
-            'street_address': forms.TextInput(attrs={'class': 'form-control'}),
-            'postal_code': forms.TextInput(attrs={'class': 'form-control'}),
-            'localition': forms.TextInput(attrs={'class': 'form-control'}),
-            'region': forms.TextInput(attrs={'class': 'form-control'}),
+            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': _('e.g. Acme Corp')}),
+            'logo': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://example.com/logo.png'}),
+            'responsable_person': forms.TextInput(attrs={'class': 'form-control', 'placeholder': _('e.g. Jane Doe')}),
+            'supervisor_person': forms.TextInput(attrs={'class': 'form-control', 'placeholder': _('e.g. John Smith')}),
+
+            'facility_id_uri': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'did:web:example.com'}),
+            'facility_description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': _('Describe the primary activities...')}),
+
+            'country': forms.TextInput(attrs={'class': 'form-control', 'placeholder': _('e.g. US, ES, DE'), 'maxlength': '2'}),
+            'street_address': forms.TextInput(attrs={'class': 'form-control', 'placeholder': _('123 Main St')}),
+            'postal_code': forms.TextInput(attrs={'class': 'form-control', 'placeholder': _('10001')}),
+            'location': forms.TextInput(attrs={'class': 'form-control', 'placeholder': _('City or Locality')}), # Fixed typo here!
+            'region': forms.TextInput(attrs={'class': 'form-control', 'placeholder': _('State or Province')}),
         }
 
 

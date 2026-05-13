@@ -240,8 +240,9 @@ class UpdateLotTagOrderView(AdminView, TemplateView):
 class InstitutionView(AdminView, UpdateView):
     template_name = "institution.html"
     title = _("Edit institution")
+    breadcrumb = [(_("Admin"), reverse_lazy("admin:panel")), (_("Edit Institution"), None)]
     section = "admin"
-    subtitle = _('Edit institution')
+    subtitle = _('Edit your institution settings')
     model = Institution
     success_url = reverse_lazy('admin:panel')
     form_class = InstitutionForm
@@ -362,8 +363,7 @@ class InstitutionLabelCustomizationView(AdminView, UpdateView):
     success_url = reverse_lazy('admin:panel')
     breadcrumb = [(_("Admin"), reverse_lazy("admin:panel")), (_("Label Settings"), None)]
     title = _("Edit Label")
-    section = "admin"
-    subtitle = _('Edit Label information')
+    subtitle = _('Manage your label settings')
 
     def get_object(self, queryset=None):
         institution = self.request.user.institution
