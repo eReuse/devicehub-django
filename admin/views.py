@@ -355,12 +355,12 @@ class UpdateStateDefinitionView(AdminView, UpdateView):
         return redirect(self.get_success_url())
 
 
-class InstitutionQRCustomizationView(AdminView, UpdateView):
+class InstitutionLabelCustomizationView(AdminView, UpdateView):
     model = InstitutionSettings
     form_class = InstitutionSettingsForm
     template_name = 'institution.html'
     success_url = reverse_lazy('admin:panel')
-    breadcrumb = "Admin / Label settings"
+    breadcrumb = [(_("Admin"), reverse_lazy("admin:panel")), (_("Label Settings"), None)]
     title = _("Edit Label")
     section = "admin"
     subtitle = _('Edit Label information')
