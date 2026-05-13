@@ -1,5 +1,6 @@
 import unittest
 from unittest.mock import Mock, patch
+from types import SimpleNamespace
 from environmental_impact.algorithms.ereuse2025.ereuse2025 import (
     EReuse2025EnvironmentalImpactAlgorithm,
 )
@@ -77,6 +78,7 @@ class EReuse2025AlgorithmTests(unittest.TestCase):
             "evidence_count",
             "disk_change_count",
             "hours_in_sleep_mode",
+            "country_code",
             "carbon_intensity_factor",
             "device_type",
         }
@@ -239,6 +241,39 @@ class EReuse2025AlgorithmTests(unittest.TestCase):
             expected_co2 = (250.0 * total_energy) / 1000
             self.assertAlmostEqual(result["in_use"], expected_co2, places=4)
             self.assertEqual(result["carbon_intensity_factor"], 250.0)
+
+    @patch(
+        "environmental_impact.algorithms.common.render_algorithm_docs",
+        return_value="Algorithm Docs",
+    )
+    def test_environmental_impact_uses_institution_country(self, mock_render_docs):
+        self.device.type = Device.Types.DESKTOP
+        institution = SimpleNamespace(country="FR")
+
+        impact = self.algorithm.get_device_environmental_impact(
+            self.device, institution=institution
+        )
+
+        self.assertEqual(impact.relevant_input_data["country_code"], "FR")
+        self.assertEqual(impact.relevant_input_data["carbon_intensity_factor"], 60.0)
+        self.assertEqual(impact.kg_CO2e["carbon_intensity_factor"], 60.0)
+
+    @patch(
+        "environmental_impact.algorithms.common.render_algorithm_docs",
+        return_value="Algorithm Docs",
+    )
+    def test_environmental_impact_falls_back_to_spain_without_country(
+        self, mock_render_docs
+    ):
+        self.device.type = Device.Types.DESKTOP
+        institution = SimpleNamespace(country=None)
+
+        impact = self.algorithm.get_device_environmental_impact(
+            self.device, institution=institution
+        )
+
+        self.assertEqual(impact.relevant_input_data["country_code"], "ES")
+        self.assertEqual(impact.relevant_input_data["carbon_intensity_factor"], 250.0)
 
     @patch(
         "environmental_impact.algorithms.common.render_algorithm_docs",

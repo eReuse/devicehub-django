@@ -444,7 +444,7 @@ class LotEnvironmentalImpactView(DashboardLotMixing, TemplateView):
             )
             if devices:
                 env_impact = algorithm.get_lot_environmental_impact(
-                    devices
+                    devices, self.request.user.institution
                 )
                 # Check if there's actual impact data
                 if (env_impact and
