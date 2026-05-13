@@ -27,16 +27,19 @@
         break-inside: avoid;
         display: flex;
         flex-direction: column;
+        justify-content: center;
         gap: 5px;
+        min-height: 130px;
     }
 
     .label-top {
         display: flex;
         flex-direction: column;
-        align-items: flex-center;
+        align-items: center;
         border-bottom: 1px solid #333;
         padding-bottom: 4px;
         gap: 3px;
+        width: 100%;
     }
 
     .label-logo {
@@ -54,7 +57,12 @@
         line-height: 1.2;
         text-transform: uppercase;
         letter-spacing: 0.03em;
+        text-align: center;
         width: 100%;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
     }
 
     .label-body {
@@ -62,6 +70,11 @@
         flex-direction: row;
         align-items: center;
         gap: 7px;
+        width: 100%;
+    }
+
+    .label-body.qr-only {
+        justify-content: center;
     }
 
     .qr-col {
@@ -89,31 +102,6 @@
         display: flex;
         flex-direction: column;
         min-width: 0;
-    }
-
-    .label-logo {
-        max-height: 28px;
-        max-width: 100%;
-        width: auto;
-        height: auto;
-        object-fit: contain;
-        margin-bottom: 4px;
-        display: block;
-    }
-
-    .label-header {
-        font-weight: 700;
-        font-size: 0.75rem;
-        line-height: 1.2;
-        text-transform: uppercase;
-        letter-spacing: 0.03em;
-        border-bottom: 1px solid #333;
-        padding-bottom: 3px;
-        margin-bottom: 4px;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
     }
 
     .properties-box {
@@ -191,17 +179,24 @@
     {% for label in labels_data %}
     <div class="label-card">
 
+        {% if label.include_logo and label.logo_url or header %}
         <div class="label-top">
             {% if label.include_logo and label.logo_url %}
                 <img class="label-logo" src="{{ label.logo_url }}" alt="Logo">
             {% endif %}
-            <div class="label-header">{{ header }}</div>
-        </div>
 
-        <div class="label-body">
+            {% if header %}
+                <div class="label-header">{{ header }}</div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <div class="label-body {% if not label.properties %}qr-only{% endif %}">
             <div class="qr-col">
                 <div class="qr-box qrcode-element" data-payload="{{ label.payload }}"></div>
             </div>
+
+            {% if label.properties %}
             <div class="info-col">
                 <div class="properties-box">
                     {% for prop in label.properties %}
@@ -211,6 +206,7 @@
                     {% endfor %}
                 </div>
             </div>
+            {% endif %}
         </div>
 
     </div>
