@@ -9,7 +9,8 @@ from lot.models import Lot, LotTag
 class PublicDeviceWebViewTests(TestCase):
     def setUp(self):
         self.institution = Institution.objects.create(
-            name="Test Institution"
+            name="Test Institution",
+            country="ES",
         )
         i = self.institution
         for x in ["ereuse24:a1", "ereuse24:a2", "ereuse24:a3", "ereuse24:b1",
