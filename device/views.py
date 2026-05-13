@@ -137,7 +137,8 @@ class DetailsView(DashboardView, TemplateView ):
         try:
             enviromental_impact_algorithm = FactoryEnvironmentImpactAlgorithm.run_environmental_impact_calculation()
             enviromental_impact = enviromental_impact_algorithm.get_device_environmental_impact(
-            self.object)
+                self.object, self.request.user.institution
+            )
             # If total usage time is 0, treat as unavailable data
             if (enviromental_impact and
                     enviromental_impact.relevant_input_data.get(
