@@ -4,6 +4,9 @@ from types import SimpleNamespace
 from environmental_impact.algorithms.ereuse2025.ereuse2025 import (
     EReuse2025EnvironmentalImpactAlgorithm,
 )
+from environmental_impact.algorithms.ereuse2025.carbon_intensity import (
+    get_carbon_intensity_data,
+)
 from environmental_impact.algorithms.common import get_poh_from_device
 from device.models import Device
 from environmental_impact.models import EnvironmentalImpact
@@ -230,8 +233,8 @@ class EReuse2025AlgorithmTests(unittest.TestCase):
         # Mock to return specific carbon intensity
         with patch(
             "environmental_impact.algorithms.ereuse2025.carbon_intensity."
-            "carbon_intensity.get_carbon_intensity_factor_from",
-            return_value=250.0,
+            "carbon_intensity.resolve_carbon_intensity_factor",
+            return_value=(250.0, None),
         ), patch(
             "environmental_impact.algorithms.common.get_poh_from_device",
             return_value=power_on_hours,
@@ -255,8 +258,9 @@ class EReuse2025AlgorithmTests(unittest.TestCase):
         )
 
         self.assertEqual(impact.relevant_input_data["country_code"], "FR")
-        self.assertEqual(impact.relevant_input_data["carbon_intensity_factor"], 60.0)
-        self.assertEqual(impact.kg_CO2e["carbon_intensity_factor"], 60.0)
+        self.assertEqual(impact.relevant_input_data["carbon_intensity_factor"], 44.179)
+        self.assertEqual(impact.kg_CO2e["carbon_intensity_factor"], 44.179)
+        self.assertNotIn("warnings", impact.relevant_input_data)
 
     @patch(
         "environmental_impact.algorithms.common.render_algorithm_docs",
@@ -273,7 +277,31 @@ class EReuse2025AlgorithmTests(unittest.TestCase):
         )
 
         self.assertEqual(impact.relevant_input_data["country_code"], "ES")
-        self.assertEqual(impact.relevant_input_data["carbon_intensity_factor"], 250.0)
+        self.assertEqual(impact.relevant_input_data["carbon_intensity_factor"], 146.154)
+
+    @patch(
+        "environmental_impact.algorithms.common.render_algorithm_docs",
+        return_value="Algorithm Docs",
+    )
+    def test_environmental_impact_warns_for_unknown_country(self, mock_render_docs):
+        self.device.type = Device.Types.DESKTOP
+        institution = SimpleNamespace(country="NAH")
+
+        impact = self.algorithm.get_device_environmental_impact(
+            self.device, institution=institution
+        )
+
+        self.assertEqual(impact.relevant_input_data["country_code"], "NAH")
+        self.assertEqual(impact.relevant_input_data["carbon_intensity_factor"], 146.154)
+        self.assertEqual(
+            impact.relevant_input_data["warnings"],
+            ["Unknown country code 'NAH'. Using ES carbon intensity fallback."],
+        )
+
+    def test_carbon_intensity_data_contains_namibia(self):
+        carbon_data = get_carbon_intensity_data()
+        self.assertIn("NA", carbon_data)
+        self.assertEqual(carbon_data["NA"], 47.619)
 
     @patch(
         "environmental_impact.algorithms.common.render_algorithm_docs",
