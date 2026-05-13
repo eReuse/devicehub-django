@@ -146,14 +146,14 @@ Different device types have specific power consumption profiles:
 
 ## Limitations
 
-- **Geographic Scope**: Carbon intensity currently fixed to Spain
+- **Geographic Scope**: Carbon intensity uses latest serialized OWID country data and falls back to Spain for unknown country codes
 - **Device Coverage**: Requires modern evidence with inxi data
 - **Usage Patterns**: Assumes standard active/sleep ratios
 - **Power Models**: Uses simplified power consumption estimates
 
 ## Future Enhancements
 
-- Dynamic carbon intensity based on device location
+- Dynamic carbon intensity based on per-evidence device location
 - More granular device-specific power profiles
 - Integration with real-time energy grid data
 - Support for additional lifecycle phases (manufacturing, disposal)
