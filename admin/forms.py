@@ -8,7 +8,7 @@ class OrderingStateForm(forms.Form):
     ordering = forms.CharField()
 
 AVAILABLE_PROPERTIES = [
-    ('shortid', _('Short ID')),
+    ('ID', _('Short ID')),
     ('manufacturer', _('Manufacturer')),
     ('model', _('Model')),
     ('serial', _('Serial Number')),
@@ -33,7 +33,6 @@ class InstitutionForm(forms.ModelForm):
             'logo': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://example.com/logo.png'}),
             'responsable_person': forms.TextInput(attrs={'class': 'form-control', 'placeholder': _('e.g. Jane Doe')}),
             'supervisor_person': forms.TextInput(attrs={'class': 'form-control', 'placeholder': _('e.g. John Smith')}),
-
             'facility_id_uri': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'did:web:example.com'}),
             'facility_description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': _('Describe the primary activities...')}),
 
