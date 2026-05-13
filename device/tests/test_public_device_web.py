@@ -13,7 +13,8 @@ class PublicDeviceWebViewTests(TestCase):
         self.test_url = reverse('device:device_web',
                                 kwargs={'pk': self.test_id})
         self.institution = Institution.objects.create(
-            name="Test Institution"
+            name="Test Institution",
+            country="ES",
         )
         self.user = User.objects.create_user(
             email='test@example.com',
