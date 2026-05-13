@@ -28,13 +28,13 @@
     <div class="card h-100 shadow-sm border-0">
       <div class="card-body d-flex flex-column">
         <h5 class="card-title mb-3">
-          <i class="bi bi-sliders me-2"></i>{% translate "Label Settings" %}
+          <i class="bi bi-tag me-2"></i>{% translate "Label Settings" %}
         </h5>
         <p class="card-text flex-grow-1">
           {% translate "Manage your devices label generation settings." %}
         </p>
         <div class="text-end">
-          <a href="{% url 'admin:settings_qr_labels' user.institution.pk %}" class="btn btn-outline-dark btn-sm d-inline-flex align-items-center">
+          <a href="{% url 'admin:label_settings' user.institution.pk %}" class="btn btn-outline-dark btn-sm d-inline-flex align-items-center">
             <span class="me-2">{% translate 'Edit' %}</span>
             <i class="bi bi-arrow-right"></i>
           </a>
