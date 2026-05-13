@@ -18,6 +18,7 @@ class Institution(models.Model):
     )
     logo = models.CharField(_("Logo"), max_length=255, blank=True, null=True)
     location = models.CharField(_("Location"), max_length=255, blank=True, null=True)
+    country = models.CharField(_("Country"), max_length=2, blank=True, null=True)
     responsable_person = models.CharField(
         _("Responsable"),
         max_length=255,

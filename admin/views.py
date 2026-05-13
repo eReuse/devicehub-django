@@ -248,6 +248,7 @@ class InstitutionView(AdminView, UpdateView):
         "name",
         "logo",
         "location",
+        "country",
         "responsable_person",
         "supervisor_person",
         "algorithm"

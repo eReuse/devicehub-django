@@ -9,7 +9,8 @@ from evidence.models import SystemProperty, RootAlias
 class PublicDeviceWebViewTests(TestCase):
     def setUp(self):
         self.institution = Institution.objects.create(
-            name="Test Institution"
+            name="Test Institution",
+            country="ES",
         )
         i = self.institution
         for x in ["a1", "a2", "a3", "b1", "b3", "c1", "d1", "d2"]:
