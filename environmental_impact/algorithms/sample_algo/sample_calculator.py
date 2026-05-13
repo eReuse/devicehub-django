@@ -1,4 +1,8 @@
+from __future__ import annotations
+
 import os
+from typing import TYPE_CHECKING
+
 from device.models import Device
 from ..algorithm_interface import EnvironmentImpactAlgorithm
 from environmental_impact.models import EnvironmentalImpact
@@ -9,6 +13,9 @@ from ..common import (
     compute_co2_emissions,
 )
 
+if TYPE_CHECKING:
+    from user.models import Institution
+
 
 class SampleEnvironmentalImpactAlgorithm(EnvironmentImpactAlgorithm):
 
@@ -17,7 +24,9 @@ class SampleEnvironmentalImpactAlgorithm(EnvironmentImpactAlgorithm):
         "CO2_PER_KWH": 0.233,
     }
 
-    def get_device_environmental_impact(self, device: Device) -> EnvironmentalImpact:
+    def get_device_environmental_impact(
+        self, device: Device, institution: Institution | None = None
+    ) -> EnvironmentalImpact:
         env_impact = EnvironmentalImpact()
         env_impact.constants = self.algorithm_constants
         co2_emissions_in_use = self.compute_co2_emissions_while_in_use(device)
@@ -39,13 +48,13 @@ class SampleEnvironmentalImpactAlgorithm(EnvironmentImpactAlgorithm):
         return {"in_use": co2_consumption_in_use}
 
     def get_lot_environmental_impact(
-        self, devices: list[Device]
+        self, devices: list[Device], institution: Institution | None = None
     ) -> EnvironmentalImpact:
         env_impact = EnvironmentalImpact()
         env_impact.constants = self.algorithm_constants
         total_kg_CO2e = {"in_use": 0.0}
         for device in devices:
-            device_env_impact = self.get_device_environmental_impact(device)
+            device_env_impact = self.get_device_environmental_impact(device, institution)
             total_kg_CO2e["in_use"] += device_env_impact.kg_CO2e.get(
                 "in_use", 0.0
             )
@@ -54,5 +63,3 @@ class SampleEnvironmentalImpactAlgorithm(EnvironmentImpactAlgorithm):
             "docs.md", os.path.dirname(__file__)
         )
         return env_impact
-
-
