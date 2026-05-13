@@ -34,6 +34,20 @@
   {% include 'tabs.html' %}
 
   {% if impact %}
+    {% if impact.relevant_input_data.warnings %}
+      <div class="row mt-4">
+        <div class="col">
+          <div class="alert alert-warning" role="alert">
+            <h6><i class="bi bi-exclamation-triangle"></i> {% trans 'Environmental Impact Warnings' %}</h6>
+            <ul class="mb-0">
+              {% for warning in impact.relevant_input_data.warnings %}
+                <li>{{ warning }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+      </div>
+    {% endif %}
     <div class="row mt-4">
       <div class="col">
         <!-- Main CO2 Summary -->
