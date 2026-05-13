@@ -8,6 +8,7 @@ class OrderingStateForm(forms.Form):
     ordering = forms.CharField()
 
 AVAILABLE_PROPERTIES = [
+    ('shortid', _('Short ID')),
     ('manufacturer', _('Manufacturer')),
     ('model', _('Model')),
     ('serial', _('Serial Number')),
@@ -60,6 +61,11 @@ class InstitutionSettingsForm(forms.ModelForm):
             'qr_include_logo',
             'qr_printed_properties'
         ]
+        widgets = {
+            'qr_content_type': forms.RadioSelect,
+            'qr_include_logo': forms.CheckboxInput(attrs={'class': 'form-check-input', 'role': 'switch'}),
+            'qr_label_header': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Property of {institution}'}),
+        }
 
     def clean_qr_printed_properties(self):
         return self.cleaned_data.get('qr_printed_properties', [])

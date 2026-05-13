@@ -529,7 +529,7 @@ class Device:
 
         return hardware_info
 
-    def get_qr_label_data(self, request, settings=None):
+    def get_label_data(self, request, settings=None):
         if not settings:
             settings, created= InstitutionSettings.objects.get_or_create(institution=self.owner)
 
@@ -558,11 +558,11 @@ class Device:
         export_data = self.components_export()
         properties = []
 
-        properties.append({'name': _("Short ID"), 'value': self.shortid})
+        if 'shortid' in settings.qr_printed_properties:
+            properties.append({'name': _("Short ID"), 'value': self.shortid})
 
         for prop in settings.qr_printed_properties:
             val = export_data.get(prop, _('N/A'))
-
             name = TRANSLATED_PROPERTIES.get(prop, prop.replace('_', ' ').title())
 
             properties.append({'name': name, 'value': val})

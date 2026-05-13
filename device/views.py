@@ -398,7 +398,7 @@ class DeviceBulkLabelView(DashboardView, ListView):
 
             labels_data = []
             for device in self.object_list:
-                labels_data.append(device.get_qr_label_data(self.request, settings=settings))
+                labels_data.append(device.get_label_data(self.request, settings=settings))
 
             context['labels_data'] = labels_data
             context['header'] = settings.qr_label_header
