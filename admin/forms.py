@@ -50,6 +50,7 @@ class InstitutionSettingsForm(forms.ModelForm):
         widget=forms.CheckboxSelectMultiple,
         required=False,
         label=_("Properties to Print")
+    )
     schema_config_json = forms.CharField(
         label=_("Schema Configuration (JSON)"),
         widget=forms.Textarea(attrs={
@@ -82,9 +83,6 @@ class InstitutionSettingsForm(forms.ModelForm):
 
     def clean_qr_printed_properties(self):
         return self.cleaned_data.get('qr_printed_properties', [])
-        # If the instance exists and has config, load it into the text field
-        if self.instance and self.instance.pk and self.instance.schema_config:
-            self.fields['schema_config_json'].initial = json.dumps(self.instance.schema_config, indent=2)
 
     def clean_schema_config_json(self):
         """Validate that the text input is actually valid JSON"""

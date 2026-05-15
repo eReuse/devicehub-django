@@ -53,11 +53,7 @@ class Institution(models.Model):
         blank=True,
         null=True,
         validators=[URLValidator(schemes=['http', 'https', 'did'])],
-<<<<<<< HEAD
         help_text=_("Globally unique URI for this facility (e.g., did:web:example.com).")
-=======
-        help_text=_("Globally unique URI for this facility (e.g., did:web:...)")
->>>>>>> 0c6ecef2 (updated institution model and added config)
     )
     facility_description = models.TextField(
         _("Facility Description"),
@@ -73,7 +69,6 @@ class Institution(models.Model):
         validators=[RegexValidator(r'^[A-Z]{2}$', _("Must be a 2-letter uppercase ISO code (e.g. AU, DE)"))],
         help_text=_("ISO 3166-1 alpha-2 code (e.g., AU, US, DE).")
     )
-<<<<<<< HEAD
 
     street_address = models.CharField(
         _("Street Address"),
@@ -104,8 +99,6 @@ class Institution(models.Model):
         help_text=_("The state, province, or geographic region.")
     )
 
-=======
->>>>>>> 0c6ecef2 (updated institution model and added config)
     algorithm = models.CharField(
         _("Algorithm"),
         max_length=30,
@@ -114,25 +107,8 @@ class Institution(models.Model):
         help_text=_("The default algorithm used for device aggregation."),
     )
 
-<<<<<<< HEAD
-<<<<<<< HEAD
     def __str__(self):
         return self.name
-=======
-=======
-    facility_id_uri = models.URLField(
-        _("Facility ID (URI)"),
-        max_length=500,
-        blank=True, null=True,
-        validators=[URLValidator(schemes=['http', 'https', 'did'])],
-        help_text=_("Globally unique URI.")
-    )
-
->>>>>>> c9d78b20 (dismantling, did qr,)
-    street_address = models.CharField(_("Street Address"), max_length=255, blank=True, null=True)
-    postal_code = models.CharField(_("Postal Code"), max_length=20, blank=True, null=True)
-    location = models.CharField(_("City/Locality"), max_length=100, blank=True, null=True)
-    region = models.CharField(_("State/Region"), max_length=100, blank=True, null=True)
 
     @property
     def latest_facility_credential(self):
@@ -144,23 +120,14 @@ class Institution(models.Model):
     def __str__(self):
         return self.name
 
->>>>>>> 0c6ecef2 (updated institution model and added config)
 
 class InstitutionSettings(models.Model):
     institution = models.OneToOneField(
         Institution,
         on_delete=models.CASCADE,
-<<<<<<< HEAD
-        related_name='settings',
-<<<<<<< HEAD
         verbose_name=_("Institution"),
-        help_text=_("The institution these settings belong to.")
-=======
-        verbose_name=_("Institution")
->>>>>>> 0c6ecef2 (updated institution model and added config)
-=======
+        help_text=_("The institution these settings belong to."),
         related_name='settings'
->>>>>>> c9d78b20 (dismantling, did qr,)
     )
 
     # --- QR Settings ---
@@ -190,10 +157,6 @@ class InstitutionSettings(models.Model):
         help_text=_("Text printed at the top of the label.")
     )
 
-<<<<<<< HEAD
-    def __str__(self):
-        return f"Settings for {self.institution.name}"
-=======
     # --- IDHub  Settings ---
     api_base_url = models.URLField(
         _("Signing Service Base URL"),
@@ -228,14 +191,6 @@ class InstitutionSettings(models.Model):
         help_text=_("Map 'credential_type' (keys) to 'schema_filename' (values).")
     )
 
-    algorithm = models.CharField(
-        _("Algorithm"),
-        max_length=30,
-        default='ereuse24',
-        help_text=_("The default algorithm used for device aggregation."),
-        choices=ALGORITHMS,
-    )
-
     def get_service_url(self, endpoint: str) -> str:
         base = self.api_base_url.rstrip('/')
         path = endpoint.lstrip('/')
@@ -247,7 +202,6 @@ class InstitutionSettings(models.Model):
     def __str__(self):
         return f"Config: {self.institution.name} ({self.api_base_url})"
 
->>>>>>> 0c6ecef2 (updated institution model and added config)
 
 class UserManager(BaseUserManager):
     def create_user(self, email, institution, password=None, commit=True):
