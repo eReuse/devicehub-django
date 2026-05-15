@@ -48,9 +48,9 @@ class Institution(models.Model):
         null=True,
         help_text=_("The primary person responsible for the operations at this facility.")
     )
-    country = models.CharField(
-        _("Country of Operation"),
-        max_length=2,
+    supervisor_person = models.CharField(
+        _("Supervisor"),
+        max_length=255,
         blank=True,
         null=True,
         help_text=_("The person supervising this facility or organization.")
@@ -115,9 +115,6 @@ class Institution(models.Model):
         choices=ALGORITHMS,
         help_text=_("The default algorithm used for device aggregation."),
     )
-
-    def __str__(self):
-        return self.name
 
     @property
     def latest_facility_credential(self):
@@ -207,6 +204,9 @@ class InstitutionSettings(models.Model):
     # --- IDHub  Settings ---
     api_base_url = models.URLField(
         _("Signing Service Base URL"),
+        max_length=1024,
+        blank=True,
+        null=True,
         help_text=_("The root URL of the IdHub instance (e.g., https://idhub.example.com/api/v1/)")
     )
 

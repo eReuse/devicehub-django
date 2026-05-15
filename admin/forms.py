@@ -45,13 +45,33 @@ class InstitutionForm(forms.ModelForm):
         }
 
 
-class InstitutionSettingsForm(forms.ModelForm):
+class InstitutionLabelSettingsForm(forms.ModelForm):
     qr_printed_properties = forms.MultipleChoiceField(
         choices=AVAILABLE_PROPERTIES,
         widget=forms.CheckboxSelectMultiple,
         required=False,
         label=_("Properties to Print")
     )
+
+    class Meta:
+        model = InstitutionSettings
+        fields = [
+            'qr_content_type',
+            'qr_label_header',
+            'qr_include_logo',
+            'qr_printed_properties',
+        ]
+        widgets = {
+            'qr_content_type': forms.RadioSelect,
+            'qr_include_logo': forms.CheckboxInput(attrs={'class': 'form-check-input', 'role': 'switch'}),
+            'qr_label_header': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Property of...'}),
+        }
+
+    def clean_qr_printed_properties(self):
+        return self.cleaned_data.get('qr_printed_properties', [])
+
+
+class InstitutionApiSettingsForm(forms.ModelForm):
     schema_config_json = forms.CharField(
         label=_("Schema Configuration (JSON)"),
         widget=forms.Textarea(attrs={
@@ -81,11 +101,10 @@ class InstitutionSettingsForm(forms.ModelForm):
             'signing_auth_token',
             'device_dpp_schema',
             'untp_drf_schema'
-            'algorithm',
             'issuer_did',
             'api_base_url',
             'signing_auth_token',
-            # 'schema_config' is handled by schema_config_json
+            # 'schema_config' is handled manually via the schema_config_json field
         ]
         widgets = {
             'qr_content_type': forms.RadioSelect,
@@ -96,13 +115,12 @@ class InstitutionSettingsForm(forms.ModelForm):
             'qr_width_mm': forms.NumberInput(attrs={'class': 'form-control', 'min': '20', 'max': '200'}),
             'qr_height_mm': forms.NumberInput(attrs={'class': 'form-control', 'min': '20', 'max': '200'}),
             'qr_font_size': forms.NumberInput(attrs={'class': 'form-control', 'min': '4', 'max': '24'}),
+            'signing_auth_token': forms.PasswordInput(render_value=True, attrs={'class': 'form-control'}),
+            'issuer_did': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'did:web:example.com'}),
+            'api_base_url': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://api.example.com'}),
         }
 
-    def clean_qr_printed_properties(self):
-        return self.cleaned_data.get('qr_printed_properties', [])
-
     def clean_schema_config_json(self):
-        """Validate that the text input is actually valid JSON"""
         data = self.cleaned_data.get('schema_config_json')
         if not data:
             return {}
@@ -115,8 +133,9 @@ class InstitutionSettingsForm(forms.ModelForm):
             raise forms.ValidationError(_("Invalid JSON format. Please check syntax."))
 
     def save(self, commit=True):
-        instance = super(InstitutionSettingsForm, self).save(commit=False)
-        instance.schema_config = self.cleaned_data['schema_config_json']
+        instance = super().save(commit=False)
+
+        instance.schema_config = self.cleaned_data.get('schema_config_json', {})
         if commit:
             instance.save()
         return instance
