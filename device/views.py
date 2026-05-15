@@ -237,7 +237,7 @@ class DetailsView(DashboardView, TemplateView ):
             "device_states": device_states,
             "device_logs": device_logs,
             "device_notes": device_notes,
-            "table": evidence_table
+            "table": evidence_table,
             "credential_table": credential_table,
         })
         return context

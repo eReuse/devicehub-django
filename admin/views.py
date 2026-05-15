@@ -435,7 +435,7 @@ class IssueDigitalFacilityRecordView(AdminView, View):
             "type": ["Address"],
             "streetAddress": institution.street_address,
             "postalCode": institution.postal_code,
-            "addressLocality": institution.locality,
+            "addressLocality": institution.location,
             "addressRegion": institution.region,
             "addressCountry": institution.country
         }
