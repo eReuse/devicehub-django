@@ -15,7 +15,7 @@ from django.views.generic.edit import (
 from openlocationcode import openlocationcode as olc
 from django.db import IntegrityError,   transaction
 from dashboard.mixins import DashboardView, Http403
-from admin.forms import OrderingStateForm, InstitutionSettingsForm, InstitutionForm
+from admin.forms import OrderingStateForm, InstitutionApiSettingsForm, InstitutionLabelSettingsForm, InstitutionForm
 from user.models import User, Institution, InstitutionSettings
 from admin.email import NotifyActivateUserByEmail
 from admin.tables import UserTable
@@ -263,7 +263,7 @@ class InstitutionView(AdminView, UpdateView):
 class InstitutionConfigView( AdminView, UpdateView):
     template_name = "institution.html"
     model = InstitutionSettings
-    form_class = InstitutionSettingsForm
+    form_class = InstitutionApiSettingsForm
     title = _("Configuration & Signing")
     subtitle = _("Manage technical settings and signing credentials")
     success_url = reverse_lazy('admin:panel')
@@ -383,7 +383,7 @@ class UpdateStateDefinitionView(AdminView, UpdateView):
 
 class InstitutionLabelCustomizationView(AdminView, UpdateView):
     model = InstitutionSettings
-    form_class = InstitutionSettingsForm
+    form_class = InstitutionLabelSettingsForm
     template_name = 'institution.html'
     success_url = reverse_lazy('admin:panel')
     breadcrumb = [(_("Admin"), reverse_lazy("admin:panel")), (_("Label Settings"), None)]
