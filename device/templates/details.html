@@ -82,6 +82,11 @@
           <a href="#dpps" class="nav-link" data-bs-toggle="tab" data-bs-target="#dpps">{% trans 'Dpps' %}</a>
         </li>
     {% endif %}
+    {% if device_beneficiary and is_shop %}
+        <li class="nav-item">
+          <a href="#beneficiary" class="nav-link" data-bs-toggle="tab" data-bs-target="#beneficiary">{% trans 'Beneficiary' %}</a>
+        </li>
+    {% endif %}
         <li class="nav-item">
           <a class="nav-link" href="{% url 'device:device_web' object.web_pk %}" target="_blank">Web</a>
         </li>
@@ -111,6 +116,8 @@
   {% include 'tabs/dpps.html' %}
 
   {% include 'tabs/environmental_impact.html' %}
+
+  {% include 'tabs/beneficiary.html' %}
 
   <!-- Add a note popup -->
   <div class="modal fade" id="addNoteModal" tabindex="-1" aria-labelledby="addNoteModalLabel" aria-hidden="true">

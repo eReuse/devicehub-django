@@ -8,6 +8,7 @@ from django.urls import reverse_lazy, resolve
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect, Http404
 from django.utils.translation import gettext_lazy as _
+from django.forms import modelformset_factory, Select
 from django.views.generic.edit import (
     CreateView,
     UpdateView,
@@ -19,7 +20,7 @@ from action.models import StateDefinition, State, DeviceLog, Note
 from dashboard.mixins import DashboardView, Http403
 from environmental_impact.algorithms.algorithm_factory import FactoryEnvironmentImpactAlgorithm
 from evidence.models import UserProperty, SystemProperty, Evidence, RootAlias
-from lot.models import LotTag
+from lot.models import LotTag, LotSubscription, DeviceBeneficiary
 from device.models import Device
 from device.forms import DeviceFormSet
 from evidence.models import SystemProperty, RootAlias
@@ -123,6 +124,28 @@ class DetailsView(DashboardView, TemplateView ):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         self.object.initial()
+
+        device_id = self.pk
+        if self.pk.startswith("custom_id:"):
+            ra = RootAlias.objects.filter(
+                root=self.pk, owner=self.request.user.institution
+            ).order_by("-created").first()
+            if ra:
+                device_id = ra.alias
+
+        shop_subscriptions = LotSubscription.objects.filter(
+            lot__in=self.object.lots,
+            user=self.request.user,
+            type=LotSubscription.Type.SHOP,
+        )
+        device_beneficiary = None
+        if shop_subscriptions.exists():
+            shop_lot_ids = shop_subscriptions.values_list("lot_id", flat=True)
+            device_beneficiary = DeviceBeneficiary.objects.filter(
+                device_id=device_id,
+                beneficiary__lot_id__in=shop_lot_ids,
+            ).select_related("beneficiary__lot").first()
+
         lot_tags = LotTag.objects.filter(owner=self.request.user.institution)
         dpps = []
         if settings.DPP:
@@ -172,9 +195,33 @@ class DetailsView(DashboardView, TemplateView ):
             "device_states": device_states,
             "device_logs": device_logs,
             "device_notes": device_notes,
-            "table": evidence_table
+            "table": evidence_table,
+            "device_beneficiary": device_beneficiary,
+            "is_shop": shop_subscriptions.first(),
+            "form": self._build_beneficiary_formset(device_beneficiary),
+            "lot": device_beneficiary.beneficiary.lot if device_beneficiary else None,
+            "beneficiary": device_beneficiary.beneficiary if device_beneficiary else None,
         })
         return context
+
+    def _build_beneficiary_formset(self, device_beneficiary):
+        if not device_beneficiary:
+            return None
+        FormSet = modelformset_factory(
+            DeviceBeneficiary,
+            fields=["status"],
+            widgets={"status": Select(attrs={"class": "form-select"})},
+            labels={"status": ""},
+            extra=0,
+        )
+        formset = FormSet(
+            queryset=DeviceBeneficiary.objects.filter(pk=device_beneficiary.pk)
+        )
+        for f in formset:
+            f.device = Device(id=f.instance.device_id, owner=self.request.user.institution)
+            f.fields['status'].choices = f.fields['status'].choices[1:]
+        return formset
+
 
 
 class PublicDeviceWebView(TemplateView):

@@ -1117,6 +1117,9 @@ class ListDevicesBeneficiaryView(DashboardLotMixing, BeneficiaryEmail, FormView)
                 for c in self.get_subscriptors():
                     self.send_email(c.user)
 
+        next_url = self.request.POST.get('next', '')
+        if next_url.startswith('/') and not next_url.startswith('//'):
+            return redirect(next_url)
         return response
 
 
@@ -1146,6 +1149,9 @@ class DelDeviceBeneficiaryView(DashboardView, TemplateView):
             # TODO
             # self.send_email()
 
+        next_url = self.request.GET.get('next', '')
+        if next_url.startswith('/') and not next_url.startswith('//'):
+            return redirect(next_url)
         return redirect(self.success_url)
 
 
