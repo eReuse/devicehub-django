@@ -14,7 +14,8 @@ class QRContentType(models.TextChoices):
     DEVICE_ID = 'INTERNAL', _("Internal Product ID")
     DEVICE_INVENTORY = 'INVENTORY', _("Product inventory URL")
     PUBLIC_VIEW = 'PUBLIC', _("Public Product View")
-    #DPP_VIEW = 'DPP', _("DPP view else ")
+    DPP_URL = 'DPP', _("DPP URL (DPP or Inventory)")
+    DID = 'DID', _("DID (Fallback to Short ID)")
 
 class LabelVersion(models.TextChoices):
     V1 = 'V1', _("Version 1 (Classic)")
