@@ -103,7 +103,9 @@
           <th scope="col">{% trans 'Accepted terms' %}</th>
           <th scope="col">{% trans 'Devices' %}</th>
           <th scope="col"></th>
+            {% if devices_to_assign or devices_already_assigned %}
           <th scope="col"></th>
+            {% endif %}
           <th scope="col"></th>
         </tr>
       </thead>
@@ -120,8 +122,6 @@
 	    <i class="bi bi-shield-slash text-danger"></i>
 	    {% endif %}
 	  </td>
-
-
             <td class="font-monospace">
                 <a href="{% url 'lot:devices_beneficiary' lot.id s.id %}">{% trans 'Devices' %}</a>{% if s.device_count %}<span class="badge bg-primary ms-1">{{ s.device_count }}</span>{% endif %}
             </td>
@@ -130,16 +130,18 @@
                     {% trans 'web' %}
                 </a>
             </td>
+            {% if devices_to_assign or devices_already_assigned %}
             <td class="font-monospace">
             <a href="{% url 'lot:add_device_beneficiary' lot.id s.id %}" type="button" class="btn btn-sm btn-outline-primary align-items-center">
               <i class="bi bi-plus-circle me-1"></i>
               {% trans 'Assign' %}
             </a>
-	  </td>
+	    </td>
+            {% endif %}
           <td class="font-monospace">
             <button type="button" class="btn btn-sm btn-outline-danger d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#deleteModal{{ s.id }}">
               <i class="bi bi-trash me-1"></i>
-              {% trans 'Deallocate' %}
+              {% trans 'Remove' %}
             </button>
 	  </td>
         </tr>
