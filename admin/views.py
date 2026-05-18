@@ -271,7 +271,7 @@ class StateDefinitionContextMixin(ContextMixin):
 
 class StatesPanelView(AdminView, StateDefinitionContextMixin, TemplateView):
     template_name = "states_panel.html"
-    title = _("States Panel")
+    title = _("Device States Panel")
     breadcrumb = [(_("Admin"), reverse_lazy("admin:panel")), (_("States"), None)]
 
 

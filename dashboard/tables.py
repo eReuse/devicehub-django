@@ -37,7 +37,7 @@ class DeviceTable(tables.Table):
     )
     current_state = tables.Column(
         accessor='current_state',
-        verbose_name=_("Current State"),
+        verbose_name=_("Device state"),
         attrs={
             'th': {'class': 'text-center'},
             'td': {'class': 'text-muted text-center'}
@@ -79,7 +79,7 @@ class DeviceTable(tables.Table):
     )
     status_beneficiary = tables.Column(
         accessor='status_beneficiary',
-        verbose_name=_("Status"),
+        verbose_name=_("Shop status"),
         attrs={
             'th': {'class': 'text-center'},
             'td': {'class': 'text-center'}
@@ -89,7 +89,7 @@ class DeviceTable(tables.Table):
     last_updated = tables.DateTimeColumn(
         format="Y-m-d H:i",
         accessor='last_updated',
-        verbose_name=_("Evidence last updated"),
+        verbose_name=_("Last updated"),
         attrs={
             'td': {'class': 'text-center'},
             'th': {

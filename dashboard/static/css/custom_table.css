@@ -9,6 +9,7 @@
 .custom_table thead th {
     border: none;
     padding: 1rem 1rem;
+    white-space: nowrap;
 }
 
 .custom_table tbody td {
