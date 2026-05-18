@@ -12,7 +12,8 @@ class QRContentType(models.TextChoices):
     DEVICE_ID = 'INTERNAL', _("Internal Device ID")
     DEVICE_INVENTORY = 'INVENTORY', _("Device inventory URL")
     PUBLIC_VIEW = 'PUBLIC', _("Public Device View")
-    #DPP_VIEW = 'DPP', _("DPP view else ")
+    DPP_URL = 'DPP', _("DPP URL (DPP or Inventory)")
+    DID = 'DID', _("DID (Fallback to Short ID)")
 
 def default_printed_properties():
     return ["shortid"]

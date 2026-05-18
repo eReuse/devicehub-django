@@ -76,7 +76,7 @@ class InstitutionApiSettingsForm(forms.ModelForm):
         widget=forms.Textarea(attrs={
             'rows': 5,
             'class': 'form-control font-monospace',
-            'placeholder': '{"dpp": "dpp_v1.json", "traceability": "trace_v1.json"}'
+            'placeholder': '{"dpp": "dpp_v1.json", "traceability": "trace_v1.json",  "facility": "facility_record_v2.json" }'
         }),
         help_text=_("Map credential types to schema filenames. Must be valid JSON."),
         required=False

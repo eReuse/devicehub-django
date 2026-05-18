@@ -7,6 +7,7 @@ urlpatterns = [
     path("add/", views.NewDeviceView.as_view(), name="add"),
     path("edit/<str:pk>/", views.EditDeviceView.as_view(), name="edit"),
     path("<str:pk>/", views.DetailsView.as_view(), name="details"),
+    path("<str:pk>/dpp/", views.DeviceDPPView.as_view(), name="dpp"),
     path("<str:pk>/user_property/add",
          views.AddUserPropertyView.as_view(), name="add_user_property"),
     path("<str:device_id>/user_property/<int:pk>/delete",
@@ -17,5 +18,4 @@ urlpatterns = [
     path("<str:device_id>/issue-dpp/", views.IssueDigitalPassportView.as_view(), name="issue_dpp"),
     path('<str:pk>/label/print', views.DeviceBulkLabelView.as_view(), name='single_label'),
     path('labels/print', views.DeviceBulkLabelView.as_view(), name='bulk_labels'),
-    path("<str:device_id>/complete-dpp/", views.DeviceFullDPPView.as_view(), name="full_dpp"),
 ]

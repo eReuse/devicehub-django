@@ -21,6 +21,6 @@ tablib[xlsx]==3.8.0
 psycopg2-binary==2.9.10
 gunicorn==21.2.0
 qrcode[pil]==8.2
-pyvckit
+git+https://github.com/ereuse/pyvckit.git@path_level_did_resolver
 pyroaring==0.4.5
 openlocationcode

@@ -659,100 +659,62 @@ class IssueDigitalPassportView(DeviceLogMixin, View):
         return traceability_information
 
 
-class DeviceFullDPPView(DashboardView, TemplateView):
-    template_name = "device_dpp.html"
+class DeviceDPPView(TemplateView):
+    template_name = "dpp_credential.html"
 
     def get(self, request, *args, **kwargs):
-        self.pk = kwargs.get('device_id')
+        self.pk = kwargs.get('pk')
+
+        root = RootAlias.objects.filter(alias=self.pk).first()
+        if root:
+            return redirect(request.resolver_match.view_name, pk=root.root)
+
         try:
-            self.device = Device(id=self.pk, owner=self.request.user.institution)
+            self.device = Device(id=self.pk)
+            self.device.initial()
         except Exception:
-            raise Http404("Device not found")
+            raise Http404(_("Device not found."))
 
         if not self.device.last_evidence:
-            raise Http404("No evidence found for this device.")
-        if self.device.owner != self.request.user.institution:
-            raise Http403("You do not have permission to view this device.")
+            raise Http404(_("No evidence found for this device."))
+
+        self.latest_dpp_cred = CredentialProperty.objects.filter(
+            uuid__in=self.device.uuids,
+            key='DigitalProductPassport'
+        ).order_by('-created').first()
+
+        if not self.latest_dpp_cred:
+            messages.info(
+                request,
+                _("A Digital Product Passport (DPP) has not been generated for this device yet.")
+            )
+            return redirect(reverse_lazy('device:details', args=[self.pk]))
+
+        if self.request.GET.get('format') == 'json':
+            credential_data = self.latest_dpp_cred.credential or {}
+
+            cred_id = credential_data.get('id', '').split(':')[-1]
+            filename = f"credential_{cred_id or self.object.pk}.json"
+
+            response = JsonResponse(credential_data, json_dumps_params={'indent': 2})
+            response['Content-Disposition'] = f'attachment; filename="{filename}"'
+            return response
 
         return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        pk = self.kwargs.get('device_id')
-        device = Device(id=pk, owner=self.request.user.institution)
-        device.initial()
-
-        all_device_creds = CredentialProperty.objects.filter(
-            uuid__in=device.uuids,
-            owner=self.request.user.institution
-        ).order_by('-created')
-
-        latest_dpp_cred = all_device_creds.filter(key='DigitalProductPassport').first()
         dpp_data = None
-
-        if latest_dpp_cred:
-            subject = latest_dpp_cred.credential.get('credentialSubject', {})
+        if self.latest_dpp_cred:
+            subject = self.latest_dpp_cred.credential.get('credentialSubject', {})
             if isinstance(subject, dict):
                 dpp_data = subject.get('product') or subject.get('facility')
                 if not dpp_data and 'name' in subject:
                     dpp_data = subject
 
-        timeline_events = []
-        traceability_creds = all_device_creds.filter(key__in=['DigitalTraceabilityEvent', 'TraceabilityBatch'])
-
-        for cred in traceability_creds:
-            events_list = cred.credential.get('credentialSubject', [])
-            if isinstance(events_list, dict):
-                events_list = [events_list]
-            elif not isinstance(events_list, list):
-                events_list = []
-
-            for event in events_list:
-                event['meta_verified_id'] = cred.credential.get('id')
-                event['meta_verified_at'] = cred.created
-                event['meta_verified_pk'] = cred.pk
-
-                raw_time = event.get('eventTime')
-
-                if raw_time:
-                    try:
-                        dt = isoparse(raw_time)
-                    except (ValueError, TypeError):
-                        dt = cred.created
-                else:
-                    dt = cred.created
-
-                if timezone.is_naive(dt):
-                    dt = timezone.make_aware(dt)
-
-                event['parsed_date'] = dt
-                timeline_events.append(event)
-
-        timeline_events.sort(key=lambda x: x['parsed_date'], reverse=True)
-
-        latest_facility_cred = CredentialProperty.objects.filter(
-            owner=device.owner,
-            key='DigitalFacilityRecord'
-        ).order_by('-created').first()
-
-        facility_data = None
-        if latest_facility_cred:
-            subject = latest_facility_cred.credential.get('credentialSubject', {})
-            facility_data = subject.get('facility') or subject
-
         context.update({
-            'device': device,
-
-            # DPP Data
-            'dpp_meta': latest_dpp_cred,
-            'dpp_data': dpp_data,
-
-            # Facility Data
-            'facility_meta': latest_facility_cred,
-            'facility_data': facility_data,
-
-            # Timeline
-            'events': timeline_events,
+            'credential': self.latest_dpp_cred.credential,
         })
+
         return context
