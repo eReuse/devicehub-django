@@ -93,7 +93,13 @@
 {% endif %}
 
 {% if beneficiaries %}
-<div class="row mt-3">
+<div class="d-flex justify-content-end mt-3 mb-2">
+  <button class="btn btn-green-admin btn-sm d-flex align-items-center"
+          type="button" data-bs-toggle="modal" data-bs-target="#addBeneficiaryModal">
+    <i class="bi bi-plus me-1"></i>{% trans 'Add Beneficiary' %}
+  </button>
+</div>
+<div class="row">
   <div class="col">
     <table class="table table-hover table-bordered align-middel">
       <thead class="table-light">
@@ -173,32 +179,38 @@
 </div>
 {% endif %}
 
-<div class="mt-4">
-  <button class="btn bi-plus btn-green-admin" type="button" data-bs-toggle="collapse" data-bs-target="#add_beneficiary">
-    {% trans 'Add Beneficiary' %}
-  </button>
-
-  <div class="collapse mt-3" id="add_beneficiary">
-    {% load django_bootstrap5 %}
-    <form role="form" method="post">
-      {% csrf_token %}
-      {% if form.errors %}
-      <div class="alert alert-danger alert-icon alert-icon-border alert-dismissible" role="alert">
-        <div class="icon"><span class="mdi mdi-close-circle-o"></span></div>
-        <div class="message">
-          {% for field, error in form.errors.items %}
-            {{ error }}<br />
-          {% endfor %}
-          <button class="btn-close" type="button" data-dismiss="alert" aria-label="Close"></button>
-        </div>
+<div class="modal fade {% if form.errors %}show{% endif %}" id="addBeneficiaryModal" tabindex="-1"
+     aria-labelledby="addBeneficiaryModalLabel" aria-hidden="{% if form.errors %}false{% else %}true{% endif %}"
+     {% if form.errors %}style="display:block"{% endif %}>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addBeneficiaryModalLabel">{% trans 'Add Beneficiary' %}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                aria-label="{% trans 'Close' %}"></button>
       </div>
-      {% endif %}
-      {% bootstrap_form form %}
-      <div class="form-actions-no-box">
-        <a class="btn btn-grey" href="{% url 'dashboard:lot' lot.id %}">{% translate "Cancel" %}</a>
-        <input class="btn btn-green-admin" type="submit" name="submit" value="{{ action }}" />
+      <div class="modal-body">
+        {% load django_bootstrap5 %}
+        <form role="form" method="post">
+          {% csrf_token %}
+          {% if form.errors %}
+          <div class="alert alert-danger alert-dismissible" role="alert">
+            {% for field, error in form.errors.items %}
+              {{ error }}<br />
+            {% endfor %}
+            <button class="btn-close" type="button" data-bs-dismiss="alert" aria-label="{% trans 'Close' %}"></button>
+          </div>
+          {% endif %}
+          {% bootstrap_form form %}
+          <div class="d-flex justify-content-end gap-2 mt-3">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans 'Cancel' %}</button>
+            <input class="btn btn-green-admin" type="submit" name="submit" value="{{ action }}" />
+          </div>
+        </form>
       </div>
-    </form>
+    </div>
   </div>
 </div>
+
+{% if form.errors %}<div class="modal-backdrop fade show"></div>{% endif %}
 {% endblock %}
