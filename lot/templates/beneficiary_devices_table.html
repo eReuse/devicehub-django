@@ -1,39 +1,40 @@
 {% load i18n %}
 <table class="table table-hover table-bordered align-middle">
-  <thead class="table-light">
+    <thead class="table-light">
     <tr>
-      <th scope="col">{% trans 'ShortId' %}</th>
-      <th scope="col">{% trans 'Manufacturer' %}</th>
-      <th scope="col">{% trans 'Model' %}</th>
-      <th scope="col">{% trans 'Serial Number' %}</th>
-      <th scope="col">{% trans 'Status' %}</th>
-      {% if returned %}<th scope="col">{% trans 'Returned' %}</th>{% endif %}
-      <th scope="col"></th>
-      {% if device_context %}<th scope="col"></th>{% endif %}
+        <th scope="col">{% trans 'ShortId' %}</th>
+        <th scope="col">{% trans 'Manufacturer' %}</th>
+        <th scope="col">{% trans 'Model' %}</th>
+        <th scope="col">{% trans 'Serial Number' %}</th>
+        <th scope="col">{% trans 'Status' %}</th>
+        {% if returned %}<th scope="col">{% trans 'Returned' %}</th>{% endif %}
+        {% if device_context %}<th scope="col">{% trans 'Lot' %}</th>{% endif %}
+        <th scope="col"></th>
+        {% if device_context %}<th scope="col"></th>{% endif %}
     </tr>
-  </thead>
-  <tbody>
+    </thead>
+    <tbody>
     {% for f in form %}
     <tr>
-      <td class="font-monospace"><a href="{% url 'device:details' f.device.link_pk %}">{{ f.device.shortid }}</a></td>
-      <td class="font-monospace">{{ f.device.manufacturer }}</td>
-      <td class="font-monospace">{{ f.device.model }}</td>
-      <td class="font-monospace">{{ f.device.serial_number }}</td>
-      <td class="font-monospace">{{ f }}</td>
-      {% if returned %}<td class="font-monospace">{{ f.instance.returned_place|default:"" }}</td>{% endif %}
-      <td class="font-monospace">
-        <a href="{% url 'lot:del_device_beneficiary' lot.id beneficiary.id f.device.id %}{% if device_context %}?next={% url 'device:details' object.id %}{% endif %}">
-          {% trans 'Deallocate' %}
-        </a>
-      </td>
-      {% if device_context %}
-      <td class="font-monospace">
-        <a href="{% url 'lot:devices_beneficiary' lot.id beneficiary.id %}">
-          {% trans 'View in lot' %}
-        </a>
-      </td>
-      {% endif %}
+        <td class="font-monospace"><a href="{% url 'device:details' f.device.link_pk %}">{{ f.device.shortid }}</a></td>
+        <td class="font-monospace">{{ f.device.manufacturer }}</td>
+        <td class="font-monospace">{{ f.device.model }}</td>
+        <td class="font-monospace">{{ f.device.serial_number }}</td>
+        <td class="font-monospace">{{ f }}</td>
+        {% if returned %}<td class="font-monospace">{{ f.instance.returned_place|default:"" }}</td>{% endif %}
+        {% if device_context %}
+        <td class="font-monospace">
+            <a href="{% url 'lot:devices_beneficiary' lot.id beneficiary.id %}">
+                {{ lot.name }}
+            </a>
+        </td>
+        {% endif %}
+        <td class="font-monospace">
+            <a href="{% url 'lot:del_device_beneficiary' lot.id beneficiary.id f.device.id %}{% if device_context %}?next={% url 'device:details' object.id %}{% endif %}">
+                {% trans 'Deallocate' %}
+            </a>
+        </td>
     </tr>
     {% endfor %}
-  </tbody>
+    </tbody>
 </table>
