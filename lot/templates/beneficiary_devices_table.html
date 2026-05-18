@@ -15,7 +15,7 @@
   <tbody>
     {% for f in form %}
     <tr>
-      <td class="font-monospace">{{ f.device.shortid }}</td>
+      <td class="font-monospace"><a href="{% url 'device:details' f.device.link_pk %}">{{ f.device.shortid }}</a></td>
       <td class="font-monospace">{{ f.device.manufacturer }}</td>
       <td class="font-monospace">{{ f.device.model }}</td>
       <td class="font-monospace">{{ f.device.serial_number }}</td>
