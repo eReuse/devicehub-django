@@ -9,6 +9,7 @@ from django.db import IntegrityError, models
 from django.urls import reverse_lazy, resolve
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect, Http404
+from django.http import HttpResponseForbidden
 from django.utils.translation import gettext_lazy as _
 from django.urls import reverse
 from django.views.generic.edit import (
@@ -497,7 +498,8 @@ class IssueDigitalPassportView(DeviceLogMixin, View):
 
         device_uri = device.did if device.did else f"ereuse:{device.id}"
         traceability_info = self._get_traceability_info(device, request)
-
+        country_code = getattr(device.owner, 'country', None)
+        manufacturer_name = getattr(device.owner, 'name', None)
 
         credential_subject = {
             "type": ["ProductPassport"],
@@ -506,12 +508,14 @@ class IssueDigitalPassportView(DeviceLogMixin, View):
             "product": {
                 "type": ["Product"],
                 "id": device_uri,
-                "name": f"{components.get('manufacturer', 'Unknown')} {components.get('model', 'Unknown')}",
+                "name": f"{manufacturer_name} {components.get('model', 'Unknown')}",
                 "description": "A personal refurbished computing device.",
                 "characteristics": characteristics,
             },
             "traceabilityInformation": traceability_info
         }
+        if country_code:
+            credential_subject["product"]["countryOfProduction"] = country_code
 
         if raw_grade in CosmeticGrade.values:
             credential_subject["product"]["characteristics"]["itemCondition"] = raw_grade
@@ -521,14 +525,15 @@ class IssueDigitalPassportView(DeviceLogMixin, View):
             credential_subject["product"]["serialNumber"] = str(serial)
 
         if facility_info:
+            if facility_info.get("registeredId"):
+                credential_subject["product"]["producedByParty"]["id"] = str(facility_info["registeredId"])
+
             credential_subject["product"]["producedAtFacility"] = {
                 "id": facility_info["id"],
                 "name": facility_info["name"]
             }
             if facility_info.get("registeredId"):
                 credential_subject["product"]["producedAtFacility"]["registeredId"] = str(facility_info["registeredId"])
-
-
         if repair_guide:
             credential_subject["circularityScorecard"] = {
                 "type": ["CircularityPerformance"],
@@ -587,32 +592,34 @@ class IssueDigitalPassportView(DeviceLogMixin, View):
 
 
     def _get_facility_info(self, device, request):
-        facility_cred_prop = CredentialProperty.objects.filter(
-            owner=device.owner,
-            key='DigitalFacilityRecord'
-        ).order_by('-created').first()
+        institution = device.owner
+        if not institution:
+            return None
 
+        facility_cred_prop = institution.latest_facility_credential
         if not facility_cred_prop:
             return None
 
         subject = facility_cred_prop.credential.get('credentialSubject', {})
         facility_data = subject.get('facility', subject)
 
-        fac_url = self.request.build_absolute_uri(
+        operated_by = facility_data.get('operatedByParty', {})
+
+        fac_url = request.build_absolute_uri(
             reverse('evidence:credential_detail', kwargs={'pk': facility_cred_prop.id})
         )
 
         return {
             "id": fac_url,
-            "name": facility_data.get("name"),
-            "registeredId": facility_data.get("registeredId", ""),
+            "name": facility_data.get("name", "Unknown Facility"),
+            "registeredId": operated_by.get("registeredId", ""),
+
             "idScheme": {
                 "type": ["IdentifierScheme"],
                 "id": "https://www.gleif.org/lei/",
                 "name": "Legal Entity Identifier"
             }
         }
-
     def _get_traceability_info(self, device, request):
         events = CredentialProperty.objects.filter(
             uuid__in=device.uuids,
