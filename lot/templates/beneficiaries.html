@@ -149,18 +149,18 @@
           <div class="modal-dialog">
             <div class="modal-content">
               <div class="modal-header">
-                <h5 class="modal-title" id="deleteModalLabel{{ s.id }}">{% trans "Deallocate Beneficiary" %}</h5>
+                <h5 class="modal-title" id="deleteModalLabel{{ s.id }}">{% trans "Remove Beneficiary" %}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
               </div>
               <div class="modal-body">
-                <p>{% trans "Are you sure you want to deallocate this beneficiary?" %}</p>
+                <p>{% trans "Are you sure you want to remove this user from beneficiaries list?" %}</p>
               </div>
               <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
 		  {% trans "Cancel" %}
 		</button>
              	<a type="submit" class="btn btn-danger" href="{% url 'lot:del_beneficiary' lot.id s.id %}">
-	         {% trans 'Deallocate' %}
+	         {% trans 'Remove' %}
 		</a>
 	      </div>
             </div>
