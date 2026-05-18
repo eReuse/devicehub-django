@@ -4,8 +4,15 @@
 {% block content %}
 {% include 'tabs.html' %}
 
+<div class="d-flex justify-content-end mt-3 mb-2">
+  <button class="btn btn-green-admin btn-sm d-flex align-items-center"
+          type="button" data-bs-toggle="modal" data-bs-target="#addSubscriptionModal">
+    <i class="bi bi-plus me-1"></i>{% trans 'Add Subscription' %}
+  </button>
+</div>
+
 {% if subscriptors %}
-<div class="row mt-3">
+<div class="row">
   <div class="col">
     <table class="table table-hover table-bordered align-middel">
       <thead class="table-light">
@@ -33,30 +40,38 @@
 </div>
 {% endif %}
 
-<div class="mt-4">
-  <button class="btn bi-plus btn-green-admin" type="button" data-bs-toggle="collapse" data-bs-target="#subscribe">
-    {% trans 'Add Subscription' %}
-  </button>
-
-    <div class="collapse mt-3 {% if form.errors %} show{% endif %}" id="subscribe">
-        <div class="card card-body">
-            <h5 class="card-title">
-                {% trans 'Add new user subscription' %}.
-            </h5>
-            <p class="card-text">
-                {% trans 'To create a new user subscription for this lot add user email and its subscription type' %}.
-            </p>
-            {% load django_bootstrap5 %}
-            <form role="form" method="post">
-                {% csrf_token %}
-                {% bootstrap_form form %}
-                <div class="form-actions-no-box">
-                    <a class="btn btn-grey" href="{% url 'dashboard:lot' lot.id %}">{% translate "Cancel" %}</a>
-                    <input class="btn btn-green-admin" type="submit" name="submit" value="{{ action }}" />
-                </div>
-            </form>
-        </div>
+<div class="modal fade {% if form.errors %}show{% endif %}" id="addSubscriptionModal" tabindex="-1"
+     aria-labelledby="addSubscriptionModalLabel" aria-hidden="{% if form.errors %}false{% else %}true{% endif %}"
+     {% if form.errors %}style="display:block"{% endif %}>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addSubscriptionModalLabel">{% trans 'Add Subscription' %}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                aria-label="{% trans 'Close' %}"></button>
+      </div>
+      <div class="modal-body">
+        {% load django_bootstrap5 %}
+        <form role="form" method="post">
+          {% csrf_token %}
+          {% if form.errors %}
+          <div class="alert alert-danger alert-dismissible" role="alert">
+            {% for field, error in form.errors.items %}
+              {{ error }}<br />
+            {% endfor %}
+            <button class="btn-close" type="button" data-bs-dismiss="alert" aria-label="{% trans 'Close' %}"></button>
+          </div>
+          {% endif %}
+          {% bootstrap_form form %}
+          <div class="d-flex justify-content-end gap-2 mt-3">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans 'Cancel' %}</button>
+            <input class="btn btn-green-admin" type="submit" name="submit" value="{{ action }}" />
+          </div>
+        </form>
+      </div>
     </div>
-
+  </div>
 </div>
+
+{% if form.errors %}<div class="modal-backdrop fade show"></div>{% endif %}
 {% endblock %}
