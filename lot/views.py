@@ -838,9 +838,9 @@ class BeneficiaryView(DashboardLotMixing, BeneficiaryInterestedEmail, FormView):
         beneficiaries = []
         if self.request.user.is_admin or self.is_shop:
             if self.is_shop:
-                beneficiaries = self.is_shop.beneficiary_set.filter(lot=self.lot)
+                beneficiaries = self.is_shop.beneficiary_set.filter(lot=self.lot).annotate(device_count=Count('devicebeneficiary'))
             else:
-                beneficiaries = Beneficiary.objects.filter(lot=self.lot)
+                beneficiaries = Beneficiary.objects.filter(lot=self.lot).annotate(device_count=Count('devicebeneficiary'))
 
         devices_to_assign = []
         devices_already_assigned = []

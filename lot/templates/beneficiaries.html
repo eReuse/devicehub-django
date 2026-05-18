@@ -122,17 +122,15 @@
 	  </td>
 
 
-          <td class="font-monospace">
-	    <a href="{% url 'lot:devices_beneficiary' lot.id s.id %}">
-	       {% trans 'Devices' %}
-	    </a>
-	  </td>
-          <td class="font-monospace">
-	    <a href="{% url 'lot:web_beneficiary' lot.id s.id %}">
-	       {% trans 'web' %}
-	    </a>
-	  </td>
-          <td class="font-monospace">
+            <td class="font-monospace">
+                <a href="{% url 'lot:devices_beneficiary' lot.id s.id %}">{% trans 'Devices' %}</a>{% if s.device_count %}<span class="badge bg-primary ms-1">{{ s.device_count }}</span>{% endif %}
+            </td>
+            <td class="font-monospace">
+                <a href="{% url 'lot:web_beneficiary' lot.id s.id %}">
+                    {% trans 'web' %}
+                </a>
+            </td>
+            <td class="font-monospace">
             <a href="{% url 'lot:add_device_beneficiary' lot.id s.id %}" type="button" class="btn btn-sm btn-outline-primary align-items-center">
               <i class="bi bi-plus-circle me-1"></i>
               {% trans 'Assign' %}
