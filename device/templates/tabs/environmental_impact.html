@@ -4,6 +4,37 @@
   <h5 class="card-title">{% trans 'Environmental Impact Details' %}</h5>
   <hr />
 
+  <div class="card mb-3">
+    <div class="card-body">
+      <h6 class="card-title mb-3">{% trans 'Country Override' %}</h6>
+      <form method="post" class="row g-2 align-items-end">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="save_environmental_profile">
+        <div class="col-sm-4 col-md-3">
+          <label for="country_code" class="form-label">{% trans 'Country code' %}</label>
+          <input
+            id="country_code"
+            name="country_code"
+            type="text"
+            class="form-control"
+            maxlength="2"
+            placeholder="ES"
+            value="{{ environmental_profile.country|default:'' }}"
+          >
+        </div>
+        <div class="col-sm-8 col-md-9">
+          <div class="d-flex gap-2 flex-wrap">
+            <button type="submit" class="btn btn-primary">{% trans 'Save country' %}</button>
+            <button type="submit" name="country_code" value="" class="btn btn-outline-secondary">{% trans 'Use institution default' %}</button>
+          </div>
+          <div class="form-text">
+            {% trans 'Set a per-device ISO 3166-1 alpha-2 code like ES, FR or NA. Leave empty to fall back to the institution country.' %}
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
   {% if impact %}
     {% if impact.relevant_input_data.warnings %}
       <div class="alert alert-warning" role="alert">

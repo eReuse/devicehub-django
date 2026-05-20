@@ -12,6 +12,26 @@ class EnvironmentalImpact:
         self.docs: str = ""
 
 
+class DeviceEnvironmentalProfile(models.Model):
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+    device_chid = models.CharField(max_length=STR_EXTEND_SIZE, db_index=True)
+    country = models.CharField(max_length=2, blank=True, null=True)
+    owner = models.ForeignKey(Institution, on_delete=models.CASCADE)
+
+    class Meta:
+        ordering = ["device_chid"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["device_chid", "owner"],
+                name="env_profile_unique_device_owner",
+            )
+        ]
+
+    def __str__(self):
+        return f"Environmental profile for {self.device_chid}"
+
+
 class DiskChangeEvent(models.Model):
     """
     Records when a disk change is detected in a device.
