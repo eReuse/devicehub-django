@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 from device.models import Device
 from ..algorithm_interface import EnvironmentImpactAlgorithm
-from environmental_impact.models import EnvironmentalImpact
+from environmental_impact.models import EnvironmentalImpact, DeviceEnvironmentalProfile
 from environmental_impact.algorithms import common
 from .carbon_intensity import carbon_intensity
 from .lifecycle_extractors import get_evidences_data_from_device
@@ -67,6 +67,13 @@ class EReuse2025EnvironmentalImpactAlgorithm(EnvironmentImpactAlgorithm):
         self, device: Device, institution: Institution | None = None
     ) -> str:
         owner = institution or getattr(device, "owner", None)
+        if getattr(owner, "pk", None):
+            profile = DeviceEnvironmentalProfile.objects.filter(
+                device_chid=device.id,
+                owner=owner,
+            ).first()
+            if profile and profile.country:
+                return profile.country.upper()
         country_code = getattr(owner, "country", None)
         if not country_code:
             return self.default_country_code
