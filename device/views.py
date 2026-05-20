@@ -1,4 +1,5 @@
 import logging
+import re
 
 from django.conf import settings
 from django.contrib import messages
@@ -19,6 +20,7 @@ from credentials.services import CredentialService
 from dashboard.mixins import DashboardView, Http403
 from device.forms import DeviceAttributeFormSet, DeviceMainForm
 from device.models import Device, DeviceType
+from environmental_impact.models import DeviceEnvironmentalProfile
 from django_tables2 import RequestConfig
 from environmental_impact.algorithms.algorithm_factory import (
     FactoryEnvironmentImpactAlgorithm,
@@ -39,6 +41,7 @@ if settings.DPP:
 
 
 logger = logging.getLogger(__name__)
+COUNTRY_CODE_PATTERN = re.compile(r"^[A-Za-z]{2}$")
 
 
 class CosmeticGrade(models.TextChoices):
@@ -162,6 +165,10 @@ class DetailsView(DashboardView, TemplateView ):
         return super().get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
+        action = request.POST.get("action")
+        if action == "save_environmental_profile":
+            return self._save_environmental_profile(request, kwargs["pk"])
+
         url = request.POST.get("url")
 
         if url:
@@ -177,6 +184,42 @@ class DetailsView(DashboardView, TemplateView ):
                 pass
 
         return self.get(request, *args, **kwargs)
+
+    def _save_environmental_profile(self, request, pk):
+        institution = request.user.institution
+        root = RootAlias.objects.filter(owner=institution, alias=pk).first()
+        device_id = root.root if root else pk
+        country_code = (request.POST.get("country_code") or "").strip().upper()
+
+        if not country_code:
+            DeviceEnvironmentalProfile.objects.filter(
+                device_chid=device_id,
+                owner=institution,
+            ).delete()
+            messages.success(
+                request,
+                _("Environmental impact country override removed."),
+            )
+            return redirect(reverse_lazy("device:details", args=[pk]) + "#environmental_impact")
+
+        if not COUNTRY_CODE_PATTERN.fullmatch(country_code):
+            messages.error(
+                request,
+                _("Country code must contain exactly 2 letters."),
+            )
+            return redirect(reverse_lazy("device:details", args=[pk]) + "#environmental_impact")
+
+        DeviceEnvironmentalProfile.objects.update_or_create(
+            device_chid=device_id,
+            owner=institution,
+            defaults={"country": country_code},
+        )
+        messages.success(
+            request,
+            _("Environmental impact country updated to %(country)s.")
+            % {"country": country_code},
+        )
+        return redirect(reverse_lazy("device:details", args=[pk]) + "#environmental_impact")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -205,6 +248,10 @@ class DetailsView(DashboardView, TemplateView ):
         except Exception as err:
             logger.error("Environmental Impact Error: {}".format(err))
             enviromental_impact = None
+        environmental_profile = DeviceEnvironmentalProfile.objects.filter(
+            device_chid=self.object.id,
+            owner=self.request.user.institution,
+        ).first()
         last_evidence = self.object.get_last_evidence()
         uuids = self.object.uuids
 
@@ -233,6 +280,7 @@ class DetailsView(DashboardView, TemplateView ):
             'lot_tags': lot_tags,
             'dpps': dpps,
             'impact': enviromental_impact,
+            'environmental_profile': environmental_profile,
             "state_definitions": state_definitions,
             "device_states": device_states,
             "device_logs": device_logs,

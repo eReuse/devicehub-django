@@ -23,6 +23,7 @@ class EReuse2025AlgorithmTests(unittest.TestCase):
     def setUp(self):
         self.algorithm = EReuse2025EnvironmentalImpactAlgorithm()
         self.device = Mock(spec=Device)
+        self.device.id = "ereuse24:test-device"
 
         # Mock evidence with components
         evidence = Mock()
@@ -244,6 +245,28 @@ class EReuse2025AlgorithmTests(unittest.TestCase):
             expected_co2 = (250.0 * total_energy) / 1000
             self.assertAlmostEqual(result["in_use"], expected_co2, places=4)
             self.assertEqual(result["carbon_intensity_factor"], 250.0)
+
+    @patch(
+        "environmental_impact.algorithms.common.render_algorithm_docs",
+        return_value="Algorithm Docs",
+    )
+    @patch(
+        "environmental_impact.algorithms.ereuse2025.ereuse2025."
+        "DeviceEnvironmentalProfile.objects.filter"
+    )
+    def test_environmental_impact_prefers_device_profile_country(
+        self, mock_filter, mock_render_docs
+    ):
+        self.device.type = Device.Types.DESKTOP
+        institution = SimpleNamespace(country="ES", pk=1)
+        mock_filter.return_value.first.return_value = SimpleNamespace(country="NA")
+
+        impact = self.algorithm.get_device_environmental_impact(
+            self.device, institution=institution
+        )
+
+        self.assertEqual(impact.relevant_input_data["country_code"], "NA")
+        self.assertEqual(impact.relevant_input_data["carbon_intensity_factor"], 47.619)
 
     @patch(
         "environmental_impact.algorithms.common.render_algorithm_docs",
