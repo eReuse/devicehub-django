@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load django_bootstrap5 %}
+
+{% block content %}
+<style>
+    .properties-grid .mb-3 > div {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 0.5rem 1rem;
+    }
+
+</style>
+
+{% if form.errors %}
+<div class="alert alert-danger alert-dismissible fade show shadow-sm mt-3" role="alert">
+    <strong>{% translate "Please correct the errors below:" %}</strong>
+    <ul class="mb-0 small mt-1">
+        {% for field, error in form.errors.items %}<li>{{ error }}</li>{% endfor %}
+    </ul>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{% endif %}
+
+<form role="form" method="post" id="labelConfigForm" novalidate class="mb-5 pb-5 ">
+    {% csrf_token %}
+
+    <div class="card shadow-sm border-0 mb-4 ">
+        <div class="card-body p-4">
+            <h6 class="fw-bold mb-3 text-secondary">{% translate "Select Label Version" %}</h6>
+
+            <div class="btn-group shadow-sm w-100 w-md-auto" role="group">
+                <input type="radio" class="btn-check label-version-toggle" name="qr_label_version" id="version_v1" value="V1" autocomplete="off"
+                       data-help-text="{% translate 'Prints a simple 3-column grid containing only the QR code of the device. No extra text or formatting.' %}"
+                       {% if form.qr_label_version.value == 'V1' or not form.qr_label_version.value %}checked{% endif %}>
+                <label class="btn btn-outline-secondary px-4 py-2 fw-semibold" for="version_v1">
+                    <i class="bi bi-qr-code me-2"></i>{% translate "Legacy (QR Only)" %}
+                </label>
+
+                <input type="radio" class="btn-check label-version-toggle" name="qr_label_version" id="version_v2" value="V2" autocomplete="off"
+                       data-help-text="{% translate 'Full control over printed properties, logos, headers, and physical dimensions.' %}"
+                       {% if form.qr_label_version.value == 'V2' %}checked{% endif %}>
+                <label class="btn btn-outline-secondary px-4 py-2 fw-semibold" for="version_v2">
+                    <i class="bi bi-sliders me-2"></i>{% translate "Modern (Custom Layout)" %}
+                </label>
+            </div>
+
+            <div id="version-help-text" class="form-text mt-3 text-muted">
+            </div>
+        </div>
+    </div>
+
+    <div id="customization-container" class="d-none">
+
+        <div class="row g-4 mb-4">
+            <div class="col-12 col-xl-5">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-body p-4">
+                        <h6 class="fw-bold mb-3 text-secondary border-bottom pb-2">{% translate "Logo, heading & QR code" %}</h6>
+                        <div class="mt-3">
+                            {% bootstrap_field form.qr_content_type %}
+                            <hr class="my-4 text-muted opacity-25">
+                            {% bootstrap_field form.qr_label_header %}
+                            <div class="mt-3">
+                                {% bootstrap_field form.qr_include_logo %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-xl-7">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-body p-4">
+                        <h6 class="fw-bold mb-3 text-secondary border-bottom pb-2">{% translate "Device Properties" %}</h6>
+                        <p class="small text-muted mb-3">{% translate "Select which hardware specifications should appear as text next to the QR code." %}</p>
+                        <div class="properties-grid bg-light p-3 rounded border">
+                            {% bootstrap_field form.qr_printed_properties show_label=False %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h6 class="fw-semibold text-secondary mb-1">{% translate "Advanced Parameters" %}</h6>
+        <div class="small text-muted mb-3 d-flex align-items-start">
+            <span>{% translate "Warning: Customizing these values beyond standard presets may result in broken layouts, or overflowing text." %}</span>
+        </div>
+
+        <div class="row g-3 mt-1 align-items-end">
+            <div class="col-md-4 col-xl-2">
+                {% bootstrap_field form.qr_label_columns %}
+            </div>
+            <div class="col-md-4 col-xl-3">
+                {% bootstrap_field form.qr_label_orientation %}
+            </div>
+            <div class="col-md-4 col-xl-2">
+                {% bootstrap_field form.qr_width_mm %}
+            </div>
+            <div class="col-md-4 col-xl-2">
+                {% bootstrap_field form.qr_height_mm %}
+            </div>
+            <div class="col-md-4 col-xl-3">
+                {% bootstrap_field form.qr_font_size %}
+            </div>
+        </div>
+    </div>
+
+    {% for field in form %}
+        {% if field.is_hidden %}{{ field }}{% endif %}
+    {% endfor %}
+
+    <div class="d-flex justify-content-end align-items-center gap-3 border-top pt-3 mt-2">
+        <a class="btn btn-light text-secondary fw-semibold px-4 border" href="{% url 'admin:panel' %}">{% translate "Cancel" %}</a>
+        <button class="btn btn-success px-5 fw-semibold shadow-sm d-flex align-items-center gap-2" type="submit">
+            {% translate 'Save Configuration' %}
+        </button>
+    </div>
+</form>
+
+{% endblock %}
+
+{% block extrascript %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const versionToggles = document.querySelectorAll('.label-version-toggle');
+    const customizationContainer = document.getElementById('customization-container');
+    const helpText = document.getElementById('version-help-text');
+
+    function updateFormVisibility() {
+        const selected = document.querySelector('.label-version-toggle:checked');
+        if (!selected) return;
+
+        helpText.textContent = selected.getAttribute('data-help-text');
+
+        if (selected.value === 'V2') {
+            customizationContainer.classList.remove('d-none');
+        } else {
+            customizationContainer.classList.add('d-none');
+        }
+    }
+
+    versionToggles.forEach(radio => {
+        radio.addEventListener('change', updateFormVisibility);
+    });
+
+    updateFormVisibility();
+});
+</script>
+{% endblock %}

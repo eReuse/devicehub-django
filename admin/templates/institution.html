@@ -4,7 +4,6 @@
 
 {% block content %}
 <div class="container-fluid p-0">
-
     {% if form.errors %}
     <div class="alert alert-danger alert-dismissible fade show shadow-sm border-0 rounded-0 mb-3" role="alert">
         <div class="d-flex align-items-center">
@@ -12,9 +11,7 @@
             <div>
                 <strong class="d-block mb-1">{% translate "Please correct the errors below:" %}</strong>
                 <ul class="mb-0 small ps-3 text-danger">
-                    {% for field, error in form.errors.items %}
-                        <li>{{ error }}</li>
-                    {% endfor %}
+                    {% for field, error in form.errors.items %}<li>{{ error }}</li>{% endfor %}
                 </ul>
             </div>
         </div>
@@ -22,105 +19,54 @@
     </div>
     {% endif %}
 
-    <div class="card shadow-sm border-0 rounded-0 m-0">
+    <div class="card shadow-sm border-0 rounded-3 m-0">
+        <div class="card-header bg-white border-bottom py-3">
+            <h5 class="mb-0 fw-bold text-dark"><i class="bi bi-building me-2"></i>{% translate "Institution Profile" %}</h5>
+        </div>
         <div class="card-body p-md-4">
-
-            <p class="text-muted mb-3">{{ subtitle|default:"Edit Information" }}</p>
+            <p class="text-muted mb-4">{{ subtitle|default:"Manage your organization's general information." }}</p>
 
             <form role="form" method="post" novalidate>
                 {% csrf_token %}
 
-                <div class="row g-3 align-items-start">
-
-                    <div class="col-12 {% if 'qr_printed_properties' in form.fields %}col-lg-5{% endif %}">
-                        <div class="p-3 bg-light rounded-3 border">
-
+                <div class="row g-4">
+                    <div class="col-12 col-xl-6">
+                        <div class="p-4 bg-light rounded-3 border h-100">
+                            <h6 class="fw-bold mb-3 pb-2 border-bottom text-secondary">{% translate "General Details" %}</h6>
                             <div class="row g-3">
-                                {% for field in form %}
-                                    {% if field.name != 'qr_printed_properties' and field.name != 'qr_content_type' and not field.is_hidden %}
-                                        <div class="col-12 {% if 'qr_printed_properties' not in form.fields and field.field.widget.input_type != 'textarea' and 'uri' not in field.name %}col-md-6{% endif %}">
-                                            {% bootstrap_field field %}
-                                        </div>
-                                    {% endif %}
-
-                                    {% if field.is_hidden %}
-                                        {{ field }}
-                                    {% endif %}
-                                {% endfor %}
-                            </div>
-
-                            {% if 'qr_content_type' in form.fields %}
-                            <div class="mt-4">
-                                <label class="form-label fw-bold text-dark mb-3">{{ form.qr_content_type.label }}</label>
-
-                                {% for radio in form.qr_content_type %}
-                                    <div class="form-check mb-3">
-                                        {{ radio.tag }}
-                                        <label class="form-check-label fw-semibold" for="{{ radio.id_for_label }}">
-                                            {{ radio.choice_label }}
-                                        </label>
-                                        <div class="form-text mt-1 lh-sm">
-                                            {% if radio.data.value == 'INTERNAL' %}
-                                                {% translate "Embeds the raw database ID. Best if you are scanning with a dedicated internal app." %}
-                                            {% elif radio.data.value == 'INVENTORY' %}
-                                                {% translate "Embeds a secure link directly to the device's backend inventory management page." %}
-                                            {% elif radio.data.value == 'PUBLIC' %}
-                                                {% translate "Embeds a public-facing URL so anyone scanning can view the device's basic specifications." %}
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                {% endfor %}
-
-                                {% if form.qr_content_type.errors %}
-                                    <div class="text-danger small mt-2">{{ form.qr_content_type.errors|striptags }}</div>
-                                {% endif %}
-                            </div>
-                            {% endif %}
-
-                        </div>
-                    </div>
-
-                    {% if 'qr_printed_properties' in form.fields %}
-                    <div class="col-12 col-lg-7">
-                        <div class="p-3 bg-light rounded-3 border h-100">
-                            <h6 class="fw-bold mb-3 border-bottom pb-2">{% translate "Properties to Print" %}</h6>
-                            <div class="properties-grid">
-                                {% bootstrap_field form.qr_printed_properties show_label=False %}
+                                <div class="col-12">{% bootstrap_field form.name %}</div>
+                                <div class="col-12">{% bootstrap_field form.logo %}</div>
+                                <div class="col-md-6">{% bootstrap_field form.responsable_person %}</div>
+                                <div class="col-md-6">{% bootstrap_field form.supervisor_person %}</div>
+                                <div class="col-12">{% bootstrap_field form.facility_description %}</div>
                             </div>
                         </div>
                     </div>
-                    {% endif %}
 
+                    <div class="col-12 col-xl-6">
+                        <div class="p-4 bg-light rounded-3 border h-100">
+                            <h6 class="fw-bold mb-3 pb-2 border-bottom text-secondary">{% translate "Location & System" %}</h6>
+                            <div class="row g-3">
+                                <div class="col-12">{% bootstrap_field form.facility_id_uri %}</div>
+                                <div class="col-12">{% bootstrap_field form.street_address %}</div>
+                                <div class="col-md-6">{% bootstrap_field form.location %}</div>
+                                <div class="col-md-6">{% bootstrap_field form.region %}</div>
+                                <div class="col-md-6">{% bootstrap_field form.postal_code %}</div>
+                                <div class="col-md-6">{% bootstrap_field form.country %}</div>
+                                <div class="col-12 mt-4 pt-3 border-top">{% bootstrap_field form.algorithm %}</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="d-flex justify-content-end align-items-center gap-3 mt-4 pt-3 border-top">
-                    <a class="btn btn-light text-secondary fw-semibold px-4" href="{% url 'admin:panel' %}">
-                        {% translate "Cancel" %}
-                    </a>
-                    <button class="btn btn-success px-5 fw-semibold shadow-sm d-flex align-items-center gap-2" type="submit" name="submit">
-                        {% translate 'Save Changes' %}
+                    <a class="btn btn-light text-secondary fw-semibold px-4" href="{% url 'admin:panel' %}">{% translate "Cancel" %}</a>
+                    <button class="btn btn-primary px-5 fw-semibold shadow-sm d-flex align-items-center gap-2" type="submit">
+                        <i class="bi bi-save"></i> {% translate 'Save Profile' %}
                     </button>
                 </div>
             </form>
         </div>
     </div>
 </div>
-
-<style>
-    .properties-grid .mb-3 > div {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 0.5rem 1rem;
-    }
-
-    .properties-grid .form-check {
-        margin-bottom: 0.5rem;
-    }
-
-    .form-switch .form-check-input {
-        width: 2.5em;
-        height: 1.25em;
-        cursor: pointer;
-    }
-</style>
 {% endblock %}
