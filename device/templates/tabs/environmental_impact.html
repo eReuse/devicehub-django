@@ -4,5 +4,5 @@
   <h5 class="card-title">{% trans 'Environmental Impact Details' %}</h5>
   <hr />
 
-  {% include 'partials/environmental_impact_content.html' with show_country_override=True is_lot_view=False chart_id='deviceImpactChart' docs_collapse_id='deviceDocsCollapse' comparison_prefix='device' %}
+  {% include 'partials/environmental_impact_content.html' with show_country_override=True is_lot_view=False chart_id='deviceImpactChart' docs_collapse_id='deviceDocsCollapse' comparison_prefix='device' override_collapse_id='deviceCountryOverrideCollapse' %}
 </div>
