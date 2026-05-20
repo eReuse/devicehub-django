@@ -204,7 +204,7 @@
     <div class="tab-pane fade" id="tag">
       {% load django_bootstrap5 %}
       <div class="list-group col-6">
-        <form role="form" method="post">
+        <form id="alias-form" role="form" method="post">
           {% csrf_token %}
           {% bootstrap_form form  layout="floating"  %}
           <div class="container">
@@ -269,6 +269,69 @@
             </div>
           </div>
         </div>
+        {% endif %}
+
+        {% if confirm_lots or confirm_properties or confirm_beneficiaries %}
+        <div class="modal fade" id="confirmAliasModal" tabindex="-1" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title">{% translate "Confirm alias association" %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                <p>{% translate "Are you sure you want to associate this device? Take into account the following warnings:" %}</p>
+                {% if confirm_lots %}
+                  <p>{% translate "This device is in the following lots. If you associate it and later undo the association, it may be removed from all of them:" %}</p>
+                  <ul>
+                    {% for lot in confirm_lots %}
+                      <li>{{ lot.name }}</li>
+                    {% endfor %}
+                  </ul>
+                {% endif %}
+                {% if confirm_properties %}
+                  <p>{% translate "This device has user properties. They will be linked to the associated device. If you revert the association, that link may be lost:" %}</p>
+                  <ul>
+                    {% for prop in confirm_properties %}
+                      <li><strong>{{ prop.key }}</strong>: {{ prop.value }}</li>
+                    {% endfor %}
+                  </ul>
+                {% endif %}
+                {% if confirm_beneficiaries %}
+                  <p>{% translate "This device has a beneficiary associated. If you revert the association, the link to the beneficiary may be lost. Also, the device identifier stored for the beneficiary will change:" %}</p>
+                  <ul>
+                    {% for db in confirm_beneficiaries %}
+                      <li>{{ db.beneficiary.email }}</li>
+                    {% endfor %}
+                  </ul>
+                {% endif %}
+              </div>
+              <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% translate "Cancel" %}</button>
+                <button type="button" class="btn btn-danger" id="confirm-alias-btn">{% translate "Confirm" %}</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <script>
+          (function () {
+            var form = document.getElementById('alias-form');
+            var confirmModal = document.getElementById('confirmAliasModal');
+            var confirmed = false;
+
+            form.addEventListener('submit', function (e) {
+              if (confirmed) return;
+              e.preventDefault();
+              new bootstrap.Modal(confirmModal).show();
+            });
+
+            document.getElementById('confirm-alias-btn').addEventListener('click', function () {
+              confirmed = true;
+              bootstrap.Modal.getInstance(confirmModal).hide();
+              form.submit();
+            });
+          })();
+        </script>
         {% endif %}
       </div>
     </div>

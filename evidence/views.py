@@ -2,7 +2,7 @@ import json
 import os
 
 from django.contrib import messages
-from django.http import HttpResponse, FileResponse
+from django.http import HttpResponse, FileResponse, JsonResponse
 from django.utils.translation import gettext_lazy as _
 from django.shortcuts import get_object_or_404, redirect, Http404
 from django.views.generic.base import TemplateView
@@ -132,31 +132,34 @@ class EvidenceView(DashboardView, FormView):
             'form2': EraseServerForm(**self.get_form_erase_kwargs()),
         })
         form = context.get('form')
-        alias_affected_lots = []
-        alias_affected_user_properties = []
-        alias_affected_beneficiaries = []
-        if form and form.instance and form.instance.root != form.instance.alias:
-            affected = DeviceLot.objects.filter(
-                lot__owner=self.request.user.institution,
-                device_id=form.instance.root,
-            ).select_related('lot')
-            alias_affected_lots = [dl.lot for dl in affected]
-            alias_affected_user_properties = list(
-                UserProperty.objects.filter(
-                    owner=self.request.user.institution,
-                    device_id=form.instance.root,
-                    type=UserProperty.Type.USER,
-                )
-            )
-            alias_affected_beneficiaries = list(
-                DeviceBeneficiary.objects.filter(
-                    device_id=form.instance.root,
-                    beneficiary__lot__owner=self.request.user.institution,
-                ).select_related('beneficiary')
-            )
-        context['alias_affected_lots'] = alias_affected_lots
-        context['alias_affected_user_properties'] = alias_affected_user_properties
-        context['alias_affected_beneficiaries'] = alias_affected_beneficiaries
+        confirm_lots = []
+        confirm_properties = []
+        confirm_beneficiaries = []
+        if form and form.instance:
+            root_id = form.instance.root
+            confirm_lots = [
+                dl.lot for dl in DeviceLot.objects.filter(
+                    lot__owner=self.request.user.institution,
+                    device_id=root_id,
+                ).select_related('lot')
+            ]
+            confirm_properties = list(UserProperty.objects.filter(
+                owner=self.request.user.institution,
+                device_id=root_id,
+                type=UserProperty.Type.USER,
+            ))
+            confirm_beneficiaries = list(DeviceBeneficiary.objects.filter(
+                device_id=root_id,
+                beneficiary__lot__owner=self.request.user.institution,
+            ).select_related('beneficiary'))
+
+        has_alias = form and form.instance and form.instance.root != form.instance.alias
+        context['alias_affected_lots'] = confirm_lots if has_alias else []
+        context['alias_affected_user_properties'] = confirm_properties if has_alias else []
+        context['alias_affected_beneficiaries'] = confirm_beneficiaries if has_alias else []
+        context['confirm_lots'] = confirm_lots
+        context['confirm_properties'] = confirm_properties
+        context['confirm_beneficiaries'] = confirm_beneficiaries
         return context
 
     def get_form_erase_kwargs(self):
