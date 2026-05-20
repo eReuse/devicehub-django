@@ -1,6 +1,7 @@
 import ast
 import logging
 import datetime
+import re
 
 from django.db import IntegrityError
 from utils.icons import get_icon_by_type
@@ -20,7 +21,7 @@ from django.views.generic.edit import (
 )
 from django_tables2 import SingleTableView
 from dashboard.mixins import DashboardView
-from environmental_impact.models import EnvironmentalImpact
+from environmental_impact.models import EnvironmentalImpact, DeviceEnvironmentalProfile
 from lot.tables import LotTable
 from device.models import Device
 from evidence.models import SystemProperty
@@ -411,14 +412,35 @@ class LotEnvironmentalImpactView(DashboardLotMixing, TemplateView):
     template_name = "lot_environmental_impact.html"
     title = _("Environmental Impact")
 
+    def post(self, request, *args, **kwargs):
+        action = request.POST.get("action")
+        if action == "save_environmental_profile":
+            return self._save_environmental_profile(request, kwargs["pk"])
+        return self.get(request, *args, **kwargs)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         devices = self._get_devices_with_evidence()
         env_impact = self._compute_environmental_impact(devices)
+        profiles_by_device = {
+            profile.device_chid: profile
+            for profile in DeviceEnvironmentalProfile.objects.filter(
+                owner=self.request.user.institution,
+                device_chid__in=[device.id for device in devices],
+            )
+        }
+        lot_environmental_profiles = [
+            {
+                "device": device,
+                "profile": profiles_by_device.get(device.id),
+            }
+            for device in devices
+        ]
         context.update({
             'impact': env_impact,
             'device_count': len(devices),
             'devices_with_evidence': len(devices),
+            'lot_environmental_profiles': lot_environmental_profiles,
             'breadcrumb': [
                 (_("Lots"), reverse("dashboard:unassigned")),
                 (self.lot.type.name, reverse("lot:tags", args=[self.lot.type.pk])),
@@ -439,6 +461,41 @@ class LotEnvironmentalImpactView(DashboardLotMixing, TemplateView):
             if device.last_evidence:
                 devices_with_evidence.append(device)
         return devices_with_evidence
+
+    def _save_environmental_profile(self, request, pk):
+        self.request = request
+        self.pk = pk
+        self.get_lot()
+        device_id = request.POST.get("device_id")
+        country_code = (request.POST.get("country_code") or "").strip().upper()
+
+        if not device_id or not self.lot.devicelot_set.filter(device_id=device_id).exists():
+            messages.error(request, _("Selected device does not belong to this lot."))
+            return redirect(reverse_lazy("lot:environmental_impact", args=[pk]))
+
+        if not country_code:
+            DeviceEnvironmentalProfile.objects.filter(
+                device_chid=device_id,
+                owner=request.user.institution,
+            ).delete()
+            messages.success(request, _("Environmental impact country override removed."))
+            return redirect(reverse_lazy("lot:environmental_impact", args=[pk]))
+
+        if not re.fullmatch(r"^[A-Za-z]{2}$", country_code):
+            messages.error(request, _("Country code must contain exactly 2 letters."))
+            return redirect(reverse_lazy("lot:environmental_impact", args=[pk]))
+
+        DeviceEnvironmentalProfile.objects.update_or_create(
+            device_chid=device_id,
+            owner=request.user.institution,
+            defaults={"country": country_code},
+        )
+        messages.success(
+            request,
+            _("Environmental impact country updated to %(country)s.")
+            % {"country": country_code},
+        )
+        return redirect(reverse_lazy("lot:environmental_impact", args=[pk]))
 
 
     def _compute_environmental_impact(self, devices) -> EnvironmentalImpact:
