@@ -23,14 +23,15 @@ class LotEnvironmentalProfileViewTests(TestCase):
         self.tag = LotTag.objects.create(name="Test Tag", owner=self.institution)
         self.lot = Lot.objects.create(name="Lot 1", owner=self.institution, type=self.tag)
         self.device_id = "ereuse24:test-device"
+        self.other_device_id = "ereuse24:test-device-2"
         DeviceLot.objects.create(lot=self.lot, device_id=self.device_id)
+        DeviceLot.objects.create(lot=self.lot, device_id=self.other_device_id)
 
     def _build_request(self, country_code):
         request = self.factory.post(
             f"/lot/{self.lot.pk}/environmental-impact",
             {
                 "action": "save_environmental_profile",
-                "device_id": self.device_id,
                 "country_code": country_code,
             },
         )
@@ -55,12 +56,24 @@ class LotEnvironmentalProfileViewTests(TestCase):
             owner=self.institution,
         )
         self.assertEqual(profile.country, "NA")
+        self.assertTrue(
+            DeviceEnvironmentalProfile.objects.filter(
+                device_chid=self.other_device_id,
+                owner=self.institution,
+                country="NA",
+            ).exists()
+        )
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, f"/lot/{self.lot.pk}/environmental-impact")
 
     def test_save_environmental_profile_empty_value_removes_override(self):
         DeviceEnvironmentalProfile.objects.create(
             device_chid=self.device_id,
+            owner=self.institution,
+            country="NA",
+        )
+        DeviceEnvironmentalProfile.objects.create(
+            device_chid=self.other_device_id,
             owner=self.institution,
             country="NA",
         )
@@ -72,7 +85,7 @@ class LotEnvironmentalProfileViewTests(TestCase):
 
         self.assertFalse(
             DeviceEnvironmentalProfile.objects.filter(
-                device_chid=self.device_id,
+                device_chid__in=[self.device_id, self.other_device_id],
                 owner=self.institution,
             ).exists()
         )
