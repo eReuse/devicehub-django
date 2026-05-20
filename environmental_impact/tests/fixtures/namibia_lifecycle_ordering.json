@@ -1,0 +1,28 @@
+[
+  {
+    "source_file": "evidence (21).json",
+    "uuid": "7ee57700-cb7f-418e-b7ce-8aab97ada02a",
+    "timestamp": "2026-03-23 10:32:16.413555",
+    "uploaded_at": "2026-05-20T14:43:36.535743",
+    "storage": {
+      "type": "Storage",
+      "manufacturer": "Western Digital",
+      "model": "WD5000LPLX-08ZNTT0",
+      "serialNumber": "WD-WXH1AB7DHKRD",
+      "time of used": "45d 6h"
+    }
+  },
+  {
+    "source_file": "evidence (7).json",
+    "uuid": "3bcfe16c-7834-4ba3-9507-ddc31e8f4fea",
+    "timestamp": "2026-04-10 11:42:52.527352",
+    "uploaded_at": "2026-05-20T14:43:36.333376",
+    "storage": {
+      "type": "Storage",
+      "manufacturer": "Western Digital",
+      "model": "WD5000LPLX-08ZNTT0",
+      "serialNumber": "WD-WXH1AB7DHKRD",
+      "time of used": "46d 5h"
+    }
+  }
+]

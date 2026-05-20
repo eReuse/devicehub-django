@@ -1,9 +1,14 @@
+import json
+from pathlib import Path
 from types import SimpleNamespace
 
 from django.test import TestCase
 
 from environmental_impact.algorithms.ereuse2025.lifecycle_extractors import (
     get_evidences_data_from_device,
+)
+from environmental_impact.algorithms.ereuse2025.time_calculations import (
+    calculate_reuse_time,
 )
 
 
@@ -45,3 +50,37 @@ class LifecycleExtractorsTests(TestCase):
 
         self.assertEqual([e.uuid for e in evidences_data], ["older", "newer"])
         self.assertEqual([e.poh for e in evidences_data], [1086, 1109])
+
+    def test_get_evidences_data_uses_real_namibia_ordering_fixture(self):
+        fixture_path = (
+            Path(__file__).resolve().parent
+            / "fixtures"
+            / "namibia_lifecycle_ordering.json"
+        )
+        fixture = json.loads(fixture_path.read_text())
+
+        uploaded_newer_first = []
+        for item in reversed(fixture):
+            uploaded_newer_first.append(
+                SimpleNamespace(
+                    uuid=item["uuid"],
+                    doc={"timestamp": item["timestamp"]},
+                    inxi=True,
+                    get_time_created=lambda uploaded_at=item["uploaded_at"]: uploaded_at,
+                    get_components=lambda storage=item["storage"]: [storage],
+                )
+            )
+
+        device = SimpleNamespace(evidences=uploaded_newer_first)
+
+        evidences_data = get_evidences_data_from_device(device)
+
+        self.assertEqual(
+            [e.uuid for e in evidences_data],
+            [
+                "7ee57700-cb7f-418e-b7ce-8aab97ada02a",
+                "3bcfe16c-7834-4ba3-9507-ddc31e8f4fea",
+            ],
+        )
+        self.assertEqual([e.poh for e in evidences_data], [1086, 1109])
+        self.assertEqual(calculate_reuse_time(evidences_data), 23)
