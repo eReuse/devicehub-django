@@ -422,25 +422,19 @@ class LotEnvironmentalImpactView(DashboardLotMixing, TemplateView):
         context = super().get_context_data(**kwargs)
         devices = self._get_devices_with_evidence()
         env_impact = self._compute_environmental_impact(devices)
-        profiles_by_device = {
-            profile.device_chid: profile
-            for profile in DeviceEnvironmentalProfile.objects.filter(
-                owner=self.request.user.institution,
-                device_chid__in=[device.id for device in devices],
+        distinct_countries = sorted(
+            set(
+                DeviceEnvironmentalProfile.objects.filter(
+                    owner=self.request.user.institution,
+                    device_chid__in=[device.id for device in devices],
+                ).values_list("country", flat=True)
             )
-        }
-        lot_environmental_profiles = [
-            {
-                "device": device,
-                "profile": profiles_by_device.get(device.id),
-            }
-            for device in devices
-        ]
+        )
         context.update({
             'impact': env_impact,
             'device_count': len(devices),
             'devices_with_evidence': len(devices),
-            'lot_environmental_profiles': lot_environmental_profiles,
+            'lot_country_override': distinct_countries[0] if len(distinct_countries) == 1 else '',
             'breadcrumb': [
                 (_("Lots"), reverse("dashboard:unassigned")),
                 (self.lot.type.name, reverse("lot:tags", args=[self.lot.type.pk])),
@@ -466,16 +460,18 @@ class LotEnvironmentalImpactView(DashboardLotMixing, TemplateView):
         self.request = request
         self.pk = pk
         self.get_lot()
-        device_id = request.POST.get("device_id")
         country_code = (request.POST.get("country_code") or "").strip().upper()
+        device_ids = list(
+            self.lot.devicelot_set.filter().values_list("device_id", flat=True).distinct()
+        )
 
-        if not device_id or not self.lot.devicelot_set.filter(device_id=device_id).exists():
-            messages.error(request, _("Selected device does not belong to this lot."))
+        if not device_ids:
+            messages.error(request, _("This lot has no devices to update."))
             return redirect(reverse_lazy("lot:environmental_impact", args=[pk]))
 
         if not country_code:
             DeviceEnvironmentalProfile.objects.filter(
-                device_chid=device_id,
+                device_chid__in=device_ids,
                 owner=request.user.institution,
             ).delete()
             messages.success(request, _("Environmental impact country override removed."))
@@ -485,15 +481,16 @@ class LotEnvironmentalImpactView(DashboardLotMixing, TemplateView):
             messages.error(request, _("Country code must contain exactly 2 letters."))
             return redirect(reverse_lazy("lot:environmental_impact", args=[pk]))
 
-        DeviceEnvironmentalProfile.objects.update_or_create(
-            device_chid=device_id,
-            owner=request.user.institution,
-            defaults={"country": country_code},
-        )
+        for device_id in device_ids:
+            DeviceEnvironmentalProfile.objects.update_or_create(
+                device_chid=device_id,
+                owner=request.user.institution,
+                defaults={"country": country_code},
+            )
         messages.success(
             request,
-            _("Environmental impact country updated to %(country)s.")
-            % {"country": country_code},
+            _("Environmental impact country updated to %(country)s for %(count)s devices.")
+            % {"country": country_code, "count": len(device_ids)},
         )
         return redirect(reverse_lazy("lot:environmental_impact", args=[pk]))
 
