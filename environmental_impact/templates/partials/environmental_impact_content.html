@@ -3,32 +3,97 @@
 {% if show_country_override %}
   <div class="card mb-3">
     <div class="card-body">
-      <h6 class="card-title mb-3">{% trans 'Country Override' %}</h6>
-      <form method="post" class="row g-2 align-items-end">
-        {% csrf_token %}
-        <input type="hidden" name="action" value="save_environmental_profile">
-        <div class="col-sm-4 col-md-3">
-          <label for="country_code" class="form-label">{% trans 'Country code' %}</label>
-          <input
-            id="country_code"
-            name="country_code"
-            type="text"
-            class="form-control"
-            maxlength="2"
-            placeholder="ES"
-            value="{{ environmental_profile.country|default:'' }}"
-          >
-        </div>
-        <div class="col-sm-8 col-md-9">
-          <div class="d-flex gap-2 flex-wrap">
-            <button type="submit" class="btn btn-primary">{% trans 'Save country' %}</button>
-            <button type="submit" name="country_code" value="" class="btn btn-outline-secondary">{% trans 'Use institution default' %}</button>
+      <button class="btn btn-outline-secondary btn-sm w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#{{ override_collapse_id }}" aria-expanded="false">
+        {% trans 'Country Overrides' %}
+      </button>
+      <div class="collapse mt-3" id="{{ override_collapse_id }}">
+        {% if is_lot_view %}
+          <div class="form-text mb-3">
+            {% trans 'Set per-device ISO 3166-1 alpha-2 codes like ES, FR or NA. Leave empty to fall back to the institution country.' %}
           </div>
-          <div class="form-text">
+          <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+              <thead>
+                <tr>
+                  <th>{% trans 'Device' %}</th>
+                  <th>{% trans 'Country code' %}</th>
+                  <th class="text-end">{% trans 'Action' %}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for item in lot_environmental_profiles %}
+                  <tr>
+                    <td>
+                      <div>{{ item.device.shortid }}</div>
+                      <small class="text-muted">{{ item.device.id }}</small>
+                    </td>
+                    <td>
+                      <form method="post" class="row g-2 align-items-center">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="save_environmental_profile">
+                        <input type="hidden" name="device_id" value="{{ item.device.id }}">
+                        <div class="col-sm-6 col-md-5">
+                          <input
+                            name="country_code"
+                            type="text"
+                            class="form-control form-control-sm"
+                            maxlength="2"
+                            placeholder="ES"
+                            value="{{ item.profile.country|default:'' }}"
+                          >
+                        </div>
+                        <div class="col-auto ms-auto d-flex gap-2 justify-content-end">
+                          <button type="submit" class="btn btn-primary btn-sm">{% trans 'Save' %}</button>
+                          <button type="submit" name="country_code" value="" class="btn btn-outline-secondary btn-sm">{% trans 'Clear' %}</button>
+                        </div>
+                      </form>
+                    </td>
+                    <td class="text-end">
+                      <small class="text-muted">
+                        {% if item.profile and item.profile.country %}
+                          {% trans 'Override active' %}
+                        {% else %}
+                          {% trans 'Using institution default' %}
+                        {% endif %}
+                      </small>
+                    </td>
+                  </tr>
+                {% empty %}
+                  <tr>
+                    <td colspan="3" class="text-center text-muted">{% trans 'No devices with evidence available' %}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="form-text mb-3">
             {% trans 'Set a per-device ISO 3166-1 alpha-2 code like ES, FR or NA. Leave empty to fall back to the institution country.' %}
           </div>
-        </div>
-      </form>
+          <form method="post" class="row g-2 align-items-end">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="save_environmental_profile">
+            <div class="col-sm-4 col-md-3">
+              <label for="country_code" class="form-label">{% trans 'Country code' %}</label>
+              <input
+                id="country_code"
+                name="country_code"
+                type="text"
+                class="form-control"
+                maxlength="2"
+                placeholder="ES"
+                value="{{ environmental_profile.country|default:'' }}"
+              >
+            </div>
+            <div class="col-sm-8 col-md-9">
+              <div class="d-flex gap-2 flex-wrap">
+                <button type="submit" class="btn btn-primary">{% trans 'Save country' %}</button>
+                <button type="submit" name="country_code" value="" class="btn btn-outline-secondary">{% trans 'Use institution default' %}</button>
+              </div>
+            </div>
+          </form>
+        {% endif %}
+      </div>
     </div>
   </div>
 {% endif %}

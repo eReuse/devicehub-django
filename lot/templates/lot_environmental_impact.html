@@ -4,5 +4,5 @@
 {% block content %}
   {% include 'tabs.html' %}
 
-  {% include 'partials/environmental_impact_content.html' with show_country_override=False is_lot_view=True chart_id='lotImpactChart' docs_collapse_id='lotDocsCollapse' comparison_prefix='lot' %}
+  {% include 'partials/environmental_impact_content.html' with show_country_override=True is_lot_view=True chart_id='lotImpactChart' docs_collapse_id='lotDocsCollapse' comparison_prefix='lot' override_collapse_id='lotCountryOverrideCollapse' %}
 {% endblock %}
