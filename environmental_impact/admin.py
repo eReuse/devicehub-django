@@ -1,8 +1,17 @@
 from django.contrib import admin
 from environmental_impact.models import (
+    DeviceEnvironmentalProfile,
     DeviceLifecycleMetrics,
     DiskChangeEvent
 )
+
+
+@admin.register(DeviceEnvironmentalProfile)
+class DeviceEnvironmentalProfileAdmin(admin.ModelAdmin):
+    list_display = ['device_chid', 'country', 'owner', 'updated']
+    search_fields = ['device_chid', 'country']
+    list_filter = ['owner', 'country', 'updated']
+    readonly_fields = ['created', 'updated']
 
 
 @admin.register(DeviceLifecycleMetrics)
