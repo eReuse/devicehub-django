@@ -413,18 +413,12 @@ class LotEnvironmentalImpactView(DashboardLotMixing, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        device_ids = self.lot.devicelot_set.all().values_list(
-            "device_id", flat=True
-        ).distinct()
-        devices = [Device(id=dev_id) for dev_id in device_ids]
-        devices_with_evidence = [
-            dev for dev in devices if dev.last_evidence
-        ]
-        env_impact = self._compute_environmental_impact(devices_with_evidence)
+        devices = self._get_devices_with_evidence()
+        env_impact = self._compute_environmental_impact(devices)
         context.update({
             'impact': env_impact,
             'device_count': len(devices),
-            'devices_with_evidence': len(devices_with_evidence),
+            'devices_with_evidence': len(devices),
             'breadcrumb': [
                 (_("Lots"), reverse("dashboard:unassigned")),
                 (self.lot.type.name, reverse("lot:tags", args=[self.lot.type.pk])),
@@ -433,6 +427,18 @@ class LotEnvironmentalImpactView(DashboardLotMixing, TemplateView):
             ],
         })
         return context
+
+    def _get_devices_with_evidence(self) -> list[Device]:
+        device_ids = self.lot.devicelot_set.all().values_list(
+            "device_id", flat=True
+        ).distinct()
+        devices_with_evidence = []
+        for dev_id in device_ids:
+            device = Device(id=dev_id, owner=self.request.user.institution)
+            device.initial()
+            if device.last_evidence:
+                devices_with_evidence.append(device)
+        return devices_with_evidence
 
 
     def _compute_environmental_impact(self, devices) -> EnvironmentalImpact:
