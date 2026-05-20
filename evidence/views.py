@@ -14,7 +14,8 @@ from django.views.generic.edit import (
 
 from action.models import DeviceLog
 from dashboard.mixins import  DashboardView, Http403
-from evidence.models import SystemProperty, RootAlias, Evidence
+from evidence.models import SystemProperty, RootAlias, Evidence, UserProperty
+from lot.models import DeviceLot, DeviceBeneficiary
 from evidence.forms import (
     UploadForm,
     UserAliasForm,
@@ -130,6 +131,32 @@ class EvidenceView(DashboardView, FormView):
             'object': self.object,
             'form2': EraseServerForm(**self.get_form_erase_kwargs()),
         })
+        form = context.get('form')
+        alias_affected_lots = []
+        alias_affected_user_properties = []
+        alias_affected_beneficiaries = []
+        if form and form.instance and form.instance.root != form.instance.alias:
+            affected = DeviceLot.objects.filter(
+                lot__owner=self.request.user.institution,
+                device_id=form.instance.root,
+            ).select_related('lot')
+            alias_affected_lots = [dl.lot for dl in affected]
+            alias_affected_user_properties = list(
+                UserProperty.objects.filter(
+                    owner=self.request.user.institution,
+                    device_id=form.instance.root,
+                    type=UserProperty.Type.USER,
+                )
+            )
+            alias_affected_beneficiaries = list(
+                DeviceBeneficiary.objects.filter(
+                    device_id=form.instance.root,
+                    beneficiary__lot__owner=self.request.user.institution,
+                ).select_related('beneficiary')
+            )
+        context['alias_affected_lots'] = alias_affected_lots
+        context['alias_affected_user_properties'] = alias_affected_user_properties
+        context['alias_affected_beneficiaries'] = alias_affected_beneficiaries
         return context
 
     def get_form_erase_kwargs(self):
@@ -301,6 +328,9 @@ class DeleteEvidenceAliasView(DashboardView, DeleteView):
 
         messages.info(self.request, _("Evicende alias deleted successfully."))
         return self.handle_success()
+
+    def post(self, request, *args, **kwargs):
+        return self.get(request, *args, **kwargs)
 
     def handle_success(self):
         return redirect(self.get_success_url())
