@@ -359,7 +359,7 @@ class UpdateStateDefinitionView(AdminView, UpdateView):
 class InstitutionLabelCustomizationView(AdminView, UpdateView):
     model = InstitutionSettings
     form_class = InstitutionSettingsForm
-    template_name = 'institution.html'
+    template_name = 'label_settings.html'
     success_url = reverse_lazy('admin:panel')
     breadcrumb = [(_("Admin"), reverse_lazy("admin:panel")), (_("Label Settings"), None)]
     title = _("Edit Label")

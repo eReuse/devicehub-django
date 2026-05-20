@@ -1,6 +1,6 @@
 from django.db import models
 from django.db.models import ProtectedError
-from django.core.validators import RegexValidator, URLValidator
+from django.core.validators import URLValidator, RegexValidator, MinValueValidator, MaxValueValidator
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser
 from utils.constants import ALGOS
@@ -9,13 +9,22 @@ from utils.constants import ALGOS
 ALGORITHMS = [(x, x) for x in ALGOS.keys()]
 
 class QRContentType(models.TextChoices):
+    NONE = 'NONE', _("No QR on label")
     DEVICE_ID = 'INTERNAL', _("Internal Device ID")
     DEVICE_INVENTORY = 'INVENTORY', _("Device inventory URL")
     PUBLIC_VIEW = 'PUBLIC', _("Public Device View")
     #DPP_VIEW = 'DPP', _("DPP view else ")
 
+class LabelVersion(models.TextChoices):
+    V1 = 'V1', _("Version 1 (Classic)")
+    V2 = 'V2', _("Version 2 (Modern Customizable)")
+
+class LabelOrientation(models.TextChoices):
+    HORIZONTAL = 'HORIZONTAL', _("Horizontal (Landscape)")
+    VERTICAL = 'VERTICAL', _("Vertical (Portrait)")
+
 def default_printed_properties():
-    return ["shortid"]
+    return ["ID"]
 
 class Institution(models.Model):
     name = models.CharField(
@@ -142,6 +151,44 @@ class InstitutionSettings(models.Model):
         default="Property of ...",
         blank=True,
         help_text=_("Text printed at the top of the label.")
+    )
+    qr_label_version = models.CharField(
+        _("Label Version"),
+        max_length=2,
+        choices=LabelVersion.choices,
+        default=LabelVersion.V1,
+        help_text=_("Select the visual template for the labels.")
+    )
+    qr_label_orientation = models.CharField(
+        _("Label Orientation"),
+        max_length=15,
+        choices=LabelOrientation.choices,
+        default=LabelOrientation.HORIZONTAL,
+        help_text=_("Only applies to Version 2.")
+    )
+    qr_label_columns = models.PositiveIntegerField(
+        _("Labels per row"),
+        default=0,
+        validators=[MinValueValidator(0), MaxValueValidator(10)],
+        help_text=_("Set to 0 for adaptive.")
+    )
+    qr_width_mm = models.PositiveIntegerField(
+        _("Label Width (mm)"),
+        default=50,
+        validators=[MinValueValidator(0), MaxValueValidator(200)],
+        help_text=_("Set to 0 for adaptive.")
+    )
+    qr_height_mm = models.PositiveIntegerField(
+        _("Label Height (mm)"),
+        default=30,
+        validators=[MinValueValidator(0), MaxValueValidator(200)],
+        help_text=_("Set to 0 for adaptive.")
+    )
+    qr_font_size = models.PositiveIntegerField(
+        _("Font Size (pt)"),
+        default=4,
+        validators=[MinValueValidator(4), MaxValueValidator(24)],
+        help_text=_("Base text size for properties. Header is scaled slightly larger.")
     )
 
     def __str__(self):

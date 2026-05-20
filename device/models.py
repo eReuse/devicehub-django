@@ -6,7 +6,7 @@ from evidence.models import SystemProperty, UserProperty, Evidence, RootAlias
 from django.utils.dateparse import parse_datetime
 from lot.models import DeviceLot, DeviceBeneficiary
 from action.models import State
-from user.models import InstitutionSettings, QRContentType
+from user.models import InstitutionSettings, LabelVersion, QRContentType
 
 
 class Device:
@@ -515,7 +515,15 @@ class Device:
         if not settings:
             settings, created= InstitutionSettings.objects.get_or_create(institution=self.owner)
 
-        if settings.qr_content_type == QRContentType.PUBLIC_VIEW:
+        if settings.qr_label_version == LabelVersion.V1:
+            return {
+                'payload': self.shortid,
+            }
+
+        if settings.qr_content_type == QRContentType.NONE:
+            qr_payload = ""
+
+        elif settings.qr_content_type == QRContentType.PUBLIC_VIEW:
             path = reverse('device:device_web', kwargs={'pk': self.pk})
             qr_payload = request.build_absolute_uri(path)
 
@@ -527,6 +535,7 @@ class Device:
             qr_payload = str(self.shortid)
 
         TRANSLATED_PROPERTIES = {
+            'ID': _('Short ID'),
             'manufacturer': _('Manufacturer'),
             'model': _('Model'),
             'serial': _('Serial Number'),

@@ -413,6 +413,7 @@ class DeviceBulkLabelView(DashboardView, ListView):
 
             context['labels_data'] = labels_data
             context['header'] = settings.qr_label_header
+            context['settings'] = settings
 
         return context
 

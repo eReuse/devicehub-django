@@ -26,7 +26,8 @@ class InstitutionForm(forms.ModelForm):
             'name',
             'logo', 'responsable_person', 'supervisor_person',
             'facility_id_uri', 'facility_description', 'country',
-            'street_address', 'postal_code', 'location', 'region'
+            'street_address', 'postal_code', 'location', 'region',
+            'algorithm'
         ]
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': _('e.g. Acme Corp')}),
@@ -39,7 +40,7 @@ class InstitutionForm(forms.ModelForm):
             'country': forms.TextInput(attrs={'class': 'form-control', 'placeholder': _('e.g. US, ES, DE'), 'maxlength': '2'}),
             'street_address': forms.TextInput(attrs={'class': 'form-control', 'placeholder': _('123 Main St')}),
             'postal_code': forms.TextInput(attrs={'class': 'form-control', 'placeholder': _('10001')}),
-            'location': forms.TextInput(attrs={'class': 'form-control', 'placeholder': _('City or Locality')}), # Fixed typo here!
+            'location': forms.TextInput(attrs={'class': 'form-control', 'placeholder': _('City or Locality')}),
             'region': forms.TextInput(attrs={'class': 'form-control', 'placeholder': _('State or Province')}),
         }
 
@@ -58,12 +59,23 @@ class InstitutionSettingsForm(forms.ModelForm):
             'qr_content_type',
             'qr_label_header',
             'qr_include_logo',
-            'qr_printed_properties'
+            'qr_printed_properties',
+            'qr_label_version',
+            'qr_label_orientation',
+            'qr_label_columns',
+            'qr_width_mm',
+            'qr_height_mm',
+            'qr_font_size'
         ]
         widgets = {
             'qr_content_type': forms.RadioSelect,
             'qr_include_logo': forms.CheckboxInput(attrs={'class': 'form-check-input', 'role': 'switch'}),
-            'qr_label_header': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Property of {institution}'}),
+            'qr_label_header': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Property of... '}),
+            'qr_label_orientation': forms.Select(attrs={'class': 'form-select'}),
+            'qr_label_columns': forms.NumberInput(attrs={'class': 'form-control', 'min': '1', 'max': '10'}),
+            'qr_width_mm': forms.NumberInput(attrs={'class': 'form-control', 'min': '20', 'max': '200'}),
+            'qr_height_mm': forms.NumberInput(attrs={'class': 'form-control', 'min': '20', 'max': '200'}),
+            'qr_font_size': forms.NumberInput(attrs={'class': 'form-control', 'min': '4', 'max': '24'}),
         }
 
     def clean_qr_printed_properties(self):
