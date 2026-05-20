@@ -2,6 +2,7 @@
 Extraction utilities for lifecycle data from device evidences.
 """
 
+from datetime import datetime
 from typing import List, Optional, Tuple, Dict
 from device.models import Device
 from ..common import convert_str_time_to_hours
@@ -28,6 +29,25 @@ def _find_first_storage(components: List[Dict]) -> Optional[Dict]:
     return None
 
 
+def _get_evidence_sort_key(evidence) -> tuple[int, object]:
+    timestamp_candidates = [
+        evidence.doc.get("endTime"),
+        evidence.doc.get("timestamp"),
+        evidence.doc.get("date"),
+        evidence.get_time_created(),
+    ]
+
+    for value in timestamp_candidates:
+        if not value:
+            continue
+        try:
+            return (0, datetime.fromisoformat(str(value)))
+        except ValueError:
+            continue
+
+    return (1, str(evidence.uuid))
+
+
 def get_evidences_data_from_device(device: Device) -> List[EvidenceData]:
     """
     Extract all evidences from a device as EvidenceData objects.
@@ -40,8 +60,9 @@ def get_evidences_data_from_device(device: Device) -> List[EvidenceData]:
     """
 
     evidences_data = []
-    # We want chronological order (oldest first)
-    for idx, evidence in enumerate(reversed(device.evidences)):
+    evidences_in_chronological_order = sorted(device.evidences, key=_get_evidence_sort_key)
+
+    for idx, evidence in enumerate(evidences_in_chronological_order):
         components = evidence.get_components()
         poh = 0
         disk_metadata = DiskMetadata("", "", "")
