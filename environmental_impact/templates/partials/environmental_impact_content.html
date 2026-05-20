@@ -1,42 +1,5 @@
 {% load i18n %}
 
-{% if show_country_override and is_lot_view %}
-  <div class="card mb-3">
-    <div class="card-body">
-      <button class="btn btn-outline-secondary btn-sm w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#{{ override_collapse_id }}" aria-expanded="false">
-        {% trans 'Country Overrides' %}
-      </button>
-      <div class="collapse mt-3" id="{{ override_collapse_id }}">
-        <div class="form-text mb-3">
-          {% trans 'Apply one ISO 3166-1 alpha-2 country code like ES, FR or NA to all devices in this lot. Leave empty to remove all lot device overrides and fall back to the institution country.' %}
-        </div>
-        <form method="post" class="row g-2 align-items-end">
-          {% csrf_token %}
-          <input type="hidden" name="action" value="save_environmental_profile">
-          <div class="col-sm-4 col-md-3">
-            <label for="lot_country_code" class="form-label">{% trans 'Country code' %}</label>
-            <input
-              id="lot_country_code"
-              name="country_code"
-              type="text"
-              class="form-control"
-              maxlength="2"
-              placeholder="ES"
-              value="{{ lot_country_override|default:'' }}"
-            >
-          </div>
-          <div class="col-sm-8 col-md-9">
-            <div class="d-flex gap-2 flex-wrap">
-              <button type="submit" class="btn btn-primary">{% trans 'Apply to all devices' %}</button>
-              <button type="submit" name="country_code" value="" class="btn btn-outline-secondary">{% trans 'Use institution default' %}</button>
-            </div>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-{% endif %}
-
 {% if impact %}
   {% if impact.relevant_input_data.warnings %}
     <div class="alert alert-warning mt-4" role="alert">
@@ -90,33 +53,58 @@
                 <th>{% trans 'Country code' %}</th>
                 <td>
                   {{ impact.relevant_input_data.country_code|default:'-' }}
-                  {% if show_country_override and not is_lot_view %}
+                  {% if show_country_override %}
                     <button class="btn btn-link btn-sm p-0 ms-2 align-baseline" type="button" data-bs-toggle="collapse" data-bs-target="#{{ override_collapse_id }}" aria-expanded="false">
                       {% trans 'change' %}
                     </button>
                     <div class="collapse mt-2" id="{{ override_collapse_id }}">
-                      <div class="form-text mb-2">
-                        {% trans 'Set a per-device ISO 3166-1 alpha-2 code like ES, FR or NA. Leave empty to fall back to the institution country.' %}
-                      </div>
-                      <form method="post" class="row g-2 align-items-end">
-                        {% csrf_token %}
-                        <input type="hidden" name="action" value="save_environmental_profile">
-                        <div class="col-sm-5">
-                          <input
-                            id="country_code"
-                            name="country_code"
-                            type="text"
-                            class="form-control form-control-sm"
-                            maxlength="2"
-                            placeholder="ES"
-                            value="{{ environmental_profile.country|default:'' }}"
-                          >
+                      {% if is_lot_view %}
+                        <div class="form-text mb-2">
+                          {% trans 'Apply one ISO 3166-1 alpha-2 country code like ES, FR or NA to all devices in this lot. Leave empty to remove all lot device overrides and fall back to the institution country.' %}
                         </div>
-                        <div class="col-sm-7 d-flex gap-2 flex-wrap">
-                          <button type="submit" class="btn btn-primary btn-sm">{% trans 'Save' %}</button>
-                          <button type="submit" name="country_code" value="" class="btn btn-outline-secondary btn-sm">{% trans 'Use default' %}</button>
+                        <form method="post" class="row g-2 align-items-end">
+                          {% csrf_token %}
+                          <input type="hidden" name="action" value="save_environmental_profile">
+                          <div class="col-sm-5">
+                            <input
+                              id="lot_country_code"
+                              name="country_code"
+                              type="text"
+                              class="form-control form-control-sm"
+                              maxlength="2"
+                              placeholder="ES"
+                              value="{{ lot_country_override|default:'' }}"
+                            >
+                          </div>
+                          <div class="col-sm-7 d-flex gap-2 flex-wrap">
+                            <button type="submit" class="btn btn-primary btn-sm">{% trans 'Apply to all devices' %}</button>
+                            <button type="submit" name="country_code" value="" class="btn btn-outline-secondary btn-sm">{% trans 'Use default' %}</button>
+                          </div>
+                        </form>
+                      {% else %}
+                        <div class="form-text mb-2">
+                          {% trans 'Set a per-device ISO 3166-1 alpha-2 code like ES, FR or NA. Leave empty to fall back to the institution country.' %}
                         </div>
-                      </form>
+                        <form method="post" class="row g-2 align-items-end">
+                          {% csrf_token %}
+                          <input type="hidden" name="action" value="save_environmental_profile">
+                          <div class="col-sm-5">
+                            <input
+                              id="country_code"
+                              name="country_code"
+                              type="text"
+                              class="form-control form-control-sm"
+                              maxlength="2"
+                              placeholder="ES"
+                              value="{{ environmental_profile.country|default:'' }}"
+                            >
+                          </div>
+                          <div class="col-sm-7 d-flex gap-2 flex-wrap">
+                            <button type="submit" class="btn btn-primary btn-sm">{% trans 'Save' %}</button>
+                            <button type="submit" name="country_code" value="" class="btn btn-outline-secondary btn-sm">{% trans 'Use default' %}</button>
+                          </div>
+                        </form>
+                      {% endif %}
                     </div>
                   {% endif %}
                 </td>
