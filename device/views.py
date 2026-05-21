@@ -19,6 +19,9 @@ from django.views.generic.base import TemplateView
 from action.models import StateDefinition, State, DeviceLog, Note
 from dashboard.mixins import DashboardView, Http403
 from environmental_impact.algorithms.algorithm_factory import FactoryEnvironmentImpactAlgorithm
+from environmental_impact.algorithms.ereuse2025.carbon_intensity import (
+    get_available_country_codes,
+)
 from environmental_impact.models import DeviceEnvironmentalProfile
 from evidence.models import UserProperty, SystemProperty, Evidence, RootAlias
 from lot.models import LotTag
@@ -34,6 +37,7 @@ if settings.DPP:
 
 logger = logging.getLogger(__name__)
 COUNTRY_CODE_PATTERN = re.compile(r"^[A-Za-z]{2}$")
+AVAILABLE_COUNTRY_CODES = set(get_available_country_codes())
 
 
 class DeviceLogMixin(DashboardView):
@@ -151,6 +155,13 @@ class DetailsView(DashboardView, TemplateView ):
             )
             return redirect(reverse_lazy("device:details", args=[pk]) + "#environmental_impact")
 
+        if country_code not in AVAILABLE_COUNTRY_CODES:
+            messages.error(
+                request,
+                _("Selected country is not available for environmental impact."),
+            )
+            return redirect(reverse_lazy("device:details", args=[pk]) + "#environmental_impact")
+
         DeviceEnvironmentalProfile.objects.update_or_create(
             device_chid=device_id,
             owner=institution,
@@ -217,6 +228,7 @@ class DetailsView(DashboardView, TemplateView ):
             'dpps': dpps,
             'impact': enviromental_impact,
             'environmental_profile': environmental_profile,
+            'environmental_country_codes': get_available_country_codes(),
             "state_definitions": state_definitions,
             "device_states": device_states,
             "device_logs": device_logs,
