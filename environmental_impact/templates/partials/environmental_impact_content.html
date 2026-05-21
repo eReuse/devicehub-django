@@ -54,8 +54,8 @@
                 <td>
                   {{ impact.relevant_input_data.country_code|default:'-' }}
                   {% if show_country_override %}
-                    <button class="btn btn-link btn-sm p-0 ms-2 align-baseline" type="button" data-bs-toggle="collapse" data-bs-target="#{{ override_collapse_id }}" aria-expanded="false">
-                      {% trans 'change' %}
+                    <button class="btn btn-outline-secondary btn-sm ms-2 py-0 px-2 align-baseline" type="button" data-bs-toggle="collapse" data-bs-target="#{{ override_collapse_id }}" aria-expanded="false">
+                      {% trans 'Change' %}
                     </button>
                     <div class="collapse mt-2" id="{{ override_collapse_id }}">
                       {% if is_lot_view %}
