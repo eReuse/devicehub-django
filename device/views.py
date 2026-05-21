@@ -1,6 +1,5 @@
 import json
 import logging
-import re
 
 from django.http import JsonResponse
 from django.conf import settings
@@ -36,7 +35,6 @@ if settings.DPP:
 
 
 logger = logging.getLogger(__name__)
-COUNTRY_CODE_PATTERN = re.compile(r"^[A-Za-z]{2}$")
 AVAILABLE_COUNTRY_CODES = set(get_available_country_codes())
 
 
@@ -145,13 +143,6 @@ class DetailsView(DashboardView, TemplateView ):
             messages.success(
                 request,
                 _("Environmental impact country override removed."),
-            )
-            return redirect(reverse_lazy("device:details", args=[pk]) + "#environmental_impact")
-
-        if not COUNTRY_CODE_PATTERN.fullmatch(country_code):
-            messages.error(
-                request,
-                _("Country code must contain exactly 2 letters."),
             )
             return redirect(reverse_lazy("device:details", args=[pk]) + "#environmental_impact")
 

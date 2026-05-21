@@ -1,7 +1,6 @@
 import ast
 import logging
 import datetime
-import re
 
 from django.db import IntegrityError
 from utils.icons import get_icon_by_type
@@ -480,10 +479,6 @@ class LotEnvironmentalImpactView(DashboardLotMixing, TemplateView):
                 owner=request.user.institution,
             ).delete()
             messages.success(request, _("Environmental impact country override removed."))
-            return redirect(reverse_lazy("lot:environmental_impact", args=[pk]))
-
-        if not re.fullmatch(r"^[A-Za-z]{2}$", country_code):
-            messages.error(request, _("Country code must contain exactly 2 letters."))
             return redirect(reverse_lazy("lot:environmental_impact", args=[pk]))
 
         if country_code not in AVAILABLE_COUNTRY_CODES:
