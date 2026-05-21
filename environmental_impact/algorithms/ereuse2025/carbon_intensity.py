@@ -15,6 +15,11 @@ def get_carbon_intensity_data() -> dict[str, float]:
     return {country_code: float(value) for country_code, value in raw_data.items()}
 
 
+@lru_cache(maxsize=1)
+def get_available_country_codes() -> tuple[str, ...]:
+    return tuple(sorted(get_carbon_intensity_data().keys()))
+
+
 def get_carbon_intensity_factor_from(country_code: str) -> float:
     """
     Get carbon intensity factor for a given ISO 3166-1 alpha-2 country code.

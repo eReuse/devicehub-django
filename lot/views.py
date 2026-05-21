@@ -26,6 +26,9 @@ from lot.tables import LotTable, BeneficiaryTable
 from device.models import Device
 from evidence.models import SystemProperty, RootAlias
 from environmental_impact.algorithms.algorithm_factory import FactoryEnvironmentImpactAlgorithm
+from environmental_impact.algorithms.ereuse2025.carbon_intensity import (
+    get_available_country_codes,
+)
 from lot.forms import (
     LotsForm,
     LotSubscriptionForm,
@@ -53,6 +56,7 @@ from dhemail.views import (
 
 
 logger = logging.getLogger(__name__)
+AVAILABLE_COUNTRY_CODES = set(get_available_country_codes())
 
 
 class LotSuccessUrlMixin():
@@ -447,6 +451,7 @@ class LotEnvironmentalImpactView(DashboardLotMixing, TemplateView):
             'device_count': len(devices),
             'devices_with_evidence': len(devices),
             'lot_country_override': distinct_countries[0] if len(distinct_countries) == 1 else '',
+            'environmental_country_codes': get_available_country_codes(),
             'breadcrumb': [
                 (_("Lots"), reverse("dashboard:unassigned")),
                 (self.lot.type.name, reverse("lot:tags", args=[self.lot.type.pk])),
@@ -491,6 +496,13 @@ class LotEnvironmentalImpactView(DashboardLotMixing, TemplateView):
 
         if not re.fullmatch(r"^[A-Za-z]{2}$", country_code):
             messages.error(request, _("Country code must contain exactly 2 letters."))
+            return redirect(reverse_lazy("lot:environmental_impact", args=[pk]))
+
+        if country_code not in AVAILABLE_COUNTRY_CODES:
+            messages.error(
+                request,
+                _("Selected country is not available for environmental impact."),
+            )
             return redirect(reverse_lazy("lot:environmental_impact", args=[pk]))
 
         for device_id in device_ids:
