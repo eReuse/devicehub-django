@@ -79,7 +79,7 @@ class DeviceTable(tables.Table):
     )
     status_beneficiary = tables.Column(
         accessor='status_beneficiary',
-        verbose_name=_("Shop status"),
+        verbose_name=_("Shop state"),
         attrs={
             'th': {'class': 'text-center'},
             'td': {'class': 'text-center'}
