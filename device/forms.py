@@ -22,7 +22,6 @@ DEVICE_TYPES = [
     ("Switch", "Switch"),
     ("Router", "Router"),
     ("RouterWifi", "RouterWifi"),
-
 #TODO:TEST FOR DISMANTLING
     ("Plastic", "Plastic (Recycled)"),
     ("Aluminium", "Aluminium"),
@@ -33,6 +32,7 @@ DEVICE_TYPES = [
     ("Lithium", "Lithium"),
     ("PCB", "Printed Circuit Board (Scrap)"),
     ("MixedEwaste", "Mixed E-Waste"),
+    ("FhA-Chemicals", "FhA-Chemicals"),
 ]
 
 

@@ -19,6 +19,7 @@ ICONS = {
     "Switch": "bi-hdd-network",
     "Router": "bi-hdd",
     "RouterWifi": "bi-router",
+    "FhA-Chemicals": "bi-box",
 }
 
 def get_icon_by_type(value):

@@ -32,6 +32,7 @@ class Device:
         SWITCH = "Switch"
         ROUTER = "Router"
         ROUTERWIFI = "RouterWifi"
+        FHACHEMICALS = "FhA-Chemicals"
 
         # --- Raw Materials (Dismantling Outputs) ---
         PLASTIC = "Plastic"
