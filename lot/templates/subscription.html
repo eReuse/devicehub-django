@@ -21,11 +21,29 @@
           <td class="font-monospace">{{ s.user.email }}</td>
           <td class="font-monospace">{{ s.get_type_display }}</td>
           <td class="font-monospace">
-	    <a href="{% url 'lot:unsubscription' lot.id s.id %}">
-	       {% trans 'Unsubscribe' %}
-	    </a>
-	  </td>
+            <button type="button" class="btn btn-sm btn-outline-danger d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#unsubscribeModal{{ forloop.counter }}">
+              <i class="bi bi-trash me-1"></i>
+              {% trans 'Unsubscribe' %}
+            </button>
+          </td>
         </tr>
+        <div class="modal fade" id="unsubscribeModal{{ forloop.counter }}" tabindex="-1" aria-labelledby="unsubscribeModalLabel{{ forloop.counter }}" aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="unsubscribeModalLabel{{ forloop.counter }}">{% trans "Unsubscribe User" %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
+              </div>
+              <div class="modal-body">
+                <p>{% blocktrans with email=s.user.email type=s.get_type_display %}Are you sure you want to unsubscribe <strong>{{ email }}</strong> as {{ type }}?{% endblocktrans %}</p>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+                <a class="btn btn-danger" href="{% url 'lot:unsubscription' lot.id s.id %}">{% trans 'Unsubscribe' %}</a>
+              </div>
+            </div>
+          </div>
+        </div>
       {% endfor %}
       </tbody>
     </table>
