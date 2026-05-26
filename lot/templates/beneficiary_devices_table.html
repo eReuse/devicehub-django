@@ -36,11 +36,31 @@
         </td>
         {% endif %}
         <td class="font-monospace">
-            <a href="{% url 'lot:del_device_beneficiary' lot.id beneficiary.id f.device.id %}{% if device_context %}?next={% url 'device:details' object.id %}{% endif %}">
+            <button type="button" class="btn btn-sm btn-outline-danger d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#deallocateDeviceModal{{ forloop.counter }}">
+                <i class="bi bi-trash me-1"></i>
                 {% trans 'Deallocate' %}
-            </a>
+            </button>
         </td>
     </tr>
+    <div class="modal fade" id="deallocateDeviceModal{{ forloop.counter }}" tabindex="-1" aria-labelledby="deallocateDeviceModalLabel{{ forloop.counter }}" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deallocateDeviceModalLabel{{ forloop.counter }}">{% trans "Deallocate Device" %}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
+                </div>
+                <div class="modal-body">
+                    <p>{% blocktrans with email=beneficiary.email shortid=f.device.shortid %}Are you sure you want to deallocate device <strong>{{ shortid }}</strong> from beneficiary <strong>{{ email }}</strong>?{% endblocktrans %}</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+                    <a class="btn btn-danger" href="{% url 'lot:del_device_beneficiary' lot.id beneficiary.id f.device.id %}{% if device_context %}?next={% url 'device:details' object.id %}{% endif %}">
+                        {% trans 'Deallocate' %}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
     {% endfor %}
     </tbody>
 </table>
