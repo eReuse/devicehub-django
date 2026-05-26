@@ -8,14 +8,9 @@
     {% csrf_token %}
 
     {{ form.management_form }}
-<div class="row mt-3">
-  <div class="col">
-    Beneficiary: {{ beneficiary.email }}
-  </div>
-</div>
-<div class="row mt-3">
-  <div class="col">
 
+<div class="row mt-3">
+  <div class="col">
     {% include 'beneficiary_devices_table.html' %}
   </div>
 </div>
