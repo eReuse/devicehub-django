@@ -120,7 +120,6 @@ class Institution(models.Model):
     @property
     def latest_facility_credential(self):
         return self.credentialproperty_set.filter(
-            uuid__isnull=True,
             key='DigitalFacilityRecord'
         ).order_by('-created').first()
 

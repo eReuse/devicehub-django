@@ -151,8 +151,8 @@ class Device:
     @property
     def did(self):
         did_document = CredentialProperty.objects.filter(
-            uuid__in=self.uuids,
-            key="DID_DOCUMENT"
+            sysprop__in=self.properties,
+            key=CredentialProperty.CredentialType.DIDDOC
         ).order_by("created").first()
 
         return getattr( did_document, "value", "")
