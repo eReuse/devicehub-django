@@ -1,4 +1,5 @@
 import uuid
+from django.db import transaction
 from django.utils import timezone
 from django.views import View
 from django.urls import reverse
@@ -38,21 +39,6 @@ class ChangeStateView(LoginRequiredMixin, FormView):
         if not device.last_evidence:
             return super().form_invalid(form)
 
-        State.objects.create(
-            snapshot_uuid=snapshot_uuid,
-            state=new_state,
-            user=self.request.user,
-            institution=self.request.user.institution,
-        )
-
-        message = _("<Created> State '{}'. Previous State: '{}'").format(new_state, previous_state)
-        DeviceLog.objects.create(
-            snapshot_uuid=snapshot_uuid,
-            event=message,
-            user=self.request.user,
-            institution=self.request.user.institution,
-        )
-
         service = CredentialService(self.request.user)
         did_error = service.ensure_device_did(device)
         if did_error:
@@ -70,24 +56,19 @@ class ChangeStateView(LoginRequiredMixin, FormView):
 
         traceability_event = {
             "type": ["ObjectEvent", "Event"],
-            #unique id for each transformation event
             "id": f"urn:uuid:{uuid.uuid4()}",
             "eventTime": timezone.now().isoformat(),
             "eventTimeZoneOffset": "+00:00",
-
             "action": "observe",
             "processType": new_state,
-            #TODO map specific bizstep to maybe pre-loaded states?
             "bizStep": "urn:epcglobal:cbv:bizstep:other",
             "disposition": "urn:epcglobal:cbv:disp:active",
             "bizLocation": facility_uri,
-
             "epcList": [{
                 "type": ["Item"],
                 "id": device_uri,
                 "name": clean_name
             }],
-
             "ereuse:deviceState": new_state,
             "ereuse:previousState": previous_state,
             "ereuse:lastUpdate": timezone.now().isoformat()
@@ -96,19 +77,39 @@ class ChangeStateView(LoginRequiredMixin, FormView):
         if comment:
             traceability_event["ereuse:operatorComment"] = comment
 
-        credential, error = service.issue_device_credential(
-            credential_type_key='traceability',
-            credential_subject=[traceability_event],
-            credential_db_key="DigitalTraceabilityEvent",
-            device=device,
-            uuid=snapshot_uuid,
-            description=f"State Change: {previous_state} -> {new_state}"
-        )
+        try:
+            with transaction.atomic():
+                State.objects.create(
+                    snapshot_uuid=snapshot_uuid,
+                    state=new_state,
+                    user=self.request.user,
+                    institution=self.request.user.institution,
+                )
 
-        if error:
-            messages.warning(self.request, _("State changed, but credential failed: {}").format(error))
-        else:
+                message = _("<Created> State '{}'. Previous State: '{}'").format(new_state, previous_state)
+                DeviceLog.objects.create(
+                    snapshot_uuid=snapshot_uuid,
+                    event=message,
+                    user=self.request.user,
+                    institution=self.request.user.institution,
+                )
+
+                credential, error = service.issue_device_credential(
+                    credential_type_key='traceability',
+                    credential_subject=[traceability_event],
+                    credential_db_key="DTE",
+                    device=device,
+                    uuid=snapshot_uuid,
+                    description=f"State Change: {previous_state} -> {new_state}"
+                )
+
+                if error:
+                    raise Exception(error)
+
             messages.success(self.request, _("State changed and credential issued successfully from '{}' to '{}'").format(previous_state, new_state))
+
+        except Exception as e:
+            messages.warning(self.request, _("State changed, but credential failed: {}").format(str(e)))
 
         return super().form_valid(form)
 
@@ -118,7 +119,6 @@ class ChangeStateView(LoginRequiredMixin, FormView):
 
     def get_success_url(self):
         return self.request.META.get('HTTP_REFERER') or reverse_lazy('device:details')
-
 
 BULK_MATERIALS = ['Plastic', 'Aluminium', 'Copper', 'Steel', 'Glass', 'Gold', 'Lithium', 'MixedEwaste']
 
@@ -288,35 +288,39 @@ class DismantleDeviceView(LoginRequiredMixin, FormView):
         desc = f"Dismantled into {len(output_items)} components and {len(output_quantities)} material batches."
 
         service = CredentialService(self.request.user)
-        credential, error = service.issue_device_credential(
-            credential_type_key='traceability',
-            credential_subject=[cleaned_event],
-            credential_db_key="DigitalTraceabilityEvent",
-            device=device,
-            uuid=parent_uuid,
-            description=desc
-        )
+        try:
+            with transaction.atomic():
+                State.objects.create(
+                    snapshot_uuid=parent_uuid,
+                    state="Dismantled",
+                    user=user,
+                    institution=institution,
+                )
+                DeviceLog.objects.create(
+                    snapshot_uuid=parent_uuid,
+                    event=f"<Dismantled> {desc}",
+                    user=user,
+                    institution=institution,
+                )
 
-        if error:
-            messages.error(self.request, f"Dismantle failed during credential issuance: {error}")
+                credential, error = service.issue_device_credential(
+                    credential_type_key='traceability',
+                    credential_subject=[cleaned_event],
+                    credential_db_key="DTE",
+                    device=device,
+                    uuid=parent_uuid,
+                    description=desc
+                )
+
+                if error:
+                    raise Exception(error)
+
+            messages.success(self.request, "Device dismantled successfully. Traceability Record issued.")
+
+        except Exception as e:
+            messages.error(self.request, f"Dismantle failed during credential issuance: {str(e)}")
             return self.form_invalid(formset)
 
-        # 5. Finalize Local State
-        State.objects.create(
-            snapshot_uuid=parent_uuid,
-            state="Dismantled",
-            user=user,
-            institution=institution,
-        )
-
-        DeviceLog.objects.create(
-            snapshot_uuid=parent_uuid,
-            event=f"<Dismantled> {desc}",
-            user=user,
-            institution=institution,
-        )
-
-        messages.success(self.request, "Device dismantled successfully. Traceability Record issued.")
         return redirect('device:details', pk=parent_device_id)
 
 class BulkStateChangeView(DashboardView, View):
