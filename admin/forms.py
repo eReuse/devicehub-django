@@ -71,16 +71,6 @@ class InstitutionLabelSettingsForm(forms.ModelForm):
 
 
 class InstitutionApiSettingsForm(forms.ModelForm):
-    schema_config_json = forms.CharField(
-        label=_("Schema Configuration (JSON)"),
-        widget=forms.Textarea(attrs={
-            'rows': 5,
-            'class': 'form-control font-monospace',
-            'placeholder': '{"dpp": "dpp_v1.json", "traceability": "trace_v1.json",  "facility": "facility_record_v2.json" }'
-        }),
-        help_text=_("Map credential types to schema filenames. Must be valid JSON."),
-        required=False
-    )
 
     class Meta:
         model = InstitutionSettings
@@ -88,7 +78,7 @@ class InstitutionApiSettingsForm(forms.ModelForm):
             'issuer_did',
             'api_base_url',
             'signing_auth_token',
-            # 'schema_config' is handled manually via the schema_config_json field
+            'schema_config'
         ]
         widgets = {
             'signing_auth_token': forms.PasswordInput(render_value=True, attrs={'class': 'form-control'}),
@@ -96,22 +86,9 @@ class InstitutionApiSettingsForm(forms.ModelForm):
             'api_base_url': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://api.example.com'}),
         }
 
-    def clean_schema_config_json(self):
-        data = self.cleaned_data.get('schema_config_json')
-        if not data:
-            return {}
-        try:
-            json_data = json.loads(data)
-            if not isinstance(json_data, dict):
-                raise forms.ValidationError(_("Configuration must be a JSON object (dictionary)."))
-            return json_data
-        except json.JSONDecodeError:
-            raise forms.ValidationError(_("Invalid JSON format. Please check syntax."))
 
     def save(self, commit=True):
         instance = super().save(commit=False)
-
-        instance.schema_config = self.cleaned_data.get('schema_config_json', {})
         if commit:
             instance.save()
         return instance

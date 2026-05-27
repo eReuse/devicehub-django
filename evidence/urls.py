@@ -25,9 +25,9 @@ urlpatterns = [
     path("alias/<str:pk>/<uuid:snapshot_id>/delete", views.DeleteEvidenceAliasView.as_view(), name="delete_alias"),
     path("tag/<str:pk>/delete", views.DeleteEvidenceAliasView.as_view(), name="delete_tag"),
 
-    path('credential/<int:pk>/', views.CredentialDetailView.as_view(), name='credential_detail'),
-    path('credential/<int:pk>/download/', views.DownloadDPPView.as_view(), name='download_dpp'),
     path('credential/<int:pk>/validate/', views.ValidateDPPView.as_view(), name='validate_dpp'),
+    path('credential/<uuid:uuid>/', views.CredentialDetailView.as_view(), name='credential_detail'),
+    path('credential/<uuid:uuid>/download/', views.DownloadDPPView.as_view(), name='download_dpp'),
     path('credential/by-evidence/<uuid:uuid>/', views.CredentialByEvidenceUUIDView.as_view(), name='credential_by_evidence')
 
 ]

@@ -69,7 +69,7 @@ class EvidenceTable(tables.Table):
 
         credential_prop = self.evidence_map.get(value).get_credential()
         if credential_prop:
-            url = reverse('evidence:credential_detail', kwargs={'pk': credential_prop.pk})
+            url = reverse('evidence:credential_detail', kwargs={'uuid': credential_prop.uuid})
             return format_html(
                 '<a href="{}" class="btn btn-sm btn-outline-success">{}</a>',
                 url,
@@ -279,7 +279,7 @@ class CredentialTable(tables.Table):
             if record.key == "DID_DOCUMENT":
                 url = resolve_did_url(record.value)
             else:
-                url = reverse('evidence:credential_detail', kwargs={'pk': record.pk})
+                url = reverse('evidence:credential_detail', kwargs={'uuid': record.uuid})
 
             return format_html(
                 '''<a href="{}" class="btn btn-sm btn-outline-primary d-inline-flex align-items-center">
