@@ -713,7 +713,6 @@ class IssueDigitalFacilityRecordView(AdminView, View):
             credential_subject=credential_subject,
             credential_db_key="DigitalFacilityRecord",
             description="Facility Sustainability Record",
-            uuid=None
         )
         if error:
             messages.error(request, error)

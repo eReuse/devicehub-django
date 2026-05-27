@@ -271,6 +271,8 @@ class PhotoEvidenceView(DashboardView, TemplateView):
 class CredentialDetailView(DetailView):
     model = CredentialProperty
     context_object_name = 'credential_prop'
+    slug_field = 'uuid'
+    slug_url_kwarg = 'uuid'
 
     def render_to_response(self, context, **response_kwargs):
         """
@@ -315,13 +317,13 @@ class CredentialDetailView(DetailView):
 
 class DownloadDPPView(DashboardView, TemplateView):
     def get(self, request, *args, **kwargs):
-        pk = kwargs.get('pk')
+        uuid_val = kwargs.get('uuid')
         try:
-            credential_prop = get_object_or_404(CredentialProperty, pk=pk)
+            credential_prop = get_object_or_404(CredentialProperty, uuid=uuid_val)
 
             data = json.dumps(credential_prop.credential, indent=4)
             response = HttpResponse(data, content_type="application/json")
-            response['Content-Disposition'] = f'attachment; filename="dpp_credential_{pk}.json"'
+            response['Content-Disposition'] = f'attachment; filename="dpp_credential_{uuid_val}.json"'
             return response
         except CredentialProperty.DoesNotExist:
             raise Http404("Credential not found.")
@@ -333,7 +335,7 @@ class CredentialByEvidenceUUIDView(TemplateView):
         credential_prop = CredentialProperty.objects.filter(uuid=uuid).order_by('-created').first()
 
         if credential_prop:
-            return redirect('evidence:credential_detail', pk=credential_prop.pk)
+            return redirect('evidence:credential_detail', uuid=credential_prop.uuid)
         else:
             raise Http404("No credential found for the specified evidence UUID.")
 

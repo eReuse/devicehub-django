@@ -1,6 +1,7 @@
 import json
 import hashlib
 import re
+import uuid
 
 from dmidecode import DMIParse
 from django.db import models
@@ -8,8 +9,6 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils import timezone
 from django.conf import settings
-
-import json
 
 from django.db.models import Q
 from utils.constants import STR_EXTEND_SIZE, CHASSIS_DH
@@ -56,8 +55,21 @@ class SystemProperty(Property):
 
 
 class CredentialProperty(Property):
+    class CredentialType(models.TextChoices):
+        DPP = 'DPP', 'Digital Product Passport'
+        DFR = 'DFR', 'Digital Facility Record'
+        DTE = 'DTE', 'Digital Traceability Event'
+        DIDDOC = 'DIDDOC', 'DID DOCUMENT'
+
     credential = models.JSONField()
-    uuid = models.UUIDField(null=True, blank=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    sysprop = models.ForeignKey(
+        SystemProperty,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='credentials'
+    )
     description = models.CharField(
         "Description",
         max_length=255,
@@ -65,6 +77,14 @@ class CredentialProperty(Property):
         blank=True,
         help_text="E.g. 'Digital Facility Record' or 'Product Passport'"
     )
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                check=~Q(key='DPP') | Q(sysprop__isnull=False),
+                name='dpp_must_have_sysprop'
+            ),
+        ]
 
 
 class UserProperty(Property):

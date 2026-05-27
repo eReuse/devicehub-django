@@ -4,7 +4,7 @@ import requests
 import logging
 from django.db import IntegrityError
 from user.models import InstitutionSettings
-from evidence.models import CredentialProperty
+from evidence.models import CredentialProperty, SystemProperty
 
 logger = logging.getLogger(__name__)
 
@@ -26,9 +26,13 @@ class CredentialService:
             did_str, did_doc, err = self._create_object_did(target_suffix, service_endpoint)
             if err: return err
 
+            sysprop_instance = None
+            if device.last_evidence:
+                sysprop_instance = SystemProperty.objects.filter(uuid=device.last_evidence.uuid).first()
+
             CredentialProperty.objects.create(
-                uuid=device.last_evidence.uuid,
-                key="DID_DOCUMENT",
+                sysprop=sysprop_instance,
+                key=CredentialProperty.CredentialType.DIDDOC,
                 owner= self.institution,
                 value= did_str,
                 credential= did_doc,
@@ -95,10 +99,13 @@ class CredentialService:
             "issuer_did": self.settings.issuer_did,
             "credentialSubject": credential_subject
         }
+        sysprop_instance = None
+        if uuid:
+            sysprop_instance = SystemProperty.objects.filter(uuid=uuid).first()
 
-        return self._execute_issuance(endpoint, payload, credential_db_key, description, uuid)
+        return self._execute_issuance(endpoint, payload, credential_db_key, description, sysprop_instance)
 
-    def issue_facility_credential(self, credential_subject, credential_db_key, description=None, uuid=None):
+    def issue_facility_credential(self, credential_subject, credential_db_key, description=None):
         error_msg = self._validate_config('facility')
         if error_msg: return None, error_msg
 
@@ -109,10 +116,10 @@ class CredentialService:
             "credentialSubject": credential_subject
         }
 
-        return self._execute_issuance(endpoint, payload, credential_db_key, description, uuid)
+        return self._execute_issuance(endpoint, payload, credential_db_key, description, sysprop_instance=None)
 
     # -------------------------------------------------------------------------
-    def _execute_issuance(self, endpoint, payload, db_key, description, uuid):
+    def _execute_issuance(self, endpoint, payload, db_key, description, sysprop_instance):
         headers = self._get_auth_headers()
         try:
             response = requests.post(endpoint, json=payload, headers=headers, timeout=30, verify=False)
@@ -128,7 +135,7 @@ class CredentialService:
                     return None, "API success but response format was invalid."
 
             cred_prop = CredentialProperty.objects.create(
-                uuid=uuid,
+                sysprop=sysprop_instance,
                 owner=self.institution,
                 key=db_key,
                 value=signed_credential.get('id'),

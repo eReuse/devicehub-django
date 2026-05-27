@@ -218,7 +218,7 @@ class DetailsView(DashboardView, TemplateView ):
         RequestConfig(self.request).configure(evidence_table)
 
         credential_queryset = CredentialProperty.objects.filter(
-            uuid__in=uuids,
+            sysprop__in=self.object.properties,
             owner=self.request.user.institution
         ).order_by('-created')
         credential_table = CredentialTable(credential_queryset)
@@ -562,7 +562,6 @@ class IssueDigitalPassportView(DeviceLogMixin, View):
         device_uri = device.did if device.did else f"ereuse:{device.id}"
         traceability_info = self._get_traceability_info(device, request)
         country_code = getattr(device.owner, 'country', None)
-        manufacturer_name = getattr(device.owner, 'name', None)
 
         credential_subject = {
             "type": ["ProductPassport"],
@@ -571,7 +570,7 @@ class IssueDigitalPassportView(DeviceLogMixin, View):
             "product": {
                 "type": ["Product"],
                 "id": device_uri,
-                "name": f"{manufacturer_name} {components.get('model', 'Unknown')}",
+                "name": f"{components.get('model', 'Unknown')}",
                 "description": "A personal refurbished computing device.",
                 "characteristics": characteristics,
             },
@@ -588,9 +587,6 @@ class IssueDigitalPassportView(DeviceLogMixin, View):
             credential_subject["product"]["serialNumber"] = str(serial)
 
         if facility_info:
-            if facility_info.get("registeredId"):
-                credential_subject["product"]["producedByParty"]["id"] = str(facility_info["registeredId"])
-
             credential_subject["product"]["producedAtFacility"] = {
                 "id": facility_info["id"],
                 "name": facility_info["name"]
@@ -627,7 +623,7 @@ class IssueDigitalPassportView(DeviceLogMixin, View):
         credential, error = service.issue_device_credential(
             credential_type_key='dpp',
             credential_subject=credential_subject,
-            credential_db_key='DigitalProductPassport',
+            credential_db_key='DPP',
             device=device,
             uuid=last_evidence.uuid,
             description="Digital Product Passport"
@@ -640,7 +636,7 @@ class IssueDigitalPassportView(DeviceLogMixin, View):
             messages.success(request, "Digital Product Passport issued successfully!")
 
         dpp_url = self.request.build_absolute_uri(
-            reverse('evidence:credential_detail', kwargs={'pk': credential.id})
+            reverse('evidence:credential_detail', kwargs={'uuid': credential.uuid})
         )
         did_error = service.ensure_device_did(device, service_endpoint=dpp_url)
 
@@ -669,7 +665,7 @@ class IssueDigitalPassportView(DeviceLogMixin, View):
         operated_by = facility_data.get('operatedByParty', {})
 
         fac_url = request.build_absolute_uri(
-            reverse('evidence:credential_detail', kwargs={'pk': facility_cred_prop.id})
+            reverse('evidence:credential_detail', kwargs={'uuid': facility_cred_prop.uuid})
         )
 
         return {
@@ -683,10 +679,11 @@ class IssueDigitalPassportView(DeviceLogMixin, View):
                 "name": "Legal Entity Identifier"
             }
         }
+
     def _get_traceability_info(self, device, request):
         events = CredentialProperty.objects.filter(
-            uuid__in=device.uuids,
-            key='DigitalTraceabilityEvent',
+            sysprop__uuid__in=device.uuids,
+            key='DTE',
         ).order_by('created')
 
         if not events:
@@ -704,7 +701,7 @@ class IssueDigitalPassportView(DeviceLogMixin, View):
                 process_name = raw_process.split(':')[-1].capitalize() if ':' in raw_process else raw_process
 
                 cred_url = request.build_absolute_uri(
-                    reverse('evidence:credential_detail', kwargs={'pk': prop.id})
+                    reverse('evidence:credential_detail', kwargs={'uuid': prop.uuid})
                 )
 
                 link_obj = {
@@ -721,6 +718,7 @@ class IssueDigitalPassportView(DeviceLogMixin, View):
             entry = {
                 "type": ["TraceabilityPerformance"],
                 "valueChainProcess": process,
+                #verification of 1.0 given it is internal state change
                 "verifiedRatio": 1.0,
                 "traceabilityEvent": links
             }
