@@ -225,6 +225,12 @@ class ImportForm(forms.Form):
 
         if commit:
             for doc, cred in table:
+                kv_data = doc.get('kv', {})
+
+                if isinstance(kv_data, dict):
+                    fha_date = kv_data.get("production_date")
+                    if fha_date:
+                        doc["kv"]["production_date"] = str(fha_date)
                 path_name = save_in_disk(doc, self.user.institution.name, place="placeholder")
 
                 cred.save()

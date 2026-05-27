@@ -452,6 +452,7 @@ class IssueDigitalPassportView(DeviceLogMixin, View):
         service = CredentialService(request.user)
         did_error = service.ensure_device_did(device)
         did_warning_message = None
+
         if did_error:
             error_lower = did_error.lower()
             if  "[404]" in error_lower:
@@ -467,95 +468,101 @@ class IssueDigitalPassportView(DeviceLogMixin, View):
         operator_notes = request.POST.get('operator_notes', '').strip()
         facility_info = self._get_facility_info(device, request)
 
-        def convert_ram_to_mb(ram_string):
-            if not isinstance(ram_string, str): return 0
-            match = re.match(r'(\d+\.?\d*)\s*(GiB|MiB|GB|MB)', ram_string, re.IGNORECASE)
-            if not match: return 0
-            value, unit = float(match.groups()[0]), match.groups()[1].lower()
-            if 'gib' in unit: return int(value * 1024)
-            if 'gb' in unit: return int(value * 1000)
-            if 'mib' in unit or 'mb' in unit: return int(value)
-            return 0
-
-        components = device.components_export() or {}
-        raw_characteristics = {
-            "chassis": components.get('type') or "Laptop",
-            "manufacturer": components.get('manufacturer') or "Unknown",
-            "model": components.get('model') or "Unknown",
-            "cpu_model": components.get('cpu_model'),
-            "cpu_cores": str(components.get('cpu_cores')) if components.get('cpu_cores') else None,
-            "current_state": components.get('current_state') or "refurbished",
-            "ram_total": convert_ram_to_mb(components.get('ram_total')),
-            "ram_type": components.get('ram_type') or "Other",
-            "ram_slots": components.get('ram_slots'),
-            "slots_used": components.get('slots_used'),
-            "drive": components.get('drive') or "Other",
-            "gpu_model": components.get('gpu_model'),
-            "user_properties": components.get('user_properties'),
-            "serial": components.get('serial', "NA")
-        }
-        characteristics = {k: v for k, v in raw_characteristics.items() if v is not None and v != ''}
-
         device_uri = device.did if device.did else f"ereuse:{device.id}"
         traceability_info = self._get_traceability_info(device, request)
         country_code = getattr(device.owner, 'country', None)
 
-        credential_subject = {
-            "type": ["ProductPassport"],
-            "id": device_uri,
-            "granularityLevel": "item",
-            "product": {
-                "type": ["Product"],
+
+        if device.type == 'FhA-Chemicals':
+            doc = device.last_evidence.doc
+
+            credential_subject = self._build_generic_product_dpp(
+                doc=doc,
+                device_uri=device_uri,
+                facility_info=facility_info,
+                traceability_info=traceability_info,
+                owner=device.owner
+            )
+
+        else:
+            def convert_ram_to_mb(ram_string):
+                if not isinstance(ram_string, str): return 0
+                import re
+                match = re.match(r'(\d+\.?\d*)\s*(GiB|MiB|GB|MB)', ram_string, re.IGNORECASE)
+                if not match: return 0
+                value, unit = float(match.groups()[0]), match.groups()[1].lower()
+                if 'gib' in unit: return int(value * 1024)
+                if 'gb' in unit: return int(value * 1000)
+                if 'mib' in unit or 'mb' in unit: return int(value)
+                return 0
+
+            components = device.components_export() or {}
+            raw_characteristics = {
+                "chassis": components.get('type') or "Laptop",
+                "manufacturer": components.get('manufacturer') or "Unknown",
+                "model": components.get('model') or "Unknown",
+                "cpu_model": components.get('cpu_model'),
+                "cpu_cores": str(components.get('cpu_cores')) if components.get('cpu_cores') else None,
+                "current_state": components.get('current_state') or "refurbished",
+                "ram_total": convert_ram_to_mb(components.get('ram_total')),
+                "ram_type": components.get('ram_type') or "Other",
+                "ram_slots": components.get('ram_slots'),
+                "slots_used": components.get('slots_used'),
+                "drive": components.get('drive') or "Other",
+                "gpu_model": components.get('gpu_model'),
+                "user_properties": components.get('user_properties'),
+                "serial": components.get('serial', "NA")
+            }
+            characteristics = {k: v for k, v in raw_characteristics.items() if v is not None and v != ''}
+
+            credential_subject = {
+                "type": ["ProductPassport"],
                 "id": device_uri,
-                "name": f"{components.get('model', 'Unknown')}",
-                "description": "A personal refurbished computing device.",
-                "characteristics": characteristics,
-            },
-            "traceabilityInformation": traceability_info
-        }
-        if country_code:
-            credential_subject["product"]["countryOfProduction"] = country_code
-
-        if raw_grade in CosmeticGrade.values:
-            credential_subject["product"]["characteristics"]["itemCondition"] = raw_grade
-
-        serial = components.get('serial')
-        if serial and str(serial).upper() != "NA":
-            credential_subject["product"]["serialNumber"] = str(serial)
-
-        if facility_info:
-            credential_subject["product"]["producedAtFacility"] = {
-                "id": facility_info["id"],
-                "name": facility_info["name"]
+                "granularityLevel": "item",
+                "product": {
+                    "type": ["Product"],
+                    "id": device_uri,
+                    "name": f"{components.get('model', 'Unknown')}",
+                    "description": "A personal refurbished computing device.",
+                    "characteristics": characteristics,
+                },
+                "traceabilityInformation": traceability_info
             }
-            if facility_info.get("registeredId"):
-                credential_subject["product"]["producedAtFacility"]["registeredId"] = str(facility_info["registeredId"])
-        if repair_guide:
-            credential_subject["circularityScorecard"] = {
-                "type": ["CircularityPerformance"],
-                "repairInformation": {
-                    "type": ["Link"],
-                    "linkURL": repair_guide,
-                    "linkName": "Device Repair Guide"
+            if country_code:
+                credential_subject["product"]["countryOfProduction"] = country_code
+
+            if raw_grade in CosmeticGrade.values:
+                credential_subject["product"]["characteristics"]["itemCondition"] = raw_grade
+            elif raw_grade:
+                credential_subject["product"]["characteristics"]["itemCondition"] = raw_grade
+
+            serial = components.get('serial')
+            if serial and str(serial).upper() != "NA":
+                credential_subject["product"]["serialNumber"] = str(serial)
+
+            if repair_guide:
+                credential_subject["circularityScorecard"] = {
+                    "type": ["CircularityPerformance"],
+                    "repairInformation": {
+                        "type": ["Link"],
+                        "linkURL": repair_guide,
+                        "linkName": "Device Repair Guide"
+                    }
                 }
-            }
 
-        if raw_grade:
-            credential_subject["product"]["characteristics"]["itemCondition"] = raw_grade
+            if warranty_months or warranty_url:
+                warranty_obj = {}
+                if warranty_months:
+                    try:
+                        warranty_obj["durationMonths"] = int(warranty_months)
+                    except ValueError:
+                        pass
+                if warranty_url:
+                    warranty_obj["termsOfService"] = warranty_url
+                credential_subject["product"]["characteristics"]["warrantyPromise"] = warranty_obj
 
-        if warranty_months or warranty_url:
-            warranty_obj = {}
-            if warranty_months:
-                try:
-                    warranty_obj["durationMonths"] = int(warranty_months)
-                except ValueError:
-                    pass
-            if warranty_url:
-                warranty_obj["termsOfService"] = warranty_url
-            credential_subject["product"]["characteristics"]["warrantyPromise"] = warranty_obj
-
-        if operator_notes:
-            credential_subject["product"]["characteristics"]["operatorNotes"] = operator_notes
+            if operator_notes:
+                credential_subject["product"]["characteristics"]["operatorNotes"] = operator_notes
 
         credential, error = service.issue_device_credential(
             credential_type_key='dpp',
@@ -583,9 +590,90 @@ class IssueDigitalPassportView(DeviceLogMixin, View):
                 messages.warning(request, "Passport issued but service endpoint not modified given that you don't own the DID.")
             else:
                 messages.error(request, f"DID configuration error during endpoint update: {did_error}")
+        elif did_warning_message:
+            messages.warning(request, did_warning_message)
 
         return redirect('device:details', pk=pk)
 
+
+    def _build_generic_product_dpp(self, doc, device_uri, facility_info, traceability_info, owner):
+        """
+        Maps flat CSV/JSON keys (from 'kv') into a complex UNTP Digital Product Passport.
+        """
+        kv = doc.get('kv', {})
+
+        raw_date = kv.get('production_date', '')
+        prod_date_str = str(raw_date).split(' ')[0] if raw_date else ""
+
+        gtin = str(kv.get('gtin', ''))
+        gtin_uri = f"https://id.gs1.org/01/{gtin.replace('.', '/')}" if gtin else device_uri
+
+        product_block = {
+            "type": ["Product"],
+            "id": gtin_uri,
+            "name": kv.get('product_name', 'Unknown Product'),
+            "description": kv.get('description', ''),
+            "batchNumber": str(kv.get('batch_number', '')),
+            "countryOfProduction": kv.get('country_of_production', ''),
+            "producedByParty": {
+                "name": getattr(owner, 'name', 'Unknown'),
+            }
+        }
+
+        if gtin:
+            product_block["registeredId"] = gtin
+            product_block["idScheme"] = {
+                "type": ["IdentifierScheme"],
+                "id": "https://id.gs1.org/01/",
+                "name": "Global Trade Identification Number (GTIN)"
+            }
+
+        if facility_info:
+            product_block["producedByParty"]["id"] = str(facility_info.get("registeredId", facility_info.get("id")))
+
+            product_block["producedAtFacility"] = {
+                "id": facility_info["id"],
+                "name": facility_info["name"]
+            }
+            if facility_info.get("registeredId"):
+                product_block["producedAtFacility"]["registeredId"] = str(facility_info["registeredId"])
+            if prod_date_str:
+                product_block["producedAtFacility"]["productionDate"] = prod_date_str
+
+            weight = kv.get('weight_kg')
+            if weight is not None:
+                product_block["producedAtFacility"]["dimensions"] = {
+                    "weight": {"value": float(weight), "unit": "KGM"}
+                }
+
+        product_block["emissionsScorecard"] = {
+            "carbonFootprint": float(kv.get('carbon_footprint', 0)),
+            "declaredUnit": "KGM",
+            "operationalScope": "CradleToGate"
+        }
+
+        product_block["circularityScorecard"] = {
+            "recyclableContent": float(kv.get('recyclable_content_ratio', 0)),
+            "recycledContent": float(kv.get('recycled_content_ratio', 0)),
+            "materialCircularityIndicator": float(kv.get('material_circularity_indicator', 0))
+        }
+
+        product_block["materialsProvenance"] = [
+            {
+                "name": kv.get('primary_material_name', ''),
+                "originCountry": kv.get('primary_material_origin', ''),
+                "massFraction": float(kv.get('recycled_content_ratio', 0)),
+                "mass": {"value": float(kv.get('weight_kg', 0)), "unit": "KGM"}
+            }
+        ]
+
+        return {
+            "type": ["ProductPassport"],
+            "id": device_uri,
+            "granularityLevel": "batch",
+            "product": product_block,
+            "traceabilityInformation": traceability_info
+        }
 
     def _get_facility_info(self, device, request):
         institution = device.owner
