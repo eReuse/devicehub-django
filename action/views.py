@@ -16,15 +16,47 @@ from action.models import State, StateDefinition, Note, DeviceLog
 from device.models import Device
 from .models import State, DeviceLog
 from device.forms import DeviceFormSet
-from evidence.models import Evidence
+from evidence.models import CredentialProperty
 from evidence.services import CredentialService
 
-from django import forms
 from utils.device import create_property, create_doc, create_index
 from utils.save_snapshots import move_json, save_in_disk
 from evidence.models import RootAlias
 
-class ChangeStateView(LoginRequiredMixin, FormView):
+class FacilityInfoMixin:
+    def get_facility_info(self, institution, request):
+        if not institution:
+            return None
+
+        facility_cred_prop = CredentialProperty.objects.filter(
+            owner=institution,
+            key='DFR'
+        ).order_by('-created').first()
+
+        if not facility_cred_prop:
+            return None
+
+        subject = facility_cred_prop.credential.get('credentialSubject', {})
+        facility_data = subject.get('facility', subject)
+        operated_by = facility_data.get('operatedByParty', {})
+
+        fac_url = request.build_absolute_uri(
+            reverse('evidence:credential_detail', kwargs={'uuid': facility_cred_prop.uuid})
+        )
+
+        return {
+            "id": fac_url,
+            "name": facility_data.get("name", "Unknown Facility"),
+            "registeredId": operated_by.get("registeredId", ""),
+            "idScheme": {
+                "type": ["IdentifierScheme"],
+                "id": "https://www.gleif.org/lei/",
+                "name": "Legal Entity Identifier"
+            }
+        }
+
+
+class ChangeStateView(LoginRequiredMixin, FacilityInfoMixin, FormView):
     form_class = ChangeStateForm
 
     def form_valid(self, form):
@@ -77,6 +109,16 @@ class ChangeStateView(LoginRequiredMixin, FormView):
         if comment:
             traceability_event["ereuse:operatorComment"] = comment
 
+        facility_info = self.get_facility_info(self.request.user.institution, self.request)
+        if facility_info:
+            traceability_event["facility"] = {
+                "id": facility_info["id"],
+                "name": facility_info["name"]
+            }
+            if facility_info.get("registeredId"):
+                traceability_event["facility"]["registeredId"] = str(facility_info["registeredId"])
+                traceability_event["facility"]["idScheme"] = facility_info.get("idScheme")
+
         try:
             with transaction.atomic():
                 State.objects.create(
@@ -122,7 +164,7 @@ class ChangeStateView(LoginRequiredMixin, FormView):
 
 BULK_MATERIALS = ['Plastic', 'Aluminium', 'Copper', 'Steel', 'Glass', 'Gold', 'Lithium', 'MixedEwaste']
 
-class DismantleDeviceView(LoginRequiredMixin, FormView):
+class DismantleDeviceView(LoginRequiredMixin, FacilityInfoMixin, FormView):
     template_name = "dismantle_form.html"
     form_class = DeviceFormSet
 
@@ -281,6 +323,16 @@ class DismantleDeviceView(LoginRequiredMixin, FormView):
             # Custom State extensions
             "ereuse:deviceState": "Dismantled",
         }
+
+        facility_info = self.get_facility_info(institution, self.request)
+        if facility_info:
+            transformation_event["facility"] = {
+                "id": facility_info["id"],
+                "name": facility_info["name"]
+            }
+            if facility_info.get("registeredId"):
+                transformation_event["facility"]["registeredId"] = str(facility_info["registeredId"])
+                transformation_event["facility"]["idScheme"] = facility_info.get("idScheme")
 
         # Sanitize empty list
         cleaned_event = {k: v for k, v in transformation_event.items() if v is not None and (not isinstance(v, list) or len(v) > 0)}
