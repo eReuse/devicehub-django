@@ -139,9 +139,8 @@ class ChangeStateView(LoginRequiredMixin, FacilityInfoMixin, FormView):
                 credential, error = service.issue_device_credential(
                     credential_type_key='traceability',
                     credential_subject=[traceability_event],
-                    credential_db_key="DTE",
+                    credential_db_key=CredentialProperty.CredentialType.DTE,
                     device=device,
-                    uuid=snapshot_uuid,
                     description=f"State Change: {previous_state} -> {new_state}"
                 )
 
@@ -358,9 +357,8 @@ class DismantleDeviceView(LoginRequiredMixin, FacilityInfoMixin, FormView):
                 credential, error = service.issue_device_credential(
                     credential_type_key='traceability',
                     credential_subject=[cleaned_event],
-                    credential_db_key="DTE",
+                    credential_db_key=CredentialProperty.CredentialType.DTE,
                     device=device,
-                    uuid=parent_uuid,
                     description=desc
                 )
 
