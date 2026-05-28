@@ -26,10 +26,7 @@ class CredentialService:
             did_str, did_doc, err = self._create_object_did(target_suffix, service_endpoint)
             if err: return err
 
-            sysprop_instance = None
-            if device.last_evidence:
-                sysprop_instance = SystemProperty.objects.filter(uuid=device.last_evidence.uuid).first()
-
+            sysprop_instance = SystemProperty.objects.filter(uuid=device.last_evidence.uuid).first()
             CredentialProperty.objects.create(
                 sysprop=sysprop_instance,
                 key=CredentialProperty.CredentialType.DIDDOC,
@@ -80,7 +77,7 @@ class CredentialService:
 
     # -------------------------------------------------------------------------
     def issue_device_credential(self, credential_type_key, credential_subject,
-                                credential_db_key, device, description=None, uuid=None):
+                                credential_db_key, device, description=None):
 
         error_msg = self._validate_config(credential_type_key)
         if error_msg: return None, error_msg
@@ -99,9 +96,7 @@ class CredentialService:
             "issuer_did": self.settings.issuer_did,
             "credentialSubject": credential_subject
         }
-        sysprop_instance = None
-        if uuid:
-            sysprop_instance = SystemProperty.objects.filter(uuid=uuid).first()
+        sysprop_instance = SystemProperty.objects.filter(uuid=device.last_evidence.uuid).first()
 
         return self._execute_issuance(endpoint, payload, credential_db_key, description, sysprop_instance)
 

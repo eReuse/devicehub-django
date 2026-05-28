@@ -573,9 +573,8 @@ class IssueDigitalPassportView(DeviceLogMixin, View):
         credential, error = service.issue_device_credential(
             credential_type_key='dpp',
             credential_subject=credential_subject,
-            credential_db_key='DPP',
+            credential_db_key=CredentialProperty.CredentialType.DPP,
             device=device,
-            uuid=last_evidence.uuid,
             description="Digital Product Passport"
         )
 
@@ -697,8 +696,8 @@ class DeviceDPPView(TemplateView):
             raise Http404(_("No evidence found for this device."))
 
         self.latest_dpp_cred = CredentialProperty.objects.filter(
-            uuid__in=self.device.uuids,
-            key='DigitalProductPassport'
+            sysprop__in=self.device.properties,
+            key=CredentialProperty.CredentialType.DPP
         ).order_by('-created').first()
 
         if not self.latest_dpp_cred:
