@@ -12,6 +12,7 @@ from django.views.generic.edit import (
     UpdateView,
     DeleteView,
 )
+from evidence.models import CredentialProperty
 from openlocationcode import openlocationcode as olc
 from django.db import IntegrityError,   transaction
 from dashboard.mixins import DashboardView, Http403
@@ -467,8 +468,8 @@ class IssueDigitalFacilityRecordView(AdminView, View):
 
         credential, error = service.issue_facility_credential(
             credential_subject=credential_subject,
-            credential_db_key="DigitalFacilityRecord",
-            description="Facility Sustainability Record",
+            credential_db_key=CredentialProperty.CredentialType.DFR,
+            description="Digital Facility Record",
         )
         if error:
             messages.error(request, error)
