@@ -4,6 +4,7 @@ from django.db.models import ProtectedError
 from django.core.validators import URLValidator, RegexValidator, MinValueValidator, MaxValueValidator
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser
+from evidence.models import CredentialProperty
 from utils.constants import ALGOS
 
 
@@ -121,7 +122,8 @@ class Institution(models.Model):
     @property
     def latest_facility_credential(self):
         return self.credentialproperty_set.filter(
-            key='DigitalFacilityRecord'
+            key=CredentialProperty.CredentialType.DFR,
+            owner=self
         ).order_by('-created').first()
 
     def __str__(self):
