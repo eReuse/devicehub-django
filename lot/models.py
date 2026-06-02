@@ -139,7 +139,7 @@ class Beneficiary(models.Model):
     def add(self, v):
         exist = DeviceBeneficiary.objects.filter(
             beneficiary__lot=self.lot, device_id=v
-        ).exists()
+        ).exclude(status=DeviceBeneficiary.Status.RETURNED).exists()
 
         if exist:
             return

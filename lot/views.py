@@ -241,7 +241,7 @@ class DelToLotView(DashboardView, View):
             for dev in selected_devices:
                 exist = DeviceBeneficiary.objects.filter(
                     beneficiary__lot_id=lot_id, device_id=dev.id
-                ).exists()
+                ).exclude(status=DeviceBeneficiary.Status.RETURNED).exists()
                 if exist:
                     beneficiary.append(dev.shortid)
 
@@ -851,7 +851,7 @@ class BeneficiaryView(DashboardLotMixing, BeneficiaryInterestedEmail, FormView):
             d_ben = DeviceBeneficiary.objects.filter(
                 device_id=device_id,
                 beneficiary__lot=self.lot
-            ).first()
+            ).exclude(status=DeviceBeneficiary.Status.RETURNED).first()
 
             device_info = {
                 'id': device_id,
@@ -1172,7 +1172,9 @@ class AddDevicesBeneficiaryView(DashboardView, NotifyEmail, TemplateView):
         if subscriptor or self.request.user.is_admin:
             devices = self.request.session.get("devices", [])
             for dev in devices:
-                exist = DeviceBeneficiary.objects.filter(device_id=dev).first()
+                exist = DeviceBeneficiary.objects.filter(device_id=dev).exclude(
+                    status=DeviceBeneficiary.Status.RETURNED
+                ).first()
                 if exist:
                     try:
                         short_id = dev.split(":")[1][:6].upper()
