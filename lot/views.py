@@ -253,7 +253,7 @@ class DelToLotView(DashboardView, View):
                 )
                 exist = DeviceBeneficiary.objects.filter(
                     beneficiary__lot_id=lot_id, device_id__in=aliases
-                ).exists()
+                ).exclude(status=DeviceBeneficiary.Status.RETURNED).exists()
                 if exist:
                     beneficiary.append(dev.shortid)
 
@@ -863,7 +863,7 @@ class BeneficiaryView(DashboardLotMixing, BeneficiaryInterestedEmail, FormView):
             d_ben = DeviceBeneficiary.objects.filter(
                 device_id=device_id,
                 beneficiary__lot=self.lot
-            ).first()
+            ).exclude(status=DeviceBeneficiary.Status.RETURNED).first()
 
             device_info = {
                 'id': device_id,
@@ -1199,8 +1199,8 @@ class AddDevicesBeneficiaryView(DashboardView, NotifyEmail, TemplateView):
                 aliases = RootAlias.physical_aliases(
                     self.request.user.institution, dev
                 )
-                exist = DeviceBeneficiary.objects.filter(
-                    device_id__in=aliases
+                exist = DeviceBeneficiary.objects.filter(device_id__in=aliases).exclude(
+                    status=DeviceBeneficiary.Status.RETURNED
                 ).first()
                 if exist:
                     try:
