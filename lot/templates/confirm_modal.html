@@ -1,0 +1,31 @@
+{% load i18n %}
+<div class="modal fade" id="{{ modal_id }}" tabindex="-1"
+     aria-labelledby="{{ modal_id }}Label" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="{{ modal_id }}Label">{{ modal_title }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                aria-label="{% trans 'Close' %}"></button>
+      </div>
+      <div class="modal-body">
+        <p>{{ modal_body|safe }}</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary"
+                data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+        {% if action_url %}
+          <a class="btn btn-danger" href="{{ action_url }}">{{ action_text }}</a>
+        {% elif action_form_url %}
+          <form method="post" action="{{ action_form_url }}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">{{ action_text }}</button>
+          </form>
+        {% else %}
+          <input class="btn btn-danger" type="submit" name="submit"
+                 value="{{ action_text }}" />
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>

@@ -27,23 +27,13 @@
             </button>
           </td>
         </tr>
-        <div class="modal fade" id="unsubscribeModal{{ forloop.counter }}" tabindex="-1" aria-labelledby="unsubscribeModalLabel{{ forloop.counter }}" aria-hidden="true">
-          <div class="modal-dialog">
-            <div class="modal-content">
-              <div class="modal-header">
-                <h5 class="modal-title" id="unsubscribeModalLabel{{ forloop.counter }}">{% trans "Unsubscribe User" %}</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
-              </div>
-              <div class="modal-body">
-                <p>{% blocktrans with email=s.user.email type=s.get_type_display %}Are you sure you want to unsubscribe <strong>{{ email }}</strong> as {{ type }}?{% endblocktrans %}</p>
-              </div>
-              <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
-                <a class="btn btn-danger" href="{% url 'lot:unsubscription' lot.id s.id %}">{% trans 'Unsubscribe' %}</a>
-              </div>
-            </div>
-          </div>
-        </div>
+        {% url 'lot:unsubscription' lot.id s.id as unsubscribe_url %}
+        {% blocktrans with email=s.user.email type=s.get_type_display asvar modal_body_text %}Are you sure you want to unsubscribe <strong>{{ email }}</strong> as {{ type }}?{% endblocktrans %}
+        {% trans "Unsubscribe User" as modal_title_text %}
+        {% trans "Unsubscribe" as modal_action_text %}
+        {% with id_suffix=forloop.counter|stringformat:"s" %}
+          {% include 'confirm_modal.html' with modal_id="unsubscribeModal"|add:id_suffix modal_title=modal_title_text modal_body=modal_body_text action_text=modal_action_text action_url=unsubscribe_url %}
+        {% endwith %}
       {% endfor %}
       </tbody>
     </table>

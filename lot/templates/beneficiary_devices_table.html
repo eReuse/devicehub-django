@@ -42,25 +42,20 @@
             </button>
         </td>
     </tr>
-    <div class="modal fade" id="deallocateDeviceModal{{ forloop.counter }}" tabindex="-1" aria-labelledby="deallocateDeviceModalLabel{{ forloop.counter }}" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="deallocateDeviceModalLabel{{ forloop.counter }}">{% trans "Deallocate Device" %}</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
-                </div>
-                <div class="modal-body">
-                    <p>{% blocktrans with email=beneficiary.email shortid=f.device.shortid %}Are you sure you want to deallocate device <strong>{{ shortid }}</strong> from beneficiary <strong>{{ email }}</strong>?{% endblocktrans %}</p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
-                    <a class="btn btn-danger" href="{% url 'lot:del_device_beneficiary' lot.id beneficiary.id f.device.id %}{% if device_context %}?next={% url 'device:details' object.id %}{% endif %}">
-                        {% trans 'Deallocate' %}
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
+    {% url 'lot:del_device_beneficiary' lot.id beneficiary.id f.device.id as del_base_url %}
+    {% if device_context %}{% url 'device:details' object.id as detail_url %}{% endif %}
+    {% blocktrans with email=beneficiary.email shortid=f.device.shortid asvar modal_body_text %}Are you sure you want to deallocate device <strong>{{ shortid }}</strong> from beneficiary <strong>{{ email }}</strong>?{% endblocktrans %}
+    {% trans "Deallocate Device" as modal_title_text %}
+    {% trans "Deallocate" as modal_action_text %}
+    {% with id_suffix=forloop.counter|stringformat:"s" %}
+      {% if device_context %}
+        {% with action_url=del_base_url|add:"?next="|add:detail_url %}
+          {% include 'confirm_modal.html' with modal_id="deallocateDeviceModal"|add:id_suffix modal_title=modal_title_text modal_body=modal_body_text action_text=modal_action_text action_url=action_url %}
+        {% endwith %}
+      {% else %}
+        {% include 'confirm_modal.html' with modal_id="deallocateDeviceModal"|add:id_suffix modal_title=modal_title_text modal_body=modal_body_text action_text=modal_action_text action_url=del_base_url %}
+      {% endif %}
+    {% endwith %}
     {% endfor %}
     </tbody>
 </table>
