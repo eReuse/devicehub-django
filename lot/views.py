@@ -997,6 +997,8 @@ class ListDevicesBeneficiaryView(DashboardLotMixing, BeneficiaryEmail, FormView)
             f.device = Device(id=f.instance.device_id, owner=self.request.user.institution)
             choices = f.fields['status'].choices
             f.fields['status'].choices = choices[1:]
+            if f.instance.status == DeviceBeneficiary.Status.RETURNED:
+                f.fields['status'].disabled = True
 
         return formset
 
