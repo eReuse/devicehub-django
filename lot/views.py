@@ -997,9 +997,6 @@ class ListDevicesBeneficiaryView(DashboardLotMixing, BeneficiaryEmail, FormView)
             f.device = Device(id=f.instance.device_id, owner=self.request.user.institution)
             choices = f.fields['status'].choices
             f.fields['status'].choices = choices[1:]
-            if f.instance.status == DeviceBeneficiary.Status.RETURNED:
-                f.fields['status'].disabled = True
-
         return formset
 
     def get_form_kwargs(self):
@@ -1075,6 +1072,30 @@ class ListDevicesBeneficiaryView(DashboardLotMixing, BeneficiaryEmail, FormView)
         )
 
     def form_valid(self, form):
+        for sub_form in form.forms:
+            if not sub_form.has_changed() or 'status' not in sub_form.changed_data:
+                continue
+            f_instance = sub_form.instance
+            conflict = DeviceBeneficiary.objects.filter(
+                device_id=f_instance.device_id
+            ).exclude(
+                beneficiary=self.beneficiary
+            ).exclude(
+                status=DeviceBeneficiary.Status.RETURNED
+            ).first()
+            if conflict:
+                try:
+                    short_id = f_instance.device_id.split(":")[1][:6].upper()
+                except Exception:
+                    short_id = f_instance.device_id
+                messages.error(
+                    self.request,
+                    _("Device {} is already assigned to beneficiary {}").format(
+                        short_id, conflict.beneficiary.email
+                    )
+                )
+                return redirect(self.success_url)
+
         form.save()
         response = super().form_valid(form)
 
