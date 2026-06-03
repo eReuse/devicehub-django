@@ -8,7 +8,7 @@ from django.urls import reverse_lazy, reverse
 from django.shortcuts import get_object_or_404, redirect, Http404, render
 from django.contrib import messages
 from django.core.cache import cache
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext_lazy as _, get_language
 from django.db.models import Q, Count, Case, When, IntegerField
 from django.views.generic.base import TemplateView, View
 from django.forms import modelformset_factory, Select
@@ -27,7 +27,9 @@ from evidence.models import SystemProperty
 from lot.tables import LotTable
 from environmental_impact.algorithms.algorithm_factory import FactoryEnvironmentImpactAlgorithm
 from environmental_impact.algorithms.ereuse2025.carbon_intensity import (
+    get_available_country_choices,
     get_available_country_codes,
+    get_country_label,
 )
 from lot.forms import (
     LotsForm,
@@ -433,12 +435,19 @@ class LotEnvironmentalImpactView(DashboardLotMixing, TemplateView):
                 ).values_list("country", flat=True)
             )
         )
+        country_code = (
+            env_impact.relevant_input_data.get("country_code")
+            if env_impact
+            else None
+        )
+        language_code = get_language()
         context.update({
             'impact': env_impact,
             'device_count': len(devices),
             'devices_with_evidence': len(devices),
             'lot_country_override': distinct_countries[0] if len(distinct_countries) == 1 else '',
-            'environmental_country_codes': get_available_country_codes(),
+            'environmental_country_choices': get_available_country_choices(language_code),
+            'environmental_country_label': get_country_label(country_code, language_code),
             'breadcrumb': [
                 (_("Lots"), reverse("dashboard:unassigned")),
                 (self.lot.type.name, reverse("lot:tags", args=[self.lot.type.pk])),
