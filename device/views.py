@@ -7,7 +7,7 @@ from django.db import IntegrityError
 from django.urls import reverse_lazy, resolve
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect, Http404
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext_lazy as _, get_language
 from django.views.generic.edit import (
     CreateView,
     UpdateView,
@@ -19,7 +19,9 @@ from action.models import StateDefinition, State, DeviceLog, Note
 from dashboard.mixins import DashboardView, Http403
 from environmental_impact.algorithms.algorithm_factory import FactoryEnvironmentImpactAlgorithm
 from environmental_impact.algorithms.ereuse2025.carbon_intensity import (
+    get_available_country_choices,
     get_available_country_codes,
+    get_country_label,
 )
 from environmental_impact.models import DeviceEnvironmentalProfile
 from evidence.models import UserProperty, SystemProperty, Evidence, RootAlias
@@ -196,6 +198,12 @@ class DetailsView(DashboardView, TemplateView ):
             device_chid=self.object.id,
             owner=self.request.user.institution,
         ).first()
+        country_code = (
+            enviromental_impact.relevant_input_data.get("country_code")
+            if enviromental_impact
+            else None
+        )
+        language_code = get_language()
         last_evidence = self.object.get_last_evidence()
         uuids = self.object.uuids
 
@@ -219,7 +227,8 @@ class DetailsView(DashboardView, TemplateView ):
             'dpps': dpps,
             'impact': enviromental_impact,
             'environmental_profile': environmental_profile,
-            'environmental_country_codes': get_available_country_codes(),
+            'environmental_country_choices': get_available_country_choices(language_code),
+            'environmental_country_label': get_country_label(country_code, language_code),
             "state_definitions": state_definitions,
             "device_states": device_states,
             "device_logs": device_logs,

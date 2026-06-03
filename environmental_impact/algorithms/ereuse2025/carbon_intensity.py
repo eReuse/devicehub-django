@@ -2,6 +2,9 @@ import json
 import os
 from functools import lru_cache
 
+from babel import Locale
+from babel.core import UnknownLocaleError
+
 
 DEFAULT_COUNTRY_CODE = "ES"
 DATA_FILENAME = "latest_carbon_intensity_by_country.json"
@@ -18,6 +21,53 @@ def get_carbon_intensity_data() -> dict[str, float]:
 @lru_cache(maxsize=1)
 def get_available_country_codes() -> tuple[str, ...]:
     return tuple(sorted(get_carbon_intensity_data().keys()))
+
+
+def _normalize_language_code(language_code: str | None) -> str:
+    normalized = (language_code or "en").split(".")[0].replace("-", "_")
+    parts = normalized.split("_")
+    if len(parts) > 1:
+        parts[1] = parts[1].upper()
+    return "_".join(parts)
+
+
+@lru_cache(maxsize=16)
+def _get_locale(language_code: str) -> Locale:
+    normalized_language_code = _normalize_language_code(language_code)
+    try:
+        return Locale.parse(normalized_language_code)
+    except (UnknownLocaleError, ValueError):
+        primary_language = normalized_language_code.split("_", 1)[0]
+        try:
+            return Locale.parse(primary_language)
+        except (UnknownLocaleError, ValueError):
+            return Locale.parse("en")
+
+
+def get_country_label(
+    country_code: str | None, language_code: str | None = None
+) -> str:
+    normalized_country_code = (country_code or "").upper()
+    if not normalized_country_code:
+        return ""
+
+    country_name = _get_locale(language_code or "en").territories.get(
+        normalized_country_code
+    )
+    if not country_name:
+        return normalized_country_code
+    return f"{country_name} ({normalized_country_code})"
+
+
+@lru_cache(maxsize=16)
+def get_available_country_choices(
+    language_code: str | None = None,
+) -> tuple[tuple[str, str], ...]:
+    choices = (
+        (country_code, get_country_label(country_code, language_code))
+        for country_code in get_available_country_codes()
+    )
+    return tuple(sorted(choices, key=lambda choice: choice[1].casefold()))
 
 
 def get_carbon_intensity_factor_from(country_code: str) -> float:
