@@ -199,7 +199,10 @@ class ImportForm(forms.Form):
                 params={"file_name": self.file_name}
             )
 
-        df.fillna('', inplace=True)
+        df = df.apply(lambda col: col.map(lambda v: v.strip() if isinstance(v, str) else v))
+        df.replace('', pd.NA, inplace=True)
+        df.dropna(how='all', inplace=True)
+        df = df.astype(object).fillna('')
 
         data_pd = df.to_dict(orient='index')
 
