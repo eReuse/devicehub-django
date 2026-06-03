@@ -9,7 +9,7 @@ from django.shortcuts import Http404, get_object_or_404, redirect
 from django.urls import resolve, reverse_lazy
 from django.urls import reverse
 from django.utils.functional import cached_property
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext_lazy as _, get_language
 from django.views.generic import ListView
 from django.views.generic.base import TemplateView
 from django.views.generic.edit import CreateView, DeleteView, FormView, UpdateView, View
@@ -20,7 +20,9 @@ from dashboard.mixins import DashboardView, Http403
 from device.forms import DeviceAttributeFormSet, DeviceMainForm
 from device.models import Device, DeviceType
 from environmental_impact.algorithms.ereuse2025.carbon_intensity import (
+    get_available_country_choices,
     get_available_country_codes,
+    get_country_label,
 )
 from environmental_impact.models import DeviceEnvironmentalProfile
 from django_tables2 import RequestConfig
@@ -254,6 +256,12 @@ class DetailsView(DashboardView, TemplateView ):
             device_chid=self.object.id,
             owner=self.request.user.institution,
         ).first()
+        country_code = (
+            enviromental_impact.relevant_input_data.get("country_code")
+            if enviromental_impact
+            else None
+        )
+        language_code = get_language()
         last_evidence = self.object.get_last_evidence()
         uuids = self.object.uuids
 
@@ -283,7 +291,8 @@ class DetailsView(DashboardView, TemplateView ):
             'dpps': dpps,
             'impact': enviromental_impact,
             'environmental_profile': environmental_profile,
-            'environmental_country_codes': get_available_country_codes(),
+            'environmental_country_choices': get_available_country_choices(language_code),
+            'environmental_country_label': get_country_label(country_code, language_code),
             "state_definitions": state_definitions,
             "device_states": device_states,
             "device_logs": device_logs,
