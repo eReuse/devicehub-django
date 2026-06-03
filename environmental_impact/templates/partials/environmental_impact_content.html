@@ -50,64 +50,48 @@
                 <td>{{ impact.relevant_input_data.total_usage_time|default:0 }} {% trans 'hours' %}</td>
               </tr>
               <tr>
-                <th>{% trans 'Country code' %}</th>
+                <th>{% trans 'Country' %}</th>
                 <td>
-                  {{ impact.relevant_input_data.country_code|default:'-' }}
                   {% if show_country_override %}
-                    <button class="btn btn-outline-secondary btn-sm ms-2 py-0 px-2 align-baseline" type="button" data-bs-toggle="collapse" data-bs-target="#{{ override_collapse_id }}" aria-expanded="false">
-                      {% trans 'Change' %}
-                    </button>
-                    <div class="collapse mt-2" id="{{ override_collapse_id }}">
-                      {% if is_lot_view %}
-                        <div class="form-text mb-2">
-                          {% trans 'Apply one ISO 3166-1 alpha-2 country code like ES, FR or NA to all devices in this lot. Leave empty to remove all lot device overrides and fall back to the institution country.' %}
+                    {% if is_lot_view %}
+                      <form method="post" class="row g-2 align-items-end">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="save_environmental_profile">
+                        <div class="col-sm-7">
+                          <select
+                            id="lot_country_code"
+                            name="country_code"
+                            class="form-select form-select-sm"
+                            onchange="this.form.requestSubmit()"
+                          >
+                            <option value="">{% trans 'Use institution default' %}</option>
+                            {% for country_code, country_label in environmental_country_choices %}
+                              <option value="{{ country_code }}" {% if lot_country_override == country_code %}selected{% endif %}>{{ country_label }}</option>
+                            {% endfor %}
+                          </select>
                         </div>
-                        <form method="post" class="row g-2 align-items-end">
-                          {% csrf_token %}
-                          <input type="hidden" name="action" value="save_environmental_profile">
-                          <div class="col-sm-5">
-                            <select
-                              id="lot_country_code"
-                              name="country_code"
-                              class="form-select form-select-sm"
-                            >
-                              <option value="">{% trans 'Use institution default' %}</option>
-                              {% for country_code in environmental_country_codes %}
-                                <option value="{{ country_code }}" {% if lot_country_override == country_code %}selected{% endif %}>{{ country_code }}</option>
-                              {% endfor %}
-                            </select>
-                          </div>
-                          <div class="col-sm-7 d-flex gap-2 flex-wrap">
-                            <button type="submit" class="btn btn-primary btn-sm">{% trans 'Apply to all devices' %}</button>
-                            <button type="submit" name="country_code" value="" class="btn btn-outline-secondary btn-sm">{% trans 'Use default' %}</button>
-                          </div>
-                        </form>
-                      {% else %}
-                        <div class="form-text mb-2">
-                          {% trans 'Set a per-device ISO 3166-1 alpha-2 code like ES, FR or NA. Leave empty to fall back to the institution country.' %}
+                      </form>
+                    {% else %}
+                      <form method="post" class="row g-2 align-items-end">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="save_environmental_profile">
+                        <div class="col-sm-7">
+                          <select
+                            id="country_code"
+                            name="country_code"
+                            class="form-select form-select-sm"
+                            onchange="this.form.requestSubmit()"
+                          >
+                            <option value="">{% trans 'Use institution default' %}</option>
+                            {% for country_code, country_label in environmental_country_choices %}
+                              <option value="{{ country_code }}" {% if environmental_profile.country == country_code %}selected{% endif %}>{{ country_label }}</option>
+                            {% endfor %}
+                          </select>
                         </div>
-                        <form method="post" class="row g-2 align-items-end">
-                          {% csrf_token %}
-                          <input type="hidden" name="action" value="save_environmental_profile">
-                          <div class="col-sm-5">
-                            <select
-                              id="country_code"
-                              name="country_code"
-                              class="form-select form-select-sm"
-                            >
-                              <option value="">{% trans 'Use institution default' %}</option>
-                              {% for country_code in environmental_country_codes %}
-                                <option value="{{ country_code }}" {% if environmental_profile.country == country_code %}selected{% endif %}>{{ country_code }}</option>
-                              {% endfor %}
-                            </select>
-                          </div>
-                          <div class="col-sm-7 d-flex gap-2 flex-wrap">
-                            <button type="submit" class="btn btn-primary btn-sm">{% trans 'Save' %}</button>
-                            <button type="submit" name="country_code" value="" class="btn btn-outline-secondary btn-sm">{% trans 'Use default' %}</button>
-                          </div>
-                        </form>
-                      {% endif %}
-                    </div>
+                      </form>
+                    {% endif %}
+                  {% else %}
+                    {{ environmental_country_label|default:impact.relevant_input_data.country_code|default:'-' }}
                   {% endif %}
                 </td>
               </tr>
