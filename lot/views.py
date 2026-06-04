@@ -23,7 +23,7 @@ from dashboard.mixins import DashboardView
 from environmental_impact.models import EnvironmentalImpact
 from lot.tables import LotTable
 from device.models import Device
-from evidence.models import SystemProperty
+from evidence.models import SystemProperty, RootAlias
 from lot.tables import LotTable
 from environmental_impact.algorithms.algorithm_factory import FactoryEnvironmentImpactAlgorithm
 from lot.forms import (
@@ -41,7 +41,7 @@ from lot.models import (
     LotSubscription,
     Beneficiary,
     Donor,
-    DeviceBeneficiary
+    DeviceBeneficiary,
 )
 from dhemail.views import (
     NotifyEmail,
@@ -239,8 +239,14 @@ class DelToLotView(DashboardView, View):
 
             beneficiary = []
             for dev in selected_devices:
+                # dev.id may be any physical alias or the root; the stored
+                # device_id may be a stale root captured at add time, so
+                # match against every alias of the canonical device.
+                aliases = RootAlias.physical_aliases(
+                    self.request.user.institution, dev.id
+                )
                 exist = DeviceBeneficiary.objects.filter(
-                    beneficiary__lot_id=lot_id, device_id=dev.id
+                    beneficiary__lot_id=lot_id, device_id__in=aliases
                 ).exists()
                 if exist:
                     beneficiary.append(dev.shortid)
@@ -1135,9 +1141,14 @@ class DelDeviceBeneficiaryView(DashboardView, TemplateView):
             user=self.request.user
         ).first()
 
+        # dev_id arrives from the URL; match against every alias sharing
+        # the same canonical device so stale-root storage also matches.
+        aliases = RootAlias.physical_aliases(
+            self.request.user.institution, dev_id
+        )
         device = DeviceBeneficiary.objects.filter(
             beneficiary_id=id,
-            device_id=dev_id
+            device_id__in=aliases
         ).first()
 
         if subscriptor or self.request.user.is_admin:
@@ -1172,7 +1183,14 @@ class AddDevicesBeneficiaryView(DashboardView, NotifyEmail, TemplateView):
         if subscriptor or self.request.user.is_admin:
             devices = self.request.session.get("devices", [])
             for dev in devices:
-                exist = DeviceBeneficiary.objects.filter(device_id=dev).first()
+                # Match any alias of the canonical device to detect dups
+                # even when the stored device_id is a stale root.
+                aliases = RootAlias.physical_aliases(
+                    self.request.user.institution, dev
+                )
+                exist = DeviceBeneficiary.objects.filter(
+                    device_id__in=aliases
+                ).first()
                 if exist:
                     try:
                         short_id = dev.split(":")[1][:6].upper()

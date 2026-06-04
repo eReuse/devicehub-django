@@ -18,10 +18,11 @@ from django.views.generic.edit import (
     UpdateView,
 )
 
+from django.db.models import Q
 from utils.save_snapshots import move_json, save_in_disk
 from django.views.generic.edit import View
 from dashboard.mixins import DashboardView
-from evidence.models import SystemProperty, UserProperty
+from evidence.models import SystemProperty, UserProperty, RootAlias
 from evidence.parse_details import ParseSnapshot
 from evidence.parse import Build
 from device.models import Device
@@ -259,14 +260,22 @@ class DetailsDeviceView(ApiMixing):
                 "components": snapshot.get("components"),
             })
 
-        uuids = SystemProperty.objects.filter(
-            owner=self.tk.owner.institution,
-            value=self.pk
-        ).values("uuid")
+        institution = self.tk.owner.institution
+        canonical = RootAlias.resolve_root(institution, self.pk)
+
+        # ERASE_SERVER properties are still anchored to uuid.
+        erase_uuids = SystemProperty.objects.filter(
+            owner=institution,
+            value__in=RootAlias.physical_aliases(institution, self.pk),
+        ).values_list("uuid", flat=True)
 
         properties = UserProperty.objects.filter(
-            uuid__in=uuids,
-            owner=self.tk.owner.institution,
+            Q(type=UserProperty.Type.USER,
+              owner=institution,
+              device_id=canonical) |
+            Q(type=UserProperty.Type.ERASE_SERVER,
+              owner=institution,
+              uuid__in=erase_uuids)
         ).values_list("key", "value")
 
         data.update({"properties": list(properties)})
@@ -282,12 +291,10 @@ class AddPropertyView(ApiMixing):
 
         self.pk = kwargs['pk']
         institution = self.tk.owner.institution
-        self.property = SystemProperty.objects.filter(
-            owner=institution,
-            value=self.pk,
-        ).first()
 
-        if not self.property:
+        if not RootAlias.objects.filter(owner=institution).filter(
+            Q(alias=self.pk) | Q(root=self.pk)
+        ).exists():
             return JsonResponse({}, status=404)
 
         try:
@@ -298,11 +305,13 @@ class AddPropertyView(ApiMixing):
             logger.error("Invalid Snapshot of user %s", self.tk.owner)
             return JsonResponse({'error': 'Invalid JSON'}, status=500)
 
+        device_id = RootAlias.resolve_root(institution, self.pk)
         UserProperty.objects.create(
-            uuid=self.property.uuid,
-            owner=self.tk.owner.institution,
-            key = key,
-            value = value
+            device_id=device_id,
+            owner=institution,
+            key=key,
+            value=value,
+            type=UserProperty.Type.USER,
         )
 
         return JsonResponse({"status": "success"}, status=200)

@@ -3,10 +3,8 @@ import base64
 
 from io import BytesIO
 from django.db import models
-from django.db.models import Subquery, F, Window, Max
-from django.db.models.functions import RowNumber
+from django.db.models import Max
 
-from utils import sql_query as q_sql
 from utils.constants import ALGOS
 from evidence.models import SystemProperty, UserProperty, Evidence, RootAlias
 from django.utils.dateparse import parse_datetime
@@ -51,18 +49,49 @@ class Device:
         self.evidences = []
         self.lots = []
         self.last_evidence = None
+        self._canonical_cache = None
+        self._physicals_cache = None
         self.get_shortid()
         self.get_last_evidence()
 
+    def _canonical_id(self):
+        """Resolve self.id to its canonical device ID via RootAlias.
+
+        Thanks to invariant (every SystemProperty.value has a
+        RootAlias row with alias=value), any physical ID resolves through one
+        lookup; a custom_id or unknown ID falls back to itself.
+        """
+        if self._canonical_cache is not None:
+            return self._canonical_cache
+        if not self.owner:
+            self._canonical_cache = self.id
+            return self._canonical_cache
+
+        self.alias = RootAlias.objects.filter(
+            owner=self.owner, alias=self.id
+        ).first()
+        self._canonical_cache = self.alias.root if self.alias else self.id
+        return self._canonical_cache
+
+    def _physical_ids(self):
+        """All physical IDs that share the same canonical device."""
+        if self._physicals_cache is not None:
+            return self._physicals_cache
+        if not self.owner:
+            self._physicals_cache = [self.id]
+            return self._physicals_cache
+
+        canonical = self._canonical_id()
+        ids = list(
+            RootAlias.objects.filter(owner=self.owner, root=canonical)
+            .values_list("alias", flat=True)
+        )
+        self._physicals_cache = ids or [self.id]
+        return self._physicals_cache
+
     def get_shortid(self):
-        self.shortid = self.pk.split(":")[1][:6].upper()
-        if self.owner:
-            self.alias = RootAlias.objects.filter(
-                owner=self.owner,
-                alias=self.pk
-            ).first()
-            if self.alias:
-                self.shortid = self.alias.root.split(":")[1][:6].upper()
+        canonical = self._canonical_id()
+        self.shortid = canonical.split(":")[1][:6].upper()
 
     def initial(self):
         self.get_properties()
@@ -76,20 +105,9 @@ class Device:
             return self.properties
 
         if self.owner:
-            # if hid exist as root
-            roots = [x.alias for x in RootAlias.objects.filter(root=self.id, owner=self.owner)]
-            roots.append(self.id)
-            # if hid exist as alias
-            ali = RootAlias.objects.filter(alias=self.id).first()
-            if ali:
-                roots.append(ali.root)
-                for x in RootAlias.objects.filter(root=ali.root, owner=self.owner):
-                    if x.alias not in roots:
-                        roots.append(x.alias)
-
             self.properties = SystemProperty.objects.filter(
                 owner=self.owner,
-                value__in=roots
+                value__in=self._physical_ids(),
             ).order_by("-created")
         else:
             # Is good not filter from owner for public view of device
@@ -104,15 +122,13 @@ class Device:
         return self.properties
 
     def get_user_properties(self):
-        if not self.uuids:
-            self.get_uuids()
-
-        user_properties = UserProperty.objects.filter(
-            uuid__in=self.uuids,
+        if not self.owner:
+            return UserProperty.objects.none()
+        return UserProperty.objects.filter(
             owner=self.owner,
+            device_id=self._canonical_id(),
             type=UserProperty.Type.USER,
         )
-        return user_properties
 
     def get_uuids(self):
         for a in self.get_properties():
@@ -182,19 +198,26 @@ class Device:
         return State.objects.filter(snapshot_uuid=uuid).order_by('-date').first()
 
     def get_lots(self):
-        device_ids = [self.id]
-        if self.id.startswith("custom_id:"):
-            # ra = RootAlias.objects.filter(root=self.id, owner=self.owner
-            #                                  ).order_by("-created").first()
-            # if ra:
-            device_ids = self.hids
+        # A lot row may have been stored with either the physical ID or the
+        # canonical root. Look up all IDs that belong to this logical device
+        # and deduplicate by lot.
+        device_ids = self._physical_ids()
+        canonical = self._canonical_id()
+        if canonical not in device_ids:
+            device_ids = [*device_ids, canonical]
 
-        self.lots = [
-            x.lot for x in DeviceLot.objects.filter(device_id__in=device_ids)
-            .distinct()
-            .select_related('lot__type')
-            .order_by('-lot__type__name', '-lot__created')
-        ]
+        seen = set()
+        lots = []
+        for dl in (
+            DeviceLot.objects.filter(device_id__in=device_ids)
+            .select_related("lot__type")
+            .order_by("-lot__type__name", "-lot__created")
+        ):
+            if dl.lot_id in seen:
+                continue
+            seen.add(dl.lot_id)
+            lots.append(dl.lot)
+        self.lots = lots
 
     def matches_query(self, query):
         if not query:
@@ -239,98 +262,59 @@ class Device:
         return False
 
     @classmethod
-    def queryset_orm(cls, institution):
-        alias = RootAlias.objects.filter(owner=institution)
-        sp = SystemProperty.objects.filter(owner=institution)
+    def _roots_queryset(cls, institution):
+        """Canonical roots owned by ``institution`` ordered by last activity.
 
-        # qry1 = Search roots in RootAlias than not exist in Systemproperty
-        # qry2 = Search the first entry alias for every one root of qry1
-        # qry3 = Search all alias in RootAlias than not exists in qry2
-        # qry4 = Search all values in Systemproperty than not exists in qry3
-
-        qry1 = alias.exclude(root__in=sp.values_list("value", flat=True))
-
-        #######
-        ranked_qs = qry1.annotate(
-            rank=Window(
-                expression=RowNumber(),
-                partition_by=[F('root')],
-                order_by=[F('id')]
-            )
-        ).filter(
-            rank=1
-        ).values_list('pk', flat=True).distinct()
-
-        qry2 = alias.filter(
-            pk__in=Subquery(ranked_qs)).values_list("alias", flat=True).distinct()
-
-        # only for postgresql
-        # qry2 = alias.filter(root__in=qry1).order_by('root', 'id').distinct('root').values_list(
-        #     "alias", flat=True
-        # ).distinct()
-        #######
-        qry3 = alias.exclude(alias__in=qry2).values_list("alias", flat=True).distinct()
-        qry4 = sp.exclude(value__in=qry3).values('value').annotate(max_created=Max('created'))
-        qry5 = qry4.order_by("-max_created").values_list('value', flat=True)
-        return qry5
+        Every ``SystemProperty.value`` has a
+        ``RootAlias`` row with ``alias=value``. Therefore the set of
+        logical devices equals ``DISTINCT RootAlias.root`` for the owner.
+        ``RootAlias.updated`` caches the timestamp of the latest
+        ``SystemProperty`` seen for each alias, so the most recent
+        activity for a root is ``MAX(updated)`` over its aliases.
+        """
+        return (
+            RootAlias.objects.filter(owner=institution)
+            .values("root")
+            .annotate(latest=Max("updated"))
+            .order_by("-latest")
+        )
 
     @classmethod
     def queryset_orm_unassigned(cls, institution):
-        qry4 = cls.queryset_orm(institution)
-        alias = RootAlias.objects.filter(owner=institution)
-        dev_lots = DeviceLot.objects.filter(lot__owner=institution
-                                            ).values_list("device_id", flat=True).distinct()
-        root_lots = alias.filter(root__in=dev_lots).values_list("alias", flat=True).distinct()
-        alias_lots = alias.filter(alias__in=dev_lots).values_list("alias", flat=True).distinct()
-
-        # excluding devices and alias linked to lots
-        exclude_lots = qry4.exclude(
-            value__in=dev_lots
-        ).exclude(
-            value__in=root_lots
-        ).exclude(
-            value__in=alias_lots
-        ).distinct()
-        return exclude_lots
+        # DeviceLot.device_id stores the canonical root,
+        # so excluding ``root IN assigned_roots`` is enough.
+        assigned = DeviceLot.objects.filter(
+            lot__owner=institution
+        ).values_list("device_id", flat=True)
+        return (
+            cls._roots_queryset(institution)
+            .exclude(root__in=assigned)
+        )
 
     @classmethod
     def get_all(cls, institution, offset=0, limit=None):
-        # return cls.get_all_sql(institution, offset=offset, limit=limit)
-        return cls.get_all_orm(institution, offset=offset, limit=limit)
+        qry = cls._roots_queryset(institution)
+        rows = qry[offset:] if limit is None else qry[offset:offset+limit]
+        count = (
+            RootAlias.objects.filter(owner=institution)
+            .values("root").distinct().count()
+        )
+        devices = [cls(id=r["root"], owner=institution) for r in rows]
+        return devices, count
 
     @classmethod
     def get_unassigned(cls, institution, offset=0, limit=20):
-        # return cls.get_unassigned_sql(institution, offset=offset, limit=limit)
-        return cls.get_unassigned_orm(institution, offset=offset, limit=limit)
-
-    @classmethod
-    def get_all_orm(cls, institution, offset=0, limit=None):
-        qry = cls.queryset_orm(institution)
-        evs = qry[offset:] if limit is None else qry[offset:offset+limit]
-        count = qry.count()
-        devices = [cls(id=x, owner=institution) for x in evs]
-        return devices, count
-
-    @classmethod
-    def get_unassigned_orm(cls, institution, offset=0, limit=20):
         qry = cls.queryset_orm_unassigned(institution)
-        evs = qry[offset:] if limit is None else qry[offset:offset+limit]
-        count = qry.count()
-        devices = [cls(id=x, owner=institution) for x in evs]
-        return devices, count
-
-    @classmethod
-    def get_all_sql(cls, institution, offset=0, limit=None):
-        evs = q_sql.queryset_SQL(institution, offset=offset, limit=limit)
-        count = q_sql.queryset_SQL_count(institution)
-        devices = [cls(id=x[0], owner=institution) for x in evs]
-        return devices, count
-
-    @classmethod
-    def get_unassigned_sql(cls, institution, offset=0, limit=20):
-        evs = q_sql.queryset_SQL_unassigned(institution, offset=offset, limit=limit)
-        count = q_sql.queryset_SQL_unassigned_count(institution)
-        devices = [cls(id=x[0], owner=institution) for x in evs]
+        rows = qry[offset:] if limit is None else qry[offset:offset+limit]
+        assigned = DeviceLot.objects.filter(
+            lot__owner=institution
+        ).values_list("device_id", flat=True)
+        count = (
+            RootAlias.objects.filter(owner=institution)
+            .exclude(root__in=assigned)
+            .values("root").distinct().count()
+        )
+        devices = [cls(id=r["root"], owner=institution) for r in rows]
         return devices, count
 
 
@@ -419,16 +403,14 @@ class Device:
         if not self.lot:
             return ''
 
-        device_id = self.id
-        if self.id.startswith("custom_id:"):
-            ra = RootAlias.objects.filter(root=self.id, owner=self.owner
-                                             ).order_by("-created").first()
-            if ra:
-                device_id = ra.alias
+        device_ids = self._physical_ids()
+        canonical = self._canonical_id()
+        if canonical not in device_ids:
+            device_ids = [*device_ids, canonical]
 
         dev = DeviceBeneficiary.objects.filter(
-            device_id=device_id,
-            beneficiary__lot=self.lot
+            device_id__in=device_ids,
+            beneficiary__lot=self.lot,
         ).first()
 
         status = DeviceBeneficiary.Status.AVAILABLE.label
@@ -448,9 +430,10 @@ class Device:
 
     @property
     def link_pk(self):
-        if self.alias and self.alias.root.startswith("custom_id:"):
-            return self.alias.root
-        return self.pk
+        # Always link to the canonical ID. The canonical root may be a
+        # custom_id, a different algorithm's hash (e.g. ereuse26) or the
+        # device's own physical ID when it has no alias.
+        return self._canonical_id()
 
     def components_export(self):
         self.get_last_evidence()

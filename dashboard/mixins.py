@@ -64,7 +64,7 @@ class DashboardView(LoginRequiredMixin):
             root_aliases = RootAlias.objects.filter(
                 root__in=custom_ids,
                 owner=self.request.user.institution
-            ).order_by("-created")
+            ).order_by("-updated")
             seen_roots = set()
             for ra in root_aliases:
                 if ra.root not in seen_roots:

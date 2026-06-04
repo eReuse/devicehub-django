@@ -1,6 +1,7 @@
 import json
 import logging
 
+from django.db.models import Q
 from django.http import JsonResponse
 from django.conf import settings
 from django.db import IntegrityError
@@ -22,7 +23,6 @@ from evidence.models import UserProperty, SystemProperty, Evidence, RootAlias
 from lot.models import LotTag
 from device.models import Device
 from device.forms import DeviceFormSet
-from evidence.models import SystemProperty, RootAlias
 from evidence.tables import EvidenceTable
 from django_tables2 import RequestConfig
 if settings.DPP:
@@ -42,6 +42,17 @@ class DeviceLogMixin(DashboardView):
             user=self.request.user,
             institution=self.request.user.institution
         )
+
+    def latest_uuid_for_device(self, institution, device_id):
+        """Return the most recent snapshot uuid for a device, for DeviceLog only.
+
+        DeviceLog is still anchored to a snapshot uuid — will migrate in Phase 5.
+        """
+        physicals = RootAlias.physical_aliases(institution, device_id)
+        prop = SystemProperty.objects.filter(
+            owner=institution, value__in=physicals
+        ).order_by("-created").first()
+        return prop.uuid if prop else None
 
 class NewDeviceView(DashboardView, FormView):
     template_name = "new_device.html"
@@ -92,7 +103,7 @@ class DetailsView(DashboardView, TemplateView ):
             alias=self.pk
         ).first()
 
-        if root:
+        if root and root.root != self.pk:
             return redirect(reverse_lazy('device:details', args=[root.root]))
 
         self.object = Device(id=self.pk, owner=self.request.user.institution)
@@ -241,9 +252,10 @@ class AddUserPropertyView(DeviceLogMixin, CreateView):
     fields = ("key", "value")
 
     def form_valid(self, form):
-        form.instance.owner = self.request.user.institution
+        institution = self.request.user.institution
+        form.instance.owner = institution
         form.instance.user = self.request.user
-        form.instance.uuid = self.property.uuid
+        form.instance.device_id = RootAlias.resolve_root(institution, self.kwargs['pk'])
         form.instance.type = UserProperty.Type.USER
 
         try:
@@ -253,8 +265,10 @@ class AddUserPropertyView(DeviceLogMixin, CreateView):
                 form.instance.key,
                 form.instance.value
             ))
-
-            self.log_registry(form.instance.uuid, log_message)
+            # DeviceLog is still anchored to a snapshot uuid — will migrate in Phase 5.
+            log_uuid = self.latest_uuid_for_device(institution, form.instance.device_id)
+            if log_uuid:
+                self.log_registry(log_uuid, log_message)
             return response
         except IntegrityError:
             messages.error(self.request, _("Property is already defined."))
@@ -263,22 +277,12 @@ class AddUserPropertyView(DeviceLogMixin, CreateView):
     def get_form_kwargs(self):
         pk = self.kwargs.get('pk')
         institution = self.request.user.institution
-
-        if 'custom_id' in pk:
-            alias = RootAlias.objects.filter(
-                root=pk,
-                owner=institution
-            ).first()
-
-            if not alias:
-                raise Http404
-            pk = alias.alias
-
-        self.property = SystemProperty.objects.filter(
-            owner=institution, value=pk).first()
-        if not self.property:
+        # A device may be known as an alias (physical id) or as a root
+        # (custom_id set via set_alias, which has no self-referential row).
+        if not RootAlias.objects.filter(owner=institution).filter(
+            Q(alias=pk) | Q(root=pk)
+        ).exists():
             raise Http404
-
         return super().get_form_kwargs()
 
     def get_success_url(self):
@@ -319,8 +323,11 @@ class UpdateUserPropertyView(DeviceLogMixin, UpdateView):
                 new_key,
                 new_value
             ))
-            self.log_registry(form.instance.uuid, log_message)
-            # return response
+            # DeviceLog is still anchored to a snapshot uuid — will migrate in Phase 5.
+            institution = self.request.user.institution
+            log_uuid = self.latest_uuid_for_device(institution, form.instance.device_id)
+            if log_uuid:
+                self.log_registry(log_uuid, log_message)
             return redirect(self.get_success_url())
         except IntegrityError:
             messages.error(self.request, _("Property is already defined."))
@@ -353,7 +360,11 @@ class DeleteUserPropertyView(DeviceLogMixin, DeleteView):
             self.object.key,
             self.object.value
         ))
-        self.log_registry(self.object.uuid, msg)
+        # DeviceLog is still anchored to a snapshot uuid — will migrate in Phase 5.
+        institution = self.request.user.institution
+        log_uuid = self.latest_uuid_for_device(institution, self.object.device_id)
+        if log_uuid:
+            self.log_registry(log_uuid, msg)
         messages.info(self.request, _("User property deleted successfully."))
 
         return redirect(self.get_success_url())

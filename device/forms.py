@@ -66,11 +66,14 @@ class BaseDeviceFormSet(forms.BaseFormSet):
         create_property(doc, user, commit=commit)
         move_json(path_name, self.user.institution.name, place="placeholder")
         if d.get("custom_id"):
-            RootAlias.objects.create(
+            # The post_save signal on SystemProperty has already created a
+            # self-referential RootAlias (alias=WEB_ID, root=WEB_ID); route
+            # through ``set_alias`` so the depth-1 invariant is enforced.
+            RootAlias.set_alias(
                 owner=self.user.institution,
+                alias=doc["WEB_ID"],
+                new_root="custom_id:{}".format(d["custom_id"]),
                 user=self.user,
-                root="custom_id:{}".format(d["custom_id"]),
-                alias=doc["WEB_ID"]
             )
 
         return doc
