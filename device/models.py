@@ -458,7 +458,8 @@ class Device:
             'type': self.type,
             'user_properties': user_properties,
             'current_state': self.get_current_state().state if self.get_current_state() else '',
-            'last_updated': parse_datetime(self.updated) or ""
+            'last_updated': parse_datetime(self.updated) or "",
+            'beneficiary_status': self.status_beneficiary or ""
         }
 
         if not self.last_evidence.is_legacy or not self.last_evidence:
