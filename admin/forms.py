@@ -1,7 +1,8 @@
 import json
 from django import forms
 from django.utils.translation import gettext_lazy as _
-from user.models import Institution, InstitutionSettings
+from django.forms.models import inlineformset_factory
+from user.models import Institution, InstitutionSettings, FacilityClaim
 
 
 class OrderingStateForm(forms.Form):
@@ -27,23 +28,24 @@ class InstitutionForm(forms.ModelForm):
             'logo', 'responsable_person', 'supervisor_person',
             'facility_id_uri', 'facility_description', 'country',
             'street_address', 'postal_code', 'location', 'region',
-            'algorithm'
+            'algorithm',
+            'name', 'logo', 'registered_id', 'process_category_code',
         ]
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': _('e.g. Acme Corp')}),
             'logo': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://example.com/logo.png'}),
+            'registered_id': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '30-12345678-9'}),
+            'process_category_code': forms.Select(attrs={'class': 'form-select'}),
             'responsable_person': forms.TextInput(attrs={'class': 'form-control', 'placeholder': _('e.g. Jane Doe')}),
             'supervisor_person': forms.TextInput(attrs={'class': 'form-control', 'placeholder': _('e.g. John Smith')}),
             'facility_id_uri': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'did:web:example.com'}),
             'facility_description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': _('Describe the primary activities...')}),
-
-            'country': forms.TextInput(attrs={'class': 'form-control', 'placeholder': _('e.g. US, ES, DE'), 'maxlength': '2'}),
+            'country': forms.TextInput(attrs={'class': 'form-control', 'placeholder': _('e.g. US, ES, AR'), 'maxlength': '2'}),
             'street_address': forms.TextInput(attrs={'class': 'form-control', 'placeholder': _('123 Main St')}),
             'postal_code': forms.TextInput(attrs={'class': 'form-control', 'placeholder': _('10001')}),
             'location': forms.TextInput(attrs={'class': 'form-control', 'placeholder': _('City or Locality')}),
             'region': forms.TextInput(attrs={'class': 'form-control', 'placeholder': _('State or Province')}),
         }
-
 
 class InstitutionLabelSettingsForm(forms.ModelForm):
     qr_printed_properties = forms.MultipleChoiceField(
@@ -116,3 +118,29 @@ class InstitutionApiSettingsForm(forms.ModelForm):
         if commit:
             instance.save()
         return instance
+
+
+class FacilityClaimForm(forms.ModelForm):
+    class Meta:
+        model = FacilityClaim
+        fields = [
+            'description', 'topic_code', 'admin_name', 'admin_url',
+            'assessment_date', 'evidence_name', 'evidence_url'
+        ]
+        widgets = {
+            'description': forms.TextInput(attrs={'class': 'form-control', 'placeholder': _('e.g., ISO 14001 Certified')}),
+            'topic_code': forms.Select(attrs={'class': 'form-select'}),
+            'admin_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': _('e.g., IRAM')}),
+            'admin_url': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://www.example.org'}),
+            'assessment_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'evidence_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': _('e.g., Certificate.pdf')}),
+            'evidence_url': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://example.com/cert.pdf'}),
+        }
+
+FacilityClaimFormSet = inlineformset_factory(
+    Institution,
+    FacilityClaim,
+    form=FacilityClaimForm,
+    extra=1,
+    can_delete=True
+)
