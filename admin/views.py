@@ -16,7 +16,7 @@ from evidence.models import CredentialProperty
 from openlocationcode import openlocationcode as olc
 from django.db import IntegrityError,   transaction
 from dashboard.mixins import DashboardView, Http403
-from admin.forms import OrderingStateForm, InstitutionApiSettingsForm, InstitutionLabelSettingsForm, InstitutionForm
+from admin.forms import OrderingStateForm, InstitutionApiSettingsForm, InstitutionLabelSettingsForm, InstitutionForm, FacilityClaimFormSet
 from user.models import User, Institution, InstitutionSettings
 from admin.email import NotifyActivateUserByEmail
 from admin.tables import UserTable
@@ -252,16 +252,46 @@ class InstitutionView(AdminView, UpdateView):
     success_url = reverse_lazy('admin:panel')
     form_class = InstitutionForm
 
-    def form_valid(self, form):
-        messages.success(self.request, _("Institution information updated successfully."))
-        return super().form_valid(form)
-
     def get_object(self, queryset=None):
-        institution = self.request.user.institution
-        return institution
+        return self.request.user.institution
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        if self.request.POST:
+            context['claim_formset'] = FacilityClaimFormSet(
+                self.request.POST,
+                instance=self.object,
+                prefix='claims'
+            )
+        else:
+            context['claim_formset'] = FacilityClaimFormSet(
+                instance=self.object,
+                prefix='claims'
+            )
+        return context
+
+    def form_valid(self, form):
+        context = self.get_context_data()
+        claim_formset = context['claim_formset']
+
+        if claim_formset.is_valid():
+            self.object = form.save()
+
+            claim_formset.instance = self.object
+            claim_formset.save()
+
+            messages.success(self.request, _("Institution information and claims updated successfully."))
+            return super().form_valid(form)
+        else:
+            return self.form_invalid(form)
+
+    def form_invalid(self, form):
+        messages.error(self.request, _("Please correct the errors below."))
+        return self.render_to_response(self.get_context_data(form=form))
 
 
-class InstitutionConfigView( AdminView, UpdateView):
+class InstitutionConfigView(AdminView, UpdateView):
     template_name = "institution.html"
     model = InstitutionSettings
     form_class = InstitutionApiSettingsForm
@@ -442,6 +472,26 @@ class IssueDigitalFacilityRecordView(AdminView, View):
         }
         address_data = {k: v for k, v in address_data.items() if v}
 
+        isic_names = {
+            '9511': "Repair of computers and peripheral equipment",
+            '3830': "Materials recovery and recycling",
+            '3313': "Repair of electronic and optical equipment",
+            '4649': "Wholesale of other household goods",
+            '0000': "General Operations"
+        }
+
+        process_code = institution.process_category_code
+        process_name = isic_names.get(process_code, "General Operations")
+        process_category = [
+            {
+                "id": f"https://unstats.un.org/unsd/classifications/Econ/ISIC/Rev4/{process_code}",
+                "code": process_code,
+                "name": process_name,
+                "schemeID": "https://unstats.un.org/unsd/classifications/Econ/ISIC/",
+                "schemeName": "UN ISIC Rev.4"
+            }
+        ]
+
         facility_uri = institution.facility_id_uri or f"urn:uuid:{uuid.uuid4()}"
         facility_data = {
             "type": ["Facility"],
@@ -453,18 +503,42 @@ class IssueDigitalFacilityRecordView(AdminView, View):
             "operatedByParty": {
                 "id": facility_uri,
                 "name": institution.name,
-                "registeredId": str(institution.id)
+                "registeredId": institution.registered_id or str(institution.id)
             },
-            "locationInformation": geo_data
+            "locationInformation": geo_data,
+            "processCategory": process_category
         }
+        if institution.logo:
+            facility_data["logo"] = institution.logo
+            facility_data["operatedByParty"]["logo"] = institution.logo
         #delete empty fields jic
         facility_data = {k: v for k, v in facility_data.items() if v}
+
+        conformity_claims = []
+        for claim in institution.claims.all():
+            claim_data = {
+                "id": f"{facility_uri}/declarations/{claim.id}",
+                "type": ["Claim", "Declaration"],
+                "description": claim.description,
+                "conformance": True,
+                "conformityTopic": claim.topic_code,
+            }
+            if claim.admin_name:
+                claim_data["referenceRegulation"] = {
+                    "administeredBy": {
+                        "id": claim.admin_url or "urn:uuid:unknown",
+                        "name": claim.admin_name
+                    }
+                }
+            conformity_claims.append(claim_data)
 
         credential_subject = {
             "type": ["FacilityRecord"],
             "id": facility_uri,
             "facility": facility_data
         }
+        if conformity_claims:
+            credential_subject["conformityClaim"] = conformity_claims
 
         credential, error = service.issue_facility_credential(
             credential_subject=credential_subject,

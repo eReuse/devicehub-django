@@ -25,8 +25,16 @@ class LabelOrientation(models.TextChoices):
     HORIZONTAL = 'HORIZONTAL', _("Horizontal (Landscape)")
     VERTICAL = 'VERTICAL', _("Vertical (Portrait)")
 
+PROCESS_CHOICES = [
+    ('9511', _('Repair of computers and peripheral equipment (9511)')),
+    ('3830', _('Materials recovery and recycling (3830)')),
+    ('3313', _('Repair of electronic and optical equipment (3313)')),
+    ('4649', _('Wholesale of other household goods (4649)')),
+    ('0000', _('Other / General Facility')),
+]
+
 def default_printed_properties():
-    return ["ID"]
+    return ["shortid"]
 
 class Institution(models.Model):
     name = models.CharField(
@@ -118,6 +126,21 @@ class Institution(models.Model):
         help_text=_("The default algorithm used for device aggregation."),
     )
 
+    registered_id = models.CharField(
+        _("Registered ID"),
+        max_length=100,
+        blank=True,
+        null=True,
+        help_text=_("Business Registration Number (e.g., CUIT, VAT).")
+    )
+    process_category_code = models.CharField(
+        _("Primary Facility Activity"),
+        max_length=10,
+        choices=PROCESS_CHOICES,
+        default='0000',
+        help_text=_("UN ISIC classification for the primary operations.")
+    )
+
     @property
     def latest_facility_credential(self):
         return self.credentialproperty_set.filter(
@@ -128,6 +151,67 @@ class Institution(models.Model):
     def __str__(self):
         return self.name
 
+
+class FacilityClaim(models.Model):
+    TOPIC_CHOICES = [
+        ("environment.waste", _("Environment - Waste")),
+        ("environment.energy", _("Environment - Energy")),
+        ("environment.emissions", _("Environment - Emissions")),
+        ("circularity.content", _("Circularity - Content")),
+        ("circularity.design", _("Circularity - Design")),
+        ("social.labour", _("Social - Labour")),
+        ("governance.compliance", _("Governance - Compliance")),
+    ]
+
+    institution = models.ForeignKey(
+        Institution,
+        on_delete=models.CASCADE,
+        related_name="claims"
+    )
+    description = models.CharField(
+        _("Claim Description"),
+        max_length=255,
+        help_text=_("E.g., Certified ISO 14001 Environmental Management System or Registered WEEE Processing Facility.")
+    )
+    topic_code = models.CharField(
+        _("Conformity Topic"),
+        max_length=50,
+        choices=TOPIC_CHOICES
+    )
+    admin_name = models.CharField(
+        _("Administering Body"),
+        max_length=255,
+        help_text=_("E.g., Environmental Protection Agency, Ministry of Environment, or ISO.")
+    )
+    admin_url = models.URLField(
+        _("Administering Body URL"),
+        blank=True,
+        null=True,
+        help_text=_("E.g., https://www.epa.gov/ or https://www.iso.org/")
+    )
+    assessment_date = models.DateField(
+        _("Assessment Date"),
+        blank=True,
+        null=True,
+        help_text=_("The date the audit or certification was granted.")
+    )
+    evidence_url = models.URLField(
+        _("Evidence URL"),
+        max_length=1024,
+        blank=True,
+        null=True,
+        help_text=_("Link to the certificate PDF or a Digital Conformity Credential (DCC).")
+    )
+    evidence_name = models.CharField(
+        _("Evidence Document Name"),
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text=_("E.g., 'ISO 14001 Certificate 2024.pdf'")
+    )
+
+    def __str__(self):
+        return f"{self.topic_code} - {self.admin_name}"
 
 class InstitutionSettings(models.Model):
     institution = models.OneToOneField(
