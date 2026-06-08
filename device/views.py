@@ -497,14 +497,12 @@ class IssueDigitalPassportView(DeviceLogMixin, View):
             "model": components.get('model') or "Unknown",
             "cpu_model": components.get('cpu_model'),
             "cpu_cores": str(components.get('cpu_cores')) if components.get('cpu_cores') else None,
-            "current_state": components.get('current_state') or "refurbished",
             "ram_total": convert_ram_to_mb(components.get('ram_total')),
             "ram_type": components.get('ram_type') or "Other",
             "ram_slots": components.get('ram_slots'),
             "slots_used": components.get('slots_used'),
             "drive": components.get('drive') or "Other",
             "gpu_model": components.get('gpu_model'),
-            "user_properties": components.get('user_properties'),
             "serial": components.get('serial', "NA")
         }
         characteristics = {k: v for k, v in raw_characteristics.items() if v is not None and v != ''}
