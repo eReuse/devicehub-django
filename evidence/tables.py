@@ -248,12 +248,14 @@ class CredentialTable(tables.Table):
 
     def render_key(self, value):
         display_text = value
-        if value == "DigitalProductPassport":
+        if value == CredentialProperty.CredentialType.DPP:
             display_text = "Product Passport"
-        elif value == "DigitalFacilityRecord":
+        elif value == CredentialProperty.CredentialType.DFR:
             display_text = "Facility Record"
-        elif value == "DigitalTraceabilityEvent":
+        elif value == CredentialProperty.CredentialType.DTE:
             display_text = "Traceability Event"
+        elif value == CredentialProperty.CredentialType.DIDDOC:
+            display_text = "DID Document"
 
         return format_html('<span class="fw-bold">{}</span>', display_text)
 
@@ -276,7 +278,7 @@ class CredentialTable(tables.Table):
 
     def render_actions(self, record):
         try:
-            if record.key == "DID_DOCUMENT":
+            if record.key == CredentialProperty.CredentialType.DIDDOC:
                 url = resolve_did_url(record.value)
             else:
                 url = reverse('evidence:credential_detail', kwargs={'uuid': record.uuid})
