@@ -373,46 +373,123 @@ class DismantleDeviceView(LoginRequiredMixin, FacilityInfoMixin, FormView):
 
         return redirect('device:details', pk=parent_device_id)
 
-class BulkStateChangeView(DashboardView, View):
-    #DashboardView will redirect to a GET method
+class BulkStateChangeView(FacilityInfoMixin, DashboardView, View):
+
     def get(self, request, *args, **kwargs):
         state_id = self.kwargs.get('pk')
-        new_state = StateDefinition.objects.filter(id=state_id).first().state
+        state_def = StateDefinition.objects.filter(id=state_id).first()
+
+        if not state_def:
+            messages.error(request, _("Invalid state selected."))
+            return self.get_success_url()
+
+        new_state = state_def.state
         selected_devices = self.get_session_devices()
 
         if not selected_devices:
             messages.error(request, _("No devices selected"))
             return self.get_success_url()
-        try:
-            for dev in selected_devices:
 
-                message = _("<Created> State '{}'. Previous State: '{}'").format(new_state, dev.get_current_state().state if dev.get_current_state() else _("None") )
-                State.objects.create(
-                    snapshot_uuid=dev.last_uuid(),
-                    state=new_state,
-                    user=self.request.user,
-                    institution=self.request.user.institution,
-                )
+        service = CredentialService(self.request.user)
+        facility_info = self.get_facility_info(self.request.user.institution, self.request)
 
-                DeviceLog.objects.create(
-                    snapshot_uuid=dev.last_uuid(),
-                    event=message,
-                    user=self.request.user,
-                    institution=self.request.user.institution,
-                )
+        inst_facility_uri = getattr(self.request.user.institution, 'facility_id_uri', None)
+        facility_uri = inst_facility_uri or f"urn:uuid:{self.request.user.institution.id}"
 
-            messages.success(request,_("State changed Successfully"))
+        success_count = 0
+        error_count = 0
 
-        except Exception as e:
-            messages.error(
-                request,
-                _("Error changing state on devices: %s") % str(e))
+        for dev in selected_devices:
+            try:
+                with transaction.atomic():
+                    dev.initial()
+
+                    previous_state_obj = dev.get_current_state()
+                    previous_state = previous_state_obj.state if previous_state_obj else _("None")
+                    snapshot_uuid = dev.last_uuid()
+
+                    if not snapshot_uuid:
+                        raise Exception("Device is missing initial evidence/snapshot.")
+
+                    did_error = service.ensure_device_did(dev)
+                    if did_error:
+                        raise Exception(_("DID configuration failed."))
+
+                    components = dev.components_export()
+                    manufacturer = components.get('manufacturer') or "Unknown"
+                    model = components.get('model') or "Device"
+                    clean_name = f"{manufacturer} {model}"
+
+                    traceability_event = {
+                        "type": ["ObjectEvent", "Event"],
+                        "id": f"urn:uuid:{uuid.uuid4()}",
+                        "eventTime": timezone.now().isoformat(),
+                        "eventTimeZoneOffset": "+00:00",
+                        "action": "observe",
+                        "processType": new_state,
+                        "bizStep": "urn:epcglobal:cbv:bizstep:other",
+                        "disposition": "urn:epcglobal:cbv:disp:active",
+                        "bizLocation": facility_uri,
+                        "epcList": [{
+                            "type": ["Item"],
+                            "id": dev.did,
+                            "name": clean_name
+                        }],
+                        "ereuse:deviceState": new_state,
+                        "ereuse:previousState": previous_state,
+                        "ereuse:lastUpdate": timezone.now().isoformat()
+                    }
+
+                    if facility_info:
+                        traceability_event["facility"] = {
+                            "id": facility_info["id"],
+                            "name": facility_info["name"]
+                        }
+                        if facility_info.get("registeredId"):
+                            traceability_event["facility"]["registeredId"] = str(facility_info["registeredId"])
+                            traceability_event["facility"]["idScheme"] = facility_info.get("idScheme")
+
+                    State.objects.create(
+                        snapshot_uuid=snapshot_uuid,
+                        state=new_state,
+                        user=self.request.user,
+                        institution=self.request.user.institution,
+                    )
+
+                    message = _("<Created> State '{}'. Previous State: '{}'").format(new_state, previous_state)
+                    DeviceLog.objects.create(
+                        snapshot_uuid=snapshot_uuid,
+                        event=message,
+                        user=self.request.user,
+                        institution=self.request.user.institution,
+                    )
+
+                    credential, error = service.issue_device_credential(
+                        credential_type_key='traceability',
+                        credential_subject=[traceability_event],
+                        credential_db_key=CredentialProperty.CredentialType.DTE,
+                        device=dev,
+                        description=f"State Change: {previous_state} -> {new_state}"
+                    )
+
+                    if error:
+                        raise Exception(error)
+
+                    success_count += 1
+
+            except Exception as e:
+                error_count += 1
+
+        if success_count > 0:
+            messages.success(request, _("State changed and credentials issued successfully for {} devices.").format(success_count))
+
+        if error_count > 0:
+            messages.warning(request, _("Failed to process state/credentials for {} devices.").format(error_count))
 
         return self.get_success_url()
 
     def get_success_url(self):
-        return HttpResponseRedirect(self.request.META.get('HTTP_REFERER', 'dashboard:all'))
-
+        return HttpResponseRedirect(self.request.META.get('HTTP_REFERER', reverse_lazy('dashboard:all')))
 
 class AddNoteView(LoginRequiredMixin, FormView):
     form_class = AddNoteForm
