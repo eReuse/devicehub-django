@@ -516,13 +516,16 @@ class IssueDigitalFacilityRecordView(AdminView, View):
 
         conformity_claims = []
         for claim in institution.claims.all():
+            claim_id = f"urn:uuid:{uuid.uuid4()}"
+
             claim_data = {
-                "id": f"{facility_uri}/declarations/{claim.id}",
+                "id": claim_id,
                 "type": ["Claim", "Declaration"],
                 "description": claim.description,
                 "conformance": True,
                 "conformityTopic": claim.topic_code,
             }
+
             if claim.admin_name:
                 claim_data["referenceRegulation"] = {
                     "administeredBy": {
@@ -530,6 +533,20 @@ class IssueDigitalFacilityRecordView(AdminView, View):
                         "name": claim.admin_name
                     }
                 }
+
+            if hasattr(claim, 'assessment_date') and claim.assessment_date:
+                claim_data["assessmentDate"] = claim.assessment_date.isoformat()
+
+            if hasattr(claim, 'evidence_url') and claim.evidence_url:
+                evidence = {
+                    "type": ["SecureLink", "Link"],
+                    "linkURL": claim.evidence_url
+                }
+                if hasattr(claim, 'evidence_name') and claim.evidence_name:
+                    evidence["linkName"] = claim.evidence_name
+
+                claim_data["conformityEvidence"] = evidence
+
             conformity_claims.append(claim_data)
 
         credential_subject = {
