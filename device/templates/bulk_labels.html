@@ -25,6 +25,7 @@ body {
     .label-card { break-inside: avoid; page-break-inside: avoid; }
 }
 
+/* GRID */
 .label-grid {
     display: {% if settings.qr_label_columns == 0 %}flex{% else %}grid{% endif %};
     {% if settings.qr_label_columns == 0 %}flex-wrap: wrap;{% else %}grid-template-columns: repeat({{ settings.qr_label_columns }}, max-content);{% endif %}
@@ -32,8 +33,8 @@ body {
     align-items: start;
 }
 
+/* BASE */
 .label-card {
-    border: var(--border);
     background: #fff;
     overflow: hidden;
     display: flex;
@@ -41,9 +42,26 @@ body {
     position: relative;
 }
 
-.v1-card { min-width: 32mm; min-height: 32mm; padding: var(--gap); justify-content: center; align-items: center; gap: 2mm; }
-.v1-id { font-weight: 700; text-align: center; max-width: 30mm; overflow-wrap: anywhere; line-height: 1.1; }
+/* ── V1 LEGACY ── */
+.v1-card {
+    align-items: flex-start;
+    border: none;
+    margin-right: 8px;
+    padding: 10px;
+}
+.v1-id {
+    width: 180px;
+    text-align: center;
+    font-size: 25px;
+    font-family: monospace;
+    margin-top: 20px;
+    font-weight: bold;
+    word-break: break-word;
+}
+
+/* ── V2 MODERN ── */
 .v2-card {
+    border: var(--border);
     width: {% if settings.qr_width_mm == 0 %}auto{% else %}{{ settings.qr_width_mm }}mm{% endif %};
     height: {% if settings.qr_height_mm == 0 %}auto{% else %}{{ settings.qr_height_mm }}mm{% endif %};
     min-width: 30mm;
@@ -56,7 +74,7 @@ body {
 .lbl-title { font-weight: bold; text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
 
 /* BODY & ORIENTATIONS */
-.lbl-body { flex: 1; display: flex; align-items: stretch; gap: 1.5mm; padding: 1.5mm; min-height: 0; }
+.lbl-body { flex: 1; display: flex; align-items: stretch; gap: var(--gap); padding: var(--gap); min-height: 0; }
 .v2-card[data-orient="VERTICAL"] .lbl-body { flex-direction: column; }
 .v2-card[data-orient="HORIZONTAL"] .lbl-body { flex-direction: row; }
 
@@ -65,15 +83,17 @@ body {
 .qr-cell canvas, .qr-cell img { display: block; }
 
 /* PROPERTIES */
-.props-cell { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 2px; overflow: hidden; }
-.v2-card[data-orient="HORIZONTAL"] .props-cell { border-left: 1px solid #ddd; padding-left: 1.5mm; }
-.v2-card[data-orient="VERTICAL"] .props-cell { border-top: 1px solid #ddd; padding-top: 1.5mm; }
+.props-cell { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 1mm; overflow: hidden; }
+.v2-card[data-orient="HORIZONTAL"] .props-cell { border-left: 1px solid #ddd; padding-left: 2mm; }
+.v2-card[data-orient="VERTICAL"] .props-cell { border-top: 1px solid #ddd; padding-top: 2mm; }
 
 /* ROWS */
-.prop-row { display: flex; align-items: flex-start; gap: 1mm; line-height: 1; width: 100%; overflow: hidden; }
+.prop-row { display: flex; align-items: flex-start; gap: 1mm; line-height: 1.05; width: 100%; overflow: hidden; }
 .prop-key { font-weight: 700; flex-shrink: 0; }
 .prop-val { flex: 1; overflow-wrap: anywhere; word-break: break-word; white-space: normal; }
 
+.label-card.dense { --font: calc({{ settings.qr_font_size|default:7 }}pt - 1pt); }
+.label-card.dense .prop-row { line-height: 1; }
 </style>
 </head>
 <body>
@@ -81,13 +101,11 @@ body {
 <div class="label-grid">
 {% for label in labels_data %}
     {% if settings.qr_label_version == 'V1' %}
-    <!-- V1 LEGACY -->
     <div class="label-card v1-card">
-        <div class="qr-cell" data-payload="{{ label.payload }}" data-size="100"></div>
+        <div class="qr-cell" data-payload="{{ label.payload }}" data-size="180" style="width: 180px; height: 180px;"></div>
         <div class="v1-id">{{ label.shortid|default:label.payload }}</div>
     </div>
     {% else %}
-    <!-- V2 MODERN -->
     <div class="label-card v2-card" data-orient="{{ settings.qr_label_orientation|default:'HORIZONTAL'|upper }}">
         {% if label.include_logo and label.logo_url or header %}
         <div class="lbl-header">
@@ -125,7 +143,11 @@ document.addEventListener("DOMContentLoaded", () => {
         const card = el.closest(".label-card");
         const props = card.querySelectorAll(".prop-val");
 
-        // compute QR: prioritize text space but enforce minimum scan size
+        if (props.length >= 5 || Array.from(props).some(v => v.textContent.length > 42)) {
+            card.classList.add("dense");
+        }
+
+        // prioritize text space but enforce minimum scan size
         let size = parseInt(el.dataset.size || 0);
         if (!size) {
             const bodyRect = card.querySelector(".lbl-body").getBoundingClientRect();
@@ -142,35 +164,21 @@ document.addEventListener("DOMContentLoaded", () => {
             size = Math.max(65, Math.min(size, 160));
         }
 
-        // render qr (at Low correct level) given that it devices wont be outside
-        // so qr shouldnt tear apart
         new QRCode(el, {
             text: el.dataset.payload,
             width: Math.floor(size),
             height: Math.floor(size),
-            correctLevel: QRCode.CorrectLevel.L
+            correctLevel: QRCode.CorrectLevel.M
         });
 
-        // prevent flexbox rendering glitches
+        //exact dimensions to prevent flexbox rendering glitches
         setTimeout(() => {
             el.querySelectorAll("canvas, img").forEach(n => {
                 n.style.width = n.style.height = `${Math.floor(size)}px`;
             });
-
-            // better text fit
-            const propsCell = card.querySelector(".props-cell");
-            if (propsCell) {
-                let currentFont = parseFloat(window.getComputedStyle(card).getPropertyValue('--font')) || 7;
-
-                while (propsCell.scrollHeight > propsCell.clientHeight && currentFont > 4.5) {
-                    currentFont -= 0.2;
-                    card.style.setProperty('--font', `${currentFont}pt`);
-                }
-            }
         }, 30);
     });
 
-    // handle printing dialog
     setTimeout(() => window.print(), 350);
     window.onafterprint = () => setTimeout(() => window.history.back(), 300);
 });
