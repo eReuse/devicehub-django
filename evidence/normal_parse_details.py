@@ -96,11 +96,11 @@ class ParseSnapshot:
             mb["serialNumber"] = get_inxi(m, "serial")
             mb["version"] = get_inxi(m, "v")
             mb["biosDate"] = bios_date
-            mb["biosVersion"] = self.get_bios_version()
-            mb["firewire"] = self.get_firmware_num()
-            mb["pcmcia"] = self.get_pcmcia_num()
-            mb["serial"] = self.get_serial_num()
-            mb["usb"] = self.get_usb_num()
+            mb["biosVersion"] = self.get_bios_version() or ''
+            mb["firewire"] = self.get_firmware_num() or ''
+            mb["pcmcia"] = self.get_pcmcia_num() or ''
+            mb["serial"] = self.get_serial_num() or ''
+            mb["usb"] = self.get_usb_num() or ''
 
             self.get_ram_slots(mb)
 
@@ -397,7 +397,10 @@ class ParseSnapshot:
         )
 
     def get_bios_version(self):
-        return self.dmi.get("BIOS")[0].get("BIOS Revision", '1')
+        try:
+            return self.dmi.get("BIOS")[0].get("BIOS Revision", '1')
+        except (TypeError, IndexError, KeyError):
+            return ''
 
     def loads(self, x):
         if isinstance(x, str):
