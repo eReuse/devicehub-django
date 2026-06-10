@@ -456,7 +456,7 @@ class Evidence:
             return list(self.doc.get('kv').values())[0]
 
         if self.inxi or self.is_beta():
-            return self.device_manufacturer
+            return getattr(self, 'device_manufacturer', '')
 
         if self.is_legacy():
             return self.doc.get('device', {}).get('manufacturer', '')
@@ -474,7 +474,7 @@ class Evidence:
             return list(self.doc.get('kv').values())[1]
 
         if self.inxi or self.is_beta():
-            return self.device_model
+            return getattr(self, 'device_model', '')
 
         if self.is_legacy():
             model = self.doc.get('device', {}).get('model', '') or ''
@@ -488,7 +488,7 @@ class Evidence:
 
     def get_chassis(self):
         if self.inxi or self.is_beta():
-            return self.device_chassis
+            return getattr(self, 'device_chassis', '')
 
         if self.is_legacy():
             chassis = self.doc.get('device', {}).get('chassis', '')
@@ -511,7 +511,7 @@ class Evidence:
 
     def get_serial_number(self):
         if self.inxi or self.is_beta():
-            return self.device_serial_number
+            return getattr(self, 'device_serial_number', '')
 
         if self.is_legacy():
             return self.doc.get('device', {}).get('serialNumber', '')
@@ -523,7 +523,7 @@ class Evidence:
 
     def get_version(self):
         if self.inxi or self.is_beta():
-            return self.device_version
+            return getattr(self, 'device_version', '')
 
         return ""
 
