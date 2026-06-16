@@ -77,6 +77,7 @@ INSTALLED_APPS = [
     "api",
     "environmental_impact",
     "dhemail",
+    "django_components",
 ]
 
 DPP = config("DEVICEHUB_DPP", default=False, cast=bool)
@@ -103,7 +104,6 @@ TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
         "DIRS": [],
-        "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
                 "django.template.context_processors.debug",
@@ -112,14 +112,31 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
                 "django.template.context_processors.i18n",
             ],
-
-            'libraries':{
+            "loaders": [
+                (
+                    "django.template.loaders.cached.Loader",
+                    [
+                        "django.template.loaders.filesystem.Loader",
+                        "django.template.loaders.app_directories.Loader",
+                        "django_components.template_loader.Loader",
+                    ],
+                )
+            ],
+            "builtins": [
+                "django_components.templatetags.component_tags",
+            ],
+            'libraries': {
                 'get_language_code': 'dashboard.templatetags.language_code',
-            }
-
+            },
         },
     },
 ]
+
+COMPONENTS = {
+    "autodiscover": True,
+    "app_dirs": ["components"],
+    "context_behavior": "django",
+}
 
 WSGI_APPLICATION = "dhub.wsgi.application"
 

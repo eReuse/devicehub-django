@@ -50,10 +50,22 @@
     {% with id_suffix=forloop.counter|stringformat:"s" %}
       {% if device_context %}
         {% with action_url=del_base_url|add:"?next="|add:detail_url %}
-          {% include 'confirm_modal.html' with modal_id="deallocateDeviceModal"|add:id_suffix modal_title=modal_title_text modal_body=modal_body_text action_text=modal_action_text action_url=action_url %}
+          {% component "confirm_modal"
+              modal_id="deallocateDeviceModal"|add:id_suffix
+              modal_title=modal_title_text
+              modal_body=modal_body_text
+              action_text=modal_action_text
+              action_url=action_url
+          %}{% endcomponent %}
         {% endwith %}
       {% else %}
-        {% include 'confirm_modal.html' with modal_id="deallocateDeviceModal"|add:id_suffix modal_title=modal_title_text modal_body=modal_body_text action_text=modal_action_text action_url=del_base_url %}
+        {% component "confirm_modal"
+            modal_id="deallocateDeviceModal"|add:id_suffix
+            modal_title=modal_title_text
+            modal_body=modal_body_text
+            action_text=modal_action_text
+            action_url=del_base_url
+        %}{% endcomponent %}
       {% endif %}
     {% endwith %}
     {% endfor %}

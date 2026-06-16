@@ -1,4 +1,4 @@
-{% load i18n %}
+{% load i18n component_tags %}
 <div class="modal fade" id="{{ modal_id }}" tabindex="-1"
      aria-labelledby="{{ modal_id }}Label" aria-hidden="true">
   <div class="modal-dialog">
@@ -9,7 +9,9 @@
                 aria-label="{% trans 'Close' %}"></button>
       </div>
       <div class="modal-body">
-        <p>{{ modal_body|safe }}</p>
+        {% slot "body" %}
+          <p>{{ modal_body|safe }}</p>
+        {% endslot %}
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary"

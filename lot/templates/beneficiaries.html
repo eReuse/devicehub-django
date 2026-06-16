@@ -150,7 +150,13 @@
         {% trans "Are you sure you want to deallocate this beneficiary?" as modal_body_text %}
         {% trans "Deallocate" as modal_action_text %}
         {% with id_suffix=s.id|stringformat:"s" %}
-          {% include 'confirm_modal.html' with modal_id="deleteModal"|add:id_suffix modal_title=modal_title_text modal_body=modal_body_text action_text=modal_action_text action_url=del_beneficiary_url %}
+          {% component "confirm_modal"
+              modal_id="deleteModal"|add:id_suffix
+              modal_title=modal_title_text
+              modal_body=modal_body_text
+              action_text=modal_action_text
+              action_url=del_beneficiary_url
+          %}{% endcomponent %}
         {% endwith %}
       {% endfor %}
       </tbody>
