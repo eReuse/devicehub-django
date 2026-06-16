@@ -9,9 +9,7 @@
                 aria-label="{% trans 'Close' %}"></button>
       </div>
       <div class="modal-body">
-        {% slot "body" %}
-          <p>{{ modal_body|safe }}</p>
-        {% endslot %}
+        {% slot "body" %}{% endslot %}
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary"

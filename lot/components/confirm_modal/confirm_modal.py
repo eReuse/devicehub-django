@@ -12,7 +12,6 @@ class ConfirmModal(Component):
         modal_id: str,
         modal_title: str,
         action_text: str,
-        modal_body: str = "",
         action_url: Optional[str] = None,
         action_form_url: Optional[str] = None,
         **kwargs: Any,
@@ -20,7 +19,6 @@ class ConfirmModal(Component):
         return {
             "modal_id": modal_id,
             "modal_title": modal_title,
-            "modal_body": modal_body,
             "action_text": action_text,
             "action_url": action_url,
             "action_form_url": action_form_url,
