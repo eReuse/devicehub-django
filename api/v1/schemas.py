@@ -5,7 +5,7 @@ from django.utils.translation import gettext as _t
 
 from lot.models import Lot
 from typing import List, Optional
-from ninja import ModelSchema
+from ninja import ModelSchema, Schema
 from datetime import datetime
 from evidence.models import UserProperty
 
@@ -221,4 +221,53 @@ class SnapshotResponse(BaseModel):
         ...,
         description=_("Public URL for sharing this device"),
         example="https://example.com/web/devices/0FCDC8/"
+    )
+
+class DeviceLogOut(Schema):
+    event: str = Field(
+        ...,
+        example="<Created> UserProperty: status: refurbished",
+        description=_("Description of the event or action performed")
+    )
+    date: datetime = Field(
+        ...,
+        example="2026-06-12T14:30:00Z",
+        description=_("Timestamp when the event occurred")
+    )
+    user: Optional[str] = Field(
+        default=None,
+        example="admin_user",
+        description=_("Username of the person who triggered the event, or System if null")
+    )
+    snapshot_uuid: str = Field(
+        ...,
+        example="123e4567-e89b-12d3-a456-426614174000",
+        description=_("UUID of the associated hardware snapshot (evidence)")
+    )
+
+class DeviceWithLogsOut(Schema):
+    device: DeviceResponse = Field(
+        ...,
+        description=_("Complete device information including components and properties")
+    )
+    logs: List[DeviceLogOut] = Field(
+        ...,
+        description=_("Chronological list of all events associated with this device")
+    )
+
+class BulkPropertyIn(Schema):
+    device_ids: List[str] = Field(
+        ...,
+        example=["ereuse24:50d7033117...", "0FCDC8"],
+        description=_("List of device identifiers (can be full hashes, short IDs, or custom aliases)")
+    )
+    key: str = Field(
+        ...,
+        example="warranty",
+        description=_("The name or key of the user property to assign")
+    )
+    value: str = Field(
+        ...,
+        example="12-months",
+        description=_("The value to assign to the property across all specified devices")
     )

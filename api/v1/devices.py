@@ -224,38 +224,165 @@ def set_property(request, device_id: str, key: str, data: PropertyIn):
         raise HttpError(500, "Internal server error")
 
 @router.get(
-    "/{device_id}/",
+    "/{device_id}/logs/",
     response={
-        200: DeviceResponse,
+        200: DeviceWithLogsOut,
         403: MessageOut,
         404: MessageOut
     },
-    summary=_("Get complete device information"),
+    summary=_("Get device details and audit logs"),
     description=_("""
-    Retrieves comprehensive technical specifications and metadata for a device.
-
-    Includes:
-    - Hardware specifications (CPU, RAM, storage etc.)
-    - Custom user properties
-    - Current device state
-    - Last update timestamp
-
-    Responses:
-    - 200: Full device details
-    - 403: Access denied
-    - 404: Device not found
+    Retrieves the complete hardware/software specifications of a device
+    alongside its historical timeline of events (property changes, state changes, etc.).
     """),
     tags=["Devices"],
     auth=GlobalAuth()
 )
-def get_device_details(request, device_id: str):
+def get_device_logs(request, device_id: str):
     user = request.auth
+    institution = user.institution
+
     try:
         device = _get_device(device_id, user)
+
         device_data = device.components_export()
-        return DeviceResponse(**device_data)
+
+        aliases = RootAlias.physical_aliases(institution, device.id)
+
+        uuids = SystemProperty.objects.filter(
+            owner=institution,
+            value__in=aliases
+        ).values_list('uuid', flat=True)
+
+        logs_qs = DeviceLog.objects.filter(
+            institution=institution,
+            snapshot_uuid__in=uuids
+        ).order_by('-date')
+
+        logs_data = [
+            {
+                "event": log.event,
+                "date": log.date,
+                "user": log.user.username if log.user else "System",
+                "snapshot_uuid": str(log.snapshot_uuid)
+            }
+            for log in logs_qs
+        ]
+
+        return {
+            "device": device_data,
+            "logs": logs_data
+        }
 
     except PermissionDenied:
         raise HttpError(403, "Access denied")
-    except ObjectDoesNotExist:
-        raise HttpError(404, "Property not found")
+    except HttpError:
+        raise
+    except Exception as e:
+        logger.exception(f"Error fetching logs and details for device {device_id}")
+        raise HttpError(500, "Internal server error")
+
+
+@router.post(
+    "/bulk-properties/",
+    response={
+        200: OperationResult,
+        207: OperationResult,
+        400: MessageOut,
+        403: MessageOut,
+        422: MessageOut
+    },
+    summary=_("Bulk assign a user property"),
+    description=_("""
+    Assigns or updates a specific UserProperty across multiple devices simultaneously.
+
+    Accepts partial hashes, short IDs, or exact aliases. Ambiguous identifiers are rejected.
+
+    Returns:
+    - 200: Property successfully applied to all devices
+    - 207: Partial success (some identifiers were invalid/ambiguous)
+    - 422: No valid devices provided
+    """),
+    tags=["Device Properties"],
+    auth=GlobalAuth()
+)
+def bulk_assign_properties(request, data: BulkPropertyIn):
+    user = request.auth
+    institution = user.institution
+
+    try:
+        valid_ids, invalid_ids = _check_valid_ids(data.device_ids, institution)
+        if not valid_ids:
+            raise HttpError(422, "No valid device IDs provided or all matches were ambiguous")
+
+        existing_props = UserProperty.objects.filter(
+            owner=institution,
+            device_id__in=valid_ids,
+            key=data.key,
+            type=UserProperty.Type.USER
+        )
+        existing_map = {p.device_id: p for p in existing_props}
+
+        devices = [Device(id=id) for id in valid_ids]
+        device_map = {d.id: d for d in devices}
+
+        props_to_create = []
+        props_to_update = []
+        logs_to_create = []
+
+        for canonical_id in valid_ids:
+            device = device_map.get(canonical_id)
+            if not device:
+                continue
+
+            if canonical_id in existing_map:
+                prop = existing_map[canonical_id]
+                old_val = prop.value
+                prop.value = data.value
+                props_to_update.append(prop)
+                log_msg = f"<Updated> UserProperty: {data.key}: {old_val} to {data.key}: {data.value}"
+            else:
+                props_to_create.append(
+                    UserProperty(
+                        device_id=canonical_id,
+                        type=UserProperty.Type.USER,
+                        key=data.key,
+                        value=data.value,
+                        owner=institution,
+                        user=user,
+                    )
+                )
+                log_msg = f"<Created> UserProperty: {data.key}: {data.value}"
+
+            if hasattr(device, 'last_evidence') and device.last_evidence:
+                logs_to_create.append(
+                    DeviceLog(
+                        institution=institution,
+                        user=user,
+                        event=log_msg,
+                        snapshot_uuid=device.last_evidence.uuid
+                    )
+                )
+
+        if props_to_create:
+            UserProperty.objects.bulk_create(props_to_create, ignore_conflicts=True)
+        if props_to_update:
+            UserProperty.objects.bulk_update(props_to_update, fields=['value'])
+        if logs_to_create:
+            DeviceLog.objects.bulk_create(logs_to_create)
+
+        response = OperationResult(
+            success=True,
+            processed_ids=list(valid_ids),
+            invalid_ids=list(invalid_ids),
+            message="Some IDs were invalid or ambiguous" if invalid_ids else f"Property '{data.key}' successfully applied."
+        )
+        return 200 if not invalid_ids else 207, response
+
+    except PermissionDenied:
+        raise HttpError(403, "Access denied")
+    except HttpError:
+        raise
+    except Exception as e:
+        logger.exception("Error executing bulk property assignment")
+        raise HttpError(500, "Internal server error")
