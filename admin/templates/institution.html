@@ -1,32 +1,72 @@
 {% extends "base.html" %}
 {% load i18n %}
+{% load django_bootstrap5 %}
 
 {% block content %}
-<div class="row">
-  <div class="col">
-    <h3>{{ subtitle }}</h3>
-  </div>
-</div>
+<div class="container-fluid p-0">
+    {% if form.errors %}
+    <div class="alert alert-danger alert-dismissible fade show shadow-sm border-0 rounded-0 mb-3" role="alert">
+        <div class="d-flex align-items-center">
+            <i class="bi bi-exclamation-triangle-fill fs-4 me-3 text-danger"></i>
+            <div>
+                <strong class="d-block mb-1">{% translate "Please correct the errors below:" %}</strong>
+                <ul class="mb-0 small ps-3 text-danger">
+                    {% for field, error in form.errors.items %}<li>{{ error }}</li>{% endfor %}
+                </ul>
+            </div>
+        </div>
+        <button class="btn-close" type="button" data-bs-dismiss="alert" aria-label="{% translate 'Close' %}"></button>
+    </div>
+    {% endif %}
 
-{% load django_bootstrap5 %}
-<form role="form" method="post">
-{% csrf_token %}
-{% if form.errors %}
-<div class="alert alert-danger alert-icon alert-icon-border alert-dismissible" role="alert">
-  <div class="icon"><span class="mdi mdi-close-circle-o"></span></div>
-  <div class="message">
-    {% for field, error in form.errors.items %}
-      {{ error }}<br />
-    {% endfor %}
-    <button class="btn-close" type="button" data-dismiss="alert" aria-label="Close"></button>
-  </div>
-</div>
-{% endif %}
-{% bootstrap_form form %}
-<div class="form-actions-no-box">
-  <a class="btn btn-grey" href="{% url 'admin:panel' %}">{% translate "Cancel" %}</a>
-  <input class="btn btn-green-admin" type="submit" name="submit" value="{% translate 'Save' %}" />
-</div>
+    <div class="card shadow-sm border-0 rounded-3 m-0">
+        <div class="card-header bg-white border-bottom py-3">
+            <h5 class="mb-0 fw-bold text-dark"><i class="bi bi-building me-2"></i>{% translate "Institution Profile" %}</h5>
+        </div>
+        <div class="card-body p-md-4">
+            <p class="text-muted mb-4">{{ subtitle|default:"Manage your organization's general information." }}</p>
 
-</form>
+            <form role="form" method="post" novalidate>
+                {% csrf_token %}
+
+                <div class="row g-4">
+                    <div class="col-12 col-xl-6">
+                        <div class="p-4 bg-light rounded-3 border h-100">
+                            <h6 class="fw-bold mb-3 pb-2 border-bottom text-secondary">{% translate "General Details" %}</h6>
+                            <div class="row g-3">
+                                <div class="col-12">{% bootstrap_field form.name %}</div>
+                                <div class="col-12">{% bootstrap_field form.logo %}</div>
+                                <div class="col-md-6">{% bootstrap_field form.responsable_person %}</div>
+                                <div class="col-md-6">{% bootstrap_field form.supervisor_person %}</div>
+                                <div class="col-12">{% bootstrap_field form.facility_description %}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-xl-6">
+                        <div class="p-4 bg-light rounded-3 border h-100">
+                            <h6 class="fw-bold mb-3 pb-2 border-bottom text-secondary">{% translate "Location & System" %}</h6>
+                            <div class="row g-3">
+                                <div class="col-12">{% bootstrap_field form.facility_id_uri %}</div>
+                                <div class="col-12">{% bootstrap_field form.street_address %}</div>
+                                <div class="col-md-6">{% bootstrap_field form.location %}</div>
+                                <div class="col-md-6">{% bootstrap_field form.region %}</div>
+                                <div class="col-md-6">{% bootstrap_field form.postal_code %}</div>
+                                <div class="col-md-6">{% bootstrap_field form.country %}</div>
+                                <div class="col-12 mt-4 pt-3 border-top">{% bootstrap_field form.algorithm %}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end align-items-center gap-3 mt-4 pt-3 border-top">
+                    <a class="btn btn-light text-secondary fw-semibold px-4" href="{% url 'admin:panel' %}">{% translate "Cancel" %}</a>
+                    <button class="btn btn-primary px-5 fw-semibold shadow-sm d-flex align-items-center gap-2" type="submit">
+                        <i class="bi bi-save"></i> {% translate 'Save Profile' %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 {% endblock %}

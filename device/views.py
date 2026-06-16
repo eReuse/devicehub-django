@@ -15,6 +15,8 @@ from django.views.generic.edit import (
     FormView,
     DeleteView,
 )
+from django.views.generic import ListView
+
 from django.views.generic.base import TemplateView
 from action.models import StateDefinition, State, DeviceLog, Note
 from dashboard.mixins import DashboardView, Http403
@@ -25,6 +27,7 @@ from device.models import Device
 from device.forms import DeviceFormSet
 from evidence.tables import EvidenceTable
 from django_tables2 import RequestConfig
+from user.models import InstitutionSettings
 if settings.DPP:
     from dpp.models import Proof
     from dpp.api_dlt import PROOF_TYPE
@@ -372,3 +375,47 @@ class DeleteUserPropertyView(DeviceLogMixin, DeleteView):
     def get_success_url(self):
         pk = self.kwargs.get('device_id')
         return reverse_lazy('device:details', args=[pk]) + "#user_properties"
+
+
+class DeviceBulkLabelView(DashboardView, ListView):
+    model = Device
+    template_name = 'bulk_labels.html'
+    context_object_name = 'devices'
+
+    def get(self, request, *args, **kwargs):
+        self.single_pk = self.kwargs.get('pk')
+
+        if self.single_pk:
+            self.selected_devices = [Device(id=self.single_pk)]
+            return super().get(request, *args, **kwargs)
+
+        self.selected_devices = self.get_session_devices()
+
+        if not self.selected_devices:
+            messages.error(self.request, _("No devices selected for printing."))
+            return redirect(self.get_success_url())
+
+        return super().get(request, *args, **kwargs)
+
+    def get_queryset(self):
+        return self.selected_devices
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        if self.object_list:
+            institution = self.request.user.institution
+            settings, _ = InstitutionSettings.objects.get_or_create(institution=institution)
+
+            labels_data = []
+            for device in self.object_list:
+                labels_data.append(device.get_label_data(self.request, settings=settings))
+
+            context['labels_data'] = labels_data
+            context['header'] = settings.qr_label_header
+            context['settings'] = settings
+
+        return context
+
+    def get_success_url(self):
+        return self.request.META.get('HTTP_REFERER') or reverse_lazy('device:details')

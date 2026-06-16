@@ -1,7 +1,3 @@
-import qrcode
-import base64
-
-from io import BytesIO
 from django.db import models
 from django.db.models import Max
 
@@ -10,6 +6,7 @@ from evidence.models import SystemProperty, UserProperty, Evidence, RootAlias
 from django.utils.dateparse import parse_datetime
 from lot.models import DeviceLot, DeviceBeneficiary
 from action.models import State
+from user.models import InstitutionSettings, LabelVersion, QRContentType
 
 
 class Device:
@@ -514,25 +511,54 @@ class Device:
 
         return hardware_info
 
-    @property
-    def QR(self):
-        if hasattr(self, "img_qr"):
-            return self.img_qr
+    def get_label_data(self, request, settings=None):
+        if not settings:
+            settings, created= InstitutionSettings.objects.get_or_create(institution=self.owner)
 
-        qr = qrcode.QRCode(
-            version=1,            # Size of QR 1 to 40
-            error_correction=qrcode.constants.ERROR_CORRECT_L, # Level of correct errors
-            box_size=10,          # Pixels for every box of QR
-            border=1,             # Size of border
-        )
+        if settings.qr_label_version == LabelVersion.V1:
+            return {
+                'payload': self.shortid,
+            }
 
-        qr.add_data(self.shortid)
-        qr.make(fit=True)
+        if settings.qr_content_type == QRContentType.NONE:
+            qr_payload = ""
 
-        # Custom colors with names or hexa
-        img = qr.make_image(fill_color="black", back_color="white")
+        elif settings.qr_content_type == QRContentType.PUBLIC_VIEW:
+            path = reverse('device:device_web', kwargs={'pk': self.pk})
+            qr_payload = request.build_absolute_uri(path)
 
-        buffer = BytesIO()
-        img.save(buffer, format="PNG")
-        self.img_qr = base64.b64encode(buffer.getvalue()).decode('utf-8')
-        return self.img_qr
+        elif settings.qr_content_type == QRContentType.DEVICE_INVENTORY:
+            path = reverse('device:details', kwargs={'pk': self.pk})
+            qr_payload = request.build_absolute_uri(path)
+
+        else:
+            qr_payload = str(self.shortid)
+
+        TRANSLATED_PROPERTIES = {
+            'ID': _('Short ID'),
+            'manufacturer': _('Manufacturer'),
+            'model': _('Model'),
+            'serial': _('Serial Number'),
+            'cpu_model': _('CPU Model'),
+            'ram_total': _('Total RAM'),
+            'ram_type': _('RAM Type'),
+            'drive': _('Storage Drive'),
+            'type': _('Device Type'),
+        }
+
+        export_data = self.components_export()
+        properties = []
+
+        for prop in settings.qr_printed_properties:
+            val = export_data.get(prop, _('N/A'))
+
+            name = TRANSLATED_PROPERTIES.get(prop, prop.replace('_', ' ').title())
+
+            properties.append({'name': name, 'value': val})
+
+        return {
+            'payload': qr_payload,
+            'properties': properties,
+            'include_logo': settings.qr_include_logo,
+            'logo_url': self.owner.logo if settings.qr_include_logo and self.owner.logo else None,
+        }

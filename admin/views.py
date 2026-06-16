@@ -14,8 +14,8 @@ from django.views.generic.edit import (
 )
 from django.db import IntegrityError,   transaction
 from dashboard.mixins import DashboardView, Http403
-from admin.forms import OrderingStateForm
-from user.models import User, Institution
+from admin.forms import OrderingStateForm, InstitutionSettingsForm, InstitutionForm
+from user.models import User, Institution, InstitutionSettings
 from admin.email import NotifyActivateUserByEmail
 from admin.tables import UserTable
 from action.models import StateDefinition
@@ -240,18 +240,12 @@ class UpdateLotTagOrderView(AdminView, TemplateView):
 class InstitutionView(AdminView, UpdateView):
     template_name = "institution.html"
     title = _("Edit institution")
+    breadcrumb = [(_("Admin"), reverse_lazy("admin:panel")), (_("Edit Institution"), None)]
     section = "admin"
-    subtitle = _('Edit institution')
+    subtitle = _('Edit your institution settings')
     model = Institution
     success_url = reverse_lazy('admin:panel')
-    fields = (
-        "name",
-        "logo",
-        "location",
-        "responsable_person",
-        "supervisor_person",
-        "algorithm"
-    )
+    form_class = InstitutionForm
 
     def get_form_kwargs(self):
         self.object = self.request.user.institution
@@ -360,3 +354,26 @@ class UpdateStateDefinitionView(AdminView, UpdateView):
     def form_invalid(self, form):
         super().form_invalid(form)
         return redirect(self.get_success_url())
+
+
+class InstitutionLabelCustomizationView(AdminView, UpdateView):
+    model = InstitutionSettings
+    form_class = InstitutionSettingsForm
+    template_name = 'label_settings.html'
+    success_url = reverse_lazy('admin:panel')
+    breadcrumb = [(_("Admin"), reverse_lazy("admin:panel")), (_("Label Settings"), None)]
+    title = _("Edit Label")
+    subtitle = _('Manage your label settings')
+
+    def get_object(self, queryset=None):
+        institution = self.request.user.institution
+        settings, created = InstitutionSettings.objects.get_or_create(institution=institution)
+        return settings
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+    def form_valid(self, form):
+        messages.success(self.request, _("QR printing preferences saved successfully."))
+        return super().form_valid(form)

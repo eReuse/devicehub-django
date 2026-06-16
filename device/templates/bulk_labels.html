@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+:root {
+    --font: {{ settings.qr_font_size|default:7 }}pt;
+    --border: 1px solid #111;
+    --gap: 2mm;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    background: white;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: var(--font);
+    color: #111;
+    padding: 3mm;
+}
+
+@media print {
+    body { padding: 0; }
+    .label-grid { gap: 0 !important; }
+    .label-card { break-inside: avoid; page-break-inside: avoid; }
+}
+
+/* GRID */
+.label-grid {
+    display: {% if settings.qr_label_columns == 0 %}flex{% else %}grid{% endif %};
+    {% if settings.qr_label_columns == 0 %}flex-wrap: wrap;{% else %}grid-template-columns: repeat({{ settings.qr_label_columns }}, max-content);{% endif %}
+    gap: var(--gap);
+    align-items: start;
+}
+
+/* BASE */
+.label-card {
+    background: #fff;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+/* ── V1 LEGACY ── */
+.v1-card {
+    align-items: flex-start;
+    border: none;
+    margin-right: 8px;
+    padding: 10px;
+}
+.v1-id {
+    width: 180px;
+    text-align: center;
+    font-size: 25px;
+    font-family: monospace;
+    margin-top: 20px;
+    font-weight: bold;
+    word-break: break-word;
+}
+
+/* ── V2 MODERN ── */
+.v2-card {
+    border: var(--border);
+    width: {% if settings.qr_width_mm == 0 %}auto{% else %}{{ settings.qr_width_mm }}mm{% endif %};
+    height: {% if settings.qr_height_mm == 0 %}auto{% else %}{{ settings.qr_height_mm }}mm{% endif %};
+    min-width: 30mm;
+    min-height: 20mm;
+}
+
+/* HEADER */
+.lbl-header { min-height: 8mm; border-bottom: var(--border); padding: 1.2mm 2mm; display: flex; align-items: center; gap: 2mm; flex-shrink: 0; }
+.lbl-header img { max-height: 6mm; max-width: 18mm; object-fit: contain; }
+.lbl-title { font-weight: bold; text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+
+/* BODY & ORIENTATIONS */
+.lbl-body { flex: 1; display: flex; align-items: stretch; gap: var(--gap); padding: var(--gap); min-height: 0; }
+.v2-card[data-orient="VERTICAL"] .lbl-body { flex-direction: column; }
+.v2-card[data-orient="HORIZONTAL"] .lbl-body { flex-direction: row; }
+
+/* QR */
+.qr-cell { flex-shrink: 0; display: flex; justify-content: center; align-items: center; }
+.qr-cell canvas, .qr-cell img { display: block; }
+
+/* PROPERTIES */
+.props-cell { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 1mm; overflow: hidden; }
+.v2-card[data-orient="HORIZONTAL"] .props-cell { border-left: 1px solid #ddd; padding-left: 2mm; }
+.v2-card[data-orient="VERTICAL"] .props-cell { border-top: 1px solid #ddd; padding-top: 2mm; }
+
+/* ROWS */
+.prop-row { display: flex; align-items: flex-start; gap: 1mm; line-height: 1.05; width: 100%; overflow: hidden; }
+.prop-key { font-weight: 700; flex-shrink: 0; }
+.prop-val { flex: 1; overflow-wrap: anywhere; word-break: break-word; white-space: normal; }
+
+.label-card.dense { --font: calc({{ settings.qr_font_size|default:7 }}pt - 1pt); }
+.label-card.dense .prop-row { line-height: 1; }
+</style>
+</head>
+<body>
+
+<div class="label-grid">
+{% for label in labels_data %}
+    {% if settings.qr_label_version == 'V1' %}
+    <div class="label-card v1-card">
+        <div class="qr-cell" data-payload="{{ label.payload }}" data-size="180" style="width: 180px; height: 180px;"></div>
+        <div class="v1-id">{{ label.shortid|default:label.payload }}</div>
+    </div>
+    {% else %}
+    <div class="label-card v2-card" data-orient="{{ settings.qr_label_orientation|default:'HORIZONTAL'|upper }}">
+        {% if label.include_logo and label.logo_url or header %}
+        <div class="lbl-header">
+            {% if label.include_logo and label.logo_url %}<img src="{{ label.logo_url }}" alt="Logo">{% endif %}
+            {% if header %}<span class="lbl-title">{{ header }}</span>{% endif %}
+        </div>
+        {% endif %}
+
+        <div class="lbl-body">
+            {% if label.payload %}
+            <div class="qr-cell" data-payload="{{ label.payload }}"></div>
+            {% endif %}
+
+            {% if label.properties %}
+            <div class="props-cell" {% if not label.payload %}style="border: none; padding: 0;"{% endif %}>
+                {% for prop in label.properties %}
+                <div class="prop-row">
+                    <span class="prop-key">{{ prop.name }}:</span>
+                    <span class="prop-val">{{ prop.value }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+{% endfor %}
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+    document.querySelectorAll(".qr-cell[data-payload]").forEach(el => {
+        const card = el.closest(".label-card");
+        const props = card.querySelectorAll(".prop-val");
+
+        if (props.length >= 5 || Array.from(props).some(v => v.textContent.length > 42)) {
+            card.classList.add("dense");
+        }
+
+        // prioritize text space but enforce minimum scan size
+        let size = parseInt(el.dataset.size || 0);
+        if (!size) {
+            const bodyRect = card.querySelector(".lbl-body").getBoundingClientRect();
+
+            if (props.length) {
+                if (card.dataset.orient === "HORIZONTAL") {
+                    size = Math.min(bodyRect.height, bodyRect.width * 0.35);
+                } else {
+                    size = Math.min(bodyRect.width, bodyRect.height * 0.40);
+                }
+            } else {
+                size = Math.min(bodyRect.width, bodyRect.height);
+            }
+            size = Math.max(65, Math.min(size, 160));
+        }
+
+        new QRCode(el, {
+            text: el.dataset.payload,
+            width: Math.floor(size),
+            height: Math.floor(size),
+            correctLevel: QRCode.CorrectLevel.M
+        });
+
+        //exact dimensions to prevent flexbox rendering glitches
+        setTimeout(() => {
+            el.querySelectorAll("canvas, img").forEach(n => {
+                n.style.width = n.style.height = `${Math.floor(size)}px`;
+            });
+        }, 30);
+    });
+
+    setTimeout(() => window.print(), 350);
+    window.onafterprint = () => setTimeout(() => window.history.back(), 300);
+});
+</script>
+</body>
+</html>
