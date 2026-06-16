@@ -6,8 +6,8 @@ from ninja.errors import HttpError
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 
-from evidence.models import SystemProperty
-from lot.models import Lot
+from evidence.models import RootAlias
+from lot.models import Lot, DeviceLot
 from device.models import Device
 from api.auth import GlobalAuth
 from api.v1.schemas import DeviceIDInput, LotDevicesResponse, MessageOut, OperationResult
@@ -33,19 +33,45 @@ def _find_lot(identifier, institution):
         logger.error(f"Invalid lot identifier: {identifier}")
     return None
 
-def _check_valid_ids(device_ids, owner):
-    """
-    Returns:
-        valid_ids: a list of all valid device id's
-        invalid_ids: self explanatory
-    """
-    properties = SystemProperty.objects.filter(
-        owner = owner,
-        value__in=device_ids
-    ).values_list('value', flat=True)
+def _resolve_single_device(pk: str, owner):
+    clean_pk = pk.split(":")[-1] if ":" in pk else pk
+    base_qs = RootAlias.objects.filter(owner=owner)
 
-    valid_ids = set(properties)
-    invalid_ids = set(set(device_ids) - valid_ids)
+    strategies = [
+        base_qs.filter(alias__endswith=f":{clean_pk}")
+    ]
+    if len(clean_pk) >= 6:
+        short_id = clean_pk[:6]
+        strategies.append(base_qs.filter(alias__contains=f":{short_id}"))
+
+    strategies.append(base_qs.filter(alias__icontains=clean_pk))
+
+    for qs in strategies:
+        count = qs.count()
+        if count == 1:
+            return qs.first().root
+        elif count > 1:
+            return None
+
+    return None
+
+def _check_valid_ids(device_ids, owner):
+    valid_ids = set()
+    invalid_ids = set()
+    pending_ids = set(device_ids)
+
+    exact_matches = RootAlias.objects.filter(owner=owner, alias__in=pending_ids)
+
+    for match in exact_matches:
+        valid_ids.add(match.root)
+        pending_ids.remove(match.alias)
+
+    for pk in pending_ids:
+        canonical_id = _resolve_single_device(pk, owner)
+        if canonical_id:
+            valid_ids.add(canonical_id)
+        else:
+            invalid_ids.add(pk)
 
     return valid_ids, invalid_ids
 
@@ -92,15 +118,17 @@ def retrieveLotDevices(request, lot_id: str):
         },
         devices=[device.components_export() for device in devices]
     )
+
+
 @router.post(
     "/{lot_id}/devices/",
     response={
         200: OperationResult,
         207: OperationResult,
-        400: MessageOut,     # Bad request
-        401: MessageOut,     # Archived lot
-        404: MessageOut,     # Lot not found
-        422: MessageOut      # No valid devices
+        400: MessageOut,
+        401: MessageOut,
+        404: MessageOut,
+        422: MessageOut
     },
     summary=_("Assign devices to lot"),
     description=_("""
@@ -137,8 +165,11 @@ def assignLotDevices(request, lot_id: str, data:DeviceIDInput):
 
         unassigned_ids = set(valid_ids - existing_devices)
 
-        for device_id in unassigned_ids:
-            lot.add(device_id)
+        if unassigned_ids:
+            DeviceLot.objects.bulk_create([
+                DeviceLot(lot=lot, device_id=device_id)
+                for device_id in unassigned_ids
+            ], ignore_conflicts=True)
 
         response = OperationResult(
             success=True,
@@ -190,9 +221,9 @@ def remove_devices_from_lot(request, lot_id: str, data: DeviceIDInput):
         existing_devices = set(lot.devicelot_set.filter(device_id__in=valid_ids)
                           .values_list('device_id', flat=True))
 
-        unassigned_ids = set(valid_ids - existing_devices)
-        for device_id in unassigned_ids:
-            lot.remove(device_id)
+        devices_to_remove = list(valid_ids & existing_devices)
+        if devices_to_remove:
+            lot.devicelot_set.filter(device_id__in=devices_to_remove).delete()
 
         response = OperationResult(
             success=True,
