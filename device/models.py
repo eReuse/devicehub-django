@@ -8,6 +8,7 @@ from lot.models import DeviceLot, DeviceBeneficiary
 from action.models import State
 from user.models import InstitutionSettings, LabelVersion, QRContentType
 
+from django.utils.translation import gettext_lazy as _
 
 class Device:
     class Types(models.TextChoices):
