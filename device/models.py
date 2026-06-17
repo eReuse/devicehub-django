@@ -1,5 +1,6 @@
 from django.db import models
 from django.db.models import Max
+from django.urls import reverse
 
 from utils.constants import ALGOS
 from evidence.models import SystemProperty, UserProperty, Evidence, RootAlias
