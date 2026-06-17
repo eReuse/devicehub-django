@@ -24,35 +24,35 @@ class RootAliasUpdatedSignalTests(TestCase):
         )
 
     def test_signal_creates_row_with_sp_created_as_created_and_updated(self):
-        sp = self._sp("a1")
-        ra = RootAlias.objects.get(owner=self.institution, alias="a1")
+        sp = self._sp("ereuse24:a1")
+        ra = RootAlias.objects.get(owner=self.institution, alias="ereuse24:a1")
         self.assertEqual(ra.created, sp.created)
         self.assertEqual(ra.updated, sp.created)
 
     def test_second_sp_bumps_updated_only(self):
-        self._sp("a1")
-        ra0 = RootAlias.objects.get(owner=self.institution, alias="a1")
+        self._sp("ereuse24:a1")
+        ra0 = RootAlias.objects.get(owner=self.institution, alias="ereuse24:a1")
         original_created = ra0.created
 
-        sp2 = self._sp("a1")
-        ra1 = RootAlias.objects.get(owner=self.institution, alias="a1")
+        sp2 = self._sp("ereuse24:a1")
+        ra1 = RootAlias.objects.get(owner=self.institution, alias="ereuse24:a1")
 
         self.assertEqual(ra1.updated, sp2.created)
         self.assertEqual(ra1.created, original_created)
 
     def test_second_sp_does_not_bump_created(self):
-        sp1 = self._sp("a1")
-        self._sp("a1")
-        ra = RootAlias.objects.get(owner=self.institution, alias="a1")
+        sp1 = self._sp("ereuse24:a1")
+        self._sp("ereuse24:a1")
+        ra = RootAlias.objects.get(owner=self.institution, alias="ereuse24:a1")
         self.assertEqual(ra.created, sp1.created)
 
     def test_older_sp_does_not_regress_updated(self):
-        self._sp("a1")
+        self._sp("ereuse24:a1")
         # Create a second SP so updated is bumped; capture the resulting max.
         sp_old = SystemProperty.objects.create(
-            owner=self.institution, uuid=uuid.uuid4(), value="a1",
+            owner=self.institution, uuid=uuid.uuid4(), value="ereuse24:a1",
         )
-        newest = RootAlias.objects.get(owner=self.institution, alias="a1").updated
+        newest = RootAlias.objects.get(owner=self.institution, alias="ereuse24:a1").updated
 
         # Backdate the SP and re-emit the signal: the guard must not regress updated.
         past = newest - timedelta(days=7)
@@ -62,7 +62,7 @@ class RootAliasUpdatedSignalTests(TestCase):
             sender=SystemProperty, instance=sp_old, created=True,
         )
 
-        ra1 = RootAlias.objects.get(owner=self.institution, alias="a1")
+        ra1 = RootAlias.objects.get(owner=self.institution, alias="ereuse24:a1")
         self.assertEqual(ra1.updated, newest)
 
 
@@ -80,25 +80,25 @@ class RootAliasSetAliasTimestampTests(TestCase):
         )
 
     def test_set_alias_does_not_modify_updated(self):
-        self._sp("a1")
-        self._sp("a2")
-        before = RootAlias.objects.get(owner=self.institution, alias="a1")
+        self._sp("ereuse24:a1")
+        self._sp("ereuse24:a2")
+        before = RootAlias.objects.get(owner=self.institution, alias="ereuse24:a1")
         updated_before = before.updated
 
-        RootAlias.set_alias(self.institution, "a1", "a2")
+        RootAlias.set_alias(self.institution, "ereuse24:a1", "ereuse24:a2")
 
-        after = RootAlias.objects.get(owner=self.institution, alias="a1")
+        after = RootAlias.objects.get(owner=self.institution, alias="ereuse24:a1")
         self.assertEqual(after.updated, updated_before)
 
     def test_set_alias_does_not_modify_created(self):
-        self._sp("a1")
-        self._sp("a2")
-        before = RootAlias.objects.get(owner=self.institution, alias="a1")
+        self._sp("ereuse24:a1")
+        self._sp("ereuse24:a2")
+        before = RootAlias.objects.get(owner=self.institution, alias="ereuse24:a1")
         created_before = before.created
 
-        RootAlias.set_alias(self.institution, "a1", "a2")
+        RootAlias.set_alias(self.institution, "ereuse24:a1", "ereuse24:a2")
 
-        after = RootAlias.objects.get(owner=self.institution, alias="a1")
+        after = RootAlias.objects.get(owner=self.institution, alias="ereuse24:a1")
         self.assertEqual(after.created, created_before)
 
 
@@ -119,20 +119,20 @@ class RootsQuerysetOrderingTests(TestCase):
         ).update(updated=ts)
 
     def test_roots_queryset_orders_by_latest_updated_desc(self):
-        self._sp("a1")
-        self._sp("b1")
-        self._sp("c1")
+        self._sp("ereuse24:a1")
+        self._sp("ereuse24:b1")
+        self._sp("ereuse24:c1")
 
         now = timezone.now()
-        self._set_updated("a1", now - timedelta(days=10))
-        self._set_updated("b1", now - timedelta(days=1))
-        self._set_updated("c1", now - timedelta(days=5))
+        self._set_updated("ereuse24:a1", now - timedelta(days=10))
+        self._set_updated("ereuse24:b1", now - timedelta(days=1))
+        self._set_updated("ereuse24:c1", now - timedelta(days=5))
 
         roots = [
             r["root"]
             for r in Device._roots_queryset(self.institution)
         ]
-        self.assertEqual(roots, ["b1", "c1", "a1"])
+        self.assertEqual(roots, ["ereuse24:b1", "ereuse24:c1", "ereuse24:a1"])
 
     def test_get_all_count_matches_distinct_roots(self):
         self._sp("phid:a1")

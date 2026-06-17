@@ -37,28 +37,28 @@ class CanonicalDeviceIdsTests(TestCase):
             type=self.tag,
         )
 
-        # Two physical aliases that share the same canonical root "b2".
-        for v in ["b1", "b3", "b2"]:
+        # Two physical aliases that share the same canonical root "ereuse24:b2".
+        for v in ["ereuse24:b1", "ereuse24:b3", "ereuse24:b2"]:
             SystemProperty.objects.create(
                 owner=self.institution, uuid=uuid.uuid4(), value=v
             )
         RootAlias.objects.update_or_create(
             owner=self.institution,
-            alias="b1",
-            defaults={"root": "b2"},
+            alias="ereuse24:b1",
+            defaults={"root": "ereuse24:b2"},
         )
         RootAlias.objects.update_or_create(
             owner=self.institution,
-            alias="b3",
-            defaults={"root": "b2"},
+            alias="ereuse24:b3",
+            defaults={"root": "ereuse24:b2"},
         )
 
     # --- helper ---------------------------------------------------------
 
     def test_resolve_root_returns_root(self):
-        self.assertEqual(RootAlias.resolve_root(self.institution, "b1"), "b2")
-        self.assertEqual(RootAlias.resolve_root(self.institution, "b3"), "b2")
-        self.assertEqual(RootAlias.resolve_root(self.institution, "b2"), "b2")
+        self.assertEqual(RootAlias.resolve_root(self.institution, "ereuse24:b1"), "ereuse24:b2")
+        self.assertEqual(RootAlias.resolve_root(self.institution, "ereuse24:b3"), "ereuse24:b2")
+        self.assertEqual(RootAlias.resolve_root(self.institution, "ereuse24:b2"), "ereuse24:b2")
 
     def test_resolve_root_falls_back_when_missing(self):
         self.assertEqual(
@@ -67,8 +67,8 @@ class CanonicalDeviceIdsTests(TestCase):
 
     def test_physical_aliases_covers_all_siblings(self):
         self.assertEqual(
-            set(RootAlias.physical_aliases(self.institution, "b1")),
-            {"b1", "b2", "b3"},
+            set(RootAlias.physical_aliases(self.institution, "ereuse24:b1")),
+            {"ereuse24:b1", "ereuse24:b2", "ereuse24:b3"},
         )
         # input not in RootAlias still falls back to itself
         self.assertEqual(
@@ -79,18 +79,18 @@ class CanonicalDeviceIdsTests(TestCase):
     # --- Lot.add --------------------------------------------------------
 
     def test_lot_add_with_physical_stores_root(self):
-        self.lot.add("b1")
+        self.lot.add("ereuse24:b1")
         self.assertEqual(
             list(DeviceLot.objects.filter(lot=self.lot).values_list(
                 "device_id", flat=True
             )),
-            ["b2"],
+            ["ereuse24:b2"],
         )
 
     def test_lot_add_dedupes_physical_variants(self):
-        self.lot.add("b1")
-        self.lot.add("b3")
-        self.lot.add("b2")
+        self.lot.add("ereuse24:b1")
+        self.lot.add("ereuse24:b3")
+        self.lot.add("ereuse24:b2")
         self.assertEqual(
             DeviceLot.objects.filter(lot=self.lot).count(), 1
         )
@@ -107,13 +107,13 @@ class CanonicalDeviceIdsTests(TestCase):
     # --- Lot.remove -----------------------------------------------------
 
     def test_lot_remove_accepts_any_physical(self):
-        self.lot.add("b2")
-        self.lot.remove("b1")
+        self.lot.add("ereuse24:b2")
+        self.lot.remove("ereuse24:b1")
         self.assertFalse(DeviceLot.objects.filter(lot=self.lot).exists())
 
     def test_lot_remove_accepts_root(self):
-        self.lot.add("b1")
-        self.lot.remove("b2")
+        self.lot.add("ereuse24:b1")
+        self.lot.remove("ereuse24:b2")
         self.assertFalse(DeviceLot.objects.filter(lot=self.lot).exists())
 
     # --- Beneficiary.add / remove --------------------------------------
@@ -132,19 +132,19 @@ class CanonicalDeviceIdsTests(TestCase):
 
     def test_beneficiary_add_stores_root(self):
         b = self._make_beneficiary()
-        b.add("b3")
+        b.add("ereuse24:b3")
         self.assertEqual(
             list(DeviceBeneficiary.objects.filter(beneficiary=b).values_list(
                 "device_id", flat=True
             )),
-            ["b2"],
+            ["ereuse24:b2"],
         )
 
     def test_beneficiary_add_dedupes_within_lot(self):
         b = self._make_beneficiary()
-        b.add("b1")
-        b.add("b3")
-        b.add("b2")
+        b.add("ereuse24:b1")
+        b.add("ereuse24:b3")
+        b.add("ereuse24:b2")
         self.assertEqual(
             DeviceBeneficiary.objects.filter(beneficiary__lot=self.lot).count(),
             1,
@@ -152,8 +152,8 @@ class CanonicalDeviceIdsTests(TestCase):
 
     def test_beneficiary_remove_accepts_any_physical(self):
         b = self._make_beneficiary()
-        b.add("b2")
-        b.remove("b1")
+        b.add("ereuse24:b2")
+        b.remove("ereuse24:b1")
         self.assertFalse(
             DeviceBeneficiary.objects.filter(beneficiary=b).exists()
         )
@@ -167,51 +167,51 @@ class CanonicalDeviceIdsTests(TestCase):
 
     def test_lot_remove_after_aliasing_deletes_stale_row(self):
         """Add before alias, then alias, then remove must succeed."""
-        self._fresh_sp("z1")                       # signal: (z1, z1)
-        self.lot.add("z1")                         # stored device_id=z1
+        self._fresh_sp("ereuse24:z1")                       # signal: (z1, z1)
+        self.lot.add("ereuse24:z1")                         # stored device_id=z1
         RootAlias.objects.update_or_create(
             owner=self.institution,
-            alias="z1",
+            alias="ereuse24:z1",
             defaults={"root": "custom_id:Z"},
         )
-        self.lot.remove("z1")                      # physical ref
+        self.lot.remove("ereuse24:z1")                      # physical ref
         self.assertFalse(DeviceLot.objects.filter(lot=self.lot).exists())
 
     def test_lot_remove_by_new_root_after_aliasing(self):
-        self._fresh_sp("z1")
-        self.lot.add("z1")
+        self._fresh_sp("ereuse24:z1")
+        self.lot.add("ereuse24:z1")
         RootAlias.objects.update_or_create(
             owner=self.institution,
-            alias="z1",
+            alias="ereuse24:z1",
             defaults={"root": "custom_id:Z"},
         )
         self.lot.remove("custom_id:Z")             # new canonical
         self.assertFalse(DeviceLot.objects.filter(lot=self.lot).exists())
 
     def test_lot_add_after_aliasing_does_not_duplicate(self):
-        self._fresh_sp("z1")
-        self.lot.add("z1")
+        self._fresh_sp("ereuse24:z1")
+        self.lot.add("ereuse24:z1")
         RootAlias.objects.update_or_create(
             owner=self.institution,
-            alias="z1",
+            alias="ereuse24:z1",
             defaults={"root": "custom_id:Z"},
         )
-        self.lot.add("z1")
+        self.lot.add("ereuse24:z1")
         self.lot.add("custom_id:Z")
         self.assertEqual(
             DeviceLot.objects.filter(lot=self.lot).count(), 1
         )
 
     def test_beneficiary_remove_after_aliasing_deletes_stale_row(self):
-        self._fresh_sp("w1")
+        self._fresh_sp("ereuse24:w1")
         b = self._make_beneficiary()
-        b.add("w1")                                # stored w1
+        b.add("ereuse24:w1")                                # stored w1
         RootAlias.objects.update_or_create(
             owner=self.institution,
-            alias="w1",
+            alias="ereuse24:w1",
             defaults={"root": "custom_id:W"},
         )
-        b.remove("w1")
+        b.remove("ereuse24:w1")
         self.assertFalse(
             DeviceBeneficiary.objects.filter(beneficiary=b).exists()
         )
@@ -235,16 +235,16 @@ class DataMigrationDedupTests(TestCase):
             name="m", owner=self.institution, type=self.tag
         )
 
-        for v in ["p1", "p2", "p3"]:
+        for v in ["ereuse24:p1", "ereuse24:p2", "ereuse24:p3"]:
             SystemProperty.objects.create(
                 owner=self.institution, uuid=uuid.uuid4(), value=v
             )
         # p1 and p3 share canonical p2; p2 is its own root (self-ref).
         RootAlias.objects.update_or_create(
-            owner=self.institution, alias="p1", defaults={"root": "p2"}
+            owner=self.institution, alias="ereuse24:p1", defaults={"root": "ereuse24:p2"}
         )
         RootAlias.objects.update_or_create(
-            owner=self.institution, alias="p3", defaults={"root": "p2"}
+            owner=self.institution, alias="ereuse24:p3", defaults={"root": "ereuse24:p2"}
         )
 
     def _migrate(self):
@@ -272,13 +272,13 @@ class DataMigrationDedupTests(TestCase):
 
     def test_migration_collapses_physical_rows(self):
         # Pre-migration state: 3 DeviceLot rows, one per physical.
-        DeviceLot.objects.create(lot=self.lot, device_id="p1")
-        DeviceLot.objects.create(lot=self.lot, device_id="p3")
-        DeviceLot.objects.create(lot=self.lot, device_id="p2")
+        DeviceLot.objects.create(lot=self.lot, device_id="ereuse24:p1")
+        DeviceLot.objects.create(lot=self.lot, device_id="ereuse24:p3")
+        DeviceLot.objects.create(lot=self.lot, device_id="ereuse24:p2")
 
         self._migrate()
 
         self.assertEqual(DeviceLot.objects.filter(lot=self.lot).count(), 1)
         self.assertEqual(
-            DeviceLot.objects.get(lot=self.lot).device_id, "p2"
+            DeviceLot.objects.get(lot=self.lot).device_id, "ereuse24:p2"
         )

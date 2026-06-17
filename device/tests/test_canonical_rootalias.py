@@ -93,17 +93,18 @@ class RootAliasSelfReferenceTests(TestCase):
     # where alias=value (self-ref or user-set). This is the Phase 1 contract.
 
     def test_every_systemproperty_value_has_exactly_one_alias_row(self):
-        values = ["a1", "a2", "a3", "b1", "b3", "c1", "d1", "d2"]
+        values = ["ereuse24:a1", "ereuse24:a2", "ereuse24:a3", "ereuse24:b1",
+                  "ereuse24:b3", "ereuse24:c1", "ereuse24:d1", "ereuse24:d2"]
         for v in values:
             self._new_sp(v)
 
         for ali, root in [
-            ("a1", "a2"),
-            ("a3", "a2"),
-            ("b1", "b2"),
-            ("b3", "b2"),
-            ("c1", "c2"),
-            ("d1", "d2"),
+            ("ereuse24:a1", "ereuse24:a2"),
+            ("ereuse24:a3", "ereuse24:a2"),
+            ("ereuse24:b1", "ereuse24:b2"),
+            ("ereuse24:b3", "ereuse24:b2"),
+            ("ereuse24:c1", "ereuse24:c2"),
+            ("ereuse24:d1", "ereuse24:d2"),
         ]:
             RootAlias.objects.update_or_create(
                 owner=self.institution,
