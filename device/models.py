@@ -193,8 +193,11 @@ class Device:
         return self.uuids[0]
 
     def get_current_state(self):
-        uuid = self.last_uuid()
-        return State.objects.filter(snapshot_uuid=uuid).order_by('-date').first()
+        if not self.uuids:
+            self.get_uuids()
+        if not self.uuids:
+            return None
+        return State.objects.filter(snapshot_uuid__in=self.uuids).order_by('-date').first()
 
     def get_lots(self):
         # A lot row may have been stored with either the physical ID or the

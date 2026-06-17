@@ -178,6 +178,16 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
 
         rows_by_id, sort_keys = self._build_table_rows(device_ids)
 
+        # beneficiary status per device
+        beneficiary_statuses = {
+            row['device_id']: row['status']
+            for row in DeviceBeneficiary.objects.filter(
+                device_id__in=device_ids,
+                beneficiary__lot=self.object,
+            ).values('device_id', 'status')
+        }
+
+        # Phase 3: sort in Python
         sort_param = self.request.GET.get('sort', '-last_updated')
         reverse = sort_param.startswith('-')
         sort_field = sort_param.lstrip('-')
