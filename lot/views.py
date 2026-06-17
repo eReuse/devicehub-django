@@ -21,10 +21,9 @@ from django.views.generic.edit import (
 from django_tables2 import SingleTableView
 from dashboard.mixins import DashboardView
 from environmental_impact.models import EnvironmentalImpact
-from lot.tables import LotTable
+from lot.tables import LotTable, BeneficiaryDeviceTable
 from device.models import Device
 from evidence.models import SystemProperty
-from lot.tables import LotTable
 from environmental_impact.algorithms.algorithm_factory import FactoryEnvironmentImpactAlgorithm
 from lot.forms import (
     LotsForm,
@@ -53,6 +52,21 @@ from dhemail.views import (
 
 
 logger = logging.getLogger(__name__)
+
+
+class BeneficiaryDeviceRow:
+    def __init__(self, form, lot_id, beneficiary_id):
+        device = form.device
+        self.shortid = device.shortid
+        self.link_pk = device.link_pk
+        self.manufacturer = device.manufacturer or ""
+        self.model = device.model or ""
+        self.serial_number = device.serial_number or ""
+        self.returned_place = form.instance.returned_place or ""
+        self.form = form
+        self.device_id = device.id
+        self.lot_id = lot_id
+        self.beneficiary_id = str(beneficiary_id)
 
 
 class LotSuccessUrlMixin():
@@ -972,14 +986,6 @@ class ListDevicesBeneficiaryView(DashboardLotMixing, BeneficiaryEmail, FormView)
     title = _("Beneficiaries")
     lot = None
 
-    def get(self, *args, **kwargs):
-        res = super().get(*args, **kwargs)
-        if not self.beneficiary.devicebeneficiary_set.first():
-            url = reverse_lazy("dashboard:lot", args=[self.beneficiary.lot.id])
-            return redirect(url)
-
-        return res
-
     def get_form_class(self):
         return modelformset_factory(
             DeviceBeneficiary,
@@ -1057,6 +1063,10 @@ class ListDevicesBeneficiaryView(DashboardLotMixing, BeneficiaryEmail, FormView)
                 (self.beneficiary.email, None),
             ],
         })
+
+        rows = [BeneficiaryDeviceRow(f, self.pk, self.id) for f in context['form']]
+        exclude = () if returned else ('returned_place',)
+        context['table'] = BeneficiaryDeviceTable(rows, exclude=exclude)
 
         return context
 

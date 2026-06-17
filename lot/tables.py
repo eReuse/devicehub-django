@@ -1,4 +1,6 @@
 import django_tables2 as tables
+from django.urls import reverse
+from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 from lot.models import Lot
 from django.utils.safestring import mark_safe
@@ -66,3 +68,81 @@ class LotTable(tables.Table):
         model = Lot
         fields = ("select", "archived", "name", "description", "device_count", "created", "user", "actions")
         order_by = ("-created",)
+
+
+class BeneficiaryDeviceTable(tables.Table):
+    hide_count = True
+
+    shortid = tables.Column(
+        verbose_name=_("Short ID"),
+        attrs={
+            'th': {'class': 'text-center'},
+            'td': {'class': 'text-center font-monospace'},
+        },
+        orderable=False,
+    )
+    manufacturer = tables.Column(
+        verbose_name=_("Manufacturer"),
+        attrs={
+            'th': {'class': 'text-center'},
+            'td': {'class': 'text-center font-monospace'},
+        },
+        orderable=False,
+    )
+    model = tables.Column(
+        verbose_name=_("Model"),
+        attrs={
+            'th': {'class': 'text-center'},
+            'td': {'class': 'text-center font-monospace'},
+        },
+        orderable=False,
+    )
+    serial_number = tables.Column(
+        verbose_name=_("Serial Number"),
+        attrs={
+            'th': {'class': 'text-center'},
+            'td': {'class': 'text-center font-monospace'},
+        },
+        orderable=False,
+    )
+    status = tables.TemplateColumn(
+        template_name="beneficiary_devices/beneficiary_status_cell.html",
+        verbose_name=_("Status"),
+        attrs={
+            'th': {'class': 'text-center'},
+            'td': {'class': 'text-center'},
+        },
+        orderable=False,
+    )
+    returned_place = tables.Column(
+        verbose_name=_("Returned"),
+        attrs={
+            'th': {'class': 'text-center'},
+            'td': {'class': 'text-center font-monospace'},
+        },
+        orderable=False,
+    )
+    deallocate = tables.TemplateColumn(
+        template_name="beneficiary_devices/beneficiary_deallocate_cell.html",
+        verbose_name="",
+        attrs={
+            'th': {'class': 'text-center'},
+            'td': {'class': 'text-center'},
+        },
+        orderable=False,
+    )
+
+    def render_shortid(self, value, record):
+        return format_html(
+            '<a href="{}">{}</a>',
+            reverse('device:details', kwargs={'pk': record.link_pk}),
+            value,
+        )
+
+    class Meta:
+        template_name = "custom_table.html"
+        empty_text = _("No devices assigned to this beneficiary.")
+        sequence = (
+            'shortid', 'manufacturer', 'model', 'serial_number',
+            'status', 'returned_place', 'deallocate',
+        )
