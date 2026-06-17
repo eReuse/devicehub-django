@@ -32,4 +32,35 @@
 </div>
 
 </form>
+
+<div class="modal fade" id="beneficiaryDeallocateModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{% trans "Deallocate Device" %}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                aria-label="{% trans 'Close' %}"></button>
+      </div>
+      <div class="modal-body">
+        <p>{% blocktrans %}Are you sure you want to deallocate device <strong id="deallocateShortId"></strong>?{% endblocktrans %}</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary"
+                data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+        <a id="deallocateConfirmLink" class="btn btn-danger" href="#">
+          {% trans 'Deallocate' %}
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.getElementById('beneficiaryDeallocateModal')
+    .addEventListener('show.bs.modal', function (event) {
+      var btn = event.relatedTarget;
+      document.getElementById('deallocateShortId').textContent = btn.dataset.shortid;
+      document.getElementById('deallocateConfirmLink').setAttribute('href', btn.dataset.deallocateUrl);
+    });
+</script>
 {% endblock %}
