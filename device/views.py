@@ -26,7 +26,7 @@ from evidence.models import UserProperty, SystemProperty, Evidence, RootAlias
 from lot.models import LotTag
 from device.models import Device
 from evidence.models import SystemProperty, RootAlias
-from device.forms import DeviceMainForm, DeviceAttributeFormSet, save_device_data
+from device.forms import DeviceAttributeFormSet, DeviceMainForm, DEVICE_ATTRIBUTE_SUGGESTIONS
 
 from evidence.tables import EvidenceTable
 from django_tables2 import RequestConfig
@@ -66,7 +66,7 @@ class NewDeviceView(DashboardView, FormView):
     title = _("New Device")
     breadcrumb = [(_("Device"), reverse_lazy("dashboard:all_device")), (_("New Device"), None)]
     success_url = reverse_lazy('dashboard:unassigned')
-    form_class = DeviceFormSet
+    form_class = DeviceMainForm
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -80,6 +80,13 @@ class NewDeviceView(DashboardView, FormView):
             context['attribute_formset'] = DeviceAttributeFormSet(self.request.POST)
         else:
             context['attribute_formset'] = DeviceAttributeFormSet()
+
+        suggestions_for_js = {}
+        for dev_type, attrs in DEVICE_ATTRIBUTE_SUGGESTIONS.items():
+            suggestions_for_js[dev_type] = [
+                {"name": a["name"], "label": str(a["label"])} for a in attrs
+            ]
+        context['device_suggestions'] = suggestions_for_js
 
         context['subtitle'] = self.title
         return context

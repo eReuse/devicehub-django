@@ -160,30 +160,34 @@ class Device:
         if self.last_evidence:
             return self.last_evidence
 
-        latest_photo = None
+        fallback_latest = None
 
         if self.uuid:
             uuid_evidence = Evidence(self.uuid)
-            if not uuid_evidence.is_photo_evidence():
-               self.last_evidence = uuid_evidence
-               return self.last_evidence
-            else:
-                latest_photo = uuid_evidence
 
-        self.get_evidences()
-        for evidence in reversed(self.evidences):
-            if not evidence.is_photo_evidence():
-                self.last_evidence = evidence
+            if not uuid_evidence.is_photo_evidence():
+                self.last_evidence = uuid_evidence
                 return self.last_evidence
 
-            if latest_photo is None or evidence != latest_photo:
-                latest_photo = evidence
+            fallback_latest = uuid_evidence
 
-        if latest_photo:
-            self.last_evidence = latest_photo
+        self.get_evidences()
+
+        if self.evidences:
+            if not fallback_latest:
+                fallback_latest = self.evidences[-1]
+
+            for evidence in reversed(self.evidences):
+                if not evidence.is_photo_evidence():
+                    self.last_evidence = evidence
+                    return self.last_evidence
+
+        if fallback_latest:
+            self.last_evidence = fallback_latest
             return self.last_evidence
 
         return None
+
 
     def is_eraseserver(self):
         if not self.uuids:
@@ -593,7 +597,69 @@ class Device:
         hardware_info.update({
             'user_properties': user_properties,
             'current_state': self.get_current_state().state if self.get_current_state() else '',
-            'beneficiary_status': self.status_beneficiary or "",
+            'last_updated': parse_datetime(self.updated) or "",
+            'beneficiary_status': self.status_beneficiary or ""
+        })
+
+        if not self.last_evidence.is_legacy or not self.last_evidence:
+            return hardware_info
+
+        if getattr(self.last_evidence, 'is_web_snapshot', False):
+            doc = getattr(self.last_evidence, 'doc', {})
+            kv_data = doc.get('kv', {})
+
+            # Map only the keys from 'kv' that actually exist in our hardware_info structure
+            for key, value in kv_data.items():
+                if key in hardware_info:
+                    hardware_info[key] = value
+
+            return hardware_info
+
+        storage_devices = []
+        gpu_models = []
+        slots_used = slots_total = 0
+
+        for c in self.components:
+            match c.get("type"):
+                case "Motherboard":
+                    hardware_info.update({
+                        'manufacturer': c.get("manufacturer", ""),
+                        'serial': self.serial_number,
+                        'ram_total': c.get("installedRam", ""),
+                    })
+                case "Processor":
+                    hardware_info.update({
+                        'cpu_cores': c.get("cores", ""),
+                        'cpu_model': c.get("model", "")
+                    })
+                case "RamModule":
+                    slots_total += 1
+                    if slots_used == 0:
+                        hardware_info.update({
+                            'ram_type': c.get("interface", "")
+                        })
+                    if c.get("interface", "") != "no module installed":
+                        slots_used += 1
+                case "Storage":
+                    if size := c.get("size", ""):
+                        storage_devices.append({
+                            'model': c.get("model", ""),
+                            'size': size,
+                            'type': c.get("interface", "")
+                        })
+                case "GraphicCard":
+                    if model := c.get("model", ""):
+                        gpu_models.append(model)
+
+        if storage_devices:
+            hardware_info['drive'] = ", ".join([f" {d['type']} {d['model']} ({d['size']} )"
+                                            for d in storage_devices])
+        if gpu_models:
+            hardware_info['gpu_model'] = ", ".join(gpu_models)
+
+        hardware_info.update({
+            'slots_used': slots_used,
+            'ram_slots': slots_total,
         })
 
         return hardware_info

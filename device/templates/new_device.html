@@ -13,18 +13,15 @@
     cursor: pointer;
     transition: all 0.2s ease-in-out;
   }
-
   .drop-area:hover, .drop-area.dragover {
     border-color: #0d6efd;
     background: #e9ecef;
     transform: scale(1.01);
   }
-
   .drop-area i {
     color: #6c757d;
     transition: color 0.2s;
   }
-
   .drop-area:hover i {
     color: #0d6efd;
   }
@@ -110,7 +107,6 @@
                                     {% for hidden in form.hidden_fields %}
                                         {{ hidden }}
                                     {% endfor %}
-
                                     <div class="col-sm-5">
                                         {% bootstrap_field form.name show_label=False placeholder="Attribute Name" %}
                                     </div>
@@ -145,7 +141,7 @@
     </form>
 </div>
 
-<div id="empty-form" class="d-none">
+<template id="empty-form">
     <div class="attribute-form-row row mb-2 g-2 align-items-center">
         <div class="col-sm-5">
             {% bootstrap_field attribute_formset.empty_form.name show_label=False placeholder="Attribute Name" %}
@@ -160,49 +156,46 @@
             </button>
         </div>
     </div>
-</div>
+</template>
+
+{{ device_suggestions|json_script:"device-suggestions-data" }}
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
 
+    // FILE DRAG & DROP LOGIC
     const dropZone = document.getElementById("drop-zone");
-    const fileInput = document.getElementById("file-input");
+    const fileInput = document.getElementById("id_photo_file");
     const imagePreview = document.getElementById("image-preview");
     const previewImg = document.getElementById("preview-img");
-    const previewFilename = document.getElementById("preview-filename");
 
-    dropZone.addEventListener('click', () => fileInput.click());
-    fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+    if (dropZone && fileInput) {
+        dropZone.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
 
-    ['dragover', 'dragleave', 'drop'].forEach(event => {
-        dropZone.addEventListener(event, (e) => {
-            e.preventDefault();
-            e.stopPropagation();
+        ['dragover', 'dragleave', 'drop'].forEach(event => {
+            dropZone.addEventListener(event, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropZone.classList.toggle('dragover', event === 'dragover');
 
-            if (event === 'dragover') {
-                dropZone.classList.add('dragover');
-            } else if (event === 'dragleave') {
-                dropZone.classList.remove('dragover');
-            } else if (event === 'drop') {
-                dropZone.classList.remove('dragover');
-                const files = e.dataTransfer.files;
-
-                // Update file input manually
-                fileInput.files = files;
-                handleFiles(files);
-            }
+                if (event === 'drop') {
+                    fileInput.files = e.dataTransfer.files;
+                    handleFiles(e.dataTransfer.files);
+                }
+            });
         });
-    });
+    }
 
     function handleFiles(files) {
-        if (!files.length) return;
+        if (!files?.length) return;
         const file = files[0];
 
         if (file.type.startsWith('image/')) {
             const reader = new FileReader();
-            reader.onload = function (e) {
+            reader.onload = (e) => {
                 previewImg.src = e.target.result;
-                previewFilename.textContent = `${file.name} (${formatFileSize(file.size)})`;
+                document.getElementById("preview-filename").textContent = `${file.name} (${(file.size / 1024 / 1024).toFixed(1)} MB)`;
                 imagePreview.style.display = 'block';
             };
             reader.readAsDataURL(file);
@@ -213,31 +206,58 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function formatFileSize(bytes) {
-        if (bytes < 1024) return bytes + ' B';
-        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-        return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    const formContainer = document.getElementById('formset-container');
+    const totalFormsInput = document.getElementById('id_form-TOTAL_FORMS');
+    const emptyTemplate = document.getElementById('empty-form')?.innerHTML || '';
+
+    function addFormRow(name = '', labelText = '', placeholder = 'Value') {
+        const count = parseInt(totalFormsInput.value) || 0;
+        formContainer.insertAdjacentHTML('beforeend', emptyTemplate.replace(/__prefix__/g, count));
+        totalFormsInput.value = count + 1;
+
+        // If 'name' is provided, it's an auto-suggestion
+        if (name) {
+            const newRow = formContainer.lastElementChild;
+            const nameInput = newRow.querySelector('input[name$="-name"]');
+
+            nameInput.value = name;
+            nameInput.hidden = true;
+
+            const labelSpan = document.createElement('span');
+            labelSpan.className = 'form-control-plaintext fw-bold text-secondary ps-2';
+            labelSpan.textContent = labelText;
+            nameInput.before(labelSpan);
+
+            newRow.querySelector('input[name$="-value"]').placeholder = placeholder;
+        }
     }
 
+    // --- dynamic suggestions
+    const typeSelect = document.getElementById('id_type');
+    const suggestionsData = JSON.parse(document.getElementById('device-suggestions-data')?.textContent || '{}');
 
-    // formset logic
-    const formContainer = document.getElementById('formset-container');
-    const addBtn = document.getElementById('add-form-btn');
-    const totalFormsInput = document.getElementById('id_form-TOTAL_FORMS');
-    const emptyFormTemplate = document.getElementById('empty-form').innerHTML;
+    if (typeSelect) {
+        typeSelect.addEventListener('change', function() {
+            formContainer.innerHTML = '';
+            totalFormsInput.value = 0;
 
-    addBtn.addEventListener('click', function() {
-        const formCount = parseInt(totalFormsInput.value);
-        const newFormHtml = emptyFormTemplate.replace(/__prefix__/g, formCount);
+            const suggestions = suggestionsData[this.value] || [];
+            suggestions.forEach(attr => addFormRow(attr.name, attr.label.split(' (')[0], attr.label));
+        });
 
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = newFormHtml;
-        formContainer.appendChild(tempDiv.firstElementChild);
+        // trigger on load if form is empty
+        if (!document.querySelector('.alert-danger') &&
+            !formContainer.querySelector('input[name$="-value"]')?.value.trim() &&
+            typeSelect.value) {
+            typeSelect.dispatchEvent(new Event('change'));
+        }
+    }
 
-        totalFormsInput.value = formCount + 1;
-    });
+    // add attribute button
+    document.getElementById('add-form-btn')?.addEventListener('click', () => addFormRow());
 
-    formContainer.addEventListener('click', function(e) {
+    // --- remove button
+    formContainer?.addEventListener('click', function(e) {
         const btn = e.target.closest('.remove-form-btn');
         if (btn) {
             const row = btn.closest('.attribute-form-row');
@@ -251,6 +271,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
+
 });
 </script>
 {% endblock %}
