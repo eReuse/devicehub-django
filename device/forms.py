@@ -5,6 +5,7 @@ from evidence.models import SystemProperty
 from utils.device import create_property, create_doc, create_index
 from utils.save_snapshots import move_json, save_in_disk
 from evidence.forms import BasePhotoMixin, UserAliasForm
+from django.utils.translation import gettext_lazy as _
 
 
 DEVICE_TYPES = [
@@ -27,6 +28,95 @@ DEVICE_TYPES = [
     ("RouterWifi", "RouterWifi"),
 ]
 
+DEVICE_ATTRIBUTE_SUGGESTIONS = {
+    "Desktop": [
+        {"name": "cpu_model", "label": _("CPU Model (e.g. i5-10400)")},
+        {"name": "ram_total", "label": _("Total RAM (e.g. 16GB)")},
+        {"name": "drive", "label": _("Storage Drive (e.g. 512GB SSD)")},
+        {"name": "gpu_model", "label": _("GPU Model (e.g. RTX 3060)")},
+    ],
+    "Laptop": [
+        {"name": "cpu_model", "label": _("CPU Model (e.g. i7-12700H)")},
+        {"name": "ram_total", "label": _("Total RAM (e.g. 16GB)")},
+        {"name": "drive", "label": _("Storage Drive (e.g. 1TB NVMe)")},
+        {"name": "screen_size", "label": _("Screen Size (e.g. 15.6\")")},
+        {"name": "battery_health", "label": _("Battery Health (e.g. 85%)")},
+    ],
+    "Server": [
+        {"name": "cpu_model", "label": _("CPU Model (e.g. Xeon Silver 4214)")},
+        {"name": "ram_total", "label": _("Total RAM (e.g. 128GB ECC)")},
+        {"name": "drive", "label": _("Storage Arrays (e.g. 4x 4TB SAS)")},
+        {"name": "raid_controller", "label": _("RAID Controller (e.g. PERC H740P)")},
+        {"name": "power_supply", "label": _("Power Supply (e.g. Dual 750W)")},
+    ],
+    "GraphicCard": [
+        {"name": "vram_capacity", "label": _("VRAM Capacity (e.g. 8GB)")},
+        {"name": "vram_type", "label": _("VRAM Type (e.g. GDDR6)")},
+        {"name": "core_clock", "label": _("Core Clock (e.g. 1837 MHz)")},
+    ],
+    "HardDrive": [
+        {"name": "capacity", "label": _("Capacity (e.g. 4TB)")},
+        {"name": "interface", "label": _("Interface (e.g. SATA III / SAS)")},
+        {"name": "rpm", "label": _("RPM (e.g. 7200 RPM)")},
+    ],
+    "SolidStateDrive": [
+        {"name": "capacity", "label": _("Capacity (e.g. 1TB)")},
+        {"name": "interface", "label": _("Interface (e.g. NVMe PCIe 4.0)")},
+        {"name": "health_tbw", "label": _("Health / TBW (e.g. 98% / 300TBW)")},
+    ],
+    "Motherboard": [
+        {"name": "socket_type", "label": _("Socket Type (e.g. AM4 / LGA1700)")},
+        {"name": "chipset", "label": _("Chipset (e.g. B550 / Z690)")},
+        {"name": "ram_slots", "label": _("RAM Slots (e.g. 4)")},
+    ],
+    "NetworkAdapter": [
+        {"name": "speed", "label": _("Speed (e.g. 10 Gbps)")},
+        {"name": "port_type", "label": _("Port Type (e.g. RJ45 / SFP+)")},
+    ],
+    "Processor": [
+        {"name": "cpu_cores", "label": _("Core Count (e.g. 8 Cores / 16 Threads)")},
+        {"name": "base_clock", "label": _("Base Clock (e.g. 3.2 GHz)")},
+        {"name": "socket_type", "label": _("Socket Type (e.g. AM5)")},
+    ],
+    "RamModule": [
+        {"name": "ram_type", "label": _("RAM Type (e.g. DDR4)")},
+        {"name": "capacity", "label": _("Capacity (e.g. 16GB)")},
+        {"name": "speed_mhz", "label": _("Speed (e.g. 3200 MHz)")},
+    ],
+    "SoundCard": [
+        {"name": "channels", "label": _("Channels (e.g. 5.1 / 7.1)")},
+        {"name": "interface", "label": _("Interface (e.g. PCIe x1)")},
+    ],
+    "Display": [
+        {"name": "resolution", "label": _("Resolution (e.g. 1920x1080)")},
+        {"name": "refresh_rate", "label": _("Refresh Rate (e.g. 144Hz)")},
+        {"name": "panel_type", "label": _("Panel Type (e.g. IPS)")},
+    ],
+    "Battery": [
+        {"name": "capacity_wh", "label": _("Capacity in Wh (e.g. 56Wh)")},
+        {"name": "cycle_count", "label": _("Cycle Count (e.g. 120)")},
+    ],
+    "Camera": [
+        {"name": "megapixels", "label": _("Megapixels (e.g. 12MP)")},
+        {"name": "max_resolution", "label": _("Max Resolution (e.g. 4K@60fps)")},
+    ],
+    "Switch": [
+        {"name": "ports", "label": _("Port Count (e.g. 24 / 48)")},
+        {"name": "link_speed", "label": _("Link Speed (e.g. 10/100/1000)")},
+        {"name": "poe_budget", "label": _("PoE Budget (e.g. 370W)")},
+        {"name": "management_type", "label": _("Management Type (e.g. Managed / Unmanaged)")},
+    ],
+    "Router": [
+        {"name": "ports", "label": _("Port Count (e.g. 4x LAN, 1x WAN)")},
+        {"name": "throughput", "label": _("Throughput (e.g. 1 Gbps)")},
+        {"name": "routing_protocols", "label": _("Protocols (e.g. OSPF, BGP)")},
+    ],
+    "RouterWifi": [
+        {"name": "wifi_standard", "label": _("Wi-Fi Standard (e.g. Wi-Fi 6 / 802.11ax)")},
+        {"name": "frequency_bands", "label": _("Bands (e.g. Dual-Band 2.4/5GHz)")},
+        {"name": "antennas", "label": _("Antennas (e.g. 4x External)")},
+    ],
+}
 
 class DeviceMainForm(BasePhotoMixin):
     type = forms.ChoiceField(choices=DEVICE_TYPES, required=False)
@@ -90,20 +180,6 @@ class DeviceMainForm(BasePhotoMixin):
             if photo_prop:
                 self._create_alias(photo_prop, alias_root_target)
 
-        path_name = save_in_disk(doc, self.user.institution.name, place="placeholder")
-        create_index(doc, self.user)
-        create_property(doc, user, commit=commit)
-        move_json(path_name, self.user.institution.name, place="placeholder")
-        if d.get("custom_id"):
-            # The post_save signal on SystemProperty has already created a
-            # self-referential RootAlias (alias=WEB_ID, root=WEB_ID); route
-            # through ``set_alias`` so the depth-1 invariant is enforced.
-            RootAlias.set_alias(
-                owner=self.user.institution,
-                alias=doc["WEB_ID"],
-                new_root="custom_id:{}".format(d["custom_id"]),
-                user=self.user,
-            )
             device_prop = SystemProperty.objects.filter(
                 uuid=device_doc['uuid']
             ).first()
@@ -124,11 +200,11 @@ class DeviceMainForm(BasePhotoMixin):
 class DeviceAttributeForm(forms.Form):
     name = forms.CharField(
         required=False,
-        widget=forms.TextInput(attrs={'placeholder': 'Attribute (e.g. CPU)'})
+        widget=forms.TextInput(attrs={'placeholder': 'Attribute Name', 'class': 'form-control'})
     )
     value = forms.CharField(
         required=False,
-        widget=forms.TextInput(attrs={'placeholder': 'Value (e.g. i5-6200U)'})
+        widget=forms.TextInput(attrs={'placeholder': 'Value', 'class': 'form-control'})
     )
 
 
@@ -143,8 +219,8 @@ def save_device_data(main_data, attribute_formset, user, commit=True):
         if form.cleaned_data and not form.cleaned_data.get('DELETE', False):
             name = form.cleaned_data.get("name")
             value = form.cleaned_data.get("value", "")
-            if name:
-                row[name] = value
+            if name and value.strip():
+                row[name] = value.strip()
 
     doc = create_doc(row)
 
