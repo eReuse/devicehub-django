@@ -1,5 +1,6 @@
 import json
 import hashlib
+import re
 
 from dmidecode import DMIParse
 from django.db import models
@@ -13,6 +14,9 @@ from utils.constants import STR_EXTEND_SIZE, CHASSIS_DH
 from evidence.xapian import search
 from evidence.parse_details import ParseSnapshot
 from evidence.normal_parse_details import get_inxi, get_inxi_key
+
+from device.product_cache import ProductCache
+
 
 
 class Property(models.Model):
@@ -34,7 +38,10 @@ class SystemProperty(Property):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["key", "uuid"], name="system_unique_type_key_uuid")
+                fields=["key", "uuid"], name="system_unique_type_key_uuid"),
+            models.CheckConstraint(
+                check=Q(value__contains=":"),
+                name="systemproperty_value_has_algorithm_prefix"),
         ]
 
     @property
@@ -91,7 +98,10 @@ class RootAlias(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["owner", "alias"], name="rootalias_unique")
+                fields=["owner", "alias"], name="rootalias_unique"),
+            models.CheckConstraint(
+                check=Q(alias__contains=":") & Q(root__contains=":"),
+                name="rootalias_ids_have_algorithm_prefix"),
         ]
         indexes = [
             models.Index(fields=["owner", "updated"], name="evidence_ro_owner_upd_idx"),
@@ -208,6 +218,18 @@ class RootAlias(models.Model):
 
         if old_root != new_root:
             cls._sync_memberships(owner, alias, new_root, old_root=old_root)
+            # The read model follows the canonical change: rebuild the gaining
+            # root; rebuild the losing root if it still has aliases, else drop
+            # it (``alias`` was its last child, mirroring _sync_memberships).
+            ProductCache.rebuild(owner, new_root)
+            if old_root is not None:
+                old_still_canonical = cls.objects.filter(
+                    owner=owner, root=old_root
+                ).exists()
+                if old_still_canonical:
+                    ProductCache.rebuild(owner, old_root)
+                else:
+                    ProductCache.drop(owner, old_root)
         return obj
 
     @classmethod
@@ -328,6 +350,10 @@ def ensure_root_alias_self_reference(sender, instance, created, **kwargs):
         RootAlias.objects.filter(pk=existing.pk).update(
             updated=instance.created,
         )
+
+    # A new evidence changes the device's latest state: refresh its read model.
+    root = RootAlias.resolve_root(instance.owner, instance.value)
+    ProductCache.rebuild(instance.owner, root)
 
 
 class Evidence:
@@ -525,6 +551,116 @@ class Evidence:
             return getattr(self, 'device_version', '')
 
         return ""
+
+    # Component-derived export fields. Each getter handles the per-format
+    # shape differences (like get_manufacturer does), reading from a parsed,
+    # memoized component list. An evidence whose components cannot be parsed
+    # (e.g. credentialSubject, not yet supported) yields an empty list, so the
+    # getters return "" and the projection merge backfills from another
+    # evidence instead of crashing.
+    STORAGE_TYPES = ("Storage", "SolidStateDrive", "HardDrive")
+    NO_MODULE = "no module installed"
+
+    def export_components(self):
+        if getattr(self, "_export_components_memo", None) is None:
+            try:
+                self._export_components_memo = self.get_components()
+            except Exception:
+                self._export_components_memo = []
+        return self._export_components_memo
+
+    def get_cpu_model(self):
+        model = ""
+        for c in self.export_components():
+            if c.get("type") == "Processor":
+                model = c.get("model", "") or ""
+        return model
+
+    def get_cpu_cores(self):
+        cores = ""
+        for c in self.export_components():
+            if c.get("type") == "Processor":
+                cores = c.get("cores", "")
+        return cores
+
+    def get_ram_total(self):
+        # Sum the size of every populated RamModule instead of relying on the
+        # motherboard's installedRam, which inxi frequently leaves empty.
+        total = 0.0
+        found = False
+        for c in self.export_components():
+            if c.get("type") != "RamModule":
+                continue
+            gib = self._ram_size_to_gib(c.get("size", ""))
+            if gib:
+                total += gib
+                found = True
+        if not found:
+            return ""
+        return int(total) if total == int(total) else round(total, 1)
+
+    @staticmethod
+    def _ram_size_to_gib(size):
+        # RamModule sizes come from inxi as strings like "4 GB", "2048 MiB" or
+        # "8 GiB". Normalise to GiB; treat GB/GiB as equivalent.
+        if not size:
+            return 0.0
+        match = re.match(r"\s*([\d.]+)\s*([a-zA-Z]+)?", str(size))
+        if not match:
+            return 0.0
+        try:
+            value = float(match.group(1))
+        except ValueError:
+            return 0.0
+        unit = (match.group(2) or "gb").lower()
+        if unit in ("mib", "mb"):
+            value /= 1024
+        elif unit in ("kib", "kb"):
+            value /= 1024 * 1024
+        elif unit in ("tib", "tb"):
+            value *= 1024
+        return value
+
+    def get_ram_type(self):
+        ram_type = ""
+        for c in self.export_components():
+            if c.get("type") == "RamModule":
+                ram_type = c.get("interface", "")
+                if ram_type != self.NO_MODULE:
+                    break
+        return ram_type
+
+    def get_ram_slots(self):
+        rams = [c for c in self.export_components()
+                if c.get("type") == "RamModule"]
+        return len(rams) if rams else ""
+
+    def get_ram_slots_used(self):
+        rams = [c for c in self.export_components()
+                if c.get("type") == "RamModule"]
+        if not rams:
+            return ""
+        return sum(1 for c in rams
+                   if c.get("interface", "") != self.NO_MODULE)
+
+    def get_drive(self):
+        drives = []
+        for c in self.export_components():
+            if c.get("type") in self.STORAGE_TYPES:
+                size = c.get("size", "")
+                if size:
+                    drives.append(" {} {} ({} )".format(
+                        c.get("interface", ""), c.get("model", ""), size))
+        return ", ".join(drives)
+
+    def get_gpu_model(self):
+        models = []
+        for c in self.export_components():
+            if c.get("type") == "GraphicCard":
+                model = c.get("model", "")
+                if model:
+                    models.append(model)
+        return ", ".join(models)
 
     def get_alias(self):
         aliases = [ x.value for x in self.properties ]

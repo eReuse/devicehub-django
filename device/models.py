@@ -434,81 +434,158 @@ class Device:
         # device's own physical ID when it has no alias.
         return self._canonical_id()
 
-    def components_export(self):
+    def evidence_export_fields(self):
+        """Export fields derived from the device's evidence only.
+
+        Kept separate from relational fields (state, user properties,
+        beneficiary status) so a read model can persist this expensive,
+        Xapian-backed part without re-parsing evidence on every list/export.
+
+        Each field is read through an Evidence getter that resolves the
+        per-format differences internally, so this method just assembles them.
+        """
         self.get_last_evidence()
+        ev = self.last_evidence
+
+        return {
+            'ID': self.shortid or '',
+            'manufacturer': self.manufacturer or '',
+            'model': self.model or '',
+            'serial': self.serial_number or '',
+            'cpu_model': ev.get_cpu_model(),
+            'cpu_cores': ev.get_cpu_cores(),
+            'ram_total': ev.get_ram_total(),
+            'ram_type': ev.get_ram_type(),
+            'ram_slots': ev.get_ram_slots(),
+            'slots_used': ev.get_ram_slots_used(),
+            'drive': ev.get_drive(),
+            'gpu_model': ev.get_gpu_model(),
+            'type': self.type,
+            'last_updated': parse_datetime(self.updated) or "",
+        }
+
+    def merged_export_fields(self):
+        """Evidence-derived export fields, backfilled from older evidence.
+
+        The newest evidence wins; any field it leaves empty is filled from the
+        next older evidence, walking back until every field is set or the
+        evidence list is exhausted. ``ID`` and ``last_updated`` always come from
+        the newest evidence and are never backfilled. An evidence that fails to
+        parse (e.g. missing from Xapian) is skipped rather than fatal, so one
+        bad evidence never breaks the whole projection.
+        """
+        self.get_uuids()
+        # Walking back through evidences reassigns self.last_evidence; remember
+        # the entry state so the device is left pointing at its newest evidence.
+        saved_last_evidence = self.last_evidence
+        skip = {"ID", "last_updated"}
+        merged = None
+        remaining = set()
+        for uuid in self.uuids:  # ordered newest -> oldest
+            try:
+                self.last_evidence = Evidence(uuid)
+                fields = self.evidence_export_fields()
+            except Exception:
+                continue
+            if merged is None:
+                merged = dict(fields)
+                remaining = {
+                    k for k, v in merged.items()
+                    if k not in skip and v in (None, "")
+                }
+            else:
+                for k in list(remaining):
+                    v = fields.get(k)
+                    if v not in (None, ""):
+                        merged[k] = v
+                        remaining.discard(k)
+            if not remaining:
+                break
+
+        self.last_evidence = saved_last_evidence
+        if merged is None:
+            merged = {"ID": self.shortid or ""}
+        return merged
+
+    def storage_readings(self):
+        """Per-disk power-on-hours readings across the full evidence history.
+
+        Returns a dict keyed by disk serial number. Each disk carries its
+        latest non-empty static metadata plus a ``readings`` list with one
+        entry per evidence in which the disk reported power data, deduplicated
+        by evidence uuid and ordered oldest -> newest. Raw inxi strings are
+        preserved as-is; ``power_on_hours`` is a parsed convenience copy of
+        ``power_on``. Stored raw in the projection so the environmental-impact
+        calc can reconstruct usage across disk swaps without re-reading Xapian.
+        """
+        # Local import: environmental_impact.algorithms.common imports
+        # device.models, so a module-level import would be circular.
+        from environmental_impact.algorithms.common import (
+            convert_str_time_to_hours,
+        )
+
+        self.get_uuids()
+        disks = {}
+        seen = {}  # serial -> set of uuids already recorded
+        for uuid in reversed(list(self.uuids)):  # oldest -> newest
+            try:
+                evidence = Evidence(uuid)
+                components = evidence.get_components()
+            except Exception:
+                continue
+            for c in components:
+                if c.get("type") != "Storage":
+                    continue
+                serial = c.get("serialNumber") or ""
+                if not serial:
+                    continue
+                disk = disks.setdefault(serial, {
+                    "model": "",
+                    "manufacturer": "",
+                    "size": "",
+                    "interface": "",
+                    "readings": [],
+                })
+                for key in ("model", "manufacturer", "size", "interface"):
+                    v = c.get(key)
+                    if v:
+                        disk[key] = v
+
+                power_on = c.get("time of used") or ""
+                cycles = c.get("cycles") or ""
+                health = c.get("health") or ""
+                read_units = c.get("read used") or ""
+                written_units = c.get("written used") or ""
+                if not any((power_on, cycles, health,
+                            read_units, written_units)):
+                    continue
+                recorded = seen.setdefault(serial, set())
+                if uuid in recorded:
+                    continue
+                recorded.add(uuid)
+                disk["readings"].append({
+                    "uuid": str(uuid),
+                    "created": getattr(evidence, "created", None),
+                    "power_on": power_on,
+                    "power_on_hours": convert_str_time_to_hours(power_on),
+                    "cycles": cycles,
+                    "health": health,
+                    "read_units": read_units,
+                    "written_units": written_units,
+                })
+        return disks
+
+    def components_export(self):
+        hardware_info = self.evidence_export_fields()
 
         user_properties = ""
         for x in self.get_user_properties():
             user_properties += "({}:{}) ".format(x.key, x.value)
 
-        hardware_info = {
-            'ID': self.shortid or '',
-            'manufacturer': self.manufacturer or '',
-            'model': self.model or '',
-            'serial': '',
-            'cpu_model': '',
-            'cpu_cores': '',
-            'ram_total': '',
-            'ram_type': '',
-            'ram_slots': '',
-            'slots_used': '',
-            'drive': '',
-            'gpu_model': '',
-            'type': self.type,
+        hardware_info.update({
             'user_properties': user_properties,
             'current_state': self.get_current_state().state if self.get_current_state() else '',
-            'last_updated': parse_datetime(self.updated) or "",
-            'beneficiary_status': self.status_beneficiary or ""
-        }
-
-        if not self.last_evidence.is_legacy or not self.last_evidence:
-            return hardware_info
-
-        storage_devices = []
-        gpu_models = []
-        slots_used = slots_total = 0
-
-        for c in self.components:
-            match c.get("type"):
-                case "Motherboard":
-                    hardware_info.update({
-                        'manufacturer': c.get("manufacturer", ""),
-                        'serial': self.serial_number,
-                        'ram_total': c.get("installedRam", ""),
-                    })
-                case "Processor":
-                    hardware_info.update({
-                        'cpu_cores': c.get("cores", ""),
-                        'cpu_model': c.get("model", "")
-                    })
-                case "RamModule":
-                    slots_total += 1
-                    if slots_used == 0:
-                        hardware_info.update({
-                            'ram_type': c.get("interface", "")
-                        })
-                    if c.get("interface", "") != "no module installed":
-                        slots_used += 1
-                case "Storage":
-                    if size := c.get("size", ""):
-                        storage_devices.append({
-                            'model': c.get("model", ""),
-                            'size': size,
-                            'type': c.get("interface", "")
-                        })
-                case "GraphicCard":
-                    if model := c.get("model", ""):
-                        gpu_models.append(model)
-
-        if storage_devices:
-            hardware_info['drive'] = ", ".join([f" {d['type']} {d['model']} ({d['size']} )"
-                                            for d in storage_devices])
-        if gpu_models:
-            hardware_info['gpu_model'] = ", ".join(gpu_models)
-
-        hardware_info.update({
-            'slots_used': slots_used,
-            'ram_slots': slots_total,
+            'beneficiary_status': self.status_beneficiary or "",
         })
 
         return hardware_info
@@ -564,3 +641,8 @@ class Device:
             'include_logo': settings.qr_include_logo,
             'logo_url': self.owner.logo if settings.qr_include_logo and self.owner.logo else None,
         }
+
+# Registers the ProductCache ORM model under the `device` app. Django only
+# auto-imports `<app>.models`, so the read model defined in device/product_cache.py
+# must be imported here to be discovered by makemigrations.
+from device.product_cache import ProductCache  # noqa: E402,F401

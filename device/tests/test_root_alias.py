@@ -12,15 +12,16 @@ class PublicDeviceWebViewTests(TestCase):
             name="Test Institution"
         )
         i = self.institution
-        for x in ["a1", "a2", "a3", "b1", "b3", "c1", "d1", "d2"]:
+        for x in ["ereuse24:a1", "ereuse24:a2", "ereuse24:a3", "ereuse24:b1",
+                  "ereuse24:b3", "ereuse24:c1", "ereuse24:d1", "ereuse24:d2"]:
             SystemProperty.objects.create(owner=i, uuid=uuid.uuid4(), value=x)
         alias  = [
-            ("a1", "a2"),
-            ("a3", "a2"),
-            ("b1", "b2"),
-            ("b3", "b2"),
-            ("c1", "c2"),
-            ("d1", "d2"),
+            ("ereuse24:a1", "ereuse24:a2"),
+            ("ereuse24:a3", "ereuse24:a2"),
+            ("ereuse24:b1", "ereuse24:b2"),
+            ("ereuse24:b3", "ereuse24:b2"),
+            ("ereuse24:c1", "ereuse24:c2"),
+            ("ereuse24:d1", "ereuse24:d2"),
         ]
 
         # Every SystemProperty already has a self-referential RootAlias row
@@ -38,7 +39,8 @@ class PublicDeviceWebViewTests(TestCase):
         Expected roots: a2, b2, c2, d2 (four groups collapsed by alias).
         """
         result = {r["root"] for r in Device._roots_queryset(self.institution)}
-        self.assertEqual(result, {"a2", "b2", "c2", "d2"})
+        self.assertEqual(result, {"ereuse24:a2", "ereuse24:b2",
+                                  "ereuse24:c2", "ereuse24:d2"})
 
     def test_queryset_unassigned_excludes_devices_in_lots(self):
         """Roots stored in DeviceLot must not appear as unassigned."""
@@ -48,10 +50,10 @@ class PublicDeviceWebViewTests(TestCase):
         )
         # b2 is a canonical root with no SystemProperty row; adding any of
         # its physical aliases stores the root (Phase 2).
-        lot.add("b1")
+        lot.add("ereuse24:b1")
 
         result = {
             r["root"]
             for r in Device.queryset_orm_unassigned(self.institution)
         }
-        self.assertEqual(result, {"a2", "c2", "d2"})
+        self.assertEqual(result, {"ereuse24:a2", "ereuse24:c2", "ereuse24:d2"})
