@@ -108,7 +108,9 @@
 	    <tbody>
 	      {% for dev in devices %}
 	      <tr>
-		<td class="font-monospace">{{ dev.shortid }}</td>
+		<td class="font-monospace">
+		  <a href="{% url 'device:device_web' dev.web_pk %}" target="_blank">{{ dev.shortid }}</a>
+		</td>
 		<td class="font-monospace">{{ dev.manufacturer }}</td>
 		<td class="font-monospace">{{ dev.model }}</td>
 		<td class="font-monospace">{{ dev.serial_number }}</td>
