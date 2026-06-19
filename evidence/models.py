@@ -87,7 +87,7 @@ class RootAlias(models.Model):
     """All SystemProperty.value have one RootAlias.alias and no more than one
        RootAlias.root is editable but RootAlias.alias is not possible
     """
-    created = models.DateTimeField(auto_now_add=True)
+    created = models.DateTimeField(default=timezone.now)
     updated = models.DateTimeField()
     owner = models.ForeignKey('user.Institution', on_delete=models.CASCADE)
     user = models.ForeignKey(
