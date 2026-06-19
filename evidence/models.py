@@ -451,8 +451,12 @@ class Evidence:
                         self.device_manufacturer = system
                         self.device_model = get_inxi(m, "product")
                         self.device_serial_number = get_inxi(m, "serial")
-                        self.device_chassis = get_inxi(m, "Type")
                         self.device_version = get_inxi(m, "v")
+                    else:
+                        self.device_manufacturer = getattr(self, 'device_manufacturer', '') or get_inxi(m, "Mobo")
+                        self.device_model = getattr(self, 'device_model', '') or get_inxi(m, "model")
+                        self.device_serial_number = getattr(self, 'device_serial_number', '') or get_inxi(m, "serial")
+                    self.device_chassis = getattr(self, 'device_chassis', '') or get_inxi(m, "Type")
             except Exception:
                 return
 
