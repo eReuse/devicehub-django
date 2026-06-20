@@ -3,7 +3,8 @@ import logging
 from evidence import (
     legacy_parse_details,
     normal_parse_details,
-    old_parse_details
+    old_parse_details,
+    mobile_parse_details
 )
 
 
@@ -19,6 +20,11 @@ class ParseSnapshot:
            )
        elif snapshot.get("data",{}).get("lshw"):
            self.build = legacy_parse_details.ParseSnapshot(
+               snapshot,
+               default=default
+           )
+       elif snapshot.get("software") == "workbench-android":
+           self.build = mobile_parse_details.ParseSnapshot(
                snapshot,
                default=default
            )
