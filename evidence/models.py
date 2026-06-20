@@ -526,6 +526,9 @@ class Evidence:
         if self.is_web_snapshot():
             return self.components.get("manufacturer", "")
 
+        if self.is_mobile():
+            return self.mobile_device().get("manufacturer", "")
+
         if self.inxi or self.is_beta():
             return getattr(self, 'device_manufacturer', '')
 
@@ -543,6 +546,9 @@ class Evidence:
         if self.is_web_snapshot():
             return self.components.get("model", "")
 
+        if self.is_mobile():
+            return self.mobile_device().get("model", "")
+
         if self.inxi or self.is_beta():
             return getattr(self, 'device_model', '')
 
@@ -558,6 +564,9 @@ class Evidence:
             return ''
 
     def get_chassis(self):
+        if self.is_mobile():
+            return self.mobile_device().get("type", "Smartphone")
+
         if self.is_web_snapshot():
             return self.components.get("form_factor", self.components.get("type", "Websnapshot"))
 
@@ -591,6 +600,10 @@ class Evidence:
         return ""
 
     def get_serial_number(self):
+        if self.is_mobile():
+            d = self.mobile_device()
+            return d.get("serial_number") or d.get("manual_id") or ""
+
         if self.is_web_snapshot():
             return self.components.get("serial", "")
 
@@ -817,6 +830,12 @@ class Evidence:
             return False
 
         return self.doc.get("software") != "workbench-script"
+
+    def is_mobile(self):
+        return self.doc.get("software") == "workbench-android"
+
+    def mobile_device(self):
+        return self.doc.get("data", {}).get("device", {})
 
     def is_web_snapshot(self):
         return self.doc.get("type") == "WebSnapshot"
