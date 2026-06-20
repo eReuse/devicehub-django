@@ -5,9 +5,10 @@ import logging
 from evidence import legacy_parse
 from evidence import old_parse
 from evidence import normal_parse
+from evidence import mobile_parse
 from evidence.parse_details import ParseSnapshot
 
-from evidence.models import SystemProperty
+from evidence.models import SystemProperty, RootAlias
 from evidence.xapian import index
 from evidence.normal_parse_details import get_inxi_key, get_inxi
 from django.conf import settings
@@ -47,6 +48,8 @@ class Build:
             self.uuid = evidence_json.get("credentialSubject", {}).get("uuid")
         elif evidence_json.get("data",{}).get("lshw"):
             self.build = legacy_parse.Build(evidence_json)
+        elif evidence_json.get("software") == "workbench-android":
+            self.build = mobile_parse.Build(evidence_json)
         elif evidence_json.get("software") != "workbench-script":
             self.build = old_parse.Build(evidence_json)
         else:
@@ -60,8 +63,37 @@ class Build:
 
         self.index()
         self.create_annotations()
+        self.create_root_alias()
         if settings.DPP:
             self.register_device_dlt()
+
+    def create_root_alias(self):
+        """Mirror the custom_id RootAlias pattern (device/forms.py) for the
+        operator's manual id, so re-scans collapse to one logical device."""
+        manual_id = getattr(self.build, "manual_id", None)
+        if not manual_id or not self.user:
+            return
+
+        hid = self.build.algorithms.get("ereuse24")
+        if not hid:
+            return
+
+        alias = "ereuse24:{}".format(self.sign(hid))
+        root = "custom_id:{}".format(manual_id)
+        if alias == root:
+            return
+
+        owner = self.user.institution
+        # idempotent: (owner, alias) is unique; re-scans skip silently
+        if RootAlias.objects.filter(owner=owner, alias=alias).exists():
+            return
+
+        RootAlias.objects.create(
+            owner=owner,
+            user=self.user,
+            alias=alias,
+            root=root,
+        )
 
     def index(self):
         snap = json.dumps(self.evidence)

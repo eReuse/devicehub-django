@@ -42,7 +42,8 @@ class BuildMix:
 
         dmidecode_raw = data.get("dmidecode")
         inxi_raw = data.get("inxi")
-        device = self.json.get("device")
+        # mobile (workbench-android) snapshots carry the device under data.device
+        device = self.json.get("device") or data.get("device")
         if not dmidecode_raw and not inxi_raw and not device:
             txt = "snapshot without dmidecode and inxi datas"
             logger.error(txt)
