@@ -496,6 +496,14 @@ class Device:
             try:
                 self.last_evidence = Evidence(uuid)
                 fields = self.evidence_export_fields()
+
+                is_web_snapshot = (self.last_evidence.is_web_snapshot()
+                                   if hasattr(self.last_evidence, 'is_web_snapshot') else False)
+                if is_web_snapshot:
+                    doc = getattr(self.last_evidence, 'doc', {})
+                    kv_data = doc.get('kv', {})
+                    fields.update(kv_data)
+
             except Exception:
                 continue
             if merged is None:
@@ -534,6 +542,10 @@ class Device:
         from environmental_impact.algorithms.common import (
             convert_str_time_to_hours,
         )
+
+        #check best way to input websnapshot storage hours
+        if self.is_websnapshot:
+            return self.components.get("storage_hours", {})
 
         self.get_uuids()
         disks = {}
@@ -605,10 +617,7 @@ class Device:
             doc = getattr(self.last_evidence, 'doc', {})
             kv_data = doc.get('kv', {})
 
-            # Map only the keys from 'kv' that actually exist in our hardware_info structure
-            for key, value in kv_data.items():
-                if key in hardware_info:
-                    hardware_info[key] = value
+            hardware_info.update(kv_data)
 
             return hardware_info
 
