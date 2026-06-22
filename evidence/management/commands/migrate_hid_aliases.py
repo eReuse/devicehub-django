@@ -102,12 +102,12 @@ class Command(BaseCommand):
     def create_alias(self, prop, new_hid_raw, user):
         new_hash = hashlib.sha3_256(new_hid_raw.encode()).hexdigest()
         alias = f"{self.new_algo}:{new_hash}"
-        root = prop.value
 
         if RootAlias.objects.filter(owner=prop.owner, alias=alias).exists():
             self.stdout.write(f"  Skip (exists): {alias}")
             return False
 
-        RootAlias.objects.create(owner=prop.owner, user=user, alias=alias, root=root)
+        root = RootAlias.resolve_root(prop.owner, prop.value)
+        RootAlias.set_alias(prop.owner, alias, root, user=user)
         self.stdout.write(self.style.SUCCESS(f"  Created: alias={alias}, root={root}"))
         return True
