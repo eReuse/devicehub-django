@@ -110,14 +110,14 @@
                                     <div class="col-sm-5">
                                         {% bootstrap_field form.name show_label=False placeholder="Attribute Name" %}
                                     </div>
-                                    <div class="col-sm-5">
+                                    <div class="col-sm-6">
                                         {% bootstrap_field form.value show_label=False placeholder="Value" %}
                                     </div>
-                                    <div class="col-sm-2 text-center">
+                                    <div class="col-sm-1 d-flex justify-content-center align-items-center">
                                         {% if attribute_formset.can_delete %}
                                             <div class="d-none">{{ form.DELETE }}</div>
-                                            <button type="button" class="btn btn-link text-danger remove-form-btn text-decoration-none">
-                                                <i class="bi bi-trash fs-5"></i>
+                                            <button type="button" class="btn btn-sm btn-link text-danger remove-form-btn text-decoration-none p-0">
+                                                <i class="bi bi-trash"></i>
                                             </button>
                                         {% endif %}
                                     </div>
@@ -146,13 +146,13 @@
         <div class="col-sm-5">
             {% bootstrap_field attribute_formset.empty_form.name show_label=False placeholder="Attribute Name" %}
         </div>
-        <div class="col-sm-5">
+        <div class="col-sm-6">
             {% bootstrap_field attribute_formset.empty_form.value show_label=False placeholder="Value" %}
         </div>
-        <div class="col-sm-2 text-center">
+        <div class="col-sm-1 d-flex justify-content-center align-items-center">
             <div class="d-none">{{ attribute_formset.empty_form.DELETE }}</div>
-            <button type="button" class="btn btn-link text-danger remove-form-btn text-decoration-none">
-                <i class="bi bi-trash fs-5"></i>
+            <button type="button" class="btn btn-sm btn-link text-danger remove-form-btn text-decoration-none p-0">
+                <i class="bi bi-trash"></i>
             </button>
         </div>
     </div>
@@ -163,27 +163,41 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
 
-    // FILE DRAG & DROP LOGIC
     const dropZone = document.getElementById("drop-zone");
-    const fileInput = document.getElementById("id_photo_file");
+    const fileInput = dropZone ? dropZone.querySelector('input[type="file"]') : null;
     const imagePreview = document.getElementById("image-preview");
     const previewImg = document.getElementById("preview-img");
 
     if (dropZone && fileInput) {
+        fileInput.style.display = 'none';
+
         dropZone.addEventListener('click', () => fileInput.click());
         fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
 
-        ['dragover', 'dragleave', 'drop'].forEach(event => {
-            dropZone.addEventListener(event, (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                dropZone.classList.toggle('dragover', event === 'dragover');
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+        });
 
-                if (event === 'drop') {
-                    fileInput.files = e.dataTransfer.files;
-                    handleFiles(e.dataTransfer.files);
-                }
-            });
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        // visual cues
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.add('dragover'), false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.remove('dragover'), false);
+        });
+
+        // Handle the drop
+        dropZone.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            fileInput.files = files;
+            handleFiles(files);
         });
     }
 
@@ -215,7 +229,7 @@ document.addEventListener('DOMContentLoaded', function() {
         formContainer.insertAdjacentHTML('beforeend', emptyTemplate.replace(/__prefix__/g, count));
         totalFormsInput.value = count + 1;
 
-        // If 'name' is provided, it's an auto-suggestion
+        // if 'name' is provided, it's an auto-suggestion
         if (name) {
             const newRow = formContainer.lastElementChild;
             const nameInput = newRow.querySelector('input[name$="-name"]');
@@ -232,7 +246,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // --- dynamic suggestions
+    // load dynamic suggestions
     const typeSelect = document.getElementById('id_type');
     const suggestionsData = JSON.parse(document.getElementById('device-suggestions-data')?.textContent || '{}');
 
@@ -253,10 +267,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // add attribute button
+    // attribute button
     document.getElementById('add-form-btn')?.addEventListener('click', () => addFormRow());
 
-    // --- remove button
+    // remove button
     formContainer?.addEventListener('click', function(e) {
         const btn = e.target.closest('.remove-form-btn');
         if (btn) {
