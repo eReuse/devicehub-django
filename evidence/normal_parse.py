@@ -6,6 +6,7 @@ from django.conf import settings
 
 from evidence.mixin_parse import BuildMix
 from evidence.normal_parse_details import get_inxi_key, get_inxi, ParseSnapshot
+from evidence.universal_parse import get_mac_linux
 
 
 logger = logging.getLogger('django')
@@ -44,19 +45,21 @@ class Build(BuildMix):
             return ""
 
         dmidecode_raw = self.json["data"].get('dmidecode', '')
-        dmi = DMIParse(dmidecode_raw)
-        chassis = dmi.get('Chassis')
-        self.chassis = clean(chassis[0].get('Type', '')) if chassis else ''
-        self.manufacturer = clean(dmi.manufacturer())
-        self.model = clean(dmi.model())
-        self.serial_number = clean(dmi.serial_number())
+        has_dmi = bool(dmidecode_raw)
+        if has_dmi:
+            dmi = DMIParse(dmidecode_raw)
+            chassis = dmi.get('Chassis')
+            self.chassis = clean(chassis[0].get('Type', '')) if chassis else ''
+            self.manufacturer = clean(dmi.manufacturer())
+            self.model = clean(dmi.model())
+            self.serial_number = clean(dmi.serial_number())
 
         machine = get_inxi_key(self.inxi, 'Machine')
         for m in machine:
             system = get_inxi(m, "System")
             if system:
                 self.type = get_inxi(m, "Type")
-                if settings.DEVICEHUB_ALGORITHM_DEVICE == "ereuse24":
+                if settings.DEVICEHUB_ALGORITHM_DEVICE == "ereuse24" or not has_dmi:
                     self.manufacturer = system
                     self.type = get_inxi(m, "Type")
                     self.model = get_inxi(m, "product")
@@ -74,7 +77,13 @@ class Build(BuildMix):
             self.type = self.type or get_inxi(m, "Type")
             self.chassis = self.type
 
-        self.mac = get_mac(self.inxi) or ""
+        self.mac = ""
+        net_linux = self.json["data"].get('linux-adapters')
+        if net_linux:
+            self.mac = get_mac_linux(net_linux) or ""
+        if not self.mac:
+            self.mac = get_mac(self.inxi) or ""
+
         if not self.mac:
             txt = "Could not retrieve MAC address in snapshot %s"
             logger.warning(txt, self.uuid)
