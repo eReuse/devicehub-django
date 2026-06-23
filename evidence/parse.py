@@ -1,3 +1,4 @@
+import copy
 import json
 import hashlib
 import logging
@@ -6,7 +7,7 @@ from evidence import legacy_parse
 from evidence import old_parse
 from evidence import normal_parse
 from evidence import universal_parse
-from evidence.parse_details import _has_inxi
+from evidence.sources import Sources, detect, WB11, LEGACY, INXI, DMI
 
 from evidence.models import SystemProperty
 from evidence.xapian import index
@@ -17,6 +18,13 @@ if settings.DPP:
     from dpp.api_dlt import register_device_dlt, register_passport_dlt
 
 logger = logging.getLogger('django')
+
+BUILDERS = {
+    WB11: old_parse.Build,
+    LEGACY: legacy_parse.Build,
+    INXI: normal_parse.Build,
+    DMI: universal_parse.Build,
+}
 
 
 def get_mac(inxi):
@@ -41,21 +49,13 @@ class Build:
         4) normal snapshot from worbench-script is the most basic and is parsed as normal_parse
         5) workbench-script snapshot without inxi (e.g. Windows): universal_parse (dmidecode + smartctl)
         """
-        self.evidence = evidence_json.copy()
-        self.uuid = self.evidence.get('uuid')
+        self.evidence = copy.deepcopy(evidence_json)
         self.user = user
 
-        if evidence_json.get("credentialSubject"):
-            self.build = normal_parse.Build(evidence_json)
-            self.uuid = evidence_json.get("credentialSubject", {}).get("uuid")
-        elif evidence_json.get("data", {}).get("lshw"):
-            self.build = legacy_parse.Build(evidence_json)
-        elif evidence_json.get("software") != "workbench-script":
-            self.build = old_parse.Build(evidence_json)
-        elif not _has_inxi(evidence_json):
-            self.build = universal_parse.Build(evidence_json)
-        else:
-            self.build = normal_parse.Build(evidence_json)
+        self.sources = Sources(self.evidence)
+        self.uuid = self.sources.uuid
+        builder = BUILDERS.get(detect(self.sources), normal_parse.Build)
+        self.build = builder(self.sources.snapshot)
 
         if check:
             return
