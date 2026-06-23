@@ -108,14 +108,7 @@ class TokenView(DashboardView, SingleTableView):
         """
         Override the get_queryset method to filter events based on the user type.
         """
-        return Token.objects.filter().order_by("-id")
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context.update({
-            'tokens': Token.objects.all(),
-        })
-        return context
+        return Token.objects.filter(owner=self.request.user).order_by("-id")
 
 
 class TokenDeleteView(DashboardView, DeleteView):
