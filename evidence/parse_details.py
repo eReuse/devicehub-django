@@ -6,48 +6,26 @@ from evidence import (
     old_parse_details,
     universal_parse_details,
 )
+from evidence.sources import Sources, detect, WB11, LEGACY, INXI, DMI
 
 
 logger = logging.getLogger('django')
 
-
-def _has_inxi(snapshot):
-    """Returns True if the snapshot contains inxi data (normal or credential format)."""
-    if snapshot.get("data", {}).get("inxi"):
-        return True
-    for ev in snapshot.get("evidence", []):
-        if ev.get("operation") == "inxi" and ev.get("output"):
-            return True
-    return False
+DETAIL_BUILDERS = {
+    WB11: old_parse_details.ParseSnapshot,
+    LEGACY: legacy_parse_details.ParseSnapshot,
+    INXI: normal_parse_details.ParseSnapshot,
+    DMI: universal_parse_details.ParseSnapshot,
+}
 
 
 class ParseSnapshot:
     def __init__(self, snapshot, default="n/a"):
-        if snapshot.get("credentialSubject"):
-            self.build = normal_parse_details.ParseSnapshot(
-                snapshot,
-                default=default
-            )
-        elif snapshot.get("data", {}).get("lshw"):
-            self.build = legacy_parse_details.ParseSnapshot(
-                snapshot,
-                default=default
-            )
-        elif snapshot.get("software") != "workbench-script":
-            self.build = old_parse_details.ParseSnapshot(
-                snapshot,
-                default=default
-            )
-        elif not _has_inxi(snapshot):
-            self.build = universal_parse_details.ParseSnapshot(
-                snapshot,
-                default=default
-            )
-        else:
-            self.build = normal_parse_details.ParseSnapshot(
-                snapshot,
-                default=default
-            )
+        sources = Sources(snapshot)
+        builder = DETAIL_BUILDERS.get(
+            detect(sources), normal_parse_details.ParseSnapshot
+        )
+        self.build = builder(sources.snapshot, default=default)
 
         self.default = default
         self.device = self.build.snapshot_json.get("device")
