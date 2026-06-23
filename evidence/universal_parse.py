@@ -74,6 +74,68 @@ def _normalize_mac(raw):
     return ':'.join(digits[i:i+2] for i in range(0, 12, 2)).lower()
 
 
+def _parse_pci_bdf(bdf):
+    """
+    Extracts (domain, bus, device, function) from a Linux PCI address.
+    Returns None when the string is not a PCI BDF (e.g. loopback, USB or
+    virtual interfaces), so callers skip non-PCI interfaces the same way
+    inxi's "port" filter does.
+
+    sysfs exposes the address as DOMAIN:BUS:DEVICE.FUNCTION, e.g.
+      0000:00:1f.6
+    """
+    match = re.match(
+        r'^([0-9a-fA-F]{4}):([0-9a-fA-F]{2}):([0-9a-fA-F]{2})\.([0-9a-fA-F])$',
+        bdf.strip(),
+    )
+    if not match:
+        return None
+    return tuple(int(g, 16) for g in match.groups())
+
+
+def get_mac_linux(net_sysfs):
+    """
+    Returns the MAC of the most integrated (lowest PCI domain/bus/device/function)
+    network interface from a minimal /sys/class/net dump.
+
+    Linux mirror of get_mac_win for snapshots that ship a sysfs listing
+    instead of inxi. Each line is "BDF iface MAC", e.g.:
+      0000:00:1f.6 enp0s31f6 54:e1:ad:11:fb:b7
+    Non-PCI interfaces (loopback, USB, virtual) lack a decodeable BDF and are
+    skipped, so the result is the lowest-bus PCI card just like the inxi path.
+    Returns None if no PCI interface with a valid MAC is found.
+    """
+    if isinstance(net_sysfs, str):
+        lines = net_sysfs.splitlines()
+    elif isinstance(net_sysfs, list):
+        lines = net_sysfs
+    else:
+        return None
+
+    best_mac = None
+    best_location = None
+
+    for line in lines:
+        parts = line.split()
+        if len(parts) < 3:
+            continue
+        bdf, _iface, raw = parts[0], parts[1], parts[2]
+
+        location = _parse_pci_bdf(bdf)
+        if location is None:
+            continue
+
+        mac = _normalize_mac(raw)
+        if mac in ('', '00:00:00:00:00:00', 'ff:ff:ff:ff:ff:ff'):
+            continue
+
+        if best_location is None or location < best_location:
+            best_location = location
+            best_mac = mac
+
+    return best_mac
+
+
 class Build(BuildMix):
     """
     Universal parser that uses only dmidecode + smartctl.
@@ -86,9 +148,6 @@ class Build(BuildMix):
         data = self.json.get('data', {})
 
         dmidecode_raw = data.get('dmidecode', '')
-        for ev in self.json.get('evidence', []):
-            if ev.get('operation') == 'dmidecode':
-                dmidecode_raw = ev['output']
 
         if not dmidecode_raw:
             txt = 'universal_parse: snapshot %s has no dmidecode data'
@@ -109,20 +168,20 @@ class Build(BuildMix):
             self.sku = system[0].get('SKU Number', '').strip()
             self.version = system[0].get('Version', '').strip()
 
-        net_adapters_raw = data.get('get-netadapter', [])
-        for ev in self.json.get('evidence', []):
-            if ev.get('operation') == 'get-netadapter':
-                net_adapters_raw = ev['output']
+        net_win = data.get('windows-adapters')
+        net_linux = data.get('linux-adapters')
 
-        if isinstance(net_adapters_raw, str):
+        if isinstance(net_win, str):
             try:
-                net_adapters_raw = json.loads(net_adapters_raw)
+                net_win = json.loads(net_win)
             except Exception:
-                net_adapters_raw = []
+                net_win = []
 
         self.mac = ''
-        if net_adapters_raw:
-            self.mac = get_mac_win(net_adapters_raw) or ''
+        if net_win:
+            self.mac = get_mac_win(net_win) or ''
+        elif net_linux:
+            self.mac = get_mac_linux(net_linux) or ''
 
         if not self.mac:
             logger.warning(
