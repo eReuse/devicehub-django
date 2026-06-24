@@ -84,7 +84,7 @@ class Sources:
 
     @property
     def windows_adapters(self):
-        return self.data.get("windows-adapters")
+        return self.data.get("get-netadapter")
 
     @property
     def linux_adapters(self):

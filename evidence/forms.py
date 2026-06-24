@@ -18,6 +18,7 @@ from utils.save_snapshots import move_json, save_in_disk
 from utils.photo_evidence import save_photo_in_disk, get_photos_dir
 from action.models import DeviceLog
 from evidence.image_processing import process_image
+from utils.constants import ALGO_PHOTO25
 
 
 class UploadForm(forms.Form):
@@ -385,7 +386,7 @@ class PhotoForm(forms.Form):
         self.photo_data.pop('content', None)
         self.photo_data.pop('file', None)
         self.uuid = str(uuid.uuid4())
-        algo_key = 'photo25'
+        algo_key = ALGO_PHOTO25
 
         doc = {
             'uuid': self.uuid,

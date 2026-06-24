@@ -1,7 +1,9 @@
 import logging
 from django.conf import settings
 
-from utils.constants import ALGOS
+from evidence.identity import parse_identity
+from evidence.sources import Sources
+from utils.constants import ALGOS, ALGO_EREUSE26, ALGO_EREUSE22
 
 
 logger = logging.getLogger('django')
@@ -49,7 +51,16 @@ class BuildMix:
             raise Exception(txt)
 
         self.get_details()
+        if settings.DEVICEHUB_ALGORITHM_DEVICE == ALGO_EREUSE26:
+            self._apply_ereuse26_identity()
         self.generate_chids()
+
+    def _apply_ereuse26_identity(self):
+        sources = Sources(self.json)
+        identity = parse_identity(sources, native_device=sources.device)
+        self.manufacturer = identity.get("manufacturer", "") or ""
+        self.model = identity.get("model", "") or ""
+        self.serial_number = identity.get("serial_number", "") or ""
 
     def get_hid(self, algo):
         algorithm = ALGOS.get(algo, [])
@@ -77,7 +88,7 @@ class BuildMix:
         self._get_components()
 
         components = sorted(self.components, key=lambda x: x.get("type"))
-        device = self.algorithms.get('ereuse22')
+        device = self.algorithms.get(ALGO_EREUSE22)
 
         doc = [("computer", device)]
 
@@ -87,7 +98,7 @@ class BuildMix:
         return doc
 
     def get_id_hw_dpp(self, d):
-        algorithm = ALGOS.get("ereuse22", [])
+        algorithm = ALGOS.get(ALGO_EREUSE22, [])
         hid = ""
         for f in algorithm:
             hid += d.get(f, '')

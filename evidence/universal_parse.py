@@ -168,7 +168,7 @@ class Build(BuildMix):
             self.sku = system[0].get('SKU Number', '').strip()
             self.version = system[0].get('Version', '').strip()
 
-        net_win = data.get('windows-adapters')
+        net_win = data.get('get-netadapter')
         net_linux = data.get('linux-adapters')
 
         if isinstance(net_win, str):
