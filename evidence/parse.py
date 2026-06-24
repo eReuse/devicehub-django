@@ -12,6 +12,7 @@ from evidence.sources import Sources, detect, WB11, LEGACY, INXI, DMI
 from evidence.models import SystemProperty
 from evidence.xapian import index
 from evidence.normal_parse_details import get_inxi_key, get_inxi
+from utils.constants import ALGO_EREUSE22
 from django.conf import settings
 
 if settings.DPP:
@@ -97,7 +98,7 @@ class Build:
         return hashlib.sha3_256(doc.encode()).hexdigest()
 
     def register_device_dlt(self):
-        legacy_dpp = self.build.algorithms.get('ereuse22')
+        legacy_dpp = self.build.algorithms.get(ALGO_EREUSE22)
         chid = self.sign(legacy_dpp)
         phid = self.sign(json.dumps(self.build.get_doc()))
         register_device_dlt(chid, phid, self.uuid, self.user)

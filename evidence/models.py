@@ -10,7 +10,7 @@ from django.utils import timezone
 from django.conf import settings
 
 from django.db.models import Q
-from utils.constants import STR_EXTEND_SIZE, CHASSIS_DH
+from utils.constants import STR_EXTEND_SIZE, CHASSIS_DH, ALGO_PHOTO25
 from evidence.xapian import search
 from evidence.parse_details import ParseSnapshot
 from evidence.normal_parse_details import get_inxi, get_inxi_key
@@ -715,7 +715,7 @@ class Evidence:
         return self.doc.get("type") == "WebSnapshot"
 
     def is_photo_evidence(self):
-        return self.doc.get("type") == "photo25"
+        return self.doc.get("type") == ALGO_PHOTO25
 
     def did_document(self):
         if not self.doc.get("credentialSubject"):

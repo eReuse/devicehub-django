@@ -8,6 +8,14 @@ STR_BIG_SIZE = 128
 STR_EXTEND_SIZE = 256
 
 
+# Algorithm identifiers (string keys). Named constants so a typo raises
+# NameError instead of silently producing a wrong key, and so the name lives
+# in a single place.
+ALGO_EREUSE24 = "ereuse24"
+ALGO_EREUSE26 = "ereuse26"
+ALGO_EREUSE22 = "ereuse22"
+ALGO_PHOTO25 = "photo25"
+
 # Algorithms for build hids
 EREUSE24 = [
     "manufacturer",
@@ -44,11 +52,16 @@ PHOTO25 = {
 }
 
 ALGOS = {
-    "ereuse24": EREUSE24,
-    "ereuse26": EREUSE26,
-    "ereuse22": EREUSE22,
-    "photo25": PHOTO25
+    ALGO_EREUSE24: EREUSE24,
+    ALGO_EREUSE26: EREUSE26,
+    ALGO_EREUSE22: EREUSE22,
+    ALGO_PHOTO25: PHOTO25
 }
+
+# Subset of ALGOS that build a device identity HID (excludes ereuse22, the DPP
+# chid, and photo25, the photo evidence algorithm). migrate_hid_aliases maps
+# RootAlias entries between these when the active algorithm changes.
+DEVICE_IDENTITY_ALGOS = (ALGO_EREUSE24, ALGO_EREUSE26)
 
 
 # utils/icons.py is the source of true about types of devices
