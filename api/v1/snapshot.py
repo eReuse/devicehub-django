@@ -125,12 +125,15 @@ def NewSnapshot(request, snapshot: UploadedFile = File(...)):
     url_args = reverse_lazy("device:details", args=(prop.value,))
     url = request.build_absolute_uri(url_args)
 
+    url_public_args = reverse_lazy("device:device_web", args=(prop.value,))
+    url_public = request.build_absolute_uri(url_public_args)
+
     move_json(path_name, user.institution.name)
     response = {
         "status": "success",
         "dhid": prop.value[:6].upper(),
         "url": url,
         # TODO replace with public_url when available
-        "public_url": url
+        "public_url": url_public
     }
     return response

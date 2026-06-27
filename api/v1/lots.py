@@ -1,16 +1,18 @@
 import logging
 
-from ninja import Router
+import math
+from ninja import Router, Query
 from ninja.errors import HttpError
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 
 from lot.models import DeviceLot
-from device.models import Device, ProductCache
+from evidence.models import UserProperty
 from api.auth import GlobalAuth
 from api.v1.schemas import DeviceIDInput, LotDevicesResponse, MessageOut, OperationResult
 
-from api.v1.utils import find_lot, check_valid_ids, build_device_export_dict
+from api.v1.utils import find_lot, check_valid_ids, get_all_search_results, build_device_response_list
+from device.models import ProductCache
 
 logger = logging.getLogger('django')
 router = Router(tags=["Lots"])
@@ -32,32 +34,56 @@ router = Router(tags=["Lots"])
     tags=["Lots"],
     auth=GlobalAuth(),
 )
-def retrieveLotDevices(request, lot_id: str):
+def retrieveLotDevices(
+    request,
+    lot_id: str,
+    q: str = Query(None, description="Optional search query (ShortID or Text)"),
+    prop_key: str = Query(None, description="Filter by UserProperty key"),
+    prop_value: str = Query(None, description="Filter by UserProperty value"),
+    page: int = Query(1, ge=1, description="Page number"),
+    size: int = Query(50, ge=1, le=50, description="Items per page")
+):
     user = request.auth
+    institution = user.institution
 
-    lot = find_lot(lot_id, user.institution)
+    lot = find_lot(lot_id, institution)
     if not lot:
-        raise HttpError(404, "Lot not found")
+        raise HttpError(404, "Lot not found for your institution")
 
-    chids = lot.devicelot_set.values_list("device_id", flat=True).distinct()
-    cached_devices = ProductCache.objects.filter(owner=user.institution, root__in=chids)
+    valid_ids_set = set(lot.devicelot_set.values_list("device_id", flat=True))
 
-    devices_export = []
-    for cache in cached_devices:
-        device = Device(id=cache.root, owner=user.institution)
-        dev_data = build_device_export_dict(cache, device)
-        devices_export.append(dev_data)
+    # apply filters
+    if prop_key or prop_value:
+        prop_qs = UserProperty.objects.filter(owner=institution, device_id__in=valid_ids_set, type=UserProperty.Type.USER)
+        if prop_key: prop_qs = prop_qs.filter(key=prop_key)
+        if prop_value: prop_qs = prop_qs.filter(value=prop_value)
+        valid_ids_set = valid_ids_set.intersection(prop_qs.values_list("device_id", flat=True))
+
+    if q and q.strip():
+        search_ids = get_all_search_results(q.strip(), institution)
+        chids_ordered = [x for x in search_ids if x in valid_ids_set]
+    else:
+        chids_ordered = list(ProductCache.objects.filter(root__in=valid_ids_set).order_by('-last_updated').values_list('root', flat=True))
+
+    total_items = len(chids_ordered)
+    total_pages = math.ceil(total_items / size) if total_items > 0 else 1
+
+    if total_items == 0 or page > total_pages:
+        return LotDevicesResponse(
+            lot={"id": lot.pk, "name": lot.name, "code": lot.code, "archived": lot.archived, "created": lot.created, "updated": lot.updated, "description": lot.description},
+            pagination={"total_items": total_items, "total_pages": total_pages, "current_page": page, "page_size": size},
+            devices=[]
+        )
+
+    # slice and then fetch data
+    offset = (page - 1) * size
+    chids_page = chids_ordered[offset : offset + size]
+
+    devices_export = build_device_response_list(chids_page, institution, lot)
 
     return LotDevicesResponse(
-        lot={
-            "id": lot.pk,
-            "name": lot.name,
-            "code": lot.code,
-            "archived": lot.archived,
-            "created": lot.created,
-            "updated": lot.updated,
-            "description": lot.description,
-        },
+        lot={"id": lot.pk, "name": lot.name, "code": lot.code, "archived": lot.archived, "created": lot.created, "updated": lot.updated, "description": lot.description},
+        pagination={"total_items": total_items, "total_pages": total_pages, "current_page": page, "page_size": size},
         devices=devices_export
     )
 
@@ -86,32 +112,23 @@ def assignLotDevices(request, lot_id: str, data: DeviceIDInput):
     user = request.auth
     lot = find_lot(lot_id, user.institution)
 
-    if not lot:
-        raise HttpError(404, "Lot not found")
-    if lot.archived:
-        raise HttpError(401, "Lot is archived")
+    if not lot: raise HttpError(404, "Lot not found")
+    if lot.archived: raise HttpError(401, "Lot is archived")
 
     try:
         valid_ids, invalid_ids = check_valid_ids(data.device_ids, user.institution)
-        if not valid_ids:
-            raise HttpError(422, "No valid device IDs provided")
+        if not valid_ids: raise HttpError(422, "No valid device IDs provided")
 
         existing_devices = set(lot.devicelot_set.filter(device_id__in=valid_ids).values_list('device_id', flat=True))
         unassigned_ids = valid_ids - existing_devices
 
         if unassigned_ids:
-            DeviceLot.objects.bulk_create([
-                DeviceLot(lot=lot, device_id=device_id) for device_id in unassigned_ids
-            ], ignore_conflicts=True)
+            DeviceLot.objects.bulk_create([DeviceLot(lot=lot, device_id=did) for did in unassigned_ids], ignore_conflicts=True)
 
-        response = OperationResult(
-            success=True,
-            processed_ids=list(valid_ids),
-            invalid_ids=list(invalid_ids),
+        return (200 if not invalid_ids else 207), OperationResult(
+            success=True, processed_ids=list(valid_ids), invalid_ids=list(invalid_ids),
             message="Some id's were invalid" if invalid_ids else "All devices assigned successfully"
         )
-        return 200 if not invalid_ids else 207, response
-
     except ValidationError as e:
         raise HttpError(400, str(e))
 
@@ -138,13 +155,11 @@ def remove_devices_from_lot(request, lot_id: str, data: DeviceIDInput):
     user = request.auth
     lot = find_lot(lot_id, user.institution)
 
-    if not lot:
-        raise HttpError(404, "Lot not found")
+    if not lot: raise HttpError(404, "Lot not found")
 
     try:
         valid_ids, invalid_ids = check_valid_ids(data.device_ids, user.institution)
-        if not valid_ids:
-            raise HttpError(422, "No valid device IDs provided")
+        if not valid_ids: raise HttpError(422, "No valid device IDs provided")
 
         existing_devices = set(lot.devicelot_set.filter(device_id__in=valid_ids).values_list('device_id', flat=True))
         devices_to_remove = valid_ids & existing_devices
@@ -152,13 +167,9 @@ def remove_devices_from_lot(request, lot_id: str, data: DeviceIDInput):
         if devices_to_remove:
             lot.devicelot_set.filter(device_id__in=devices_to_remove).delete()
 
-        response = OperationResult(
-            success=True,
-            processed_ids=list(valid_ids),
-            invalid_ids=list(invalid_ids),
+        return (200 if not invalid_ids else 207), OperationResult(
+            success=True, processed_ids=list(valid_ids), invalid_ids=list(invalid_ids),
             message="Some id's were invalid" if invalid_ids else "All devices de-assigned successfully"
         )
-        return 200 if not invalid_ids else 207, response
-
     except ValidationError as e:
         raise HttpError(400, str(e))

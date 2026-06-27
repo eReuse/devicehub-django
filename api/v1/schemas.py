@@ -10,6 +10,13 @@ from lot.models import Lot
 from evidence.models import UserProperty
 
 
+class PaginationOut(BaseModel):
+    total_items: int = Field(..., description=str(_("Total number of items across all pages")))
+    total_pages: int = Field(..., description=str(_("Total number of pages")))
+    current_page: int = Field(..., description=str(_("Current page number")))
+    page_size: int = Field(..., description=str(_("Number of items per page")))
+
+
 class DeviceResponse(BaseModel):
     ID: str = Field(
         ...,
@@ -130,9 +137,14 @@ class LotInfo(ModelSchema):
         description=str(_("Description of the lot contents"))
     )
 
+class DeviceListResponse(BaseModel):
+    pagination: PaginationOut = Field(..., description=str(_("Pagination metadata")))
+    devices: List[DeviceResponse] = Field(..., description=str(_("List of all devices")))
+
 
 class LotDevicesResponse(BaseModel):
     lot: LotInfo = Field(..., description=str(_("Lot information")))
+    pagination: PaginationOut = Field(..., description=str(_("Pagination metadata")))
     devices: List[DeviceResponse] = Field(..., description=str(_("List of devices in this lot")))
 
 
