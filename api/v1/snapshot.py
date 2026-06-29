@@ -1,9 +1,8 @@
 import json
 import logging
 
-from ninja import Router, File
-from ninja.files import UploadedFile
-from django.urls import reverse_lazy
+from ninja import Router
+from django.urls import reverse
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 
@@ -41,20 +40,16 @@ router = Router(tags=["Snapshot"])
     url_name="upload_snapshot",
     auth=GlobalAuth()
 )
-def NewSnapshot(request, snapshot: UploadedFile = File(...)):
+def NewSnapshot(request):
     user = request.auth
 
-    # Validation snapshot
+    # validate payload
     try:
-        data = json.loads(snapshot.read())
+        data = json.loads(request.body)
     except json.JSONDecodeError as e:
         logger.error("Invalid JSON received: %s", str(e))
-        return 400, {
-            "error": "Invalid JSON format",
-            "details": str(e)
-        }
+        return 400, {"error": "Invalid JSON format", "details": str(e)}
 
-    # Process snapshot
     try:
         path_name = save_in_disk(data, user.institution.name)
     except Exception as e:
@@ -84,16 +79,9 @@ def NewSnapshot(request, snapshot: UploadedFile = File(...)):
             "details": "Snapshot must contain a UUID"
         }
 
-    exist_property = SystemProperty.objects.filter(
-        uuid=ev_uuid
-    ).first()
-
-    if exist_property:
+    if SystemProperty.objects.filter(uuid=ev_uuid).exists():
         logger.warning("Duplicate snapshot received with UUID: %s", ev_uuid)
-        return 409, {
-            "error": "Snapshot already exists",
-            "details": f"UUID {ev_uuid} is already registered"
-        }
+        return 409, {"error": "Snapshot already exists", "details": f"UUID {ev_uuid} is already registered"}
 
     try:
         Build(data, user)
@@ -122,10 +110,10 @@ def NewSnapshot(request, snapshot: UploadedFile = File(...)):
             "details": "Could not create device property"
         }
 
-    url_args = reverse_lazy("device:details", args=(prop.value,))
+    url_args = reverse("device:details", args=(prop.value,))
     url = request.build_absolute_uri(url_args)
 
-    url_public_args = reverse_lazy("device:device_web", args=(prop.value,))
+    url_public_args = reverse("device:device_web", args=(prop.value,))
     url_public = request.build_absolute_uri(url_public_args)
 
     move_json(path_name, user.institution.name)
