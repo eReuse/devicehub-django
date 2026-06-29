@@ -1,6 +1,7 @@
 import json
 import logging
 
+from ninja import Body
 from ninja import Router
 from django.urls import reverse
 from django.conf import settings
@@ -40,7 +41,7 @@ router = Router(tags=["Snapshot"])
     url_name="upload_snapshot",
     auth=GlobalAuth()
 )
-def NewSnapshot(request):
+def NewSnapshot(request, data: dict = Body(..., description="Paste the raw workbench JSON snapshot here")):
     user = request.auth
 
     # validate payload
