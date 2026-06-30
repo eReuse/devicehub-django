@@ -24,6 +24,14 @@ from environmental_impact.algorithms.ereuse2025.carbon_intensity import (
     get_country_label,
 )
 from environmental_impact.models import DeviceEnvironmentalProfile
+from environmental_impact.social_impact import (
+    compute_device_social_impact,
+    evidence_timeline,
+    expand_intervals_to_flagged_uuids,
+    SocialKeys,
+    TRUE_VALUE,
+    FALSE_VALUE,
+)
 from evidence.models import UserProperty, SystemProperty, Evidence, RootAlias
 from lot.models import LotTag
 from device.models import Device
@@ -114,6 +122,8 @@ class DetailsView(DashboardView, TemplateView ):
         action = request.POST.get("action")
         if action == "save_environmental_profile":
             return self._save_environmental_profile(request, kwargs["pk"])
+        if action == "save_social_inclusion":
+            return self._save_social_inclusion(request, kwargs["pk"])
 
         url = request.POST.get("url")
 
@@ -166,6 +176,69 @@ class DetailsView(DashboardView, TemplateView ):
             % {"country": country_code},
         )
         return redirect(reverse_lazy("device:details", args=[pk]) + "#environmental_impact")
+
+    def _save_social_inclusion(self, request, pk):
+        """Store the manager-set vulnerable-person marking for a device.
+
+        The vulnerable-person gate is one device-level property on the last
+        evidence. The submitted (from, to) interval pairs are expanded into
+        per-evidence ``social:inclusion_use`` flags (one per marked span uuid),
+        which generalises to several disjoint inclusion periods. Existing flags
+        are cleared first so unmarking works.
+        """
+        institution = request.user.institution
+        root = RootAlias.objects.filter(owner=institution, alias=pk).first()
+        device_id = root.root if root else pk
+
+        device = Device(id=device_id, owner=institution)
+        device.initial()
+        last_evidence = device.last_evidence
+        if not last_evidence:
+            raise Http404
+
+        # Device-level vulnerable gate.
+        UserProperty.objects.update_or_create(
+            uuid=last_evidence.uuid,
+            key=SocialKeys.VULNERABLE,
+            defaults={
+                "value": (
+                    TRUE_VALUE if request.POST.get("vulnerable_person") else FALSE_VALUE
+                ),
+                "owner": institution,
+                "user": request.user,
+                "type": UserProperty.Type.USER,
+            },
+        )
+
+        # Expand the submitted intervals into per-evidence span flags.
+        timeline = evidence_timeline(device)
+        froms = request.POST.getlist("vulnerable_from")
+        tos = request.POST.getlist("vulnerable_to")
+        intervals = [
+            (f.strip(), t.strip())
+            for f, t in zip(froms, tos)
+            if f.strip()
+        ]
+        flagged = expand_intervals_to_flagged_uuids(timeline, intervals)
+
+        # Reset existing flags across the device, then set the marked spans.
+        UserProperty.objects.filter(
+            uuid__in=device.uuids,
+            owner=institution,
+            key=SocialKeys.INCLUSION_USE,
+        ).delete()
+        for uuid in flagged:
+            UserProperty.objects.create(
+                uuid=uuid,
+                key=SocialKeys.INCLUSION_USE,
+                value=TRUE_VALUE,
+                owner=institution,
+                user=request.user,
+                type=UserProperty.Type.USER,
+            )
+
+        messages.success(request, _("Social impact information updated."))
+        return redirect(reverse_lazy("device:details", args=[pk]) + "#social_impact")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -226,6 +299,7 @@ class DetailsView(DashboardView, TemplateView ):
             'lot_tags': lot_tags,
             'dpps': dpps,
             'impact': enviromental_impact,
+            'social': compute_device_social_impact(self.object, self.request.user.institution),
             'environmental_profile': environmental_profile,
             'environmental_country_choices': get_available_country_choices(language_code),
             'environmental_country_label': get_country_label(country_code, language_code),

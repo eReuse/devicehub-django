@@ -91,6 +91,9 @@
         <li class="nav-item">
           <a href="#environmental_impact" class="nav-link" data-bs-toggle="tab" data-bs-target="#environmental_impact">{% trans 'Environmental impact' %}</a>
         </li>
+        <li class="nav-item">
+          <a href="#social_impact" class="nav-link" data-bs-toggle="tab" data-bs-target="#social_impact">{% trans 'Social impact' %}</a>
+        </li>
       </ul>
     </div>
   </div>
@@ -111,6 +114,8 @@
   {% include 'tabs/dpps.html' %}
 
   {% include 'tabs/environmental_impact.html' %}
+
+  {% include 'tabs/social_impact.html' %}
 
   <!-- Add a note popup -->
   <div class="modal fade" id="addNoteModal" tabindex="-1" aria-labelledby="addNoteModalLabel" aria-hidden="true">

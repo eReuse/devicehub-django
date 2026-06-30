@@ -110,10 +110,31 @@ class Build:
         if not self.user:
             return
 
+        sibling_uuids = self._device_evidence_uuids()
         data = self.evidence.get("data", {})
         for key, value in self.mobile_annotations(data).items():
             if value in (None, ""):
                 continue
+            value = str(value)
+
+            # Record value changes vs the device's previous evidences in the
+            # device log, so the Properties tab can show only the current value
+            # while the history stays visible (time series of re-scans).
+            prev = (
+                UserProperty.objects.filter(
+                    uuid__in=sibling_uuids,
+                    owner=self.user.institution,
+                    key=key,
+                    type=UserProperty.Type.USER,
+                )
+                .exclude(uuid=self.uuid)
+                .order_by("-created")
+                .values_list("value", flat=True)
+                .first()
+            )
+            if prev is not None and prev != value:
+                self._log_device_event("{}: {} → {}".format(key, prev, value))
+
             exists = UserProperty.objects.filter(
                 uuid=self.uuid, owner=self.user.institution, key=key
             ).exists()
@@ -124,9 +145,41 @@ class Build:
                 owner=self.user.institution,
                 user=self.user,
                 key=key,
-                value=str(value),
+                value=value,
                 type=UserProperty.Type.USER,
             )
+
+    def _device_evidence_uuids(self):
+        """Uuids of every evidence identified as the same device.
+
+        Siblings share an identity SystemProperty value (``algo:hash``), the
+        same join used for device enumeration. Includes the current evidence.
+        """
+        my_values = [
+            "{}:{}".format(k, self.sign(v))
+            for k, v in self.build.algorithms.items()
+        ]
+        if not my_values:
+            return [self.uuid]
+        uuids = (
+            SystemProperty.objects.filter(
+                owner=self.user.institution, value__in=my_values
+            )
+            .values_list("uuid", flat=True)
+            .distinct()
+        )
+        return list(uuids) or [self.uuid]
+
+    def _log_device_event(self, event):
+        # Lazy import: action depends on device/evidence, avoid an import cycle.
+        from action.models import DeviceLog
+
+        DeviceLog.objects.create(
+            institution=self.user.institution,
+            user=self.user,
+            event=event[:255],
+            snapshot_uuid=self.uuid,
+        )
 
     @staticmethod
     def mobile_annotations(data):

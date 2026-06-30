@@ -112,8 +112,16 @@ class Device:
             uuid__in=self.uuids,
             owner=self.owner,
             type=UserProperty.Type.USER,
-        )
-        return user_properties
+        ).order_by("-created")
+
+        # Properties accumulate one row per evidence (uuid); for the device view
+        # we only want the current value, i.e. the newest row per key. Older
+        # values live on in the device log. order_by(-created) + setdefault keeps
+        # the most recent per key.
+        latest = {}
+        for prop in user_properties:
+            latest.setdefault(prop.key, prop)
+        return list(latest.values())
 
     def get_uuids(self):
         for a in self.get_properties():
