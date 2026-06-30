@@ -19,7 +19,7 @@ from django_tables2.export.export import TableExport
 from django_tables2.export.views import ExportMixin
 
 from action.models import StateDefinition, State
-from django.db.models import Max, Q, Subquery, OuterRef
+from django.db.models import Q, Subquery, OuterRef
 
 from dashboard.mixins import InventaryMixin, DetailsMixin, DeviceTableMixin, ProductCacheTableMixin
 from evidence.models import SystemProperty, RootAlias, UserProperty
@@ -177,13 +177,6 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
             return []
 
         rows_by_id, sort_keys = self._build_table_rows(device_ids)
-
-        # beneficiary status per device (global across all lots — highest status wins)
-        beneficiary_statuses = dict(
-            DeviceBeneficiary.objects.filter(
-                device_id__in=device_ids,
-            ).values('device_id').annotate(max_status=Max('status')).values_list('device_id', 'max_status')
-        )
 
         # Phase 3: sort in Python
         sort_param = self.request.GET.get('sort', '-last_updated')
@@ -352,10 +345,11 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
         # beneficiary status per root (any physical id may carry the row).
         status_by_root = {}
         for db in DeviceBeneficiary.objects.filter(
-            device_id__in=alias_ids, beneficiary__lot=self.object,
+            device_id__in=alias_ids,
         ).values('device_id', 'status'):
             root = alias_to_root.get(db['device_id'], db['device_id'])
-            status_by_root.setdefault(root, db['status'])
+            if root not in status_by_root or db['status'] > status_by_root[root]:
+                status_by_root[root] = db['status']
 
         return projections, state_by_root, status_by_root
 
