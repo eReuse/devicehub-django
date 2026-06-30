@@ -1,7 +1,9 @@
 import os
 from typing import List, Dict, Optional
+from django.core.exceptions import ValidationError
 from device.models import Device
-from evidence.models import Evidence
+from evidence.estimators import estimate_power_on_hours
+from evidence.models import Evidence, UserProperty
 from .docs_renderer import render_docs
 
 
@@ -20,6 +22,10 @@ def get_poh_from_evidence(evidence: Evidence) -> int:
         int: Power-on hours, or 0 if unable to determine
     """
     try:
+        mobile_poh = get_mobile_poh_from_evidence(evidence)
+        if mobile_poh:
+            return mobile_poh
+
         # Check if it's legacy workbench (no inxi data)
         is_legacy_workbench = not evidence.inxi
         if is_legacy_workbench:
@@ -39,6 +45,32 @@ def get_poh_from_evidence(evidence: Evidence) -> int:
 
     except Exception:
         return 0  # Default fallback for any errors
+
+
+def get_mobile_poh_from_evidence(evidence: Evidence) -> int:
+    """Extract or estimate power-on hours from a workbench-android evidence."""
+    doc = getattr(evidence, "doc", None) or {}
+    if doc.get("software") != "workbench-android":
+        return 0
+
+    try:
+        prop = UserProperty.objects.filter(
+            uuid=getattr(evidence, "uuid", None),
+            key="usage:power_on_hours",
+        ).first()
+    except (TypeError, ValueError, ValidationError):
+        prop = None
+
+    if prop:
+        try:
+            return int(prop.value)
+        except (TypeError, ValueError):
+            pass
+
+    estimate = estimate_power_on_hours(doc.get("data", {}).get("usage") or {})
+    if estimate:
+        return estimate.hours
+    return 0
 
 
 def get_poh_from_device(device: Device) -> int:

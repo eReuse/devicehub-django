@@ -5,6 +5,7 @@ Extraction utilities for lifecycle data from device evidences.
 from datetime import datetime
 from typing import List, Optional, Tuple, Dict
 from device.models import Device
+from .. import common
 from ..common import convert_str_time_to_hours
 from .lifecycle_models import EvidenceData, DiskMetadata
 
@@ -64,11 +65,13 @@ def get_evidences_data_from_device(device: Device) -> List[EvidenceData]:
 
     for idx, evidence in enumerate(evidences_in_chronological_order):
         components = evidence.get_components()
-        poh = 0
+        poh = common.get_mobile_poh_from_evidence(evidence)
         disk_metadata = DiskMetadata("", "", "")
         # Only process if not legacy (inxi present)
-        if getattr(evidence, "inxi", None):
-            poh, candidate_comp = _find_storage_with_poh(components)
+        if getattr(evidence, "inxi", None) or poh:
+            storage_poh, candidate_comp = _find_storage_with_poh(components)
+            if storage_poh:
+                poh = storage_poh
             if not candidate_comp:
                 candidate_comp = _find_first_storage(components)
             if candidate_comp:
