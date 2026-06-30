@@ -5,12 +5,19 @@ from django.shortcuts import render
 from django.utils.translation import gettext_lazy as _
 from django.views.generic.base import TemplateView
 from dashboard.mixins import DashboardView, Http403
+from django.shortcuts import get_object_or_404, redirect
+from dashboard.mixins import DashboardView
+from django_tables2 import SingleTableView
 from django.views.generic.edit import (
-    FormView,
+    CreateView,
+    DeleteView,
+    UpdateView,
+    FormView
 )
-
-from user.models import User
+from user.tables import TokensTable
 from user.forms import SettingsForm
+from user.models import User
+from uuid import uuid4
 from api.models import Token
 from django_tables2 import RequestConfig
 from django.views.generic import DetailView
@@ -35,7 +42,7 @@ class SettingsView(DashboardView, FormView):
     def form_valid(self, form):
         cleaned_data = form.cleaned_data.copy()
         settings_tmpl = "settings.ini"
-        path = reverse("api:new_snapshot")
+        path = reverse("api_v1:upload_snapshot")
         cleaned_data['url'] = self.request.build_absolute_uri(path)
 
         if config("LEGACY", False):
@@ -49,7 +56,7 @@ class SettingsView(DashboardView, FormView):
         return response
 
     def get_form_kwargs(self):
-        tokens = Token.objects.filter(owner=self.request.user)
+        tokens = Token.objects.filter(owner=self.request.user, is_active=True)
         kwargs = super().get_form_kwargs()
         kwargs['tokens'] = tokens
         return kwargs
@@ -86,3 +93,72 @@ class UserProfileView(DashboardView, DetailView):
 
             context['title'] = f"{user.first_name or user.email}'s Profile"
             return context
+
+
+class TokenView(DashboardView, SingleTableView):
+    template_name = "token.html"
+    title = _("Credential management")
+    section = "Credential"
+    subtitle = _('Managament Tokens')
+    icon = 'bi bi-key'
+    model = Token
+    table_class = TokensTable
+
+    def get_queryset(self):
+        """
+        Override the get_queryset method to filter events based on the user type.
+        """
+        return Token.objects.filter(owner=self.request.user).order_by("-id")
+
+
+class TokenDeleteView(DashboardView, DeleteView):
+    model = Token
+
+    def get(self, request, *args, **kwargs):
+        self.pk = kwargs['pk']
+        self.object = get_object_or_404(self.model, pk=self.pk, owner=self.request.user)
+        self.object.delete()
+
+        return redirect('user:tokens')
+
+
+class TokenNewView(DashboardView, CreateView):
+    template_name = "new_token.html"
+    title = _("Credential management")
+    section = "Credential"
+    subtitle = _('New Tokens')
+    icon = 'bi bi-key'
+    model = Token
+    success_url = reverse_lazy('user:tokens')
+    fields = (
+        "tag",
+    )
+
+    def form_valid(self, form):
+        form.instance.owner = self.request.user
+        form.instance.token = uuid4()
+        return super().form_valid(form)
+
+
+class EditTokenView(DashboardView, UpdateView):
+    template_name = "new_token.html"
+    title = _("Credential management")
+    section = "Credential"
+    subtitle = _('New Tokens')
+    icon = 'bi bi-key'
+    model = Token
+    success_url = reverse_lazy('user:tokens')
+    fields = (
+        "tag",
+        "is_active"
+    )
+
+    def get_form_kwargs(self):
+        pk = self.kwargs.get('pk')
+        self.object = get_object_or_404(
+            self.model,
+            owner=self.request.user,
+            pk=pk,
+        )
+        kwargs = super().get_form_kwargs()
+        return kwargs

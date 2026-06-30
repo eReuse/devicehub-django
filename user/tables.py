@@ -1,6 +1,7 @@
 import django_tables2 as tables
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
+from django.urls import reverse
 
 from api.models import Token
 
@@ -28,14 +29,14 @@ class TokensTable(tables.Table):
     delete = ButtonColumn(
             verbose_name=_("Delete"),
             linkify={
-                "viewname": "api:delete_token",
+                "viewname": "user:delete_token",
                 "args": [tables.A("pk")]
             },
             orderable=False
     )
     edit_token = ButtonColumn(
             linkify={
-                "viewname": "api:edit_token",
+                "viewname": "user:edit_token",
                 "args": [tables.A("pk")]
                 },
             attrs = {
@@ -79,7 +80,6 @@ class TokensTable(tables.Table):
     #     return (queryset, True)
 
     class Meta:
-        model = Token
         template_name = "custom_table.html"
-        fields = ("tag", "token",  "edit_token")
-        sequence = ("tag", "token",  "edit_token")
+        model = Token
+        fields = ("token", "tag", "is_active" , "edit_token")

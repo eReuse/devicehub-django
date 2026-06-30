@@ -10,7 +10,6 @@ from django.conf import settings
 # stemmer = xapian.Stem("english")
 # indexer.set_stemmer(stemmer)
 
-
 def search(institution, qs, offset=0, limit=10):
     try:
         database = xapian.Database(settings.EVIDENCES_DIR)
@@ -21,8 +20,21 @@ def search(institution, qs, offset=0, limit=10):
     qp.set_database(database)
     qp.set_stemmer(xapian.Stem("english"))
     qp.set_stemming_strategy(xapian.QueryParser.STEM_SOME)
+
+    # AND operator so search doesnt return thousands of results
+    qp.set_default_op(xapian.Query.OP_AND)
+
     qp.add_prefix("uuid", "uuid")
-    query = qp.parse_query(qs)
+
+    flags = (
+        xapian.QueryParser.FLAG_BOOLEAN |
+        xapian.QueryParser.FLAG_PHRASE |
+        xapian.QueryParser.FLAG_PARTIAL |
+        xapian.QueryParser.FLAG_LOVEHATE
+    )
+
+    query = qp.parse_query(qs, flags)
+
     if institution:
         institution_term = "U{}".format(institution.id)
         final_query = xapian.Query(
@@ -30,12 +42,15 @@ def search(institution, qs, offset=0, limit=10):
         )
     else:
         final_query = xapian.Query(query)
-        
+
     enquire = xapian.Enquire(database)
+
+    # sort by weight first
+    enquire.set_weighting_scheme(xapian.BM25Weight())
     enquire.set_query(final_query)
+
     matches = enquire.get_mset(offset, limit)
     return matches
-
 
 def index(institution, uuid, snap):
     uuid = 'uuid:"{}"'.format(uuid)

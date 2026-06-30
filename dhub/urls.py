@@ -19,8 +19,9 @@ from django.urls import path, include
 from django.conf.urls.i18n import i18n_patterns
 from django.views.i18n import set_language
 
+from api.v1.urls import api as v1_api
+
 urlpatterns = [
-    # path('api/', include('snapshot.urls')),
     path("", include("login.urls")),
     path("dashboard/", include("dashboard.urls")),
     path("evidence/", include("evidence.urls")),
@@ -29,7 +30,7 @@ urlpatterns = [
     path("admin/", include("admin.urls")),
     path("user/", include("user.urls")),
     path("lot/", include("lot.urls")),
-    path('api/', include('api.urls')),
+    path('api/v1/', v1_api.urls),
 ]
 
 urlpatterns += i18n_patterns(

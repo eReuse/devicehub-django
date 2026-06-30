@@ -578,9 +578,7 @@ class Device:
     def components_export(self):
         hardware_info = self.evidence_export_fields()
 
-        user_properties = ""
-        for x in self.get_user_properties():
-            user_properties += "({}:{}) ".format(x.key, x.value)
+        user_properties = dict(self.get_user_properties().values_list("key", "value"))
 
         hardware_info.update({
             'user_properties': user_properties,
