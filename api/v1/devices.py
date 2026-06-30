@@ -191,7 +191,7 @@ def list_all_devices(
     prop_key: str = Query(None, description="Filter by UserProperty key"),
     prop_value: str = Query(None, description="Filter by UserProperty value"),
     page: int = Query(1, ge=1, description="Page number"),
-    size: int = Query(50, ge=1, le=500, description="Items per page")
+    size: int = Query(50, ge=1, le=50, description="Items per page")
 ):
     user = request.auth
     institution = user.institution
