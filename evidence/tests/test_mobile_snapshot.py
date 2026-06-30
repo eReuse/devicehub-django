@@ -4,7 +4,7 @@ from django.test import TestCase
 
 from user.models import Institution, User
 from evidence.parse import Build
-from evidence.models import SystemProperty, RootAlias
+from evidence.models import SystemProperty, UserProperty, RootAlias
 
 
 def mobile_snapshot(manual_id, app_uuid="app-uuid", ev_uuid=None):
@@ -33,8 +33,20 @@ def mobile_snapshot(manual_id, app_uuid="app-uuid", ev_uuid=None):
                 "api_level": 35,
                 "build_fingerprint": "google/...",
             },
-            "usage": {"usage_category": "UNKNOWN", "usage_confidence": "LOW"},
-            "hwtest": {"verdict": "OK", "results": []},
+            "usage": {
+                "battery_cycle_count": 150,
+                "boot_count": 80,
+                "uptime_hours": 12,
+                "device_age_days": 600,
+            },
+            "hwtest": {
+                "verdict": "OK",
+                "results": [
+                    {"id": "screen", "status": "PASS"},
+                    {"id": "touch", "status": "PASS"},
+                    {"id": "charging", "status": "SKIP"},
+                ],
+            },
         },
     }
 
@@ -109,6 +121,36 @@ class MobileSnapshotTests(TestCase):
             {"Processor", "RamModule", "Storage", "Display", "Battery", "Camera"} <= types,
             types,
         )
+
+    def test_hwtest_results_become_user_properties(self):
+        snap = mobile_snapshot("AUCOOP-HW")
+        Build(snap, self.user)
+
+        props = {
+            p.key: p.value
+            for p in UserProperty.objects.filter(
+                uuid=snap["uuid"], owner=self.institution, type=UserProperty.Type.USER
+            )
+        }
+        self.assertEqual(props.get("hwtest:verdict"), "OK")
+        self.assertEqual(props.get("hwtest:screen"), "PASS")
+        self.assertEqual(props.get("hwtest:touch"), "PASS")
+        self.assertEqual(props.get("hwtest:charging"), "SKIP")
+
+    def test_power_on_hours_estimated_into_user_property(self):
+        snap = mobile_snapshot("AUCOOP-POH")
+        Build(snap, self.user)
+
+        props = {
+            p.key: p.value
+            for p in UserProperty.objects.filter(
+                uuid=snap["uuid"], owner=self.institution, type=UserProperty.Type.USER
+            )
+        }
+        # 150 cycles * 18 h/cycle = 2700 (battery_cycle wins over weaker signals)
+        self.assertEqual(props.get("usage:power_on_hours"), "2700")
+        self.assertEqual(props.get("usage:power_on_hours_method"), "battery_cycle")
+        self.assertEqual(props.get("usage:power_on_hours_confidence"), "MEDIUM")
 
     def test_no_manual_id_no_alias(self):
         Build(mobile_snapshot(None, app_uuid="uuid-C"), self.user)
