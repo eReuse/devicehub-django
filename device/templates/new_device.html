@@ -161,131 +161,95 @@
 {{ device_suggestions|json_script:"device-suggestions-data" }}
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', () => {
 
-    const dropZone = document.getElementById("drop-zone");
-    const fileInput = dropZone ? dropZone.querySelector('input[type="file"]') : null;
-    const imagePreview = document.getElementById("image-preview");
-    const previewImg = document.getElementById("preview-img");
+    // drag and drop image preview
+    const dz = document.getElementById("drop-zone");
+    const fi = dz?.querySelector('input[type="file"]');
+    const prv = document.getElementById("image-preview");
 
-    if (dropZone && fileInput) {
-        fileInput.style.display = 'none';
+    if (dz && fi) {
+        fi.style.display = 'none';
+        dz.onclick = () => fi.click();
+        fi.onchange = e => handle(e.target.files[0]);
 
-        dropZone.addEventListener('click', () => fileInput.click());
-        fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
-
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            dropZone.addEventListener(eventName, preventDefaults, false);
-        });
-
-        function preventDefaults(e) {
-            e.preventDefault();
-            e.stopPropagation();
-        }
-
-        // visual cues
-        ['dragenter', 'dragover'].forEach(eventName => {
-            dropZone.addEventListener(eventName, () => dropZone.classList.add('dragover'), false);
-        });
-
-        ['dragleave', 'drop'].forEach(eventName => {
-            dropZone.addEventListener(eventName, () => dropZone.classList.remove('dragover'), false);
-        });
-
-        // Handle the drop
-        dropZone.addEventListener('drop', (e) => {
-            const dt = e.dataTransfer;
-            const files = dt.files;
-            fileInput.files = files;
-            handleFiles(files);
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(ev => {
+            dz.addEventListener(ev, e => {
+                e.preventDefault();
+                dz.classList.toggle('dragover', ['dragenter', 'dragover'].includes(ev));
+                if (ev === 'drop') { fi.files = e.dataTransfer.files; handle(fi.files[0]); }
+            });
         });
     }
 
-    function handleFiles(files) {
-        if (!files?.length) return;
-        const file = files[0];
+    const handle = file => {
+        if (!file?.type.startsWith('image/')) return alert("invalid image"), fi.value = "", prv.style.display = 'none';
+        const r = new FileReader();
+        r.onload = e => {
+            document.getElementById("preview-img").src = e.target.result;
+            document.getElementById("preview-filename").textContent = `${file.name} (${(file.size/1048576).toFixed(1)} mb)`;
+            prv.style.display = 'block';
+        };
+        r.readAsDataURL(file);
+    };
 
-        if (file.type.startsWith('image/')) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                previewImg.src = e.target.result;
-                document.getElementById("preview-filename").textContent = `${file.name} (${(file.size / 1024 / 1024).toFixed(1)} MB)`;
-                imagePreview.style.display = 'block';
-            };
-            reader.readAsDataURL(file);
-        } else {
-            alert("Please upload a valid image file.");
-            fileInput.value = "";
-            imagePreview.style.display = 'none';
+    // flatten suggestions for fast lookup
+    const container = document.getElementById('formset-container');
+    const total = document.getElementById('id_form-TOTAL_FORMS');
+    const tpl = document.getElementById('empty-form')?.innerHTML || '';
+    const sug = JSON.parse(document.getElementById('device-suggestions-data')?.textContent || '{}');
+    const known = Object.values(sug).flat().reduce((acc, curr) => ({...acc, [curr.name]: curr}), {});
+
+    // replace raw inputs with formatted labels
+    const formatRow = row => {
+        const n = row.querySelector('input[name$="-name"]');
+        const v = row.querySelector('input[name$="-value"]');
+        if (n && !n.hidden && known[n.value]) {
+            n.hidden = true;
+            n.insertAdjacentHTML('beforebegin', `<span class="form-control-plaintext fw-bold text-secondary ps-2">${known[n.value].label.split(' (')[0]}</span>`);
+            if (v) v.placeholder = known[n.value].label;
         }
-    }
+    };
 
-    const formContainer = document.getElementById('formset-container');
-    const totalFormsInput = document.getElementById('id_form-TOTAL_FORMS');
-    const emptyTemplate = document.getElementById('empty-form')?.innerHTML || '';
+    document.querySelectorAll('#formset-container .attribute-form-row').forEach(formatRow);
 
-    function addFormRow(name = '', labelText = '', placeholder = 'Value') {
-        const count = parseInt(totalFormsInput.value) || 0;
-        formContainer.insertAdjacentHTML('beforeend', emptyTemplate.replace(/__prefix__/g, count));
-        totalFormsInput.value = count + 1;
-
-        // if 'name' is provided, it's an auto-suggestion
+    const addRow = (name = '') => {
+        const count = +total.value || 0;
+        container.insertAdjacentHTML('beforeend', tpl.replace(/__prefix__/g, count));
+        total.value = count + 1;
         if (name) {
-            const newRow = formContainer.lastElementChild;
-            const nameInput = newRow.querySelector('input[name$="-name"]');
+            const row = container.lastElementChild;
+            row.querySelector('input[name$="-name"]').value = name;
+            formatRow(row);
+        }
+    };
 
-            nameInput.value = name;
-            nameInput.hidden = true;
+    // load suggestions on type change if form is clean
+    const typeSel = document.getElementById('id_type');
+    if (typeSel) {
+        typeSel.onchange = () => {
+            container.innerHTML = '';
+            total.value = 0;
+            (sug[typeSel.value] || []).forEach(attr => addRow(attr.name));
+        };
 
-            const labelSpan = document.createElement('span');
-            labelSpan.className = 'form-control-plaintext fw-bold text-secondary ps-2';
-            labelSpan.textContent = labelText;
-            nameInput.before(labelSpan);
-
-            newRow.querySelector('input[name$="-value"]').placeholder = placeholder;
+        if (!document.querySelector('.text-danger, .alert-danger') && !container.querySelector('input[name$="-name"]')?.value && typeSel.value) {
+            typeSel.dispatchEvent(new Event('change'));
         }
     }
 
-    // load dynamic suggestions
-    const typeSelect = document.getElementById('id_type');
-    const suggestionsData = JSON.parse(document.getElementById('device-suggestions-data')?.textContent || '{}');
+    document.getElementById('add-form-btn')?.addEventListener('click', () => addRow());
 
-    if (typeSelect) {
-        typeSelect.addEventListener('change', function() {
-            formContainer.innerHTML = '';
-            totalFormsInput.value = 0;
-
-            const suggestions = suggestionsData[this.value] || [];
-            suggestions.forEach(attr => addFormRow(attr.name, attr.label.split(' (')[0], attr.label));
-        });
-
-        // trigger on load if form is empty
-        if (!document.querySelector('.alert-danger') &&
-            !formContainer.querySelector('input[name$="-value"]')?.value.trim() &&
-            typeSelect.value) {
-            typeSelect.dispatchEvent(new Event('change'));
-        }
-    }
-
-    // attribute button
-    document.getElementById('add-form-btn')?.addEventListener('click', () => addFormRow());
-
-    // remove button
-    formContainer?.addEventListener('click', function(e) {
+    // handle soft or hard row deletion
+    container?.addEventListener('click', e => {
         const btn = e.target.closest('.remove-form-btn');
-        if (btn) {
-            const row = btn.closest('.attribute-form-row');
-            const deleteCheckbox = row.querySelector('input[name$="-DELETE"]');
-
-            if (deleteCheckbox) {
-                deleteCheckbox.checked = true;
-                row.classList.add('d-none');
-            } else {
-                row.remove();
-            }
-        }
+        if (!btn) return;
+        const row = btn.closest('.attribute-form-row');
+        const del = row.querySelector('input[name$="-DELETE"]');
+        del ? (del.checked = true, row.classList.add('d-none')) : row.remove();
     });
 
 });
 </script>
+
 {% endblock %}
