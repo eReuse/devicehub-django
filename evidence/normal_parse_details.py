@@ -66,12 +66,16 @@ class ParseSnapshot:
                 self.device['manufacturer'] = system
                 self.device['model'] = get_inxi(m, "product")
                 self.device['serialNumber'] = get_inxi(m, "serial")
-                self.device['type'] = get_inxi(m, "Type")
-                self.device['chassis'] = self.device['type']
                 self.device['version'] = get_inxi(m, "v")
             else:
+                self.device['manufacturer'] = self.device.get('manufacturer') or get_inxi(m, "Mobo")
+                self.device['model'] = self.device.get('model') or get_inxi(m, "model")
+                self.device['serialNumber'] = self.device.get('serialNumber') or get_inxi(m, "serial")
                 self.device['system_uuid'] = get_inxi(m, "uuid")
                 self.device['sku'] = get_inxi(m, "part-nu")
+
+            self.device['type'] = self.device.get('type') or get_inxi(m, "Type")
+            self.device['chassis'] = self.device['type']
 
     def set_components(self):
         self.get_mother_board()

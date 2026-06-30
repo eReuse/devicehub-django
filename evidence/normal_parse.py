@@ -41,11 +41,16 @@ class Build(BuildMix):
                 self.manufacturer = system
                 self.model = get_inxi(m, "product")
                 self.serial_number = get_inxi(m, "serial")
-                self.type = get_inxi(m, "Type")
-                self.chassis = self.type
                 self.version = get_inxi(m, "v")
             else:
+                self.manufacturer = self.manufacturer or get_inxi(m, "Mobo")
+                self.model = self.model or get_inxi(m, "model")
+                self.serial_number = self.serial_number or get_inxi(m, "serial")
+                self.system_uuid = get_inxi(m, "uuid")
                 self.sku = get_inxi(m, "part-nu")
+
+            self.type = self.type or get_inxi(m, "Type")
+            self.chassis = self.type
 
         self.mac = get_mac(self.inxi) or ""
         if not self.mac:
