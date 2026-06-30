@@ -84,3 +84,27 @@ class LifecycleExtractorsTests(TestCase):
         )
         self.assertEqual([e.poh for e in evidences_data], [1086, 1109])
         self.assertEqual(calculate_reuse_time(evidences_data), 23)
+
+    def test_get_evidences_data_uses_mobile_usage_estimate(self):
+        mobile = SimpleNamespace(
+            uuid="mobile-evidence",
+            doc={
+                "software": "workbench-android",
+                "timestamp": "2026-06-30T17:24:00Z",
+                "data": {
+                    "usage": {
+                        "battery_cycle_count": 150,
+                        "boot_count": 80,
+                        "device_age_days": 600,
+                    }
+                },
+            },
+            inxi=None,
+            get_time_created=lambda: "2026-06-30T17:24:00Z",
+            get_components=lambda: [{"type": "Storage", "size": "128 GB"}],
+        )
+        device = SimpleNamespace(evidences=[mobile])
+
+        evidences_data = get_evidences_data_from_device(device)
+
+        self.assertEqual([e.poh for e in evidences_data], [2700])

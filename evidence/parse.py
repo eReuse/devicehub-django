@@ -8,7 +8,8 @@ from evidence import normal_parse
 from evidence import mobile_parse
 from evidence.parse_details import ParseSnapshot
 
-from evidence.models import SystemProperty, RootAlias
+from evidence.models import SystemProperty, UserProperty, RootAlias
+from evidence.estimators import estimate_power_on_hours
 from evidence.xapian import index
 from evidence.normal_parse_details import get_inxi_key, get_inxi
 from django.conf import settings
@@ -64,6 +65,7 @@ class Build:
         self.index()
         self.create_annotations()
         self.create_root_alias()
+        self.create_mobile_user_properties()
         if settings.DPP:
             self.register_device_dlt()
 
@@ -94,6 +96,58 @@ class Build:
             alias=alias,
             root=root,
         )
+
+    def create_mobile_user_properties(self):
+        """Store derived hardware-test results as per-device UserProperty rows.
+
+        UserProperty is uuid-keyed (unlike SystemProperty, whose value carries
+        the identity hash), so these show on the device's Properties tab and are
+        aggregated across re-scans without polluting device enumeration. The
+        operator can later edit/correct them in the UI.
+        """
+        if self.evidence.get("software") != "workbench-android":
+            return
+        if not self.user:
+            return
+
+        data = self.evidence.get("data", {})
+        for key, value in self.mobile_annotations(data).items():
+            if value in (None, ""):
+                continue
+            exists = UserProperty.objects.filter(
+                uuid=self.uuid, owner=self.user.institution, key=key
+            ).exists()
+            if exists:
+                continue
+            UserProperty.objects.create(
+                uuid=self.uuid,
+                owner=self.user.institution,
+                user=self.user,
+                key=key,
+                value=str(value),
+                type=UserProperty.Type.USER,
+            )
+
+    @staticmethod
+    def mobile_annotations(data):
+        props = {}
+        hwtest = data.get("hwtest") or {}
+        verdict = hwtest.get("verdict")
+        if verdict:
+            props["hwtest:verdict"] = verdict
+        for result in hwtest.get("results", []):
+            rid = result.get("id")
+            status = result.get("status")
+            if rid and status:
+                props["hwtest:{}".format(rid)] = status
+
+        # Estimate power-on hours from whatever raw wear signals the app shipped.
+        estimate = estimate_power_on_hours(data.get("usage") or {})
+        if estimate:
+            props["usage:power_on_hours"] = estimate.hours
+            props["usage:power_on_hours_method"] = estimate.method
+            props["usage:power_on_hours_confidence"] = estimate.confidence
+        return props
 
     def index(self):
         snap = json.dumps(self.evidence)
