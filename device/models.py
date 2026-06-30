@@ -385,7 +385,7 @@ class Device:
         dev = DeviceBeneficiary.objects.filter(
             device_id__in=device_ids,
             beneficiary__lot=self.lot,
-        ).exclude(status=DeviceBeneficiary.Status.RETURNED).first()
+        ).exclude(status=DeviceBeneficiary.Status.RETURNED).order_by('-status').first()
 
         status = DeviceBeneficiary.Status.AVAILABLE.label
         if dev:
