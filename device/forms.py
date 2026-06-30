@@ -1,7 +1,8 @@
 import re
 from django import forms
+from django.db.models import Q
 from evidence.image_processing import process_photo_upload
-from evidence.models import SystemProperty
+from evidence.models import SystemProperty, RootAlias
 from utils.device import create_property, create_doc, create_index
 from utils.save_snapshots import move_json, save_in_disk
 from evidence.forms import BasePhotoMixin, UserAliasForm
@@ -9,23 +10,24 @@ from django.utils.translation import gettext_lazy as _
 
 
 DEVICE_TYPES = [
-    ("Desktop", "Desktop"),
-    ("Laptop", "Laptop"),
-    ("Server", "Server"),
-    ("GraphicCard", "GraphicCard"),
-    ("HardDrive", "HardDrive"),
-    ("SolidStateDrive", "SolidStateDrive"),
-    ("Motherboard", "Motherboard"),
-    ("NetworkAdapter", "NetworkAdapter"),
-    ("Processor", "Processor"),
-    ("RamModule", "RamModule"),
-    ("SoundCard", "SoundCard"),
-    ("Display", "Display"),
-    ("Battery", "Battery"),
-    ("Camera", "Camera"),
-    ("Switch", "Switch"),
-    ("Router", "Router"),
-    ("RouterWifi", "RouterWifi"),
+    ("", _("Select One")),
+    ("Desktop", _("Desktop")),
+    ("Laptop", _("Laptop")),
+    ("Server", _("Server")),
+    ("GraphicCard", _("Graphic Card")),
+    ("HardDrive", _("Hard Drive")),
+    ("SolidStateDrive", _("Solid State Drive")),
+    ("Motherboard", _("Motherboard")),
+    ("NetworkAdapter", _("Network Adapter")),
+    ("Processor", _("Processor")),
+    ("RamModule", _("RAM Module")),
+    ("SoundCard", _("Sound Card")),
+    ("Display", _("Display")),
+    ("Battery", _("Battery")),
+    ("Camera", _("Camera")),
+    ("Switch", _("Switch")),
+    ("Router", _("Router")),
+    ("RouterWifi", _("Router Wi-Fi")),
 ]
 
 DEVICE_ATTRIBUTE_SUGGESTIONS = {
@@ -34,7 +36,7 @@ DEVICE_ATTRIBUTE_SUGGESTIONS = {
         {"name": "manufacturer", "label": _("Device Manufacturer (e.g. Lenovo)")},
         {"name": "cpu_model", "label": _("CPU Model (e.g. i5-10400)")},
         {"name": "ram_total", "label": _("Total RAM (e.g. 16GB)")},
-        {"name": "drive", "label": _("Storage Drive (e.g. 512GB SSD)")},
+        {"name": "storage", "label": _("Storage Drive (e.g. 512GB SSD)")},
         {"name": "gpu_model", "label": _("GPU Model (e.g. RTX 3060)")},
     ],
     "Laptop": [
@@ -42,7 +44,7 @@ DEVICE_ATTRIBUTE_SUGGESTIONS = {
         {"name": "manufacturer", "label": _("Device Manufacturer (e.g. Lenovo)")},
         {"name": "cpu_model", "label": _("CPU Model (e.g. i7-12700H)")},
         {"name": "ram_total", "label": _("Total RAM (e.g. 16GB)")},
-        {"name": "drive", "label": _("Storage Drive (e.g. 1TB NVMe)")},
+        {"name": "storage", "label": _("Storage Drive (e.g. 1TB NVMe)")},
         {"name": "screen_size", "label": _("Screen Size (e.g. 15.6\")")},
         {"name": "battery_health", "label": _("Battery Health (e.g. 85%)")},
     ],
@@ -51,7 +53,7 @@ DEVICE_ATTRIBUTE_SUGGESTIONS = {
         {"name": "manufacturer", "label": _("Device Manufacturer (e.g. Dell)")},
         {"name": "cpu_model", "label": _("CPU Model (e.g. Xeon Silver 4214)")},
         {"name": "ram_total", "label": _("Total RAM (e.g. 128GB ECC)")},
-        {"name": "drive", "label": _("Storage Arrays (e.g. 4x 4TB SAS)")},
+        {"name": "storage", "label": _("Storage Arrays (e.g. 4x 4TB SAS)")},
         {"name": "raid_controller", "label": _("RAID Controller (e.g. PERC H740P)")},
         {"name": "power_supply", "label": _("Power Supply (e.g. Dual 750W)")},
     ],
@@ -153,13 +155,27 @@ DEVICE_ATTRIBUTE_SUGGESTIONS = {
 }
 
 class DeviceMainForm(BasePhotoMixin):
-    type = forms.ChoiceField(choices=DEVICE_TYPES, required=False)
-    amount = forms.IntegerField(required=False, initial=1, min_value=1)
-    custom_id = forms.CharField(required=False, label="Custom ID")
+    type = forms.ChoiceField(choices=DEVICE_TYPES)
+    amount = forms.IntegerField(initial=1, min_value=1)
+    custom_id = forms.CharField(required=False, label=_("Custom ID"))
 
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
+
+    def clean_custom_id(self):
+        custom_id = self.cleaned_data.get('custom_id')
+
+        if custom_id and self.user:
+            _custom_id = f"custom_id:{custom_id}"
+            exists = RootAlias.objects.filter(owner=self.user.institution).filter(
+                Q(root__iexact=_custom_id) | Q(alias__iexact=_custom_id)
+            ).exists()
+
+            if exists:
+                raise forms.ValidationError(_("This Custom ID is already in use by another device."))
+
+        return custom_id
 
     def generate_next_id(self, base_id, offset):
         if offset == 0: return base_id
@@ -175,13 +191,15 @@ class DeviceMainForm(BasePhotoMixin):
         if not self.user:
             raise ValueError("User is required to save devices.")
 
+        # custom_id is now guaranteed to be safe and duplicate-free
+        custom_id = self.cleaned_data.get('custom_id')
+
         photo_cache = getattr(self, 'photo_data_cache', None)
         photo_doc = process_photo_upload(photo_cache, self.user)
 
         amount = self.cleaned_data.get('amount') or 1
-        custom_id = self.cleaned_data.get('custom_id')
 
-        #for now, if a photo is uploaded, only create 1 device
+        # for now, if a photo is uploaded, only create 1 device
         if photo_cache or custom_id:
             amount = 1
 
@@ -203,7 +221,12 @@ class DeviceMainForm(BasePhotoMixin):
             created_docs.append(device_doc)
 
             device_web_id = device_doc.get('WEB_ID', None)
-            alias_root_target = custom_id or (device_web_id if photo_prop else None)
+
+            alias_root_target = None
+            if custom_id:
+                alias_root_target = custom_id
+            elif photo_prop:
+                alias_root_target = device_web_id
 
             if not alias_root_target:
                 continue
@@ -229,7 +252,6 @@ class DeviceMainForm(BasePhotoMixin):
         )
         if form.is_valid():
             form.save()
-
 
 class DeviceAttributeForm(forms.Form):
     name = forms.CharField(
