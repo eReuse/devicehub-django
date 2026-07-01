@@ -15,7 +15,7 @@ from django.views.generic.edit import (
 
 from action.models import DeviceLog
 from dashboard.mixins import  DashboardView, Http403
-from evidence.models import SystemProperty, RootAlias, Evidence, UserProperty, Credential Property
+from evidence.models import SystemProperty, RootAlias, Evidence, UserProperty, CredentialProperty
 from lot.models import DeviceLot, DeviceBeneficiary
 from evidence.forms import (
     UploadForm,

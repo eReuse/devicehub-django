@@ -17,8 +17,8 @@ from evidence.models import CredentialProperty
 from openlocationcode import openlocationcode as olc
 from django.db import IntegrityError,   transaction
 from dashboard.mixins import DashboardView, Http403
-from admin.forms import OrderingStateForm, InstitutionApiSettingsForm, InstitutionLabelSettingsForm, InstitutionForm, FacilityClaimFormSet
-from user.models import User, Institution, InstitutionSettings
+from admin.forms import InstitutionDPPSettingsForm, InstitutionLabelSettingsForm, OrderingStateForm, InstitutionLabelSettings, InstitutionDPPSettings, InstitutionForm, FacilityClaimFormSet
+from user.models import User, Institution, InstitutionDPPSettings, InstitutionLabelSettings
 from admin.email import NotifyActivateUserByEmail
 from admin.tables import UserTable
 from action.models import StateDefinition
@@ -294,9 +294,9 @@ class InstitutionView(AdminView, UpdateView):
 
 
 class InstitutionConfigView(AdminView, UpdateView):
-    template_name = "institution.html"
-    model = InstitutionSettings
-    form_class = InstitutionApiSettingsForm
+    template_name = "dpp_settings.html"
+    model = InstitutionDPPSettings
+    form_class = InstitutionDPPSettingsForm
     title = _("Configuration & Signing")
     subtitle = _("Manage technical settings and signing credentials")
     success_url = reverse_lazy('admin:panel')
@@ -307,7 +307,7 @@ class InstitutionConfigView(AdminView, UpdateView):
 
     def get_object(self, queryset=None):
         institution = self.request.user.institution
-        obj, created = InstitutionSettings.objects.get_or_create(institution=institution)
+        obj, created = InstitutionDPPSettings.objects.get_or_create(institution=institution)
         return obj
 
 
@@ -415,8 +415,8 @@ class UpdateStateDefinitionView(AdminView, UpdateView):
 
 
 class InstitutionLabelCustomizationView(AdminView, UpdateView):
-    model = InstitutionSettings
-    form_class = InstitutionSettingsForm
+    model = InstitutionLabelSettings
+    form_class = InstitutionLabelSettingsForm
     template_name = 'label_settings.html'
     success_url = reverse_lazy('admin:panel')
     breadcrumb = [(_("Admin"), reverse_lazy("admin:panel")), (_("Label Settings"), None)]
@@ -425,7 +425,7 @@ class InstitutionLabelCustomizationView(AdminView, UpdateView):
 
     def get_object(self, queryset=None):
         institution = self.request.user.institution
-        settings, created = InstitutionSettings.objects.get_or_create(institution=institution)
+        settings, created = InstitutionLabelSettings.objects.get_or_create(institution=institution)
         return settings
 
     def get_context_data(self, **kwargs):

@@ -12,6 +12,7 @@ from django.utils.dateparse import parse_datetime
 from lot.models import DeviceLot, DeviceBeneficiary
 from action.models import State
 from user.models import InstitutionSettings, LabelVersion, QRContentType, Institution
+
 from django.utils.translation import gettext_lazy as _
 
 
@@ -679,7 +680,7 @@ class Device:
 
     def get_label_data(self, request, settings=None):
         if not settings:
-            settings, created= InstitutionSettings.objects.get_or_create(institution=self.owner)
+            settings, created= InstitutionLabelSettings.objects.get_or_create(institution=self.owner)
 
         if settings.qr_label_version == LabelVersion.V1:
             return {

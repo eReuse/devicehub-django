@@ -8,7 +8,7 @@
     <div class="row mb-4 align-items-center">
         <div class="col">
             <h3 class="mb-0 text-dark fw-bold">
-                {{ subtitle|default:"Settings" }}
+                {{ subtitle|default:"Institution Settings" }}
             </h3>
         </div>
     </div>
@@ -39,11 +39,6 @@
     {% endif %}
 
     <div class="card shadow-sm border-0 rounded-3 m-0">
-        <div class="card-header bg-white border-bottom py-3">
-            <h5 class="mb-0 fw-bold text-dark"><i class="bi bi-building me-2"></i>{% translate "Institution Profile" %}</h5>
-        </div>
-        <div class="card-body p-md-4">
-            <p class="text-muted mb-4">{{ subtitle|default:"Manage your organization's general information." }}</p>
 
             <form role="form" method="post" novalidate>
                 {% csrf_token %}
@@ -51,7 +46,9 @@
                 <div class="row g-4">
                     <div class="col-12 col-xl-6">
                         <div class="p-4 bg-light rounded-3 border h-100">
-                            <h6 class="fw-bold mb-3 pb-2 border-bottom text-secondary">{% translate "General Details" %}</h6>
+                            <h6 class="fw-bold mb-3 pb-2 border-bottom text-secondary">
+                                <i class="bi bi-card-heading me-2"></i>{% translate "General Details" %}
+                            </h6>
                             <div class="row g-3">
                                 <div class="col-12">{% bootstrap_field form.name %}</div>
                                 <div class="col-12">{% bootstrap_field form.logo %}</div>
@@ -64,7 +61,9 @@
 
                     <div class="col-12 col-xl-6">
                         <div class="p-4 bg-light rounded-3 border h-100">
-                            <h6 class="fw-bold mb-3 pb-2 border-bottom text-secondary">{% translate "Location & System" %}</h6>
+                            <h6 class="fw-bold mb-3 pb-2 border-bottom text-secondary">
+                                <i class="bi bi-geo-alt me-2"></i>{% translate "Location & System" %}
+                            </h6>
                             <div class="row g-3">
                                 <div class="col-12">{% bootstrap_field form.facility_id_uri %}</div>
                                 <div class="col-12">{% bootstrap_field form.street_address %}</div>
@@ -72,7 +71,14 @@
                                 <div class="col-md-6">{% bootstrap_field form.region %}</div>
                                 <div class="col-md-6">{% bootstrap_field form.postal_code %}</div>
                                 <div class="col-md-6">{% bootstrap_field form.country %}</div>
-                                <div class="col-12 mt-4 pt-3 border-top">{% bootstrap_field form.algorithm %}</div>
+
+                                <div class="col-12 mt-4 pt-3 border-top">
+                                    <div class="row g-3">
+                                        <div class="col-md-6">{% bootstrap_field form.registered_id %}</div>
+                                        <div class="col-md-6">{% bootstrap_field form.process_category_code %}</div>
+                                        <div class="col-12">{% bootstrap_field form.algorithm %}</div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -155,12 +161,11 @@
                         {% translate "Cancel" %}
                     </a>
                     <button class="btn btn-success px-5 fw-semibold shadow-sm d-flex align-items-center gap-2" type="submit" name="submit">
-                        {% translate 'Save Changes' %}
+                        <i class="bi bi-check2-circle me-1"></i> {% translate 'Save Changes' %}
                     </button>
                 </div>
             </form>
         </div>
-    </div>
 
 </div>
 {% endblock %}

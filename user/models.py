@@ -214,7 +214,7 @@ class FacilityClaim(models.Model):
     def __str__(self):
         return f"{self.topic_code} - {self.admin_name}"
 
-class InstitutionSettings(models.Model):
+class InstitutionLabelSettings(models.Model):
     institution = models.OneToOneField(
         Institution,
         on_delete=models.CASCADE,
@@ -288,7 +288,15 @@ class InstitutionSettings(models.Model):
         help_text=_("Base text size for properties. Header is scaled slightly larger.")
     )
 
-    # --- IDHub  Settings ---
+
+class InstitutionDPPSettings(models.Model):
+    institution = models.OneToOneField(
+        Institution,
+        on_delete=models.CASCADE,
+        verbose_name=_("Institution"),
+        related_name='integration_settings'
+    )
+
     api_base_url = models.URLField(
         _("Signing Service Base URL"),
         max_length=1024,

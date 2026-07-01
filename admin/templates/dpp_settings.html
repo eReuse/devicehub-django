@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load django_bootstrap5 %}
+
+{% block content %}
+<div class="container-fluid p-0">
+
+    <div class="row mb-4 align-items-center">
+        <div class="col">
+            <h3 class="mb-0 text-dark fw-bold">
+                {{ subtitle|default:"Integration Settings" }}
+            </h3>
+        </div>
+    </div>
+
+    {% if form.errors %}
+    <div class="alert alert-danger alert-dismissible fade show shadow-sm border-0 rounded-0 mb-3" role="alert">
+        <div class="d-flex align-items-center">
+            <i class="bi bi-exclamation-triangle-fill fs-4 me-3 text-danger"></i>
+            <div>
+                <strong class="d-block mb-1">{% translate "Please correct the errors below:" %}</strong>
+                <ul class="mb-0 small ps-3 text-danger">
+                    {% for field, error in form.errors.items %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        <button class="btn-close" type="button" data-bs-dismiss="alert" aria-label="{% translate 'Close' %}"></button>
+    </div>
+    {% endif %}
+
+    <div class="card shadow-sm border-0 rounded-3 m-0">
+            <form role="form" method="post" novalidate>
+                {% csrf_token %}
+
+                <div class="row g-4">
+                    <div class="col-12 col-xl-6">
+                        <div class="p-4 bg-light rounded-3 border h-100">
+                            <h6 class="fw-bold mb-3 pb-2 border-bottom text-secondary">
+                                <i class="bi bi-link-45deg me-2"></i>{% translate "Service Connection" %}
+                            </h6>
+
+                            <div class="alert alert-warning border-0 shadow-sm mb-4" role="alert" style="font-size: 0.9em;">
+                                <i class="bi bi-shield-lock me-2"></i>
+                                {% translate "Your API token will be saved securely. If you need to rotate it, simply enter the new token below." %}
+                            </div>
+
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    {% bootstrap_field form.api_base_url %}
+                                </div>
+                                <div class="col-12">
+                                    {% bootstrap_field form.signing_auth_token %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-xl-6">
+                        <div class="p-4 bg-light rounded-3 border h-100">
+                            <h6 class="fw-bold mb-3 pb-2 border-bottom text-secondary">
+                                <i class="bi bi-fingerprint me-2"></i>{% translate "Identity & Schemas" %}
+                            </h6>
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    {% bootstrap_field form.issuer_did %}
+                                </div>
+                                <div class="col-12">
+                                    <div class="position-relative">
+                                        {% bootstrap_field form.schema_config field_class="font-monospace text-sm" %}
+                                    </div>
+                                    <div class="form-text text-muted mt-2 small">
+                                        <i class="bi bi-info-circle me-1"></i>
+                                        {% translate "Format as valid JSON. Example:" %} <code>{"dpp": "product_passport_v1.json"}</code>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end align-items-center gap-3 py-5 border-top">
+                    <a class="btn btn-light text-secondary fw-semibold px-4" href="{% url 'admin:panel' %}">
+                        {% translate "Cancel" %}
+                    </a>
+                    <button class="btn btn-success px-5 fw-semibold shadow-sm d-flex align-items-center gap-2" type="submit" name="submit">
+                        <i class="bi bi-check2-circle me-1"></i> {% translate 'Save Changes' %}
+                    </button>
+                </div>
+            </form>
+    </div>
+
+</div>
+{% endblock %}
