@@ -33,7 +33,7 @@ from device.forms import DeviceFormSet
 from evidence.models import SystemProperty, RootAlias, CredentialProperty
 from evidence.tables import EvidenceTable, CredentialTable
 from django_tables2 import RequestConfig
-from user.models import InstitutionSettings
+from user.models import InstitutionLabelSettings, InstitutionDPPSettings
 from evidence.services import CredentialService
 if settings.DPP:
     from dpp.models import Proof
@@ -431,7 +431,7 @@ class DeviceBulkLabelView(DashboardView, ListView):
 
         if self.object_list:
             institution = self.request.user.institution
-            settings, _ = InstitutionSettings.objects.get_or_create(institution=institution)
+            settings, _ = InstitutionLabelSettings.objects.get_or_create(institution=institution)
 
             labels_data = []
             for device in self.object_list:

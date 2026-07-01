@@ -2,8 +2,7 @@ import json
 from django import forms
 from django.utils.translation import gettext_lazy as _
 from django.forms.models import inlineformset_factory
-from user.models import Institution, InstitutionSettings, FacilityClaim
-
+from user.models import Institution, InstitutionLabelSettings, InstitutionDPPSettings, FacilityClaim
 
 class OrderingStateForm(forms.Form):
     ordering = forms.CharField()
@@ -24,12 +23,10 @@ class InstitutionForm(forms.ModelForm):
     class Meta:
         model = Institution
         fields = [
-            'name',
-            'logo', 'responsable_person', 'supervisor_person',
+            'name', 'logo', 'responsable_person', 'supervisor_person',
             'facility_id_uri', 'facility_description', 'country',
             'street_address', 'postal_code', 'location', 'region',
-            'algorithm',
-            'name', 'logo', 'registered_id', 'process_category_code',
+            'algorithm','registered_id', 'process_category_code',
         ]
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': _('e.g. Acme Corp')}),
@@ -56,27 +53,7 @@ class InstitutionLabelSettingsForm(forms.ModelForm):
     )
 
     class Meta:
-        model = InstitutionSettings
-        fields = [
-            'qr_content_type',
-            'qr_label_header',
-            'qr_include_logo',
-            'qr_printed_properties',
-        ]
-        widgets = {
-            'qr_content_type': forms.RadioSelect,
-            'qr_include_logo': forms.CheckboxInput(attrs={'class': 'form-check-input', 'role': 'switch'}),
-            'qr_label_header': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Property of...'}),
-        }
-
-    def clean_qr_printed_properties(self):
-        return self.cleaned_data.get('qr_printed_properties', [])
-
-
-class InstitutionApiSettingsForm(forms.ModelForm):
-
-    class Meta:
-        model = InstitutionSettings
+        model = InstitutionLabelSettings
         fields = [
             'qr_content_type',
             'qr_label_header',
@@ -88,37 +65,35 @@ class InstitutionApiSettingsForm(forms.ModelForm):
             'qr_width_mm',
             'qr_height_mm',
             'qr_font_size'
-            'issuer_did',
-            'signing_service_domain',
-            'signing_auth_token',
-            'device_dpp_schema',
-            'untp_drf_schema'
-            'issuer_did',
-            'api_base_url',
-            'signing_auth_token',
-            'schema_config'
         ]
         widgets = {
             'qr_content_type': forms.RadioSelect,
             'qr_include_logo': forms.CheckboxInput(attrs={'class': 'form-check-input', 'role': 'switch'}),
-            'qr_label_header': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Property of... '}),
+            'qr_label_header': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Property of...'}),
             'qr_label_orientation': forms.Select(attrs={'class': 'form-select'}),
             'qr_label_columns': forms.NumberInput(attrs={'class': 'form-control', 'min': '1', 'max': '10'}),
             'qr_width_mm': forms.NumberInput(attrs={'class': 'form-control', 'min': '20', 'max': '200'}),
             'qr_height_mm': forms.NumberInput(attrs={'class': 'form-control', 'min': '20', 'max': '200'}),
             'qr_font_size': forms.NumberInput(attrs={'class': 'form-control', 'min': '4', 'max': '24'}),
+        }
+
+    def clean_qr_printed_properties(self):
+        return self.cleaned_data.get('qr_printed_properties', [])
+
+class InstitutionDPPSettingsForm(forms.ModelForm):
+    class Meta:
+        model = InstitutionDPPSettings
+        fields = [
+            'issuer_did',
+            'signing_auth_token',
+            'api_base_url',
+            'schema_config'
+        ]
+        widgets = {
             'signing_auth_token': forms.PasswordInput(render_value=True, attrs={'class': 'form-control'}),
             'issuer_did': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'did:web:example.com'}),
             'api_base_url': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://api.example.com'}),
         }
-
-
-    def save(self, commit=True):
-        instance = super().save(commit=False)
-        if commit:
-            instance.save()
-        return instance
-
 
 class FacilityClaimForm(forms.ModelForm):
     class Meta:
