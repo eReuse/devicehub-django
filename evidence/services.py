@@ -3,7 +3,7 @@
 import requests
 import logging
 from django.db import IntegrityError
-from user.models import InstitutionSettings
+from user.models import InstitutionDPPSettings
 from evidence.models import CredentialProperty, SystemProperty
 
 logger = logging.getLogger(__name__)
@@ -13,8 +13,8 @@ class CredentialService:
         self.user = user
         self.institution = user.institution
         try:
-            self.settings = InstitutionSettings.objects.get(institution=self.institution)
-        except InstitutionSettings.DoesNotExist:
+            self.settings = InstitutionDPPSettings.objects.get(institution=self.institution)
+        except InstitutionDPPSettings.DoesNotExist:
             self.settings = None
 
     def ensure_device_did(self, device, service_endpoint=None):
