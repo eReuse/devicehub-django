@@ -13,14 +13,24 @@
         </div>
     </div>
 
-    {% if form.errors %}
+    {% if form.errors or claim_formset.errors %}
     <div class="alert alert-danger alert-dismissible fade show shadow-sm border-0 rounded-0 mb-3" role="alert">
         <div class="d-flex align-items-center">
             <i class="bi bi-exclamation-triangle-fill fs-4 me-3 text-danger"></i>
             <div>
                 <strong class="d-block mb-1">{% translate "Please correct the errors below:" %}</strong>
                 <ul class="mb-0 small ps-3 text-danger">
-                    {% for field, error in form.errors.items %}<li>{{ error }}</li>{% endfor %}
+
+                    {% for field, error in form.errors.items %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                    {% if claim_formset %}
+                        {% for dict in claim_formset.errors %}
+                            {% for error in dict.values %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        {% endfor %}
+                    {% endif %}
                 </ul>
             </div>
         </div>
@@ -68,10 +78,84 @@
                     </div>
                 </div>
 
-                <div class="d-flex justify-content-end align-items-center gap-3 mt-4 pt-3 border-top">
-                    <a class="btn btn-light text-secondary fw-semibold px-4" href="{% url 'admin:panel' %}">{% translate "Cancel" %}</a>
-                    <button class="btn btn-primary px-5 fw-semibold shadow-sm d-flex align-items-center gap-2" type="submit">
-                        <i class="bi bi-save"></i> {% translate 'Save Profile' %}
+                {% if claim_formset %}
+                <div class="row mt-5">
+                    <div class="col-12">
+                        <h5 class="fw-bold mb-3 border-bottom pb-2" style="color: #545f71;">
+                            <i class="bi bi-shield-check me-2"></i>{% translate "Facility Conformity Claims & Evidence" %}
+                        </h5>
+
+                        {{ claim_formset.management_form }}
+
+                        <div class="row g-4">
+                            {% for claim_form in claim_formset %}
+                            <div class="col-12">
+                                <div class="p-4 bg-light rounded-3 border position-relative shadow-sm">
+
+                                    {% for hidden in claim_form.hidden_fields %}
+                                        {{ hidden }}
+                                    {% endfor %}
+
+                                    {% if claim_form.non_field_errors %}
+                                        <div class="alert alert-danger py-2">{{ claim_form.non_field_errors }}</div>
+                                    {% endif %}
+
+                                    <h6 class="text-muted fw-bold text-uppercase mb-3" style="font-size: 0.85em;">{% translate "Claim Details" %}</h6>
+                                    <div class="row g-3 mb-4">
+                                        <div class="col-12 col-md-6">
+                                            {% bootstrap_field claim_form.topic_code %}
+                                        </div>
+                                        <div class="col-12 col-md-6">
+                                            {% bootstrap_field claim_form.assessment_date %}
+                                        </div>
+                                        <div class="col-12">
+                                            {% bootstrap_field claim_form.description %}
+                                        </div>
+                                        <div class="col-12 col-md-6">
+                                            {% bootstrap_field claim_form.admin_name %}
+                                        </div>
+                                        <div class="col-12 col-md-6">
+                                            {% bootstrap_field claim_form.admin_url %}
+                                        </div>
+                                    </div>
+
+                                    <hr class="text-secondary opacity-25">
+
+                                    <h6 class="text-muted fw-bold text-uppercase mb-3 mt-4" style="font-size: 0.85em;">{% translate "Validation Evidence" %}</h6>
+                                    <div class="row g-3">
+                                        <div class="col-12 col-md-6">
+                                            {% bootstrap_field claim_form.evidence_name %}
+                                        </div>
+                                        <div class="col-12 col-md-6">
+                                            {% bootstrap_field claim_form.evidence_url %}
+                                        </div>
+                                    </div>
+
+                                    {% if claim_formset.can_delete and claim_form.instance.pk %}
+                                        <div class="form-check mt-4 pt-3 border-top">
+                                            {{ claim_form.DELETE }}
+                                            <label class="form-check-label text-danger fw-semibold" for="{{ claim_form.DELETE.id_for_label }}">
+                                                <i class="bi bi-trash me-1"></i>{% translate "Remove this claim entirely" %}
+                                            </label>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <div class="form-text mt-3">
+                            <i class="bi bi-info-circle me-1"></i> {% translate "Save changes to add another empty claim slot." %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="d-flex justify-content-end align-items-center gap-3 mt-5 pt-3 border-top">
+                    <a class="btn btn-light text-secondary fw-semibold px-4" href="{% url 'admin:panel' %}">
+                        {% translate "Cancel" %}
+                    </a>
+                    <button class="btn btn-success px-5 fw-semibold shadow-sm d-flex align-items-center gap-2" type="submit" name="submit">
+                        {% translate 'Save Changes' %}
                     </button>
                 </div>
             </form>
