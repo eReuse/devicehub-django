@@ -40,7 +40,6 @@ class Device:
         self.pk = self.id
         self.hid = self.id.split(":")[1]
         self.algorithm = None
-        self.alias = None
         self.owner = kwargs.get("owner")
         self.properties = []
         self.hids = []
@@ -54,22 +53,9 @@ class Device:
         self.get_last_evidence()
 
     def _canonical_id(self):
-        """Resolve self.id to its canonical device ID via RootAlias.
-
-        Thanks to invariant (every SystemProperty.value has a
-        RootAlias row with alias=value), any physical ID resolves through one
-        lookup; a custom_id or unknown ID falls back to itself.
-        """
         if self._canonical_cache is not None:
             return self._canonical_cache
-        if not self.owner:
-            self._canonical_cache = self.id
-            return self._canonical_cache
-
-        self.alias = RootAlias.objects.filter(
-            owner=self.owner, alias=self.id
-        ).first()
-        self._canonical_cache = self.alias.root if self.alias else self.id
+        self._canonical_cache = self.get_canonical_id_for(self.id, self.owner)
         return self._canonical_cache
 
     def _physical_ids(self):
@@ -88,9 +74,26 @@ class Device:
         self._physicals_cache = ids or [self.id]
         return self._physicals_cache
 
+    @classmethod
+    def get_canonical_id_for(cls, id, owner=None):
+        """Canonical id without instantiating a full Device.
+
+        Thanks to invariant (every SystemProperty.value has a
+        RootAlias row with alias=value), any physical ID resolves through one
+        lookup; a custom_id or unknown ID falls back to itself.
+        """
+        if not owner:
+            return id
+        alias = RootAlias.objects.filter(owner=owner, alias=id).first()
+        return alias.root if alias else id
+
+    @classmethod
+    def get_shortid_for(cls, id, owner=None):
+        canonical = cls.get_canonical_id_for(id, owner)
+        return canonical.split(":")[1][:6].upper()
+
     def get_shortid(self):
-        canonical = self._canonical_id()
-        self.shortid = canonical.split(":")[1][:6].upper()
+        self.shortid = self.get_shortid_for(self._canonical_id())
 
     def initial(self):
         self.get_properties()
