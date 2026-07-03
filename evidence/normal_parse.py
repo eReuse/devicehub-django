@@ -44,7 +44,7 @@ class Build(BuildMix):
                 self.inxi = json.loads(self.inxi)
         except Exception:
             logger.error("No inxi in snapshot %s", self.uuid)
-            return ""
+            self.inxi = None
 
         dmidecode_raw = self.json["data"].get('dmidecode', '')
         has_dmi = bool(dmidecode_raw)
@@ -56,30 +56,14 @@ class Build(BuildMix):
             self.model = clean(dmi.model())
             self.serial_number = clean(dmi.serial_number())
 
-        machine = get_inxi_key(self.inxi, 'Machine')
-        for m in machine:
-            system = get_inxi(m, "System")
-            if system:
-                self.type = get_inxi(m, "Type")
-                if settings.DEVICEHUB_ALGORITHM_DEVICE == ALGO_EREUSE24 or not has_dmi:
-                    ereuse24.set_inxi_identity(self, m, system)
-
-                self.version = get_inxi(m, "v")
-            else:
-                self.manufacturer = self.manufacturer or get_inxi(m, "Mobo")
-                self.model = self.model or get_inxi(m, "model")
-                self.serial_number = self.serial_number or get_inxi(m, "serial")
-                self.system_uuid = get_inxi(m, "uuid")
-                self.sku = get_inxi(m, "part-nu")
-
-            self.type = self.type or get_inxi(m, "Type")
-            self.chassis = self.type
+        if self.inxi and (settings.DEVICEHUB_ALGORITHM_DEVICE == ALGO_EREUSE24 or not has_dmi):
+            ereuse24.set_inxi_identity(self, self.inxi)
 
         self.mac = ""
         net_linux = self.json["data"].get('linux-adapters')
         if net_linux:
             self.mac = get_mac_linux(net_linux) or ""
-        if not self.mac:
+        if not self.mac and self.inxi:
             self.mac = get_mac(self.inxi) or ""
 
         if not self.mac:

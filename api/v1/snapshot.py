@@ -7,6 +7,7 @@ from django.urls import reverse
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 
+from utils.constants import ALGO_EREUSE24
 from utils.save_snapshots import move_json, save_in_disk
 from evidence.models import SystemProperty
 from evidence.parse import Build
@@ -100,7 +101,7 @@ def NewSnapshot(request, data: dict = Body(..., description="Paste the raw workb
     prop = SystemProperty.objects.filter(
         uuid=ev_uuid,
         # TODO this is hardcoded, it should select the user preferred algorithm
-        key="ereuse24",
+        key=ALGO_EREUSE24,
         owner=user.institution
     ).first()
 
