@@ -1,5 +1,7 @@
 import math
 import logging
+from django.db import transaction
+from django.shortcuts import get_object_or_404
 from ninja import Router, Query
 from ninja.errors import HttpError
 from django.db import IntegrityError
@@ -27,22 +29,28 @@ def _log_registry(_uuid, msg, user):
     )
 
 @router.get(
-    "/devices/{device_id}/properties/{key}/",
+    "/{device_id}/properties/{key}/",
     response={200: SuccessResponse, 400: MessageOut, 403: MessageOut, 404: MessageOut},
     summary=_("Retrieve a specific device property"),
     tags=["Device Properties"],
     auth=GlobalAuth()
 )
 def get_property(request, device_id: str, key: str):
-    try:
-        device = get_device_instance(device_id, request.auth)
-        prop = UserProperty.objects.get(owner=request.auth.institution, device_id=device.id, key=key)
-        return {"status": "success", "property": {"key": prop.key, "value": prop.value, "device_id": device.id, "created_at": prop.created}}
-    except UserProperty.DoesNotExist: raise HttpError(404, "Property not found")
+    device = get_device_instance(device_id, request.auth)
+    prop = get_object_or_404(UserProperty, owner=request.auth.institution, device_id=device.id, key=key)
 
+    return {
+        "status": "success",
+        "property": {
+            "key": prop.key,
+            "value": prop.value,
+            "device_id": device.id,
+            "created_at": prop.created
+        }
+    }
 
 @router.delete(
-    "/devices/{device_id}/properties/{key}/",
+    "/{device_id}/properties/{key}/",
     response={200: SuccessResponse, 400: MessageOut, 403: MessageOut, 404: MessageOut},
     summary=_("Remove a device's user property"),
     tags=["Device Properties"],
@@ -50,18 +58,29 @@ def get_property(request, device_id: str, key: str):
 )
 def delete_property(request, device_id: str, key: str):
     user = request.auth
-    try:
-        device = get_device_instance(device_id, user)
-        prop = UserProperty.objects.get(owner=user.institution, device_id=device.id, key=key)
-        old_key, old_value, prop_time = prop.key, prop.value, prop.created
-        prop.delete()
-        if device.last_evidence: _log_registry(device.last_evidence.uuid, f"<Deleted> User Property: {old_key}:{old_value}", user)
-        return {"status": "success", "property": {"key": old_key, "value": old_value, "device_id": device.id, "created_at": prop_time}, "action": "deleted"}
-    except UserProperty.DoesNotExist: raise HttpError(404, "Property not found")
+    device = get_device_instance(device_id, user)
 
+    prop = get_object_or_404(UserProperty, owner=user.institution, device_id=device.id, key=key)
+
+    old_key, old_value, prop_time = prop.key, prop.value, prop.created
+    prop.delete()
+
+    if device.last_evidence:
+        _log_registry(device.last_evidence.uuid, f"<Deleted> User Property: {old_key}:{old_value}", user)
+
+    return {
+        "status": "success",
+        "property": {
+            "key": old_key,
+            "value": old_value,
+            "device_id": device.id,
+            "created_at": prop_time
+        },
+        "action": "deleted"
+    }
 
 @router.post(
-    "/devices/{device_id}/properties/{key}/",
+    "/{device_id}/properties/{key}/",
     response={200: SuccessResponse, 201: SuccessResponse, 400: MessageOut, 403: MessageOut, 404: MessageOut},
     summary=_("Create or update device's user property"),
     tags=["Device Properties"],
@@ -69,8 +88,8 @@ def delete_property(request, device_id: str, key: str):
 )
 def set_property(request, device_id: str, key: str, data: PropertyIn):
     user = request.auth
+    device = get_device_instance(device_id, user)
     try:
-        device = get_device_instance(device_id, user)
         try:
             prop = UserProperty.objects.get(owner=user.institution, device_id=device.id, key=key)
             old_value, prop.value = prop.value, data.value
@@ -140,9 +159,10 @@ def bulk_assign_properties(request, data: BulkPropertyIn):
     user = request.auth
     institution = user.institution
 
+    valid_ids, invalid_ids = check_valid_ids(data.device_ids, institution)
+    if not valid_ids: raise HttpError(422, "No valid device IDs provided")
+
     try:
-        valid_ids, invalid_ids = check_valid_ids(data.device_ids, institution)
-        if not valid_ids: raise HttpError(422, "No valid device IDs provided")
 
         existing_map = {p.device_id: p for p in UserProperty.objects.filter(owner=institution, device_id__in=valid_ids, key=data.key, type=UserProperty.Type.USER)}
         devices = [Device(id=id, owner=institution) for id in valid_ids]
@@ -162,9 +182,10 @@ def bulk_assign_properties(request, data: BulkPropertyIn):
             if hasattr(device, 'last_evidence') and device.last_evidence:
                 logs_to_create.append(DeviceLog(institution=institution, user=user, event=log_msg, snapshot_uuid=device.last_evidence.uuid))
 
-        if props_to_create: UserProperty.objects.bulk_create(props_to_create, ignore_conflicts=True)
-        if props_to_update: UserProperty.objects.bulk_update(props_to_update, fields=['value'])
-        if logs_to_create: DeviceLog.objects.bulk_create(logs_to_create)
+        with transaction.atomic():
+            if props_to_create: UserProperty.objects.bulk_create(props_to_create, ignore_conflicts=True)
+            if props_to_update: UserProperty.objects.bulk_update(props_to_update, fields=['value'])
+            if logs_to_create: DeviceLog.objects.bulk_create(logs_to_create)
 
         return (200 if not invalid_ids else 207), OperationResult(
             success=True, processed_ids=list(valid_ids), invalid_ids=list(invalid_ids),
