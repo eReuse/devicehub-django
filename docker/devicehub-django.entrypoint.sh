@@ -32,7 +32,7 @@ wait_for_dpp_shared() {
 gen_env_vars() {
         INIT_ORG="${DEVICEHUB_INIT_ORG:-example-org}"
         INIT_USER="${DEVICEHUB_INIT_ADMIN_EMAIL:-user@example.org}"
-        INIT_PASSWD="${DEVICEHUB_INIT_ADMIN_PASSWORD:-1234}"
+        INIT_PASSWD="${DEVICEHUB_INIT_ADMIN_PASSWORD_SECRET:-1234}"
         IS_ADMIN='True'
         DEMO_PREDEFINED_TOKEN="${DEVICEHUB_DEMO_PREDEFINED_TOKEN:-}"
 
