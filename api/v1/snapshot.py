@@ -10,6 +10,7 @@ from django.utils.translation import gettext_lazy as _
 from utils.save_snapshots import move_json, save_in_disk
 from evidence.models import SystemProperty
 from evidence.parse import Build
+from device.models import Device
 from .schemas import SnapshotResponse, MessageOut
 from api.auth import GlobalAuth
 
@@ -120,7 +121,7 @@ def NewSnapshot(request, data: dict = Body(..., description="Paste the raw workb
     move_json(path_name, user.institution.name)
     response = {
         "status": "success",
-        "dhid": prop.value[:6].upper(),
+        "dhid": Device.get_shortid_for(prop.value, prop.owner),
         "url": url,
         # TODO replace with public_url when available
         "public_url": url_public
