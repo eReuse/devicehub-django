@@ -1,6 +1,6 @@
 import logging
-
 import math
+
 from ninja import Router, Query
 from ninja.errors import HttpError
 from django.core.exceptions import ValidationError
@@ -102,7 +102,7 @@ def retrieveLotDevices(
     - 200: All valid devices assigned
     - 207: Partial assignment (some invalid IDs)
     - 401: Lot is archived
-    - 404: Lot wasnot found
+    - 404: Lot was not found
     - 422: No valid device IDs provided
     """),
     tags=["Lots"],
@@ -115,10 +115,10 @@ def assignLotDevices(request, lot_id: str, data: DeviceIDInput):
     if not lot: raise HttpError(404, "Lot not found")
     if lot.archived: raise HttpError(401, "Lot is archived")
 
-    try:
-        valid_ids, invalid_ids = check_valid_ids(data.device_ids, user.institution)
-        if not valid_ids: raise HttpError(422, "No valid device IDs provided")
+    valid_ids, invalid_ids = check_valid_ids(data.device_ids, user.institution)
+    if not valid_ids: raise HttpError(422, "No valid device IDs provided")
 
+    try:
         existing_devices = set(lot.devicelot_set.filter(device_id__in=valid_ids).values_list('device_id', flat=True))
         unassigned_ids = valid_ids - existing_devices
 
@@ -157,10 +157,10 @@ def remove_devices_from_lot(request, lot_id: str, data: DeviceIDInput):
 
     if not lot: raise HttpError(404, "Lot not found")
 
-    try:
-        valid_ids, invalid_ids = check_valid_ids(data.device_ids, user.institution)
-        if not valid_ids: raise HttpError(422, "No valid device IDs provided")
+    valid_ids, invalid_ids = check_valid_ids(data.device_ids, user.institution)
+    if not valid_ids: raise HttpError(422, "No valid device IDs provided")
 
+    try:
         existing_devices = set(lot.devicelot_set.filter(device_id__in=valid_ids).values_list('device_id', flat=True))
         devices_to_remove = valid_ids & existing_devices
 

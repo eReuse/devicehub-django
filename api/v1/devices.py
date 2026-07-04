@@ -89,20 +89,48 @@ def delete_property(request, device_id: str, key: str):
 def set_property(request, device_id: str, key: str, data: PropertyIn):
     user = request.auth
     device = get_device_instance(device_id, user)
+
     try:
-        try:
-            prop = UserProperty.objects.get(owner=user.institution, device_id=device.id, key=key)
-            old_value, prop.value = prop.value, data.value
-            prop.save()
-            action, status_code, log_msg = "updated", 200, f"<Updated> UserProperty: {key}: {old_value} to {key}: {data.value}"
-        except UserProperty.DoesNotExist:
-            prop = UserProperty.objects.create(device_id=device.id, type=UserProperty.Type.USER, key=key, value=data.value, owner=user.institution, user=user)
-            action, status_code, log_msg = "created", 201, f"<Created> UserProperty: {key}: {data.value}"
+        with transaction.atomic():
+            prop, created = UserProperty.objects.get_or_create(
+                owner=user.institution,
+                device_id=device.id,
+                key=key,
+                defaults={
+                    'type': UserProperty.Type.USER,
+                    'value': data.value,
+                    'user': user
+                }
+            )
 
-        if device.last_evidence: _log_registry(device.last_evidence.uuid, log_msg, user)
-        return status_code, {"status": "success", "action": action, "property": {"key": prop.key, "value": prop.value, "device_id": device.id, "created_at": prop.created}}
-    except IntegrityError: raise HttpError(400, "Integrity error.")
+            if created:
+                action, status_code = "created", 201
+                log_msg = f"<Created> UserProperty: {key}: {data.value}"
+            else:
+                old_value = prop.value
+                if old_value != data.value:
+                    prop.value = data.value
+                    prop.save(update_fields=['value'])
 
+                action, status_code = "updated", 200
+                log_msg = f"<Updated> UserProperty: {key}: {old_value} to {key}: {data.value}"
+
+            if device.last_evidence:
+                _log_registry(device.last_evidence.uuid, log_msg, user)
+
+            return status_code, {
+                "status": "success",
+                "action": action,
+                "property": {
+                    "key": prop.key,
+                    "value": prop.value,
+                    "device_id": device.id,
+                    "created_at": prop.created
+                }
+            }
+
+    except IntegrityError:
+        raise HttpError(400, "Integrity error.")
 
 @router.get(
     "/{device_id}/logs/",
@@ -271,7 +299,7 @@ def get_property_keys(request):
         type=UserProperty.Type.USER
     ).values_list('key', flat=True).distinct().order_by('key')
 
-    return 200, list(keys)
+    return list(keys)
 
 
 @router.get(
@@ -291,4 +319,4 @@ def get_property_values(request, key: str):
         type=UserProperty.Type.USER
     ).values_list('value', flat=True).distinct().order_by('value')
 
-    return 200, list(values)
+    return list(values)
