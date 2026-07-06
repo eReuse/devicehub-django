@@ -419,6 +419,9 @@ class Evidence:
             self.device_version = device.get("version") or ''
             self.components = parse.components
 
+        dmidecode_raw = self.doc.get("data", {}).get("dmidecode", "")
+        self.dmi = DMIParse(dmidecode_raw)
+
         if self.is_legacy():
             return
 
@@ -488,7 +491,9 @@ class Evidence:
             return getattr(self, 'device_manufacturer', '')
 
         if self.is_legacy():
-            return self.doc.get('device', {}).get('manufacturer', '')
+            manufacturer = self.doc.get('device', {}).get('manufacturer', '')
+            if manufacturer:
+                return manufacturer
 
         try:
             return self.dmi.manufacturer().strip()
@@ -508,7 +513,8 @@ class Evidence:
         if self.is_legacy():
             model = self.doc.get('device', {}).get('model', '') or ''
             version = self.doc.get('device', {}).get('version', '') or ''
-            return "{} {}".format(model, version)
+            if model:
+                return "{} {}".format(model, version)
 
         try:
             return self.dmi.model().strip()
@@ -524,7 +530,8 @@ class Evidence:
             for k, v in CHASSIS_DH.items():
                 if chassis.lower() in v:
                     return k
-            return chassis
+            if chassis:
+                return chassis
 
         dmi_chassis = self.dmi.get("Chassis")
         if not dmi_chassis:
@@ -543,7 +550,9 @@ class Evidence:
             return getattr(self, 'device_serial_number', '')
 
         if self.is_legacy():
-            return self.doc.get('device', {}).get('serialNumber', '')
+            serial = self.doc.get('device', {}).get('serialNumber', '')
+            if serial:
+                return serial
 
         try:
             return self.dmi.serial_number().strip()
