@@ -207,16 +207,17 @@ class ImportForm(forms.Form):
         data_pd = df.to_dict(orient='index')
 
         if not data_pd or df.last_valid_index() is None:
-            self.exception(_("The file you try to import is empty!"))
+            raise ValidationError(_("The file you try to import is empty"))
 
         for n in data_pd.keys():
             if 'type' not in [x.lower() for x in data_pd[n]]:
-                raise ValidationError("You need a column with name 'type'")
+                raise ValidationError(_("You need a column with name 'type'"))
 
             for k, v in data_pd[n].items():
                 if k.lower() == "type":
                     if v not in Device.Types.values:
-                        raise ValidationError("{} is not a valid device".format(v))
+                        msg = _("is not a valid device")
+                        raise ValidationError("{} {}".format(v, msg))
 
             self.rows.append(data_pd[n])
 
@@ -234,8 +235,8 @@ class ImportForm(forms.Form):
             for doc, cred in table:
                 path_name = save_in_disk(doc, self.user.institution.name, place="placeholder")
 
-                cred.save()
                 create_index(doc, self.user)
+                cred.save()
                 move_json(path_name, self.user.institution.name, place="placeholder")
             return table
 
@@ -358,7 +359,7 @@ class PhotoForm(forms.Form):
             name,
         )
         if os.path.exists(photo_path):
-            raise ValidationError(f"Photo already exists.")
+            raise ValidationError(_("Photo already exists."))
 
         self.photo_data = {
             'file': photo,
