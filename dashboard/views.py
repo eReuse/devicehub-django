@@ -1,6 +1,7 @@
 import json
 import logging
 import re
+from urllib.parse import parse_qsl
 
 from tablib import Dataset
 
@@ -462,12 +463,27 @@ class SearchView(DeviceTableMixin, InventaryMixin):
     breadcrumb = [(_("All Devices"), reverse_lazy("dashboard:all_device")), (_("Search"), None)]
     table_order_by = ()  # override DeviceTable.Meta order_by=("-last_updated",) to preserve relevance order
 
+    def _winning_match_mode(self, request):
+        """Return 'best', 'exact' or None: whichever of best_match/exact_match
+        is true and appears last in the raw querystring wins over the other."""
+        raw_params = parse_qsl(request.META.get("QUERY_STRING", ""), keep_blank_values=True)
+        last_key = None
+        last_true = False
+        for key, value in raw_params:
+            if key in ("best_match", "exact_match"):
+                last_key = key
+                last_true = value.lower() == "true"
+        if not last_true:
+            return None
+        return "best" if last_key == "best_match" else "exact"
+
     def get(self, request, *args, **kwargs):
         query = request.GET.get("gquery")
-        best_match = request.GET.get("best_match", "").lower() == "true"
-        if query and best_match:
+        mode = self._winning_match_mode(request) if query else None
+        if mode:
             devices, total = self.get_devices(request.user, 0, 1)
-            if total:
+            redirect_ok = total >= 1 if mode == "best" else total == 1
+            if redirect_ok:
                 public = request.GET.get("public", "").lower() == "true"
                 url_name = "device:device_web" if public else "device:details"
                 return redirect(url_name, pk=devices[0].pk)
