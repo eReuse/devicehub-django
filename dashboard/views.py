@@ -144,21 +144,6 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
         })
         return context
 
-    def get_queryset(self):
-        chids = self._get_chids_qs()
-        search_query = self.request.GET.get('q', '').lower()
-        owner = self.request.user.institution
-
-        if search_query:
-            ldevices = []
-            for x in chids:
-                dev = Device(id=x, lot=self.object, owner=owner)
-                if dev.matches_query(search_query):
-                    ldevices.append(dev)
-            return ldevices
-
-        return [Device(id=x, lot=self.object, owner=owner) for x in chids]
-
     def get_table_data(self):
         search = self.request.GET.get('search', '').lower()
         chids = list(self._get_chids_qs())
