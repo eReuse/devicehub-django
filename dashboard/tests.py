@@ -1,19 +1,22 @@
 import csv
 import io
+import json
 import uuid as uuidlib
 from unittest.mock import patch
 
 from django.test import TestCase, RequestFactory
+from django.urls import reverse
+from django.utils import timezone
 
 from user.models import Institution, User
-from evidence.models import SystemProperty, UserProperty
+from evidence.models import SystemProperty, UserProperty, RootAlias
 from device.product_cache import ProductCache
 from action.models import State, StateDefinition
 from lot.models import (
     Lot, LotTag, LotSubscription, Beneficiary, DeviceBeneficiary,
 )
 from dashboard.views import (
-    LotDashboardView, AllDevicesView, UnassignedDevicesView,
+    LotDashboardView, AllDevicesView, UnassignedDevicesView, SearchView,
 )
 
 
@@ -445,3 +448,378 @@ class LotSortTests(TestCase):
         self.assertEqual(
             self._row_ids(sort="model"),
             ["ereuse24:bbbbbb", "ereuse24:aaaaaa"])
+
+
+def _fake_xapian_search(ordered_uuids):
+    """Build a stand-in for ``evidence.xapian.search``: an ``(institution,
+    qs, offset, limit) -> matches`` callable backed by a fixed, relevance
+    ordered list of uuids, so tests never touch a real Xapian database."""
+
+    class _FakeDocument:
+        def __init__(self, data):
+            self._data = data
+
+        def get_data(self):
+            return self._data
+
+    class _FakeMatch:
+        def __init__(self, uuid):
+            self.document = _FakeDocument(json.dumps({"uuid": str(uuid)}))
+
+    class _FakeMSet(list):
+        def size(self):
+            return len(self)
+
+    def fake_search(institution, qs, offset=0, limit=10):
+        page = ordered_uuids[offset:offset + limit]
+        return _FakeMSet(_FakeMatch(u) for u in page)
+
+    return fake_search
+
+
+class LotQueryParamTests(TestCase):
+    """LotDashboardView reads the in-lot search filter from ``lquery`` (the
+    old shared ``search`` param name is no longer read for the lot page)."""
+
+    def setUp(self):
+        self.institution = Institution.objects.create(name="Inst")
+        self.user = User.objects.create(
+            email="u@test.local", institution=self.institution)
+        self.tag = LotTag.objects.create(name="t", owner=self.institution)
+        self.lot = Lot.objects.create(
+            name="L", owner=self.institution, type=self.tag)
+        for v in ["ereuse24:aaaaaa", "ereuse24:bbbbbb"]:
+            SystemProperty.objects.create(
+                owner=self.institution, uuid=uuidlib.uuid4(), value=v)
+            self.lot.add(v)
+        ProductCache.objects.update_or_create(
+            owner=self.institution, root="ereuse24:aaaaaa",
+            defaults={"manufacturer": "Samsung"})
+        ProductCache.objects.update_or_create(
+            owner=self.institution, root="ereuse24:bbbbbb",
+            defaults={"manufacturer": "Dell"})
+
+    def _view(self, lot=None, **params):
+        lot = lot or self.lot
+        req = RequestFactory().get("/", params)
+        req.user = self.user
+        view = LotDashboardView()
+        view.request = req
+        view.kwargs = {"pk": lot.pk}
+        view.object = lot
+        return view
+
+    def test_lquery_filters_rows_within_the_lot(self):
+        rows = self._view(lquery="samsung").get_table_data()
+        self.assertEqual([r['id'] for r in rows], ["ereuse24:aaaaaa"])
+
+        # The old shared param name is no longer read: it must not filter.
+        rows = self._view(search="samsung").get_table_data()
+        self.assertEqual(len(rows), 2)
+
+    def test_lquery_search_is_scoped_to_the_current_lot(self):
+        # A second lot with its own "Samsung" device, unrelated to self.lot.
+        other_lot = Lot.objects.create(
+            name="L2", owner=self.institution, type=self.tag)
+        SystemProperty.objects.create(
+            owner=self.institution, uuid=uuidlib.uuid4(),
+            value="ereuse24:cccccc")
+        other_lot.add("ereuse24:cccccc")
+        ProductCache.objects.update_or_create(
+            owner=self.institution, root="ereuse24:cccccc",
+            defaults={"manufacturer": "Samsung"})
+
+        row_ids = [r['id'] for r in
+                   self._view(other_lot, lquery="samsung").get_table_data()]
+
+        # Only the device that actually belongs to other_lot shows up...
+        self.assertEqual(row_ids, ["ereuse24:cccccc"])
+        # ...even though "ereuse24:aaaaaa" also matches "samsung" and is
+        # visible in self.lot's own search (previous test).
+        self.assertNotIn("ereuse24:aaaaaa", row_ids)
+
+
+class SearchViewGqueryTests(TestCase):
+    """SearchView reads the global search filter from ``gquery`` and merges
+    the shortid (DB-only) and Xapian result lists preserving relevance order
+    (shortid matches first, then Xapian matches in their ranked order)."""
+
+    def setUp(self):
+        self.institution = Institution.objects.create(name="Inst")
+        self.user = User.objects.create(
+            email="u@test.local", institution=self.institution)
+        self.shortid_sp = SystemProperty.objects.create(
+            owner=self.institution, uuid=uuidlib.uuid4(),
+            value="ereuse24:acme12")
+        self.top_sp = SystemProperty.objects.create(
+            owner=self.institution, uuid=uuidlib.uuid4(),
+            value="ereuse24:zzzxxx")
+        self.second_sp = SystemProperty.objects.create(
+            owner=self.institution, uuid=uuidlib.uuid4(),
+            value="ereuse24:yyyxxx")
+
+    def _view(self, **params):
+        req = RequestFactory().get("/", params)
+        req.user = self.user
+        view = SearchView()
+        view.request = req
+        return view
+
+    def test_gquery_merges_shortid_and_xapian_in_relevance_order(self):
+        fake_search = _fake_xapian_search(
+            [self.top_sp.uuid, self.second_sp.uuid])
+        view = self._view(gquery="acme")
+        with patch("dashboard.views.search", side_effect=fake_search):
+            devices, total = view.get_devices(self.user, 0, 10)
+
+        self.assertEqual(total, 3)
+        self.assertEqual(
+            [d.pk for d in devices],
+            ["ereuse24:acme12", "ereuse24:zzzxxx", "ereuse24:yyyxxx"])
+
+    def test_old_search_param_name_returns_nothing(self):
+        view = self._view(search="acme")
+        with patch("dashboard.views.search", side_effect=_fake_xapian_search([])):
+            devices, total = view.get_devices(self.user, 0, 10)
+        self.assertEqual((devices, total), ([], 0))
+
+
+class SearchViewBestMatchTests(TestCase):
+    """``?gquery=...&best_match=true`` redirects straight to the private
+    device view of the top-relevance result, instead of rendering the
+    results page. Any other value of ``best_match`` must not redirect."""
+
+    def setUp(self):
+        self.institution = Institution.objects.create(name="Inst")
+        self.user = User.objects.create(
+            email="u@test.local", institution=self.institution)
+        self.top_sp = SystemProperty.objects.create(
+            owner=self.institution, uuid=uuidlib.uuid4(),
+            value="ereuse24:topone")
+        self.second_sp = SystemProperty.objects.create(
+            owner=self.institution, uuid=uuidlib.uuid4(),
+            value="ereuse24:secondo")
+
+    def _view(self, **params):
+        req = RequestFactory().get("/", params)
+        req.user = self.user
+        view = SearchView()
+        view.request = req
+        view.kwargs = {}
+        return view
+
+    def test_best_match_true_redirects_following_relevance_order(self):
+        # top_sp is ranked first by the (mocked) Xapian relevance order.
+        fake_search = _fake_xapian_search([self.top_sp.uuid, self.second_sp.uuid])
+
+        with patch("dashboard.views.search", side_effect=fake_search):
+            view = self._view(gquery="unrelatedterm", best_match="true")
+            response = view.get(view.request)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(
+            response.url,
+            reverse("device:details", kwargs={"pk": "ereuse24:topone"}))
+
+    def test_best_match_with_public_redirects_to_the_public_device_page(self):
+        # top_sp is ranked first by the (mocked) Xapian relevance order.
+        fake_search = _fake_xapian_search([self.top_sp.uuid, self.second_sp.uuid])
+
+        with patch("dashboard.views.search", side_effect=fake_search):
+            view = self._view(
+                gquery="unrelatedterm", best_match="true", public="true")
+            response = view.get(view.request)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(
+            response.url,
+            reverse("device:device_web", kwargs={"pk": "ereuse24:topone"}))
+
+    def test_best_match_not_true_does_not_redirect(self):
+        # Stub out the normal results-page rendering: it builds real Device
+        # objects (Xapian-backed), irrelevant to the redirect decision itself.
+        fake_search = _fake_xapian_search([self.top_sp.uuid, self.second_sp.uuid])
+
+        with patch("dashboard.views.search", side_effect=fake_search), \
+                patch.object(SearchView, "get_context_data", return_value={}):
+            view = self._view(gquery="unrelatedterm", best_match="false")
+            response = view.get(view.request)
+            self.assertNotEqual(response.status_code, 302)
+
+            view = self._view(gquery="unrelatedterm")
+            response = view.get(view.request)
+            self.assertNotEqual(response.status_code, 302)
+
+
+class SearchViewExactMatchTests(TestCase):
+    """``?gquery=...&exact_match=true`` redirects only when the search
+    yields exactly one result; any other match count falls back to the
+    normal listing. When both ``best_match`` and ``exact_match`` are
+    present, whichever appears last in the raw querystring wins."""
+
+    def setUp(self):
+        self.institution = Institution.objects.create(name="Inst")
+        self.user = User.objects.create(
+            email="u@test.local", institution=self.institution)
+        self.top_sp = SystemProperty.objects.create(
+            owner=self.institution, uuid=uuidlib.uuid4(),
+            value="ereuse24:topone")
+        self.second_sp = SystemProperty.objects.create(
+            owner=self.institution, uuid=uuidlib.uuid4(),
+            value="ereuse24:secondo")
+
+    def _view(self, raw_query_string):
+        req = RequestFactory().get("/?" + raw_query_string)
+        req.user = self.user
+        view = SearchView()
+        view.request = req
+        view.kwargs = {}
+        return view
+
+    def test_exact_match_true_redirects_when_there_is_a_single_result(self):
+        fake_search = _fake_xapian_search([self.top_sp.uuid])
+
+        with patch("dashboard.views.search", side_effect=fake_search):
+            view = self._view("gquery=unrelatedterm&exact_match=true")
+            response = view.get(view.request)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(
+            response.url,
+            reverse("device:details", kwargs={"pk": "ereuse24:topone"}))
+
+    def test_exact_match_with_public_redirects_to_the_public_device_page(self):
+        fake_search = _fake_xapian_search([self.top_sp.uuid])
+
+        with patch("dashboard.views.search", side_effect=fake_search):
+            view = self._view(
+                "gquery=unrelatedterm&exact_match=true&public=true")
+            response = view.get(view.request)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(
+            response.url,
+            reverse("device:device_web", kwargs={"pk": "ereuse24:topone"}))
+
+    def test_exact_match_true_does_not_redirect_with_multiple_results(self):
+        fake_search = _fake_xapian_search([self.top_sp.uuid, self.second_sp.uuid])
+
+        with patch("dashboard.views.search", side_effect=fake_search), \
+                patch.object(SearchView, "get_context_data", return_value={}):
+            view = self._view("gquery=unrelatedterm&exact_match=true")
+            response = view.get(view.request)
+
+        self.assertNotEqual(response.status_code, 302)
+
+    def test_exact_match_true_does_not_redirect_with_zero_results(self):
+        fake_search = _fake_xapian_search([])
+
+        with patch("dashboard.views.search", side_effect=fake_search), \
+                patch.object(SearchView, "get_context_data", return_value={}):
+            view = self._view("gquery=unrelatedterm&exact_match=true")
+            response = view.get(view.request)
+
+        self.assertNotEqual(response.status_code, 302)
+
+    def test_last_param_in_url_wins_on_collision(self):
+        # Two results: best_match alone would redirect (total >= 1), while
+        # exact_match alone would not (total != 1). Whichever is last decides.
+        fake_search = _fake_xapian_search([self.top_sp.uuid, self.second_sp.uuid])
+
+        with patch("dashboard.views.search", side_effect=fake_search), \
+                patch.object(SearchView, "get_context_data", return_value={}):
+            # exact_match appears last -> wins -> no redirect (2 results).
+            view = self._view(
+                "gquery=unrelatedterm&best_match=true&exact_match=true")
+            response = view.get(view.request)
+            self.assertNotEqual(response.status_code, 302)
+
+        with patch("dashboard.views.search", side_effect=fake_search):
+            # best_match appears last -> wins -> redirects to top result.
+            view = self._view(
+                "gquery=unrelatedterm&exact_match=true&best_match=true")
+            response = view.get(view.request)
+            self.assertEqual(response.status_code, 302)
+            self.assertEqual(
+                response.url,
+                reverse("device:details", kwargs={"pk": "ereuse24:topone"}))
+
+    def test_best_match_true_then_exact_match_false_disables_redirect(self):
+        # exact_match=false is the last occurrence, so it wins over the
+        # earlier best_match=true, and no redirect happens at all.
+        fake_search = _fake_xapian_search([self.top_sp.uuid, self.second_sp.uuid])
+
+        with patch("dashboard.views.search", side_effect=fake_search), \
+                patch.object(SearchView, "get_context_data", return_value={}):
+            view = self._view(
+                "gquery=unrelatedterm&best_match=true&exact_match=false")
+            response = view.get(view.request)
+
+        self.assertNotEqual(response.status_code, 302)
+
+    def test_exact_match_true_then_best_match_false_disables_redirect(self):
+        # best_match=false is the last occurrence, so it wins over the
+        # earlier exact_match=true, and no redirect happens at all, even
+        # though there is exactly one result (which would satisfy exact_match).
+        fake_search = _fake_xapian_search([self.top_sp.uuid])
+
+        with patch("dashboard.views.search", side_effect=fake_search), \
+                patch.object(SearchView, "get_context_data", return_value={}):
+            view = self._view(
+                "gquery=unrelatedterm&exact_match=true&best_match=false")
+            response = view.get(view.request)
+
+        self.assertNotEqual(response.status_code, 302)
+
+
+class SearchViewCustomIdPublicRedirectTests(TestCase):
+    """A device whose canonical root is a bare ``custom_id:...`` (a
+    RootAlias-only root, with no SystemProperty of its own) must not be
+    used verbatim as the pk for the public redirect: PublicDeviceWebView
+    resolves devices by literal SystemProperty.value with no owner filter,
+    so that pk would 404. The redirect must use the real physical alias
+    (``web_pk``) instead. The private redirect is unaffected, since
+    DetailsView resolves the canonical root fine using the owner."""
+
+    def setUp(self):
+        self.institution = Institution.objects.create(name="Inst")
+        self.user = User.objects.create(
+            email="u@test.local", institution=self.institution)
+        self.real_alias = "ereuse24:realphys"
+        SystemProperty.objects.create(
+            owner=self.institution, uuid=uuidlib.uuid4(),
+            key="ereuse24", value=self.real_alias)
+        # SystemProperty creation auto-creates a self-referential RootAlias
+        # row (alias == root == value); re-point it to the custom_id root.
+        RootAlias.objects.update_or_create(
+            owner=self.institution, alias=self.real_alias,
+            defaults={"root": "custom_id:tstid1", "updated": timezone.now()})
+
+    def _view(self, raw_query_string):
+        req = RequestFactory().get("/?" + raw_query_string)
+        req.user = self.user
+        view = SearchView()
+        view.request = req
+        view.kwargs = {}
+        return view
+
+    def test_public_redirect_uses_web_pk_instead_of_the_bare_custom_id_root(self):
+        with patch("dashboard.views.search", side_effect=_fake_xapian_search([])):
+            view = self._view(
+                "gquery=tstid1&exact_match=true&public=true")
+            response = view.get(view.request)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(
+            response.url,
+            reverse("device:device_web", kwargs={"pk": self.real_alias}))
+
+    def test_private_redirect_keeps_the_canonical_custom_id_pk(self):
+        with patch("dashboard.views.search", side_effect=_fake_xapian_search([])):
+            view = self._view("gquery=tstid1&best_match=true")
+            response = view.get(view.request)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(
+            response.url,
+            reverse("device:details", kwargs={"pk": "custom_id:tstid1"}))
