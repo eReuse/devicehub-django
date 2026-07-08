@@ -112,7 +112,7 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
 
         limit = int(self.request.GET.get('limit', self.paginate_by))
         page = int(self.request.GET.get('page', 1))
-        search = self.request.GET.get('search', '')
+        search = self.request.GET.get('lquery', '')
         if search:
             count = getattr(self, '_search_count', None)
             if count is None:
@@ -131,6 +131,7 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
             'state_definitions': self._get_state_definitions(),
             'limit': limit,
             'search': search,
+            'query_param': 'lquery',
             'sort': self.request.GET.get('sort', ''),
             'breadcrumb': [
                 (_("Lots"), reverse_lazy("dashboard:unassigned")),
@@ -145,7 +146,7 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
         return context
 
     def get_table_data(self):
-        search = self.request.GET.get('search', '').lower()
+        search = self.request.GET.get('lquery', '').lower()
         chids = list(self._get_chids_qs())
 
         # Both paths read the ProductCache read model (no per-device Device
@@ -213,7 +214,7 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
                 owner=self.request.user.institution,
             )
         chids = list(self._get_chids_qs())
-        search = self.request.GET.get('search', '').lower()
+        search = self.request.GET.get('lquery', '').lower()
         if search:
             chids = self._search_roots(chids, search)
         return chids
@@ -464,17 +465,18 @@ class SearchView(DeviceTableMixin, InventaryMixin):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         search_params = self.request.GET.urlencode(),
-        search = self.request.GET.get("search")
+        search = self.request.GET.get("gquery")
         if search:
             context.update({
                 'search_params': search_params,
-                'search': search
+                'search': search,
+                'query_param': 'gquery',
             })
 
         return context
 
     def get_devices(self, user, offset, limit):
-        query = dict(self.request.GET).get("search")
+        query = dict(self.request.GET).get("gquery")
 
         if not query:
             return [], 0

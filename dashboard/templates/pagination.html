@@ -5,7 +5,7 @@
 <ul class="pagination mb-0">
   {% if page_number > 1 %}
   <li class="page-item">
-    <a class="page-link" href="?page={{ page_number|add:-1 }}&limit={{ limit }}{% if search %}&search={{ search }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">
+    <a class="page-link" href="?page={{ page_number|add:-1 }}&limit={{ limit }}{% if search %}&{{ query_param }}={{ search }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">
         <span aria-hidden="true">«</span>
         {% translate "previous" %}
     </a>
@@ -14,7 +14,7 @@
 
     <!-- First button is shown always-->
     <li class="page-item {% if 1 == page_number %}active{% endif %}">
-        <a class="page-link" href="?page=1&limit={{ limit }}{% if search %}&search={{ search }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">
+        <a class="page-link" href="?page=1&limit={{ limit }}{% if search %}&{{ query_param }}={{ search }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">
             1
         </a>
     </li>
@@ -24,7 +24,7 @@
         {% if p != total_pages and p != 1 %}
             <li class="page-item {% if p == page_number %}active{% endif %}">
             <a class="page-link"
-               href="{% if p == page_number or p == '...' %}#{% else %}?page={{ p }}&limit={{ limit }}{% if search %}&search={{ search }}{% endif %}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">
+               href="{% if p == page_number or p == '...' %}#{% else %}?page={{ p }}&limit={{ limit }}{% if search %}&{{ query_param }}={{ search }}{% endif %}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">
               {{ p }}
             </a>
           </li>
@@ -34,14 +34,14 @@
 
     <!--    Last page button is shown always -->
     <li class="page-item {% if total_pages == page_number %}active{% endif %}">
-        <a class="page-link" href="?page={{ total_pages }}&limit={{ limit }}{% if search %}&search={{ search }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">
+        <a class="page-link" href="?page={{ total_pages }}&limit={{ limit }}{% if search %}&{{ query_param }}={{ search }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">
             {{ total_pages }}
         </a>
     </li>
 
     {% if page_number < total_pages %}
     <li class="page-item">
-        <a class="page-link" href="?page={{ page_number|add:+1 }}&limit={{ limit }}{% if search %}&search={{ search }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">
+        <a class="page-link" href="?page={{ page_number|add:+1 }}&limit={{ limit }}{% if search %}&{{ query_param }}={{ search }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">
             {% translate "next" %}
             <span aria-hidden="true">»</span>
         </a>
