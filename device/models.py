@@ -239,48 +239,6 @@ class Device:
             lots.append(dl.lot)
         self.lots = lots
 
-    def matches_query(self, query):
-        if not query:
-            return True
-
-        #thanks ai for usage of lambda for lazy compute
-        details = {
-            'shortid': lambda d: str(d.shortid),
-            'type': lambda d: str(getattr(d, 'type', '')),
-            'manufacturer': lambda d: str(getattr(d, 'manufacturer', '')),
-            'model': lambda d: str(getattr(d, 'model', '')),
-            'current_state': lambda d: str(d.get_current_state()) if d.get_current_state() else '',
-            'status_beneficiary': lambda d: str(d.status_beneficiary),
-            'serial': lambda d: str(getattr(d, 'serial_number', '')),
-            'cpu': lambda d: str(getattr(d, 'cpu', '')),
-            'total_ram': lambda d: str(getattr(d, 'total_ram', ''))
-        }
-
-        #if query ends with :some_field, only search on this field
-        if ':' in query:
-            search_part, field_part = query.rsplit(':', 1)
-            search_part = search_part.strip().lower()
-            field_part = field_part.strip().lower()
-
-            if field_part in details:
-                field_value = details[field_part](self).lower()
-                return search_part in field_value
-            return False
-
-        query = query.lower().strip()
-
-        for value in details.values():
-            if query in value(self).lower():
-                return True
-
-        for prop in self.get_user_properties():
-            if query in str(prop.key).lower():
-                return True
-            if query in str(prop.value).lower():
-                return True
-
-        return False
-
     @classmethod
     def _roots_queryset(cls, institution):
         """Canonical roots owned by ``institution`` ordered by last activity.

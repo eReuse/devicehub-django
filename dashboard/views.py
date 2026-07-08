@@ -222,8 +222,8 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
 
     def _search_roots(self, device_ids, search_query):
         """Filter canonical roots by ``search_query`` against the ProductCache
-        read model, mirroring Device.matches_query field semantics without
-        constructing Device objects (no Xapian read/parse per device).
+        read model, matching the same device fields without constructing
+        Device objects (no Xapian read/parse per device).
 
         Whitespace separates terms and a device must match all of them (AND).
         A ``term:field`` token restricts that term to one field; a bare term
@@ -486,7 +486,16 @@ class SearchView(DeviceTableMixin, InventaryMixin):
             if redirect_ok:
                 public = request.GET.get("public", "").lower() == "true"
                 url_name = "device:device_web" if public else "device:details"
-                return redirect(url_name, pk=devices[0].pk)
+                pk = devices[0].pk
+                if public:
+                    # PublicDeviceWebView resolves by literal
+                    # SystemProperty.value (no owner), so a bare custom_id
+                    # root (RootAlias-only, no backing SystemProperty) would
+                    # 404; web_pk needs hids populated to fall back to a
+                    # real physical id in that case.
+                    devices[0].get_hids()
+                    pk = devices[0].web_pk
+                return redirect(url_name, pk=pk)
         return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
