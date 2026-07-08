@@ -468,7 +468,9 @@ class SearchView(DeviceTableMixin, InventaryMixin):
         if query and best_match:
             devices, total = self.get_devices(request.user, 0, 1)
             if total:
-                return redirect("device:details", pk=devices[0].pk)
+                public = request.GET.get("public", "").lower() == "true"
+                url_name = "device:device_web" if public else "device:details"
+                return redirect(url_name, pk=devices[0].pk)
         return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
