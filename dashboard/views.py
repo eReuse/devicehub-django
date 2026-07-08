@@ -6,7 +6,7 @@ from tablib import Dataset
 
 from django.utils.translation import gettext_lazy as _
 from django.views.generic.edit import FormView
-from django.shortcuts import Http404, get_object_or_404
+from django.shortcuts import Http404, get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.utils.dateparse import parse_datetime
 from django.utils import timezone
@@ -462,6 +462,15 @@ class SearchView(DeviceTableMixin, InventaryMixin):
     breadcrumb = [(_("All Devices"), reverse_lazy("dashboard:all_device")), (_("Search"), None)]
     table_order_by = ()  # override DeviceTable.Meta order_by=("-last_updated",) to preserve relevance order
 
+    def get(self, request, *args, **kwargs):
+        query = request.GET.get("gquery")
+        best_match = request.GET.get("best_match", "").lower() == "true"
+        if query and best_match:
+            devices, total = self.get_devices(request.user, 0, 1)
+            if total:
+                return redirect("device:details", pk=devices[0].pk)
+        return super().get(request, *args, **kwargs)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         search_params = self.request.GET.urlencode(),
@@ -498,7 +507,12 @@ class SearchView(DeviceTableMixin, InventaryMixin):
         total = sp_count + xapian_count
 
         page_ids = sp_page + xapian_page
-        distinct_page_ids = set(page_ids)
+        seen = set()
+        distinct_page_ids = []
+        for pid in page_ids:
+            if pid not in seen:
+                seen.add(pid)
+                distinct_page_ids.append(pid)
         devices = [Device(id=x, owner=user.institution) for x in distinct_page_ids]
 
         return devices, total
