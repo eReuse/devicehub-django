@@ -24,6 +24,7 @@ def get_lshw_child(child, nets, component):
 class ParseSnapshot:
     def __init__(self, snapshot, default="n/a"):
         self.default = default
+        self._errors = []
         self.dmidecode_raw = snapshot["data"].get("dmidecode", "{}")
         self.smart_raw = snapshot["data"].get("smart", [])
         if not self.smart_raw:
@@ -466,10 +467,10 @@ class ParseSnapshot:
         if interface.upper() in DATASTORAGEINTERFACE:
             return interface.upper()
 
-        txt = "Sid: {}, interface {} is not in DataStorageInterface Enum".format(
-            self.sid, interface
+        txt = "interface {} is not in DataStorageInterface Enum".format(
+            interface
         )
-        self.errors("{}".format(txt))
+        self.errors(txt)
 
     def get_data_storage_size(self, x):
         return x.get('user_capacity', {}).get('bytes')
@@ -496,4 +497,4 @@ class ParseSnapshot:
             return self._errors
 
         logger.error(txt)
-        self._errors.append("%s", txt)
+        self._errors.append(txt)

@@ -23,7 +23,7 @@ class Http403(PermissionDenied):
 
     def __init__(self, details=None, code=None):
         if details is not None:
-            self.detail = details or self.default_details
+            self.detail = details or self.default_detail
         if code is not None:
             self.code = code or self.default_code
 
