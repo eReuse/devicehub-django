@@ -1,5 +1,8 @@
 import json
+import requests
+
 from django import forms
+from credentials.services import CredentialService
 from django.utils.translation import gettext_lazy as _
 from django.forms.models import inlineformset_factory
 from user.models import Institution, InstitutionLabelSettings, InstitutionDPPSettings, FacilityClaim
@@ -80,20 +83,56 @@ class InstitutionLabelSettingsForm(forms.ModelForm):
     def clean_qr_printed_properties(self):
         return self.cleaned_data.get('qr_printed_properties', [])
 
+DPP_VERSION_CHOICES = [
+    ('untp-0.7.0', 'UNTP v0.7.0'),
+]
+
 class InstitutionDPPSettingsForm(forms.ModelForm):
+    active_dpp_standard = forms.ChoiceField(
+        choices=DPP_VERSION_CHOICES,
+        widget=forms.RadioSelect,
+        label=_("Supported UNTP Versions"),
+        required=True,
+        help_text=_("Select the protocol version your backend should use to construct credentials.")
+    )
+
     class Meta:
         model = InstitutionDPPSettings
-        fields = [
-            'issuer_did',
-            'signing_auth_token',
-            'api_base_url',
-            'schema_config'
-        ]
-        widgets = {
-            'signing_auth_token': forms.PasswordInput(render_value=True, attrs={'class': 'form-control'}),
-            'issuer_did': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'did:web:example.com'}),
-            'api_base_url': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://api.example.com'}),
-        }
+        fields = ['api_base_url', 'signing_auth_token', 'issuer_did',
+                  'active_dpp_standard', 'dpp_schema', 'dte_schema', 'dfr_schema']
+
+    def __init__(self, *args, **kwargs):
+        schemas = kwargs.pop('schemas', {})
+        super().__init__(*args, **kwargs)
+
+        def setup_schema_field(field_name, schema_list, label):
+            choices = [(s['file_schema'], s['name']) for s in schema_list]
+
+            if choices:
+                self.fields[field_name] = forms.ChoiceField(
+                    choices=choices,
+                    label=label,
+                    required=False
+                )
+            else:
+                saved_val = getattr(self.instance, field_name, None)
+
+                if saved_val:
+                    fallback_choices = [(saved_val, f"{saved_val} (Unverified - API Unreachable)")]
+                else:
+                    fallback_choices = [('', _('API Unreachable - No Schema Available'))]
+
+                self.fields[field_name] = forms.ChoiceField(
+                    choices=fallback_choices,
+                    label=label,
+                    required=False,
+                    disabled=True
+                )
+
+        setup_schema_field('dpp_schema', schemas.get('dpp', []), _("DPP Schema"))
+        setup_schema_field('dte_schema', schemas.get('dte', []), _("DTE Schema"))
+        setup_schema_field('dfr_schema', schemas.get('dfr', []), _("DFR Schema"))
+
 
 class FacilityClaimForm(forms.ModelForm):
     class Meta:

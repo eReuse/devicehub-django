@@ -1,4 +1,6 @@
 import uuid
+import requests
+from django.core.cache import cache
 from django_tables2 import SingleTableView
 from smtplib import SMTPException
 from django.contrib import messages
@@ -22,7 +24,7 @@ from admin.email import NotifyActivateUserByEmail
 from admin.tables import UserTable
 from action.models import StateDefinition
 from lot.models import LotTag
-from evidence.services import CredentialService
+from credentials.services import CredentialService
 
 from django.views import View
 
@@ -299,14 +301,43 @@ class InstitutionConfigView(AdminView, UpdateView):
     subtitle = _("Manage technical settings and signing credentials")
     success_url = reverse_lazy('admin:panel')
 
-    def form_valid(self, form):
-        messages.success(self.request, _("Configuration updated successfully."))
-        return super().form_valid(form)
-
     def get_object(self, queryset=None):
         institution = self.request.user.institution
         obj, created = InstitutionDPPSettings.objects.get_or_create(institution=institution)
         return obj
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['schemas'] = self.fetch_schemas(self.object)
+        return kwargs
+
+    def fetch_schemas(self, settings_obj) -> dict:
+        if not settings_obj or not settings_obj.api_base_url or not settings_obj.signing_auth_token:
+            return {}
+
+        cached = cache.get('idhub_schemas')
+        if cached:
+            return cached
+
+        try:
+            #should a call be done here?
+            url = f"{settings_obj.api_base_url.rstrip('/')}/schemas/untp/active/"
+            headers = {'Authorization': f'Bearer {settings_obj.signing_auth_token}'}
+
+            # TODO: manage verify=False in production
+            res = requests.get(url, headers=headers, timeout=5, verify=False)
+            res.raise_for_status()
+
+            data = res.json()
+            cache.set('idhub_schemas', data, timeout=600)
+            return data
+
+        except Exception as e:
+            return {}
+
+    def form_valid(self, form):
+        messages.success(self.request, _("Configuration updated successfully."))
+        return super().form_valid(form)
 
 
 class StateDefinitionContextMixin(ContextMixin):
