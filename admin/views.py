@@ -467,134 +467,21 @@ class InstitutionLabelCustomizationView(AdminView, UpdateView):
 
 
 class IssueDigitalFacilityRecordView(AdminView, View):
+
     def post(self, request, *args, **kwargs):
         service = CredentialService(request.user)
-        institution = request.user.institution
 
-        geo_data = None
-        try:
-            raw_lat = request.POST.get('latitude')
-            raw_lon = request.POST.get('longitude')
-
-            if raw_lat and raw_lon:
-                lat = float(raw_lat)
-                lon = float(raw_lon)
-
-                plus_code = olc.encode(lat, lon, 11)
-                plus_code_url = f"https://plus.codes/{plus_code}"
-
-                geo_data = {
-                    "plusCode": plus_code_url,
-                    "geoLocation": {
-                        "type": "Point",
-                        "coordinates": [lon, lat]
-                    }
-                }
-        except (ValueError, TypeError):
-            pass
-
-        address_data = {
-            "type": ["Address"],
-            "streetAddress": institution.street_address,
-            "postalCode": institution.postal_code,
-            "addressLocality": institution.location,
-            "addressRegion": institution.region,
-            "addressCountry": institution.country
-        }
-        address_data = {k: v for k, v in address_data.items() if v}
-
-        isic_names = {
-            '9511': "Repair of computers and peripheral equipment",
-            '3830': "Materials recovery and recycling",
-            '3313': "Repair of electronic and optical equipment",
-            '4649': "Wholesale of other household goods",
-            '0000': "General Operations"
-        }
-
-        process_code = institution.process_category_code
-        process_name = isic_names.get(process_code, "General Operations")
-        process_category = [
-            {
-                "id": f"https://unstats.un.org/unsd/classifications/Econ/ISIC/Rev4/{process_code}",
-                "code": process_code,
-                "name": process_name,
-                "schemeID": "https://unstats.un.org/unsd/classifications/Econ/ISIC/",
-                "schemeName": "UN ISIC Rev.4"
-            }
-        ]
-
-        facility_uri = institution.facility_id_uri or f"urn:uuid:{uuid.uuid4()}"
-        facility_data = {
-            "type": ["Facility"],
-            "id": facility_uri,
-            "name": institution.name,
-            "description": institution.facility_description,
-            "countryOfOperation": institution.country,
-            "address": address_data,
-            "operatedByParty": {
-                "id": facility_uri,
-                "name": institution.name,
-                "registeredId": institution.registered_id or str(institution.id)
+        credential, error = service.issue_credential(
+            workflow_type='facility',
+            build_kwargs={
+                'institution': request.user.institution,
+                'request_data': request.POST,
             },
-            "locationInformation": geo_data,
-            "processCategory": process_category
-        }
-        if institution.logo:
-            facility_data["logo"] = institution.logo
-            facility_data["operatedByParty"]["logo"] = institution.logo
-        #delete empty fields jic
-        facility_data = {k: v for k, v in facility_data.items() if v}
-
-        conformity_claims = []
-        for claim in institution.claims.all():
-            claim_id = f"urn:uuid:{uuid.uuid4()}"
-
-            claim_data = {
-                "id": claim_id,
-                "type": ["Claim", "Declaration"],
-                "description": claim.description,
-                "conformance": True,
-                "conformityTopic": claim.topic_code,
-            }
-
-            if claim.admin_name:
-                claim_data["referenceRegulation"] = {
-                    "administeredBy": {
-                        "id": claim.admin_url or "urn:uuid:unknown",
-                        "name": claim.admin_name
-                    }
-                }
-
-            if hasattr(claim, 'assessment_date') and claim.assessment_date:
-                claim_data["assessmentDate"] = claim.assessment_date.isoformat()
-
-            if hasattr(claim, 'evidence_url') and claim.evidence_url:
-                evidence = {
-                    "type": ["SecureLink", "Link"],
-                    "linkURL": claim.evidence_url
-                }
-                if hasattr(claim, 'evidence_name') and claim.evidence_name:
-                    evidence["linkName"] = claim.evidence_name
-
-                claim_data["conformityEvidence"] = evidence
-
-            conformity_claims.append(claim_data)
-
-        credential_subject = {
-            "type": ["FacilityRecord"],
-            "id": facility_uri,
-            "facility": facility_data
-        }
-        if conformity_claims:
-            credential_subject["conformityClaim"] = conformity_claims
-
-        credential, error = service.issue_facility_credential(
-            credential_subject=credential_subject,
-            credential_db_key=CredentialProperty.CredentialType.DFR,
-            description="Digital Facility Record",
+            description="Digital Facility Record"
         )
+
         if error:
-            messages.error(request, error)
+            messages.error(request, f"Failed to issue Facility Record: {error}")
         else:
             messages.success(request, "Facility Record issued successfully!")
 
