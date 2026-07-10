@@ -1,4 +1,5 @@
 import uuid
+import datetime
 from django.db import transaction
 from django.utils import timezone
 from django.views import View
@@ -17,7 +18,7 @@ from device.models import Device
 from .models import State, DeviceLog
 from device.forms import DeviceFormSet
 from evidence.models import CredentialProperty
-from evidence.services import CredentialService
+from credentials.services import CredentialService
 
 from utils.device import create_property, create_doc, create_index
 from utils.save_snapshots import move_json, save_in_disk
@@ -71,86 +72,49 @@ class ChangeStateView(LoginRequiredMixin, FacilityInfoMixin, FormView):
         if not device.last_evidence:
             return super().form_invalid(form)
 
+        with transaction.atomic():
+            State.objects.create(
+                snapshot_uuid=snapshot_uuid,
+                state=new_state,
+                user=self.request.user,
+                institution=self.request.user.institution,
+            )
+
+            message_log = _("<Created> State '{}'. Previous State: '{}'").format(new_state, previous_state)
+            DeviceLog.objects.create(
+                snapshot_uuid=snapshot_uuid,
+                event=message_log,
+                user=self.request.user,
+                institution=self.request.user.institution,
+            )
+
         service = CredentialService(self.request.user)
         did_error = service.ensure_device_did(device)
+
         if did_error:
-            messages.warning(self.request, _("State changed, but DID configuration failed"))
+            messages.warning(self.request, _("Local state updated to '{}', but DID configuration failed. Credential skipped.").format(new_state))
             return super().form_valid(form)
 
-        components = device.components_export()
-        manufacturer = components.get('manufacturer') or "Unknown"
-        model = components.get('model') or "Device"
-        clean_name = f"{manufacturer} {model}"
-
-        device_uri = device.did
-        inst_facility_uri = getattr(self.request.user.institution, 'facility_id_uri', None)
-        facility_uri = inst_facility_uri or f"urn:uuid:{self.request.user.institution.id}"
-
-        traceability_event = {
-            "type": ["ObjectEvent", "Event"],
-            "id": f"urn:uuid:{uuid.uuid4()}",
-            "eventTime": timezone.now().isoformat(),
-            "eventTimeZoneOffset": "+00:00",
-            "action": "observe",
-            "processType": new_state,
-            "bizStep": "urn:epcglobal:cbv:bizstep:other",
-            "disposition": "urn:epcglobal:cbv:disp:active",
-            "bizLocation": facility_uri,
-            "epcList": [{
-                "type": ["Item"],
-                "id": device_uri,
-                "name": clean_name
-            }],
-            "ereuse:deviceState": new_state,
-            "ereuse:previousState": previous_state,
-            "ereuse:lastUpdate": timezone.now().isoformat()
-        }
-
-        if comment:
-            traceability_event["ereuse:operatorComment"] = comment
-
         facility_info = self.get_facility_info(self.request.user.institution, self.request)
-        if facility_info:
-            traceability_event["facility"] = {
-                "id": facility_info["id"],
-                "name": facility_info["name"]
-            }
-            if facility_info.get("registeredId"):
-                traceability_event["facility"]["registeredId"] = str(facility_info["registeredId"])
-                traceability_event["facility"]["idScheme"] = facility_info.get("idScheme")
 
-        try:
-            with transaction.atomic():
-                State.objects.create(
-                    snapshot_uuid=snapshot_uuid,
-                    state=new_state,
-                    user=self.request.user,
-                    institution=self.request.user.institution,
-                )
+        credential, error = service.issue_credential(
+            workflow_type='traceability',
+            build_kwargs={
+                'event_type': 'ModifyEvent',
+                'device': device,
+                'institution': self.request.user.institution,
+                'facility_info': facility_info,
+                'previous_state': previous_state,
+                'new_state': new_state,
+                'comment': comment
+            },
+            description=f"State Change: {previous_state} -> {new_state}"
+        )
 
-                message = _("<Created> State '{}'. Previous State: '{}'").format(new_state, previous_state)
-                DeviceLog.objects.create(
-                    snapshot_uuid=snapshot_uuid,
-                    event=message,
-                    user=self.request.user,
-                    institution=self.request.user.institution,
-                )
-
-                credential, error = service.issue_device_credential(
-                    credential_type_key='traceability',
-                    credential_subject=[traceability_event],
-                    credential_db_key=CredentialProperty.CredentialType.DTE,
-                    device=device,
-                    description=f"State Change: {previous_state} -> {new_state}"
-                )
-
-                if error:
-                    raise Exception(error)
-
-            messages.success(self.request, _("State changed and credential issued successfully from '{}' to '{}'").format(previous_state, new_state))
-
-        except Exception as e:
-            messages.warning(self.request, _("State changed, but credential failed: {}").format(str(e)))
+        if error:
+            messages.warning(self.request, _("Local state updated to '{}', but credential issuance failed: {}").format(new_state, error))
+        else:
+            messages.success(self.request, _("State changed to '{}' and Traceability Credential issued successfully!").format(new_state))
 
         return super().form_valid(form)
 
