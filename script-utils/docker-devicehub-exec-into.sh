@@ -8,7 +8,7 @@ set -u
 set -x
 
 main() {
-       docker compose exec devicehub-django bash
+        docker compose exec --user devicehub-django devicehub-django bash
 }
 
 main "${@}"

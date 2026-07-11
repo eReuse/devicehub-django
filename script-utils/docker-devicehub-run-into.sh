@@ -8,7 +8,7 @@ set -u
 set -x
 
 main() {
-       docker compose run --rm  --entrypoint bash devicehub-django
+       docker compose run --rm --entrypoint bash devicehub-django
 }
 
 main "${@}"

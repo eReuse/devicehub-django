@@ -8,8 +8,8 @@ set -u
 set -x
 
 main() {
-        docker compose exec devicehub-django \
-               sh -c 'gosu $(cat /app_user) ./manage.py dbbackup && ./manage.py evidence_backup'
+        docker compose exec --user devicehub-django devicehub-django \
+               sh -c './manage.py dbbackup && ./manage.py evidence_backup'
 }
 
 main "${@}"

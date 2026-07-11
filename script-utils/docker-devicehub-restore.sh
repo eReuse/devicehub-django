@@ -10,10 +10,10 @@ set -x
 main() {
         echo 'WARNING! This is going to delete all data to restore it with a previous one'
         sleep 10
-       docker compose exec devicehub-django \
-               sh -c 'gosu $(cat /app_user) ./manage.py reset_db --close-sessions --noinput'
-        docker compose exec devicehub-django \
-               sh -c 'gosu $(cat /app_user) ./manage.py dbrestore --noinput && ./manage.py evidence_restore'
+       docker compose exec --user devicehub-django devicehub-django \
+               sh -c './manage.py reset_db --close-sessions --noinput'
+        docker compose exec --user devicehub-django devicehub-django \
+               sh -c './manage.py dbrestore --noinput && ./manage.py evidence_restore'
 }
 
 main "${@}"
