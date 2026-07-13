@@ -34,7 +34,7 @@ PROCESS_CHOICES = [
 ]
 
 def default_printed_properties():
-    return ["shortid"]
+    return ["ID"]
 
 class Institution(models.Model):
     name = models.CharField(

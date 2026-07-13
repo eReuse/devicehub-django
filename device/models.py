@@ -34,16 +34,6 @@ class Device:
         ROUTER = "Router"
         ROUTERWIFI = "RouterWifi"
 
-        # --- Raw Materials (Dismantling Outputs) ---
-        PLASTIC = "Plastic"
-        ALUMINIUM = "Aluminium"
-        COPPER = "Copper"
-        STEEL = "Steel"
-        GLASS = "Glass"
-        GOLD = "Gold"
-        LITHIUM = "Lithium"
-        PCB = "PCB"
-        MIXED_EWASTE = "MixedEwaste"
 
     def __init__(self, *args, **kwargs):
         # the id is the chid of the device
