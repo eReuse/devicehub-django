@@ -6,15 +6,14 @@ import os
 from django import forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
-from django.conf import settings
 from utils.device import create_property, create_doc, create_index
 from utils.forms import MultipleFileField
 from device.models import Device
 from evidence.parse import Build
 from evidence.models import SystemProperty, UserProperty, RootAlias
-from evidence.image_processing import build_json, process_image, process_photo_upload
+from evidence.image_processing import process_photo_upload
 from utils.save_snapshots import move_json, save_in_disk
-from utils.photo_evidence import save_photo_in_disk, get_photos_dir
+from utils.photo_evidence import get_photos_dir
 from action.models import DeviceLog
 
 
@@ -26,7 +25,7 @@ class UploadForm(forms.Form):
         data = self.cleaned_data.get('evidence_file')
         if not data:
             raise ValidationError(
-                _("No snapshot slected"),
+                _("No snapshot selected"),
                 code="no_input",
             )
 
@@ -336,7 +335,7 @@ class BasePhotoMixin(forms.Form):
             name,
         )
         if os.path.exists(photo_path):
-            raise ValidationError(f"Photo {name} already exists.")
+            raise ValidationError(_("Photo already exists."))
 
         self.photo_data_cache = {
             'file': photo,
