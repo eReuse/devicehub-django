@@ -25,6 +25,7 @@ def get_inxi(n, name):
 class ParseSnapshot:
     def __init__(self, snapshot, default="n/a"):
         self.default = default
+        self._errors = []
         self.dmidecode_raw = snapshot.get("data", {}).get("dmidecode", "{}")
         self.smart_raw = snapshot.get("data", {}).get("smartctl", [])
         self.inxi_raw = snapshot.get("data", {}).get("inxi", "") or ""
@@ -420,4 +421,4 @@ class ParseSnapshot:
             return self._errors
 
         logger.error(txt)
-        self._errors.append("%s", txt)
+        self._errors.append(txt)

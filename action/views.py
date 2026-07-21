@@ -7,7 +7,7 @@ from django.views.generic.edit import DeleteView, CreateView, UpdateView, FormVi
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
 from dashboard.mixins import DashboardView
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, Http404
 from action.models import State, StateDefinition, Note, DeviceLog
 from device.models import Device
 
