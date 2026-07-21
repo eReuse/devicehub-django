@@ -1,5 +1,6 @@
+{% load i18n %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ LANGUAGE_CODE|default:'en' }}">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -88,51 +89,41 @@
   </head>
   <body>
     <div class="container custom-container">
-      <h1 class="text-center mb-4" style="color: #545f71;">{{ object.manufacturer }} {{ object.type }} {{ object.model }}</h1>
+      <h1 class="text-center mb-4" style="color: #545f71;">{{ object.manufacturer|default:'' }} {{ object.type }} {{ object.model|default:'' }}</h1>
 
       <div class="row">
         <div class="col-lg-6">
-          <h2 class="section-title">Details</h2>
+          <h2 class="section-title">{% trans "Details" %}</h2>
           <div class="info-row row">
-            <div class="col-md-4 info-label">Type</div>
+            <div class="col-md-4 info-label">{% trans "Type" %}</div>
             <div class="col-md-8 info-value">{{ object.type }}</div>
           </div>
-
-          {% if object.is_websnapshot %}
-            {% for snapshot_key, snapshot_value in object.last_user_evidence %}
-              <div class="info-row row">
-                <div class="col-md-4 info-label">{{ snapshot_key }}</div>
-                <div class="col-md-8 info-value">{{ snapshot_value|default:'' }}</div>
-              </div>
-            {% endfor %}
-          {% else %}
+          <div class="info-row row">
+            <div class="col-md-4 info-label">{% trans "Manufacturer" %}</div>
+            <div class="col-md-8 info-value">{{ object.manufacturer|default:'-' }}</div>
+          </div>
+          <div class="info-row row">
+            <div class="col-md-4 info-label">{% trans "Model" %}</div>
+            <div class="col-md-8 info-value">{{ object.model|default:'-' }}</div>
+          </div>
+          {% if user.is_authenticated and not object.is_websnapshot %}
             <div class="info-row row">
-              <div class="col-md-4 info-label">Manufacturer</div>
-              <div class="col-md-8 info-value">{{ object.manufacturer|default:'' }}</div>
+              <div class="col-md-4 info-label">{% trans "Serial Number" %}</div>
+              <div class="col-md-8 info-value">{{ object.serial_number|default:'' }}</div>
             </div>
-            <div class="info-row row">
-              <div class="col-md-4 info-label">Model</div>
-              <div class="col-md-8 info-value">{{ object.model|default:'' }}</div>
-            </div>
-            {% if user.is_authenticated %}
-              <div class="info-row row">
-                <div class="col-md-4 info-label">Serial Number</div>
-                <div class="col-md-8 info-value">{{ object.serial_number|default:'' }}</div>
-              </div>
-            {% endif %}
           {% endif %}
         </div>
 
         <div class="col-lg-6">
-          <h2 class="section-title">Identifiers</h2>
+          <h2 class="section-title">{% trans "Identifiers" %}</h2>
           <div class="info-row row">
-            <div class="col-md-4 info-label">Chid</div>
+            <div class="col-md-4 info-label">{% trans "Chid" %}</div>
             <div class="col-md-8 info-value">
               <div class="hash-value">{{ object.id }}</div>
             </div>
           </div>
           <div class="info-row row">
-            <div class="col-md-4 info-label">Short ID</div>
+            <div class="col-md-4 info-label">{% trans "Short ID" %}</div>
             <div class="col-md-8 info-value">
               <div class="hash-value">{{ object.shortid }}</div>
             </div>
@@ -141,30 +132,55 @@
    	  {% if object.QR %}
           <div class="col-md-4 info-label">
 	    <img width="100px" src="data:image/png;base64,{{ object.QR }}" />
-	  </div>
-	  {% endif %}
+            <img width="100px" src="data:image/png;base64,{{ object.QR }}" alt="{% trans 'QR Code' %}" />
+          </div>
+          {% endif %}
         </div>
       </div>
-      <h2 class="section-title mt-5">Components</h2>
+
+      <h2 class="section-title mt-5">
+        {% if object.is_websnapshot %}
+          {% trans "Manually Entered Components" %}
+        {% else %}
+          {% trans "Components" %}
+        {% endif %}
+      </h2>
+
       <div class="row">
-        {% for component in object.components %}
-          <div class="col-md-6 mb-3">
-            <div class="card component-card">
-              <div class="card-body">
-                <h5 class="card-title">{{ component.type }}</h5>
-                <p class="card-text">
-                  {% for component_key, component_value in component.items %}
-                    {% if component_key not in 'actions,type' %}
-                      {% if component_key != 'serialNumber' or user.is_authenticated %}
-                        <strong>{{ component_key }}:</strong> {{ component_value }}<br />
-                      {% endif %}
-                    {% endif %}
-                  {% endfor %}
-                </p>
+        {% if object.is_websnapshot %}
+          <!-- websnapshot attributes as components -->
+          {% for snapshot_key, snapshot_value in object.last_user_evidence %}
+            <div class="col-md-6 mb-3">
+              <div class="card component-card">
+                <div class="card-body">
+                  <h5 class="card-title">{{ snapshot_key }}</h5>
+                  <p class="card-text">
+                    <strong>{% trans "Value" %}:</strong> {{ snapshot_value|default:'-' }}
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
-        {% endfor %}
+          {% endfor %}
+        {% else %}
+          {% for component in object.components %}
+            <div class="col-md-6 mb-3">
+              <div class="card component-card">
+                <div class="card-body">
+                  <h5 class="card-title">{{ component.type }}</h5>
+                  <p class="card-text">
+                    {% for component_key, component_value in component.items %}
+                      {% if component_key not in 'actions,type' %}
+                        {% if component_key != 'serialNumber' or user.is_authenticated %}
+                          <strong>{{ component_key }}:</strong> {{ component_value }}<br />
+                        {% endif %}
+                      {% endif %}
+                    {% endfor %}
+                  </p>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        {% endif %}
       </div>
     </div>
     <footer>

@@ -25,7 +25,24 @@ class ProductCache(models.Model):
     DATA_FIELDS = (
         "cpu_cores", "ram_total", "ram_type",
         "ram_slots", "slots_used", "drive", "gpu_model",
+
+        "raid_controller", "power_supply",
+
+        "screen_size", "battery_health", "capacity_wh", "cycle_count",
+        "resolution", "refresh_rate", "panel_type",
+
+        "ports", "link_speed", "poe_budget", "management_type",
+        "throughput", "routing_protocols", "wifi_standard",
+        "frequency_bands", "antennas",
+
+        "vram_capacity", "vram_type", "core_clock",
+        "capacity", "interface", "rpm", "health_tbw",
+        "socket_type", "chipset", "speed", "port_type",
+        "base_clock", "speed_mhz", "channels",
+
+        "megapixels", "max_resolution",
     )
+
 
     owner = models.ForeignKey(Institution, on_delete=models.CASCADE)
     root = models.CharField(max_length=STR_EXTEND_SIZE)

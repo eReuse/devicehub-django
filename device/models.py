@@ -158,18 +158,36 @@ class Device:
 
     def get_last_evidence(self):
         if self.last_evidence:
-            return
+            return self.last_evidence
+
+        fallback_latest = None
 
         if self.uuid:
-            self.last_evidence = Evidence(self.uuid)
-            return
+            uuid_evidence = Evidence(self.uuid)
 
-        properties = self.get_properties()
-        if not properties.count():
-            return
-        prop = properties.first()
+            if not uuid_evidence.is_photo_evidence():
+                self.last_evidence = uuid_evidence
+                return self.last_evidence
 
-        self.last_evidence = Evidence(prop.uuid)
+            fallback_latest = uuid_evidence
+
+        self.get_evidences()
+
+        if self.evidences:
+            if not fallback_latest:
+                fallback_latest = self.evidences[-1]
+
+            for evidence in reversed(self.evidences):
+                if not evidence.is_photo_evidence():
+                    self.last_evidence = evidence
+                    return self.last_evidence
+
+        if fallback_latest:
+            self.last_evidence = fallback_latest
+            return self.last_evidence
+
+        return None
+
 
     def is_eraseserver(self):
         if not self.uuids:
@@ -358,7 +376,7 @@ class Device:
     @property
     def type(self):
         self.get_last_evidence()
-        if self.last_evidence.doc['type'] == "WebSnapshot":
+        if self.last_evidence and self.last_evidence.doc.get("type", "") == "WebSnapshot":
             return self.last_evidence.doc.get("device", {}).get("type", "")
 
         return self.last_evidence.get_chassis()
@@ -370,20 +388,13 @@ class Device:
 
     @property
     def cpu(self):
-        cpu_component = next(
-            (c for c in self.components if c.get('type') == 'Processor'),
-            None
-        )
-        cpu_model = cpu_component.get('model', '') if cpu_component else ""
-        return cpu_model
+        self.get_last_evidence()
+        return self.last_evidence.get_cpu()
 
     @property
-    def total_ram(self):
-        ram_component = next(
-            (c for c in self.components if c.get('type') == 'RamModule'),
-            None
-        )
-        return ram_component.get('total_ram', '') if ram_component else ""
+    def ram(self):
+        self.get_last_evidence()
+        return self.last_evidence.get_ram()
 
     @property
     def version(self):
@@ -488,6 +499,14 @@ class Device:
             try:
                 self.last_evidence = Evidence(uuid)
                 fields = self.evidence_export_fields()
+
+                is_web_snapshot = (self.last_evidence.is_web_snapshot()
+                                   if hasattr(self.last_evidence, 'is_web_snapshot') else False)
+                if is_web_snapshot:
+                    doc = getattr(self.last_evidence, 'doc', {})
+                    kv_data = doc.get('kv', {})
+                    fields.update(kv_data)
+
             except Exception:
                 continue
             if merged is None:
@@ -526,6 +545,10 @@ class Device:
         from environmental_impact.algorithms.common import (
             convert_str_time_to_hours,
         )
+
+        #check best way to input websnapshot storage hours
+        if self.is_websnapshot:
+            return self.components.get("storage_hours", {})
 
         self.get_uuids()
         disks = {}
@@ -586,7 +609,66 @@ class Device:
         hardware_info.update({
             'user_properties': user_properties,
             'current_state': self.get_current_state().state if self.get_current_state() else '',
-            'beneficiary_status': self.status_beneficiary or "",
+            'last_updated': parse_datetime(self.updated) or "",
+            'beneficiary_status': self.status_beneficiary or ""
+        })
+
+        if not self.last_evidence.is_legacy or not self.last_evidence:
+            return hardware_info
+
+        if getattr(self.last_evidence, 'is_web_snapshot', False):
+            doc = getattr(self.last_evidence, 'doc', {})
+            kv_data = doc.get('kv', {})
+
+            hardware_info.update(kv_data)
+
+            return hardware_info
+
+        storage_devices = []
+        gpu_models = []
+        slots_used = slots_total = 0
+
+        for c in self.components:
+            match c.get("type"):
+                case "Motherboard":
+                    hardware_info.update({
+                        'manufacturer': c.get("manufacturer", ""),
+                        'serial': self.serial_number,
+                        'ram_total': c.get("installedRam", ""),
+                    })
+                case "Processor":
+                    hardware_info.update({
+                        'cpu_cores': c.get("cores", ""),
+                        'cpu_model': c.get("model", "")
+                    })
+                case "RamModule":
+                    slots_total += 1
+                    if slots_used == 0:
+                        hardware_info.update({
+                            'ram_type': c.get("interface", "")
+                        })
+                    if c.get("interface", "") != "no module installed":
+                        slots_used += 1
+                case "Storage":
+                    if size := c.get("size", ""):
+                        storage_devices.append({
+                            'model': c.get("model", ""),
+                            'size': size,
+                            'type': c.get("interface", "")
+                        })
+                case "GraphicCard":
+                    if model := c.get("model", ""):
+                        gpu_models.append(model)
+
+        if storage_devices:
+            hardware_info['drive'] = ", ".join([f" {d['type']} {d['model']} ({d['size']} )"
+                                            for d in storage_devices])
+        if gpu_models:
+            hardware_info['gpu_model'] = ", ".join(gpu_models)
+
+        hardware_info.update({
+            'slots_used': slots_used,
+            'ram_slots': slots_total,
         })
 
         return hardware_info
