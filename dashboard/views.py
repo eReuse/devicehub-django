@@ -1,12 +1,13 @@
 import json
 import logging
 import re
+from urllib.parse import parse_qsl
 
 from tablib import Dataset
 
 from django.utils.translation import gettext_lazy as _
 from django.views.generic.edit import FormView
-from django.shortcuts import Http404, get_object_or_404
+from django.shortcuts import Http404, get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.utils.dateparse import parse_datetime
 from django.utils import timezone
@@ -112,7 +113,7 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
 
         limit = int(self.request.GET.get('limit', self.paginate_by))
         page = int(self.request.GET.get('page', 1))
-        search = self.request.GET.get('search', '')
+        search = self.request.GET.get('lquery', '')
         if search:
             count = getattr(self, '_search_count', None)
             if count is None:
@@ -131,6 +132,7 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
             'state_definitions': self._get_state_definitions(),
             'limit': limit,
             'search': search,
+            'query_param': 'lquery',
             'sort': self.request.GET.get('sort', ''),
             'breadcrumb': [
                 (_("Lots"), reverse_lazy("dashboard:unassigned")),
@@ -144,23 +146,8 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
         })
         return context
 
-    def get_queryset(self):
-        chids = self._get_chids_qs()
-        search_query = self.request.GET.get('q', '').lower()
-        owner = self.request.user.institution
-
-        if search_query:
-            ldevices = []
-            for x in chids:
-                dev = Device(id=x, lot=self.object, owner=owner)
-                if dev.matches_query(search_query):
-                    ldevices.append(dev)
-            return ldevices
-
-        return [Device(id=x, lot=self.object, owner=owner) for x in chids]
-
     def get_table_data(self):
-        search = self.request.GET.get('search', '').lower()
+        search = self.request.GET.get('lquery', '').lower()
         chids = list(self._get_chids_qs())
 
         # Both paths read the ProductCache read model (no per-device Device
@@ -228,15 +215,15 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
                 owner=self.request.user.institution,
             )
         chids = list(self._get_chids_qs())
-        search = self.request.GET.get('search', '').lower()
+        search = self.request.GET.get('lquery', '').lower()
         if search:
             chids = self._search_roots(chids, search)
         return chids
 
     def _search_roots(self, device_ids, search_query):
         """Filter canonical roots by ``search_query`` against the ProductCache
-        read model, mirroring Device.matches_query field semantics without
-        constructing Device objects (no Xapian read/parse per device).
+        read model, matching the same device fields without constructing
+        Device objects (no Xapian read/parse per device).
 
         Whitespace separates terms and a device must match all of them (AND).
         A ``term:field`` token restricts that term to one field; a bare term
@@ -476,20 +463,56 @@ class SearchView(DeviceTableMixin, InventaryMixin):
     breadcrumb = [(_("All Devices"), reverse_lazy("dashboard:all_device")), (_("Search"), None)]
     table_order_by = ()  # override DeviceTable.Meta order_by=("-last_updated",) to preserve relevance order
 
+    def _winning_match_mode(self, request):
+        """Return 'best', 'exact' or None: whichever of best_match/exact_match
+        is true and appears last in the raw querystring wins over the other."""
+        raw_params = parse_qsl(request.META.get("QUERY_STRING", ""), keep_blank_values=True)
+        last_key = None
+        last_true = False
+        for key, value in raw_params:
+            if key in ("best_match", "exact_match"):
+                last_key = key
+                last_true = value.lower() == "true"
+        if not last_true:
+            return None
+        return "best" if last_key == "best_match" else "exact"
+
+    def get(self, request, *args, **kwargs):
+        query = request.GET.get("gquery")
+        mode = self._winning_match_mode(request) if query else None
+        if mode:
+            devices, total = self.get_devices(request.user, 0, 1)
+            redirect_ok = total >= 1 if mode == "best" else total == 1
+            if redirect_ok:
+                public = request.GET.get("public", "").lower() == "true"
+                url_name = "device:device_web" if public else "device:details"
+                pk = devices[0].pk
+                if public:
+                    # PublicDeviceWebView resolves by literal
+                    # SystemProperty.value (no owner), so a bare custom_id
+                    # root (RootAlias-only, no backing SystemProperty) would
+                    # 404; web_pk needs hids populated to fall back to a
+                    # real physical id in that case.
+                    devices[0].get_hids()
+                    pk = devices[0].web_pk
+                return redirect(url_name, pk=pk)
+        return super().get(request, *args, **kwargs)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         search_params = self.request.GET.urlencode(),
-        search = self.request.GET.get("search")
+        search = self.request.GET.get("gquery")
         if search:
             context.update({
                 'search_params': search_params,
-                'search': search
+                'search': search,
+                'query_param': 'gquery',
             })
 
         return context
 
     def get_devices(self, user, offset, limit):
-        query = dict(self.request.GET).get("search")
+        query = dict(self.request.GET).get("gquery")
 
         if not query:
             return [], 0
@@ -511,7 +534,12 @@ class SearchView(DeviceTableMixin, InventaryMixin):
         total = sp_count + xapian_count
 
         page_ids = sp_page + xapian_page
-        distinct_page_ids = set(page_ids)
+        seen = set()
+        distinct_page_ids = []
+        for pid in page_ids:
+            if pid not in seen:
+                seen.add(pid)
+                distinct_page_ids.append(pid)
         devices = [Device(id=x, owner=user.institution) for x in distinct_page_ids]
 
         return devices, total
