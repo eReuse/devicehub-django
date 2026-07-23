@@ -48,6 +48,7 @@ class CosmeticGrade(models.TextChoices):
     GRADE_C = 'GradeC', _('Grade C - Fair (Noticeable Wear)')
     GRADE_D = 'GradeD', _('Grade D - Poor (Heavy Wear/Damaged)')
 
+
 class DeviceLogMixin(DashboardView):
 
     def log_registry(self, _uuid, msg):
@@ -68,6 +69,7 @@ class DeviceLogMixin(DashboardView):
             owner=institution, value__in=physicals
         ).order_by("-created").first()
         return prop.uuid if prop else None
+
 
 class NewDeviceView(DashboardView, FormView):
     template_name = "new_device.html"
@@ -486,10 +488,12 @@ class IssueDigitalPassportView(DeviceLogMixin, View):
 
     def post(self, request, *args, **kwargs):
         pk = self.kwargs.get('device_id')
-        device = Device(id=pk, owner=request.user.institution)
+        logger.info(f"User {request.user.id} requested Digital Product Passport issuance for device {pk}.")
 
+        device = Device(id=pk, owner=request.user.institution)
         if not device.last_evidence:
-            messages.error(request, "Device not found.")
+            logger.warning(f"DPP issuance failed: Device {pk} not found or has no initial evidence.")
+            messages.error(request, _("Device not found."))
             return redirect('device:list')
 
         device.initial()
@@ -500,15 +504,17 @@ class IssueDigitalPassportView(DeviceLogMixin, View):
         did_warning_message = None
 
         if did_error:
-            if "[404]" in did_error.lower():
-                did_warning_message = "Passport issued but service endpoint not modified given that you don't own the DID."
+            if "[404]" in did_error:
+                logger.warning(f"Device {pk} DID not owned by institution. Service endpoint will not be modified.")
+                did_warning_message = _("Passport issued but service endpoint not modified given that you don't own the DID.")
             else:
-                messages.error(request, f"Failed to issue Passport. DID configuration error: {did_error}")
+                logger.error(f"DPP issuance blocked. DID configuration error for device {pk}: {did_error}")
+                messages.error(request, _("Failed to issue Passport. DID configuration error: {error}").format(error=did_error))
                 return redirect('device:details', pk=pk)
 
-        # gather databaase information for the dpp builder
-        facility_info = self._get_facility_info(device, self.request)
-        traceability_info = self._get_traceability_info(device, self.request)
+        # gather database information for the dpp builder
+        facility_info = service.get_facility_info(self.request)
+        traceability_info = service.get_traceability_info(device, self.request)
         components = device.components_export() or {}
         device_name = components.get('model', 'Unknown Device')
 
@@ -521,14 +527,16 @@ class IssueDigitalPassportView(DeviceLogMixin, View):
                 'facility_info': facility_info,
                 'traceability_info': traceability_info
             },
-            description=f"Digital Product Passport - {device_name}"
+            description=str(_("Digital Product Passport - {device_name}").format(device_name=device_name))
         )
 
         if error:
-            messages.error(request, f"Failed to issue Passport: {error}")
+            logger.error(f"Failed to issue DPP for device {pk}: {error}")
+            messages.error(request, _("Failed to issue Passport: {error}").format(error=error))
             return redirect('device:details', pk=pk)
 
-        messages.success(request, "Digital Product Passport issued successfully!")
+        logger.info(f"Successfully issued DPP for device {pk} (Credential UUID: {credential.uuid}).")
+        messages.success(request, _("Digital Product Passport issued successfully!"))
 
         # add the devices dpp view to the did servicenedpoint
         dpp_url = request.build_absolute_uri(
@@ -537,12 +545,16 @@ class IssueDigitalPassportView(DeviceLogMixin, View):
         did_update_error = service.ensure_device_did(device, service_endpoint=dpp_url)
 
         if did_update_error:
-            if "[404]" in did_update_error.lower() or "[403]" in did_update_error.lower():
-                messages.warning(request, did_warning_message or "Passport issued but service endpoint not modified given that you don't own the DID.")
+            if "[404]" in did_update_error or "[403]" in did_update_error:
+                logger.warning(f"Failed to update DID endpoint for {pk} (Not owned).")
+                messages.warning(request, did_warning_message or _("Passport issued but service endpoint not modified given that you don't own the DID."))
             else:
-                messages.error(request, f"DID configuration error during endpoint update: {did_update_error}")
+                logger.error(f"DID endpoint update error for {pk}: {did_update_error}")
+                messages.error(request, _("DID configuration error during endpoint update: {error}").format(error=did_update_error))
         elif did_warning_message:
             messages.warning(request, did_warning_message)
+        else:
+            logger.info(f"Successfully updated DID endpoint to DPP URL for device {pk}.")
 
         return redirect('device:details', pk=pk)
 
@@ -554,16 +566,13 @@ class DeviceDPPView(TemplateView):
         self.pk = kwargs.get('pk')
 
         root = RootAlias.objects.filter(alias=self.pk).first()
-        if root:
+        if root and root.root != self.pk:
+            logger.debug(f"Redirecting alias {self.pk} to root device {root.root}.")
             return redirect(request.resolver_match.view_name, pk=root.root)
 
-        try:
-            self.device = Device(id=self.pk)
-            self.device.initial()
-        except Exception:
-            raise Http404(_("Device not found."))
-
+        self.device = Device(id=self.pk, owner=request.user.institution)
         if not self.device.last_evidence:
+            logger.warning(f"DeviceDPPView: No evidence found for device {self.pk}.")
             raise Http404(_("No evidence found for this device."))
 
         self.latest_dpp_cred = CredentialProperty.objects.filter(
@@ -572,11 +581,13 @@ class DeviceDPPView(TemplateView):
         ).order_by('-created').first()
 
         if not self.latest_dpp_cred:
+            logger.info(f"DeviceDPPView: No DPP credential found for device {self.pk}. Redirecting to details.")
             messages.info(request, _("A Digital Product Passport (DPP) has not been generated for this device yet."))
             return redirect(reverse_lazy('device:details', args=[self.pk]))
 
         # Handle JSON download early return
         if request.GET.get('format') == 'json':
+            logger.info(f"User downloaded JSON format of DPP for device {self.pk}.")
             return self._serve_json_download()
 
         return super().get(request, *args, **kwargs)
