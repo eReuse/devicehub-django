@@ -264,43 +264,55 @@ class InstitutionView(AdminView, UpdateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-
-        if self.request.POST:
-            context['claim_formset'] = FacilityClaimFormSet(
-                self.request.POST,
-                instance=self.object,
-                prefix='claims'
-            )
-        else:
+        if 'claim_formset' not in kwargs:
             context['claim_formset'] = FacilityClaimFormSet(
                 instance=self.object,
                 prefix='claims'
             )
         return context
 
-    def form_valid(self, form):
-        context = self.get_context_data()
-        claim_formset = context['claim_formset']
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        form_class = self.get_form_class()
+        form = self.get_form(form_class)
 
-        if claim_formset.is_valid():
-            self.object = form.save()
+        claim_formset = FacilityClaimFormSet(
+            self.request.POST,
+            instance=self.object,
+            prefix='claims'
+        )
 
-            claim_formset.instance = self.object
-            claim_formset.save()
+        if form.is_valid() and claim_formset.is_valid():
+            return self.form_valid(form, claim_formset)
+        else:
+            return self.form_invalid(form, claim_formset)
+
+    def form_valid(self, form, claim_formset):
+        logger.info(f"User {self.request.user.id} updating institution {self.object.id} and its claims.")
+
+        try:
+            with transaction.atomic():
+                self.object = form.save()
+                claim_formset.instance = self.object
+                claim_formset.save()
 
             messages.success(self.request, _("Institution information and claims updated successfully."))
             return super().form_valid(form)
-        else:
-            return self.form_invalid(form)
 
-    def form_invalid(self, form):
+        except Exception as e:
+            logger.exception(f"Database error saving institution {self.object.id}: {str(e)}")
+            messages.error(self.request, _("An unexpected database error occurred. Please try again."))
+            return self.render_to_response(self.get_context_data(form=form, claim_formset=claim_formset))
+
+    def form_invalid(self, form, claim_formset):
+        logger.warning(f"User {self.request.user.id} submitted invalid institution form data.")
         messages.error(self.request, _("Please correct the errors below."))
-        return self.render_to_response(self.get_context_data(form=form))
+        return self.render_to_response(self.get_context_data(form=form, claim_formset=claim_formset))
 
 
 class InstitutionConfigView(AdminView, UpdateView):
     template_name = "dpp_settings.html"
-    model = InstitutionDPPSettings
+    Model = InstitutionDPPSettings
     form_class = InstitutionDPPSettingsForm
     title = _("Configuration & Signing")
     subtitle = _("Manage technical settings and signing credentials")
@@ -354,9 +366,11 @@ class AddStateDefinitionView(AdminView, StateDefinitionContextMixin, CreateView)
         form.instance.user = self.request.user
         try:
             response = super().form_valid(form)
+            logger.info(f"User {self.request.user.id} created new state definition: '{form.instance.state}'.")
             messages.success(self.request, _("State definition successfully added."))
             return response
         except IntegrityError:
+            logger.warning(f"User {self.request.user.id} attempted to create duplicate state definition '{form.instance.state}'.")
             messages.error(self.request, _("State is already defined."))
             return self.form_invalid(form)
 
@@ -370,13 +384,17 @@ class DeleteStateDefinitionView(AdminView, StateDefinitionContextMixin, SuccessM
     success_url = reverse_lazy('admin:states_panel')
 
     def get_success_message(self, cleaned_data):
-        return f'State definition: {self.object.state}, has been deleted'
+        return _("State definition: {state}, has been deleted").format(state=self.object.state)
 
     def form_valid(self, form):
         if not self.object.institution == self.request.user.institution:
+            logger.warning(f"User {self.request.user.id} attempted to delete state definition belonging to another institution.")
             raise Http404
 
-        return super().form_valid(form)
+        state_name = self.object.state
+        response = super().form_valid(form)
+        logger.info(f"User {self.request.user.id} deleted state definition: '{state_name}'.")
+        return response
 
 
 class UpdateStateOrderView(AdminView, TemplateView):
@@ -417,9 +435,11 @@ class UpdateStateDefinitionView(AdminView, UpdateView):
     def form_valid(self, form):
         try:
             response = super().form_valid(form)
+            logger.info(f"User {self.request.user.id} updated state definition to '{form.instance.state}'.")
             messages.success(self.request, _("State definition updated successfully."))
             return response
         except IntegrityError:
+            logger.warning(f"User {self.request.user.id} attempted to rename state definition to existing name '{form.instance.state}'.")
             messages.error(self.request, _("State is already defined."))
             return self.form_invalid(form)
 
@@ -447,6 +467,7 @@ class InstitutionLabelCustomizationView(AdminView, UpdateView):
         return context
 
     def form_valid(self, form):
+        logger.info(f"User {self.request.user.id} updated label print settings for institution {self.request.user.institution_id}.")
         messages.success(self.request, _("QR printing preferences saved successfully."))
         return super().form_valid(form)
 
@@ -454,6 +475,7 @@ class InstitutionLabelCustomizationView(AdminView, UpdateView):
 class IssueDigitalFacilityRecordView(AdminView, View):
 
     def post(self, request, *args, **kwargs):
+        logger.info(f"User {request.user.id} requested Digital Facility Record issuance.")
         service = CredentialService(request.user)
 
         credential, error = service.issue_credential(
@@ -466,8 +488,10 @@ class IssueDigitalFacilityRecordView(AdminView, View):
         )
 
         if error:
-            messages.error(request, f"Failed to issue Facility Record: {error}")
+            logger.error(f"Facility Record issuance failed for institution {request.user.institution_id}: {error}")
+            messages.error(request, _("Failed to issue Facility Record: {error}").format(error=error))
         else:
-            messages.success(request, "Facility Record issued successfully!")
+            logger.info(f"Successfully issued Facility Record for institution {request.user.institution_id}.")
+            messages.success(request, _("Facility Record issued successfully!"))
 
         return redirect('admin:panel')
