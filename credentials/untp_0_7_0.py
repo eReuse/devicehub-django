@@ -17,6 +17,7 @@ class BaseUNTPBuilder:
             "https://vocabulary.uncefact.org/untp/0.7.0/context/"
         ]
 
+
 @PayloadBuilderRegistry.register(workflow_key="facility", version="untp-0.7.0")
 class UNTP070DFRBuilder(BaseUNTPBuilder):
     def build(self, institution, request_data=None, **kwargs):
@@ -57,16 +58,15 @@ class UNTP070DFRBuilder(BaseUNTPBuilder):
         # clean empty strings
         address_data = {k: v for k, v in address_data.items() if v}
 
-        # process category dict
-        isic_names = {
-            '9511': "Repair of computers and peripheral equipment",
-            '3830': "Materials recovery and recycling",
-            '3313': "Repair of electronic and optical equipment",
-            '4649': "Wholesale of other household goods",
-            '0000': "General Operations"
-        }
+        # get untranslated process name
         process_code = getattr(institution, 'process_category_code', '0000')
-        process_name = isic_names.get(str(process_code), "General Operations")
+        process_name = "General Operations"
+
+        with override('en'):
+            for code, lazy_name in PROCESS_CHOICES:
+                if str(code) == process_code:
+                    process_name = str(lazy_name)
+                    break
 
         process_category = [{
             "code": str(process_code),
@@ -242,7 +242,7 @@ class UNTP070DPPBuilder(BaseUNTPBuilder):
             return 0
 
         characteristics = {
-            "chassis": components.get('type') or "Laptop",
+            "chassis": components.get('type') or "Unknown",
             "manufacturer": components.get('manufacturer') or "Unknown",
             "model": components.get('model') or "Unknown",
             "cpu_model": components.get('cpu_model'),
