@@ -144,8 +144,7 @@ class Institution(models.Model):
     @property
     def latest_facility_credential(self):
         return self.credentialproperty_set.filter(
-            key=CredentialProperty.CredentialType.DFR,
-            owner=self
+            key=CredentialProperty.CredentialType.DFR
         ).order_by('-created').first()
 
     def __str__(self):
@@ -351,11 +350,6 @@ class InstitutionDPPSettings(models.Model):
         default="DigitalFacilityRecord.json",
         help_text="Active schema for Facility Records"
     )
-
-    def get_service_url(self, endpoint: str) -> str:
-        base = self.api_base_url.rstrip('/')
-        path = endpoint.lstrip('/')
-        return f"{base}/{path}/"
 
     def __str__(self):
         return f"Config: {self.institution.name} ({self.api_base_url})"

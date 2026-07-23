@@ -212,12 +212,6 @@ class CredentialTable(tables.Table):
         orderable=False
     )
 
-    target = tables.Column(
-        verbose_name=_("Issued To"),
-        empty_values=(),
-        orderable=False
-    )
-
     user = tables.Column(
         verbose_name=_("Issuer"),
         accessor='user.email',
@@ -236,13 +230,6 @@ class CredentialTable(tables.Table):
         fields = ("created", "key", "description", "target", "user", "actions")
         order_by = ("-created")
 
-        @property
-        def empty_text(self):
-            return format_html(
-                '<div class="text-muted text-center">{}</div>',
-                _("No credentials issued yet.")
-            )
-
     def render_key(self, value):
         display_text = value
         if value == CredentialProperty.CredentialType.DPP:
@@ -256,22 +243,6 @@ class CredentialTable(tables.Table):
 
         return format_html('<span class="fw-bold">{}</span>', display_text)
 
-    def render_target(self, record):
-        try:
-            if record.uuid:
-                short_uuid = str(record.uuid)[:8]
-                return format_html(
-                    '<span class="font-monospace" title="Device UUID: {}"><i class="bi bi-cpu me-2"></i>Device ({})</span>',
-                    record.uuid,
-                    short_uuid
-                )
-            else:
-                return format_html(
-                    '<span class="badge bg-secondary"><i class="bi bi-building me-2"></i>{}</span>',
-                    _("Organization")
-                )
-        except Exception:
-            return self.render_error_message(_("Error loading target"))
 
     def render_actions(self, record):
         try:

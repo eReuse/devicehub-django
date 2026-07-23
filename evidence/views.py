@@ -288,7 +288,6 @@ class CredentialDetailView(DetailView):
             response['Content-Disposition'] = f'attachment; filename="{filename}"'
             return response
 
-        # Otherwise, render the HTML template as normal
         return super().render_to_response(context, **response_kwargs)
 
     def get_template_names(self):
@@ -311,33 +310,12 @@ class CredentialDetailView(DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['credential'] = self.object.credential
+
+        cred_prop = self.get_object()
+
+        #use this credential's institution for searching the idhub instance
+
         return context
-
-
-class DownloadDPPView(DashboardView, TemplateView):
-    def get(self, request, *args, **kwargs):
-        uuid_val = kwargs.get('uuid')
-        try:
-            credential_prop = get_object_or_404(CredentialProperty, uuid=uuid_val)
-
-            data = json.dumps(credential_prop.credential, indent=4)
-            response = HttpResponse(data, content_type="application/json")
-            response['Content-Disposition'] = f'attachment; filename="dpp_credential_{uuid_val}.json"'
-            return response
-        except CredentialProperty.DoesNotExist:
-            raise Http404("Credential not found.")
-
-
-class CredentialByEvidenceUUIDView(TemplateView):
-    def get(self, request, *args, **kwargs):
-        uuid = kwargs.get('uuid')
-        credential_prop = CredentialProperty.objects.filter(uuid=uuid).order_by('-created').first()
-
-        if credential_prop:
-            return redirect('evidence:credential_detail', uuid=credential_prop.uuid)
-        else:
-            raise Http404("No credential found for the specified evidence UUID.")
 
 
 class EraseServerView(DashboardView, FormView):

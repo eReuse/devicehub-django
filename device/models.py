@@ -308,7 +308,6 @@ class Device:
         devices = [cls(id=r["root"], owner=institution) for r in rows]
         return devices, count
 
-
     @classmethod
     def get_properties_from_uuid(cls, uuid, institution):
         ev = SystemProperty.objects.filter(

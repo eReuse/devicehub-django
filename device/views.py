@@ -211,8 +211,6 @@ class DetailsView(DashboardView, TemplateView ):
         credential_table = CredentialTable(credential_queryset)
         RequestConfig(self.request, paginate={'per_page': 10}).configure(credential_table)
 
-
-        context['dismantle_form'] = DeviceFormSet()
         state_definitions = StateDefinition.objects.filter(
             institution=self.request.user.institution
         ).order_by('order')
