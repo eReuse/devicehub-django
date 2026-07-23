@@ -62,6 +62,7 @@ class CredentialProperty(Property):
         DIDDOC = 'DIDDOC', 'DID DOCUMENT'
 
     credential = models.JSONField()
+    #TODO: change for idhub assigned uuid
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     sysprop = models.ForeignKey(
         SystemProperty,
@@ -82,7 +83,7 @@ class CredentialProperty(Property):
         constraints = [
             models.CheckConstraint(
                 check=~Q(key='DPP') | Q(sysprop__isnull=False),
-                name='dpp_must_have_sysprop'
+                name='credential_must_have_sysprop'
             ),
         ]
 
@@ -121,7 +122,7 @@ class RootAlias(models.Model):
     """All SystemProperty.value have one RootAlias.alias and no more than one
        RootAlias.root is editable but RootAlias.alias is not possible
     """
-    created = models.DateTimeField(auto_now_add=True)
+    created = models.DateTimeField(default=timezone.now)
     updated = models.DateTimeField()
     owner = models.ForeignKey('user.Institution', on_delete=models.CASCADE)
     user = models.ForeignKey(
@@ -411,9 +412,10 @@ class Evidence:
             uuid=self.uuid
         ).order_by("created")
 
-    def get_credential(self):
+    def get_last_dpp(self):
         self.credentials = CredentialProperty.objects.filter(
-            uuid=self.uuid
+            sysprop__uuid=self.uuid,
+            key=CredentialProperty.CredentialType.DPP
         ).order_by("-created")
         return self.credentials.first()
 

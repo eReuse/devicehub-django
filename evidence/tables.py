@@ -67,9 +67,12 @@ class EvidenceTable(tables.Table):
 
     def render_digital_passport(self, value):
 
-        credential_prop = self.evidence_map.get(value).get_credential()
-        if credential_prop:
-            url = reverse('evidence:credential_detail', kwargs={'uuid': credential_prop.uuid})
+        evidence = self.evidence_map.get(value)
+        dpp_prop=None
+        if evidence:
+            dpp_prop = evidence.get_last_dpp()
+        if dpp_prop:
+            url = reverse('evidence:credential_detail', kwargs={'uuid': dpp_prop.uuid})
             return format_html(
                 '<a href="{}" class="btn btn-sm btn-outline-success">{}</a>',
                 url,
@@ -223,6 +226,8 @@ class CredentialTable(tables.Table):
         empty_values=(),
         orderable=False
     )
+    msg = _("No credentials issued yet.")
+    empty_text = '<div class="text-muted text-center">{}</div>'.format(msg)
 
     class Meta:
         model = CredentialProperty
