@@ -16,6 +16,8 @@ from django.views.generic.edit import (
 from action.models import DeviceLog
 from dashboard.mixins import  DashboardView, Http403
 from evidence.models import SystemProperty, RootAlias, Evidence, UserProperty, CredentialProperty
+from credentials.services import CredentialService
+from device.models import Device
 from lot.models import DeviceLot, DeviceBeneficiary
 from evidence.forms import (
     UploadForm,
@@ -26,8 +28,6 @@ from evidence.forms import (
 )
 from django_tables2 import SingleTableView
 from evidence.tables import EvidenceTable
-
-from pyvckit.verify import verify_signature, verify_schema
 
 
 class ListEvidencesView(DashboardView, SingleTableView):

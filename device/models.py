@@ -1,8 +1,7 @@
 from django.db import models
 from django.db.models import Max
 from django.urls import reverse
-from django.db.models import Subquery, F, Window, Max
-from django.db.models.functions import RowNumber
+from django.db.models import Max
 from django.utils.translation import gettext_lazy as _
 
 from utils.constants import ALGOS

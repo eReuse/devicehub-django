@@ -1,33 +1,38 @@
-import uuid
-import requests
-from django.core.cache import cache
-from django_tables2 import SingleTableView
+import logging
 from smtplib import SMTPException
+
+from django_tables2 import SingleTableView
 from django.contrib import messages
-from django.urls import reverse_lazy
-from django.shortcuts import get_object_or_404, redirect, Http404
-from django.utils.translation import gettext_lazy as _
 from django.contrib.messages.views import SuccessMessageMixin
-from django.views.generic.base import TemplateView, ContextMixin
-from django.views.generic.edit import (
-    CreateView,
-    UpdateView,
-    DeleteView,
-)
-from evidence.models import CredentialProperty
-from openlocationcode import openlocationcode as olc
-from django.db import IntegrityError,   transaction
-from dashboard.mixins import DashboardView, Http403
-from admin.forms import InstitutionDPPSettingsForm, InstitutionLabelSettingsForm, OrderingStateForm, InstitutionLabelSettings, InstitutionDPPSettings, InstitutionForm, FacilityClaimFormSet
-from user.models import User, Institution, InstitutionDPPSettings, InstitutionLabelSettings
-from admin.email import NotifyActivateUserByEmail
-from admin.tables import UserTable
-from action.models import StateDefinition
-from lot.models import LotTag
-from credentials.services import CredentialService
-
+from django.db import IntegrityError, transaction
+from django.shortcuts import Http404, get_object_or_404, redirect
+from django.urls import reverse_lazy
+from django.utils.translation import gettext_lazy as _
 from django.views import View
+from django.views.generic.base import ContextMixin, TemplateView
+from django.views.generic.edit import CreateView, DeleteView, UpdateView
 
+from action.models import StateDefinition
+from admin.email import NotifyActivateUserByEmail
+from admin.forms import (
+    FacilityClaimFormSet,
+    InstitutionDPPSettingsForm,
+    InstitutionForm,
+    InstitutionLabelSettingsForm,
+    OrderingStateForm,
+)
+from admin.tables import UserTable
+from credentials.services import CredentialService
+from dashboard.mixins import DashboardView, Http403
+from lot.models import LotTag
+from user.models import (
+    Institution,
+    InstitutionDPPSettings,
+    InstitutionLabelSettings,
+    User,
+)
+
+logger = logging.getLogger('django')
 
 class AdminView(DashboardView):
     def get(self, *args, **kwargs):
