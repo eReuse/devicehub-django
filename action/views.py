@@ -19,33 +19,6 @@ from action.models import State, StateDefinition, Note, DeviceLog
 
 logger = logging.getLogger('django')
 
-        facility_cred_prop = CredentialProperty.objects.filter(
-            owner=institution,
-            key='DFR'
-        ).order_by('-created').first()
-
-        if not facility_cred_prop:
-            return None
-
-        subject = facility_cred_prop.credential.get('credentialSubject', {})
-        facility_data = subject.get('facility', subject)
-        operated_by = facility_data.get('operatedByParty', {})
-
-        fac_url = request.build_absolute_uri(
-            reverse('evidence:credential_detail', kwargs={'uuid': facility_cred_prop.uuid})
-        )
-
-        return {
-            "id": fac_url,
-            "name": facility_data.get("name", "Unknown Facility"),
-            "registeredId": operated_by.get("registeredId", ""),
-            "idScheme": {
-                "type": ["IdentifierScheme"],
-                "id": "https://www.gleif.org/lei/",
-                "name": "Legal Entity Identifier"
-            }
-        }
-
 
 class ChangeStateView(LoginRequiredMixin, FacilityInfoMixin, FormView):
     form_class = ChangeStateForm

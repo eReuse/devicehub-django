@@ -313,34 +313,14 @@ class InstitutionConfigView(AdminView, UpdateView):
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs['schemas'] = self.fetch_schemas(self.object)
+
+        service = CredentialService(self.request.user)
+        kwargs['schemas'] = service.fetch_schemas()
+
         return kwargs
 
-    def fetch_schemas(self, settings_obj) -> dict:
-        if not settings_obj or not settings_obj.api_base_url or not settings_obj.signing_auth_token:
-            return {}
-
-        cached = cache.get('idhub_schemas')
-        if cached:
-            return cached
-
-        try:
-            #should a call be done here?
-            url = f"{settings_obj.api_base_url.rstrip('/')}/schemas/untp/active/"
-            headers = {'Authorization': f'Bearer {settings_obj.signing_auth_token}'}
-
-            # TODO: manage verify=False in production
-            res = requests.get(url, headers=headers, timeout=5, verify=False)
-            res.raise_for_status()
-
-            data = res.json()
-            cache.set('idhub_schemas', data, timeout=600)
-            return data
-
-        except Exception as e:
-            return {}
-
     def form_valid(self, form):
+        logger.info(f"User {self.request.user.id} updated DPP integration settings for institution {self.object.institution_id}.")
         messages.success(self.request, _("Configuration updated successfully."))
         return super().form_valid(form)
 

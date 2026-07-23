@@ -547,61 +547,6 @@ class IssueDigitalPassportView(DeviceLogMixin, View):
         return redirect('device:details', pk=pk)
 
 
-    def _get_facility_info(self, device, request):
-        institution = device.owner
-        if not institution or not institution.latest_facility_credential:
-            return None
-
-        facility_cred_prop = institution.latest_facility_credential
-        subject = facility_cred_prop.credential.get('credentialSubject', {})
-        facility_data = subject.get('facility', subject)
-        operated_by = facility_data.get('operatedByParty', {})
-
-        return {
-            "id": request.build_absolute_uri(reverse('evidence:credential_detail', kwargs={'uuid': facility_cred_prop.uuid})),
-            "name": facility_data.get("name", "Unknown Facility"),
-            "registeredId": operated_by.get("registeredId", ""),
-            "idScheme": {
-                "type": ["IdentifierScheme"],
-                "id": "https://www.gleif.org/lei/",
-                "name": "Legal Entity Identifier"
-            }
-        }
-
-    def _get_traceability_info(self, device, request):
-        events = CredentialProperty.objects.filter(
-            sysprop__uuid__in=device.uuids, key='DTE'
-        ).order_by('created')
-
-        if not events: return []
-
-        grouped = defaultdict(list)
-        for prop in events:
-            subject = prop.credential.get('credentialSubject', [])
-            if isinstance(subject, dict):
-                subject = [subject]
-
-            for event in subject:
-                raw_process = event.get('processType', 'Unknown')
-                process_name = raw_process.split(':')[-1].capitalize() if ':' in raw_process else raw_process
-                cred_url = request.build_absolute_uri(reverse('evidence:credential_detail', kwargs={'uuid': prop.uuid}))
-
-                grouped[process_name].append({
-                    "type": ["SecureLink", "Link"],
-                    "linkURL": cred_url,
-                    "linkName": f"Traceability Event - {process_name}"
-                })
-
-        return [
-            {
-                "type": ["TraceabilityPerformance"],
-                "valueChainProcess": process,
-                "verifiedRatio": 1.0,
-                "traceabilityEvent": links
-            }
-            for process, links in grouped.items()
-        ]
-
 class DeviceDPPView(TemplateView):
     template_name = "dpp_credential.html"
 
