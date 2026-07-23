@@ -312,8 +312,12 @@ class CredentialDetailView(DetailView):
         context = super().get_context_data(**kwargs)
 
         cred_prop = self.get_object()
+        credential = cred_prop.credential or {}
+        context['credential'] = credential
 
         #use this credential's institution for searching the idhub instance
+        service = CredentialService(institution=cred_prop.owner)
+        context[ 'verification_url'] = service.get_full_url(append_path = "/verify")
 
         return context
 
