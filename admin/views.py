@@ -1,8 +1,7 @@
-import uuid
-import requests
-from django.core.cache import cache
-from django_tables2 import SingleTableView
+import logging
 from smtplib import SMTPException
+
+from django_tables2 import SingleTableView
 from django.contrib import messages
 from django.urls import reverse, reverse_lazy
 from django.utils.functional import cached_property
@@ -30,7 +29,30 @@ from evidence.services import CredentialService
 from credentials.services import CredentialService
 
 from django.views import View
+from django.views.generic.base import ContextMixin, TemplateView
+from django.views.generic.edit import CreateView, DeleteView, UpdateView
 
+from action.models import StateDefinition
+from admin.email import NotifyActivateUserByEmail
+from admin.forms import (
+    FacilityClaimFormSet,
+    InstitutionDPPSettingsForm,
+    InstitutionForm,
+    InstitutionLabelSettingsForm,
+    OrderingStateForm,
+)
+from admin.tables import UserTable
+from credentials.services import CredentialService
+from dashboard.mixins import DashboardView, Http403
+from lot.models import LotTag
+from user.models import (
+    Institution,
+    InstitutionDPPSettings,
+    InstitutionLabelSettings,
+    User,
+)
+
+logger = logging.getLogger('django')
 
 class AdminView(DashboardView):
     def get(self, *args, **kwargs):

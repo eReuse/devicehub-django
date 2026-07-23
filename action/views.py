@@ -1,33 +1,23 @@
-import uuid
-import datetime
+import logging
 from django.db import transaction
-from django.utils import timezone
-from django.views import View
-from django.urls import reverse
-from django.shortcuts import redirect, get_object_or_404
 from django.contrib import messages
-from action.forms import ChangeStateForm, AddNoteForm
+from django.views import View
+from django.urls import reverse, reverse_lazy
+from django.http import HttpResponseRedirect, Http404
+from django.utils.translation import gettext_lazy as _
+from django.shortcuts import redirect, get_object_or_404
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic.edit import UpdateView, FormView
-from django.urls import reverse_lazy
-from django.utils.translation import gettext_lazy as _
-from dashboard.mixins import DashboardView
-from django.http import HttpResponseRedirect, Http404
-from action.models import State, StateDefinition, Note, DeviceLog
+
 from device.models import Device
-from .models import State, DeviceLog
-from device.forms import DeviceFormSet
+from dashboard.mixins import DashboardView
 from evidence.models import CredentialProperty
 from credentials.services import CredentialService
+from action.forms import ChangeStateForm, AddNoteForm
+from action.models import State, StateDefinition, Note, DeviceLog
 
-from utils.device import create_property, create_doc, create_index
-from utils.save_snapshots import move_json, save_in_disk
-from evidence.models import RootAlias
 
-class FacilityInfoMixin:
-    def get_facility_info(self, institution, request):
-        if not institution:
-            return None
+logger = logging.getLogger('django')
 
         facility_cred_prop = CredentialProperty.objects.filter(
             owner=institution,

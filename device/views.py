@@ -1,9 +1,7 @@
 import logging
-import re
 
 from django.db.models import Q
 from collections import defaultdict
-from dateutil.parser import isoparse
 from django.http import JsonResponse
 from django.conf import settings
 from django.db import IntegrityError, models
@@ -30,19 +28,16 @@ from dashboard.mixins import DashboardView, Http403
 from environmental_impact.algorithms.algorithm_factory import FactoryEnvironmentImpactAlgorithm
 from evidence.models import UserProperty, SystemProperty, Evidence, RootAlias, CredentialProperty
 from lot.models import LotTag
+from device.models import Device
 from device.forms import DeviceAttributeFormSet, DeviceMainForm, DEVICE_ATTRIBUTE_SUGGESTIONS
 from device.forms import DeviceFormSet
 from evidence.tables import EvidenceTable, CredentialTable
 from django_tables2 import RequestConfig
-from user.models import InstitutionLabelSettings, InstitutionDPPSettings
+from user.models import InstitutionLabelSettings
 from credentials.services import CredentialService
 if settings.DPP:
     from dpp.models import Proof
     from dpp.api_dlt import PROOF_TYPE
-
-
-from django.utils import timezone 
-from dateutil.parser import isoparse
 
 
 logger = logging.getLogger(__name__)
