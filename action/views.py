@@ -21,7 +21,7 @@ logger = logging.getLogger('django')
 class ChangeStateView(LoginRequiredMixin, FormView):
     form_class = ChangeStateForm
 
-    # it is only a post
+    # it is a post
     http_method_names = ['post']
 
     def form_valid(self, form):

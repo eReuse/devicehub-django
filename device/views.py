@@ -1,7 +1,6 @@
 import logging
 
 from django.db.models import Q
-from collections import defaultdict
 from django.http import JsonResponse
 from django.conf import settings
 from django.db import IntegrityError, models
@@ -30,7 +29,6 @@ from evidence.models import UserProperty, SystemProperty, Evidence, RootAlias, C
 from lot.models import LotTag
 from device.models import Device
 from device.forms import DeviceAttributeFormSet, DeviceMainForm, DEVICE_ATTRIBUTE_SUGGESTIONS
-from device.forms import DeviceFormSet
 from evidence.tables import EvidenceTable, CredentialTable
 from django_tables2 import RequestConfig
 from user.models import InstitutionLabelSettings

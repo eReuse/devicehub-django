@@ -4,8 +4,6 @@ from django.utils.html import format_html
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from evidence.models import CredentialProperty
-from django.utils import timezone
-from django.conf import settings
 from evidence.models import Evidence
 import logging
 

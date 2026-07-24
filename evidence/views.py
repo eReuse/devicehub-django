@@ -17,7 +17,6 @@ from action.models import DeviceLog
 from dashboard.mixins import  DashboardView, Http403
 from evidence.models import SystemProperty, RootAlias, Evidence, UserProperty, CredentialProperty
 from credentials.services import CredentialService
-from device.models import Device
 from lot.models import DeviceLot, DeviceBeneficiary
 from evidence.forms import (
     UploadForm,
