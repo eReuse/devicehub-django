@@ -116,7 +116,7 @@
         <div class="card h-100 shadow-sm border-0 rounded-4">
           <div class="card-body d-flex flex-column">
             <h5 class="card-title mb-3 fw-bold">
-              <i class="bi bi-box-seam text-primary me-2"></i>
+              <i class="bi bi-database text-primary me-2"></i>
               {% if has_pinned_lots %}
                 {% translate 'Pinned Lots' %}
               {% else %}
@@ -173,7 +173,6 @@
         <div class="card h-100 shadow-sm border-0 rounded-4">
           <div class="card-body d-flex flex-column">
             <h5 class="card-title mb-3 fw-bold">
-              <i class="bi bi-tags text-secondary me-2"></i>
               {% if has_pinned_states %}
                 {% translate 'Pinned States' %}
               {% else %}
@@ -229,16 +228,7 @@
 
   <!-- Bottom Toolbar -->
   <div class="d-flex align-items-center justify-content-between mb-4 mt-2">
-
-    {% if last_updated %}
-      <small class="text-muted ms-1 fw-medium">
-        <i class="bi bi-clock-history me-1"></i>
-        {% translate "Last updated:" %} {{ last_updated|date:"N j, Y, P" }}
-      </small>
-    {% else %}
       <div></div>
-    {% endif %}
-
     <div class="d-flex align-items-center">
 
       <a href="{% url 'user:customize_dashboard' %}" class="btn btn-outline-secondary btn-sm">

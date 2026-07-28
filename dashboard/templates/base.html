@@ -197,7 +197,7 @@
 	      {% endif %}
         <li class="nav-item">
               <a class="admin {% if 'device:' in path or 'dashboard:all_device' in path or ':overview' in path %}active {% endif %}nav-link fw-bold" href="{% url 'dashboard:overview' %}">
-                <i class="bi bi-laptop icon_sidebar"></i>
+                <i class="bi bi-columns-gap icon_sidebar"></i>
                 {% trans 'Dashboard' %}
               </a>
               <ul class="flex-column mb-2 ul_sidebar accordion-collapse {% if 'device:' in path or path == 'dashboard:all_device' or ':overview' in path %}expanded{% else %}collapse{% endif %}" id="ul_device" data-bs-parent="#sidebarMenu">
