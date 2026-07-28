@@ -5,7 +5,11 @@ from urllib.parse import parse_qsl
 
 from tablib import Dataset
 
+from django.db.models import Count
+from collections import Counter
 from django.utils.translation import gettext_lazy as _
+from django.core.cache import cache
+from django.contrib import messages
 from django.views.generic.edit import FormView
 from django.shortcuts import Http404, get_object_or_404, redirect
 from django.urls import reverse_lazy
@@ -13,6 +17,8 @@ from django.utils.dateparse import parse_datetime
 from django.utils import timezone
 from django.http import HttpResponse
 from dashboard.tables import ProductCacheTable
+from dashboard.mixins import DashboardView
+from django.views.generic.base import TemplateView
 
 from django_tables2 import RequestConfig
 from django_tables2.views import SingleTableMixin
@@ -24,6 +30,7 @@ from django.db.models import Q, Subquery, OuterRef
 
 from dashboard.mixins import InventaryMixin, DetailsMixin, DeviceTableMixin, ProductCacheTableMixin
 from evidence.models import SystemProperty, RootAlias, UserProperty
+from user.models import UserProfile
 from evidence.xapian import search
 from device.models import Device
 from device.product_cache import ProductCache
@@ -673,3 +680,172 @@ class SearchView(DeviceTableMixin, InventaryMixin):
         uuid_to_value = {str(u): v for u, v in props}
 
         return [uuid_to_value[uuid] for uuid in uuids if uuid in uuid_to_value]
+
+
+class InventoryOverviewView(DashboardView, TemplateView):
+    template_name = 'inventory_overview.html'
+    section = _("Inbox")
+    title = _("Overview")
+    breadcrumb = [(_("Dashboard"), reverse_lazy("dashboard:all_device")), (_("Overview"), None)]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        if not hasattr(self.request.user, 'institution'):
+            context['error'] = 'User is not associated with an institution.'
+            return context
+
+        institution = self.request.user.institution
+
+        # fetch User Preferences First
+        profile, _ = UserProfile.objects.get_or_create(user=self.request.user)
+        pinned_lot_pks = set(profile.pinned_lots.values_list('pk', flat=True))
+        pinned_state_pks = set(profile.pinned_states.values_list('pk', flat=True))
+        has_pinned_lots = bool(pinned_lot_pks)
+        has_pinned_states = bool(pinned_state_pks)
+
+        # fetch all devices from the ProductCache model
+        pc_qs = ProductCache.objects.filter(owner=institution)
+        device_info = list(pc_qs.values_list('root', 'type'))
+
+        root_to_type = {root: (dtype or 'Unknown') for root, dtype in device_info}
+        total_devices = len(device_info)
+        all_roots = set(root_to_type.keys())
+
+        #  unassigned devices
+        assigned_roots = set(
+            DeviceLot.objects.filter(lot__owner=institution)
+            .values_list('device_id', flat=True)
+        )
+        unassigned_ids_set = all_roots - assigned_roots
+
+        # Count total, assigned, and unassigned types
+        total_types_counter = Counter()
+        assigned_types_counter = Counter()
+        unassigned_types_counter = Counter()
+
+        for root, dtype in device_info:
+            total_types_counter[dtype] += 1
+            if root in unassigned_ids_set:
+                unassigned_types_counter[dtype] += 1
+            else:
+                assigned_types_counter[dtype] += 1
+
+        # get states
+        # currently everything is tied to an evidence uuid it should be a better way
+        sys_props = SystemProperty.objects.filter(owner=institution).order_by('-created').values_list('value', 'uuid')
+        root_to_uuid = {}
+        for val, uuid in sys_props.iterator(chunk_size=2000):
+            if val not in root_to_uuid:
+                root_to_uuid[val] = uuid
+
+        states = State.objects.filter(snapshot_uuid__in=root_to_uuid.values()).order_by('-date').values_list('snapshot_uuid', 'state')
+        uuid_to_state = {}
+        for uuid, state in states.iterator(chunk_size=2000):
+            if uuid not in uuid_to_state:
+                uuid_to_state[uuid] = state
+
+        # determine states
+        target_state_names = None
+        if has_pinned_states:
+            target_state_names = set(StateDefinition.objects.filter(pk__in=pinned_state_pks).values_list('state', flat=True))
+
+        states_breakdown = {}
+        for root, dtype in device_info:
+            uuid = root_to_uuid.get(root)
+            state_name = uuid_to_state.get(uuid, 'Unknown')
+
+            # if user pinned states, ignore counting devices in non-pinned states
+            if target_state_names is not None and state_name not in target_state_names:
+                continue
+
+            s_data = states_breakdown.setdefault(state_name, {'total': 0, 'types': Counter()})
+            s_data['total'] += 1
+            s_data['types'][dtype] += 1
+
+        # ensure pinned states with 0 devices still show up in the dictionary
+        if target_state_names is not None:
+            for s_name in target_state_names:
+                if s_name not in states_breakdown:
+                    states_breakdown[s_name] = {'total': 0, 'types': Counter()}
+
+        states_summary = [
+            {
+                'state': name,
+                'count': data['total'],
+                'types': dict(data['types'].most_common(3))
+            }
+            for name, data in states_breakdown.items()
+        ]
+
+        if has_pinned_states:
+            states_summary.sort(key=lambda x: x['state'])
+        else:
+            states_summary.sort(key=lambda x: x['count'], reverse=True)
+
+        # get lots
+        target_lots_info = {}
+        if has_pinned_lots:
+            # only care about pinned lots if any
+            lots_qs = Lot.objects.filter(pk__in=pinned_lot_pks).values_list('pk', 'name')
+            for pk, name in lots_qs:
+                target_lots_info[pk] = name
+        else:
+            # else only top 10 largests lots
+            lots_qs = Lot.objects.filter(
+                owner=institution, archived=False
+            ).annotate(
+                d_count=Count('devicelot')
+            ).order_by('-d_count')[:10].values_list('pk', 'name')
+            for pk, name in lots_qs:
+                target_lots_info[pk] = name
+
+        lots_breakdown = {
+            pk: {'name': name, 'total': 0, 'types': Counter()}
+            for pk, name in target_lots_info.items()
+        }
+
+        target_lot_pks = set(target_lots_info.keys())
+
+        if target_lot_pks:
+            target_device_lots = DeviceLot.objects.filter(
+                lot__pk__in=target_lot_pks
+            ).values_list('device_id', 'lot__pk')
+
+            for root, lot_pk in target_device_lots:
+                if root in root_to_type:
+                    dtype = root_to_type[root]
+                    lots_breakdown[lot_pk]['total'] += 1
+                    lots_breakdown[lot_pk]['types'][dtype] += 1
+
+        lots_summary = [
+            {
+                'pk': pk,
+                'name': data['name'],
+                'count': data['total'],
+                'types': dict(data['types'].most_common(3))
+            }
+            for pk, data in lots_breakdown.items()
+        ]
+
+        if has_pinned_lots:
+            lots_summary.sort(key=lambda x: x['name'])
+        else:
+            lots_summary.sort(key=lambda x: x['count'], reverse=True)
+
+        context.update({
+            'last_updated': timezone.now(),
+            'total_devices': total_devices,
+            'total_types_summary': dict(total_types_counter.most_common(4)),
+            'unassigned_devices': sum(unassigned_types_counter.values()),
+            'unassigned_types_summary': dict(unassigned_types_counter.most_common(3)),
+            'assigned_devices': sum(assigned_types_counter.values()),
+            'assigned_types_summary': dict(assigned_types_counter.most_common(3)),
+
+            'has_pinned_lots': has_pinned_lots,
+            'has_pinned_states': has_pinned_states,
+            'lots_summary': lots_summary,
+            'states_summary': states_summary,
+        })
+
+        return context

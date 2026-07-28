@@ -195,20 +195,25 @@
                 </ul>
               </li>
 	      {% endif %}
-              <li class="nav-item">
-                  <a class="admin {% if 'device:' in path or path in 'dashboard:all_device' %}active {% endif %}nav-link fw-bold" href="{% url 'dashboard:all_device' %}">
-                    <i class="bi bi-laptop icon_sidebar"></i>
-                  {% trans 'Devices' %}
+        <li class="nav-item">
+              <a class="admin {% if 'device:' in path or 'dashboard:all_device' in path or ':overview' in path %}active {% endif %}nav-link fw-bold" href="{% url 'dashboard:overview' %}">
+                <i class="bi bi-columns-gap icon_sidebar"></i>
+                {% trans 'Dashboard' %}
+              </a>
+              <ul class="flex-column mb-2 ul_sidebar accordion-collapse {% if 'device:' in path or path == 'dashboard:all_device' or ':overview' in path %}expanded{% else %}collapse{% endif %}" id="ul_device" data-bs-parent="#sidebarMenu">
+                <li class="nav-item">
+                  <a class="nav-link{% if ':overview' in path %} active2{% endif %}" href="{% url 'dashboard:overview' %}">
+                    {% trans 'Overview' %}
                   </a>
-                  <ul class="flex-column mb-2 ul_sidebar accordion-collapse {% if 'device:' in path or path == 'dashboard:all_device' %}expanded{% else %}collapse{% endif %}" id="ul_device" data-bs-parent="#sidebarMenu">
-		  <li class="nav-item">
-                    <a class="nav-link{% if 'device:' in path or path in 'dashboard:all_device' %} active2{% endif %}" href="javascript:void()">
-                      {% trans 'All' %}
-                    </a>
-                  </li>
-                </ul>
-              </li>
-              <li class="nav-item">
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link{% if 'device:' in path or path == 'dashboard:all_device' %} active2{% endif %}" href="{% url 'dashboard:all_device' %}">
+                    {% trans 'All devices' %}
+                  </a>
+                </li>
+              </ul>
+          </li>
+          <li class="nav-item">
                 <a class="admin {% if 'lot:' in path or path == 'dashboard:lot' or path in 'dashboard:unassigned' %}active {% endif %}nav-link fw-bold" data-bs-toggle="collapse" data-bs-target="#ul_lots" aria-expanded="false" aria-controls="ul_lots" href="javascript:void()">
                   <i class="bi bi-database icon_sidebar"></i>
                   {% trans 'Lots' %}
