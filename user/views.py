@@ -1,11 +1,11 @@
 from decouple import config
 from django.urls import reverse, reverse_lazy
 from django.http import HttpResponse
-from django.shortcuts import render
+from django.contrib import messages
+from django.shortcuts import render, redirect, get_object_or_404
 from django.utils.translation import gettext_lazy as _
 from django.views.generic.base import TemplateView
 from dashboard.mixins import DashboardView, Http403
-from django.shortcuts import get_object_or_404, redirect
 from dashboard.mixins import DashboardView
 from django_tables2 import SingleTableView
 from django.views.generic.edit import (
@@ -24,6 +24,10 @@ from django.views.generic import DetailView
 from evidence.models import Evidence
 from evidence.tables import EvidenceTable
 from django.utils.html import format_html
+
+from lot.models import Lot
+from user.models import User, UserProfile
+from action.models import StateDefinition
 
 
 class PanelView(DashboardView, TemplateView):
@@ -162,3 +166,48 @@ class EditTokenView(DashboardView, UpdateView):
         )
         kwargs = super().get_form_kwargs()
         return kwargs
+
+
+class CustomizeDashboardView(PanelView, TemplateView):
+    template_name = 'customize_dashboard.html'
+    title = _("Customize Overview")
+    breadcrumb = [(_("User"), reverse_lazy("user:panel")), (_("Dashboard"), None)]
+    subtitle = _("Dashboard customization")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        institution = self.request.user.institution
+
+        profile, created = UserProfile.objects.get_or_create(user=self.request.user)
+
+        # Pass the raw querysets, ordered logically
+        context['lots'] = Lot.objects.filter(
+            owner=institution, archived=False
+        ).order_by('name')
+
+        context['states'] = StateDefinition.objects.filter(
+            institution=institution
+        ).order_by('order')
+
+        # Convert to lists so we can easily check `if item.pk in pinned_ids` in the template
+        context['pinned_lot_ids'] = list(profile.pinned_lots.values_list('pk', flat=True))
+        context['pinned_state_ids'] = list(profile.pinned_states.values_list('pk', flat=True))
+
+        return context
+
+    def post(self, request, *args, **kwargs):
+        profile = get_object_or_404(UserProfile, user=request.user)
+
+        pinned_lot_ids = request.POST.getlist("select_lot")
+        pinned_state_ids = request.POST.getlist("select_state")
+
+        institution = request.user.institution
+        valid_lots = Lot.objects.filter(owner=institution, pk__in=pinned_lot_ids)
+        valid_states = StateDefinition.objects.filter(institution=institution, pk__in=pinned_state_ids)
+
+        profile.pinned_lots.set(valid_lots)
+        profile.pinned_states.set(valid_states)
+        profile.save()
+
+        messages.success(request, _("Your dashboard preferences have been saved!"))
+        return redirect('dashboard:overview')
