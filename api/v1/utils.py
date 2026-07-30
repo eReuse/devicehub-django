@@ -1,7 +1,7 @@
 import re
 import json
 import logging
-from django.db.models import Q
+from django.db.models import Q, Min
 from ninja.errors import HttpError
 
 from lot.models import Lot, DeviceBeneficiary
@@ -213,8 +213,6 @@ def get_all_search_results(query_str, institution):
     return combined
 
 
-# bulk orm queries - - -
-
 def fetch_bulk_device_data(chids_page, institution, lot=None):
     """Executes the 4 heavy SQL queries required for export payloads in bulk."""
 
@@ -244,9 +242,16 @@ def fetch_bulk_device_data(chids_page, institution, lot=None):
     uuid_to_state = {state.snapshot_uuid: state.state for state in states_qs}
     state_map = {root: str(uuid_to_state.get(uuid, "")) for root, uuid in latest_uuids.items()}
 
-    return props_map, ben_map, default_ben_status, state_map
+    # check for earliest SystemProperty by root alias
+    earliest_dates_qs = SystemProperty.objects.filter(
+        owner=institution,
+        value__in=chids_page
+    ).values('value').annotate(first_seen=Min('created')).values_list('value', 'first_seen')
+    created_map = {val: first_seen for val, first_seen in earliest_dates_qs}
 
-def build_bulk_device_export_dict(cache, state_str, ben_status_str, user_props_dict):
+    return props_map, ben_map, default_ben_status, state_map, created_map
+
+def build_bulk_device_export_dict(cache, state_str, ben_status_str, user_props_dict, created_date):
     """Standardizes dictionary construction."""
     dev_data = {
         "ID": cache.root,
@@ -257,8 +262,8 @@ def build_bulk_device_export_dict(cache, state_str, ben_status_str, user_props_d
         "serial": cache.serial,
         "cpu_model": cache.cpu_model,
         "last_updated": cache.last_updated,
+        "created": created_date,
     }
-    dev_data.update(cache.data)
     dev_data["current_state"] = state_str
     dev_data["beneficiary_status"] = ben_status_str
     dev_data["user_properties"] = user_props_dict
@@ -272,7 +277,7 @@ def build_device_response_list(chids_page, institution, lot=None):
     cached_qs = ProductCache.objects.filter(owner=institution, root__in=chids_page)
     cache_map = {cache.root: cache for cache in cached_qs}
 
-    props_map, ben_map, default_ben_status, state_map = fetch_bulk_device_data(chids_page, institution, lot)
+    props_map, ben_map, default_ben_status, state_map, created_map = fetch_bulk_device_data(chids_page, institution, lot)
 
     devices_export = []
     for root_id in chids_page:
@@ -282,6 +287,7 @@ def build_device_response_list(chids_page, institution, lot=None):
                 cache=cache,
                 state_str=state_map.get(root_id, ""),
                 ben_status_str=ben_map.get(root_id, default_ben_status),
-                user_props_dict=props_map.get(root_id, {})
+                user_props_dict=props_map.get(root_id, {}),
+                created_date=created_map.get(root_id)
             ))
     return devices_export
