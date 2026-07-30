@@ -264,6 +264,12 @@ def build_bulk_device_export_dict(cache, state_str, ben_status_str, user_props_d
         "last_updated": cache.last_updated,
         "created": created_date,
     }
+    ## add cache data fields but leave out those which are empty
+    if isinstance(cache.data, dict):
+        for key, value in cache.data.items():
+            if value != "" and value is not None:
+                dev_data[key] = value
+
     dev_data["current_state"] = state_str
     dev_data["beneficiary_status"] = ben_status_str
     dev_data["user_properties"] = user_props_dict
