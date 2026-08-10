@@ -947,8 +947,11 @@ class ClearBeneficiaryDevicesView(DashboardLotMixing, View):
         if device_id:
             devices = request.session.get("devices", [])
             request.session["devices"] = [d for d in devices if d != device_id]
+            messages.info(request, _("Device removed from selection."))
         else:
             request.session["devices"] = []
+            messages.info(request, _("All devices cleared from selection."))
+
         return redirect(reverse_lazy("lot:beneficiary", kwargs={"pk": pk}))
 
 
@@ -973,9 +976,14 @@ class DeleteBeneficiaryView(DashboardView, TemplateView):
         ).first()
 
         if subscriptor or self.request.user.is_admin:
-            self.object.delete()
-            # TODO
-            # self.send_email()
+            try:
+                self.object.delete()
+                messages.success(self.request, _("Beneficiary successfully deleted."))
+                # TODO
+                # self.send_email()
+            except Exception as e:
+                logger.error(f"Error deleting beneficiary {id}: {e}")
+                messages.error(self.request, _("An error occurred while deleting the beneficiary."))
 
         return redirect(self.success_url)
 
@@ -988,6 +996,7 @@ class ListDevicesBeneficiaryView(DashboardLotMixing, BeneficiaryEmail, FormView)
     def get(self, *args, **kwargs):
         res = super().get(*args, **kwargs)
         if not self.beneficiary.devicebeneficiary_set.first():
+            messages.info(self.request, _("Beneficiary has no devices."))
             url = reverse_lazy("dashboard:lot", args=[self.beneficiary.lot.id])
             return redirect(url)
 
@@ -1160,9 +1169,16 @@ class DelDeviceBeneficiaryView(DashboardView, TemplateView):
 
         if subscriptor or self.request.user.is_admin:
             if device:
-                device.delete()
-            # TODO
-            # self.send_email()
+                try:
+                    device.delete()
+                    messages.success(self.request, _("Device successfully unassigned from the beneficiary."))
+                    # TODO
+                    # self.send_email()
+                except Exception as e:
+                    logger.error(f"Error removing device {dev_id} from beneficiary {id}: {e}")
+                    messages.error(self.request, _("An error occurred while unassigning the device."))
+            else:
+                messages.warning(self.request, _("Device not found or already unassigned."))
 
         return redirect(self.success_url)
 
@@ -1189,6 +1205,7 @@ class AddDevicesBeneficiaryView(DashboardView, NotifyEmail, TemplateView):
 
         if subscriptor or self.request.user.is_admin:
             devices = self.request.session.get("devices", [])
+            added_count = 0
             for dev in devices:
                 # Match any alias of the canonical device to detect dups
                 # even when the stored device_id is a stale root.
@@ -1208,11 +1225,25 @@ class AddDevicesBeneficiaryView(DashboardView, NotifyEmail, TemplateView):
                         short_id, exist.beneficiary.email
                     ))
                 else:
-                    self.beneficiary.add(dev)
+                    try:
+                        self.beneficiary.add(dev)
+                        added_count += 1
+                    except Exception as e:
+                        logger.error(f"Error adding device {dev} to beneficiary {self.beneficiary.email}: {e}")
+                        messages.error(self.request, _("Failed to assign a device due to an internal error."))
+
+            if added_count > 0:
+                messages.success(self.request, _("{} device(s) successfully assigned to {}.").format(
+                    added_count, self.beneficiary.email
+                ))
+                try:
+                    self.send_email_subscriptors()
+                except Exception as e:
+                    logger.error(f"Failed to send email to subscriptors on new device assignment: {e}")
+            elif not devices:
+                messages.info(self.request, _("No devices were selected for assignment."))
 
             self.request.session["devices"] = []
-            self.send_email_subscriptors()
-
 
         return redirect(self.success_url)
 

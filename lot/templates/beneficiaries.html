@@ -7,198 +7,269 @@
 <style>
     .assign-device {
         border-left: 4px solid #198754;
-        min-width: 300px;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .assign-device:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
+    }
+    .assign-device-warning {
+        border-left: 4px solid #ffc107;
     }
 </style>
 
-{% if devices_to_assign or devices_already_assigned %}
-<div class="d-flex flex-column-reverse flex-md-row align-items-start gap-3 mb-4 mt-4">
-  <div class="flex-grow-1">
+<div class="row mt-4">
 
-    {% if devices_to_assign %}
-    <div class="mb-4">
-      <h5 class="mb-3">
-        <i class="bi bi-check-circle text-success"></i>
-        {{ devices_to_assign|length }} {% trans 'Devices ready to assign' %}
-      </h5>
-        <p class="text-muted small mb-3">{% trans 'Choose a beneficiary from the list and click "Assign" to link these devices.' %}</p>
-      <div class="d-flex flex-wrap gap-2">
-        {% for d in devices_to_assign %}
-          <div class="card assign-device">
-              <div class="card-body p-2">
-                  <div class="row align-items-center">
-                      <div class="col-md-8 w-100">
-                          <h6 class="card-title mb-1 d-flex align-items-center">
-                              <i class="bi {{ d.icon }} me-1 text-primary"></i>
-                              <span class="font-monospace fw-bold me-1 small">{{ d.shortid|upper }}</span>
-                              <a href="{% url 'lot:clear_beneficiary_devices' lot.id %}?device_id={{ d.id }}" class="ms-auto text-muted" title="{% trans 'Remove' %}">
-                                  <i class="bi bi-x-circle small"></i>
-                              </a>
-                          </h6>
-                          <p class="text-muted mb-0 small">
-                              {% if d.manufacturer %}{{ d.manufacturer }}{% endif %}{% if d.model %} {{ d.model }}{% endif %}
-                          </p>
-                      </div>
-                  </div>
-              </div>
-          </div>
-        {% endfor %}
-      </div>
-    </div>
-    {% endif %}
+  <div class="col-lg-4 col-md-5 mb-4">
+    <div class="card shadow-sm border-0 h-100">
+      <div class="card-body">
+        <h5 class="card-title mb-3 fw-bold text-secondary">
+          <i class="bi bi-laptop me-2"></i>{% trans 'Session Devices' %}
+        </h5>
 
-    {% if devices_already_assigned %}
-    <div class="mb-4">
-      <h5 class="mb-2">
-        <i class="bi bi-exclamation-triangle text-warning"></i>
-        {{ devices_already_assigned|length }} {% trans 'Devices already assigned' %}
-      </h5>
-      <p class="text-muted small mb-3">{% trans 'These devices are already assigned to a beneficiary and cannot be reassigned.' %}</p>
-      <div class="d-flex flex-wrap gap-2">
-          {% for d in devices_already_assigned %}
-          <div class="card assign-device" style="border-left-color: #ffc107">
-              <div class="card-body p-2">
-                  <div class="row align-items-center">
-                      <div class="col-md-8 w-100">
-                          <h6 class="card-title mb-1 d-flex align-items-center">
-                              <span class="font-monospace fw-bold me-1 small">
-                                  <i class="bi {{ d.icon }} me-1 text-primary"></i>
-                                  {{ d.shortid|upper }}
-                              </span>
-                              <span class="badge bg-warning text-dark small">
-                                  <i class="bi bi-person-check me-1"></i>{{ d.beneficiary_email }}
-                              </span>
-                              <a href="{% url 'lot:clear_beneficiary_devices' lot.id %}?device_id={{ d.id }}" class="ms-auto text-muted" title="{% trans 'Remove' %}">
-                                  <i class="bi bi-x-circle small"></i>
-                              </a>
-                          </h6>
-                          <p class="text-muted mb-1 small">
-                              {% if d.manufacturer %}{{ d.manufacturer }}{% endif %}{% if d.model %} {{ d.model }}{% endif %}
-                          </p>
-                      </div>
-                  </div>
-              </div>
-          </div>
-          {% endfor %}
-      </div>
-    </div>
-    {% endif %}
+        {% if devices_to_assign or devices_already_assigned %}
 
-  </div>
-
-  <a href="{% url 'lot:clear_beneficiary_devices' lot.id %}" class="btn btn-outline-secondary btn-sm flex-shrink-0">
-    <i class="bi bi-x-circle me-1"></i>{% trans 'Clear selection' %}
-  </a>
-</div>
-{% endif %}
-
-{% if beneficiaries %}
-<div class="row mt-3">
-  <div class="col">
-    <table class="table table-hover table-bordered align-middel">
-      <thead class="table-light">
-        <tr>
-          <th scope="col">{% trans 'Beneficiary' %}</th>
-          <th scope="col">{% trans 'Shop' %}</th>
-          <th scope="col">{% trans 'Accepted terms' %}</th>
-          <th scope="col">{% trans 'Devices' %}</th>
-          <th scope="col"></th>
-          <th scope="col"></th>
-          <th scope="col"></th>
-        </tr>
-      </thead>
-      <tbody>
-      {% for s in beneficiaries %}
-        <tr>
-          <td class="font-monospace">{{ s.email }}</td>
-          <td class="font-monospace">{{ s.shop.user.email }}</td>
-          <td class="font-monospace">
-	    {% if s.sign_conditions %}
-	    {{ s.sign_conditions }}
-	    <i class="bi bi-shield-check text-primary"></i>
-	    {% else %}
-	    <i class="bi bi-shield-slash text-danger"></i>
-	    {% endif %}
-	  </td>
-
-
-          <td class="font-monospace">
-	    <a href="{% url 'lot:devices_beneficiary' lot.id s.id %}">
-	       {% trans 'Devices' %}
-	    </a>
-	  </td>
-          <td class="font-monospace">
-	    <a href="{% url 'lot:web_beneficiary' lot.id s.id %}">
-	       {% trans 'web' %}
-	    </a>
-	  </td>
-          <td class="font-monospace">
-            <a href="{% url 'lot:add_device_beneficiary' lot.id s.id %}" type="button" class="btn btn-sm btn-outline-primary align-items-center">
-              <i class="bi bi-plus-circle me-1"></i>
-              {% trans 'Assign' %}
-            </a>
-	  </td>
-          <td class="font-monospace">
-            <button type="button" class="btn btn-sm btn-outline-danger d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#deleteModal{{ s.id }}">
-              <i class="bi bi-trash me-1"></i>
-              {% trans 'Deallocate' %}
-            </button>
-	  </td>
-        </tr>
-        <div class="modal fade" id="deleteModal{{ s.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ s.id }}" aria-hidden="true">
-          <div class="modal-dialog">
-            <div class="modal-content">
-              <div class="modal-header">
-                <h5 class="modal-title" id="deleteModalLabel{{ s.id }}">{% trans "Deallocate Beneficiary" %}</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
-              </div>
-              <div class="modal-body">
-                <p>{% trans "Are you sure you want to deallocate this beneficiary?" %}</p>
-              </div>
-              <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-		  {% trans "Cancel" %}
-		</button>
-             	<a type="submit" class="btn btn-danger" href="{% url 'lot:del_beneficiary' lot.id s.id %}">
-	         {% trans 'Deallocate' %}
-		</a>
-	      </div>
+          {% if devices_already_assigned %}
+          <div class="alert alert-warning d-flex align-items-center shadow-sm p-2 mb-3" role="alert">
+            <i class="bi bi-exclamation-triangle-fill fs-5 me-2"></i>
+            <div class="small">
+              <strong>{% trans 'Attention:' %}</strong> {% trans 'Some (or all) devices are already assigned.' %}
             </div>
           </div>
-        </div>
-      {% endfor %}
-      </tbody>
-    </table>
+          {% endif %}
+
+          <div class="d-flex flex-column gap-3">
+            <div class="w-100">
+
+              {% if devices_to_assign %}
+              <div class="mb-4">
+                <h6 class="mb-2 text-success fw-bold">
+                  <i class="bi bi-check-circle me-1"></i>
+                  {{ devices_to_assign|length }} {% trans 'Ready to assign' %}
+                </h6>
+                <p class="text-muted small mb-2">{% trans 'Select a beneficiary from the list to assign or add a new one.' %}</p>
+                <div class="d-flex flex-column gap-2">
+                  {% for d in devices_to_assign %}
+                    <div class="card assign-device shadow-sm">
+                        <div class="card-body p-2">
+                            <div class="d-flex justify-content-between align-items-start mb-1">
+                                <h6 class="card-title mb-0 d-flex align-items-center fw-bold small">
+                                    <i class="bi {{ d.icon }} me-2 text-primary"></i>
+                                    <span class="font-monospace">{{ d.shortid|upper }}</span>
+                                </h6>
+                                <a href="{% url 'lot:clear_beneficiary_devices' lot.id %}?device_id={{ d.id }}" class="text-danger bg-light rounded-circle p-1 d-flex align-items-center justify-content-center" style="width: 24px; height: 24px;" title="{% trans 'Remove from session' %}">
+                                    <i class="bi bi-x"></i>
+                                </a>
+                            </div>
+                            <p class="text-muted mb-0 small" style="font-size: 0.8rem;">
+                                {% if d.manufacturer %}{{ d.manufacturer }}{% endif %}{% if d.model %} {{ d.model }}{% endif %}
+                            </p>
+                        </div>
+                    </div>
+                  {% endfor %}
+                </div>
+              </div>
+              {% endif %}
+
+              {% if devices_already_assigned %}
+              <div class="mb-3">
+                <h6 class="mb-2 text-warning fw-bold text-dark">
+                  <i class="bi bi-shield-lock me-1"></i>
+                  {{ devices_already_assigned|length }} {% trans 'Assigned Devices' %}
+                </h6>
+                <div class="d-flex flex-column gap-2">
+                    {% for d in devices_already_assigned %}
+                    <div class="card assign-device assign-device-warning shadow-sm">
+                        <div class="card-body p-2">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h6 class="card-title mb-0 d-flex align-items-center fw-bold small">
+                                    <i class="bi {{ d.icon }} me-2 text-primary"></i>
+                                    <span class="font-monospace">{{ d.shortid|upper }}</span>
+                                </h6>
+                                <a href="{% url 'lot:clear_beneficiary_devices' lot.id %}?device_id={{ d.id }}" class="text-secondary bg-light rounded-circle p-1 d-flex align-items-center justify-content-center" style="width: 24px; height: 24px;" title="{% trans 'Remove from session' %}">
+                                    <i class="bi bi-x"></i>
+                                </a>
+                            </div>
+                            <span class="badge bg-warning text-dark w-100 text-start py-1 mb-1" style="font-size: 0.75rem;">
+                                <i class="bi bi-person-check me-1"></i> {{ d.beneficiary_email }}
+                            </span>
+                            <p class="text-muted mb-0" style="font-size: 0.8rem;">
+                                {% if d.manufacturer %}{{ d.manufacturer }}{% endif %}{% if d.model %} {{ d.model }}{% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+              </div>
+              {% endif %}
+
+            </div>
+
+            <a href="{% url 'lot:clear_beneficiary_devices' lot.id %}" class="btn btn-outline-danger btn-sm w-100 shadow-sm mt-2">
+              <i class="bi bi-trash3 me-1"></i>{% trans 'Clear Session' %}
+            </a>
+          </div>
+
+        {% else %}
+          <div class="alert alert-info d-flex align-items-center mb-0 shadow-sm" role="alert">
+            <i class="bi bi-info-circle-fill fs-4 me-3"></i>
+            <div class="small">
+              {% trans 'No devices on the session. Add from the lot view to begin assigning them to beneficiaries.' %}
+            </div>
+          </div>
+        {% endif %}
+      </div>
+    </div>
   </div>
-</div>
-{% endif %}
 
-<div class="mt-4">
-  <button class="btn bi-plus btn-green-admin" type="button" data-bs-toggle="collapse" data-bs-target="#add_beneficiary">
-    {% trans 'Add Beneficiary' %}
-  </button>
 
-  <div class="collapse mt-3" id="add_beneficiary">
-    {% load django_bootstrap5 %}
-    <form role="form" method="post">
-      {% csrf_token %}
-      {% if form.errors %}
-      <div class="alert alert-danger alert-icon alert-icon-border alert-dismissible" role="alert">
-        <div class="icon"><span class="mdi mdi-close-circle-o"></span></div>
-        <div class="message">
-          {% for field, error in form.errors.items %}
-            {{ error }}<br />
-          {% endfor %}
-          <button class="btn-close" type="button" data-dismiss="alert" aria-label="Close"></button>
+  <div class="col-lg-8 col-md-7">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold text-secondary mb-0">{% trans 'Beneficiaries List' %}</h5>
+        <button class="btn btn-green-admin shadow-sm" type="button" data-bs-toggle="collapse" data-bs-target="#add_beneficiary" aria-expanded="false" aria-controls="add_beneficiary">
+
+          {% if devices_to_assign %}
+            {% trans 'Add devices to new Beneficiary' %}
+          {% else %}
+            {% trans 'Add new Beneficiary' %}
+            {% endif %}
+        </button>
+    </div>
+
+    <div class="collapse mb-4" id="add_beneficiary">
+      <div class="card shadow-sm border-0">
+          <div class="card-body">
+              {% load django_bootstrap5 %}
+              <form role="form" method="post">
+                {% csrf_token %}
+                {% if form.errors %}
+                <div class="alert alert-danger d-flex align-items-center alert-dismissible fade show shadow-sm" role="alert">
+                  <i class="bi bi-x-circle-fill fs-4 me-3"></i>
+                  <div>
+                    {% for field, error in form.errors.items %}
+                      {{ error }}<br />
+                    {% endfor %}
+                  </div>
+                  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endif %}
+
+                {% bootstrap_form form %}
+
+                <div class="d-flex gap-2 mt-4">
+                  <input class="btn btn-green-admin px-4" type="submit" name="submit" value="{{ action }}" />
+                  <a class="btn btn-light px-4" data-bs-toggle="collapse" href="#add_beneficiary">{% translate "Cancel" %}</a>
+                </div>
+              </form>
+          </div>
+      </div>
+    </div>
+
+    <!-- Beneficiaries Table -->
+    {% if beneficiaries %}
+    <div class="card shadow-sm mb-4 border-0">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th scope="col" class="ps-4">{% trans 'Beneficiary' %}</th>
+                <th scope="col">{% trans 'Shop' %}</th>
+                <th scope="col" class="text-center">{% trans 'Accepted terms' %}</th>
+                <th scope="col">{% trans 'Devices' %}</th>
+                <th scope="col"></th>
+                <th scope="col"></th>
+                <th scope="col"></th>
+              </tr>
+            </thead>
+            <tbody>
+            {% for s in beneficiaries %}
+              <tr>
+                <td class="font-monospace ps-4 fw-bold">{{ s.email }}</td>
+                <td class="font-monospace text-muted">{{ s.shop.user.email }}</td>
+                <td class="text-center">
+                  {% if s.sign_conditions %}
+                    <span class="badge bg-success bg-opacity-10 border border-success border-opacity-25" title="{{ s.sign_conditions }}">
+                      {% trans 'Signed' %}
+                    </span>
+                  {% else %}
+                    <span class="badge bg-danger bg-opacity-10 border border-danger border-opacity-25">
+                      {% trans 'Pending' %}
+                    </span>
+                  {% endif %}
+                </td>
+
+                <td>
+                  {% if s.devicebeneficiary_set.exists %}
+                    <a href="{% url 'lot:devices_beneficiary' lot.id s.id %}" class="btn btn-sm btn-light">
+                       <i class="bi bi-laptop me-1"></i>{% trans 'Devices' %}
+                    </a>
+                  {% else %}
+                    <span class="d-inline-block" tabindex="0" title="{% trans 'This beneficiary has no devices onto it' %}" data-bs-toggle="tooltip">
+                      <button class="btn btn-sm btn-light disabled" type="button" style="pointer-events: none;">
+                         <i class="bi bi-laptop me-1 text-muted"></i><span class="text-muted">{% trans 'Devices' %}</span>
+                      </button>
+                    </span>
+                  {% endif %}
+                </td>
+
+                <td>
+                  <a href="{% url 'lot:web_beneficiary' lot.id s.id %}" class="btn btn-sm btn-light">
+                     <i class="bi bi-globe me-1"></i>{% trans 'Web' %}
+                  </a>
+                </td>
+                <td>
+                  <td>
+                  {% if devices_to_assign %}
+                    <a href="{% url 'lot:add_device_beneficiary' lot.id s.id %}" class="btn btn-sm btn-primary d-flex align-items-center justify-content-center">
+                      {% trans 'Assign' %}
+                    </a>
+                  {% else %}
+                    <span class="d-inline-block" tabindex="0" data-bs-toggle="tooltip" title="{% trans 'No valid devices in the session to assign.' %}">
+                      <button class="btn btn-sm btn-primary d-flex align-items-center justify-content-center disabled" type="button" style="pointer-events: none; opacity: 0.6;">
+                        {% trans 'Assign' %}
+                      </button>
+                    </span>
+                  {% endif %}
+                </td>                </td>
+                <td class="pe-4 text-end">
+                  <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ s.id }}">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </td>
+              </tr>
+
+              <div class="modal fade" id="deleteModal{{ s.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ s.id }}" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                  <div class="modal-content">
+                    <div class="modal-header border-0 pb-0">
+                      <h5 class="modal-title text-danger fw-bold" id="deleteModalLabel{{ s.id }}">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>{% trans "Deallocate Beneficiary" %}
+                      </h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
+                    </div>
+                    <div class="modal-body">
+                      <p class="mb-0">{% trans "Are you sure you want to deallocate" %} <strong>{{ s.email }}</strong>? {% trans "This action cannot be undone." %}</p>
+                    </div>
+                    <div class="modal-footer border-0 pt-0">
+                      <button type="button" class="btn btn-light" data-bs-dismiss="modal">
+                        {% trans "Cancel" %}
+                      </button>
+                      <a href="{% url 'lot:del_beneficiary' lot.id s.id %}" class="btn btn-danger">
+                        {% trans 'Deallocate' %}
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+            </tbody>
+          </table>
         </div>
       </div>
-      {% endif %}
-      {% bootstrap_form form %}
-      <div class="form-actions-no-box">
-        <a class="btn btn-grey" href="{% url 'dashboard:lot' lot.id %}">{% translate "Cancel" %}</a>
-        <input class="btn btn-green-admin" type="submit" name="submit" value="{{ action }}" />
-      </div>
-    </form>
+    </div>
+    {% endif %}
+
   </div>
 </div>
 {% endblock %}
