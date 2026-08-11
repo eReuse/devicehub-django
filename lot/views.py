@@ -863,7 +863,6 @@ class BeneficiaryView(DashboardLotMixing, BeneficiaryInterestedEmail, FormView):
             aliases = RootAlias.physical_aliases(self.request.user.institution, device_id)
             d_ben = DeviceBeneficiary.objects.filter(
                 device_id__in=aliases,
-                beneficiary__lot=self.lot
             ).exclude(status=DeviceBeneficiary.Status.RETURNED).first()
 
             device_info = {
@@ -877,6 +876,9 @@ class BeneficiaryView(DashboardLotMixing, BeneficiaryInterestedEmail, FormView):
 
             if d_ben:
                 device_info['beneficiary_email'] = d_ben.beneficiary.email
+                device_info['lot_name'] = d_ben.beneficiary.lot.name
+                device_info['lot_id'] = d_ben.beneficiary.lot.id
+
                 devices_already_assigned.append(device_info)
             else:
                 devices_to_assign.append(device_info)
@@ -1232,8 +1234,8 @@ class AddDevicesBeneficiaryView(DashboardView, NotifyEmail, TemplateView):
                     except Exception:
                         short_id = dev
 
-                    messages.error(self.request, _("Device {} was already assigned to {}").format(
-                        short_id, exist.beneficiary.email
+                    messages.error(self.request, _("Device {} is already assigned to {} in lot '{}'.").format(
+                        short_id, exist.beneficiary.email, exist.beneficiary.lot.name
                     ))
                 else:
                     self.beneficiary.add(dev)
