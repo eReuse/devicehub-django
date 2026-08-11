@@ -1,6 +1,7 @@
 import django_tables2 as tables
+from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
-from lot.models import Lot
+from lot.models import Lot, Beneficiary
 from django.utils.safestring import mark_safe
 
 class LotTable(tables.Table):
@@ -66,3 +67,66 @@ class LotTable(tables.Table):
         model = Lot
         fields = ("select", "archived", "name", "description", "device_count", "created", "user", "actions")
         order_by = ("-created",)
+
+
+class BeneficiaryTable(tables.Table):
+    email = tables.Column(
+        verbose_name=_("Beneficiary"),
+        attrs={'td': {'class': 'font-monospace'}},
+    )
+    shop_email = tables.Column(
+        accessor='shop__user__email',
+        verbose_name=_("Shop"),
+        attrs={'td': {'class': 'font-monospace'}},
+        orderable=False,
+    )
+    sign_conditions = tables.Column(
+        verbose_name=_("Accepted terms"),
+        attrs={'td': {'class': 'font-monospace'}},
+        orderable=True,
+        default=None,
+    )
+    devices = tables.Column(
+        verbose_name=_("Devices"),
+        orderable=False,
+        empty_values=(),
+        linkify=lambda record, table: reverse('lot:devices_beneficiary', args=[table.lot_id, record.id]),
+    )
+    web = tables.Column(
+        verbose_name=_("Web"),
+        orderable=False,
+        empty_values=(),
+        linkify=lambda record, table: reverse('lot:web_beneficiary', args=[table.lot_id, record.id]),
+    )
+    assign = tables.Column(
+        verbose_name=_(""),
+        orderable=False,
+        empty_values=(),
+        linkify=lambda record, table: reverse('lot:add_device_beneficiary', args=[table.lot_id, record.id]),
+        attrs={"a": {"class": "btn btn-sm btn-outline-primary align-items-center"}},
+    )
+    deallocate = tables.TemplateColumn(
+        template_name="beneficiary_deallocate_button.html",
+        verbose_name=_(""),
+        orderable=False,
+    )
+
+    def render_devices(self, record):
+        return _("Devices")
+
+    def render_web(self, record):
+        return _("web")
+
+    def render_assign(self, record):
+        return mark_safe(f'<i class="bi bi-plus-circle me-1"></i> {_("Assign")}')
+
+    def render_sign_conditions(self, value):
+        if value:
+            return mark_safe(f'{value} <i class="bi bi-shield-check text-primary"></i>')
+        return mark_safe('<i class="bi bi-shield-slash text-danger"></i>')
+
+    class Meta:
+        template_name = "custom_table.html"
+        model = Beneficiary
+        fields = ("email", "shop_email", "sign_conditions", "devices", "web", "assign", "deallocate")
+        order_by = ("email",)
