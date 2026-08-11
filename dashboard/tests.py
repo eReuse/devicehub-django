@@ -619,7 +619,7 @@ class SearchViewBestMatchTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(
             response.url,
-            reverse("device:details", kwargs={"pk": "ereuse24:topone"}))
+            reverse("product:details", kwargs={"pk": "ereuse24:topone"}))
 
     def test_best_match_with_public_redirects_to_the_public_device_page(self):
         # top_sp is ranked first by the (mocked) Xapian relevance order.
@@ -633,7 +633,7 @@ class SearchViewBestMatchTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(
             response.url,
-            reverse("device:device_web", kwargs={"pk": "ereuse24:topone"}))
+            reverse("product:device_web", kwargs={"pk": "ereuse24:topone"}))
 
     def test_best_match_not_true_does_not_redirect(self):
         # Stub out the normal results-page rendering: it builds real Device
@@ -686,7 +686,7 @@ class SearchViewExactMatchTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(
             response.url,
-            reverse("device:details", kwargs={"pk": "ereuse24:topone"}))
+            reverse("product:details", kwargs={"pk": "ereuse24:topone"}))
 
     def test_exact_match_with_public_redirects_to_the_public_device_page(self):
         fake_search = _fake_xapian_search([self.top_sp.uuid])
@@ -699,7 +699,7 @@ class SearchViewExactMatchTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(
             response.url,
-            reverse("device:device_web", kwargs={"pk": "ereuse24:topone"}))
+            reverse("product:device_web", kwargs={"pk": "ereuse24:topone"}))
 
     def test_exact_match_true_does_not_redirect_with_multiple_results(self):
         fake_search = _fake_xapian_search([self.top_sp.uuid, self.second_sp.uuid])
@@ -742,7 +742,7 @@ class SearchViewExactMatchTests(TestCase):
             self.assertEqual(response.status_code, 302)
             self.assertEqual(
                 response.url,
-                reverse("device:details", kwargs={"pk": "ereuse24:topone"}))
+                reverse("product:details", kwargs={"pk": "ereuse24:topone"}))
 
     def test_best_match_true_then_exact_match_false_disables_redirect(self):
         # exact_match=false is the last occurrence, so it wins over the
@@ -812,7 +812,7 @@ class SearchViewCustomIdPublicRedirectTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(
             response.url,
-            reverse("device:device_web", kwargs={"pk": self.real_alias}))
+            reverse("product:device_web", kwargs={"pk": self.real_alias}))
 
     def test_private_redirect_keeps_the_canonical_custom_id_pk(self):
         with patch("dashboard.views.search", side_effect=_fake_xapian_search([])):
@@ -822,4 +822,4 @@ class SearchViewCustomIdPublicRedirectTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(
             response.url,
-            reverse("device:details", kwargs={"pk": "custom_id:tstid1"}))
+            reverse("product:details", kwargs={"pk": "custom_id:tstid1"}))

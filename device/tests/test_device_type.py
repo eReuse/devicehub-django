@@ -1,13 +1,18 @@
 """
 Tests for DeviceType: model, form, and admin/device views.
 """
+import io
+
+import pandas as pd
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, TransactionTestCase, Client
 from django.urls import reverse
 from django.db import IntegrityError
 
 from user.models import User, Institution
 from device.models import DeviceType
-from device.forms import DeviceForm, BaseDeviceFormSet, DeviceFormSet, DEVICE_TYPES
+from device.forms import DeviceMainForm
+from evidence.forms import ImportForm
 
 
 # ---------------------------------------------------------------------------
@@ -38,7 +43,7 @@ def make_user(institution, email="user@test.com", password="pass1234"):
 
 
 # ---------------------------------------------------------------------------
-# 1. Modelo DeviceType
+# 1. DeviceType model
 # ---------------------------------------------------------------------------
 
 class DeviceTypeModelTest(TestCase):
@@ -72,11 +77,27 @@ class DeviceTypeModelTest(TestCase):
         with self.assertRaises(IntegrityError):
             DeviceType.objects.create(institution=self.institution, name="Laptop")
 
+    def test_unique_constraint_ignores_case(self):
+        DeviceType.objects.create(institution=self.institution, name="Laptop")
+        with self.assertRaises(IntegrityError):
+            DeviceType.objects.create(institution=self.institution, name="laptop")
+
+    def test_name_keeps_the_casing_typed_by_the_user(self):
+        dt = DeviceType.objects.create(institution=self.institution, name="SolidStateDrive")
+        dt.refresh_from_db()
+        self.assertEqual(dt.name, "SolidStateDrive")
+
     def test_same_name_different_institution_allowed(self):
         other = make_institution("Other Org")
         dt1 = DeviceType.objects.create(institution=self.institution, name="Laptop")
         dt2 = DeviceType.objects.create(institution=other, name="Laptop")
         self.assertEqual(dt1.name, dt2.name)
+
+    def test_same_name_different_case_different_institution_allowed(self):
+        other = make_institution("Other Org")
+        DeviceType.objects.create(institution=self.institution, name="Laptop")
+        dt2 = DeviceType.objects.create(institution=other, name="laptop")
+        self.assertEqual(dt2.name, "laptop")
 
     def test_delete_reorders(self):
         dt1 = DeviceType.objects.create(institution=self.institution, name="A")
@@ -106,7 +127,7 @@ class DeviceTypeModelTest(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# 2. create_doc acepta tipos custom (no valida contra Device.Types)
+# 2. create_doc accepts custom types (it does not validate against Device.Types)
 # ---------------------------------------------------------------------------
 
 class CreateDocCustomTypeTest(TestCase):
@@ -125,102 +146,108 @@ class CreateDocCustomTypeTest(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# 3. Formulario DeviceForm — choices dinámicos
+# 2b. Excel import validates the type against the DB, ignoring case
 # ---------------------------------------------------------------------------
 
-class DeviceFormTest(TestCase):
+class ImportFormTypeValidationTest(TestCase):
 
-    def test_default_choices_are_device_types(self):
-        form = DeviceForm()
-        self.assertEqual(form.fields['type'].choices, DEVICE_TYPES)
+    def setUp(self):
+        self.institution = make_institution()
+        self.user = make_admin(self.institution)
 
-    def test_custom_choices_override_default(self):
-        custom = [("TypeA", "TypeA"), ("TypeB", "TypeB")]
-        form = DeviceForm(device_types=custom)
-        self.assertEqual(form.fields['type'].choices, custom)
+    def _excel(self, type_value):
+        buffer = io.BytesIO()
+        pd.DataFrame([{"type": type_value, "model": "X1"}]).to_excel(
+            buffer, index=False
+        )
+        return SimpleUploadedFile(
+            "import.xlsx",
+            buffer.getvalue(),
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
 
-    def test_valid_form_with_default_choices(self):
-        data = {'type': 'Laptop', 'amount': 1, 'custom_id': '', 'name': '', 'value': ''}
-        form = DeviceForm(data=data)
-        self.assertTrue(form.is_valid())
+    def _form(self, type_value):
+        return ImportForm(
+            data={},
+            files={"file_import": self._excel(type_value)},
+            user=self.user,
+        )
 
-    def test_valid_form_with_custom_choices(self):
-        custom = [("MyType", "MyType")]
-        data = {'type': 'MyType', 'amount': 1, 'custom_id': '', 'name': '', 'value': ''}
-        form = DeviceForm(data=data, device_types=custom)
-        self.assertTrue(form.is_valid())
+    def test_type_from_db_is_accepted(self):
+        DeviceType.objects.create(institution=self.institution, name="Laptop")
+        form = self._form("Laptop")
+        self.assertTrue(form.is_valid(), form.errors)
 
-    def test_invalid_choice_with_custom_choices(self):
-        custom = [("MyType", "MyType")]
-        data = {'type': 'Laptop', 'amount': 1, 'custom_id': '', 'name': '', 'value': ''}
-        form = DeviceForm(data=data, device_types=custom)
+    def test_type_is_case_insensitive(self):
+        DeviceType.objects.create(institution=self.institution, name="Laptop")
+        form = self._form("lAPTOp")
+        self.assertTrue(form.is_valid(), form.errors)
+
+    def test_imported_type_is_normalized_to_the_db_spelling(self):
+        DeviceType.objects.create(institution=self.institution, name="SolidStateDrive")
+        form = self._form("solidstatedrive")
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(form.rows[0]["type"], "SolidStateDrive")
+
+    def test_custom_type_from_db_is_accepted(self):
+        DeviceType.objects.create(institution=self.institution, name="Rugs")
+        form = self._form("Rugs")
+        self.assertTrue(form.is_valid(), form.errors)
+
+    def test_type_not_in_db_is_rejected(self):
+        DeviceType.objects.create(institution=self.institution, name="Laptop")
+        form = self._form("Toaster")
+        self.assertFalse(form.is_valid())
+
+    def test_type_from_another_institution_is_rejected(self):
+        other = make_institution("Other Org")
+        DeviceType.objects.create(institution=other, name="Laptop")
+        DeviceType.objects.create(institution=self.institution, name="Desktop")
+        form = self._form("Laptop")
+        self.assertFalse(form.is_valid())
+
+    def test_institution_without_types_is_rejected(self):
+        form = self._form("Laptop")
         self.assertFalse(form.is_valid())
 
 
 # ---------------------------------------------------------------------------
-# 3. BaseDeviceFormSet — propagación de device_types
+# 3. DeviceMainForm -- dynamic choices
 # ---------------------------------------------------------------------------
 
-class BaseDeviceFormSetTest(TestCase):
+class DeviceMainFormTest(TestCase):
 
-    def _make_management_form_data(self, total=1):
-        return {
-            'form-TOTAL_FORMS': str(total),
-            'form-INITIAL_FORMS': '0',
-            'form-MIN_NUM_FORMS': '0',
-            'form-MAX_NUM_FORMS': '1000',
-        }
+    def test_no_types_means_empty_choices(self):
+        form = DeviceMainForm()
+        self.assertEqual(form.fields['type'].choices, [])
 
-    def test_formset_passes_device_types_to_each_form(self):
-        custom = [("Tablet", "Tablet"), ("Phone", "Phone")]
-        mgmt = self._make_management_form_data(total=2)
-        mgmt.update({
-            'form-0-type': 'Tablet', 'form-0-amount': '1',
-            'form-0-custom_id': '', 'form-0-name': '', 'form-0-value': '',
-            'form-1-type': 'Phone', 'form-1-amount': '1',
-            'form-1-custom_id': '', 'form-1-name': '', 'form-1-value': '',
-        })
-        formset = DeviceFormSet(data=mgmt, device_types=custom)
-        for form in formset.forms:
-            self.assertEqual(form.fields['type'].choices, custom)
+    def test_db_types_become_choices_with_empty_option(self):
+        custom = [("TypeA", "TypeA"), ("TypeB", "TypeB")]
+        form = DeviceMainForm(device_types=custom)
+        self.assertEqual(form.fields['type'].choices[1:], custom)
+        self.assertEqual(form.fields['type'].choices[0][0], "")
 
-    def test_formset_fallback_to_device_types_constant(self):
-        mgmt = self._make_management_form_data(total=1)
-        mgmt.update({
-            'form-0-type': 'Laptop', 'form-0-amount': '1',
-            'form-0-custom_id': '', 'form-0-name': '', 'form-0-value': '',
-        })
-        formset = DeviceFormSet(data=mgmt)
-        for form in formset.forms:
-            self.assertEqual(form.fields['type'].choices, DEVICE_TYPES)
+    def test_form_invalid_without_any_type(self):
+        data = {'type': 'Laptop', 'amount': 1, 'custom_id': ''}
+        form = DeviceMainForm(data=data)
+        self.assertFalse(form.is_valid())
 
-    def test_formset_valid_with_custom_type(self):
-        custom = [("Tablet", "Tablet")]
-        mgmt = self._make_management_form_data(total=1)
-        mgmt.update({
-            'form-0-type': 'Tablet', 'form-0-amount': '2',
-            'form-0-custom_id': '', 'form-0-name': '', 'form-0-value': '',
-        })
-        formset = DeviceFormSet(data=mgmt, device_types=custom)
-        self.assertTrue(formset.is_valid())
+    def test_valid_form_with_custom_choices(self):
+        custom = [("MyType", "MyType")]
+        data = {'type': 'MyType', 'amount': 1, 'custom_id': ''}
+        form = DeviceMainForm(data=data, device_types=custom)
+        self.assertTrue(form.is_valid())
 
-    def test_each_form_rejects_type_not_in_custom_choices(self):
-        """Verifies that each individual form rejects types outside the choices."""
-        custom = [("Tablet", "Tablet")]
-        mgmt = self._make_management_form_data(total=1)
-        mgmt.update({
-            'form-0-type': 'Laptop', 'form-0-amount': '1',
-            'form-0-custom_id': '', 'form-0-name': '', 'form-0-value': '',
-        })
-        formset = DeviceFormSet(data=mgmt, device_types=custom)
-        # The individual form must be invalid because 'Laptop' is not in custom
-        form = formset.forms[0]
+    def test_invalid_choice_with_custom_choices(self):
+        custom = [("MyType", "MyType")]
+        data = {'type': 'Laptop', 'amount': 1, 'custom_id': ''}
+        form = DeviceMainForm(data=data, device_types=custom)
         self.assertFalse(form.is_valid())
         self.assertIn('type', form.errors)
 
 
 # ---------------------------------------------------------------------------
-# 4. Vistas admin — DeviceTypesPanelView, Add, Delete, Edit, Order
+# 4. Admin views -- DeviceTypesPanelView, Add, Delete, Edit, Order
 # ---------------------------------------------------------------------------
 
 class DeviceTypeAdminViewsTest(TestCase):
@@ -345,7 +372,7 @@ class DeviceTypeAdminViewsTest(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# 5. Vista NewDeviceView — get_form_kwargs usa tipos de BD
+# 5. NewDeviceView -- get_form_kwargs reads the types from the DB
 # ---------------------------------------------------------------------------
 
 class NewDeviceViewFormKwargsTest(TestCase):
@@ -356,55 +383,44 @@ class NewDeviceViewFormKwargsTest(TestCase):
         self.client = Client()
         self.client.login(username="admin@test.com", password="pass1234")
 
-    def test_no_db_types_uses_fallback(self):
-        """Without DB types, the form uses DEVICE_TYPES."""
+    def test_no_db_types_leaves_choices_empty(self):
         url = reverse('product:add')
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-        formset = response.context['form']
-        form = formset.forms[0]
-        self.assertEqual(form.fields['type'].choices, DEVICE_TYPES)
+        form = response.context['form']
+        self.assertEqual(form.fields['type'].choices, [])
 
     def test_with_db_types_uses_db(self):
-        """With DB types, the form uses those types."""
         DeviceType.objects.create(institution=self.institution, name="Tablet")
         DeviceType.objects.create(institution=self.institution, name="Phone")
         url = reverse('product:add')
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-        formset = response.context['form']
-        form = formset.forms[0]
+        form = response.context['form']
         choices = form.fields['type'].choices
-        self.assertEqual(choices, [("Tablet", "Tablet"), ("Phone", "Phone")])
+        self.assertEqual(choices[1:], [("Tablet", "Tablet"), ("Phone", "Phone")])
 
     def test_db_types_from_other_institution_not_used(self):
-        """Types from another institution do not appear in the form."""
         other = make_institution("Other")
         DeviceType.objects.create(institution=other, name="OnlyOther")
         url = reverse('product:add')
         response = self.client.get(url)
-        formset = response.context['form']
-        form = formset.forms[0]
-        choices = form.fields['type'].choices
-        # Fallback because the institution itself has no types
-        self.assertEqual(choices, DEVICE_TYPES)
+        form = response.context['form']
+        self.assertEqual(form.fields['type'].choices, [])
 
     def test_db_types_ordered_by_order_field(self):
-        """Types in the form follow the order of the `order` field."""
         dt1 = DeviceType.objects.create(institution=self.institution, name="Z-Type")
         dt2 = DeviceType.objects.create(institution=self.institution, name="A-Type")
-        # Manually reverse the order
         dt1.order = 2
         dt1.save()
         dt2.order = 1
         dt2.save()
         url = reverse('product:add')
         response = self.client.get(url)
-        formset = response.context['form']
-        form = formset.forms[0]
+        form = response.context['form']
         choices = form.fields['type'].choices
-        self.assertEqual(choices[0], ("A-Type", "A-Type"))
-        self.assertEqual(choices[1], ("Z-Type", "Z-Type"))
+        self.assertEqual(choices[1], ("A-Type", "A-Type"))
+        self.assertEqual(choices[2], ("Z-Type", "Z-Type"))
 
 
 # ---------------------------------------------------------------------------
@@ -433,6 +449,16 @@ class DeviceTypeDuplicateTransactionTest(TransactionTestCase):
             DeviceType.objects.filter(institution=self.institution, name='Camera').count(), 1
         )
 
+    def test_add_duplicate_ignoring_case_does_not_create(self):
+        DeviceType.objects.create(institution=self.institution, name='Camera')
+        url = reverse('admin:add_device_type')
+        response = self.client.post(url, {'name': 'camera'})
+        self.assertRedirects(response, reverse('admin:devicetypes_panel'),
+                             fetch_redirect_response=False)
+        self.assertEqual(
+            DeviceType.objects.filter(institution=self.institution).count(), 1
+        )
+
     def test_edit_to_duplicate_via_http(self):
         """PUT with an already existing name: redirects and does not modify the record."""
         DeviceType.objects.create(institution=self.institution, name='TypeA')
@@ -443,3 +469,11 @@ class DeviceTypeDuplicateTransactionTest(TransactionTestCase):
                              fetch_redirect_response=False)
         dt2.refresh_from_db()
         self.assertEqual(dt2.name, 'TypeB')  # unchanged
+
+    def test_edit_to_duplicate_ignoring_case_via_http(self):
+        DeviceType.objects.create(institution=self.institution, name='TypeA')
+        dt2 = DeviceType.objects.create(institution=self.institution, name='TypeB')
+        url = reverse('admin:edit_device_type', kwargs={'pk': dt2.pk})
+        self.client.post(url, {'name': 'typea'})
+        dt2.refresh_from_db()
+        self.assertEqual(dt2.name, 'TypeB')

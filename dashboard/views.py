@@ -42,7 +42,7 @@ class UnassignedDevicesView(ProductCacheTableMixin, InventaryMixin):
     template_name = "unassigned_devices.html"
     section = _("Inbox")
     title = _("Inbox")
-    breadcrumb = [(_('Devices'), reverse_lazy("dashboard:all_device")), (_('Inbox'), None)]
+    breadcrumb = [(_('Products'), reverse_lazy("dashboard:all_device")), (_('Inbox'), None)]
 
     def get_device_ids(self, offset=0, limit=None):
         institution = self.request.user.institution
@@ -64,8 +64,8 @@ class UnassignedDevicesView(ProductCacheTableMixin, InventaryMixin):
 class AllDevicesView(ProductCacheTableMixin, InventaryMixin):
     template_name = "unassigned_devices.html"
     section = _("All")
-    title = _("All Devices")
-    breadcrumb = [(_('Devices'), reverse_lazy("dashboard:all_device")), (_('All'), None)]
+    title = _("All Products")
+    breadcrumb = [(_('Products'), reverse_lazy("dashboard:all_device")), (_('All'), None)]
 
     def get_device_ids(self, offset=0, limit=None):
         institution = self.request.user.institution
@@ -83,7 +83,7 @@ class AllDevicesView(ProductCacheTableMixin, InventaryMixin):
 class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMixin):
     template_name = "unassigned_devices.html"
     section = "dashboard_lot"
-    breadcrumb = [(_('Devices'), reverse_lazy("dashboard:all_device")), (_('Devices'), None)]
+    breadcrumb = [(_('Products'), reverse_lazy("dashboard:all_device")), (_('Products'), None)]
     paginate_by = 10
     paginate_choices = [10, 20, 50, 100, 0]
     table_class = ProductCacheTable
@@ -468,8 +468,8 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
 class SearchView(DeviceTableMixin, InventaryMixin):
     template_name = "unassigned_devices.html"
     section = _("Search")
-    title = _("Search Devices")
-    breadcrumb = [(_("All Devices"), reverse_lazy("dashboard:all_device")), (_("Search"), None)]
+    title = _("Search Products")
+    breadcrumb = [(_("All Products"), reverse_lazy("dashboard:all_device")), (_("Search"), None)]
     table_order_by = ()  # override DeviceTable.Meta order_by=("-last_updated",) to preserve relevance order
 
     def _winning_match_mode(self, request):
@@ -494,7 +494,7 @@ class SearchView(DeviceTableMixin, InventaryMixin):
             redirect_ok = total >= 1 if mode == "best" else total == 1
             if redirect_ok:
                 public = request.GET.get("public", "").lower() == "true"
-                url_name = "device:device_web" if public else "device:details"
+                url_name = "product:device_web" if public else "product:details"
                 pk = devices[0].pk
                 if public:
                     # PublicDeviceWebView resolves by literal

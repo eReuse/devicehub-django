@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import logging
 from django.core.management.base import BaseCommand
-from device.models import DeviceType
+from device.models import DeviceType, DEFAULT_PRODUCT_TYPES
 from user.models import Institution
 
 logger = logging.getLogger('django')
@@ -14,22 +14,7 @@ class Command(BaseCommand):
         parser.add_argument('institution_name', type=str, help='The name of the institution')
 
     def handle(self, *args, **kwargs):
-        default_types = [
-            "Desktop",
-            "Laptop",
-            "Server",
-            "GraphicCard",
-            "HardDrive",
-            "SolidStateDrive",
-            "Motherboard",
-            "NetworkAdapter",
-            "Processor",
-            "RamModule",
-            "SoundCard",
-            "Display",
-            "Battery",
-            "Camera",
-        ]
+        default_types = DEFAULT_PRODUCT_TYPES
 
         institution_name = kwargs['institution_name']
         institution = Institution.objects.filter(name=institution_name).first()

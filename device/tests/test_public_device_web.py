@@ -36,7 +36,7 @@ class PublicDeviceWebViewTests(TestCase):
 
     def test_url_resolves_correctly(self):
         url = reverse('product:device_web', kwargs={'pk': self.test_id})
-        self.assertEqual(url, f'/device/{self.test_id}/public/')
+        self.assertEqual(url, f'/product/{self.test_id}/public/')
 
     @patch('device.views.Device')
     def test_html_response_anonymous(self, MockDevice):

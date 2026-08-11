@@ -6,6 +6,7 @@ import shutil
 import logging
 import subprocess
 from datetime import datetime
+from django.conf import settings
 from utils.constants import ALGOS
 from evidence.mixin_parse import BuildMix
 from utils.save_snapshots import move_json, save_in_disk
@@ -45,7 +46,7 @@ def build_json(photo_data, image_path):
         'uuid': _uuid,
         'endTime': datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
         'type': "photo25",
-        'software': 'DeviceHub',
+        'software': settings.APP_NAME,
         'photo': photo_data,
         'data': {
             'snapshot_type': "Image",
