@@ -9,6 +9,11 @@
         border-left: 4px solid #198754;
         min-width: 300px;
     }
+
+    .assign-device-warning {
+        border-left-color: #dc3545 !important;
+    }
+
 </style>
 
 {% if devices_to_assign or devices_already_assigned %}
@@ -48,31 +53,34 @@
     {% endif %}
 
     {% if devices_already_assigned %}
-    <div class="mb-4">
-      <h5 class="mb-2">
-        <i class="bi bi-exclamation-triangle text-warning"></i>
-        {{ devices_already_assigned|length }} {% trans 'Devices already assigned' %}
-      </h5>
-      <p class="text-muted small mb-3">{% trans 'These devices are already assigned to a beneficiary and cannot be reassigned.' %}</p>
+    <div class="mb-3">
+      <h6 class="mb-2 text-danger">
+        <i class="bi bi-shield-lock"></i> {{ devices_already_assigned|length }} {% trans 'Already assigned Devices' %}
+      </h6>
+      <p class="small mb-3">{% trans 'These devices are already assigned to a beneficiary and cannot be reassigned.' %}</p>
       <div class="d-flex flex-wrap gap-2">
           {% for d in devices_already_assigned %}
-          <div class="card assign-device" style="border-left-color: #ffc107">
+          <div class="card assign-device assign-device-warning">
               <div class="card-body p-2">
                   <div class="row align-items-center">
                       <div class="col-md-8 w-100">
                           <h6 class="card-title mb-1 d-flex align-items-center">
-                              <span class="font-monospace fw-bold me-1 small">
-                                  <i class="bi {{ d.icon }} me-1 text-primary"></i>
-                                  {{ d.shortid|upper }}
-                              </span>
-                              <span class="badge bg-warning text-dark small">
-                                  <i class="bi bi-person-check me-1"></i>{{ d.beneficiary_email }}
-                              </span>
-                              <a href="{% url 'lot:clear_beneficiary_devices' lot.id %}?device_id={{ d.id }}" class="ms-auto text-muted" title="{% trans 'Remove' %}">
+                              <i class="bi {{ d.icon }} me-1 text-danger"></i>
+                              <span class="font-monospace fw-bold me-1 small ">{{ d.shortid|upper }}</span>
+                              <a href="{% url 'lot:clear_beneficiary_devices' lot.id %}?device_id={{ d.id }}" class="ms-auto text-danger" title="{% trans 'Remove' %}">
                                   <i class="bi bi-x-circle small"></i>
                               </a>
                           </h6>
-                          <p class="text-muted mb-1 small">
+
+                          <div class="small mb-1 mt-2" style="opacity: 0.9;">
+                              <div><i class="bi bi-person me-1"></i>{{ d.beneficiary_email }}</div>
+                              <div>
+                                <i class="bi bi-box-seam me-1"></i>{% trans 'Lot:' %}
+                                <a href="{% url 'dashboard:lot' d.lot_id %}" class="text-decoration-underline">{{ d.lot_name }}</a>
+                              </div>
+                          </div>
+
+                          <p class="mb-0 small" style="opacity: 0.8;">
                               {% if d.manufacturer %}{{ d.manufacturer }}{% endif %}{% if d.model %} {{ d.model }}{% endif %}
                           </p>
                       </div>
