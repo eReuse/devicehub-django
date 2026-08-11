@@ -1,5 +1,6 @@
 from django.db import models
 from django.db.models import Max
+from django.db.models.functions import Lower
 from django.urls import reverse
 
 from utils.constants import ALGOS
@@ -665,11 +666,11 @@ class Device:
             qr_payload = ""
 
         elif settings.qr_content_type == QRContentType.PUBLIC_VIEW:
-            path = reverse('device:device_web', kwargs={'pk': self.pk})
+            path = reverse('product:device_web', kwargs={'pk': self.pk})
             qr_payload = request.build_absolute_uri(path)
 
         elif settings.qr_content_type == QRContentType.DEVICE_INVENTORY:
-            path = reverse('device:details', kwargs={'pk': self.pk})
+            path = reverse('product:details', kwargs={'pk': self.pk})
             qr_payload = request.build_absolute_uri(path)
 
         else:
@@ -705,6 +706,27 @@ class Device:
         }
 
 
+DEFAULT_PRODUCT_TYPES = [
+    "Desktop",
+    "Laptop",
+    "Server",
+    "GraphicCard",
+    "HardDrive",
+    "SolidStateDrive",
+    "Motherboard",
+    "NetworkAdapter",
+    "Processor",
+    "RamModule",
+    "SoundCard",
+    "Display",
+    "Battery",
+    "Camera",
+    "Switch",
+    "Router",
+    "RouterWifi",
+]
+
+
 class DeviceType(models.Model):
     institution = models.ForeignKey(Institution, on_delete=models.CASCADE)
     name = models.CharField(max_length=50)
@@ -713,8 +735,11 @@ class DeviceType(models.Model):
     class Meta:
         ordering = ['order']
         constraints = [
-            models.UniqueConstraint(fields=['institution', 'name'],
-                                    name='unique_institution_device_type')
+            models.UniqueConstraint(
+                'institution',
+                Lower('name'),
+                name='unique_institution_device_type',
+            )
         ]
 
     def save(self, *args, **kwargs):

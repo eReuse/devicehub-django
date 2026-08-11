@@ -129,6 +129,7 @@ class EReuse2025EnvironmentalImpactAlgorithm(EnvironmentImpactAlgorithm):
     def _compute_energy_consumption_in_kwh_while_idle(
         self, power_on_hours: int, device_type: str
     ) -> float:
+        # TODO we need change this for customization types
         if device_type == Device.Types.DESKTOP:
             kwatts = self.algorithm_constants["AVG_KWATTS_DESKTOP_IDLE"]
         elif device_type == Device.Types.LAPTOP:

@@ -9,27 +9,6 @@ from evidence.forms import BasePhotoMixin, UserAliasForm
 from django.utils.translation import gettext_lazy as _
 
 
-DEVICE_TYPES = [
-    ("", _("Select One")),
-    ("Desktop", _("Desktop")),
-    ("Laptop", _("Laptop")),
-    ("Server", _("Server")),
-    ("GraphicCard", _("Graphic Card")),
-    ("HardDrive", _("Hard Drive")),
-    ("SolidStateDrive", _("Solid State Drive")),
-    ("Motherboard", _("Motherboard")),
-    ("NetworkAdapter", _("Network Adapter")),
-    ("Processor", _("Processor")),
-    ("RamModule", _("RAM Module")),
-    ("SoundCard", _("Sound Card")),
-    ("Display", _("Display")),
-    ("Battery", _("Battery")),
-    ("Camera", _("Camera")),
-    ("Switch", _("Switch")),
-    ("Router", _("Router")),
-    ("RouterWifi", _("Router Wi-Fi")),
-]
-
 DEVICE_ATTRIBUTE_SUGGESTIONS = {
     "Desktop": [
         {"name": "model", "label": _("Device Model (e.g. ThinkStation)")},
@@ -155,13 +134,21 @@ DEVICE_ATTRIBUTE_SUGGESTIONS = {
 }
 
 class DeviceMainForm(BasePhotoMixin):
-    type = forms.ChoiceField(choices=DEVICE_TYPES)
+    type = forms.ChoiceField(choices=[])
     amount = forms.IntegerField(initial=1, min_value=1)
     custom_id = forms.CharField(required=False, label=_("Custom ID"))
 
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user', None)
+        self.device_types = kwargs.pop('device_types', [])
         super().__init__(*args, **kwargs)
+        if self.device_types:
+            self.fields['type'].choices = [("", _("Select One"))] + list(self.device_types)
+
+    def clean(self):
+        if not self.device_types:
+            raise forms.ValidationError(_("You need select one type of product"))
+        return super().clean()
 
     def clean_custom_id(self):
         custom_id = self.cleaned_data.get('custom_id')

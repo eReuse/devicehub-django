@@ -394,13 +394,17 @@ class DeviceTypeContextMixin(ContextMixin):
 class DeviceTypesPanelView(AdminView, DeviceTypeContextMixin, TemplateView):
     template_name = "device_types_panel.html"
     title = _("Product Types Panel")
-    breadcrumb = _("admin / Product Types Panel") + " /"
+    breadcrumb = [(_("Admin"), reverse_lazy("admin:panel")), (_("Product Types"), None)]
 
 
 class AddDeviceTypeView(AdminView, DeviceTypeContextMixin, CreateView):
     template_name = "device_types_panel.html"
     title = _("New Product Type")
-    breadcrumb = "Admin / New product type"
+    breadcrumb = [
+        (_("Admin"), reverse_lazy("admin:panel")),
+        (_("Product Types"), reverse_lazy("admin:devicetypes_panel")),
+        (_("New product type"), None),
+    ]
     success_url = reverse_lazy('admin:devicetypes_panel')
     model = DeviceType
     fields = ('name',)

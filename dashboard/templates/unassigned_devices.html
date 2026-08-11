@@ -18,7 +18,7 @@
                 type="text"
                 name="lquery"
                 class="form-control"
-                placeholder="{% trans 'Search devices within lot (append :field for filters)' %}"
+                placeholder="{% trans 'Search products within lot (append :field for filters)' %}"
                 value="{{ search }}">
             <div class="input-group-append">
                 <button type="submit" class="btn btn-outline-secondary h-100" style="border-radius: 0 4px 4px 0;">
@@ -123,7 +123,7 @@
                             </li>
                             <li>
                                 <a class="dropdown-item" id="select-all-option" href="#">
-                                    {% trans "Select all" %} {{ count }} {% trans "devices" %}
+                                    {% trans "Select all" %} {{ count }} {% trans "products" %}
                                 </a>
                             </li>
                         </ul>
@@ -155,7 +155,7 @@
                         <i class="bi bi-folder-symlink mr-2"></i> {% trans 'Assign to lot' %}
                     </button>
 
-                    <button disabled id="print-labels-button" class="btn btn-outline-dark flex-shrink-0 gap-2" type="submit" name="url" value="{% url 'device:bulk_labels' %}" style="white-space: nowrap;">
+                    <button disabled id="print-labels-button" class="btn btn-outline-dark flex-shrink-0 gap-2" type="submit" name="url" value="{% url 'product:bulk_labels' %}" style="white-space: nowrap;">
                         <i class="bi bi-qr-code"></i> {% trans 'Print Labels' %}
                     </button>
 
@@ -218,7 +218,7 @@
     {% else %}
     <div class="text-center text-muted py-5">
         <i class="bi bi-inbox h1"></i>
-        <p class="mt-2">{% trans "No devices found" %}</p>
+        <p class="mt-2">{% trans "No products found" %}</p>
     </div>
     {% endif %}
 

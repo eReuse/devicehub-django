@@ -23,7 +23,7 @@
                 <i class="bi bi-folder-symlink"></i> {% trans 'Assign to lot' %}
             </button>
         </form>
-      <a href="{% url 'device:single_label' object.id %}" class="btn btn-outline-dark">
+      <a href="{% url 'product:single_label' object.id %}" class="btn btn-outline-dark">
           <i class="bi bi-qr-code"></i> {% trans "Print Label" %}
       </a>
 
@@ -146,16 +146,16 @@
 {% block extrascript %}
   <script>
     document.addEventListener('DOMContentLoaded', function () {
-      // Obtener el hash de la URL (ejemplo: #components)
+      // Get the URL hash (e.g. #components)
       const hash = window.location.hash
 
-      // Verificar si hay un hash en la URL
+      // Check whether the URL carries a hash
       if (hash) {
-        // Buscar el botón o enlace que corresponde al hash y activarlo
+        // Find the link matching the hash and activate it
         const tabTrigger = document.querySelector(`[data-bs-target="${hash}"]`)
 
         if (tabTrigger) {
-          // Crear una instancia de tab de Bootstrap para activar el tab
+          // Build a Bootstrap tab instance to show it
           const tab = new bootstrap.Tab(tabTrigger)
           tab.show()
         }

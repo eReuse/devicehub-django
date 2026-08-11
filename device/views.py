@@ -62,15 +62,10 @@ class DeviceLogMixin(DashboardView):
 class NewDeviceView(DashboardView, FormView):
     template_name = "new_device.html"
     success_url = reverse_lazy('dashboard:unassigned')
-    title = _("New Device")
-    breadcrumb = [(_("Device"), reverse_lazy("dashboard:all_device")), (_("New Device"), None)]
+    title = _("New Product")
+    breadcrumb = [(_("Product"), reverse_lazy("dashboard:all_device")), (_("New Product"), None)]
     success_url = reverse_lazy('dashboard:unassigned')
     form_class = DeviceMainForm
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs['user'] = self.request.user
-        return kwargs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -92,6 +87,7 @@ class NewDeviceView(DashboardView, FormView):
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
         db_types = DeviceType.objects.filter(
             institution=self.request.user.institution
         ).order_by('order')
@@ -112,7 +108,7 @@ class NewDeviceView(DashboardView, FormView):
 class EditDeviceView(DashboardView, UpdateView):
     template_name = "new_device.html"
     title = _("Update Product")
-    breadcrumb = [(_("Device"), reverse_lazy("dashboard:all_device")), (_("Update Product"), None)]
+    breadcrumb = [(_("Product"), reverse_lazy("dashboard:all_device")), (_("Update Product"), None)]
     success_url = reverse_lazy('dashboard:unassigned_devices')
     model = SystemProperty
 
@@ -130,8 +126,8 @@ class EditDeviceView(DashboardView, UpdateView):
 
 class DetailsView(DashboardView, TemplateView ):
     template_name = "details.html"
-    title = _("Device")
-    breadcrumb = [(_("Device"), reverse_lazy("dashboard:all_device")), (_("Details"), None)]
+    title = _("Product")
+    breadcrumb = [(_("Product"), reverse_lazy("dashboard:all_device")), (_("Details"), None)]
     table_class = EvidenceTable
 
     def get(self, request, *args, **kwargs):
@@ -302,7 +298,7 @@ class PublicDeviceWebView(TemplateView):
 class AddUserPropertyView(DeviceLogMixin, CreateView):
     template_name = "new_user_property.html"
     title = _("New User Property")
-    breadcrumb = [(_("Device"), reverse_lazy("dashboard:all_device")), (_("New Property"), None)]
+    breadcrumb = [(_("Product"), reverse_lazy("dashboard:all_device")), (_("New Property"), None)]
     model = UserProperty
     fields = ("key", "value")
 
@@ -353,7 +349,7 @@ class AddUserPropertyView(DeviceLogMixin, CreateView):
 class UpdateUserPropertyView(DeviceLogMixin, UpdateView):
     template_name = "new_user_property.html"
     title = _("Update User Property")
-    breadcrumb = [(_("Device"), reverse_lazy("dashboard:all_device")), (_("Update Property"), None)]
+    breadcrumb = [(_("Product"), reverse_lazy("dashboard:all_device")), (_("Update Property"), None)]
     model = UserProperty
     fields = ("key", "value")
 

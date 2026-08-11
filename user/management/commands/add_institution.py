@@ -3,6 +3,7 @@ from django.conf import settings
 
 from user.models import Institution
 from lot.models import LotTag, Lot
+from device.models import DeviceType, DEFAULT_PRODUCT_TYPES
 
 
 class Command(BaseCommand):
@@ -15,8 +16,17 @@ class Command(BaseCommand):
         self.institution = Institution.objects.create(name=kwargs['name'])
         # create lot groups "Entrada, Temporal, Salida" (TODO in English?)
         self.create_lot_tags()
+        self.create_product_types()
         if settings.DEMO:
             self.create_demo_lots()
+
+    def create_product_types(self):
+        for order, name in enumerate(DEFAULT_PRODUCT_TYPES, start=1):
+            DeviceType.objects.create(
+                name=name,
+                order=order,
+                institution=self.institution
+            )
 
     def create_lot_tags(self):
         LotTag.objects.create(
