@@ -310,8 +310,8 @@ class Device:
 
     @property
     def is_websnapshot(self):
-        self.get_last_evidence()
-        return self.last_evidence.doc['type'] == "WebSnapshot"
+        evidence = self.get_last_evidence()
+        return bool(evidence) and evidence.is_web_snapshot()
 
     @property
     def last_user_evidence(self):
