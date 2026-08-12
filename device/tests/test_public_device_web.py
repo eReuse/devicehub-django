@@ -1,8 +1,11 @@
+import uuid
+
 from django.test import TestCase, Client
 from django.urls import reverse
 from unittest.mock import patch
 from device.views import PublicDeviceWebView
 from device.tests.test_mock_device import TestDevice
+from evidence.models import SystemProperty
 from user.models import User, Institution
 
 
@@ -19,6 +22,16 @@ class PublicDeviceWebViewTests(TestCase):
             email='test@example.com',
             institution=self.institution,
             password='testpass123'
+        )
+        # The view resolves the owner from a SystemProperty before building the
+        # Device, so the id must exist in the database even though Device itself
+        # is mocked.
+        self.property_uuid = uuid.uuid4()
+        SystemProperty.objects.create(
+            owner=self.institution,
+            user=self.user,
+            uuid=self.property_uuid,
+            value=self.test_id,
         )
 
     def test_url_resolves_correctly(self):
@@ -71,8 +84,8 @@ class PublicDeviceWebViewTests(TestCase):
         json_data = response.json()
         self.assertEqual(json_data['id'], self.test_id)
         self.assertEqual(json_data['shortid'], self.test_id[:6].upper())
-        self.assertEqual(json_data['uuids'], [])
-        self.assertEqual(json_data['hids'], ['hid1', 'hid2'])
+        self.assertEqual(json_data['uuids'], [str(self.property_uuid)])
+        self.assertEqual(json_data['hids'], [self.test_id])
         self.assertNotIn('serial_number', json_data)
         self.assertNotIn('serialNumber', json_data)
 
@@ -106,5 +119,5 @@ class PublicDeviceWebViewTests(TestCase):
             }
         ])
         self.assertEqual(json_data['serial_number'], 'SN123456')
-        self.assertEqual(json_data['uuids'], [])
-        self.assertEqual(json_data['hids'], ['hid1', 'hid2'])
+        self.assertEqual(json_data['uuids'], [str(self.property_uuid)])
+        self.assertEqual(json_data['hids'], [self.test_id])
