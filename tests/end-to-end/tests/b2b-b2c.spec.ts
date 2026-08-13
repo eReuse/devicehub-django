@@ -90,7 +90,7 @@ test('B2C (1/2): Refurbisher creates lot', async ({ page }) => {
 
 });
 
-test.only('B2C (2/2): Shop', async ({ page }) => {
+test('B2C (2/2): Shop', async ({ page }) => {
     await login(page, TEST_SHOP_USER, TEST_PASSWD);
 
     //await page.pause();
@@ -138,5 +138,50 @@ test.only('B2C (2/2): Shop', async ({ page }) => {
     await page.getByRole('link', { name: ' Assign' }).click();
     await page.locator('#id_form-1-status').selectOption('2');
     await page.getByRole('button', { name: 'Save' }).click();
+
+});
+
+test('B2C: Prevent assigning already assigned devices', async ({ page }) => {
+    await login(page, TEST_SHOP_USER, TEST_PASSWD);
+    //await page.pause();
+
+    // go to a lot and select a device we KNOW is already assigned
+    await page.getByRole('link', { name: 'Salida' }).click();
+    await page.getByRole('link', { name: 'beneficiario-org1' }).click();
+    await page.getByRole('link', { name: 'Devices' }).first().click();
+
+
+    // select the first device in the lot (which B2C 2/2 just assigned to beneficiary@example.org)
+    await page.getByRole('row').nth(1).getByRole('checkbox').check();
+    await page.getByRole('button', { name: 'Add to beneficiary' }).click();
+
+    // assert the UI blocks it and shows the red warning card
+    await expect(page.getByRole('heading', { name: ' 1 Already assigned Devices' })).toBeVisible();
+    await expect(page.locator('.assign-device-warning')).toBeVisible();
+    await expect(page.locator('div').filter({ hasText: /^beneficiary@example\.org$/ })).toBeVisible();
+
+    // create a SECOND beneficiary and try to steal the device
+    await page.getByRole('button', { name: ' Add Beneficiary' }).click();
+    await page.getByRole('textbox', { name: 'Email' }).fill('second-beneficiary@example.org');
+    await page.getByRole('button', { name: 'Add', exact: true }).click();
+
+    // TODO: assert the backend rejected it and showed an error message
+});
+
+
+test('B2C: Empty session UI validation', async ({ page }) => {
+    await login(page, TEST_SHOP_USER, TEST_PASSWD);
+
+    await page.getByRole('link', { name: 'Salida' }).click();
+    await page.getByRole('link', { name: 'beneficiario-org1' }).click();
+
+    await page.getByRole('row').nth(1).getByRole('checkbox').check();
+    await page.getByRole('button', { name: 'Add to beneficiary' }).click();
+
+    // ensure session is cleared using the button
+    await expect(page.getByRole('link', { name: ' Clear selection' })).toBeVisible();
+    await page.getByRole('link', { name: ' Clear selection' }).click();
+
+    //TODO: improve test when merge is done
 
 });
