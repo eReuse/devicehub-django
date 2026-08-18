@@ -36,7 +36,7 @@ class DeviceMainForm(BasePhotoMixin):
             ).exists()
 
             if exists:
-                raise forms.ValidationError(_("This Custom ID is already in use by another device."))
+                raise forms.ValidationError(_("This Custom ID is already in use by another product."))
 
         return custom_id
 

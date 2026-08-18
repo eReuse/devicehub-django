@@ -31,7 +31,7 @@
 
             <div class="btn-group shadow-sm w-100 w-md-auto" role="group">
                 <input type="radio" class="btn-check label-version-toggle" name="qr_label_version" id="version_v1" value="V1" autocomplete="off"
-                       data-help-text="{% translate 'Prints a simple 3-column grid containing only the QR code of the device. No extra text or formatting.' %}"
+                       data-help-text="{% translate 'Prints a simple 3-column grid containing only the QR code of the product. No extra text or formatting.' %}"
                        {% if form.qr_label_version.value == 'V1' or not form.qr_label_version.value %}checked{% endif %}>
                 <label class="btn btn-outline-secondary px-4 py-2 fw-semibold" for="version_v1">
                     <i class="bi bi-qr-code me-2"></i>{% translate "Legacy (QR Only)" %}
@@ -72,7 +72,7 @@
             <div class="col-12 col-xl-7">
                 <div class="card shadow-sm border-0 h-100">
                     <div class="card-body p-4">
-                        <h6 class="fw-bold mb-3 text-secondary border-bottom pb-2">{% translate "Device Properties" %}</h6>
+                        <h6 class="fw-bold mb-3 text-secondary border-bottom pb-2">{% translate "Product Properties" %}</h6>
                         <p class="small text-muted mb-3">{% translate "Select which hardware specifications should appear as text next to the QR code." %}</p>
                         <div class="properties-grid bg-light p-3 rounded border">
                             {% bootstrap_field form.qr_printed_properties show_label=False %}

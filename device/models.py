@@ -685,7 +685,7 @@ class Device:
             'ram_total': _('Total RAM'),
             'ram_type': _('RAM Type'),
             'drive': _('Storage Drive'),
-            'type': _('Device Type'),
+            'type': _('Product Type'),
         }
 
         export_data = self.components_export()

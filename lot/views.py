@@ -221,7 +221,7 @@ class AddToLotView(DashboardView, FormView):
         form.devices = self.get_session_devices()
         form.save()
         response = super().form_valid(form)
-        messages.success(self.request, _("Devices assigned to Lot."))
+        messages.success(self.request, _("Products assigned to Lot."))
         return response
 
     def get_success_url(self):
@@ -235,7 +235,7 @@ class DelToLotView(DashboardView, View):
         selected_devices = self.get_session_devices()
 
         if not selected_devices:
-            messages.error(request, _("No devices selected"))
+            messages.error(request, _("No products selected"))
             return redirect(reverse_lazy('dashboard:lot', kwargs={'pk': lot_id}))
         try:
             lot = Lot.objects.filter(
@@ -265,13 +265,13 @@ class DelToLotView(DashboardView, View):
 
             for dev in selected_devices:
                 lot.remove(dev.id)
-            msg = _("Successfully unassigned %d devices from the lot")
+            msg = _("Successfully unassigned %d products from the lot")
             messages.success(request, msg % len(selected_devices))
 
         except Exception as e:
             messages.error(
                 request,
-                _("Error unassigning devices: %s") % str(e))
+                _("Error unassigning products: %s") % str(e))
 
         return redirect(reverse_lazy('dashboard:lot', kwargs={'pk': lot_id}))
 

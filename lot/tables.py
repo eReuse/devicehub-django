@@ -40,7 +40,7 @@ class LotTable(tables.Table):
         }
     )
     device_count = tables.Column(
-        verbose_name=_("Devices"),
+        verbose_name=_("Products"),
         accessor='device_count',
     )
     created = tables.DateColumn(
@@ -87,7 +87,7 @@ class BeneficiaryTable(tables.Table):
         default=None,
     )
     devices = tables.Column(
-        verbose_name=_("Devices"),
+        verbose_name=_("Products"),
         orderable=False,
         empty_values=(),
         linkify=lambda record, table: reverse('lot:devices_beneficiary', args=[table.lot_id, record.id]),
@@ -112,7 +112,7 @@ class BeneficiaryTable(tables.Table):
     )
 
     def render_devices(self, record):
-        return _("Devices")
+        return _("Products")
 
     def render_web(self, record):
         return _("web")

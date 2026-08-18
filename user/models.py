@@ -11,9 +11,9 @@ ALGORITHMS = [(x, x) for x in ALGOS.keys()]
 
 class QRContentType(models.TextChoices):
     NONE = 'NONE', _("No QR on label")
-    DEVICE_ID = 'INTERNAL', _("Internal Device ID")
-    DEVICE_INVENTORY = 'INVENTORY', _("Device inventory URL")
-    PUBLIC_VIEW = 'PUBLIC', _("Public Device View")
+    DEVICE_ID = 'INTERNAL', _("Internal Product ID")
+    DEVICE_INVENTORY = 'INVENTORY', _("Product inventory URL")
+    PUBLIC_VIEW = 'PUBLIC', _("Public Product View")
     #DPP_VIEW = 'DPP', _("DPP view else ")
 
 class LabelVersion(models.TextChoices):
@@ -114,7 +114,7 @@ class Institution(models.Model):
         max_length=30,
         default='ereuse24',
         choices=ALGORITHMS,
-        help_text=_("The default algorithm used for device aggregation."),
+        help_text=_("The default algorithm used for product aggregation."),
     )
 
     def __str__(self):
@@ -139,7 +139,7 @@ class InstitutionSettings(models.Model):
         _("Properties to Print"),
         default=default_printed_properties,
         blank=True,
-        help_text=_("List of device properties (e.g., 'ram', 'cpu', 'storage') to print alongside the QR code.")
+        help_text=_("List of product properties (e.g., 'ram', 'cpu', 'storage') to print alongside the QR code.")
     )
     qr_include_logo = models.BooleanField(
         _("Print Institution Logo"),
