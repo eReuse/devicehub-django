@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import logging
 from django.core.management.base import BaseCommand
-from device.models import DeviceType, DEFAULT_PRODUCT_TYPES
+from device.models import DeviceType, DeviceTypeAttribute, DEFAULT_PRODUCT_TYPES
 from user.models import Institution
 
 logger = logging.getLogger('django')
@@ -24,12 +24,20 @@ class Command(BaseCommand):
             self.stdout.write(self.style.ERROR(f'No institution found: {institution_name}'))
             return
 
-        for type_name in default_types:
+        for type_name, attribute_names in default_types.items():
             device_type, created = DeviceType.objects.get_or_create(
                 institution=institution,
                 name=type_name
             )
             if created:
+                DeviceTypeAttribute.objects.bulk_create([
+                    DeviceTypeAttribute(
+                        device_type=device_type,
+                        name=attribute_name,
+                        order=order
+                    )
+                    for order, attribute_name in enumerate(attribute_names, start=1)
+                ])
                 self.stdout.write(self.style.SUCCESS(f'Successfully created device type: {type_name}'))
             else:
                 self.stdout.write(self.style.WARNING(f'Product type already exists: {type_name}'))

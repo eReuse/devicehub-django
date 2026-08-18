@@ -101,22 +101,28 @@ class DeviceTable(tables.Table):
         },
         orderable=True,
     )
+    def __init__(self, *args, type_display=None, **kwargs):
+        # DeviceType.display_map() for the institution. A type that nobody
+        # defined (a snapshot can bring any string) is rendered as it comes.
+        self.type_display = type_display or {}
+        super().__init__(*args, **kwargs)
+
+    def _type_label_icon(self, value):
+        label, icon = self.type_display.get((value or '').lower(), (None, None))
+        return label or value, icon or get_icon_by_type(value)
+
     def render_type(self, value, record):
-        safe_value = escape(value)
-        icon_class = get_icon_by_type(value)
+        label, icon_class = self._type_label_icon(value)
 
         return format_html(
             '<i class="bi {}"></i> {}',
-            escape(icon_class),
-            safe_value
+            icon_class,
+            label
         )
 
     def value_type(self, value, record):
-
-        safe_value = escape(value)
-        return format_html(
-            safe_value
-        )
+        label, _icon = self._type_label_icon(value)
+        return label
 
     def render_model(self, value, record):
         safe_value = escape(value)

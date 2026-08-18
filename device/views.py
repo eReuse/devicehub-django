@@ -9,6 +9,7 @@ from django.urls import reverse_lazy, resolve
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect, Http404, render
 from django.db import transaction
+from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from django.views.generic.edit import (
     CreateView,
@@ -25,7 +26,7 @@ from environmental_impact.algorithms.algorithm_factory import FactoryEnvironment
 from evidence.models import UserProperty, SystemProperty, Evidence, RootAlias
 from lot.models import LotTag
 from device.models import Device, DeviceType
-from device.forms import DeviceAttributeFormSet, DeviceMainForm, DEVICE_ATTRIBUTE_SUGGESTIONS
+from device.forms import DeviceAttributeFormSet, DeviceMainForm
 
 from evidence.tables import EvidenceTable
 from django_tables2 import RequestConfig
@@ -75,23 +76,26 @@ class NewDeviceView(DashboardView, FormView):
         else:
             context['attribute_formset'] = DeviceAttributeFormSet()
 
-        suggestions_for_js = {}
-        for dev_type, attrs in DEVICE_ATTRIBUTE_SUGGESTIONS.items():
-            suggestions_for_js[dev_type] = [
-                {"name": a["name"], "label": str(a["label"])} for a in attrs
-            ]
-        context['device_suggestions'] = suggestions_for_js
+        context['device_suggestions'] = {
+            dt.name: [attribute.name for attribute in dt.attributes.all()]
+            for dt in self.device_types
+        }
 
         context['subtitle'] = self.title
         return context
 
+    @cached_property
+    def device_types(self):
+        return DeviceType.objects.filter(
+            institution=self.request.user.institution
+        ).order_by('order').prefetch_related('attributes')
+
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs['user'] = self.request.user
-        db_types = DeviceType.objects.filter(
-            institution=self.request.user.institution
-        ).order_by('order')
-        kwargs['device_types'] = [(dt.name, dt.name) for dt in db_types]
+        kwargs['device_types'] = [
+            (dt.name, dt.display_name) for dt in self.device_types
+        ]
         return kwargs
 
     def form_valid(self, form):

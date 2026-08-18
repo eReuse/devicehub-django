@@ -260,16 +260,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const total = document.getElementById('id_form-TOTAL_FORMS');
     const tpl = document.getElementById('empty-form')?.innerHTML || '';
     const sug = JSON.parse(document.getElementById('device-suggestions-data')?.textContent || '{}');
-    const known = Object.values(sug).flat().reduce((acc, curr) => ({...acc, [curr.name]: curr}), {});
+    const known = new Set(Object.values(sug).flat());
 
-    // replace raw inputs with formatted labels
+    // show the attribute name as plain text instead of an editable input
     const formatRow = row => {
         const n = row.querySelector('input[name$="-name"]');
-        const v = row.querySelector('input[name$="-value"]');
-        if (n && !n.hidden && known[n.value]) {
+        if (n && !n.hidden && known.has(n.value)) {
             n.hidden = true;
-            n.insertAdjacentHTML('beforebegin', `<span class="form-control-plaintext fw-bold text-secondary ps-2">${known[n.value].label.split(' (')[0]}</span>`);
-            if (v) v.placeholder = known[n.value].label;
+            const label = document.createElement('span');
+            label.className = 'form-control-plaintext fw-bold text-secondary ps-2';
+            label.textContent = n.value;
+            n.insertAdjacentElement('beforebegin', label);
         }
     };
 
@@ -292,7 +293,7 @@ document.addEventListener('DOMContentLoaded', () => {
         typeSel.onchange = () => {
             container.innerHTML = '';
             total.value = 0;
-            (sug[typeSel.value] || []).forEach(attr => addRow(attr.name));
+            (sug[typeSel.value] || []).forEach(name => addRow(name));
         };
 
         if (!document.querySelector('.text-danger, .alert-danger') && !container.querySelector('input[name$="-name"]')?.value && typeSel.value) {

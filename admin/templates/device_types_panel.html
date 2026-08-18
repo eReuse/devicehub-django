@@ -27,7 +27,11 @@
       #</th>
       <th scope="col">{% trans "Product Type" %}
       </th>
-      <th scope="col" width="15%" class="text-center">{% trans "Actions" %}
+      <th scope="col">{% trans "Label" %}
+      </th>
+      <th scope="col" width="5%" class="text-center">{% trans "Icon" %}
+      </th>
+      <th scope="col" width="25%" class="text-center">{% trans "Actions" %}
       </th>
     </tr>
   </thead>
@@ -48,10 +52,24 @@
         <td class="font-monospace">
           {{ device_type.name }}
         </td>
+        <td>
+          {{ device_type.label }}
+        </td>
+        <td class="text-center">
+          {% if device_type.icon %}
+            <i class="bi {{ device_type.icon }}" title="{{ device_type.icon }}"></i>
+          {% endif %}
+        </td>
 
         <!-- action buttons -->
         <td>
           <div class="btn-group float-end">
+            <a
+              href="{% url 'admin:attributes_panel' device_type.id %}"
+              class="btn btn-sm btn-outline-secondary d-flex align-items-center">
+              <i class="bi bi-list-ul me-1"></i>
+              {% trans 'Attributes' %}
+            </a>
             <button
               type="button"
               class="btn btn-sm btn-outline-info d-flex align-items-center"
@@ -105,6 +123,16 @@
             <input type="text" class="form-control" id="deviceTypeInput" name="name" maxlength="50" required>
             <div class="form-text">{% trans "Maximum 50 characters." %}</div>
           </div>
+          <div class="mb-3">
+            <label for="deviceTypeLabelInput" class="form-label">{% trans "Label" %}</label>
+            <input type="text" class="form-control" id="deviceTypeLabelInput" name="label" maxlength="100">
+            <div class="form-text">{% trans "Optional. Shown instead of the name. If empty, the name is shown." %}</div>
+          </div>
+          <div class="mb-3">
+            <label for="deviceTypeIconInput" class="form-label">{% trans "Icon" %}</label>
+            <input type="text" class="form-control" id="deviceTypeIconInput" name="icon" maxlength="50" placeholder="bi-laptop">
+            <div class="form-text">{% trans "Optional" %}. <a href="https://icons.getbootstrap.com/" target="_blank">Bootstrap icon class.</a></div>
+          </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Close" %}</button>
             <button type="submit" class="btn btn-primary">{% trans "Add product type" %}</button>
@@ -137,6 +165,16 @@
             <label for="editDeviceTypeInput{{ device_type.id }}" class="form-label">{% trans "Product Type" %}</label>
             <input type="text" class="form-control" id="editDeviceTypeInput{{ device_type.id }}" name="name" maxlength="50" value="{{ device_type.name }}" required>
             <div class="form-text">{% trans "Maximum 50 characters." %}</div>
+          </div>
+          <div class="mb-3">
+            <label for="editDeviceTypeLabelInput{{ device_type.id }}" class="form-label">{% trans "Label" %}</label>
+            <input type="text" class="form-control" id="editDeviceTypeLabelInput{{ device_type.id }}" name="label" maxlength="100" value="{{ device_type.label }}">
+            <div class="form-text">{% trans "Optional. Shown instead of the name. If empty, the name is shown." %}</div>
+          </div>
+          <div class="mb-3">
+            <label for="editDeviceTypeIconInput{{ device_type.id }}" class="form-label">{% trans "Icon" %}</label>
+            <input type="text" class="form-control" id="editDeviceTypeIconInput{{ device_type.id }}" name="icon" maxlength="50" value="{{ device_type.icon }}" placeholder="bi-laptop">
+            <div class="form-text">{% trans "Optional" %}. <a href="https://icons.getbootstrap.com/" target="_blank">Bootstrap icon class.</a></div>
           </div>
 
         <p class="text-muted text-end">{% trans "Any changes in order will not be saved." %}</p>

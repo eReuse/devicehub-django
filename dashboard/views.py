@@ -32,7 +32,7 @@ from dashboard.mixins import InventaryMixin, DetailsMixin, DeviceTableMixin, Pro
 from evidence.models import SystemProperty, RootAlias, UserProperty
 from user.models import UserProfile
 from evidence.xapian import search
-from device.models import Device
+from device.models import Device, DeviceType
 from device.product_cache import ProductCache
 from lot.models import Lot, LotSubscription, Donor, DeviceLot, DeviceBeneficiary
 
@@ -198,6 +198,9 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
         kwargs = super().get_table_kwargs()
         # Pagination is handled at SQL level; disable django-tables2 pagination
         self.table_pagination = False
+        kwargs['type_display'] = DeviceType.display_map(
+            self.request.user.institution
+        )
 
         if not self.object.beneficiary_set.exists():
             kwargs['exclude'] = ('status_beneficiary',)
