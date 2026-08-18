@@ -30,7 +30,7 @@ class EvidenceTable(tables.Table):
     did_document = tables.Column(verbose_name=_("DID Document"), accessor="uuid")
     legacy = tables.Column(verbose_name=_("Legacy"), accessor="uuid")
     ev_type = tables.Column(verbose_name=_("Type"), accessor="uuid")
-    device = tables.Column(verbose_name=_("Device"), accessor="value")
+    device = tables.Column(verbose_name=_("Product"), accessor="value")
 
     class Meta:
         template_name = "custom_table.html"

@@ -444,7 +444,7 @@ class DeviceBulkLabelView(DashboardView, ListView):
         self.selected_devices = self.get_session_devices()
 
         if not self.selected_devices:
-            messages.error(self.request, _("No devices selected for printing."))
+            messages.error(self.request, _("No products selected for printing."))
             return redirect(self.get_success_url())
 
         return super().get(request, *args, **kwargs)

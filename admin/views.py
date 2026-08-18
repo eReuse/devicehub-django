@@ -260,7 +260,7 @@ class StateDefinitionContextMixin(ContextMixin):
         context = super().get_context_data(**kwargs)
         context.update({
             "state_definitions": StateDefinition.objects.filter(institution=self.request.user.institution).order_by('order'),
-            "help_text": _('State definitions are the custom finite states that a device can be in.'),
+            "help_text": _('State definitions are the custom finite states that a product can be in.'),
         })
         return context
 

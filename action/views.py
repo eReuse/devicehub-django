@@ -53,7 +53,7 @@ class BulkStateChangeView(DashboardView, View):
         selected_devices = self.get_session_devices()
 
         if not selected_devices:
-            messages.error(request, _("No devices selected"))
+            messages.error(request, _("No products selected"))
             return self.get_success_url()
         try:
             for dev in selected_devices:
@@ -78,7 +78,7 @@ class BulkStateChangeView(DashboardView, View):
         except Exception as e:
             messages.error(
                 request,
-                _("Error changing state on devices: %s") % str(e))
+                _("Error changing state on products: %s") % str(e))
 
         return self.get_success_url()
 
