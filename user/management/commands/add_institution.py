@@ -2,7 +2,7 @@ from django.core.management.base import BaseCommand
 
 from user.models import Institution
 from lot.models import LotTag
-from device.models import DeviceType, DEFAULT_PRODUCT_TYPES
+from device.models import DeviceType, DeviceTypeAttribute, DEFAULT_PRODUCT_TYPES
 
 
 class Command(BaseCommand):
@@ -18,12 +18,19 @@ class Command(BaseCommand):
         self.create_product_types()
 
     def create_product_types(self):
-        for order, name in enumerate(DEFAULT_PRODUCT_TYPES, start=1):
-            DeviceType.objects.create(
+        for name, attribute_names in DEFAULT_PRODUCT_TYPES.items():
+            device_type = DeviceType.objects.create(
                 name=name,
-                order=order,
                 institution=self.institution
             )
+            DeviceTypeAttribute.objects.bulk_create([
+                DeviceTypeAttribute(
+                    device_type=device_type,
+                    name=attribute_name,
+                    order=order
+                )
+                for order, attribute_name in enumerate(attribute_names, start=1)
+            ])
 
     def create_lot_tags(self):
         LotTag.objects.create(

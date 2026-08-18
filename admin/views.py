@@ -2,7 +2,8 @@ import logging
 from django_tables2 import SingleTableView
 from smtplib import SMTPException
 from django.contrib import messages
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
+from django.utils.functional import cached_property
 from django.shortcuts import get_object_or_404, redirect, Http404
 from django.utils.translation import gettext_lazy as _
 from django.contrib.messages.views import SuccessMessageMixin
@@ -20,7 +21,7 @@ from admin.email import NotifyActivateUserByEmail
 from admin.tables import UserTable
 from action.models import StateDefinition
 from lot.models import LotTag
-from device.models import DeviceType
+from device.models import DeviceType, DeviceTypeAttribute
 
 
 class AdminView(DashboardView):
@@ -407,7 +408,7 @@ class AddDeviceTypeView(AdminView, DeviceTypeContextMixin, CreateView):
     ]
     success_url = reverse_lazy('admin:devicetypes_panel')
     model = DeviceType
-    fields = ('name',)
+    fields = ('name', 'label', 'icon')
 
     def form_valid(self, form):
         form.instance.institution = self.request.user.institution
@@ -463,7 +464,7 @@ class UpdateDeviceTypeOrderView(AdminView, TemplateView):
 class UpdateDeviceTypeView(AdminView, UpdateView):
     model = DeviceType
     template_name = 'device_types_panel.html'
-    fields = ['name']
+    fields = ['name', 'label', 'icon']
     success_url = reverse_lazy('admin:devicetypes_panel')
     pk_url_kwarg = 'pk'
 
@@ -481,4 +482,142 @@ class UpdateDeviceTypeView(AdminView, UpdateView):
 
     def form_invalid(self, form):
         super().form_invalid(form)
+        return redirect(self.get_success_url())
+
+
+class AdminWriteView(AdminView):
+    # AdminView only checks is_admin on GET, so a view that answers POST would
+    # let any authenticated user through. Anonymous users fall through to
+    # LoginRequiredMixin, which runs later in the MRO.
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated and not request.user.is_admin:
+            raise Http403
+        return super().dispatch(request, *args, **kwargs)
+
+
+class DeviceTypeAttributeContextMixin(ContextMixin):
+    """For the views that hang off a single product type, taken from the URL."""
+
+    @cached_property
+    def device_type(self):
+        return get_object_or_404(
+            DeviceType,
+            pk=self.kwargs['type_pk'],
+            institution=self.request.user.institution,
+        )
+
+    def get_success_url(self):
+        return reverse('admin:attributes_panel', args=[self.device_type.pk])
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({
+            "device_type": self.device_type,
+            "attributes": self.device_type.attributes.all(),
+            "breadcrumb": [
+                (_("Admin"), reverse('admin:panel')),
+                (_("Product Types"), reverse('admin:devicetypes_panel')),
+                (self.device_type.display_name, None),
+            ],
+        })
+        return context
+
+
+class DeviceTypeAttributesPanelView(
+    AdminWriteView, DeviceTypeAttributeContextMixin, TemplateView
+):
+    template_name = "device_type_attributes_panel.html"
+    title = _("Product Type Attributes")
+
+
+class AddDeviceTypeAttributeView(
+    AdminWriteView, DeviceTypeAttributeContextMixin, CreateView
+):
+    template_name = "device_type_attributes_panel.html"
+    title = _("New Attribute")
+    model = DeviceTypeAttribute
+    fields = ('name',)
+
+    def form_valid(self, form):
+        form.instance.device_type = self.device_type
+        try:
+            with transaction.atomic():
+                response = super().form_valid(form)
+            messages.success(self.request, _("Attribute successfully added."))
+            return response
+        except IntegrityError:
+            messages.error(self.request, _("Attribute is already defined."))
+            return redirect(self.get_success_url())
+
+    def form_invalid(self, form):
+        return redirect(self.get_success_url())
+
+
+class DeviceTypeAttributeScopedMixin:
+    """For the views addressing an attribute by its own pk."""
+
+    model = DeviceTypeAttribute
+
+    def get_queryset(self):
+        return DeviceTypeAttribute.objects.filter(
+            device_type__institution=self.request.user.institution
+        )
+
+    def get_success_url(self):
+        return reverse('admin:attributes_panel', args=[self.object.device_type_id])
+
+
+class UpdateDeviceTypeAttributeView(
+    AdminWriteView, DeviceTypeAttributeScopedMixin, UpdateView
+):
+    template_name = 'device_type_attributes_panel.html'
+    fields = ['name']
+    pk_url_kwarg = 'pk'
+
+    def form_valid(self, form):
+        try:
+            with transaction.atomic():
+                response = super().form_valid(form)
+            messages.success(self.request, _("Attribute updated successfully."))
+            return response
+        except IntegrityError:
+            messages.error(self.request, _("Attribute is already defined."))
+            return redirect(self.get_success_url())
+
+    def form_invalid(self, form):
+        return redirect(self.get_success_url())
+
+
+class DeleteDeviceTypeAttributeView(
+    AdminWriteView, DeviceTypeAttributeScopedMixin, SuccessMessageMixin, DeleteView
+):
+
+    def get_success_message(self, cleaned_data):
+        return _("Attribute {} has been deleted").format(self.object.name)
+
+
+class UpdateDeviceTypeAttributeOrderView(
+    AdminWriteView, DeviceTypeAttributeContextMixin, TemplateView
+):
+
+    def post(self, request, *args, **kwargs):
+        form = OrderingStateForm(request.POST)
+        if not form.is_valid():
+            raise Http404
+
+        ordered_ids = form.cleaned_data["ordering"].split(',')
+        attributes = {
+            str(attribute.pk): attribute
+            for attribute in self.device_type.attributes.all()
+        }
+        if set(ordered_ids) != set(attributes):
+            raise Http404
+
+        with transaction.atomic():
+            for order, lookup_id in enumerate(ordered_ids, start=1):
+                attribute = attributes[lookup_id]
+                attribute.order = order
+                attribute.save()
+
+        messages.success(self.request, _("Order changed successfully."))
         return redirect(self.get_success_url())

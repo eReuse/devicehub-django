@@ -10,15 +10,13 @@ from django.urls import reverse
 from django.db import IntegrityError
 
 from user.models import User, Institution
+from dashboard.tables import DeviceTable
 from device.models import DeviceType
 from device.forms import DeviceMainForm
 from evidence.forms import ImportForm
 
 
-# ---------------------------------------------------------------------------
 # Helpers
-# ---------------------------------------------------------------------------
-
 def make_institution(name="Test Org"):
     return Institution.objects.create(name=name)
 
@@ -42,10 +40,7 @@ def make_user(institution, email="user@test.com", password="pass1234"):
     )
 
 
-# ---------------------------------------------------------------------------
-# 1. DeviceType model
-# ---------------------------------------------------------------------------
-
+# DeviceType model
 class DeviceTypeModelTest(TestCase):
 
     def setUp(self):
@@ -126,10 +121,7 @@ class DeviceTypeModelTest(TestCase):
         self.assertEqual(names, ["C", "A", "B"])
 
 
-# ---------------------------------------------------------------------------
-# 2. create_doc accepts custom types (it does not validate against Device.Types)
-# ---------------------------------------------------------------------------
-
+# create_doc accepts custom types (it does not validate against Device.Types)
 class CreateDocCustomTypeTest(TestCase):
 
     def test_custom_type_does_not_raise(self):
@@ -145,10 +137,8 @@ class CreateDocCustomTypeTest(TestCase):
         self.assertEqual(doc["device"]["type"], "Laptop")
 
 
-# ---------------------------------------------------------------------------
-# 2b. Excel import validates the type against the DB, ignoring case
-# ---------------------------------------------------------------------------
 
+# Excel import validates the type against the DB, ignoring case
 class ImportFormTypeValidationTest(TestCase):
 
     def setUp(self):
@@ -211,10 +201,7 @@ class ImportFormTypeValidationTest(TestCase):
         self.assertFalse(form.is_valid())
 
 
-# ---------------------------------------------------------------------------
-# 3. DeviceMainForm -- dynamic choices
-# ---------------------------------------------------------------------------
-
+# DeviceMainForm -- dynamic choices
 class DeviceMainFormTest(TestCase):
 
     def test_no_types_means_empty_choices(self):
@@ -246,10 +233,7 @@ class DeviceMainFormTest(TestCase):
         self.assertIn('type', form.errors)
 
 
-# ---------------------------------------------------------------------------
-# 4. Admin views -- DeviceTypesPanelView, Add, Delete, Edit, Order
-# ---------------------------------------------------------------------------
-
+# Admin views -- DeviceTypesPanelView, Add, Delete, Edit, Order
 class DeviceTypeAdminViewsTest(TestCase):
 
     def setUp(self):
@@ -371,10 +355,7 @@ class DeviceTypeAdminViewsTest(TestCase):
         self.assertIn("Processor", names)
 
 
-# ---------------------------------------------------------------------------
-# 5. NewDeviceView -- get_form_kwargs reads the types from the DB
-# ---------------------------------------------------------------------------
-
+# NewDeviceView -- get_form_kwargs reads the types from the DB
 class NewDeviceViewFormKwargsTest(TestCase):
 
     def setUp(self):
@@ -423,12 +404,10 @@ class NewDeviceViewFormKwargsTest(TestCase):
         self.assertEqual(choices[2], ("Z-Type", "Z-Type"))
 
 
-# ---------------------------------------------------------------------------
-# 6. Tests with TransactionTestCase for cases that generate IntegrityError
-#    SQLite + TestCase = outer transaction broken after IntegrityError in savepoint.
-#    TransactionTestCase cleans the DB between tests (slower but reliable).
-# ---------------------------------------------------------------------------
 
+# Tests with TransactionTestCase for cases that generate IntegrityError
+# SQLite + TestCase = outer transaction broken after IntegrityError in savepoint.
+# TransactionTestCase cleans the DB between tests (slower but reliable).
 class DeviceTypeDuplicateTransactionTest(TransactionTestCase):
     """Tests that trigger IntegrityError through the HTTP client."""
 
@@ -477,3 +456,52 @@ class DeviceTypeDuplicateTransactionTest(TransactionTestCase):
         self.client.post(url, {'name': 'typea'})
         dt2.refresh_from_db()
         self.assertEqual(dt2.name, 'TypeB')
+
+
+# Label and icon in the inventory listing
+class DeviceTypeInventoryDisplayTest(TestCase):
+
+    def setUp(self):
+        self.institution = make_institution()
+        DeviceType.objects.create(
+            institution=self.institution, name="Laptop",
+            label="Portátil", icon="bi-suitcase",
+        )
+        DeviceType.objects.create(institution=self.institution, name="Container")
+
+    def render_type(self, type_value):
+        table = DeviceTable(
+            [{'id': 'x', 'link_pk': 'x', 'shortid': 'X', 'type': type_value}],
+            type_display=DeviceType.display_map(self.institution),
+        )
+        return str(table.rows[0].get_cell('type'))
+
+    def test_label_is_shown_when_defined(self):
+        cell = self.render_type("Laptop")
+        self.assertIn("Portátil", cell)
+        self.assertIn("bi-suitcase", cell)
+        self.assertNotIn("Laptop", cell)
+
+    def test_name_is_shown_when_there_is_no_label(self):
+        self.assertIn("Container", self.render_type("Container"))
+
+    def test_undefined_type_is_shown_as_it_comes(self):
+        cell = self.render_type("Toaster")
+        self.assertIn("Toaster", cell)
+        self.assertIn("bi-box", cell)
+
+    def test_lookup_is_case_insensitive(self):
+        self.assertIn("Portátil", self.render_type("laptop"))
+
+    def test_other_institution_labels_are_not_applied(self):
+        other = make_institution("Other")
+        DeviceType.objects.create(
+            institution=other, name="Container", label="Contenedor")
+        self.assertIn("Container", self.render_type("Container"))
+
+    def test_export_value_is_the_plain_label(self):
+        table = DeviceTable(
+            [{'id': 'x', 'link_pk': 'x', 'shortid': 'X', 'type': 'Laptop'}],
+            type_display=DeviceType.display_map(self.institution),
+        )
+        self.assertEqual(table.rows[0].get_cell_value('type'), "Portátil")

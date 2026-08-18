@@ -26,4 +26,9 @@ urlpatterns = [
     path("producttypes/delete/<int:pk>", views.DeleteDeviceTypeView.as_view(), name='delete_device_type'),
     path("producttypes/update_order/", views.UpdateDeviceTypeOrderView.as_view(), name='update_device_type_order'),
     path("producttypes/edit/<int:pk>/", views.UpdateDeviceTypeView.as_view(), name='edit_device_type'),
+    path("producttypes/<int:type_pk>/attributes/", views.DeviceTypeAttributesPanelView.as_view(), name="attributes_panel"),
+    path("producttypes/<int:type_pk>/attributes/add", views.AddDeviceTypeAttributeView.as_view(), name="add_device_type_attribute"),
+    path("producttypes/attributes/edit/<int:pk>/", views.UpdateDeviceTypeAttributeView.as_view(), name='edit_device_type_attribute'),
+    path("producttypes/attributes/delete/<int:pk>", views.DeleteDeviceTypeAttributeView.as_view(), name='delete_device_type_attribute'),
+    path("producttypes/<int:type_pk>/attributes/update_order/", views.UpdateDeviceTypeAttributeOrderView.as_view(), name='update_device_type_attribute_order'),
 ]
