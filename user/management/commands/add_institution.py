@@ -1,8 +1,7 @@
 from django.core.management.base import BaseCommand
-from django.conf import settings
 
 from user.models import Institution
-from lot.models import LotTag, Lot
+from lot.models import LotTag
 
 
 class Command(BaseCommand):
@@ -15,8 +14,6 @@ class Command(BaseCommand):
         self.institution = Institution.objects.create(name=kwargs['name'])
         # create lot groups "Entrada, Temporal, Salida" (TODO in English?)
         self.create_lot_tags()
-        if settings.DEMO:
-            self.create_demo_lots()
 
     def create_lot_tags(self):
         LotTag.objects.create(
@@ -34,59 +31,3 @@ class Command(BaseCommand):
                 name=tag,
                 owner=self.institution
             )
-
-    def create_demo_lots(self):
-        for g in LotTag.objects.filter(owner=self.institution):
-            if g.name == "Entrada":
-                Lot.objects.create(
-                    name="donante-orgA",
-                    owner=self.institution,
-                    archived=True,
-                    type=g
-                )
-                Lot.objects.create(
-                    name="donante-orgB",
-                    owner=self.institution,
-                    type=g
-                )
-                Lot.objects.create(
-                    name="donante-orgC",
-                    owner=self.institution,
-                    type=g
-                )
-
-            if g.name == "Salida":
-                Lot.objects.create(
-                    name="beneficiario-org1",
-                    owner=self.institution,
-                    type=g
-                )
-                Lot.objects.create(
-                    name="beneficiario-org2",
-                    owner=self.institution,
-                    archived=True,
-                    type=g
-                )
-                Lot.objects.create(
-                    name="beneficiario-org3",
-                    owner=self.institution,
-                    type=g
-                )
-
-            if g.name == "Temporal":
-                Lot.objects.create(
-                    name="palet1",
-                    owner=self.institution,
-                    type=g
-                )
-                Lot.objects.create(
-                    name="palet2",
-                    owner=self.institution,
-                    type=g
-                )
-                Lot.objects.create(
-                    name="palet3",
-                    owner=self.institution,
-                    archived=True,
-                    type=g
-                )
