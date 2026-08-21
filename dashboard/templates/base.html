@@ -200,44 +200,34 @@
                 <i class="bi bi-columns-gap icon_sidebar"></i>
                 {% trans 'Dashboard' %}
               </a>
-              <ul class="flex-column mb-2 ul_sidebar accordion-collapse {% if 'device:' in path or path == 'dashboard:all_device' or ':overview' in path %}expanded{% else %}collapse{% endif %}" id="ul_device" data-bs-parent="#sidebarMenu">
-                <li class="nav-item">
-                  <a class="nav-link{% if ':overview' in path %} active2{% endif %}" href="{% url 'dashboard:overview' %}">
-                    {% trans 'Overview' %}
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a class="nav-link{% if 'device:' in path or path == 'dashboard:all_device' %} active2{% endif %}" href="{% url 'dashboard:all_device' %}">
-                    {% trans 'All devices' %}
-                  </a>
-                </li>
-              </ul>
           </li>
+          {% for tag in lot_tags %}{% if tag.inbox %}
           <li class="nav-item">
-                <a class="admin {% if 'lot:' in path or path == 'dashboard:lot' or path in 'dashboard:unassigned' %}active {% endif %}nav-link fw-bold" data-bs-toggle="collapse" data-bs-target="#ul_lots" aria-expanded="false" aria-controls="ul_lots" href="javascript:void()">
+                <a class="admin {% if path == 'dashboard:unassigned' %}active {% endif %}nav-link fw-bold" href="{% url 'dashboard:unassigned' %}">
+                  <i class="bi bi-inbox icon_sidebar"></i>
+                  {{ tag.name }}
+                  <span class="badge bg-secondary rounded-pill ms-1">{{ unassigned_count }}</span>
+                </a>
+          </li>
+          {% endif %}{% endfor %}
+          <li class="nav-item">
+                <a class="admin {% if 'lot:' in path or path == 'dashboard:lot' %}active {% endif %}nav-link fw-bold" data-bs-toggle="collapse" data-bs-target="#ul_lots" aria-expanded="false" aria-controls="ul_lots" href="javascript:void()">
                   <i class="bi bi-database icon_sidebar"></i>
                   {% trans 'Lots' %}
                 </a>
-                <ul class="flex-column mb-2 ul_sidebar accordion-collapse {% if 'lot:' in path or path == 'dashboard:lot' or path in 'dashboard:unassigned' %}expanded{% else %}collapse{% endif %}" id="ul_lots" data-bs-parent="#sidebarMenu">
-                  {% for tag in lot_tags %}
+                <ul class="flex-column mb-2 ul_sidebar accordion-collapse {% if 'lot:' in path or path == 'dashboard:lot' %}expanded{% else %}collapse{% endif %}" id="ul_lots" data-bs-parent="#sidebarMenu">
+                  {% for tag in lot_tags %}{% if not tag.inbox %}
                   <li class="nav-items">
-		  {% if tag.inbox %}
-                    <a class="nav-link{% if path == 'dashboard:unassigned' %} active2{% endif %}" href="{% url 'dashboard:unassigned' %}">
-                      <i>
-                        {{ tag.name }}
-                      </i>
-		  {% else %}
                     <a class="nav-link{% if path == 'lot:tags' and tag.id == selected_tag_id %} active2{% endif %}" href="{% url 'lot:tags' tag.id %}">
                       {{ tag.name }}
-		  {% endif %}
                     </a>
                   </li>
-                  {% endfor %}
+                  {% endif %}{% endfor %}
                 </ul>
               </li>
               <li class="nav-item">
                 <a class="admin {% if 'evidence:' in path or path == 'device:add' %}active {% endif %}nav-link fw-bold" data-bs-toggle="collapse" data-bs-target="#ul_evidences" aria-expanded="false" aria-controls="ul_evidences" href="javascript:void()">
-                  <i class="bi bi-usb-drive icon_sidebar"></i>
+                  <i class="bi bi-card-list icon_sidebar"></i>
                   {% trans 'Evidences' %}
                 </a>
                 <ul class="flex-column mb-2 ul_sidebar accordion-collapse {% if 'evidence:' in path or path == 'device:add' %}expanded{% else %}collapse{% endif %}" id="ul_evidences" data-bs-parent="#sidebarMenu">
