@@ -47,18 +47,20 @@ class UnassignedDevicesView(ProductCacheTableMixin, InventaryMixin):
     def get_device_ids(self, offset=0, limit=None):
         institution = self.request.user.institution
         qry = Device.queryset_orm_unassigned(institution)
+        # Counted off the same queryset that yields the rows, so the paginator
+        # total can never disagree with what the list actually holds.
+        count = qry.count()
         qry = self.sorted_roots(qry, institution)
         rows = qry[offset:] if limit is None else qry[offset:offset + limit]
         root_ids = [r["root"] for r in rows]
-        assigned = DeviceLot.objects.filter(
-            lot__owner=institution
-        ).values_list("device_id", flat=True)
-        count = (
-            RootAlias.objects.filter(owner=institution)
-            .exclude(root__in=assigned)
-            .values("root").distinct().count()
-        )
         return root_ids, count
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # The paginator total is the badge value, so refresh it for free here.
+        self.set_unassigned_count(context["count"])
+        context["unassigned_count"] = context["count"]
+        return context
 
 
 class AllDevicesView(ProductCacheTableMixin, InventaryMixin):
@@ -720,6 +722,9 @@ class InventoryOverviewView(DashboardView, TemplateView):
             .values_list('device_id', flat=True)
         )
         unassigned_ids_set = all_roots - assigned_roots
+        # Same set the sidebar badge counts, already computed here.
+        self.set_unassigned_count(len(unassigned_ids_set))
+        context['unassigned_count'] = len(unassigned_ids_set)
 
         # Count total, assigned, and unassigned types
         total_types_counter = Counter()

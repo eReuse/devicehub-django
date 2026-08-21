@@ -16,6 +16,9 @@ from django.utils.dateparse import parse_datetime
 from django.db.models import F, Subquery, OuterRef
 
 
+UNASSIGNED_COUNT_SESSION_KEY = "unassigned_count"
+
+
 class Http403(PermissionDenied):
     status_code = 403
     default_detail = _('Permission denied. User is not authenticated')
@@ -50,9 +53,28 @@ class DashboardView(LoginRequiredMixin):
             'section': self.section,
             'path': resolve(self.request.path).view_name,
             'user': self.request.user,
-            'lot_tags': lot_tags
+            'lot_tags': lot_tags,
+            'unassigned_count': self.get_unassigned_count()
         })
         return context
+
+    def get_unassigned_count(self):
+        """Inbox badge value, held in the user's session.
+
+        The sidebar renders on every view but computing this means scanning the
+        institution's whole slice of ProductCache, so it is only calculated on
+        a session miss. The Inbox and Overview views call set_unassigned_count()
+        with the total they already compute for themselves, which keeps the
+        badge fresh at no extra query cost.
+        """
+        count = self.request.session.get(UNASSIGNED_COUNT_SESSION_KEY)
+        if count is None:
+            count = Device.count_unassigned(self.request.user.institution)
+            self.request.session[UNASSIGNED_COUNT_SESSION_KEY] = count
+        return count
+
+    def set_unassigned_count(self, count):
+        self.request.session[UNASSIGNED_COUNT_SESSION_KEY] = count
 
     def get_session_devices(self):
         dev_ids = self.request.session.pop("devices", [])

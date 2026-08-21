@@ -273,6 +273,26 @@ class Device:
         )
 
     @classmethod
+    def count_unassigned(cls, institution):
+        """Cheap approximation of how many canonical devices sit in no lot.
+
+        Counted over ProductCache, which holds one row per (owner, root)
+        behind a unique index, so the DISTINCT over the much larger alias
+        table is already materialised there. It can drift from the Inbox
+        total when the projection is not fully rebuilt, so it only feeds the
+        sidebar badge; anything that must agree with the listing counts off
+        queryset_orm_unassigned instead.
+        """
+        assigned = DeviceLot.objects.filter(
+            lot__owner=institution
+        ).values_list("device_id", flat=True)
+        return (
+            ProductCache.objects.filter(owner=institution)
+            .exclude(root__in=assigned)
+            .count()
+        )
+
+    @classmethod
     def get_all(cls, institution, offset=0, limit=None):
         qry = cls._roots_queryset(institution)
         rows = qry[offset:] if limit is None else qry[offset:offset+limit]
@@ -287,14 +307,7 @@ class Device:
     def get_unassigned(cls, institution, offset=0, limit=20):
         qry = cls.queryset_orm_unassigned(institution)
         rows = qry[offset:] if limit is None else qry[offset:offset+limit]
-        assigned = DeviceLot.objects.filter(
-            lot__owner=institution
-        ).values_list("device_id", flat=True)
-        count = (
-            RootAlias.objects.filter(owner=institution)
-            .exclude(root__in=assigned)
-            .values("root").distinct().count()
-        )
+        count = qry.count()
         devices = [cls(id=r["root"], owner=institution) for r in rows]
         return devices, count
 
