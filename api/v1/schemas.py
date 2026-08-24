@@ -218,11 +218,10 @@ class PropertyOut(ModelSchema):
     device_id: str = Field(..., description=str(_("Associated device ID")))
     created: datetime = Field(
         ...,
-        validation_alias="created_at",  # V2 replacement for alias="created_at"
+        validation_alias="created_at",
         serialization_alias="created_at",
         description=str(_("When this property was created"))
     )
-    # Note: json_encoders removed as Pydantic V2 automatically formats datetimes to ISO.
 
 
 class SuccessResponse(BaseModel):

@@ -331,29 +331,20 @@ class InstitutionView(AdminView, UpdateView):
 
 
 class InstitutionConfigView(AdminView, UpdateView):
-    template_name = "dpp_settings.html"
-    Model = InstitutionDPPSettings
-    form_class = InstitutionDPPSettingsForm
-    title = _("Configuration & Signing")
-    subtitle = _("Manage technical settings and signing credentials")
+    template_name = "institution.html"
+    model = Institution
+    form_class = InstitutionForm
+    title = _("Organization Profile")
+    subtitle = _("Manage your organization's physical details and profile")
+    breadcrumb = [(_("Admin"), reverse_lazy("admin:panel")), (_("Edit your Institution"), None)]
     success_url = reverse_lazy('admin:panel')
 
     def get_object(self, queryset=None):
-        institution = self.request.user.institution
-        obj, created = InstitutionDPPSettings.objects.get_or_create(institution=institution)
-        return obj
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-
-        service = CredentialService(self.request.user)
-        kwargs['schemas'] = service.fetch_schemas()
-
-        return kwargs
+        return self.request.user.institution
 
     def form_valid(self, form):
-        logger.info(f"User {self.request.user.id} updated DPP integration settings for institution {self.object.institution_id}.")
-        messages.success(self.request, _("Configuration updated successfully."))
+        logger.info(f"User {self.request.user.id} updated organization profile.")
+        messages.success(self.request, _("Organization profile updated successfully."))
         return super().form_valid(form)
 
 
@@ -757,3 +748,84 @@ class IssueDigitalFacilityRecordView(AdminView, View):
             messages.success(request, _("Facility Record issued successfully!"))
 
         return redirect('admin:panel')
+
+
+class DPPConfigurationView(AdminView, UpdateView):
+    template_name = "dpp_settings.html"
+    model = InstitutionDPPSettings
+    form_class = InstitutionDPPSettingsForm
+    breadcrumb = [(_("Admin"), reverse_lazy("admin:panel")), (_("Digital Product Passport"), None)]
+    title = _("Integration & Digital Product Passports")
+    subtitle = _("Manage schemas, conformity claims, and automated traceability")
+
+    def get_success_url(self):
+        return reverse_lazy('admin:dpp_settings', kwargs={'pk': self.request.user.institution.pk})
+
+    def get_object(self, queryset=None):
+        obj, created = InstitutionDPPSettings.objects.get_or_create(
+            institution=self.request.user.institution
+        )
+        return obj
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        service = CredentialService(self.request.user)
+        self.schemas = service.fetch_schemas()
+        kwargs['schemas'] = self.schemas
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        institution = self.request.user.institution
+
+        context['subtitle'] = _("Digital Product Passport Configuration")
+        context['states'] = StateDefinition.objects.filter(institution=institution).order_by('order')
+
+        # locks for buttons
+        context['is_institution_complete'] = bool(institution.name and institution.country and institution.street_address)
+        context['api_connected'] = bool(getattr(self, 'schemas', False))
+
+        if 'claim_formset' not in kwargs:
+            context['claim_formset'] = FacilityClaimFormSet(
+                instance=institution,
+                prefix='claims'
+            )
+
+        return context
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        institution = self.request.user.institution
+        action = request.POST.get('action')
+
+        #check which form ahs been submitted
+        if action == 'save_dpp':
+            form = self.get_form()
+            if form.is_valid():
+                form.save()
+                messages.success(request, _("IdHub integration settings saved successfully."))
+                return redirect(self.get_success_url())
+            else:
+                messages.error(request, _("Please correct the errors in the integration settings."))
+                return self.render_to_response(self.get_context_data(form=form))
+
+        elif action == 'save_claims':
+            claim_formset = FacilityClaimFormSet(request.POST, instance=institution, prefix='claims')
+            if claim_formset.is_valid():
+                claim_formset.save()
+                messages.success(request, _("Facility Conformity Claims updated successfully."))
+                return redirect(self.get_success_url())
+            else:
+                messages.error(request, _("Please correct the errors in the conformity claims."))
+                return self.render_to_response(self.get_context_data(claim_formset=claim_formset))
+
+        elif action == 'save_states':
+            state_ids = request.POST.getlist('state_ids')
+            with transaction.atomic():
+                for sid in state_ids:
+                    is_checked = request.POST.get(f'state_dte_{sid}') == 'on'
+                    StateDefinition.objects.filter(id=sid, institution=institution).update(auto_issue_dte=is_checked)
+            messages.success(request, _("Traceability automation rules saved successfully."))
+            return redirect(self.get_success_url())
+
+        return super().post(request, *args, **kwargs)

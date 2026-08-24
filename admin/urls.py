@@ -13,6 +13,7 @@ urlpatterns = [
     path('institution/<int:pk>/label-settings/', views.InstitutionLabelCustomizationView.as_view(), name='label_settings'),
     path("institution/<int:pk>/settings", views.InstitutionConfigView.as_view(), name="institution_settings"),
     path("institution/<int:pk>/dfr/issue", views.IssueDigitalFacilityRecordView.as_view(), name="institution_dfr_issue"),
+    path('institution/<int:pk>/dpp-config/', views.DPPConfigurationView.as_view(),name='dpp_settings'),
 
     path("states/", views.StatesPanelView.as_view(), name="states_panel"),
     path("states/add", views.AddStateDefinitionView.as_view(), name="add_state_definition"),
