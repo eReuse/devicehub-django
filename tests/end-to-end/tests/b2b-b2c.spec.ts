@@ -77,7 +77,8 @@ test('B2C (1/2): Refurbisher creates lot', async ({ page }) => {
     await page.locator('#select-all-checkbox').check();
     await page.getByRole('button', { name: ' Assign to lot' }).click();
     await page.locator('div').filter({ hasText: 'Salida (2 open Lot/s)' }).nth(3).click();
-    await page.getByRole('checkbox', { name: 'beneficiario-org1  Aug 11,' }).check();
+
+    await page.getByText('beneficiario-org1').click();
     await page.getByRole('button', { name: 'Assign' }).click();
 
 
