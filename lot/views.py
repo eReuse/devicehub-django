@@ -872,9 +872,9 @@ class BeneficiaryView(DashboardLotMixing, BeneficiaryInterestedEmail, FormView):
             }
 
             if d_ben:
-                device_info['beneficiary_email'] = d_ben.beneficiary.email
-                device_info['lot_name'] = d_ben.beneficiary.lot.name
-                device_info['lot_id'] = d_ben.beneficiary.lot.id
+                device_info['beneficiary_email'] = d_ben.email
+                device_info['lot_name'] = d_ben.lot.name
+                device_info['lot_id'] = d_ben.lot.id
 
                 devices_already_assigned.append(device_info)
             else:
@@ -926,11 +926,39 @@ class BeneficiaryView(DashboardLotMixing, BeneficiaryInterestedEmail, FormView):
         )
 
     def form_valid(self, form):
-        form.devices = self.get_session_devices()
+        devices = self.get_session_devices()
+        free_devices = []
+        skipped_devices = []
+
+        for x in devices:
+            conflict_ben = x.active_beneficiary
+            if conflict_ben:
+                skipped_devices.append((x, conflict_ben))
+            else:
+                free_devices.append(x)
+
+        form.devices = free_devices
         form.save()
         self.beneficiary = form.ben
-        self.send_email(form.ben)
-        self.send_email_subscriptors()
+
+        if free_devices and not skipped_devices:
+            messages.success(self.request, _("Beneficiary successfully added and devices assigned."))
+            self.send_email(form.ben)
+            self.send_email_subscriptors()
+
+        elif free_devices and skipped_devices:
+            skipped_msgs = ", ".join([f"{getattr(dev, 'shortid', dev.id)[:6].upper()} (taken by {ben.email} in '{ben.lot.name}')" for dev, ben in skipped_devices])
+            messages.warning(self.request, _("Beneficiary saved. Assigned {} devices, but skipped taken ones: {}").format(len(free_devices), skipped_msgs))
+            self.send_email(form.ben)
+            self.send_email_subscriptors()
+
+        elif skipped_devices and not free_devices:
+            skipped_msgs = ", ".join([f"{getattr(dev, 'shortid', dev.id)[:6].upper()} (taken by {ben.email} in '{ben.lot.name}')" for dev, ben in skipped_devices])
+            messages.error(self.request, _("Beneficiary saved, but NO devices were assigned because they are actively held by others: {}").format(skipped_msgs))
+        else:
+            messages.success(self.request, _("Beneficiary successfully added (no devices in session)."))
+            self.send_email(form.ben)
+            self.send_email_subscriptors()
 
         response = super().form_valid(form)
         return response
@@ -1092,31 +1120,37 @@ class ListDevicesBeneficiaryView(DashboardLotMixing, BeneficiaryEmail, FormView)
         for sub_form in form.forms:
             if not sub_form.has_changed() or 'status' not in sub_form.changed_data:
                 continue
-            f_instance = sub_form.instance
-            conflict = DeviceBeneficiary.objects.filter(
-                device_id=f_instance.device_id
-            ).exclude(
-                beneficiary=self.beneficiary
-            ).exclude(
-                status=DeviceBeneficiary.Status.RETURNED
-            ).first()
-            if conflict:
-                try:
-                    short_id = f_instance.device_id.split(":")[1][:6].upper()
-                except Exception:
-                    short_id = f_instance.device_id
-                messages.error(
-                    self.request,
-                    _("Device {} is already assigned to beneficiary {}").format(
-                        short_id, conflict.beneficiary.email
+
+            new_status = sub_form.cleaned_data.get('status')
+            if new_status != DeviceBeneficiary.Status.RETURNED:
+                f_instance = sub_form.instance
+
+                device = Device(id=f_instance.device_id, owner=self.request.user.institution)
+                conflict_beneficiary = device.active_beneficiary
+                # check for assignment to other user
+                if conflict_beneficiary and conflict_beneficiary != self.beneficiary:
+                    try:
+                        short_id = f_instance.device_id.split(":")[1][:6].upper()
+                    except Exception:
+                        short_id = f_instance.device_id
+
+                    messages.error(
+                        self.request,
+                        _("Cannot change status. Device {} was reassigned to {} in lot '{}' after being returned.").format(
+                            short_id, conflict_beneficiary.email, conflict_beneficiary.lot.name
+                        )
                     )
-                )
-                return redirect(self.success_url)
+                    return redirect(self.success_url)
 
         form.save()
         response = super().form_valid(form)
 
         if form.changed_objects:
+            changed_count = len(form.changed_objects)
+            messages.success(
+                self.request,
+                _("Successfully updated the status of {} device(s).").format(changed_count)
+            )
             devs_confirmed = []
             devs_delivered = []
             for ff in form.changed_objects:
@@ -1216,30 +1250,38 @@ class AddDevicesBeneficiaryView(DashboardView, NotifyEmail, TemplateView):
 
         if subscriptor or self.request.user.is_admin:
             devices = self.request.session.get("devices", [])
+            added_count = 0
             for dev in devices:
-                # Match any alias of the canonical device to detect dups
-                # even when the stored device_id is a stale root.
-                aliases = RootAlias.physical_aliases(
-                    self.request.user.institution, dev
-                )
-                exist = DeviceBeneficiary.objects.filter(device_id__in=aliases).exclude(
-                    status=DeviceBeneficiary.Status.RETURNED
-                ).first()
-                if exist:
+                device_obj = Device(id=dev, owner=self.request.user.institution)
+                conflict_ben = device_obj.active_beneficiary
+
+                if conflict_ben:
                     try:
                         short_id = dev.split(":")[1][:6].upper()
                     except Exception:
                         short_id = dev
 
-                    messages.error(self.request, _("Device {} is already assigned to {} in lot '{}'.").format(
-                        short_id, exist.beneficiary.email, exist.beneficiary.lot.name
-                    ))
+                    messages.error(
+                        self.request,
+                        _("Device {} cannot be assigned. It is currently actively assigned to {} in lot '{}' and must be RETURNED first.").format(
+                            short_id, conflict_ben.email, conflict_ben.lot.name
+                        )
+                    )
                 else:
-                    self.beneficiary.add(dev)
+                    try:
+                        self.beneficiary.add(dev)
+                        added_count += 1
+                    except Exception as e:
+                        logger.error(f"Error adding device {dev} to beneficiary {self.beneficiary.email}: {e}")
+                        messages.error(self.request, _("Failed to assign a device due to an internal error."))
+
+            if added_count > 0:
+                messages.success(self.request, _("{} device(s) successfully assigned to {}.").format(
+                    added_count, self.beneficiary.email
+                ))
+                self.send_email_subscriptors()
 
             self.request.session["devices"] = []
-            self.send_email_subscriptors()
-
 
         return redirect(self.success_url)
 
