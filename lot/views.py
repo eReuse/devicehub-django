@@ -860,10 +860,7 @@ class BeneficiaryView(DashboardLotMixing, BeneficiaryInterestedEmail, FormView):
             device = Device(id=device_id, owner=self.request.user.institution)
             device.initial()
 
-            aliases = RootAlias.physical_aliases(self.request.user.institution, device_id)
-            d_ben = DeviceBeneficiary.objects.filter(
-                device_id__in=aliases,
-            ).exclude(status=DeviceBeneficiary.Status.RETURNED).first()
+            d_ben = device.active_beneficiary
 
             device_info = {
                 'id': device_id,

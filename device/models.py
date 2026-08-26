@@ -409,6 +409,24 @@ class Device:
         # device's own physical ID when it has no alias.
         return self._canonical_id()
 
+    @property
+    def active_beneficiary(self):
+        if not hasattr(self, 'owner') or not self.owner:
+            return None
+
+        aliases = RootAlias.physical_aliases(self.owner, self.id)
+
+        assignment = DeviceBeneficiary.objects.filter(
+            device_id__in=aliases
+        ).exclude(
+            status=DeviceBeneficiary.Status.RETURNED
+        ).select_related('beneficiary', 'beneficiary__lot').first()
+
+        if assignment:
+            return assignment.beneficiary
+
+        return None
+
     def evidence_export_fields(self):
         """Export fields derived from the device's evidence only.
 
