@@ -214,8 +214,11 @@ class Device:
         return self.uuids[0]
 
     def get_current_state(self):
-        uuid = self.last_uuid()
-        return State.objects.filter(snapshot_uuid=uuid).order_by('-date').first()
+        if not self.uuids:
+            self.get_uuids()
+        if not self.uuids:
+            return None
+        return State.objects.filter(snapshot_uuid__in=self.uuids).order_by('-date').first()
 
     def get_lots(self):
         # A lot row may have been stored with either the physical ID or the
@@ -382,7 +385,7 @@ class Device:
         dev = DeviceBeneficiary.objects.filter(
             device_id__in=device_ids,
             beneficiary__lot=self.lot,
-        ).first()
+        ).exclude(status=DeviceBeneficiary.Status.RETURNED).order_by('-status').first()
 
         status = DeviceBeneficiary.Status.AVAILABLE.label
         if dev:
@@ -405,6 +408,24 @@ class Device:
         # custom_id, a different algorithm's hash (e.g. ereuse26) or the
         # device's own physical ID when it has no alias.
         return self._canonical_id()
+
+    @property
+    def active_beneficiary(self):
+        if not hasattr(self, 'owner') or not self.owner:
+            return None
+
+        aliases = RootAlias.physical_aliases(self.owner, self.id)
+
+        assignment = DeviceBeneficiary.objects.filter(
+            device_id__in=aliases
+        ).exclude(
+            status=DeviceBeneficiary.Status.RETURNED
+        ).select_related('beneficiary', 'beneficiary__lot').first()
+
+        if assignment:
+            return assignment.beneficiary
+
+        return None
 
     def evidence_export_fields(self):
         """Export fields derived from the device's evidence only.

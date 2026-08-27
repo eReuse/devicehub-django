@@ -172,6 +172,7 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
 
         rows_by_id, sort_keys = self._build_table_rows(device_ids)
 
+        # Phase 3: sort in Python
         sort_param = self.request.GET.get('sort', '-last_updated')
         reverse = sort_param.startswith('-')
         sort_field = sort_param.lstrip('-')
@@ -338,10 +339,11 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
         # beneficiary status per root (any physical id may carry the row).
         status_by_root = {}
         for db in DeviceBeneficiary.objects.filter(
-            device_id__in=alias_ids, beneficiary__lot=self.object,
+            device_id__in=alias_ids,
         ).values('device_id', 'status'):
             root = alias_to_root.get(db['device_id'], db['device_id'])
-            status_by_root.setdefault(root, db['status'])
+            if root not in status_by_root or db['status'] > status_by_root[root]:
+                status_by_root[root] = db['status']
 
         return projections, state_by_root, status_by_root
 

@@ -143,7 +143,7 @@ class Beneficiary(models.Model):
         aliases = RootAlias.physical_aliases(self.lot.owner, v)
         exist = DeviceBeneficiary.objects.filter(
             beneficiary__lot=self.lot, device_id__in=aliases
-        ).exists()
+        ).exclude(status=DeviceBeneficiary.Status.RETURNED).exists()
 
         if exist:
             return
