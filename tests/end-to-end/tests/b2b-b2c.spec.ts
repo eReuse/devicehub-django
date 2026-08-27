@@ -79,15 +79,23 @@ test('B2C (1/2): Refurbisher creates lot', async ({ page }) => {
 
     await page.getByText('beneficiario-org1').click();
     await page.getByText('beneficiario-org3').click();
-    // later, goes to beneficario-org1 anyway
     await page.getByRole('button', { name: 'Assign' }).click();
 
-
-    // Add shop
+    // Add shop for beneficiario-org1 (goes automatically when assign)
     await page.getByRole('link', { name: 'Subscriptions' }).click();
     await page.getByRole('button', { name: ' Add Subscription' }).click();
     await page.getByRole('radio', { name: 'Shop' }).check();
     await page.getByRole('textbox', { name: 'Email' }).fill('shop@example.org');
+    await page.getByRole('button', { name: 'Subscribe' }).click();
+
+    // Add shop for beneficiario-org3
+    await page.goto(TEST_SITE);
+    await page.getByRole('link', { name: 'Salida' }).click();
+    await page.getByRole('link', { name: 'beneficiario-org3' }).click();
+    await page.getByRole('link', { name: 'Subscriptions' }).click();
+    await page.getByRole('button', { name: ' Add Subscription' }).click();
+    await page.getByRole('textbox', { name: 'Email' }).fill('shop@example.org');
+    await page.getByRole('radio', { name: 'Shop' }).check();
     await page.getByRole('button', { name: 'Subscribe' }).click();
 
 });
@@ -232,12 +240,6 @@ test('B2C: Disallow assignment over other lot', async ({ page }) => {
 
     await page.getByRole('link', { name: 'Salida' }).click();
     await page.getByRole('link', { name: 'beneficiario-org3' }).click();
-
-    await page.getByRole('link', { name: 'Subscriptions' }).click();
-    await page.getByRole('button', { name: ' Add Subscription' }).click();
-    await page.getByRole('textbox', { name: 'Email' }).fill('shop@example.org');
-    await page.getByRole('radio', { name: 'Shop' }).check();
-    await page.getByRole('button', { name: 'Subscribe' }).click();
 
     await page.getByRole('link', { name: 'Devices' }).click();
 
