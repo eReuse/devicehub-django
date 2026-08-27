@@ -185,3 +185,67 @@ test('B2C: Empty session UI validation', async ({ page }) => {
     //TODO: improve test when merge is done
 
 });
+
+
+test('B2C: Allow assignment if device is returned ', async ({ page }) => {
+    await login(page, TEST_SHOP_USER, TEST_PASSWD);
+
+    await page.getByRole('link', { name: 'Salida' }).click();
+    await page.getByRole('link', { name: 'beneficiario-org1' }).click();
+
+    await page.getByRole('link', { name: 'Beneficiaries' }).click();
+    await page.getByRole('link', { name: 'Devices' }).nth(1).click();
+    await page.locator('#id_form-0-status').click();
+    await page.locator('#id_form-0-status').selectOption('4');
+    await page.getByRole('button', { name: 'Save' }).click();
+    await page.getByRole('link', { name: 'Devices' }).click();
+
+    await page.getByRole('row').nth(1).getByRole('checkbox').check();
+    await page.getByRole('button', { name: 'Add to beneficiary' }).click();
+    await page.getByRole('link', { name: ' Assign' }).nth(1).click();
+    await expect(page.getByText('1 device(s) successfully')).toBeVisible();
+
+
+});
+
+
+test('B2C: Disallow rollback state if device was taken ', async ({ page }) => {
+    await login(page, TEST_SHOP_USER, TEST_PASSWD);
+
+    await page.getByRole('link', { name: 'Salida' }).click();
+    await page.getByRole('link', { name: 'beneficiario-org1' }).click();
+
+    await page.getByRole('link', { name: 'Beneficiaries' }).click();
+
+    await page.getByRole('link', { name: 'Devices' }).nth(1).click();
+    await page.locator('#id_form-0-status').selectOption('1');
+    await page.getByRole('button', { name: 'Save' }).click();
+    await expect(page.getByText('Cannot change status. Device')).toBeVisible();
+
+
+});
+
+test('B2C: Disallow assignment over other lot', async ({ page }) => {
+    await login(page, TEST_SHOP_USER, TEST_PASSWD);
+
+    await page.getByRole('link', { name: 'Entrada' }).click();
+    await page.getByRole('link', { name: 'donante-orgB' }).click();
+
+    await page.getByRole('link', { name: 'Subscriptions' }).click();
+    await page.getByRole('button', { name: ' Add Subscription' }).click();
+    await page.getByRole('textbox', { name: 'Email' }).fill('shop@example.org');
+    await page.getByRole('radio', { name: 'Shop' }).check();
+    await page.getByRole('button', { name: 'Subscribe' }).click();
+
+    await page.getByRole('link', { name: 'Devices' }).click();
+
+    await page.getByRole('row').nth(1).getByRole('checkbox').check();
+    await page.getByRole('button', { name: 'Add to beneficiary' }).click();
+    await page.getByRole('button', { name: ' Add Beneficiary' }).click();
+
+    await page.getByRole('textbox', { name: 'Email' }).fill('user@example.org');
+    await page.getByRole('button', { name: 'Add', exact: true }).click();
+
+    await expect(page.getByText('Beneficiary saved, but NO')).toBeVisible();
+
+});
