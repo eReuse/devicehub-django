@@ -7,7 +7,7 @@ const TEST_PASSWD = process.env.TEST_PASSWD || '1234'
 const TEST_DONOR_USER = process.env.TEST_DONOR_USER || 'donor@example.org'
 const TEST_CIRCUIT_USER = process.env.TEST_CIRCUIT_USER || 'circuit-manager@example.org'
 const TEST_SHOP_USER = process.env.TEST_SHOP_USER || 'shop@example.org'
-const TEST_BENEFICIARY_USER = process.env.TEST_BENEFICIARY_USER || 'beneficiary@example.org'
+const TEST_BENEFICIARY_USER = process.env.TEST_BENEFICIARY_USER || 'beneficiary1@example.org'
 
 async function login(page, user, passwd) {
     const loginUser = user
@@ -99,7 +99,7 @@ test('B2C (2/2): Shop', async ({ page }) => {
     // add beneficiary
     await page.getByRole('link', { name: 'Beneficiaries' }).click();
     await page.getByRole('button', { name: ' Add Beneficiary' }).click();
-    await page.getByRole('textbox', { name: 'Email' }).fill('beneficiary@example.org');
+    await page.getByRole('textbox', { name: 'Email' }).fill('beneficiary1@example.org');
     await page.getByRole('button', { name: 'Add', exact: true }).click();
 
     // Shop assign devices to beneficiary
@@ -158,11 +158,11 @@ test('B2C: Prevent assigning already assigned devices', async ({ page }) => {
     // assert the UI blocks it and shows the red warning card
     await expect(page.getByRole('heading', { name: ' 1 Already assigned Devices' })).toBeVisible();
     await expect(page.locator('.assign-device-warning')).toBeVisible();
-    await expect(page.locator('div').filter({ hasText: /^beneficiary@example\.org$/ })).toBeVisible();
+    await expect(page.locator('div').filter({ hasText: /^beneficiary1@example\.org$/ })).toBeVisible();
 
     // create a SECOND beneficiary and try to steal the device
     await page.getByRole('button', { name: ' Add Beneficiary' }).click();
-    await page.getByRole('textbox', { name: 'Email' }).fill('second-beneficiary@example.org');
+    await page.getByRole('textbox', { name: 'Email' }).fill('beneficiary2@example.org');
     await page.getByRole('button', { name: 'Add', exact: true }).click();
 
     // TODO: assert the backend rejected it and showed an error message
@@ -243,7 +243,7 @@ test('B2C: Disallow assignment over other lot', async ({ page }) => {
     await page.getByRole('button', { name: 'Add to beneficiary' }).click();
     await page.getByRole('button', { name: ' Add Beneficiary' }).click();
 
-    await page.getByRole('textbox', { name: 'Email' }).fill('user@example.org');
+    await page.getByRole('textbox', { name: 'Email' }).fill('beneficiary3@example.org');
     await page.getByRole('button', { name: 'Add', exact: true }).click();
 
     await expect(page.getByText('Beneficiary saved, but NO')).toBeVisible();
