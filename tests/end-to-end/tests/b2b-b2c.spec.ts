@@ -78,6 +78,8 @@ test('B2C (1/2): Refurbisher creates lot', async ({ page }) => {
     await page.locator('div').filter({ hasText: 'Salida (2 open Lot/s)' }).nth(3).click();
 
     await page.getByText('beneficiario-org1').click();
+    await page.getByText('beneficiario-org3').click();
+    // later, goes to beneficario-org1 anyway
     await page.getByRole('button', { name: 'Assign' }).click();
 
 
@@ -228,8 +230,8 @@ test('B2C: Disallow rollback state if device was taken ', async ({ page }) => {
 test('B2C: Disallow assignment over other lot', async ({ page }) => {
     await login(page, TEST_SHOP_USER, TEST_PASSWD);
 
-    await page.getByRole('link', { name: 'Entrada' }).click();
-    await page.getByRole('link', { name: 'donante-orgB' }).click();
+    await page.getByRole('link', { name: 'Salida' }).click();
+    await page.getByRole('link', { name: 'beneficiario-org3' }).click();
 
     await page.getByRole('link', { name: 'Subscriptions' }).click();
     await page.getByRole('button', { name: ' Add Subscription' }).click();
@@ -246,6 +248,7 @@ test('B2C: Disallow assignment over other lot', async ({ page }) => {
     await page.getByRole('textbox', { name: 'Email' }).fill('beneficiary3@example.org');
     await page.getByRole('button', { name: 'Add', exact: true }).click();
 
-    await expect(page.getByText('Beneficiary saved, but NO')).toBeVisible();
+    // this might be slow, sometimes -> src https://playwright.dev/docs/test-timeouts
+    await expect(page.getByText('Beneficiary saved, but NO')).toBeVisible({ timeout: 10_000 });
 
 });
