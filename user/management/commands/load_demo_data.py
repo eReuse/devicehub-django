@@ -20,6 +20,7 @@ DEMO_LOTS = {
         ("beneficiario-org1", False),
         ("beneficiario-org2", True),
         ("beneficiario-org3", False),
+        ("beneficiario-org4", False),
     ],
     "Temporal": [
         ("palet1", False),
@@ -28,7 +29,7 @@ DEMO_LOTS = {
     ],
 }
 
-B2C_LOT = "beneficiario-org1"
+B2C_LOT = "beneficiario-org4"
 B2C_SHOP = "shop@example.org"
 B2C_DEVICES = 25
 B2C_BENEFICIARIES = [f"beneficiary{i}@example.org" for i in range(1, 5)]
