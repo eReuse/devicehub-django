@@ -220,7 +220,11 @@ class UpdateLotTagOrderView(AdminView, TemplateView):
             with transaction.atomic():
                 current_order = 2
                 for lookup_id in ordered_ids:
-                    lot_tag = LotTag.objects.get(id=lookup_id)
+                    lot_tag = get_object_or_404(
+                        LotTag,
+                        id=lookup_id,
+                        owner=request.user.institution,
+                    )
 
                     if lookup_id != '1':  # skip the inbox lot
                         lot_tag.order = current_order
@@ -234,7 +238,7 @@ class UpdateLotTagOrderView(AdminView, TemplateView):
             messages.success(self.request, _("Order changed successfully."))
             return redirect(self.success_url)
         else:
-            return Http404
+            raise Http404
 
 
 class InstitutionView(AdminView, UpdateView):
@@ -320,7 +324,11 @@ class UpdateStateOrderView(AdminView, TemplateView):
                 current_order = 1
                 _log = []
                 for lookup_id in ordered_ids:
-                    state_definition = StateDefinition.objects.get(id=lookup_id)
+                    state_definition = get_object_or_404(
+                        StateDefinition,
+                        id=lookup_id,
+                        institution=request.user.institution,
+                    )
                     state_definition.order = current_order
                     state_definition.save()
                     _log.append(f"{state_definition.state} (ID: {lookup_id} -> Order: {current_order})")
@@ -329,7 +337,7 @@ class UpdateStateOrderView(AdminView, TemplateView):
             messages.success(self.request, _("Order changed succesfuly."))
             return redirect(self.success_url)
         else:
-            return Http404
+            raise Http404
 
 
 class UpdateStateDefinitionView(AdminView, UpdateView):
