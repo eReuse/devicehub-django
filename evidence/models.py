@@ -370,7 +370,8 @@ class Evidence:
         self.default = "n/a"
 
         self.get_owner()
-        self.get_time()
+        if self.properties:
+            self.get_time()
 
     def get_properties(self):
         # TODO is good not filter by institution?
