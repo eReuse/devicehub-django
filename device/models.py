@@ -315,57 +315,62 @@ class Device:
 
     @property
     def last_user_evidence(self):
-        self.get_last_evidence()
-        return self.last_evidence.doc.get('kv', {}).items()
+        evidence = self.get_last_evidence()
+        if not evidence:
+            return {}.items()
+        return evidence.doc.get('kv', {}).items()
 
     @property
     def manufacturer(self):
-        self.get_last_evidence()
-        return self.last_evidence.get_manufacturer()
+        evidence = self.get_last_evidence()
+        return evidence.get_manufacturer() if evidence else ''
 
     @property
     def updated(self):
         """get timestamp from last evidence created"""
-        self.get_last_evidence()
-        return self.last_evidence.get_time_created()
+        evidence = self.get_last_evidence()
+        return evidence.get_time_created() if evidence else ''
 
     @property
     def serial_number(self):
-        self.get_last_evidence()
-        return self.last_evidence.get_serial_number()
+        evidence = self.get_last_evidence()
+        return evidence.get_serial_number() if evidence else ''
 
     @property
     def type(self):
-        self.get_last_evidence()
-        if self.last_evidence and self.last_evidence.doc.get("type", "") == "WebSnapshot":
-            return self.last_evidence.doc.get("device", {}).get("type", "")
+        evidence = self.get_last_evidence()
+        if not evidence:
+            return ''
 
-        return self.last_evidence.get_chassis()
+        if evidence.doc.get("type", "") == "WebSnapshot":
+            return evidence.doc.get("device", {}).get("type", "")
+
+        return evidence.get_chassis()
 
     @property
     def model(self):
-        self.get_last_evidence()
-        return self.last_evidence.get_model()
+        evidence = self.get_last_evidence()
+        return evidence.get_model() if evidence else ''
 
     @property
     def cpu(self):
-        self.get_last_evidence()
-        return self.last_evidence.get_cpu()
+        evidence = self.get_last_evidence()
+        return evidence.get_cpu() if evidence else ''
 
     @property
     def ram(self):
-        self.get_last_evidence()
-        return self.last_evidence.get_ram()
+        evidence = self.get_last_evidence()
+        return evidence.get_ram() if evidence else ''
 
     @property
     def version(self):
-        self.get_last_evidence()
-        return self.last_evidence.get_version()
+        evidence = self.get_last_evidence()
+        return evidence.get_version() if evidence else ''
 
     @property
     def components(self):
-        self.get_last_evidence()
-        return self.last_evidence.get_components()
+        evidence = self.get_last_evidence()
+        return evidence.get_components() if evidence else []
 
     @property
     def did_document(self):
@@ -437,22 +442,21 @@ class Device:
         Each field is read through an Evidence getter that resolves the
         per-format differences internally, so this method just assembles them.
         """
-        self.get_last_evidence()
-        ev = self.last_evidence
+        ev = self.get_last_evidence()
 
         return {
             'ID': self.shortid or '',
             'manufacturer': self.manufacturer or '',
             'model': self.model or '',
             'serial': self.serial_number or '',
-            'cpu_model': ev.get_cpu_model(),
-            'cpu_cores': ev.get_cpu_cores(),
-            'ram_total': ev.get_ram_total(),
-            'ram_type': ev.get_ram_type(),
-            'ram_slots': ev.get_ram_slots(),
-            'slots_used': ev.get_ram_slots_used(),
-            'drive': ev.get_drive(),
-            'gpu_model': ev.get_gpu_model(),
+            'cpu_model': ev.get_cpu_model() if ev else '',
+            'cpu_cores': ev.get_cpu_cores() if ev else '',
+            'ram_total': ev.get_ram_total() if ev else '',
+            'ram_type': ev.get_ram_type() if ev else '',
+            'ram_slots': ev.get_ram_slots() if ev else '',
+            'slots_used': ev.get_ram_slots_used() if ev else '',
+            'drive': ev.get_drive() if ev else '',
+            'gpu_model': ev.get_gpu_model() if ev else '',
             'type': self.type,
             'last_updated': parse_datetime(self.updated) or "",
         }
@@ -592,7 +596,7 @@ class Device:
             'beneficiary_status': self.status_beneficiary or ""
         })
 
-        if not self.last_evidence.is_legacy or not self.last_evidence:
+        if not self.last_evidence or not self.last_evidence.is_legacy:
             return hardware_info
 
         if getattr(self.last_evidence, 'is_web_snapshot', False):
