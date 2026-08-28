@@ -49,7 +49,11 @@ class BulkStateChangeView(DashboardView, View):
     #DashboardView will redirect to a GET method
     def get(self, request, *args, **kwargs):
         state_id = self.kwargs.get('pk')
-        new_state = StateDefinition.objects.filter(id=state_id).first().state
+        new_state = get_object_or_404(
+            StateDefinition,
+            id=state_id,
+            institution=request.user.institution,
+        ).state
         selected_devices = self.get_session_devices()
 
         if not selected_devices:
