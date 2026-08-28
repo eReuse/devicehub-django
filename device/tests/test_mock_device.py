@@ -6,8 +6,6 @@ class TestDevice(Device):
     def __init__(self, id):
         super().__init__(id=id)
         self.shortid = id[:6].upper()
-        self.uuids = []
-        self.hids = ['hid1', 'hid2']
         self._setup_evidence()
 
     def _setup_evidence(self):
@@ -21,6 +19,7 @@ class TestDevice(Device):
                 'type': 'Computer'
             }
         }
+        self._evidence.is_web_snapshot = lambda: False
         self._evidence.get_manufacturer = lambda: 'Test Manufacturer'
         self._evidence.get_model = lambda: 'Test Model'
         self._evidence.get_chassis = lambda: 'Computer'

@@ -17,15 +17,15 @@ main() {
 
         browser="${browser:-firefox}"
         project="${project:-firefox}"
-        headed="${headed:---headed}"
+        headed="${headed---headed}"
 
         if [ $# -eq 0 ]; then
-                npx playwright test --project "${project}" "${headed}"
+                npx playwright test --project "${project}" ${headed}
         else
                 #Runs playwright with specific file if provided
                 #ej. ./run "tests/lots.spec.ts"
                 for test_file in "$@"; do
-                        npx playwright test "${test_file}" --project "${project}" "${headed}"
+                        npx playwright test "${test_file}" --project "${project}" ${headed}
                 done
         fi
 }

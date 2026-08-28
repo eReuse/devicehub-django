@@ -174,11 +174,15 @@ class RebuildTests(TestCase):
         self.assertEqual(obj.type, "Laptop")
         self.assertEqual(obj.cpu_model, "i7")
         self.assertEqual(obj.last_updated, dt)
-        self.assertEqual(obj.data, {
+        # Unset display fields default to "", so build the expectation from
+        # DATA_FIELDS instead of restating it every time the export grows.
+        expected = {k: "" for k in ProductCache.DATA_FIELDS}
+        expected.update({
             "cpu_cores": "4", "ram_total": "8", "ram_type": "DDR4",
             "ram_slots": "2", "slots_used": "1", "drive": "SSD",
             "gpu_model": "Intel", "storage": {},
         })
+        self.assertEqual(obj.data, expected)
 
     def test_rebuild_is_idempotent(self):
         fields = {"ID": "S", "type": "Laptop"}
@@ -293,6 +297,8 @@ class StorageReadingsTests(TestCase):
         d = Device.__new__(Device)
         d.uuids = list(uuids)
         d.get_uuids = MagicMock()
+        d.last_evidence = MagicMock()
+        d.last_evidence.is_web_snapshot.return_value = False
         return d
 
     def _evidence(self, created, components):
