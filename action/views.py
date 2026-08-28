@@ -152,7 +152,10 @@ class BulkStateChangeView(DashboardView, View):
 
     def post(self, request, *args, **kwargs):
         state_id = self.kwargs.get('pk')
-        state_def = StateDefinition.objects.filter(id=state_id).first()
+        state_def = StateDefinition.objects.filter(
+            id=state_id,
+            institution=request.user.institution,
+        ).first()
 
         referer = request.META.get('HTTP_REFERER') or reverse_lazy('dashboard:all')
 
