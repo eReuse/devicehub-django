@@ -131,6 +131,8 @@ class EvidenceView(DashboardView, FormView):
     def get_object(self):
         self.pk = self.kwargs['pk']
         self.object = Evidence(self.pk)
+        if not self.object.properties:
+            raise Http404
         if self.object.owner != self.request.user.institution:
             raise Http403
 
@@ -222,6 +224,8 @@ class DownloadEvidenceView(DashboardView, TemplateView):
     def get(self, request, *args, **kwargs):
         pk = kwargs['pk']
         evidence = Evidence(pk)
+        if not evidence.properties:
+            raise Http404
         if evidence.owner != self.request.user.institution:
             raise Http403()
 
@@ -240,6 +244,8 @@ class PhotoEvidenceView(DashboardView, TemplateView):
 
         pk = kwargs['pk']
         evidence = Evidence(pk)
+        if not evidence.properties:
+            raise Http404
         if evidence.owner != self.request.user.institution:
             raise Http403()
 
@@ -335,6 +341,8 @@ class EraseServerView(DashboardView, FormView):
     def get(self, request, *args, **kwargs):
         self.pk = kwargs['pk']
         self.object = Evidence(self.pk)
+        if not self.object.properties:
+            raise Http404
         if self.object.owner != self.request.user.institution:
             raise Http403
 
