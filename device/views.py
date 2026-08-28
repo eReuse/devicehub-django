@@ -129,6 +129,9 @@ class DetailsView(DashboardView, TemplateView ):
 
     def get(self, request, *args, **kwargs):
         self.pk = kwargs['pk']
+        if ":" not in self.pk:
+            raise Http404
+
         root = RootAlias.objects.filter(
             owner=self.request.user.institution,
             alias=self.pk
@@ -224,6 +227,9 @@ class PublicDeviceWebView(TemplateView):
 
     def get(self, request, *args, **kwargs):
         self.pk = kwargs['pk']
+        if ":" not in self.pk:
+            raise Http404
+
         self.object = Device(id=self.pk)
         owner = self.get_owner_for_device(self.pk)
 
@@ -431,6 +437,8 @@ class DeviceBulkLabelView(DashboardView, ListView):
         self.single_pk = self.kwargs.get('pk')
 
         if self.single_pk:
+            if ":" not in self.single_pk:
+                raise Http404
             self.selected_devices = [Device(id=self.single_pk)]
             return super().get(request, *args, **kwargs)
 
