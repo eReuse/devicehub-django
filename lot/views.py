@@ -779,8 +779,12 @@ class WebMixing(TemplateView):
 
     def get_devices(self):
         chids = self.get_chids()
+        # the url is public but anchored on the lot, so the institution is
+        # known; an ownerless Device would resolve against foreign evidences
+        owner = self.object.lot.owner
 
         props = SystemProperty.objects.filter(
+            owner=owner,
             value__in=chids
         ).order_by("-created")
 
@@ -789,7 +793,10 @@ class WebMixing(TemplateView):
             if x.value not in chids_ordered:
                 chids_ordered.append(x.value)
 
-        return [Device(id=x, lot=self.object.lot) for x in chids_ordered]
+        return [
+            Device(id=x, lot=self.object.lot, owner=owner)
+            for x in chids_ordered
+        ]
 
 
 class DonorView(WebMixing):
