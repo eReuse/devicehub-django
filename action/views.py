@@ -87,7 +87,10 @@ class BulkStateChangeView(DashboardView, View):
         return self.get_success_url()
 
     def get_success_url(self):
-        return HttpResponseRedirect(self.request.META.get('HTTP_REFERER', 'dashboard:all'))
+        return HttpResponseRedirect(
+            self.request.META.get('HTTP_REFERER')
+            or reverse_lazy('dashboard:all_device')
+        )
 
 
 class AddNoteView(LoginRequiredMixin, FormView):
