@@ -77,7 +77,11 @@ class DashboardView(LoginRequiredMixin):
         dev_org = dev_ids_list.filter(owner=self.request.user.institution)
         dev_org_set = set(x.value for x in dev_org)
         for x in dev_org_set:
-            self._devices.append(Device(id=x))
+            # owner is required: two institutions can share the same value, and
+            # an ownerless Device resolves its properties against theirs.
+            self._devices.append(
+                Device(id=x, owner=self.request.user.institution)
+            )
         return self._devices
 
 
