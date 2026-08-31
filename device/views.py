@@ -230,12 +230,7 @@ class PublicDeviceWebView(TemplateView):
         if ":" not in self.pk:
             raise Http404
 
-        self.object = Device(id=self.pk)
         owner = self.get_owner_for_device(self.pk)
-
-        if not owner:
-            raise Http404("Device ID not recognized")
-
         self.object = Device(id=self.pk, owner=owner)
         self.object.initial()
 
@@ -247,11 +242,17 @@ class PublicDeviceWebView(TemplateView):
         return super().get(request, *args, **kwargs)
 
     def get_owner_for_device(self, pk):
-        prop = SystemProperty.objects.filter(value=pk).select_related('owner').first()
+        # the url gives no institution, so it is the one that registered the
+        # most recent evidence, same criterion as Device.get_properties
+        prop = SystemProperty.objects.filter(
+            value=pk
+        ).select_related('owner').order_by("-created").first()
         if prop:
             return prop.owner
 
-        alias = RootAlias.objects.filter(root=pk).select_related('owner').first()
+        alias = RootAlias.objects.filter(
+            root=pk
+        ).select_related('owner').order_by("-created").first()
         if alias:
             return alias.owner
 
