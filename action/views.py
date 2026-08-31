@@ -145,7 +145,7 @@ class ChangeStateView(LoginRequiredMixin, FormView):
         if device_id:
             return reverse_lazy('product:details', args=[device_id])
 
-        return reverse_lazy('dashboard:all')
+        return reverse_lazy('dashboard:all_device')
 
 
 class BulkStateChangeView(DashboardView, View):
@@ -157,7 +157,7 @@ class BulkStateChangeView(DashboardView, View):
             institution=request.user.institution,
         ).first()
 
-        referer = request.META.get('HTTP_REFERER') or reverse_lazy('dashboard:all')
+        referer = request.META.get('HTTP_REFERER') or reverse_lazy('dashboard:all_device')
 
         if not state_def:
             logger.warning(f"Bulk state change failed: Invalid state selected ({state_id}).")
@@ -175,7 +175,7 @@ class BulkStateChangeView(DashboardView, View):
 
         if not selected_devices:
             messages.error(request, _("No products selected"))
-            return self.get_success_url()
+            return redirect(referer)
 
         logger.info(f"User {request.user.id} initiating bulk state change to '{new_state}' for {len(selected_devices)} products.")
 
