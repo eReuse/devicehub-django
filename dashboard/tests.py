@@ -15,9 +15,11 @@ from action.models import State, StateDefinition
 from lot.models import (
     Lot, LotTag, LotSubscription, Beneficiary, DeviceBeneficiary,
 )
+from dashboard.mixins import DashboardView
 from dashboard.views import (
     LotDashboardView, AllDevicesView, UnassignedDevicesView, SearchView,
 )
+from device.models import Device
 
 
 class LotExportTests(TestCase):
@@ -823,3 +825,68 @@ class SearchViewCustomIdPublicRedirectTests(TestCase):
         self.assertEqual(
             response.url,
             reverse("device:details", kwargs={"pk": "custom_id:tstid1"}))
+
+
+class SessionDevicesInstitutionScopeTests(TestCase):
+    """Two institutions can hold the same SystemProperty.value: the constraint
+    is on (key, uuid), and the same physical machine processed under the same
+    HID algorithm yields the same chid on both. get_session_devices already
+    picks the ids by owner, but it then builds each Device without one, and an
+    ownerless Device resolves its properties (and thus its own owner, uuids and
+    last_evidence) with no institution filter."""
+
+    def setUp(self):
+        self.shared_value = "ereuse24:abc123"
+        self.mine = Institution.objects.create(name="Mine")
+        self.theirs = Institution.objects.create(name="Theirs")
+        self.user = User.objects.create(
+            email="mine@test.local", institution=self.mine)
+        self.other_user = User.objects.create(
+            email="theirs@test.local", institution=self.theirs)
+
+        # Mine is the older evidence, theirs the newest.
+        SystemProperty.objects.create(
+            owner=self.mine, user=self.user, uuid=uuidlib.uuid4(),
+            key="ereuse24", value=self.shared_value)
+        SystemProperty.objects.create(
+            owner=self.theirs, user=self.other_user, uuid=uuidlib.uuid4(),
+            key="ereuse24", value=self.shared_value)
+
+    def _view(self):
+        req = RequestFactory().get("/")
+        req.user = self.user
+        req.session = {"devices": [self.shared_value]}
+        view = DashboardView()
+        view.request = req
+        return view
+
+    def _bare_device(self, owner):
+        """A Device with __init__ skipped: building one for real reaches
+        Evidence.get_doc(), which needs Xapian."""
+        d = Device.__new__(Device)
+        d.id = self.shared_value
+        d.pk = self.shared_value
+        d.owner = owner
+        d.properties = []
+        d.algorithm = None
+        d.uuids = []
+        d._canonical_cache = None
+        d._physicals_cache = None
+        return d
+
+    def test_ownerless_device_resolves_to_the_other_institution(self):
+        d = self._bare_device(None)
+        self.assertEqual(d.get_properties().count(), 2)
+        self.assertEqual(d.owner, self.theirs)
+
+    def test_device_built_with_owner_stays_within_that_institution(self):
+        d = self._bare_device(self.mine)
+        self.assertEqual(d.get_properties().count(), 1)
+        self.assertEqual(d.owner, self.mine)
+
+    @patch("dashboard.mixins.Device")
+    def test_session_devices_are_built_with_the_users_institution(self, MockDevice):
+        self._view().get_session_devices()
+        MockDevice.assert_called_once()
+        self.assertEqual(
+            MockDevice.call_args.kwargs.get("owner"), self.mine)
