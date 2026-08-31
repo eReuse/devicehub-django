@@ -17,7 +17,20 @@ class Command(BaseCommand):
     help = "Reindex snapshots"
     EVIDENCES = settings.EVIDENCES_DIR
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--only-index",
+            action="store_true",
+            help=(
+                "Rebuild the xapian index only. SystemProperty rows and the "
+                "dlt registration are left untouched, so the index is "
+                "restored against whatever the database already holds."
+            ),
+        )
+
     def handle(self, *args, **kwargs):
+        self.only_index = kwargs["only_index"]
+
         if os.path.isdir(self.EVIDENCES):
             self.read_files(self.EVIDENCES)
 
@@ -38,18 +51,18 @@ class Command(BaseCommand):
                 logger.warning(txt, institution.name)
                 continue
 
-            snapshots_path = os.path.join(filepath, "snapshots")
-            placeholders_path = os.path.join(filepath, "placeholders")
+            for subdir in ["snapshots", "placeholders"]:
+                self.read_snapshots(os.path.join(filepath, subdir), user)
 
-            for f in os.listdir(snapshots_path):
-                f_path = os.path.join(snapshots_path, f)
-                if f_path[-5:] == ".json" and os.path.isfile(f_path):
-                    self.process(f_path, user)
+    def read_snapshots(self, directory, user):
+        if not os.path.isdir(directory):
+            logger.error("No such directory: %s", directory)
+            return
 
-            for f in os.listdir(placeholders_path):
-                f_path = os.path.join(placeholders_path, f)
-                if f_path[-5:] == ".json" and os.path.isfile(f_path):
-                    self.process(f_path, user)
+        for f in os.listdir(directory):
+            f_path = os.path.join(directory, f)
+            if f_path[-5:] == ".json" and os.path.isfile(f_path):
+                self.process(f_path, user)
 
     def process(self, filepath, user):
         try:
@@ -67,12 +80,20 @@ class Command(BaseCommand):
     def build_placeholder(self, s, user, f_path):
         try:
             create_index(s, user)
-            create_property(s, user, commit=True)
+            if not self.only_index:
+                create_property(s, user, commit=True)
         except Exception as err:
             logger.warning("In placeholder %s \n%s", f_path, err)
 
     def build_snapshot(self, s, user, f_path):
         try:
+            if self.only_index:
+                # check=True picks the parser without writing anything
+                build = Build(s, user, check=True)
+                if build.build.uuid:
+                    build.index()
+                return
+
             Build(s, user)
         except Exception:
             logger.error("Error: in Snapshot %s", f_path)
