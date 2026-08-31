@@ -374,7 +374,9 @@ class Evidence:
             self.get_time()
 
     def get_properties(self):
-        # TODO is good not filter by institution?
+        # Not filtered by institution: the public device view is anonymous, so
+        # the owner is resolved from the uuid. A snapshot is registered once
+        # per instance, so a uuid only maps to one institution.
         self.properties = SystemProperty.objects.filter(
             uuid=self.uuid
         ).order_by("created")
