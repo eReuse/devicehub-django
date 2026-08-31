@@ -404,7 +404,8 @@ class Evidence:
 
         qry = 'uuid:"{}"'.format(self.uuid)
         matches = search(self.owner, qry, limit=1)
-        if matches and matches.size() < 0:
+        # search returns None when the xapian database is not there yet
+        if not matches:
             return
 
         for xa in matches:
