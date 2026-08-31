@@ -428,7 +428,10 @@ class LotEnvironmentalImpactView(DashboardLotMixing, TemplateView):
         device_ids = self.lot.devicelot_set.all().values_list(
             "device_id", flat=True
         ).distinct()
-        devices = [Device(id=dev_id) for dev_id in device_ids]
+        devices = [
+            Device(id=dev_id, owner=self.request.user.institution)
+            for dev_id in device_ids
+        ]
         devices_with_evidence = [
             dev for dev in devices if dev.last_evidence
         ]
