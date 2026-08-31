@@ -439,7 +439,13 @@ class DeviceBulkLabelView(DashboardView, ListView):
         if self.single_pk:
             if ":" not in self.single_pk:
                 raise Http404
-            self.selected_devices = [Device(id=self.single_pk)]
+            device = Device(
+                id=self.single_pk,
+                owner=self.request.user.institution
+            )
+            if not device.last_evidence:
+                raise Http404
+            self.selected_devices = [device]
             return super().get(request, *args, **kwargs)
 
         self.selected_devices = self.get_session_devices()
