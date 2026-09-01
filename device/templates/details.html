@@ -152,9 +152,12 @@
         <li class="nav-item">
           <a href="#user_properties" class="nav-link" data-bs-toggle="tab" data-bs-target="#user_properties">{% trans 'Properties' %}</a>
         </li>
+
+  {% if user.institution.integration_settings.dpp_enabled %}
         <li class="nav-item">
             <a href="#credentials" class="nav-link" data-bs-toggle="tab" data-bs-target="#credentials">{% trans 'Digital Credentials' %}</a>
         </li>
+  {% endif %}
         <li class="nav-item">
           <a href="#lots" class="nav-link" data-bs-toggle="tab" data-bs-target="#lots">{% trans 'Lots' %}</a>
         </li>
@@ -257,23 +260,26 @@
       })
     })
 
-    document.addEventListener('DOMContentLoaded', function () {
-        var changeStateModal = document.getElementById('changeStateModal');
+   document.querySelectorAll('.event-type-selector').forEach(function(select) {
+            select.addEventListener('change', function() {
+                const targetId = this.getAttribute('data-target-id');
+                const moveSection = document.getElementById('move_section_' + targetId);
 
-        if (changeStateModal) {
-            changeStateModal.addEventListener('show.bs.modal', function (event) {
-                var button = event.relatedTarget;
-
-                var newState = button.getAttribute('data-state');
-                var prevState = button.getAttribute('data-previous');
-
-                changeStateModal.querySelector('#stateNameDisplay').textContent = newState;
-                changeStateModal.querySelector('#modalNewStateInput').value = newState;
-                changeStateModal.querySelector('#modalPrevStateInput').value = prevState;
-
-                changeStateModal.querySelector('#stateComment').value = '';
+                if (moveSection) {
+                    if (this.value === 'MoveEvent') {
+                        moveSection.style.display = 'block';
+                    } else {
+                        moveSection.style.display = 'none';
+                        const idInput = moveSection.querySelector('input[name*="to_facility_id"]');
+                        const nameInput = moveSection.querySelector('input[name*="to_facility_name"]');
+                        const consInput = moveSection.querySelector('input[name*="consignment_id"]');
+                        if (idInput) idInput.value = '';
+                        if (nameInput) nameInput.value = '';
+                        if (consInput) consInput.value = '';
+                    }
+                }
             });
-        }
-    });
+        });
+
   </script>
 {% endblock %}

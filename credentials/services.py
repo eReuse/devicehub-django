@@ -213,6 +213,8 @@ class CredentialService:
     def _validate_config(self, type_key: str) -> str | None:
         if not self.settings:
             return "Institution settings are missing."
+        if not self.settings.dpp_enabled:
+            return "Digital Product Passport features are currently disabled for this institution."
         if not self.settings.signing_auth_token or not self.settings.api_base_url:
             return "Signing API configuration is incomplete."
 

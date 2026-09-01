@@ -3,18 +3,21 @@
 {% load django_bootstrap5 %}
 
 {% block content %}
-<div class="container-fluid p-0">
+<div class="container-fluid px-0">
 
-    <div class="row mb-4 align-items-center">
-        <div class="col">
-            <h3 class="mb-0 text-dark fw-bold">{{ title }}</h3>
-            <p class="text-muted">{{ subtitle }}</p>
+    <!-- Header Section -->
+    <div class="pb-4 pt-3">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+            <h5 class="mb-0">
+                <i class="bi bi-gear"></i> {{ title }}
+                <small class="text-muted ps-1"> | {{ subtitle }}</small>
+            </h5>
         </div>
     </div>
 
     <!-- Global Error Display -->
     {% if form.errors or claim_formset.errors %}
-    <div class="alert alert-danger alert-dismissible fade show shadow-sm border-0 rounded-0 mb-4" role="alert">
+    <div class="alert alert-danger alert-dismissible fade show shadow-sm border-0 mb-4" role="alert">
         <div class="d-flex align-items-center">
             <i class="bi bi-exclamation-triangle-fill fs-4 me-3 text-danger"></i>
             <div>
@@ -31,271 +34,407 @@
     </div>
     {% endif %}
 
-    <div class="row g-4">
-        <!-- tabs -->
-        <div class="col-12 col-md-3">
-            <div class="nav flex-column nav-pills bg-white shadow-sm rounded-3 p-2 border" id="config-tabs" role="tablist" aria-orientation="vertical">
-                <button class="nav-link active text-start fw-semibold py-3" data-bs-toggle="pill" data-bs-target="#connection" type="button" role="tab">
-                    <i class="bi bi-link-45deg me-2"></i> {% translate "Connection & Identity" %}
+    <!-- Configuration Panel -->
+    <div class="mb-4">
+        <!-- Horizontal Tabs -->
+        <ul class="nav nav-tabs" id="config-tabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active fw-semibold text-dark" data-bs-toggle="tab" data-bs-target="#connection" type="button" role="tab">
+                    {% translate "Identity (DID) & Connection" %}
                 </button>
-                <button class="nav-link text-start fw-semibold py-3" data-bs-toggle="pill" data-bs-target="#schemas" type="button" role="tab">
-                    <i class="bi bi-file-earmark-code me-2"></i> {% translate "Protocol Schemas" %}
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link fw-semibold text-dark" data-bs-toggle="tab" data-bs-target="#schemas" type="button" role="tab">
+                    {% translate "Protocol Schemas" %}
                 </button>
-                <button class="nav-link text-start fw-semibold py-3" data-bs-toggle="pill" data-bs-target="#claims" type="button" role="tab">
-                    <i class="bi bi-shield-check me-2"></i> {% translate "Conformity Claims" %}
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link fw-semibold text-dark" data-bs-toggle="tab" data-bs-target="#claims" type="button" role="tab">
+                    {% translate "Conformity Claims (DCC)" %}
                 </button>
-                <button class="nav-link text-start fw-semibold py-3" data-bs-toggle="pill" data-bs-target="#dfr" type="button" role="tab">
-                    <i class="bi bi-patch-check me-2"></i> {% translate "Facility Record (DFR)" %}
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link fw-semibold text-dark" data-bs-toggle="tab" data-bs-target="#dfr" type="button" role="tab">
+                    {% translate "Facility Record (DFR)" %}
                 </button>
-                <button class="nav-link text-start fw-semibold py-3" data-bs-toggle="pill" data-bs-target="#states" type="button" role="tab">
-                    <i class="bi bi-diagram-3 me-2"></i> {% translate "Traceability (DTE)" %}
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link fw-semibold text-dark" data-bs-toggle="tab" data-bs-target="#states" type="button" role="tab">
+                    {% translate "Traceability Events (DTE)" %}
                 </button>
-            </div>
-        </div>
+            </li>
+        </ul>
 
-        <div class="col-12 col-md-9">
-            <div class="tab-content" id="config-tabsContent">
+        <!-- Unified Card for Tab Content -->
+        <div class="card border-top-0 rounded-0 rounded-bottom shadow-sm">
+            <div class="card-body p-4 p-md-5">
+                <div class="tab-content" id="config-tabsContent">
 
-                <!-- idhub settings -->
-                <div class="tab-pane fade show active" id="connection" role="tabpanel">
-                    <div class="card shadow-sm border-0 rounded-3">
-                        <div class="card-body p-4">
-                            <h5 class="fw-bold mb-3">{% translate "Connection & Identity" %}</h5>
-                            <p class="text-muted mb-4">{% translate "Configure your signing service URL, API authentication token, and Decentralized Identifier (DID)." %}</p>
+                    <!-- Connection & Identity Tab -->
+                    <div class="tab-pane fade show active" id="connection" role="tabpanel">
+                        <div class="row">
+                            <div class="col-12 col-lg-10 col-xl-8">
 
-                            <form method="post" novalidate>
-                                {% csrf_token %}
-                                <input type="hidden" name="action" value="save_dpp">
-
-                                {{ form.active_dpp_standard.as_hidden }}
-                                {{ form.dpp_schema.as_hidden }}
-                                {{ form.dte_schema.as_hidden }}
-                                {{ form.dfr_schema.as_hidden }}
-
-                                <div class="row g-3 bg-light p-3 rounded border">
-                                    <div class="col-12 col-lg-6">{% bootstrap_field form.api_base_url %}</div>
-                                    <div class="col-12 col-lg-6">{% bootstrap_field form.signing_auth_token %}</div>
-                                    <div class="col-12 border-top pt-3 mt-3">{% bootstrap_field form.issuer_did %}</div>
-                                </div>
-
-                                <div class="text-end mt-4 pt-3 border-top">
-                                    <button class="btn btn-success px-5 fw-semibold" type="submit">
-                                        <i class="bi bi-check2-circle me-1"></i> {% translate 'Save Connection Info' %}
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- schemas  -->
-                <div class="tab-pane fade" id="schemas" role="tabpanel">
-                    <div class="card shadow-sm border-0 rounded-3">
-                        <div class="card-body p-4">
-                            <h5 class="fw-bold mb-3">{% translate "Protocol Schemas" %}</h5>
-                            <p class="text-muted mb-4">{% translate "Select the UNTP protocol version and map the active schemas." %}</p>
-
-                            <form method="post" novalidate>
-                                {% csrf_token %}
-                                <input type="hidden" name="action" value="save_dpp">
-
-                                {{ form.api_base_url.as_hidden }}
-                                {{ form.signing_auth_token.as_hidden }}
-                                {{ form.issuer_did.as_hidden }}
-
-                                {% if not api_connected %}
-                                <div class="alert alert-warning border-0 d-flex align-items-center mb-4 shadow-sm">
-                                    <i class="bi bi-wifi-off fs-4 me-3"></i>
-                                    <div>
-                                        <strong>{% translate "Unable to fetch schemas" %}</strong><br>
-                                        <span class="small">{% translate "Please verify your Service Connection credentials in the previous tab to unlock protocol mapping." %}</span>
-                                    </div>
-                                </div>
-                                {% endif %}
-
-                                <fieldset {% if not api_connected %}disabled{% endif %}>
-                                    <div class="row g-3 bg-light p-3 rounded border {% if not api_connected %}opacity-50{% endif %}">
-                                        <div class="col-12">
-                                            <h6 class="fw-bold text-muted small text-uppercase mb-2">{% translate "Protocol Standard" %}</h6>
-                                            {% bootstrap_field form.active_dpp_standard %}
-                                        </div>
-                                        <div class="col-12 col-lg-4 border-top pt-3 mt-3">{% bootstrap_field form.dpp_schema %}</div>
-                                        <div class="col-12 col-lg-4 border-top pt-3 mt-3">{% bootstrap_field form.dte_schema %}</div>
-                                        <div class="col-12 col-lg-4 border-top pt-3 mt-3">{% bootstrap_field form.dfr_schema %}</div>
-                                    </div>
-                                </fieldset>
-
-                                <div class="text-end mt-4 pt-3 border-top">
-                                    <button class="btn btn-success px-5 fw-semibold" type="submit" {% if not api_connected %}disabled{% endif %}>
-                                        <i class="bi bi-check2-circle me-1"></i> {% translate 'Save Schema Mapping' %}
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- DCC settings -->
-                <div class="tab-pane fade" id="claims" role="tabpanel">
-                    <div class="card shadow-sm border-0 rounded-3">
-                        <div class="card-body p-4">
-                            <h5 class="fw-bold mb-2">{% translate "Facility Conformity Claims (DCC)" %}</h5>
-                            <p class="text-muted mb-4">{% translate "Define verified claims to inject into your Digital Facility Record." %}</p>
-
-                            <form method="post" novalidate>
-                                {% csrf_token %}
-                                <input type="hidden" name="action" value="save_claims">
-                                {{ claim_formset.management_form }}
-
-                                <div class="row g-4">
-                                    {% for claim_form in claim_formset %}
-                                    <div class="col-12">
-                                        <div class="p-4 bg-light rounded-3 border position-relative shadow-sm">
-                                            {% for hidden in claim_form.hidden_fields %}{{ hidden }}{% endfor %}
-                                            {% if claim_form.non_field_errors %}
-                                                <div class="alert alert-danger py-2">{{ claim_form.non_field_errors }}</div>
-                                            {% endif %}
-
-                                            <h6 class="text-muted fw-bold text-uppercase mb-3" style="font-size: 0.85em;">{% translate "Claim Details" %}</h6>
-                                            <div class="row g-3 mb-4">
-                                                <div class="col-12 col-md-6">{% bootstrap_field claim_form.topic_code %}</div>
-                                                <div class="col-12 col-md-6">{% bootstrap_field claim_form.assessment_date %}</div>
-                                                <div class="col-12">{% bootstrap_field claim_form.description %}</div>
-                                                <div class="col-12 col-md-6">{% bootstrap_field claim_form.admin_name %}</div>
-                                                <div class="col-12 col-md-6">{% bootstrap_field claim_form.admin_url %}</div>
-                                            </div>
-
-                                            <hr class="text-secondary opacity-25">
-
-                                            <h6 class="text-muted fw-bold text-uppercase mb-3 mt-4" style="font-size: 0.85em;">{% translate "Validation Evidence" %}</h6>
-                                            <div class="row g-3">
-                                                <div class="col-12 col-md-6">{% bootstrap_field claim_form.evidence_name %}</div>
-                                                <div class="col-12 col-md-6">{% bootstrap_field claim_form.evidence_url %}</div>
-                                            </div>
-
-                                            {% if claim_formset.can_delete and claim_form.instance.pk %}
-                                                <div class="form-check mt-4 pt-3 border-top">
-                                                    {{ claim_form.DELETE }}
-                                                    <label class="form-check-label text-danger fw-semibold" for="{{ claim_form.DELETE.id_for_label }}">
-                                                        <i class="bi bi-trash me-1"></i>{% translate "Remove this claim entirely" %}
-                                                    </label>
-                                                </div>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                    {% endfor %}
-                                </div>
-                                <div class="form-text mt-3">
-                                    <i class="bi bi-info-circle me-1"></i> {% translate "Save changes to add another empty claim slot." %}
-                                </div>
-                                <div class="text-end mt-4 pt-3 border-top">
-                                    <button class="btn btn-success px-5 fw-semibold" type="submit">
-                                        <i class="bi bi-check2-circle me-1"></i> {% translate 'Save Claims' %}
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- dfr issuance settings -->
-                <div class="tab-pane fade" id="dfr" role="tabpanel">
-                    <div class="card shadow-sm border-0 rounded-3">
-                        <div class="card-body p-4">
-                            <h5 class="fw-bold mb-3">{% translate "Digital Facility Record" %}</h5>
-
-                            {% if is_institution_complete %}
-                                <p class="text-muted">{% translate "Issue or view the Verifiable Credential representing this facility. It automatically bundles your Conformity Claims." %}</p>
-
-                                <form id="dfr-issue-form" method="post" action="{% url 'admin:institution_dfr_issue' user.institution.pk %}" class="d-inline">
+                                <form method="post" novalidate>
                                     {% csrf_token %}
-                                    <input type="hidden" name="latitude">
-                                    <input type="hidden" name="longitude">
+                                    <input type="hidden" name="action" value="save_dpp">
+                                    {{ form.active_dpp_standard.as_hidden }}
+                                    {{ form.dpp_schema.as_hidden }}
+                                    {{ form.dte_schema.as_hidden }}
+                                    {{ form.dfr_schema.as_hidden }}
 
-                                    <div class="d-flex flex-wrap gap-2 mt-4">
-                                        <button type="button" class="btn btn-primary fw-semibold shadow-sm" onclick="locateAndSubmit(event, this)">
-                                            <i class="bi bi-geo-alt me-1"></i> {% translate 'Issue with Geolocalization' %}
+                                    <!-- MASTER TOGGLE -->
+                                    <div class="d-flex align-items-center justify-content-between p-4 bg-white border border-primary border-opacity-25 rounded-3 shadow-sm mb-4">
+                                        <div>
+                                            <h5 class="fw-bold text-primary mb-1">{% translate "Enable Digital Product Passports (DPP) & UNTP Features" %}</h5>
+                                            <span class="text-muted small">{% translate "Globally activate Decentralized Identifiers (DID), Traceability Events (DTE), and verifiable credential issuance." %}</span>
+                                        </div>
+                                        <div class="form-check form-switch fs-3 mb-0">
+                                            <input class="form-check-input cursor-pointer mt-0" type="checkbox" role="switch" name="{{ form.dpp_enabled.html_name }}" id="masterDppToggle" {% if form.dpp_enabled.value %}checked{% endif %}>
+                                        </div>
+                                    </div>
+
+                                    <div id="connectionSettingsWrapper">
+                                        <h5 class="fw-bold mb-2">{% translate "Decentralized Identity (DID) Provider" %}</h5>
+                                        <p class="text-muted mb-4">{% translate "Enter the details provided by your network administrator. This allows your organization to securely sign and publish UNTP Verifiable Credentials." %}</p>
+
+                                        <div class="p-4 bg-light rounded-3 border">
+                                            <div class="row g-3">
+                                                <div class="col-12 col-md-6">{% bootstrap_field form.api_base_url %}</div>
+                                                <div class="col-12 col-md-6">{% bootstrap_field form.signing_auth_token %}</div>
+                                                <div class="col-12 border-top pt-3 mt-3">{% bootstrap_field form.issuer_did %}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="d-flex justify-content-end mt-4">
+                                        <button class="btn btn-primary px-4 shadow-sm" type="submit">
+                                            {% translate "Save Connection Settings" %}
                                         </button>
-
-                                        <button type="button" class="btn btn-outline-primary fw-semibold" onclick="submitWithoutLocation(event, this)">
-                                            <i class="bi bi-patch-plus me-1"></i> {% translate 'Issue without Location' %}
-                                        </button>
-
-                                        {% with record=user.institution.latest_facility_credential %}
-                                            {% if record %}
-                                                <a href="{% url 'evidence:credential_detail' uuid=record.uuid %}" class="btn btn-outline-dark fw-semibold ms-auto shadow-sm">
-                                                    <i class="bi bi-eye me-1"></i> {% translate 'View Record' %}
-                                                </a>
-                                            {% endif %}
-                                        {% endwith %}
                                     </div>
                                 </form>
-
-                            {% else %}
-                                <div class="alert alert-warning border-0 d-flex align-items-center">
-                                    <i class="bi bi-exclamation-triangle fs-4 me-3"></i>
-                                    <div>
-                                        <strong>{% translate "Action Required" %}</strong><br>
-                                        <span class="small">{% translate "You must complete your organization's core details in the 'Organization Profile' settings before issuing a facility record." %}</span>
-                                    </div>
-                                </div>
-                            {% endif %}
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- dte checkbox settings -->
-                <div class="tab-pane fade" id="states" role="tabpanel">
-                    <div class="card shadow-sm border-0 rounded-3">
-                        <div class="card-body p-4">
-                            <h5 class="fw-bold mb-3">{% translate "Traceability Automation" %}</h5>
-                            <p class="text-muted">{% translate "Enable automatic Digital Traceability Event (DTE) issuance when items enter specific states." %}</p>
+                    <!-- Schemas Tab -->
+                    <div class="tab-pane fade" id="schemas" role="tabpanel">
+                        <div class="row">
+                            <div class="col-12 col-lg-10 col-xl-8">
+                                <h5 class="fw-bold mb-2">{% translate "Protocol Schemas" %}</h5>
+                                <p class="text-muted mb-4">{% translate "Select the global standard you are following (e.g., UNTP) and map the correct schemas for your passports and tracking records." %}</p>
 
-                            <form method="post">
-                                {% csrf_token %}
-                                <input type="hidden" name="action" value="save_states">
+                                <form method="post" novalidate>
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="save_dpp">
+                                    {{ form.api_base_url.as_hidden }}
+                                    {{ form.signing_auth_token.as_hidden }}
+                                    {{ form.issuer_did.as_hidden }}
 
-                                <div class="table-responsive mt-4 border rounded">
-                                    <table class="table table-hover align-middle mb-0">
-                                        <thead class="table-light">
-                                            <tr>
-                                                <th scope="col" style="width: 15%;" class="ps-3">{% translate "Order" %}</th>
-                                                <th scope="col" style="width: 65%;">{% translate "State Name" %}</th>
-                                                <th scope="col" style="width: 20%;" class="text-center">{% translate "Auto-issue DTE" %}</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
+                                    {% if not api_connected %}
+                                    <div class="alert alert-warning border-0 d-flex align-items-center mb-4 shadow-sm">
+                                        <i class="bi bi-wifi-off fs-4 me-3"></i>
+                                        <div>
+                                            <strong>{% translate "Cannot load protocol schemas" %}</strong><br>
+                                            <span class="small">{% translate "Please check your Identity & Connection settings in the previous tab first to unlock this section." %}</span>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+
+                                    <fieldset {% if not api_connected %}disabled{% endif %}>
+                                        <div class="p-4 bg-light rounded-3 border {% if not api_connected %}opacity-50{% endif %}">
+                                            <div class="row g-3">
+                                                <div class="col-12">
+                                                    <h6 class="fw-bold text-muted small text-uppercase mb-2">{% translate "Standard Version" %}</h6>
+                                                    {% bootstrap_field form.active_dpp_standard %}
+                                                </div>
+                                                <div class="col-12 col-md-4 border-top pt-3 mt-3">{% bootstrap_field form.dpp_schema %}</div>
+                                                <div class="col-12 col-md-4 border-top pt-3 mt-3">{% bootstrap_field form.dte_schema %}</div>
+                                                <div class="col-12 col-md-4 border-top pt-3 mt-3">{% bootstrap_field form.dfr_schema %}</div>
+                                            </div>
+                                        </div>
+                                    </fieldset>
+
+                                    <div class="d-flex justify-content-end mt-4">
+                                        <button class="btn btn-primary px-4 shadow-sm" type="submit" {% if not api_connected %}disabled{% endif %}>
+                                            {% translate "Save Schema Mappings" %}
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- DCC settings -->
+                    <div class="tab-pane fade" id="claims" role="tabpanel">
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+                                    <div>
+                                        <h5 class="fw-bold mb-1">{% translate "Facility Conformity Claims (DCC)" %}</h5>
+                                        <p class="text-muted mb-0">{% translate "Add your facility's certifications, audits, or sustainability claims. These will be issued as Digital Conformity Credentials (DCC) and attached to your Facility Record." %}</p>
+                                    </div>
+                                    <button type="button" class="btn btn-primary shadow-sm mt-3 mt-md-0" data-bs-toggle="modal" data-bs-target="#newClaimModal">
+                                        {% translate "Add New Conformity Claim" %}
+                                    </button>
+                                </div>
+
+                                <form method="post" novalidate id="claimsForm">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="save_claims">
+                                    {{ claim_formset.management_form }}
+
+                                    <div class="row g-4">
+                                        {% for claim_form in claim_formset %}
+                                            {% if claim_form.instance.pk %}
+                                            <div class="col-12 col-lg-6 col-xl-4">
+                                                <div class="card h-100 shadow-sm border-0 bg-light">
+                                                    <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+                                                        <h6 class="mb-0 fw-bold text-secondary text-truncate pe-2">
+                                                            {{ claim_form.instance.topic_code|default:"Claim" }}
+                                                        </h6>
+                                                        {% if claim_formset.can_delete %}
+                                                            <div class="form-check text-danger mb-0">
+                                                                {{ claim_form.DELETE }}
+                                                                <label class="form-check-label fw-semibold small" for="{{ claim_form.DELETE.id_for_label }}" title="{% translate 'Mark for deletion' %}">
+                                                                    {% translate "Remove" %}
+                                                                </label>
+                                                            </div>
+                                                        {% endif %}
+                                                    </div>
+                                                    <div class="card-body p-4">
+                                                        {% for hidden in claim_form.hidden_fields %}{{ hidden }}{% endfor %}
+                                                        {% if claim_form.non_field_errors %}
+                                                            <div class="alert alert-danger py-2">{{ claim_form.non_field_errors }}</div>
+                                                        {% endif %}
+
+                                                        <div class="row g-3">
+                                                            <div class="col-12">{% bootstrap_field claim_form.topic_code layout="floating" %}</div>
+                                                            <div class="col-12">{% bootstrap_field claim_form.assessment_date layout="floating" %}</div>
+                                                            <div class="col-12">{% bootstrap_field claim_form.admin_name layout="floating" %}</div>
+                                                            <div class="col-12">{% bootstrap_field claim_form.evidence_url layout="floating" %}</div>
+
+                                                            <div class="d-none">
+                                                                {% bootstrap_field claim_form.description %}
+                                                                {% bootstrap_field claim_form.admin_url %}
+                                                                {% bootstrap_field claim_form.evidence_name %}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            {% else %}
+                                            <!-- NEW CLAIM MODAL -->
+                                            <div class="modal fade text-start" id="newClaimModal" tabindex="-1" aria-labelledby="newClaimModalLabel" aria-hidden="true">
+                                                <div class="modal-dialog modal-dialog-centered modal-lg">
+                                                    <div class="modal-content">
+                                                        <div class="modal-header bg-light">
+                                                            <h5 class="modal-title fw-bold" id="newClaimModalLabel">
+                                                                {% translate "Add New Conformity Claim" %}
+                                                            </h5>
+                                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% translate 'Close' %}"></button>
+                                                        </div>
+                                                        <div class="modal-body p-4">
+                                                            {% for hidden in claim_form.hidden_fields %}{{ hidden }}{% endfor %}
+
+                                                            <div id="newClaimFormErrors">
+                                                                {% if claim_form.errors or claim_form.non_field_errors %}
+                                                                    <div class="alert alert-danger py-2">{% translate "Please correct the errors below." %}</div>
+                                                                {% endif %}
+                                                            </div>
+
+                                                            <h6 class="text-muted fw-bold text-uppercase mb-3" style="font-size: 0.75rem; letter-spacing: 0.5px;">{% translate "Claim Details" %}</h6>
+                                                            <div class="row g-3 mb-4">
+                                                                <div class="col-12 col-md-6">{% bootstrap_field claim_form.topic_code %}</div>
+                                                                <div class="col-12 col-md-6">{% bootstrap_field claim_form.assessment_date %}</div>
+                                                                <div class="col-12">{% bootstrap_field claim_form.description %}</div>
+                                                            </div>
+
+                                                            <h6 class="text-muted fw-bold text-uppercase mb-3 mt-4 border-top pt-3" style="font-size: 0.75rem; letter-spacing: 0.5px;">{% translate "Issuing Authority" %}</h6>
+                                                            <div class="row g-3 mb-4">
+                                                                <div class="col-12 col-md-6">{% bootstrap_field claim_form.admin_name %}</div>
+                                                                <div class="col-12 col-md-6">{% bootstrap_field claim_form.admin_url %}</div>
+                                                            </div>
+
+                                                            <h6 class="text-muted fw-bold text-uppercase mb-3 mt-4 border-top pt-3" style="font-size: 0.75rem; letter-spacing: 0.5px;">{% translate "Validation Evidence" %}</h6>
+                                                            <div class="row g-3">
+                                                                <div class="col-12 col-md-6">{% bootstrap_field claim_form.evidence_name %}</div>
+                                                                <div class="col-12 col-md-6">{% bootstrap_field claim_form.evidence_url %}</div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="modal-footer bg-light">
+                                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% translate "Cancel" %}</button>
+                                                            <button type="submit" class="btn btn-primary px-4 shadow-sm" onclick="document.getElementById('claimsForm').submit();">
+                                                                 {% translate "Save New Claim" %}
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+
+                                    <div class="d-flex justify-content-end mt-4 pt-3 border-top">
+                                        <button class="btn btn-success px-4 shadow-sm" type="submit">
+                                            {% translate "Save Changes to Claims" %}
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- DFR Tab -->
+                    <div class="tab-pane fade" id="dfr" role="tabpanel">
+                        <div class="row">
+                            <div class="col-12 col-lg-10 col-xl-8">
+                                <h5 class="fw-bold mb-2">{% translate "Digital Facility Record (DFR)" %}</h5>
+
+                                {% if is_institution_complete %}
+                                    <p class="text-muted mb-4">{% translate "Publish a secure, digital record for your facility to the network. This DFR acts as the anchor for your product passports and automatically bundles your Conformity Claims." %}</p>
+
+                                    <form id="dfr-issue-form" method="post" action="{% url 'admin:institution_dfr_issue' user.institution.pk %}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="latitude">
+                                        <input type="hidden" name="longitude">
+
+                                        <div class="d-flex flex-wrap gap-3 p-4 bg-light rounded-3 border">
+                                            <button type="button" class="btn btn-primary fw-semibold shadow-sm" onclick="locateAndSubmit(event, this)">
+                                                <i class="bi bi-geo-alt me-1"></i> {% translate 'Issue with Geolocalization' %}
+                                            </button>
+
+                                            <button type="button" class="btn btn-outline-primary fw-semibold" onclick="submitWithoutLocation(event, this)">
+                                                {% translate "Issue DFR" %}
+                                            </button>
+
+                                            {% with record=user.institution.latest_facility_credential %}
+                                                {% if record %}
+                                                    <a href="{% url 'evidence:credential_detail' uuid=record.uuid %}" class="btn btn-outline-dark fw-semibold ms-auto bg-white shadow-sm">
+                                                        {% translate "View Published DFR" %}
+                                                    </a>
+                                                {% endif %}
+                                            {% endwith %}
+                                        </div>
+                                    </form>
+                                {% else %}
+                                    <div class="alert alert-warning border-0 d-flex align-items-center mt-3 shadow-sm">
+                                        <i class="bi bi-exclamation-triangle fs-4 me-3"></i>
+                                        <div>
+                                            <strong>{% translate "Action Required" %}</strong><br>
+                                            <span class="small">{% translate "You must fill out your organization's core details in the 'Organization Profile' settings before you can publish a facility record." %}</span>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Traceability Tab -->
+                    <div class="tab-pane fade" id="states" role="tabpanel">
+                        <div class="row">
+                            <div class="col-12 col-lg-10 col-xl-8">
+                                <h5 class="fw-bold mb-2">{% translate "Digital Traceability Events (DTE) Automation" %}</h5>
+                                <p class="text-muted mb-4">{% translate "Decide what happens when a device changes its status. You can turn on 'Auto-Issue DTE' to automatically publish a secure traceability event to the network when a specific status is selected." %}</p>
+
+                                <form method="post">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="save_states">
+
+                                    <div class="table-responsive border rounded shadow-sm">
+                                        <table class="table table-hover align-middle mb-0 bg-white">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th scope="col" style="width: 15%;" class="ps-4">{% translate "Order" %}</th>
+                                                    <th scope="col" style="width: 65%;">{% translate "State Name" %}</th>
+                                                    <th scope="col" style="width: 20%;" class="text-center pe-4">{% translate "Auto-Issue DTE" %}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
                                             {% for state_def in states %}
                                             <tr>
-                                                <td class="text-muted ps-3">{{ state_def.order }}</td>
-                                                <td class="fw-semibold">{{ state_def.state }}</td>
-                                                <td class="text-center">
+                                                <td class="ps-4">
+                                                    <span class="badge {% if state_def.auto_issue_dte %}bg-primary{% else %}btn-green-user{% endif %} rounded-pill">
+                                                        {{ state_def.order }}
+                                                    </span>
+                                                </td>
+                                                <td class="fw-semibold">
+                                                    {{ state_def.state }}
+                                                </td>
+                                                <td class="text-center pe-4">
                                                     <input type="hidden" name="state_ids" value="{{ state_def.id }}">
-                                                    <div class="form-check d-inline-block form-switch mb-0">
-                                                        <input class="form-check-input cursor-pointer" type="checkbox" role="switch" name="state_dte_{{ state_def.id }}" {% if state_def.auto_issue_dte %}checked{% endif %}>
+
+                                                    <div class="d-flex align-items-center justify-content-end gap-3">
+                                                        <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#dteModal{{ state_def.id }}">
+                                                            {% translate 'Edit Details' %}
+                                                        </button>
+
+                                                        <div class="form-check form-switch mb-0 fs-5">
+                                                            <input class="form-check-input cursor-pointer mt-0" type="checkbox" role="switch" name="state_dte_{{ state_def.id }}" {% if state_def.auto_issue_dte %}checked{% endif %}>
+                                                        </div>
                                                     </div>
                                                 </td>
                                             </tr>
                                             {% empty %}
                                             <tr>
-                                                <td colspan="3" class="text-center text-muted py-4">
+                                                <td colspan="3" class="text-center text-muted py-5">
                                                     {% translate "No states defined yet." %}
                                                 </td>
                                             </tr>
                                             {% endfor %}
-                                        </tbody>
-                                    </table>
-                                </div>
+                                            </tbody>
+                                        </table>
+                                    </div>
 
-                                <div class="text-end mt-4 pt-3 border-top">
-                                    <button class="btn btn-success px-5 fw-semibold" type="submit">
-                                        <i class="bi bi-check2-circle me-1"></i> {% translate 'Save Automation Rules' %}
-                                    </button>
-                                </div>
-                            </form>
+                                    <!-- Modals for Traceability Event Configuration -->
+                                    {% for state_def in states %}
+                                        <div class="modal fade text-start" id="dteModal{{ state_def.id }}" tabindex="-1" aria-labelledby="dteModalLabel{{ state_def.id }}" aria-hidden="true">
+                                            <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+                                                <div class="modal-content">
+                                                    <div class="modal-header bg-light">
+                                                        <h5 class="modal-title fw-bold" id="dteModalLabel{{ state_def.id }}">
+                                                            {% translate "Traceability Event (DTE) Details:" %} <span class="text-primary">{{ state_def.state }}</span>
+                                                        </h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% translate 'Close' %}"></button>
+                                                    </div>
+                                                    <div class="modal-body p-4 bg-white">
+
+                                                    {% if form.active_dpp_standard.value == 'untp-0.7.0' %}
+
+                                                        {% include "dte_config_untp_070.html" with state_obj=state_def is_admin=True %}
+
+                                                    {% elif form.active_dpp_standard.value == 'untp-1.0.0' %}
+                                                        <div class="alert alert-info py-2">UNTP 1.0.0 fields will render here.</div>
+                                                    {% else %}
+                                                        <div class="alert alert-info">
+                                                            {% trans "Schema Configuration form for" %}
+                                                            <strong>{{ form.active_dpp_standard.value }}</strong>
+                                                            {% trans "is not yet defined." %}
+                                                        </div>
+                                                    {% endif %}
+
+
+                                                        <div class="modal-footer bg-light">
+                                                    <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">
+                                                        {% translate "Confirm Configuration" %}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    </div>
+                                    {% endfor %}
+
+
+                                    <div class="d-flex justify-content-end mt-4 pt-3">
+                                        <button class="btn btn-primary px-4 shadow-sm" type="submit">
+                                            {% translate "Save Tracking Rules" %}
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
                         </div>
                     </div>
-                </div>
 
             </div>
         </div>
@@ -303,11 +442,86 @@
 </div>
 
 <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Maintain active tab state on reload / redirect
+        const hash = window.location.hash;
+        if (hash) {
+            const triggerEl = document.querySelector(`button[data-bs-target="${hash}"]`);
+            if (triggerEl) {
+                const tab = new bootstrap.Tab(triggerEl);
+                tab.show();
+            }
+        }
+
+        // Update URL hash when clicking tabs
+        const tabButtons = document.querySelectorAll('#config-tabs button[data-bs-toggle="tab"]');
+        tabButtons.forEach(button => {
+            button.addEventListener('shown.bs.tab', event => {
+                history.replaceState(null, null, event.target.getAttribute('data-bs-target'));
+            });
+        });
+
+        // Toggle Movement section based on Event Type selection
+        document.querySelectorAll('.event-type-selector').forEach(function(select) {
+            select.addEventListener('change', function() {
+                const targetId = this.getAttribute('data-target-id');
+                const moveSection = document.getElementById('move_section_' + targetId);
+                if (this.value === 'MoveEvent') {
+                    moveSection.style.display = 'block';
+                } else {
+                    moveSection.style.display = 'none';
+                    const idInput = document.querySelector(`input[name="dte_to_fac_id_${targetId}"]`);
+                    const nameInput = document.querySelector(`input[name="dte_to_fac_name_${targetId}"]`);
+                    const consInput = document.querySelector(`input[name="dte_consignment_${targetId}"]`);
+                    if (idInput) idInput.value = '';
+                    if (nameInput) nameInput.value = '';
+                    if (consInput) consInput.value = '';
+                }
+            });
+        });
+
+        // Auto-open DCC modal if there are form validation errors
+        const newClaimErrors = document.querySelector('#newClaimFormErrors .alert');
+        if (newClaimErrors) {
+            const newClaimModal = new bootstrap.Modal(document.getElementById('newClaimModal'));
+            newClaimModal.show();
+        }
+
+        // Master DPP Toggle reactivity
+        const masterToggle = document.getElementById('masterDppToggle');
+        const connectionWrapper = document.getElementById('connectionSettingsWrapper');
+        const navTabs = document.querySelectorAll('#config-tabs .nav-link:not([data-bs-target="#connection"])');
+
+        function updateDppUIState() {
+            const isEnabled = masterToggle.checked;
+
+            if (connectionWrapper) {
+                connectionWrapper.style.opacity = isEnabled ? '1' : '0.5';
+                connectionWrapper.style.pointerEvents = isEnabled ? 'auto' : 'none';
+            }
+
+            navTabs.forEach(tab => {
+                if (isEnabled) {
+                    tab.classList.remove('disabled');
+                    tab.removeAttribute('aria-disabled');
+                } else {
+                    tab.classList.add('disabled');
+                    tab.setAttribute('aria-disabled', 'true');
+                }
+            });
+        }
+
+        if (masterToggle) {
+            masterToggle.addEventListener('change', updateDppUIState);
+            updateDppUIState();
+        }
+    });
+
     function locateAndSubmit(e, btn) {
         e.preventDefault();
         const form = document.getElementById('dfr-issue-form');
         btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>{% translate "Locating..." %}';
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>{% translate "Publishing..." %}';
 
         const doSubmit = () => form.submit();
         if (navigator.geolocation) {
@@ -332,7 +546,7 @@
         e.preventDefault();
         const form = document.getElementById('dfr-issue-form');
         btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>{% translate "Issuing..." %}';
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>{% translate "Publishing..." %}';
 
         form.querySelector('[name="latitude"]').value = '';
         form.querySelector('[name="longitude"]').value = '';

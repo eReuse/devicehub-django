@@ -302,6 +302,11 @@ class InstitutionDPPSettings(models.Model):
         related_name='integration_settings'
     )
 
+    dpp_enabled = models.BooleanField(
+        default=False,
+        verbose_name=_("Enable DPP Features")
+    )
+
     api_base_url = models.URLField(
         _("Signing Service Base URL"),
         max_length=1024,
