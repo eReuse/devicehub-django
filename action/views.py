@@ -20,8 +20,6 @@ logger = logging.getLogger('django')
 
 class ChangeStateView(LoginRequiredMixin, FormView):
     form_class = ChangeStateForm
-
-    # it is a post
     http_method_names = ['post']
 
     def form_valid(self, form):
@@ -34,6 +32,17 @@ class ChangeStateView(LoginRequiredMixin, FormView):
         device = Device(id=self.device_id)
         logger.info(f"User {self.request.user.id} changing state for device {self.device_id}: {previous_state} -> {new_state}")
 
+        #  check if auto-issuance is enabled
+        state_def = StateDefinition.objects.filter(
+            state=new_state,
+            institution=self.request.user.institution
+        ).first()
+        auto_issue_dte = state_def.auto_issue_dte if state_def else False
+
+        dpp_settings = self.request.user.institution.integration_settings
+        is_dpp_active = dpp_settings.dpp_enabled if dpp_settings else False
+
+        # apply local state changes and user notes
         with transaction.atomic():
             State.objects.create(
                 snapshot_uuid=snapshot_uuid,
@@ -50,35 +59,70 @@ class ChangeStateView(LoginRequiredMixin, FormView):
                 institution=self.request.user.institution,
             )
 
-        service = CredentialService(self.request.user)
-        did_error = service.ensure_device_did(device)
-        facility_info = service.get_facility_info(self.request)
+            if comment:
+                Note.objects.create(
+                    snapshot_uuid=snapshot_uuid,
+                    description=comment,
+                    user=self.request.user,
+                    institution=self.request.user.institution,
+                )
+                note_log = _("<Created> Note: '{}'").format(comment)
+                DeviceLog.objects.create(
+                    snapshot_uuid=snapshot_uuid,
+                    event=note_log,
+                    user=self.request.user,
+                    institution=self.request.user.institution,
+                )
 
-        if did_error:
-            logger.error(f"DID configuration failed for device {device.id}. Error: {did_error}")
-            messages.warning(self.request, _("Local state updated to '{}', but DID configuration failed. Credential skipped.").format(new_state))
-            return super().form_valid(form)
+        # 2. Check if we should issue a Traceability Event (DTE)
+        if auto_issue_dte and is_dpp_active:
+            service = CredentialService(self.request.user)
+            did_error = service.ensure_device_did(device)
+            facility_info = service.get_facility_info(self.request)
 
-        credential, error = service.issue_credential(
-            workflow_type='traceability',
-            build_kwargs={
-                'event_type': 'ModifyEvent',
-                'device': device,
-                'institution': self.request.user.institution,
-                'facility_info': facility_info,
-                'previous_state': previous_state,
-                'new_state': new_state,
-                'comment': comment
-            },
-            description=f"State Change: {previous_state} -> {new_state}"
-        )
+            if did_error:
+                logger.error(f"DID configuration failed for device {device.id}. Error: {did_error}")
+                messages.error(self.request, _("Local state updated to '{}', but DID configuration failed. Traceability Event skipped.").format(new_state))
+                return super().form_valid(form)
 
-        if error:
-            logger.error(f"Credential issuance failed for device {self.device_id}. Error: {error}")
-            messages.warning(self.request, _("Local state updated to '{}', but credential issuance failed: {}").format(new_state, error))
+
+            default_config = state_def.dte_config if state_def and state_def.dte_config else {}
+            overridden_config = dict(default_config)
+
+            #check for dte override config
+            for key, value in self.request.POST.items():
+                if key.startswith('dte_cfg_'):
+                    config_key = key.replace('dte_cfg_', '')
+                    if value.strip():
+                        overridden_config[config_key] = value.strip()
+                    else:
+                        overridden_config.pop(config_key, None)
+
+
+            credential, error = service.issue_credential(
+                workflow_type='traceability',
+                build_kwargs={
+                    'event_type': 'ModifyEvent',
+                    'device': device,
+                    'institution': self.request.user.institution,
+                    'facility_info': facility_info,
+                    'previous_state': previous_state,
+                    'new_state': new_state,
+                    'comment': comment,
+                    'dte_config': overridden_config
+                },
+                description=f"State Change: {previous_state} -> {new_state}"
+            )
+
+            if error:
+                logger.error(f"Credential issuance failed for device {self.device_id}. Error: {error}")
+                messages.error(self.request, _("Local state updated to '{}', but Traceability Event issuance failed: {}").format(new_state, error))
+            else:
+                logger.info(f"Successfully issued traceability credential for device {self.device_id}.")
+                messages.success(self.request, _("State changed to '{}' and Traceability Event issued successfully!").format(new_state))
         else:
-            logger.info(f"Successfully issued traceability credential for device {self.device_id}.")
-            messages.success(self.request, _("State changed to '{}' and Traceability Credential issued successfully!").format(new_state))
+            # state changed locally only
+            messages.success(self.request, _("State changed to '{}' locally.").format(new_state))
 
         return super().form_valid(form)
 
@@ -112,6 +156,12 @@ class BulkStateChangeView(DashboardView, View):
             return redirect(referer)
 
         new_state = state_def.state
+
+        comment = request.POST.get(f'comment_{state_id}', request.POST.get('comment', '')).strip()
+        posted_devices = request.POST.getlist('devices')
+        if posted_devices:
+            request.session['devices'] = posted_devices
+
         selected_devices = self.get_session_devices()
 
         if not selected_devices:
@@ -120,11 +170,8 @@ class BulkStateChangeView(DashboardView, View):
 
         logger.info(f"User {request.user.id} initiating bulk state change to '{new_state}' for {len(selected_devices)} products.")
 
-        service = CredentialService(self.request.user)
-        facility_info = service.get_facility_info(self.request)
-
-        success_count = 0
         error_count = 0
+        local_success_count = 0
 
 
         for dev in selected_devices:
@@ -153,42 +200,33 @@ class BulkStateChangeView(DashboardView, View):
                         institution=self.request.user.institution,
                     )
 
-                did_error = service.ensure_device_did(dev)
-                if did_error:
-                    logger.error(f"Bulk change DID error for device {dev.id}: {did_error}")
-                    error_count += 1
-                    continue
+                    if comment:
+                        Note.objects.create(
+                            snapshot_uuid=snapshot_uuid,
+                            description=comment,
+                            user=self.request.user,
+                            institution=self.request.user.institution,
+                        )
+                        note_log = _("<Created> Note: '{}'").format(comment)
+                        DeviceLog.objects.create(
+                            snapshot_uuid=snapshot_uuid,
+                            event=note_log,
+                            user=self.request.user,
+                            institution=self.request.user.institution,
+                        )
 
-                credential, error = service.issue_credential(
-                    workflow_type='traceability',
-                    build_kwargs={
-                        'event_type': 'ModifyEvent',
-                        'device': dev,
-                        'institution': self.request.user.institution,
-                        'facility_info': facility_info,
-                        'previous_state': previous_state,
-                        'new_state': new_state,
-                    },
-                    description=f"Bulk State Change: {previous_state} -> {new_state}"
-                )
-
-                if error:
-                    logger.error(f"Bulk change credential error for device {dev.id}: {error}")
-                    error_count += 1
-                else:
-                    success_count += 1
+                    local_success_count += 1
 
             except Exception as e:
                 logger.exception(f"Unexpected error during bulk state update for device {dev.id}: {str(e)}")
                 error_count += 1
 
-        if success_count > 0:
-            messages.success(request, _("State changed and credentials issued successfully for {} devices.").format(success_count))
+        if local_success_count > 0:
+            messages.success(request, _("State changed to '{state}' successfully for {count} devices.").format(state=new_state, count=local_success_count))
         if error_count > 0:
-            messages.warning(request, _("Local state updated, but API credentials failed for {} devices.").format(error_count))
+            messages.error(request, _("Failed to change state for {count} devices.").format(count=error_count))
 
         return redirect(referer)
-
 
 class AddNoteView(LoginRequiredMixin, FormView):
     form_class = AddNoteForm
