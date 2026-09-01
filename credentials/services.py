@@ -1,3 +1,4 @@
+import uuid
 import logging
 import requests
 from django.urls import reverse
@@ -246,6 +247,18 @@ class CredentialService:
                     logger.error(f"API issued success response but payload format is invalid. Endpoint: {endpoint}")
                     return None, "API success but response format was invalid."
 
+            #fetch credential uui if it has any, else issue a new one
+            credential_id = signed_credential.get("id", "")
+            extracted_uuid = None
+            if credential_id:
+                try:
+                    uuid_str = credential_id.split("/")[-1]
+                    extracted_uuid = uuid.UUID(uuid_str)
+                except (ValueError, IndexError):
+                    extracted_uuid = None
+
+            final_uuid = extracted_uuid if extracted_uuid else uuid.uuid4()
+
             cred_prop = CredentialProperty.objects.create(
                 sysprop=sysprop_instance,
                 owner=self.institution,
@@ -253,7 +266,8 @@ class CredentialService:
                 value=signed_credential.get('id'),
                 credential=signed_credential,
                 user=self.user,
-                description=description
+                description=description,
+                uuid=final_uuid
             )
 
             logger.info(f"Successfully issued '{db_key}' credential. Stored with CredentialProperty ID: {cred_prop.pk}.")
