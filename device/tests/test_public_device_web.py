@@ -1,11 +1,14 @@
 import uuid
 
+from datetime import timedelta
+
 from django.test import TestCase, Client
 from django.urls import reverse
+from django.utils import timezone
 from unittest.mock import patch
 from device.views import PublicDeviceWebView
 from device.tests.test_mock_device import TestDevice
-from evidence.models import SystemProperty
+from evidence.models import RootAlias, SystemProperty
 from user.models import User, Institution
 
 
@@ -121,3 +124,78 @@ class PublicDeviceWebViewTests(TestCase):
         self.assertEqual(json_data['serial_number'], 'SN123456')
         self.assertEqual(json_data['uuids'], [str(self.property_uuid)])
         self.assertEqual(json_data['hids'], [self.test_id])
+
+
+class PublicDeviceWebViewNotFoundTests(TestCase):
+    """The view resolves the owner from the id itself, so an id nobody has
+    ever registered cannot be rendered."""
+
+    def setUp(self):
+        self.client = Client()
+        self.unknown_id = "custom_id:ghost"
+        self.url = reverse('device:device_web',
+                           kwargs={'pk': self.unknown_id})
+
+    def test_unknown_device_returns_404(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 404)
+
+    def test_unknown_device_returns_404_as_json(self):
+        response = self.client.get(self.url, HTTP_ACCEPT='application/json')
+        self.assertEqual(response.status_code, 404)
+
+
+class PublicDeviceWebViewOwnerResolutionTests(TestCase):
+    """Two institutions can share a value, and the public url names none of
+    them, so the owner is the one holding the most recent evidence."""
+
+    shared_value = "ereuse24:aaaaaa"
+    canonical_value = "ereuse24:bbbbbb"
+
+    def setUp(self):
+        self.older = Institution.objects.create(name="Older")
+        self.newer = Institution.objects.create(name="Newer")
+        self.view = PublicDeviceWebView()
+
+    def property_for(self, owner, value, created):
+        prop = SystemProperty.objects.create(
+            owner=owner, uuid=uuid.uuid4(), value=value)
+        # created is auto_now_add, so it can only be set afterwards
+        SystemProperty.objects.filter(pk=prop.pk).update(created=created)
+        return prop
+
+    def test_owner_is_the_one_with_the_most_recent_property(self):
+        # inserted first, so an unordered query would pick this one
+        self.property_for(
+            self.older, self.shared_value, timezone.now() - timedelta(days=1))
+        self.property_for(self.newer, self.shared_value, timezone.now())
+
+        self.assertEqual(
+            self.view.get_owner_for_device(self.shared_value), self.newer)
+
+    def test_owner_falls_back_to_the_most_recent_root_alias(self):
+        for owner, days in [(self.older, 1), (self.newer, 0)]:
+            moment = timezone.now() - timedelta(days=days)
+            RootAlias.objects.create(
+                owner=owner,
+                alias=f"custom_id:{owner.name}",
+                root=self.canonical_value,
+                created=moment,
+                updated=moment,
+            )
+
+        self.assertEqual(
+            self.view.get_owner_for_device(self.canonical_value), self.newer)
+
+    @patch('device.views.Device')
+    def test_device_is_built_once_with_the_resolved_owner(self, MockDevice):
+        self.property_for(
+            self.newer, self.shared_value, timezone.now())
+        url = reverse('device:device_web',
+                      kwargs={'pk': self.shared_value})
+
+        self.client.get(url)
+
+        self.assertEqual(MockDevice.call_count, 1)
+        self.assertEqual(MockDevice.call_args.kwargs['owner'], self.newer)
+
