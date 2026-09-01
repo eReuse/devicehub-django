@@ -42,7 +42,7 @@
         <div id="single-device-note" class="alert alert-info d-flex align-items-center mb-4 shadow-sm d-none" role="alert">
             <div>
                 <strong>{% trans "Note:" %}</strong>
-                {% trans "Providing a Custom ID or uploading an image limits creation to a single device." %}
+                {% trans "Providing a Custom ID or uploading an image limits creation to a single product." %}
             </div>
         </div>
 
@@ -50,7 +50,7 @@
             <div class="col-lg-7">
                 <div class="card shadow-sm h-100">
                     <div class="card-header bg-white">
-                        <h5 class="mb-0 text-secondary">{% trans 'Device Information' %}</h5>
+                        <h5 class="mb-0 text-secondary">{% trans 'Product Information' %}</h5>
                     </div>
                     <div class="card-body">
                         <div class="row mb-4">
@@ -138,7 +138,7 @@
         <div class="d-flex justify-content-end gap-2 py-4 mt-2">
             <a class="btn btn-light border" href="{% url 'dashboard:unassigned' %}">{% translate "Cancel" %}</a>
             <button type="submit" class="btn btn-success px-5 shadow-sm">
-                <i class="bi bi-check2-circle me-1"></i> {% translate "Save Device" %}
+                <i class="bi bi-check2-circle me-1"></i> {% translate "Save Product" %}
             </button>
         </div>
     </form>
@@ -260,16 +260,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const total = document.getElementById('id_form-TOTAL_FORMS');
     const tpl = document.getElementById('empty-form')?.innerHTML || '';
     const sug = JSON.parse(document.getElementById('device-suggestions-data')?.textContent || '{}');
-    const known = Object.values(sug).flat().reduce((acc, curr) => ({...acc, [curr.name]: curr}), {});
+    const known = new Set(Object.values(sug).flat());
 
-    // replace raw inputs with formatted labels
+    // show the attribute name as plain text instead of an editable input
     const formatRow = row => {
         const n = row.querySelector('input[name$="-name"]');
-        const v = row.querySelector('input[name$="-value"]');
-        if (n && !n.hidden && known[n.value]) {
+        if (n && !n.hidden && known.has(n.value)) {
             n.hidden = true;
-            n.insertAdjacentHTML('beforebegin', `<span class="form-control-plaintext fw-bold text-secondary ps-2">${known[n.value].label.split(' (')[0]}</span>`);
-            if (v) v.placeholder = known[n.value].label;
+            const label = document.createElement('span');
+            label.className = 'form-control-plaintext fw-bold text-secondary ps-2';
+            label.textContent = n.value;
+            n.insertAdjacentElement('beforebegin', label);
         }
     };
 
@@ -292,7 +293,7 @@ document.addEventListener('DOMContentLoaded', () => {
         typeSel.onchange = () => {
             container.innerHTML = '';
             total.value = 0;
-            (sug[typeSel.value] || []).forEach(attr => addRow(attr.name));
+            (sug[typeSel.value] || []).forEach(name => addRow(name));
         };
 
         if (!document.querySelector('.text-danger, .alert-danger') && !container.querySelector('input[name$="-name"]')?.value && typeSel.value) {

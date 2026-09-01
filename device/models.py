@@ -1,5 +1,6 @@
 from django.db import models
 from django.db.models import Max
+from django.db.models.functions import Lower
 from django.urls import reverse
 
 from utils.constants import ALGOS
@@ -7,9 +8,9 @@ from evidence.models import SystemProperty, UserProperty, Evidence, RootAlias
 from django.utils.dateparse import parse_datetime
 from lot.models import DeviceLot, DeviceBeneficiary
 from action.models import State
-from user.models import InstitutionSettings, LabelVersion, QRContentType
-
+from user.models import InstitutionSettings, LabelVersion, QRContentType, Institution
 from django.utils.translation import gettext_lazy as _
+
 
 class Device:
     class Types(models.TextChoices):
@@ -665,11 +666,11 @@ class Device:
             qr_payload = ""
 
         elif settings.qr_content_type == QRContentType.PUBLIC_VIEW:
-            path = reverse('device:device_web', kwargs={'pk': self.pk})
+            path = reverse('product:device_web', kwargs={'pk': self.pk})
             qr_payload = request.build_absolute_uri(path)
 
         elif settings.qr_content_type == QRContentType.DEVICE_INVENTORY:
-            path = reverse('device:details', kwargs={'pk': self.pk})
+            path = reverse('product:details', kwargs={'pk': self.pk})
             qr_payload = request.build_absolute_uri(path)
 
         else:
@@ -684,7 +685,7 @@ class Device:
             'ram_total': _('Total RAM'),
             'ram_type': _('RAM Type'),
             'drive': _('Storage Drive'),
-            'type': _('Device Type'),
+            'type': _('Product Type'),
         }
 
         export_data = self.components_export()
@@ -703,6 +704,193 @@ class Device:
             'include_logo': settings.qr_include_logo,
             'logo_url': self.owner.logo if settings.qr_include_logo and self.owner.logo else None,
         }
+
+
+DEFAULT_PRODUCT_TYPES = {
+    "Desktop": [
+        "model",
+        "manufacturer",
+        "cpu_model",
+        "ram_total",
+        "storage",
+        "gpu_model",
+    ],
+    "Laptop": [
+        "model",
+        "manufacturer",
+        "cpu_model",
+        "ram_total",
+        "storage",
+        "screen_size",
+        "battery_health",
+    ],
+    "Server": [
+        "model",
+        "manufacturer",
+        "cpu_model",
+        "ram_total",
+        "storage",
+        "raid_controller",
+        "power_supply",
+    ],
+    "GraphicCard": [
+        "model",
+        "manufacturer",
+        "vram_capacity",
+        "vram_type",
+        "core_clock",
+    ],
+    "HardDrive": ["model", "manufacturer", "capacity", "interface", "rpm"],
+    "SolidStateDrive": [
+        "model",
+        "manufacturer",
+        "capacity",
+        "interface",
+        "health_tbw",
+    ],
+    "Motherboard": [
+        "model",
+        "manufacturer",
+        "socket_type",
+        "chipset",
+        "ram_slots",
+    ],
+    "NetworkAdapter": ["model", "manufacturer", "speed", "port_type"],
+    "Processor": [
+        "model",
+        "manufacturer",
+        "cpu_cores",
+        "base_clock",
+        "socket_type",
+    ],
+    "RamModule": [
+        "model",
+        "manufacturer",
+        "ram_type",
+        "capacity",
+        "speed_mhz",
+    ],
+    "SoundCard": ["model", "manufacturer", "channels", "interface"],
+    "Display": [
+        "model",
+        "manufacturer",
+        "resolution",
+        "refresh_rate",
+        "panel_type",
+    ],
+    "Battery": ["model", "manufacturer", "capacity_wh", "cycle_count"],
+    "Camera": ["model", "manufacturer", "megapixels", "max_resolution"],
+    "Switch": [
+        "model",
+        "manufacturer",
+        "ports",
+        "link_speed",
+        "poe_budget",
+        "management_type",
+    ],
+    "Router": [
+        "model",
+        "manufacturer",
+        "ports",
+        "throughput",
+        "routing_protocols",
+    ],
+    "RouterWifi": [
+        "model",
+        "manufacturer",
+        "wifi_standard",
+        "frequency_bands",
+        "antennas",
+    ],
+}
+
+
+class DeviceType(models.Model):
+    institution = models.ForeignKey(Institution, on_delete=models.CASCADE)
+    name = models.CharField(max_length=50)
+    label = models.CharField(max_length=100, blank=True, default="")
+    icon = models.CharField(max_length=50, blank=True, default="")
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ['order']
+        constraints = [
+            models.UniqueConstraint(
+                'institution',
+                Lower('name'),
+                name='unique_institution_device_type',
+            )
+        ]
+
+    @property
+    def display_name(self):
+        return self.label or self.name
+
+    @classmethod
+    def display_map(cls, institution):
+        """``{lowercased name: (display_name, icon)}`` for one institution.
+
+        Lists carry the type denormalized as text (ProductCache.type), with
+        whatever casing the snapshot brought, so the lookup is case-insensitive.
+        Either value may be empty; the caller decides the fallback.
+        """
+        return {
+            name.lower(): (label or name, icon)
+            for name, label, icon in cls.objects.filter(
+                institution=institution
+            ).values_list('name', 'label', 'icon')
+        }
+
+    def save(self, *args, **kwargs):
+        self.name = self.name.strip()
+        if not self.pk:
+            max_order = DeviceType.objects.filter(
+                institution=self.institution
+            ).aggregate(Max('order'))['order__max']
+            self.order = (max_order or 0) + 1
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        institution = self.institution
+        order = self.order
+        super().delete(*args, **kwargs)
+        DeviceType.objects.filter(
+            institution=institution, order__gt=order
+        ).update(order=models.F('order') - 1)
+
+    def __str__(self):
+        return f"{self.institution.name} - {self.name}"
+
+
+class DeviceTypeAttribute(models.Model):
+    device_type = models.ForeignKey(
+        DeviceType, on_delete=models.CASCADE, related_name="attributes"
+    )
+    name = models.CharField(max_length=50)
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ['order']
+        constraints = [
+            models.UniqueConstraint(
+                'device_type',
+                Lower('name'),
+                name='unique_device_type_attribute',
+            )
+        ]
+
+    def save(self, *args, **kwargs):
+        self.name = self.name.strip()
+        if not self.pk:
+            max_order = DeviceTypeAttribute.objects.filter(
+                device_type=self.device_type
+            ).aggregate(Max('order'))['order__max']
+            self.order = (max_order or 0) + 1
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.device_type.name} - {self.name}"
+
 
 # Registers the ProductCache ORM model under the `device` app. Django only
 # auto-imports `<app>.models`, so the read model defined in device/product_cache.py

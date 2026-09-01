@@ -112,10 +112,10 @@ def NewSnapshot(request, data: dict = Body(..., description="Paste the raw workb
             "details": "Could not create device property"
         }
 
-    url_args = reverse("device:details", args=(prop.value,))
+    url_args = reverse("product:details", args=(prop.value,))
     url = request.build_absolute_uri(url_args)
 
-    url_public_args = reverse("device:device_web", args=(prop.value,))
+    url_public_args = reverse("product:device_web", args=(prop.value,))
     url_public = request.build_absolute_uri(url_public_args)
 
     move_json(path_name, user.institution.name)

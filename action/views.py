@@ -42,7 +42,7 @@ class ChangeStateView(LoginRequiredMixin, FormView):
         return redirect(self.get_success_url())
 
     def get_success_url(self):
-        return self.request.META.get('HTTP_REFERER') or reverse_lazy('device:details')
+        return self.request.META.get('HTTP_REFERER') or reverse_lazy('product:details')
 
 
 class BulkStateChangeView(DashboardView, View):
@@ -53,7 +53,7 @@ class BulkStateChangeView(DashboardView, View):
         selected_devices = self.get_session_devices()
 
         if not selected_devices:
-            messages.error(request, _("No devices selected"))
+            messages.error(request, _("No products selected"))
             return self.get_success_url()
         try:
             for dev in selected_devices:
@@ -78,7 +78,7 @@ class BulkStateChangeView(DashboardView, View):
         except Exception as e:
             messages.error(
                 request,
-                _("Error changing state on devices: %s") % str(e))
+                _("Error changing state on products: %s") % str(e))
 
         return self.get_success_url()
 
@@ -114,7 +114,7 @@ class AddNoteView(LoginRequiredMixin, FormView):
         return redirect(self.get_success_url())
 
     def get_success_url(self):
-        return self.request.META.get('HTTP_REFERER') or reverse_lazy('device:details')
+        return self.request.META.get('HTTP_REFERER') or reverse_lazy('product:details')
 
 
 class UpdateNoteView(LoginRequiredMixin, UpdateView):
@@ -153,7 +153,7 @@ class UpdateNoteView(LoginRequiredMixin, UpdateView):
         return redirect(self.get_success_url())
 
     def get_success_url(self):
-        return self.request.META.get('HTTP_REFERER', reverse_lazy('device:details'))
+        return self.request.META.get('HTTP_REFERER', reverse_lazy('product:details'))
 
 
 class DeleteNoteView(LoginRequiredMixin, View):

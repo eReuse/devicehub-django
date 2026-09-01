@@ -22,7 +22,7 @@
           <h5 class="card-title mb-3">
             <i class="bi bi-key me-2"></i> {% translate 'Token Management' %}
           </h5>
-          <p class="card-text flex-grow-1">{% translate 'Manage your personal tokens for using Devicehub.' %}</p>
+          <p class="card-text flex-grow-1">{% blocktranslate with app=APP_NAME %}Manage your personal tokens for using {{ app }}.{% endblocktranslate %}</p>
           <div class="text-end">
             <a href="{% url 'user:tokens' %}" class="btn btn-outline-dark btn-sm d-inline-flex align-items-center">
               <span class="me-2">{% translate 'Go' %}</span>

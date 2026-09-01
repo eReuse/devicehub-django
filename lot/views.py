@@ -221,7 +221,7 @@ class AddToLotView(DashboardView, FormView):
         form.devices = self.get_session_devices()
         form.save()
         response = super().form_valid(form)
-        messages.success(self.request, _("Devices assigned to Lot."))
+        messages.success(self.request, _("Products assigned to Lot."))
         return response
 
     def get_success_url(self):
@@ -235,7 +235,7 @@ class DelToLotView(DashboardView, View):
         selected_devices = self.get_session_devices()
 
         if not selected_devices:
-            messages.error(request, _("No devices selected"))
+            messages.error(request, _("No products selected"))
             return redirect(reverse_lazy('dashboard:lot', kwargs={'pk': lot_id}))
         try:
             lot = Lot.objects.filter(
@@ -259,19 +259,19 @@ class DelToLotView(DashboardView, View):
 
             if beneficiary:
                 for d in beneficiary:
-                    msg = _("Device %s have a beneficiary")
+                    msg = _("Product %s have a beneficiary")
                     messages.error(request, msg % d)
                 return redirect(reverse_lazy('dashboard:lot', kwargs={'pk': lot_id}))
 
             for dev in selected_devices:
                 lot.remove(dev.id)
-            msg = _("Successfully unassigned %d devices from the lot")
+            msg = _("Successfully unassigned %d products from the lot")
             messages.success(request, msg % len(selected_devices))
 
         except Exception as e:
             messages.error(
                 request,
-                _("Error unassigning devices: %s") % str(e))
+                _("Error unassigning products: %s") % str(e))
 
         return redirect(reverse_lazy('dashboard:lot', kwargs={'pk': lot_id}))
 
@@ -942,21 +942,21 @@ class BeneficiaryView(DashboardLotMixing, BeneficiaryInterestedEmail, FormView):
         self.beneficiary = form.ben
 
         if free_devices and not skipped_devices:
-            messages.success(self.request, _("Beneficiary successfully added and devices assigned."))
+            messages.success(self.request, _("Beneficiary successfully added and products assigned."))
             self.send_email(form.ben)
             self.send_email_subscriptors()
 
         elif free_devices and skipped_devices:
             skipped_msgs = ", ".join([f"{getattr(dev, 'shortid', dev.id)[:6].upper()} (taken by {ben.email} in '{ben.lot.name}')" for dev, ben in skipped_devices])
-            messages.warning(self.request, _("Beneficiary saved. Assigned {} devices, but skipped taken ones: {}").format(len(free_devices), skipped_msgs))
+            messages.warning(self.request, _("Beneficiary saved. Assigned {} products, but skipped taken ones: {}").format(len(free_devices), skipped_msgs))
             self.send_email(form.ben)
             self.send_email_subscriptors()
 
         elif skipped_devices and not free_devices:
             skipped_msgs = ", ".join([f"{getattr(dev, 'shortid', dev.id)[:6].upper()} (taken by {ben.email} in '{ben.lot.name}')" for dev, ben in skipped_devices])
-            messages.error(self.request, _("Beneficiary saved, but NO devices were assigned because they are actively held by others: {}").format(skipped_msgs))
+            messages.error(self.request, _("Beneficiary saved, but NO products were assigned because they are actively held by others: {}").format(skipped_msgs))
         else:
-            messages.success(self.request, _("Beneficiary successfully added (no devices in session)."))
+            messages.success(self.request, _("Beneficiary successfully added (no products in session)."))
             self.send_email(form.ben)
             self.send_email_subscriptors()
 
@@ -1136,7 +1136,7 @@ class ListDevicesBeneficiaryView(DashboardLotMixing, BeneficiaryEmail, FormView)
 
                     messages.error(
                         self.request,
-                        _("Cannot change status. Device {} was reassigned to {} in lot '{}' after being returned.").format(
+                        _("Cannot change status. Product {} was reassigned to {} in lot '{}' after being returned.").format(
                             short_id, conflict_beneficiary.email, conflict_beneficiary.lot.name
                         )
                     )
@@ -1149,7 +1149,7 @@ class ListDevicesBeneficiaryView(DashboardLotMixing, BeneficiaryEmail, FormView)
             changed_count = len(form.changed_objects)
             messages.success(
                 self.request,
-                _("Successfully updated the status of {} device(s).").format(changed_count)
+                _("Successfully updated the status of {} product(s).").format(changed_count)
             )
             devs_confirmed = []
             devs_delivered = []
@@ -1263,7 +1263,7 @@ class AddDevicesBeneficiaryView(DashboardView, NotifyEmail, TemplateView):
 
                     messages.error(
                         self.request,
-                        _("Device {} cannot be assigned. It is currently actively assigned to {} in lot '{}' and must be RETURNED first.").format(
+                        _("Product {} cannot be assigned. It is currently actively assigned to {} in lot '{}' and must be RETURNED first.").format(
                             short_id, conflict_ben.email, conflict_ben.lot.name
                         )
                     )
@@ -1273,10 +1273,10 @@ class AddDevicesBeneficiaryView(DashboardView, NotifyEmail, TemplateView):
                         added_count += 1
                     except Exception as e:
                         logger.error(f"Error adding device {dev} to beneficiary {self.beneficiary.email}: {e}")
-                        messages.error(self.request, _("Failed to assign a device due to an internal error."))
+                        messages.error(self.request, _("Failed to assign a product due to an internal error."))
 
             if added_count > 0:
-                messages.success(self.request, _("{} device(s) successfully assigned to {}.").format(
+                messages.success(self.request, _("{} product(s) successfully assigned to {}.").format(
                     added_count, self.beneficiary.email
                 ))
                 self.send_email_subscriptors()

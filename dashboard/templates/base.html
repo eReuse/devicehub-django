@@ -11,7 +11,7 @@
     <meta name="description" content="">
     <meta name="author" content="Pangea">
     {% endblock %}
-    <title>{% block title %}{% if title %}{{ title }} – {% endif %}DeviceHub{% endblock %}</title>
+    <title>{% block title %}{% if title %}{{ title }} – {% endif %}{{ APP_NAME }}{% endblock %}</title>
 
     <!-- Bootstrap core CSS -->
     {% block style %}
@@ -99,12 +99,12 @@
           <i class="bi bi-list"></i>
       </button>
       <div id="navbar-brand-sm" class="d-sm-none px-3">
-          <a class="navbar-brand " href="#">DEVICEHUB</a>
+          <a class="navbar-brand " href="#">{{ APP_NAME|upper }}</a>
           <div class="navbar-nav navbar-sub-brand text-truncate" style="max-width: 200px;">
               {{ user.institution.name|upper }}
           </div>
       </div>
-      <a class="d-none d-sm-block navbar-brand col-md-3 col-lg-2 me-0 px-3" href="#">DEVICEHUB</a>
+      <a class="d-none d-sm-block navbar-brand col-md-3 col-lg-2 me-0 px-3" href="#">{{ APP_NAME|upper }}</a>
       <div class="d-none d-sm-block navbar-nav navbar-sub-brand text-truncate ms-auto" style="max-width: 200px;">
           {{ user.institution.name|upper }}
       </div>
@@ -167,11 +167,11 @@
             <ul class="nav flex-column">
 	      {% if user.is_admin %}
               <li class="nav-item">
-                <a class="admin {% if path in 'admin:panel admin:users admin:states_panel admin:tag_panel admin:edit_user admin:delete_user admin:new_user admin:institution' %}active {% endif %}nav-link fw-bold" data-bs-toggle="collapse" data-bs-target="#ul_admin" aria-expanded="false" aria-controls="ul_admin" href="javascript:void()">
+                <a class="admin {% if path in 'admin:panel admin:users admin:states_panel admin:tag_panel admin:edit_user admin:delete_user admin:new_user admin:institution admin:devicetypes_panel' %}active {% endif %}nav-link fw-bold" data-bs-toggle="collapse" data-bs-target="#ul_admin" aria-expanded="false" aria-controls="ul_admin" href="javascript:void()">
                   <i class="bi bi-person-fill-gear icon_sidebar"></i>
                   {% trans 'Admin' %}
                 </a>
-                <ul class="flex-column mb-2 ul_sidebar accordion-collapse {% if path in 'admin:panel admin:users admin:tag_panel admin:states_panel admin:institution' %}expanded{% else %}collapse{% endif %}" id="ul_admin" data-bs-parent="#sidebarMenu">
+                <ul class="flex-column mb-2 ul_sidebar accordion-collapse {% if path in 'admin:panel admin:users admin:tag_panel admin:states_panel admin:institution admin:devicetypes_panel' %}expanded{% else %}collapse{% endif %}" id="ul_admin" data-bs-parent="#sidebarMenu">
                   <li class="nav-item">
                     <a class="nav-link{% if path in 'admin:panel admin:institution' %} active2{% endif %}" href="{% url 'admin:panel' %}">
                       {% trans 'Panel' %}
@@ -192,23 +192,28 @@
                       {% trans 'Lot Groups' %}
                     </a>
                   </li>
+                  <li class="nav-item">
+                    <a class="nav-link{% if path == 'admin:devicetypes_panel' %} active2{% endif %}" href="{% url 'admin:devicetypes_panel' %}">
+                      {% trans 'Product Types' %}
+                    </a>
+                  </li>
                 </ul>
               </li>
 	      {% endif %}
         <li class="nav-item">
-              <a class="admin {% if 'device:' in path or 'dashboard:all_device' in path or ':overview' in path %}active {% endif %}nav-link fw-bold" href="{% url 'dashboard:overview' %}">
+              <a class="admin {% if 'product:' in path or 'dashboard:all_device' in path or ':overview' in path %}active {% endif %}nav-link fw-bold" href="{% url 'dashboard:overview' %}">
                 <i class="bi bi-columns-gap icon_sidebar"></i>
                 {% trans 'Dashboard' %}
               </a>
-              <ul class="flex-column mb-2 ul_sidebar accordion-collapse {% if 'device:' in path or path == 'dashboard:all_device' or ':overview' in path %}expanded{% else %}collapse{% endif %}" id="ul_device" data-bs-parent="#sidebarMenu">
+              <ul class="flex-column mb-2 ul_sidebar accordion-collapse {% if 'product:' in path or path == 'dashboard:all_device' or ':overview' in path %}expanded{% else %}collapse{% endif %}" id="ul_device" data-bs-parent="#sidebarMenu">
                 <li class="nav-item">
                   <a class="nav-link{% if ':overview' in path %} active2{% endif %}" href="{% url 'dashboard:overview' %}">
                     {% trans 'Overview' %}
                   </a>
                 </li>
                 <li class="nav-item">
-                  <a class="nav-link{% if 'device:' in path or path == 'dashboard:all_device' %} active2{% endif %}" href="{% url 'dashboard:all_device' %}">
-                    {% trans 'All devices' %}
+                  <a class="nav-link{% if 'product:' in path or path == 'dashboard:all_device' %} active2{% endif %}" href="{% url 'dashboard:all_device' %}">
+                    {% trans 'All products' %}
                   </a>
                 </li>
               </ul>
@@ -236,11 +241,11 @@
                 </ul>
               </li>
               <li class="nav-item">
-                <a class="admin {% if 'evidence:' in path or path == 'device:add' %}active {% endif %}nav-link fw-bold" data-bs-toggle="collapse" data-bs-target="#ul_evidences" aria-expanded="false" aria-controls="ul_evidences" href="javascript:void()">
+                <a class="admin {% if 'evidence:' in path or path == 'product:add' %}active {% endif %}nav-link fw-bold" data-bs-toggle="collapse" data-bs-target="#ul_evidences" aria-expanded="false" aria-controls="ul_evidences" href="javascript:void()">
                   <i class="bi bi-usb-drive icon_sidebar"></i>
                   {% trans 'Evidences' %}
                 </a>
-                <ul class="flex-column mb-2 ul_sidebar accordion-collapse {% if 'evidence:' in path or path == 'device:add' %}expanded{% else %}collapse{% endif %}" id="ul_evidences" data-bs-parent="#sidebarMenu">
+                <ul class="flex-column mb-2 ul_sidebar accordion-collapse {% if 'evidence:' in path or path == 'product:add' %}expanded{% else %}collapse{% endif %}" id="ul_evidences" data-bs-parent="#sidebarMenu">
                   <li class="nav-item">
                     <a class="nav-link{% if path in 'evidence:list evidence:details' %} active2{% endif %}" href="{% url 'evidence:list' %}">
                       {% trans 'List of evidences' %}
@@ -262,7 +267,7 @@
                         </a>
                     </li>
                   <li class="nav-item">
-                    <a class="nav-link{% if path == 'device:add' %} active2{% endif %}" href="{% url 'device:add' %}">
+                    <a class="nav-link{% if path == 'product:add' %} active2{% endif %}" href="{% url 'product:add' %}">
                       {% trans 'Upload Web Form' %}
                     </a>
                   </li>
@@ -294,7 +299,7 @@
 	          <form method="get" action="{% url 'dashboard:search' %}">
               {% csrf_token %}
               <div class="input-group rounded">
-                <input type="search" name="gquery" class="form-control rounded" {% if search and path == 'dashboard:search' %}value="{{ search }}" {% endif %}placeholder="{% trans "Search your device" %}" aria-label="Search" aria-describedby="search-addon" />
+                <input type="search" name="gquery" class="form-control rounded" {% if search and path == 'dashboard:search' %}value="{{ search }}" {% endif %}placeholder="{% trans "Search your product" %}" aria-label="Search" aria-describedby="search-addon" />
         	<span class="input-group-text border-0" id="search-addon">
         	  <i class="fas fa-search"></i>
         	</span>

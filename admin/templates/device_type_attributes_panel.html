@@ -4,20 +4,29 @@
 {% block content %}
 <div class="row">
   <div class="col">
-    <h3>{{ subtitle }}</h3>
+    <h3>
+      {% if device_type.icon %}<i class="bi {{ device_type.icon }} me-1"></i>{% endif %}
+      {{ device_type.display_name }}
+    </h3>
+    <p class="text-muted mb-0">
+      {% trans "Attributes suggested when a product of this type is created." %}
+    </p>
   </div>
   <div class="col text-end">
-    <button type="button" class="btn btn-green-admin" data-bs-toggle="modal" data-bs-target="#addStateModal">
+    <a class="btn btn-outline-secondary" href="{% url 'admin:devicetypes_panel' %}">
+      {% trans "Back" %}
+    </a>
+    <button type="button" class="btn btn-green-admin" data-bs-toggle="modal" data-bs-target="#addAttributeModal">
       {% trans "Add" %}
     </button>
   </div>
 </div>
 <div class="row mt-4">
   <div class="col">
-    {% if state_definitions %}
+    {% if attributes %}
   <table class="table table-hover table-bordered align-middle">
     <caption class="text-muted small">
-      {% trans 'Move and drag state definitions to reorder' %}
+      {% trans 'Move and drag attributes to reorder' %}
     </caption>
   <thead class="table-light">
     <tr>
@@ -25,16 +34,16 @@
       </th>
       <th scope="col" width="5%" class="text-center">
       #</th>
-      <th scope="col">{% trans "State Definition" %}
+      <th scope="col">{% trans "Attribute" %}
       </th>
       <th scope="col" width="15%" class="text-center">{% trans "Actions" %}
       </th>
     </tr>
   </thead>
   <tbody id="sortable_list">
-    {% for state_definition in state_definitions %}
+    {% for attribute in attributes %}
       <tr
-        data-lookup="{{ state_definition.id }}"
+        data-lookup="{{ attribute.id }}"
         style="cursor: grab;"
         class="align-items-center">
 
@@ -43,26 +52,26 @@
             </i>
         </td>
         <td class="text-center">
-          <strong>{{ state_definition.order }} </strong>
+          <strong>{{ attribute.order }} </strong>
         </td>
         <td class="font-monospace">
-          {{ state_definition.state }}
+          {{ attribute.name }}
         </td>
 
         <!-- action buttons -->
         <td>
           <div class="btn-group float-end">
-            <button 
-              type="button" 
-              class="btn btn-sm btn-outline-info d-flex align-items-center" 
-              data-bs-toggle="modal"  data-bs-target="#editStateModal{{ state_definition.id }}">
+            <button
+              type="button"
+              class="btn btn-sm btn-outline-info d-flex align-items-center"
+              data-bs-toggle="modal" data-bs-target="#editAttributeModal{{ attribute.id }}">
               <i class="bi bi-pencil me-1"></i>
               {% trans 'Edit' %}
             </button>
-            <button 
-              type="button" class="btn btn-sm btn-outline-danger d-flex align-items-center" 
-              data-bs-toggle="modal" 
-              data-bs-target="#deleteStateModal{{ state_definition.id }}" >
+            <button
+              type="button" class="btn btn-sm btn-outline-danger d-flex align-items-center"
+              data-bs-toggle="modal"
+              data-bs-target="#deleteAttributeModal{{ attribute.id }}" >
               <i class="bi bi-trash me-1"></i>
               {% trans 'Delete' %}
             </button>
@@ -73,41 +82,43 @@
   </tbody>
   </table>
 
-  <form id="orderingForm" method="post" action="{% url 'admin:update_state_order' %}">
+  <form id="orderingForm" method="post" action="{% url 'admin:update_device_type_attribute_order' device_type.id %}">
         {% csrf_token %}
         <input type="hidden" id="orderingInput" name="ordering">
          <button id="saveOrderBtn" class="btn btn-success mt-5 float-start collapse" >{% trans "Update Order" %}</button>
       </form>
 
 
-    {% else %}  
+    {% else %}
       <div class="alert alert-primary text-center mt-5" role="alert">
-        {% trans "No states found on current organization" %}
+        {% trans "No attributes defined for this product type" %}
       </div>
     {% endif %}
   </div>
 </div>
 
-<!-- add state definition Modal -->
-<div class="modal fade" id="addStateModal" tabindex="-1" aria-labelledby="addStateModalLabel" aria-hidden="true">
+<!-- add attribute Modal -->
+<div class="modal fade" id="addAttributeModal" tabindex="-1" aria-labelledby="addAttributeModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="addStateModalLabel">{% trans "Add State Definition" %}</h5>
+        <h5 class="modal-title" id="addAttributeModalLabel">{% trans "Add Attribute" %}</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
 
-        <form method="post" action="{%url 'admin:add_state_definition'%}">
+        <form method="post" action="{% url 'admin:add_device_type_attribute' device_type.id %}">
           {% csrf_token %}
           <div class="mb-3">
-            <label for="stateInput" class="form-label">{% trans "State" %}</label>
-            <input type="text" class="form-control" id="stateInput" name="state" maxlength="50" required>
-            <div class="form-text">{% trans "Maximum 50 characters." %}</div>
+            <label for="attributeInput" class="form-label">{% trans "Attribute" %}</label>
+            <input type="text" class="form-control" id="attributeInput" name="name" maxlength="50" required>
+            <div class="form-text">
+              {% trans "Maximum 50 characters. This is the name stored with each product." %}
+            </div>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Close" %}</button>
-            <button type="submit" class="btn btn-primary">{% trans "Add state definition" %}</button>
+            <button type="submit" class="btn btn-primary">{% trans "Add attribute" %}</button>
           </div>
         </form>
 
@@ -116,26 +127,26 @@
   </div>
 </div>
 
-<!-- Edit State Definition Modals -->
-{% for state_definition in state_definitions %}
-<div class="modal fade" id="editStateModal{{ state_definition.id }}" tabindex="-1" aria-labelledby="editStateModalLabel{{ state_definition.id }}" aria-hidden="true">
+<!-- Edit Attribute Modals -->
+{% for attribute in attributes %}
+<div class="modal fade" id="editAttributeModal{{ attribute.id }}" tabindex="-1" aria-labelledby="editAttributeModalLabel{{ attribute.id }}" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
-      <form method="post" action="{% url 'admin:edit_state_definition' state_definition.id %}">
+      <form method="post" action="{% url 'admin:edit_device_type_attribute' attribute.id %}">
         {% csrf_token %}
         <div class="modal-header">
-          <h5 class="modal-title" id="editStateModalLabel{{ state_definition.id }}">
-            {% trans "Edit State Definition" %}
+          <h5 class="modal-title" id="editAttributeModalLabel{{ attribute.id }}">
+            {% trans "Edit Attribute" %}
           </h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
         </div>
         <div class="modal-body">
           <div class="alert alert-warning text-center" role="alert">
-            {% trans "Existing products with this state will not have their state names changed." %}
+            {% trans "Renaming is discouraged: products already created keep the old name, so their history is split in two." %}
           </div>
           <div class="mb-3">
-            <label for="editStateInput{{ state_definition.id }}" class="form-label">{% trans "State" %}</label>
-            <input type="text" class="form-control" id="editStateInput{{ state_definition.id }}" name="state" maxlength="50" value="{{ state_definition.state }}" required>
+            <label for="editAttributeInput{{ attribute.id }}" class="form-label">{% trans "Attribute" %}</label>
+            <input type="text" class="form-control" id="editAttributeInput{{ attribute.id }}" name="name" maxlength="50" value="{{ attribute.name }}" required>
             <div class="form-text">{% trans "Maximum 50 characters." %}</div>
           </div>
 
@@ -152,25 +163,25 @@
 {% endfor %}
 
 
-<!-- delete state definition Modal -->
-{% for state_definition in state_definitions %}
-<div class="modal fade" id="deleteStateModal{{ state_definition.id }}" tabindex="-1" aria-labelledby="deleteStateModalLabel{{ state_definition.id }}" aria-hidden="true">
+<!-- delete attribute Modal -->
+{% for attribute in attributes %}
+<div class="modal fade" id="deleteAttributeModal{{ attribute.id }}" tabindex="-1" aria-labelledby="deleteAttributeModalLabel{{ attribute.id }}" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title fw-bold" id="deleteStateModalLabel{{ state_definition.id }}">
-          {% trans "Delete State Definition" %}
+        <h5 class="modal-title fw-bold" id="deleteAttributeModalLabel{{ attribute.id }}">
+          {% trans "Delete Attribute" %}
         </h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
       </div>
       <div class="modal-body">
         <div class="alert alert-warning text-center" role="alert">
-            {% trans "Products with a State of this description will not have their State altered" %}
+            {% trans "Products already created keep this attribute. It will only stop being suggested." %}
           </div>
         <div class="d-flex align-items-center border rounded p-3 mt-3">
-          <span class="badge bg-secondary me-3 display-6">{{ state_definition.order }}</span>
+          <span class="badge bg-secondary me-3 display-6">{{ attribute.order }}</span>
           <div>
-            <p class="mb-0 fw-bold">{{ state_definition.state }}</p>
+            <p class="mb-0 fw-bold">{{ attribute.name }}</p>
           </div>
         </div>
 
@@ -179,7 +190,7 @@
       </div>
 
       <div class="modal-footer">
-        <form method="post" action="{% url 'admin:delete_state_definition' state_definition.pk %}">
+        <form method="post" action="{% url 'admin:delete_device_type_attribute' attribute.pk %}">
           {% csrf_token %}
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
             {% trans "Cancel" %}
@@ -196,6 +207,7 @@
 {% endfor %}
 
 
+{% if attributes %}
 <script>
   //following https://dev.to/nemecek_f/django-how-to-let-user-re-order-sort-table-of-content-with-drag-and-drop-3nlp
   const saveOrderingButton = document.getElementById('saveOrderBtn');
@@ -207,7 +219,6 @@
       animation: 150,
       swapThreshold: 0.10,
       onChange: () => {
-        //TODO: change hide/show animation to a nicer one 
         const collapse = new bootstrap.Collapse(saveOrderingButton, {
           toggle: false
         });
@@ -228,6 +239,7 @@
  saveOrderingButton.addEventListener('click', saveOrdering);
 
 </script>
+{% endif %}
 
 
 {% endblock %}

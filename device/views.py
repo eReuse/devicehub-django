@@ -9,6 +9,7 @@ from django.urls import reverse_lazy, resolve
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect, Http404, render
 from django.db import transaction
+from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from django.views.generic.edit import (
     CreateView,
@@ -24,9 +25,8 @@ from dashboard.mixins import DashboardView, Http403
 from environmental_impact.algorithms.algorithm_factory import FactoryEnvironmentImpactAlgorithm
 from evidence.models import UserProperty, SystemProperty, Evidence, RootAlias
 from lot.models import LotTag
-from device.models import Device
-from evidence.models import SystemProperty, RootAlias
-from device.forms import DeviceAttributeFormSet, DeviceMainForm, DEVICE_ATTRIBUTE_SUGGESTIONS
+from device.models import Device, DeviceType
+from device.forms import DeviceAttributeFormSet, DeviceMainForm
 
 from evidence.tables import EvidenceTable
 from django_tables2 import RequestConfig
@@ -63,15 +63,10 @@ class DeviceLogMixin(DashboardView):
 class NewDeviceView(DashboardView, FormView):
     template_name = "new_device.html"
     success_url = reverse_lazy('dashboard:unassigned')
-    title = _("New Device")
-    breadcrumb = [(_("Device"), reverse_lazy("dashboard:all_device")), (_("New Device"), None)]
+    title = _("New Product")
+    breadcrumb = [(_("Product"), reverse_lazy("dashboard:all_device")), (_("New Product"), None)]
     success_url = reverse_lazy('dashboard:unassigned')
     form_class = DeviceMainForm
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs['user'] = self.request.user
-        return kwargs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -81,15 +76,27 @@ class NewDeviceView(DashboardView, FormView):
         else:
             context['attribute_formset'] = DeviceAttributeFormSet()
 
-        suggestions_for_js = {}
-        for dev_type, attrs in DEVICE_ATTRIBUTE_SUGGESTIONS.items():
-            suggestions_for_js[dev_type] = [
-                {"name": a["name"], "label": str(a["label"])} for a in attrs
-            ]
-        context['device_suggestions'] = suggestions_for_js
+        context['device_suggestions'] = {
+            dt.name: [attribute.name for attribute in dt.attributes.all()]
+            for dt in self.device_types
+        }
 
         context['subtitle'] = self.title
         return context
+
+    @cached_property
+    def device_types(self):
+        return DeviceType.objects.filter(
+            institution=self.request.user.institution
+        ).order_by('order').prefetch_related('attributes')
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        kwargs['device_types'] = [
+            (dt.name, dt.display_name) for dt in self.device_types
+        ]
+        return kwargs
 
     def form_valid(self, form):
         context = self.get_context_data()
@@ -104,27 +111,27 @@ class NewDeviceView(DashboardView, FormView):
 
 class EditDeviceView(DashboardView, UpdateView):
     template_name = "new_device.html"
-    title = _("Update Device")
-    breadcrumb = [(_("Device"), reverse_lazy("dashboard:all_device")), (_("Update Device"), None)]
+    title = _("Update Product")
+    breadcrumb = [(_("Product"), reverse_lazy("dashboard:all_device")), (_("Update Product"), None)]
     success_url = reverse_lazy('dashboard:unassigned_devices')
     model = SystemProperty
 
-    def get_form_kwargs(self):
-        pk = self.kwargs.get('pk')
-        self.object = get_object_or_404(
-            self.model,
-            pk=pk,
-            owner=self.request.user.institution
-        )
-        self.success_url = reverse_lazy('device:details', args=[pk])
-        kwargs = super().get_form_kwargs()
-        return kwargs
+#     def get_form_kwargs(self):
+#         pk = self.kwargs.get('pk')
+#         self.object = get_object_or_404(
+#             self.model,
+#             pk=pk,
+#             owner=self.request.user.institution
+#         )
+#         self.success_url = reverse_lazy('product:details', args=[pk])
+#         kwargs = super().get_form_kwargs()
+#         return kwargs
 
 
 class DetailsView(DashboardView, TemplateView ):
     template_name = "details.html"
-    title = _("Device")
-    breadcrumb = [(_("Device"), reverse_lazy("dashboard:all_device")), (_("Details"), None)]
+    title = _("Product")
+    breadcrumb = [(_("Product"), reverse_lazy("dashboard:all_device")), (_("Details"), None)]
     table_class = EvidenceTable
 
     def get(self, request, *args, **kwargs):
@@ -135,7 +142,7 @@ class DetailsView(DashboardView, TemplateView ):
         ).first()
 
         if root and root.root != self.pk:
-            return redirect(reverse_lazy('device:details', args=[root.root]))
+            return redirect(reverse_lazy('product:details', args=[root.root]))
 
         self.object = Device(id=self.pk, owner=self.request.user.institution)
         if not self.object.last_evidence:
@@ -295,7 +302,7 @@ class PublicDeviceWebView(TemplateView):
 class AddUserPropertyView(DeviceLogMixin, CreateView):
     template_name = "new_user_property.html"
     title = _("New User Property")
-    breadcrumb = [(_("Device"), reverse_lazy("dashboard:all_device")), (_("New Property"), None)]
+    breadcrumb = [(_("Product"), reverse_lazy("dashboard:all_device")), (_("New Property"), None)]
     model = UserProperty
     fields = ("key", "value")
 
@@ -335,7 +342,7 @@ class AddUserPropertyView(DeviceLogMixin, CreateView):
 
     def get_success_url(self):
         pk = self.kwargs.get('pk')
-        return reverse_lazy('device:details', args=[pk]) + "#user_properties"
+        return reverse_lazy('product:details', args=[pk]) + "#user_properties"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -346,7 +353,7 @@ class AddUserPropertyView(DeviceLogMixin, CreateView):
 class UpdateUserPropertyView(DeviceLogMixin, UpdateView):
     template_name = "new_user_property.html"
     title = _("Update User Property")
-    breadcrumb = [(_("Device"), reverse_lazy("dashboard:all_device")), (_("Update Property"), None)]
+    breadcrumb = [(_("Product"), reverse_lazy("dashboard:all_device")), (_("Update Property"), None)]
     model = UserProperty
     fields = ("key", "value")
 
@@ -387,7 +394,7 @@ class UpdateUserPropertyView(DeviceLogMixin, UpdateView):
 
     def get_success_url(self):
         pk = self.kwargs.get('device_id')
-        return reverse_lazy('device:details', args=[pk]) + "#user_properties"
+        return reverse_lazy('product:details', args=[pk]) + "#user_properties"
 
 
 class DeleteUserPropertyView(DeviceLogMixin, DeleteView):
@@ -419,7 +426,7 @@ class DeleteUserPropertyView(DeviceLogMixin, DeleteView):
 
     def get_success_url(self):
         pk = self.kwargs.get('device_id')
-        return reverse_lazy('device:details', args=[pk]) + "#user_properties"
+        return reverse_lazy('product:details', args=[pk]) + "#user_properties"
 
 
 class DeviceBulkLabelView(DashboardView, ListView):
@@ -437,7 +444,7 @@ class DeviceBulkLabelView(DashboardView, ListView):
         self.selected_devices = self.get_session_devices()
 
         if not self.selected_devices:
-            messages.error(self.request, _("No devices selected for printing."))
+            messages.error(self.request, _("No products selected for printing."))
             return redirect(self.get_success_url())
 
         return super().get(request, *args, **kwargs)
@@ -463,4 +470,4 @@ class DeviceBulkLabelView(DashboardView, ListView):
         return context
 
     def get_success_url(self):
-        return self.request.META.get('HTTP_REFERER') or reverse_lazy('device:details')
+        return self.request.META.get('HTTP_REFERER') or reverse_lazy('product:details')

@@ -5,7 +5,7 @@ from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import PermissionDenied
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic.base import TemplateView
-from device.models import Device
+from device.models import Device, DeviceType
 from device.product_cache import ProductCache
 from evidence.models import SystemProperty, RootAlias
 from lot.models import LotTag
@@ -202,7 +202,10 @@ class DeviceTableMixin():
         total_pages = (count + limit - 1) // limit if limit != 0 else 1
 
         table_data = self.build_table_data(devices)
-        kwargs = {'exclude': ('status_beneficiary',)}
+        kwargs = {
+            'exclude': ('status_beneficiary',),
+            'type_display': DeviceType.display_map(self.request.user.institution),
+        }
         if self.table_order_by is not None:
             kwargs['order_by'] = self.table_order_by
         table = DeviceTable(table_data, **kwargs)
@@ -351,7 +354,10 @@ class ProductCacheTableMixin():
         total_pages = (count + limit - 1) // limit if limit != 0 else 1
 
         table_data = self.build_product_cache_rows(list(root_ids))
-        table_kwargs = {'exclude': ('status_beneficiary',)}
+        table_kwargs = {
+            'exclude': ('status_beneficiary',),
+            'type_display': DeviceType.display_map(self.request.user.institution),
+        }
         # The page slice is already ordered at the DB level; mirror the request
         # sort onto the table so the header arrows reflect the active column.
         order_by = self.request.GET.get('sort', '') or self.table_order_by

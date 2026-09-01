@@ -4,10 +4,11 @@ import hashlib
 import datetime
 import logging
 
+from django.conf import settings
+
 from django.core.exceptions import ValidationError
 from evidence.xapian import index
 from evidence.models import SystemProperty
-from device.models import Device
 
 
 logger = logging.getLogger('django')
@@ -32,9 +33,6 @@ def create_doc(data):
             continue
 
         if k.lower() == "type":
-            if v not in Device.Types.values:
-                raise ValidationError("{} is not a valid device".format(v))
-
             device["type"] = v
 
         else:
@@ -53,7 +51,7 @@ def create_doc(data):
     if doc:
         doc["uuid"] = _uuid
         doc["endTime"] = date
-        doc["software"] = "DeviceHub"
+        doc["software"] = settings.APP_NAME
         doc["WEB_ID"] = web_id
         doc["type"] = "WebSnapshot"
 

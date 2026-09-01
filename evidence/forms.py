@@ -8,7 +8,7 @@ from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from utils.device import create_property, create_doc, create_index
 from utils.forms import MultipleFileField
-from device.models import Device
+from device.models import DeviceType
 from evidence.parse import Build
 from evidence.models import SystemProperty, UserProperty, RootAlias
 from evidence.image_processing import process_photo_upload
@@ -206,15 +206,31 @@ class ImportForm(forms.Form):
         if not data_pd or df.last_valid_index() is None:
             raise ValidationError(_("The file you try to import is empty"))
 
+        # Maps the lowercased name to the one stored in the DB, so the imported
+        # value is normalized to the institution's spelling.
+        valid_types = {
+            name.lower(): name
+            for name in DeviceType.objects.filter(
+                institution=self.user.institution
+            ).values_list('name', flat=True)
+        }
+
+        if not valid_types:
+            raise ValidationError(
+                _("There are no product types defined for your institution")
+            )
+
         for n in data_pd.keys():
             if 'type' not in [x.lower() for x in data_pd[n]]:
                 raise ValidationError(_("You need a column with name 'type'"))
 
             for k, v in data_pd[n].items():
                 if k.lower() == "type":
-                    if v not in Device.Types.values:
-                        msg = _("is not a valid device")
+                    stored = valid_types.get(str(v).strip().lower())
+                    if not stored:
+                        msg = _("is not a valid product")
                         raise ValidationError("{} {}".format(v, msg))
+                    data_pd[n][k] = stored
 
             self.rows.append(data_pd[n])
 

@@ -16,7 +16,7 @@
         <div class="card h-100 shadow-sm border-0 rounded-4">
           <div class="card-body d-flex flex-column">
             <h5 class="card-title text-uppercase text-muted fs-6 fw-bold mb-3">
-              <i class="bi bi-laptop text-primary me-2"></i>{% translate 'Total Devices' %}
+              <i class="bi bi-laptop text-primary me-2"></i>{% translate 'Total Products' %}
             </h5>
             <div class="flex-grow-1">
               <p class="card-text display-4 fw-bold text-dark mb-0">{{ total_devices }}</p>
@@ -35,7 +35,7 @@
             </div>
           </div>
           <a href="{% url 'dashboard:all_device' %}" class="card-footer bg-transparent border-top text-decoration-none d-flex justify-content-between align-items-center py-3 text-primary">
-            <span class="fw-medium">{% translate 'View All Devices' %}</span>
+            <span class="fw-medium">{% translate 'View All Products' %}</span>
             <i class="bi bi-arrow-right"></i>
           </a>
         </div>
@@ -46,7 +46,7 @@
         <div class="card h-100 shadow-sm border-0 rounded-4">
           <div class="card-body d-flex flex-column">
             <h5 class="card-title text-uppercase text-muted fs-6 fw-bold mb-3">
-              <i class="bi bi-check-circle-fill text-success me-2"></i>{% translate 'Assigned Devices' %}
+              <i class="bi bi-check-circle-fill text-success me-2"></i>{% translate 'Assigned Products' %}
             </h5>
             <div class="flex-grow-1">
               <p class="card-text display-4 fw-bold text-dark mb-0">{{ assigned_devices }}</p>
@@ -120,7 +120,7 @@
               {% if has_pinned_lots %}
                 {% translate 'Pinned Lots' %}
               {% else %}
-                {% translate 'Devices by Lot (Top 10)' %}
+                {% translate 'Products by Lot (Top 10)' %}
               {% endif %}
             </h5>
             <div class="flex-grow-1">
@@ -146,7 +146,7 @@
                              <span class="fw-medium text-dark">{{ count }}</span>
                            </div>
                         {% empty %}
-                          <small class="text-muted d-block mt-2 fst-italic">{% translate 'No typed devices in this lot.' %}</small>
+                          <small class="text-muted d-block mt-2 fst-italic">{% translate 'No typed products in this lot.' %}</small>
                         {% endfor %}
                       </div>
                     </a>
@@ -155,7 +155,7 @@
                   <div class="col-12">
                     <div class="text-muted py-4 text-center">
                       {% if has_pinned_lots %}
-                        {% translate 'No devices found in your pinned lots.' %}
+                        {% translate 'No products found in your pinned lots.' %}
                       {% else %}
                         {% translate 'No lots found.' %}
                       {% endif %}
@@ -176,7 +176,7 @@
               {% if has_pinned_states %}
                 {% translate 'Pinned States' %}
               {% else %}
-                {% translate 'Devices by State' %}
+                {% translate 'Products by State' %}
               {% endif %}
             </h5>
             <div class="flex-grow-1">
@@ -200,7 +200,7 @@
                              <span class="fw-medium text-dark">{{ count }}</span>
                            </div>
                         {% empty %}
-                          <small class="text-muted d-block mt-2 fst-italic">{% translate 'No typed devices in this state.' %}</small>
+                          <small class="text-muted d-block mt-2 fst-italic">{% translate 'No typed products in this state.' %}</small>
                         {% endfor %}
                       </div>
                     </div>
@@ -209,7 +209,7 @@
                   <div class="col-12">
                     <div class="text-muted py-4 text-center">
                       {% if has_pinned_states %}
-                        {% translate 'No devices found in your pinned states.' %}
+                        {% translate 'No products found in your pinned states.' %}
                       {% else %}
                         {% translate 'No state information found.' %}
                       {% endif %}
