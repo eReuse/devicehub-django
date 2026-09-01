@@ -96,7 +96,7 @@ class InstitutionDPPSettingsForm(forms.ModelForm):
 
     class Meta:
         model = InstitutionDPPSettings
-        fields = ['api_base_url', 'signing_auth_token', 'issuer_did',
+        fields = ['dpp_enabled', 'api_base_url', 'signing_auth_token', 'issuer_did',
                   'active_dpp_standard', 'dpp_schema', 'dte_schema', 'dfr_schema']
         widgets = {
             'signing_auth_token': forms.PasswordInput(render_value=True),

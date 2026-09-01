@@ -804,7 +804,8 @@ class DPPConfigurationView(AdminView, UpdateView):
             if form.is_valid():
                 form.save()
                 messages.success(request, _("IdHub integration settings saved successfully."))
-                return redirect(self.get_success_url())
+
+                return redirect(f"{self.get_success_url()}#connection")
             else:
                 messages.error(request, _("Please correct the errors in the integration settings."))
                 return self.render_to_response(self.get_context_data(form=form))
@@ -814,7 +815,7 @@ class DPPConfigurationView(AdminView, UpdateView):
             if claim_formset.is_valid():
                 claim_formset.save()
                 messages.success(request, _("Facility Conformity Claims updated successfully."))
-                return redirect(self.get_success_url())
+                return redirect(f"{self.get_success_url()}#claims")
             else:
                 messages.error(request, _("Please correct the errors in the conformity claims."))
                 return self.render_to_response(self.get_context_data(claim_formset=claim_formset))
