@@ -135,18 +135,18 @@
                 <div class="d-flex flex-wrap align-items-center gap-2">
                     <!-- Change state dropdown -->
                     <div class="dropdown flex-shrink-0">
-                        <button type="button" class="btn btn-green-admin dropdown-toggle" id="addStateDropdown" data-bs-toggle="dropdown" >
+                        <button type="button" class="btn btn-green-admin dropdown-toggle" data-bs-toggle="dropdown">
                             {% trans "Change state" %}
                         </button>
                         <ul class="dropdown-menu" style="width: 120%;">
                             {% for state in state_definitions %}
                             <li style="width: 100%;">
-                                <button type="submit"
+                                <button type="button"
                                         class="dropdown-item d-flex justify-content-between align-items-center"
-                                        formaction="{% url 'action:bulk_change_state' state.id %}"
-                                        formmethod="POST">
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#bulkChangeStateModal-{{ state.id }}">
                                     <span class="font-monospace">{{ state.state }}</span>
-                                    <span class="badge bg-secondary rounded-pill-sm">{{ forloop.counter }}</span>
+                                    <span class="badge {% if state.auto_issue_dte %}bg-secondary{% else %}btn-green-user{% endif %} rounded-pill-sm">{{ forloop.counter }}</span>
                                 </button>
                             </li>
                             {% endfor %}
@@ -183,6 +183,34 @@
             <div class="table-responsive">
                 {% render_table table %}
             </div>
+            {% for state in state_definitions %}
+            <div class="modal fade" id="bulkChangeStateModal-{{ state.id }}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content text-start">
+                        <div class="modal-header">
+                            <h5 class="modal-title">
+                                {% trans "Change State to" %} <strong class="text-primary">{{ state.state }}</strong>
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="alert alert-secondary small mb-4">
+                                {% trans "Automatic Digital Traceability Events (DTEs) are disabled for bulk operations." %}
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">{% trans "Comment (Optional)" %}</label>
+                                <textarea class="form-control" name="comment_{{ state.id }}" rows="3" placeholder="{% trans 'Leave a note about why these devices are changing state...' %}"></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+                            <button type="submit" class="btn btn-green-user" formaction="{% url 'action:bulk_change_state' state.id %}">{% trans "Confirm Local Change" %}</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
         </form>
 
         <div class="d-flex flex-wrap align-items-center gap-2 justify-content-end p-2">

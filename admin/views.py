@@ -824,8 +824,29 @@ class DPPConfigurationView(AdminView, UpdateView):
             with transaction.atomic():
                 for sid in state_ids:
                     is_checked = request.POST.get(f'state_dte_{sid}') == 'on'
-                    StateDefinition.objects.filter(id=sid, institution=institution).update(auto_issue_dte=is_checked)
-            messages.success(request, _("Traceability automation rules saved successfully."))
-            return redirect(self.get_success_url())
+                    state_obj = StateDefinition.objects.filter(id=sid, institution=institution).first()
 
+                    if not state_obj:
+                        continue
+
+                    dte_config = {}
+                    prefix = 'dte_cfg_'
+                    suffix = f'_{sid}'
+
+                    has_config_data = False
+                    for key, value in request.POST.items():
+                        if key.startswith(prefix) and key.endswith(suffix):
+                            has_config_data = True
+                            clean_key = key[len(prefix):-len(suffix)]
+                            if value.strip():
+                                dte_config[clean_key] = value.strip()
+
+                    if has_config_data:
+                        state_obj.dte_config = dte_config
+
+                    state_obj.auto_issue_dte = is_checked
+                    state_obj.save()
+
+            messages.success(request, _("Traceability automation rules saved successfully."))
+            return redirect(f"{self.get_success_url()}#states")
         return super().post(request, *args, **kwargs)

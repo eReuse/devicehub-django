@@ -159,7 +159,9 @@ class UNTP070DFRBuilder(BaseUNTPBuilder):
 @PayloadBuilderRegistry.register(workflow_key="traceability", version="untp-0.7.0")
 class UNTP070DTEBuilder(BaseUNTPBuilder):
     def build(self, event_type, device, institution, facility_info=None, previous_state=None, new_state=None, comment=None, **kwargs):
-        """Constructs a UNTP 0.7.0 compliant Traceability Lifecycle Event payload."""
+        """Constructs a UNTP 0.7.0 compliant Traceability Lifecycle/Move Event payload."""
+
+        dte_config = kwargs.get('dte_config') or {}
 
         device_uri = device.did or f"urn:uuid:{device.id}"
         inst_facility_uri = getattr(institution, 'facility_id_uri', None)
@@ -170,37 +172,83 @@ class UNTP070DTEBuilder(BaseUNTPBuilder):
 
         now = datetime.datetime.now(datetime.timezone.utc).astimezone().replace(microsecond=0)
 
+        # determine event types
+        configured_event_type = dte_config.get('event_type', event_type or "ModifyEvent")
+        is_move_event = (configured_event_type == "MoveEvent")
+
+        event_types = ["MoveEvent", "LifecycleEvent"] if is_move_event else ["ModifyEvent", "LifecycleEvent"]
+
+        event_name = dte_config.get('name') or (f"State Change to {new_state}" if new_state else f"{configured_event_type} Generated")
+        activity_code = dte_config.get('activity_code', 'inspecting')
+        activity_name = dte_config.get('activity_name', 'Inspecting')
+        disposition = dte_config.get('disposition', 'active')
+
+        # merge manual operator comment with configured default description
+        config_desc = dte_config.get('description', '')
+        auto_desc = f"Device state updated from {previous_state} to {new_state}." if new_state else f"{configured_event_type} recorded."
+
+        final_description = comment if comment else (config_desc if config_desc else auto_desc)
+
         event = {
-            "type": [event_type, "LifecycleEvent"],
+            "type": event_types,
             "id": f"urn:uuid:{uuid.uuid4()}",
-            "name": f"State Change to {new_state}" if new_state else f"{event_type} Generated",
-            "description": f"Device state was updated from {previous_state} to {new_state} following an inspection or action." if new_state else f"{event_type} recorded.",
+            "name": event_name,
+            "description": final_description,
             "eventDate": now.isoformat(),
 
             "activityType": {
-                "code": "inspecting",
-                "name": "Inspecting",
-                "schemeId": "urn:epcglobal:cbv:bizstep",
-                "schemeName": "GS1 CBV"
+                "code": activity_code,
+                "name": activity_name,
+                "schemeId": "https://ref.gs1.org/cbv/BizStep",
+                "schemeName": "GS1 CBV Business Step"
+            }
+        }
+
+        product_node = {
+            "product": {
+                "type": ["Product"],
+                "id": device_uri,
+                "name": getattr(device, 'model', "Unknown Device") or "Unknown Device",
+                "idGranularity": "item"
             },
+            "disposition": disposition
+        }
 
-            "modifiedProduct": [{
-                "product": {
-                    "type": ["Product"],
-                    "id": device_uri,
-                    "name": getattr(device, 'model', "Unknown Device") or "Unknown Device",
-                    "idGranularity": "item"
-                },
-                "disposition": "active"
-            }],
-
-            "modifiedAtFacility": {
+        if is_move_event:
+            event["movedProduct"] = [product_node]
+            event["fromFacility"] = {
                 "type": ["Facility"],
                 "id": biz_location_id,
                 "name": facility_name
-            },
+            }
 
-            "relatedParty": [{
+            to_facility_id = dte_config.get('to_facility_id') or "urn:uuid:unknown-destination"
+            event["toFacility"] = {
+                "type": ["Facility"],
+                "id": to_facility_id,
+                "name": dte_config.get('to_facility_name', "Unknown Destination")
+            }
+
+            if dte_config.get('consignment_id'):
+                event["consignmentId"] = dte_config.get('consignment_id')
+
+            event["relatedParty"] = [{
+                "role": "consignor",
+                "party": {
+                    "type": ["Party"],
+                    "id": biz_location_id,
+                    "name": institution.name
+                }
+            }]
+        else:
+            event["modifiedProduct"] = [product_node]
+            event["modifiedAtFacility"] = {
+                "type": ["Facility"],
+                "id": biz_location_id,
+                "name": facility_name
+            }
+
+            event["relatedParty"] = [{
                 "role": "operator",
                 "party": {
                     "type": ["Party"],
@@ -208,9 +256,15 @@ class UNTP070DTEBuilder(BaseUNTPBuilder):
                     "name": institution.name
                 }
             }]
-        }
 
-        # add custom states
+        doc_url = dte_config.get('doc_url')
+        if doc_url:
+            event["relatedDocument"] = [{
+                "linkURL": doc_url,
+                "linkName": dte_config.get('doc_name', 'Related Document'),
+                "linkType": "https://test.uncefact.org/vocabulary/linkTypes/supportingDocument"
+            }]
+
         if new_state:
             event["ereuse:deviceState"] = new_state
         if previous_state:
