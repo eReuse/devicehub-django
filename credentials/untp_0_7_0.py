@@ -1,13 +1,13 @@
-import uuid
 import datetime
-import re
-
 from datetime import date
-from openlocationcode import openlocationcode as olc
+import re
+import uuid
+
 from django.utils.translation import override
 
-from user.models import PROCESS_CHOICES
 from credentials.registry import PayloadBuilderRegistry
+from openlocationcode import openlocationcode as olc
+from user.models import PROCESS_CHOICES
 
 
 class BaseUNTPBuilder:

@@ -2,31 +2,34 @@ import json
 import os
 
 from django.contrib import messages
-from django.http import HttpResponse, FileResponse, JsonResponse
-from django.utils.translation import gettext_lazy as _
-from django.shortcuts import get_object_or_404, redirect, Http404
-from django.views.generic.base import TemplateView
-from django.views.generic import DetailView
+from django.http import FileResponse, HttpResponse, JsonResponse
+from django.shortcuts import Http404, get_object_or_404, redirect
 from django.urls import reverse_lazy
-from django.views.generic.edit import (
-    DeleteView,
-    FormView,
-)
+from django.utils.translation import gettext_lazy as _
+from django.views.generic import DetailView
+from django.views.generic.base import TemplateView
+from django.views.generic.edit import DeleteView, FormView
 
 from action.models import DeviceLog
-from dashboard.mixins import  DashboardView, Http403
-from evidence.models import SystemProperty, RootAlias, Evidence, UserProperty, CredentialProperty
 from credentials.services import CredentialService
-from lot.models import DeviceLot, DeviceBeneficiary
+from dashboard.mixins import DashboardView, Http403
+from django_tables2 import SingleTableView
 from evidence.forms import (
+    EraseServerForm,
+    ImportForm,
+    PhotoForm,
     UploadForm,
     UserAliasForm,
-    ImportForm,
-    EraseServerForm,
-    PhotoForm
 )
-from django_tables2 import SingleTableView
+from evidence.models import (
+    CredentialProperty,
+    Evidence,
+    RootAlias,
+    SystemProperty,
+    UserProperty,
+)
 from evidence.tables import EvidenceTable
+from lot.models import DeviceBeneficiary, DeviceLot
 
 
 class ListEvidencesView(DashboardView, SingleTableView):

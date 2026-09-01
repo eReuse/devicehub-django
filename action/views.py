@@ -1,18 +1,19 @@
 import logging
-from django.db import transaction
+
 from django.contrib import messages
-from django.views import View
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db import transaction
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
 from django.utils.translation import gettext_lazy as _
-from django.shortcuts import redirect, get_object_or_404
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.generic.edit import UpdateView, FormView
+from django.views import View
+from django.views.generic.edit import FormView, UpdateView
 
-from device.models import Device
-from dashboard.mixins import DashboardView
+from action.forms import AddNoteForm, ChangeStateForm
+from action.models import DeviceLog, Note, State, StateDefinition
 from credentials.services import CredentialService
-from action.forms import ChangeStateForm, AddNoteForm
-from action.models import State, StateDefinition, Note, DeviceLog
+from dashboard.mixins import DashboardView
+from device.models import Device
 
 
 logger = logging.getLogger('django')

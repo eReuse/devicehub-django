@@ -1,33 +1,29 @@
+from uuid import uuid4
+
 from decouple import config
-from django.urls import reverse, reverse_lazy
-from django.http import HttpResponse
 from django.contrib import messages
-from django.shortcuts import render, redirect, get_object_or_404
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse, reverse_lazy
+from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
+from django.views.generic import DetailView
 from django.views.generic.base import TemplateView
+from django.views.generic.edit import CreateView, DeleteView, FormView, UpdateView
+
+from action.models import StateDefinition
+from api.models import Token
 from dashboard.mixins import DashboardView, Http403
 from dashboard.mixins import DashboardView
 from django_tables2 import SingleTableView
-from django.views.generic.edit import (
-    CreateView,
-    DeleteView,
-    UpdateView,
-    FormView
-)
-from user.tables import TokensTable
-from user.forms import SettingsForm
-from user.models import User
-from uuid import uuid4
-from api.models import Token
 from django_tables2 import RequestConfig
-from django.views.generic import DetailView
 from evidence.models import Evidence
 from evidence.tables import EvidenceTable
-from django.utils.html import format_html
-
 from lot.models import Lot
+from user.forms import SettingsForm
+from user.models import User
 from user.models import User, UserProfile
-from action.models import StateDefinition
+from user.tables import TokensTable
 
 
 class PanelView(DashboardView, TemplateView):

@@ -1,8 +1,13 @@
 from django import forms
-from django.utils.translation import gettext_lazy as _
 from django.forms.models import inlineformset_factory
+from django.utils.translation import gettext_lazy as _
 
-from user.models import Institution, InstitutionLabelSettings, InstitutionDPPSettings, FacilityClaim
+from user.models import (
+    FacilityClaim,
+    Institution,
+    InstitutionDPPSettings,
+    InstitutionLabelSettings,
+)
 
 class OrderingStateForm(forms.Form):
     ordering = forms.CharField()

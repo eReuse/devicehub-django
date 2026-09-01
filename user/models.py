@@ -1,9 +1,15 @@
-from django.db import models
 from django.conf import settings
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
+from django.core.validators import (
+    MaxValueValidator,
+    MinValueValidator,
+    RegexValidator,
+    URLValidator,
+)
+from django.db import models
 from django.db.models import ProtectedError
-from django.core.validators import URLValidator, RegexValidator, MinValueValidator, MaxValueValidator
 from django.utils.translation import gettext_lazy as _
-from django.contrib.auth.models import BaseUserManager, AbstractBaseUser
+
 from evidence.models import CredentialProperty
 from utils.constants import ALGOS
 

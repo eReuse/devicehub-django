@@ -1,38 +1,37 @@
 import logging
 
+from django.conf import settings
+from django.contrib import messages
+from django.db import IntegrityError, models
 from django.db.models import Q
 from django.http import JsonResponse
-from django.conf import settings
-from django.db import IntegrityError, models
-from django.urls import reverse_lazy, resolve
-from django.contrib import messages
-from django.shortcuts import get_object_or_404, redirect, Http404, render
-from django.db import transaction
-from django.utils.functional import cached_property
-from django.http import HttpResponseForbidden
-from django.utils.translation import gettext_lazy as _
+from django.shortcuts import Http404, get_object_or_404, redirect
+from django.urls import resolve, reverse_lazy
 from django.urls import reverse
-from django.views.generic.edit import (
-    View,
-    CreateView,
-    UpdateView,
-    FormView,
-    DeleteView,
-)
+from django.utils.functional import cached_property
+from django.utils.translation import gettext_lazy as _
 from django.views.generic import ListView
-
 from django.views.generic.base import TemplateView
-from action.models import StateDefinition, State, DeviceLog, Note
-from dashboard.mixins import DashboardView, Http403
-from environmental_impact.algorithms.algorithm_factory import FactoryEnvironmentImpactAlgorithm
-from evidence.models import UserProperty, SystemProperty, Evidence, RootAlias, CredentialProperty
-from lot.models import LotTag
-from device.models import Device
-from device.forms import DeviceAttributeFormSet, DeviceMainForm, DEVICE_ATTRIBUTE_SUGGESTIONS
-from evidence.tables import EvidenceTable, CredentialTable
-from django_tables2 import RequestConfig
-from user.models import InstitutionLabelSettings
+from django.views.generic.edit import CreateView, DeleteView, FormView, UpdateView, View
+
+from action.models import DeviceLog, Note, State, StateDefinition
 from credentials.services import CredentialService
+from dashboard.mixins import DashboardView, Http403
+from device.forms import DeviceAttributeFormSet, DeviceMainForm
+from device.models import Device
+from django_tables2 import RequestConfig
+from environmental_impact.algorithms.algorithm_factory import (
+    FactoryEnvironmentImpactAlgorithm,
+)
+from evidence.models import (
+    CredentialProperty,
+    Evidence,
+    RootAlias,
+    SystemProperty,
+    UserProperty,
+)
+from evidence.tables import EvidenceTable
+from lot.models import LotTag
 if settings.DPP:
     from dpp.models import Proof
     from dpp.api_dlt import PROOF_TYPE

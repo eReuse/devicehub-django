@@ -1,20 +1,21 @@
-import json
-import pandas as pd
 import hashlib
+import json
 import os
 
 from django import forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
-from utils.device import create_property, create_doc, create_index
-from utils.forms import MultipleFileField
-from device.models import DeviceType
-from evidence.parse import Build
-from evidence.models import SystemProperty, UserProperty, RootAlias
-from evidence.image_processing import process_photo_upload
-from utils.save_snapshots import move_json, save_in_disk
-from utils.photo_evidence import get_photos_dir
+import pandas as pd
+
 from action.models import DeviceLog
+from device.models import DeviceType
+from evidence.image_processing import process_photo_upload
+from evidence.models import RootAlias, SystemProperty, UserProperty
+from evidence.parse import Build
+from utils.device import create_doc, create_index, create_property
+from utils.forms import MultipleFileField
+from utils.photo_evidence import get_photos_dir
+from utils.save_snapshots import move_json, save_in_disk
 
 
 class UploadForm(forms.Form):

@@ -1,38 +1,22 @@
 import logging
 from smtplib import SMTPException
 
-from django_tables2 import SingleTableView
 from django.contrib import messages
+from django.contrib.messages.views import SuccessMessageMixin
+from django.db import IntegrityError, transaction
+from django.shortcuts import Http404, get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
 from django.utils.functional import cached_property
-from django.shortcuts import get_object_or_404, redirect, Http404
 from django.utils.translation import gettext_lazy as _
-from django.contrib.messages.views import SuccessMessageMixin
-from django.views.generic.base import TemplateView, ContextMixin
-from django.views.generic.edit import (
-    CreateView,
-    UpdateView,
-    DeleteView,
-)
-from evidence.models import CredentialProperty
-from openlocationcode import openlocationcode as olc
-from django.db import IntegrityError,   transaction
-from dashboard.mixins import DashboardView, Http403
-from admin.forms import InstitutionDPPSettingsForm, InstitutionLabelSettingsForm, OrderingStateForm, InstitutionLabelSettings, InstitutionDPPSettings, InstitutionForm, FacilityClaimFormSet
-from user.models import User, Institution, InstitutionDPPSettings, InstitutionLabelSettings
-from admin.email import NotifyActivateUserByEmail
-from admin.tables import UserTable
-from action.models import StateDefinition
-from lot.models import LotTag
-from device.models import DeviceType, DeviceTypeAttribute
-from evidence.services import CredentialService
-from credentials.services import CredentialService
-
 from django.views import View
 from django.views.generic.base import ContextMixin, TemplateView
+from django.views.generic.base import ContextMixin, TemplateView
+from django.views.generic.edit import CreateView, DeleteView, UpdateView
 from django.views.generic.edit import CreateView, DeleteView, UpdateView
 
 from action.models import StateDefinition
+from action.models import StateDefinition
+from admin.email import NotifyActivateUserByEmail
 from admin.email import NotifyActivateUserByEmail
 from admin.forms import (
     FacilityClaimFormSet,
@@ -41,9 +25,22 @@ from admin.forms import (
     InstitutionLabelSettingsForm,
     OrderingStateForm,
 )
+from admin.forms import (
+    FacilityClaimFormSet,
+    InstitutionDPPSettingsForm,
+    InstitutionForm,
+    InstitutionLabelSettingsForm,
+    OrderingStateForm,
+)
+from admin.tables import UserTable
 from admin.tables import UserTable
 from credentials.services import CredentialService
+from credentials.services import CredentialService
 from dashboard.mixins import DashboardView, Http403
+from dashboard.mixins import DashboardView, Http403
+from device.models import DeviceType, DeviceTypeAttribute
+from django_tables2 import SingleTableView
+from lot.models import LotTag
 from lot.models import LotTag
 from user.models import (
     Institution,

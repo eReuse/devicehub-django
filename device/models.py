@@ -1,18 +1,24 @@
 from django.db import models
 from django.db.models import Max
+from django.db.models import Max
 from django.db.models.functions import Lower
 from django.urls import reverse
-from django.db.models import Max
-from django.utils.translation import gettext_lazy as _
-
-from utils.constants import ALGOS
-from evidence.models import CredentialProperty, SystemProperty, UserProperty, Evidence, RootAlias
 from django.utils.dateparse import parse_datetime
-from lot.models import DeviceLot, DeviceBeneficiary
-from action.models import State
-from user.models import InstitutionSettings, LabelVersion, QRContentType, Institution
-
 from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext_lazy as _
+
+from action.models import State
+from device.product_cache import ProductCache
+from evidence.models import (
+    CredentialProperty,
+    Evidence,
+    RootAlias,
+    SystemProperty,
+    UserProperty,
+)
+from lot.models import DeviceBeneficiary, DeviceLot
+from user.models import Institution, LabelVersion, QRContentType
+from utils.constants import ALGOS
 
 
 class Device:
@@ -917,4 +923,4 @@ class DeviceTypeAttribute(models.Model):
 # Registers the ProductCache ORM model under the `device` app. Django only
 # auto-imports `<app>.models`, so the read model defined in device/product_cache.py
 # must be imported here to be discovered by makemigrations.
-from device.product_cache import ProductCache  # noqa: E402,F401
+  # noqa: E402,F401

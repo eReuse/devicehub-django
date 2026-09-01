@@ -1,19 +1,20 @@
-import uuid
-import logging
-import requests
-from django.urls import reverse
-from django.conf import settings
 from collections import defaultdict
+import logging
+import uuid
+
+from django.conf import settings
 from django.core.cache import cache
 from django.db import IntegrityError
+from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
+import requests
 
-from user.models import InstitutionDPPSettings
 from evidence.models import CredentialProperty, SystemProperty
-from .registry import PayloadBuilderRegistry
+from user.models import InstitutionDPPSettings
 
 from . import untp_0_7_0
+from .registry import PayloadBuilderRegistry
 # imported so the builders register onto the register class
 
 logger = logging.getLogger(__name__)

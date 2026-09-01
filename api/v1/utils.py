@@ -1,14 +1,15 @@
-import re
 import json
 import logging
-from django.db.models import Q
-from ninja.errors import HttpError
+import re
 
-from lot.models import Lot, DeviceBeneficiary
-from evidence.models import RootAlias, SystemProperty, UserProperty
-from device.models import Device, ProductCache
+from django.db.models import Q
+
 from action.models import State
+from device.product_cache import ProductCache
+from evidence.models import RootAlias, SystemProperty, UserProperty
 from evidence.xapian import search
+from lot.models import DeviceBeneficiary, Lot
+from ninja.errors import HttpError
 
 logger = logging.getLogger('django')
 
