@@ -1,0 +1,86 @@
+{% load i18n %}
+
+<div class="mb-4">
+    <h6 class="fw-bold text-secondary mb-3 pb-2 border-bottom">1. {% translate "Event Classification" %}</h6>
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label class="form-label small fw-semibold text-dark">{% translate "Action Type" %}</label>
+            <select class="form-select form-select-sm event-type-selector"
+                    name="dte_cfg_event_type{% if is_admin %}_{{ state_obj.id }}{% endif %}"
+                    data-target-id="{% if not is_admin %}override_{% endif %}{{ state_obj.id }}">
+                <option value="ModifyEvent" {% if state_obj.dte_config.event_type == 'ModifyEvent' or not state_obj.dte_config.event_type %}selected{% endif %}>{% translate "Modify Event (Action at current facility)" %}</option>
+                <option value="MoveEvent" {% if state_obj.dte_config.event_type == 'MoveEvent' %}selected{% endif %}>{% translate "Move Event (Transfer to another facility)" %}</option>
+            </select>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label small fw-semibold text-dark">{% translate "Condition After Event" %}</label>
+            <select class="form-select form-select-sm" name="dte_cfg_disposition{% if is_admin %}_{{ state_obj.id }}{% endif %}">
+                {% with current_disp=state_obj.dte_config.disposition|default:"active" %}
+                <option value="new" {% if current_disp == 'new' %}selected{% endif %}>{% translate "New" %}</option>
+                <option value="inTransit" {% if current_disp == 'inTransit' %}selected{% endif %}>{% translate "In Transit" %}</option>
+                <option value="active" {% if current_disp == 'active' %}selected{% endif %}>{% translate "Active" %}</option>
+                <option value="repaired" {% if current_disp == 'repaired' %}selected{% endif %}>{% translate "Repaired" %}</option>
+                <option value="recalled" {% if current_disp == 'recalled' %}selected{% endif %}>{% translate "Recalled" %}</option>
+                <option value="expired" {% if current_disp == 'expired' %}selected{% endif %}>{% translate "Expired" %}</option>
+                <option value="consumed" {% if current_disp == 'consumed' %}selected{% endif %}>{% translate "Consumed" %}</option>
+                <option value="recycled" {% if current_disp == 'recycled' %}selected{% endif %}>{% translate "Recycled" %}</option>
+                <option value="disposed" {% if current_disp == 'disposed' %}selected{% endif %}>{% translate "Disposed" %}</option>
+                {% endwith %}
+            </select>
+        </div>
+        <div class="col-12">
+            <label class="form-label small fw-semibold text-dark">{% translate "Record Title" %}</label>
+            <input type="text" class="form-control form-control-sm" name="dte_cfg_name{% if is_admin %}_{{ state_obj.id }}{% endif %}" value="{{ state_obj.dte_config.name|default:'' }}" placeholder="{% translate 'e.g., Shipment to Buyer' %}">
+        </div>
+        <div class="col-12">
+            <label class="form-label small fw-semibold text-dark">{% translate "Standard Description" %}</label>
+            <textarea class="form-control form-control-sm" name="dte_cfg_description{% if is_admin %}_{{ state_obj.id }}{% endif %}" rows="2" placeholder="{% translate 'e.g., Device was successfully repaired and passed all checks.' %}">{{ state_obj.dte_config.description|default:'' }}</textarea>
+        </div>
+    </div>
+</div>
+
+<div class="mb-4">
+    <h6 class="fw-bold text-secondary mb-3 pb-2 border-bottom">2. {% translate "Industry Standard Activity (GS1 CBV)" %}</h6>
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label class="form-label small fw-semibold text-dark">{% translate "Activity Code" %}</label>
+            <input type="text" class="form-control form-control-sm" name="dte_cfg_activity_code{% if is_admin %}_{{ state_obj.id }}{% endif %}" value="{{ state_obj.dte_config.activity_code|default:'inspecting' }}" placeholder="{% translate 'e.g., shipping, repairing' %}">
+        </div>
+        <div class="col-md-6">
+            <label class="form-label small fw-semibold text-dark">{% translate "Activity Name" %}</label>
+            <input type="text" class="form-control form-control-sm" name="dte_cfg_activity_name{% if is_admin %}_{{ state_obj.id }}{% endif %}" value="{{ state_obj.dte_config.activity_name|default:'Inspecting' }}" placeholder="{% translate 'e.g., Shipping' %}">
+        </div>
+    </div>
+</div>
+
+<div class="mb-4 movement-details-section" id="move_section_{% if not is_admin %}override_{% endif %}{{ state_obj.id }}" style="{% if state_obj.dte_config.event_type != 'MoveEvent' %}display: none;{% endif %}">
+    <h6 class="fw-bold text-secondary mb-3 pb-2 border-bottom">3. {% translate "Destination Details (Move Event)" %}</h6>
+    <div class="row g-3 bg-light p-3 rounded">
+        <div class="col-12">
+            <label class="form-label small fw-semibold text-dark">{% translate "Tracking / Consignment ID (Optional)" %}</label>
+            <input type="text" class="form-control form-control-sm" name="dte_cfg_consignment_id{% if is_admin %}_{{ state_obj.id }}{% endif %}" value="{{ state_obj.dte_config.consignment_id|default:'' }}" placeholder="{% translate 'e.g., urn:carrier:waybillNumber' %}">
+        </div>
+        <div class="col-md-6">
+            <label class="form-label small fw-semibold text-dark">{% translate "Receiving Facility ID or URI" %}</label>
+            <input type="text" class="form-control form-control-sm" name="dte_cfg_to_facility_id{% if is_admin %}_{{ state_obj.id }}{% endif %}" value="{{ state_obj.dte_config.to_facility_id|default:'' }}" placeholder="https://facility.example.com/id">
+        </div>
+        <div class="col-md-6">
+            <label class="form-label small fw-semibold text-dark">{% translate "Receiving Facility Name" %}</label>
+            <input type="text" class="form-control form-control-sm" name="dte_cfg_to_facility_name{% if is_admin %}_{{ state_obj.id }}{% endif %}" value="{{ state_obj.dte_config.to_facility_name|default:'' }}" placeholder="{% translate 'e.g., Central Warehouse' %}">
+        </div>
+    </div>
+</div>
+
+<div class="mb-2">
+    <h6 class="fw-bold text-secondary mb-3 pb-2 border-bottom">4. {% translate "Related Documentary Evidence (Optional)" %}</h6>
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label class="form-label small fw-semibold text-dark">{% translate "Document Link Name" %}</label>
+            <input type="text" class="form-control form-control-sm" name="dte_cfg_doc_name{% if is_admin %}_{{ state_obj.id }}{% endif %}" value="{{ state_obj.dte_config.doc_name|default:'' }}" placeholder="{% translate 'e.g., Repair Certificate' %}">
+        </div>
+        <div class="col-md-6">
+            <label class="form-label small fw-semibold text-dark">{% translate "Document URL" %}</label>
+            <input type="url" class="form-control form-control-sm" name="dte_cfg_doc_url{% if is_admin %}_{{ state_obj.id }}{% endif %}" value="{{ state_obj.dte_config.doc_url|default:'' }}" placeholder="https://...">
+        </div>
+    </div>
+</div>
