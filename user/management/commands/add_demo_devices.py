@@ -16,6 +16,13 @@ DEVICE_TYPES = [
 ]
 
 
+def build_mac(i):
+    # locally administered unicast prefix, so it cannot collide with real ones
+    return "02:00:00:{:02X}:{:02X}:{:02X}".format(
+        (i >> 16) & 0xFF, (i >> 8) & 0xFF, i & 0xFF
+    )
+
+
 class Command(BaseCommand):
     help = "Create synthetic demo devices for stress-testing"
 
@@ -60,6 +67,7 @@ class Command(BaseCommand):
         for i in range(1, count + 1):
             mfr = MANUFACTURERS[(i - 1) % len(MANUFACTURERS)]
             dev_type, chassis = DEVICE_TYPES[(i - 1) % len(DEVICE_TYPES)]
+            mac = build_mac(i)
             snapshot = {
                 "type": "Snapshot",
                 "uuid": str(_uuid.uuid4()),
@@ -72,7 +80,28 @@ class Command(BaseCommand):
                     "serialNumber": f"DEMO{i:08d}",
                     "chassis": chassis,
                 },
-                "components": [],
+                "components": [
+                    {
+                        "type": "NetworkAdapter",
+                        "manufacturer": mfr,
+                        "model": f"Demo Ethernet {i:04d}",
+                        "serialNumber": mac,
+                        "speed": 1000,
+                        "wireless": False,
+                    },
+                ],
+                "debug": {
+                    "lshw": {
+                        "id": "computer",
+                        "children": [
+                            {
+                                "id": "network",
+                                "businfo": "pci@0000:00:19.0",
+                                "serial": mac,
+                            },
+                        ],
+                    },
+                },
             }
             if output_dir:
                 path = os.path.join(output_dir, f"demo-{i:05d}.json")
