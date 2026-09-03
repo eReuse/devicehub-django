@@ -86,12 +86,12 @@ def NewSnapshot(request, data: dict = Body(..., description="Paste the raw workb
         snapshot_id = ev_uuid
         txt = "It is not possible to parse snapshot: %s."
         logger.error(txt, snapshot_id)
-        raise HttpError(500, str(err))
+        detail = str(err) if settings.DEBUG else "Could not process snapshot"
+        raise HttpError(500, detail)
 
     prop = SystemProperty.objects.filter(
         uuid=ev_uuid,
-        # TODO this is hardcoded, it should select The user preferred algorithm
-        key="ereuse24",
+        key=settings.DEVICEHUB_ALGORITHM_DEVICE,
         owner=user.institution
     ).first()
 
