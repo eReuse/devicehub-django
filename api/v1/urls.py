@@ -1,5 +1,6 @@
 # api/v1/routers.py
-from ninja.errors import HttpError
+from django.http import Http404
+from ninja.errors import AuthenticationError, HttpError, ValidationError
 from ninja import NinjaAPI
 from . import lots, snapshot, devices
 from api.auth import GlobalAuth
@@ -30,6 +31,40 @@ def custom_http_error_handler(request, exc):
     }
 
     return api.create_response(request, payload, status=exc.status_code)
+
+
+@api.exception_handler(AuthenticationError)
+def auth_error_handler(request, exc):
+    payload = {
+        "error": "Unauthorized",
+        "details": "Malformed, invalid or not active token"
+    }
+
+    return api.create_response(request, payload, status=401)
+
+
+@api.exception_handler(Http404)
+def not_found_handler(request, exc):
+    payload = {
+        "error": "Not Found",
+        "details": "The requested resource was not found"
+    }
+
+    return api.create_response(request, payload, status=404)
+
+
+@api.exception_handler(ValidationError)
+def validation_error_handler(request, exc):
+    details = "; ".join(
+        "{}: {}".format(".".join(str(loc) for loc in err["loc"]), err["msg"])
+        for err in exc.errors
+    )
+    payload = {
+        "error": "Unprocessable Entity",
+        "details": details
+    }
+
+    return api.create_response(request, payload, status=422)
 
 api.add_router("/lots", lots.router, tags=["Lots"])
 api.add_router("/snapshot/", snapshot.router, tags=["Snapshots"])
