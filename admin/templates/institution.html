@@ -4,15 +4,8 @@
 
 {% block content %}
 <div class="container-fluid p-0">
-    <div class="row mb-4 align-items-center">
-        <div class="col">
-            <h3 class="mb-0 text-dark fw-bold">{{ title }}</h3>
-            <p class="text-muted">{{ subtitle }}</p>
-        </div>
-    </div>
-
     {% if form.errors %}
-    <div class="alert alert-danger alert-dismissible fade show shadow-sm border-0 rounded-0 mb-4" role="alert">
+    <div class="alert alert-danger alert-dismissible fade show shadow-sm border-0 rounded-0 mb-3" role="alert">
         <div class="d-flex align-items-center">
             <i class="bi bi-exclamation-triangle-fill fs-4 me-3 text-danger"></i>
             <div>
@@ -22,54 +15,64 @@
                 </ul>
             </div>
         </div>
-        <button class="btn-close" type="button" data-bs-dismiss="alert"></button>
+        <button class="btn-close" type="button" data-bs-dismiss="alert" aria-label="{% translate 'Close' %}"></button>
     </div>
     {% endif %}
 
     <div class="card shadow-sm border-0 rounded-3 m-0">
-        <form role="form" method="post" novalidate>
-            {% csrf_token %}
-            <div class="row g-0">
-                <div class="col-12 col-xl-6 p-4 bg-light border-end border-bottom h-100">
-                    <h6 class="fw-bold mb-3 pb-2 border-bottom text-secondary">
-                        <i class="bi bi-card-heading me-2"></i>{% translate "General Details" %}
-                    </h6>
-                    <div class="row g-3">
-                        <div class="col-12">{% bootstrap_field form.name %}</div>
-                        <div class="col-12">{% bootstrap_field form.logo %}</div>
-                        <div class="col-md-6">{% bootstrap_field form.responsable_person %}</div>
-                        <div class="col-md-6">{% bootstrap_field form.supervisor_person %}</div>
-                        <div class="col-12">{% bootstrap_field form.facility_description %}</div>
+        <div class="card-header bg-white border-bottom py-3">
+            <h5 class="mb-0 fw-bold text-dark"><i class="bi bi-building me-2"></i>{% translate "Institution Profile" %}</h5>
+        </div>
+        <div class="card-body p-md-4">
+            <p class="text-muted mb-4">{{ subtitle|default:"Manage your organization's general information." }}</p>
+
+            <form role="form" method="post" novalidate>
+                {% csrf_token %}
+
+                <div class="row g-4">
+                    <div class="col-12 col-xl-6">
+                        <div class="p-4 bg-light rounded-3 border h-100">
+                            <h6 class="fw-bold mb-3 pb-2 border-bottom text-secondary">{% translate "General Details" %}</h6>
+                            <div class="row g-3">
+                                <div class="col-12">{% bootstrap_field form.name %}</div>
+                                <div class="col-12">{% bootstrap_field form.logo %}</div>
+                                <div class="col-md-6">{% bootstrap_field form.responsable_person %}</div>
+                                <div class="col-md-6">{% bootstrap_field form.supervisor_person %}</div>
+                                <div class="col-12">{% bootstrap_field form.facility_description %}</div>
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div class="col-12 col-xl-6 p-4 bg-light border-bottom h-100">
-                    <h6 class="fw-bold mb-3 pb-2 border-bottom text-secondary">
-                        <i class="bi bi-geo-alt me-2"></i>{% translate "Location & System" %}
-                    </h6>
-                    <div class="row g-3">
-                        <div class="col-12">{% bootstrap_field form.facility_id_uri %}</div>
-                        <div class="col-12">{% bootstrap_field form.street_address %}</div>
-                        <div class="col-md-6">{% bootstrap_field form.location %}</div>
-                        <div class="col-md-6">{% bootstrap_field form.region %}</div>
-                        <div class="col-md-6">{% bootstrap_field form.postal_code %}</div>
-                        <div class="col-md-6">{% bootstrap_field form.country %}</div>
-                        <div class="col-12 mt-4 pt-3 border-top">
+
+                    <div class="col-12 col-xl-6">
+                        <div class="p-4 bg-light rounded-3 border h-100">
+                            <h6 class="fw-bold mb-3 pb-2 border-bottom text-secondary">{% translate "Location & System" %}</h6>
+                            <div class="row g-3">
+                                <div class="col-12">{% bootstrap_field form.facility_id_uri %}</div>
+                                <div class="col-12">{% bootstrap_field form.street_address %}</div>
+                                <div class="col-md-6">{% bootstrap_field form.location %}</div>
+                                <div class="col-md-6">{% bootstrap_field form.region %}</div>
+                                <div class="col-md-6">{% bootstrap_field form.postal_code %}</div>
+                                <div class="col-md-6">{% bootstrap_field form.country %}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 mt-4 pt-3 border-top">
                             <div class="row g-3">
                                 <div class="col-md-6">{% bootstrap_field form.registered_id %}</div>
                                 <div class="col-md-6">{% bootstrap_field form.process_category_code %}</div>
                                 <div class="col-12">{% bootstrap_field form.algorithm %}</div>
                             </div>
                         </div>
-                    </div>
                 </div>
-            </div>
-            <div class="p-4 text-end bg-white rounded-bottom">
-                <a class="btn btn-light text-secondary fw-semibold px-4 me-2" href="{% url 'admin:panel' %}">{% translate "Cancel" %}</a>
-                <button class="btn btn-success px-5 fw-semibold shadow-sm" type="submit">
-                    <i class="bi bi-check2-circle me-1"></i> {% translate 'Save Profile' %}
-                </button>
-            </div>
-        </form>
+
+                <div class="d-flex justify-content-end align-items-center gap-3 mt-4 pt-3 border-top">
+                    <a class="btn btn-light text-secondary fw-semibold px-4" href="{% url 'admin:panel' %}">{% translate "Cancel" %}</a>
+                    <button class="btn btn-primary px-5 fw-semibold shadow-sm d-flex align-items-center gap-2" type="submit">
+                        <i class="bi bi-save"></i> {% translate 'Save Profile' %}
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 {% endblock %}

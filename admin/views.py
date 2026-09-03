@@ -276,68 +276,10 @@ class InstitutionView(AdminView, UpdateView):
     success_url = reverse_lazy('admin:panel')
     form_class = InstitutionForm
 
-    def get_object(self, queryset=None):
-        return self.request.user.institution
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        if 'claim_formset' not in kwargs:
-            context['claim_formset'] = FacilityClaimFormSet(
-                instance=self.object,
-                prefix='claims'
-            )
-        return context
-
-    def post(self, request, *args, **kwargs):
-        self.object = self.get_object()
-        form_class = self.get_form_class()
-        form = self.get_form(form_class)
-
-        claim_formset = FacilityClaimFormSet(
-            self.request.POST,
-            instance=self.object,
-            prefix='claims'
-        )
-
-        if form.is_valid() and claim_formset.is_valid():
-            return self.form_valid(form, claim_formset)
-        else:
-            return self.form_invalid(form, claim_formset)
-
-    def form_valid(self, form, claim_formset):
-        logger.info(f"User {self.request.user.id} updating institution {self.object.id} and its claims.")
-
-        try:
-            with transaction.atomic():
-                self.object = form.save()
-                claim_formset.instance = self.object
-                claim_formset.save()
-
-            messages.success(self.request, _("Institution information and claims updated successfully."))
-            return super().form_valid(form)
-
-        except Exception as e:
-            logger.exception(f"Database error saving institution {self.object.id}: {str(e)}")
-            messages.error(self.request, _("An unexpected database error occurred. Please try again."))
-            return self.render_to_response(self.get_context_data(form=form, claim_formset=claim_formset))
-
-    def form_invalid(self, form, claim_formset):
-        logger.warning(f"User {self.request.user.id} submitted invalid institution form data.")
-        messages.error(self.request, _("Please correct the errors below."))
-        return self.render_to_response(self.get_context_data(form=form, claim_formset=claim_formset))
-
-
-class InstitutionConfigView(AdminView, UpdateView):
-    template_name = "institution.html"
-    model = Institution
-    form_class = InstitutionForm
-    title = _("Organization Profile")
-    subtitle = _("Manage your organization's physical details and profile")
-    breadcrumb = [(_("Admin"), reverse_lazy("admin:panel")), (_("Edit your Institution"), None)]
-    success_url = reverse_lazy('admin:panel')
-
-    def get_object(self, queryset=None):
-        return self.request.user.institution
+    def get_form_kwargs(self):
+        self.object = self.request.user.institution
+        kwargs = super().get_form_kwargs()
+        return kwargs
 
     def form_valid(self, form):
         logger.info(f"User {self.request.user.id} updated organization profile.")
