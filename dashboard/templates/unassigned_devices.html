@@ -194,9 +194,15 @@
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
                         </div>
                         <div class="modal-body">
+                        {% if not state.auto_issue_dte and user.institution.integration_settings.dpp_enabled%}
                             <div class="alert alert-secondary small mb-4">
                                 {% trans "Automatic Digital Traceability Events (DTEs) are disabled for bulk operations." %}
                             </div>
+                        {% elif state.auto_issue_dte and user.institution.integration_settings.dpp_enabled %}
+                            <div class="alert alert-secondary small mb-4">
+                                {% trans "Automatic Digital Traceability Events (DTEs) are disabled for bulk operations." %}
+                            </div>
+                        {% endif %}
 
                             <div class="mb-3">
                                 <label class="form-label">{% trans "Comment (Optional)" %}</label>

@@ -100,13 +100,13 @@
                       </div>
                   </div>
               {% endif %}
-                  {% if state.auto_issue_dte and user.institution.integration_settings.dpp_enabled %}
-                    <div class="alert alert-success small mb-4">
-                       {% trans "This will update the local state AND securely issue a Digital Traceability Event (DTE) credential to the network." %}
-                    </div>
-                  {% else %}
+                  {% if not state.auto_issue_dte and user.institution.integration_settings.dpp_enabled%}
                     <div class="alert alert-secondary small mb-4">
                       {% trans "This will only change the state in your local database. No DTE will be issued." %}
+                    </div>
+                  {% elif state.auto_issue_dte and user.institution.integration_settings.dpp_enabled %}
+                    <div class="alert alert-success small mb-4">
+                       {% trans "This will update the local state AND securely issue a Digital Traceability Event (DTE) credential to the network." %}
                     </div>
                   {% endif %}
 

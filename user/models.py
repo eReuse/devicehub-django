@@ -74,12 +74,12 @@ class Institution(models.Model):
     )
 
     facility_id_uri = models.URLField(
-        _("Facility ID (URI)"),
+        _("Facility ID"),
         max_length=500,
         blank=True,
         null=True,
         validators=[URLValidator(schemes=['http', 'https', 'did'])],
-        help_text=_("Globally unique URI for this facility (e.g., did:web:example.com).")
+        help_text=_("Global URI (or URL) for this facility (e.g., https://www.myweb.com).")
     )
     facility_description = models.TextField(
         _("Facility Description"),

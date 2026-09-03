@@ -52,6 +52,12 @@ class EvidenceTable(tables.Table):
         self.evidence_map = {}
 
     def before_render(self, request):
+        try:
+            if not request.user.institution.integration_settings.dpp_enabled:
+                self.columns.hide('digital_passport')
+        except AttributeError:
+            self.columns.hide('digital_passport')
+
         if self.page:
             if hasattr(self.page.object_list, 'data'):
                 paginated_ids = [item.uuid for item in self.page.object_list.data]
@@ -230,7 +236,7 @@ class CredentialTable(tables.Table):
     class Meta:
         model = CredentialProperty
         template_name = "custom_table.html"
-        fields = ("created", "key", "description", "target", "user", "actions")
+        fields = ("created", "key", "description", "user", "actions")
         order_by = ("-created")
 
     def render_key(self, value):

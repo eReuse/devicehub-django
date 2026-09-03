@@ -318,11 +318,20 @@
                                         </div>
                                     </form>
                                 {% else %}
-                                    <div class="alert alert-warning border-0 d-flex align-items-center mt-3 shadow-sm">
-                                        <i class="bi bi-exclamation-triangle fs-4 me-3"></i>
+                                    <div class="alert alert-warning border-0 d-flex align-items-start mt-3 shadow-sm">
+                                        <i class="bi bi-exclamation-triangle fs-4 me-3 mt-1"></i>
                                         <div>
                                             <strong>{% translate "Action Required" %}</strong><br>
-                                            <span class="small">{% translate "You must fill out your organization's core details in the 'Organization Profile' settings before you can publish a facility record." %}</span>
+                                            <span class="small">{% translate "You must fill out your organization's core details in the 'Organization Profile' settings before you can publish a facility record. The following fields are required:" %}</span>
+
+                                            <ul class="small mt-2 mb-3 ps-3 text-dark fw-semibold">
+                                                <li>{% translate "Organization Name" %}</li>
+                                                <li>{% translate "Full Address (Street, City, Country)" %}</li>
+                                            </ul>
+
+                                            <a href="{% url 'admin:institution' user.institution.id %}" class="btn btn-sm btn-warning fw-semibold shadow-sm">
+                                                {% translate "Go to Organization Profile" %} <i class="bi bi-arrow-right ms-1"></i>
+                                            </a>
                                         </div>
                                     </div>
                                 {% endif %}
