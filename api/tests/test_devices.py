@@ -1,5 +1,11 @@
+from datetime import timedelta
+
+from django.utils import timezone
+from django.utils.dateparse import parse_datetime
+
 from action.models import DeviceLog
-from evidence.models import UserProperty
+from device.models import ProductCache
+from evidence.models import RootAlias, SystemProperty, UserProperty
 from user.models import Institution
 
 from api.tests.base import ApiTestCase
@@ -173,6 +179,24 @@ class DeviceListTest(ApiTestCase):
     def test_device_payload_reports_when_it_was_first_seen(self):
         response = self.client.get("/api/v1/devices/", **self.auth)
         self.assertIsNotNone(response.json()["devices"][0]["created"])
+
+    def test_first_seen_date_covers_evidence_under_every_alias(self):
+        """Evidence is stored under the physical alias, so a re-rooted device
+        keeps the date of its oldest alias, not the date of its current root."""
+        old_root = self.device_root("o" * 12)
+        new_root = self.device_root("n" * 12)
+        _, old_prop = self.make_device(old_root)
+        long_ago = timezone.now() - timedelta(days=30)
+        SystemProperty.objects.filter(pk=old_prop.pk).update(created=long_ago)
+        self.make_device(new_root)
+        RootAlias.objects.filter(
+            owner=self.institution, alias=old_root).update(root=new_root)
+        ProductCache.objects.filter(owner=self.institution, root=old_root).delete()
+
+        response = self.client.get("/api/v1/devices/", **self.auth)
+        device = next(d for d in response.json()["devices"] if d["ID"] == new_root)
+        self.assertAlmostEqual(
+            parse_datetime(device["created"]), long_ago, delta=timedelta(seconds=1))
 
 
 class DevicePropertyKeysTest(ApiTestCase):
