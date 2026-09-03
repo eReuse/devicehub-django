@@ -295,20 +295,25 @@ class UNTP070DPPBuilder(BaseUNTPBuilder):
             if 'mib' in unit or 'mb' in unit: return int(value)
             return 0
 
-        characteristics = {
-            "chassis": components.get('type') or "Unknown",
-            "manufacturer": components.get('manufacturer') or "Unknown",
-            "model": components.get('model') or "Unknown",
-            "cpu_model": components.get('cpu_model'),
-            "cpu_cores": str(components.get('cpu_cores')) if components.get('cpu_cores') else None,
-            "ram_total": parse_ram_to_mb(components.get('ram_total')),
-            "ram_type": components.get('ram_type') or "Other",
-            "ram_slots": components.get('ram_slots'),
-            "slots_used": components.get('slots_used'),
-            "drive": components.get('drive') or "Other",
-            "gpu_model": components.get('gpu_model'),
-            "serial": components.get('serial', "NA")
-        }
+        if device.is_websnapshot:
+            #if the device is entered through form then grab all, defer compliance to the user
+            characteristics = device.components
+        else:
+            characteristics = {
+                "chassis": components.get('type') or "Unknown",
+                "manufacturer": components.get('manufacturer') or "Unknown",
+                "model": components.get('model') or "Unknown",
+                "cpu_model": components.get('cpu_model'),
+                "cpu_cores": str(components.get('cpu_cores')) if components.get('cpu_cores') else None,
+                "ram_total": parse_ram_to_mb(components.get('ram_total')),
+                "ram_type": components.get('ram_type') or "Other",
+                "ram_slots": components.get('ram_slots'),
+                "slots_used": components.get('slots_used'),
+                "drive": components.get('drive') or "Other",
+                "gpu_model": components.get('gpu_model'),
+                "serial": components.get('serial', "NA")
+            }
+
         # clean nulls
         characteristics = {k: v for k, v in characteristics.items() if v is not None and v != ''}
 

@@ -96,9 +96,9 @@ class CredentialService:
                 logger.error(f"Failed to create DID for device {device.id}: {err}")
                 return err
 
-            sysprop_instance = SystemProperty.objects.filter(uuid=device.last_evidence.uuid).first()
+            ev_prop = device.get_last_property(exclude_photo=True)
             CredentialProperty.objects.create(
-                sysprop=sysprop_instance,
+                sysprop=ev_prop,
                 key=CredentialProperty.CredentialType.DIDDOC,
                 owner=self.institution,
                 value=did_str,
@@ -154,7 +154,7 @@ class CredentialService:
             logger.exception(f"Unexpected error updating object DID ({did_str})")
             return f"Unexpected error: {str(e)}"
 
-    def issue_credential(self, workflow_type: str, build_kwargs: dict, description: str = None):
+    def issue_credential(self, workflow_type: str, build_kwargs: dict, description: str = ""):
         """
         Dynamically builds and issues a credential based on the active schema configuration.
         workflow_type: 'dpp', 'traceability', or 'facility'
@@ -188,12 +188,11 @@ class CredentialService:
             logger.exception(f"Failed to build payload subject for {workflow_type}")
             return None, f"Payload builder failed: {str(e)}"
 
-        sysprop_instance = None
         device = build_kwargs.get('device')
-        if device and getattr(device, 'last_evidence', None):
-            sysprop_instance = SystemProperty.objects.filter(uuid=device.last_evidence.uuid).first()
-            if not sysprop_instance:
-                logger.warning(f"Could not find SystemProperty matching device evidence UUID: {device.last_evidence.uuid}")
+
+        if not device and not getattr(device, 'last_evidence', None):
+            logger.warning(f"Could not find last evidencce for device UUID")
+            return None, "Last evidence not found."
 
         workflow_configs = {
             'traceability': ("issue-traceability/", CredentialProperty.CredentialType.DTE),
@@ -210,7 +209,8 @@ class CredentialService:
             "credentialSubject": credential_subject
         }
 
-        return self._execute_issuance(endpoint, payload, db_key, description, sysprop_instance)
+        ev_prop = device.get_last_property(exclude_photo=True)
+        return self._execute_issuance(endpoint, payload, db_key, description, ev_prop)
 
     def _validate_config(self, type_key: str) -> str | None:
         if not self.settings:

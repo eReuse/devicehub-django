@@ -30,7 +30,9 @@ class ChangeStateView(LoginRequiredMixin, FormView):
         self.device_id = form.cleaned_data['device_id']
         comment = form.cleaned_data.get('comment', '').strip()
 
-        device = Device(id=self.device_id)
+        device = Device(id=self.device_id, owner=self.request.user.institution)
+
+        device.initial()
         logger.info(f"User {self.request.user.id} changing state for device {self.device_id}: {previous_state} -> {new_state}")
 
         #  check if auto-issuance is enabled
@@ -75,7 +77,7 @@ class ChangeStateView(LoginRequiredMixin, FormView):
                     institution=self.request.user.institution,
                 )
 
-        # 2. Check if we should issue a Traceability Event (DTE)
+        # DTE issuance
         if auto_issue_dte and is_dpp_active:
             service = CredentialService(self.request.user)
             did_error = service.ensure_device_did(device)
@@ -223,9 +225,9 @@ class BulkStateChangeView(DashboardView, View):
                 error_count += 1
 
         if local_success_count > 0:
-            messages.success(request, _("State changed to '{state}' successfully for {count} devices.").format(state=new_state, count=local_success_count))
+            messages.success(request, _("State changed to '{state}' successfully for {count} products.").format(state=new_state, count=local_success_count))
         if error_count > 0:
-            messages.error(request, _("Failed to change state for {count} devices.").format(count=error_count))
+            messages.error(request, _("Failed to change state for {count} products.").format(count=error_count))
 
         return redirect(referer)
 

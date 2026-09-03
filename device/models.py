@@ -134,6 +134,20 @@ class Device:
 
         return self.properties
 
+    def get_last_property(self, exclude_photo=False):
+        properties = self.get_properties()
+
+        if not properties:
+            return None
+
+        if exclude_photo:
+            for prop in properties:
+                if prop.key != 'photo25':
+                    return prop
+            return None
+
+        return properties[0]
+
     def get_user_properties(self):
         if not self.owner:
             return UserProperty.objects.none()
@@ -615,7 +629,7 @@ class Device:
         if not self.last_evidence.is_legacy or not self.last_evidence:
             return hardware_info
 
-        if getattr(self.last_evidence, 'is_web_snapshot', False):
+        if self.is_websnapshot:
             doc = getattr(self.last_evidence, 'doc', {})
             kv_data = doc.get('kv', {})
 
