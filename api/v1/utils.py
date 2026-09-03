@@ -1,7 +1,7 @@
 import re
 import json
 import logging
-from django.db.models import Q, Min
+from django.db.models import Q
 from ninja.errors import HttpError
 
 from lot.models import Lot, DeviceBeneficiary
@@ -231,23 +231,22 @@ def fetch_bulk_device_data(chids_page, institution, lot=None):
     aliases_qs = RootAlias.objects.filter(owner=institution, root__in=chids_page).values_list('alias', 'root')
     alias_to_root = {alias: root for alias, root in aliases_qs}
 
-    sp_qs = SystemProperty.objects.filter(owner=institution, value__in=alias_to_root.keys()).order_by('-created').values_list('value', 'uuid')
+    sp_qs = SystemProperty.objects.filter(owner=institution, value__in=alias_to_root.keys()).order_by('-created').values_list('value', 'uuid', 'created')
     latest_uuids = {}
-    for alias, uuid in sp_qs:
+    created_map = {}
+    # Newest first: the first uuid seen for a root is its latest evidence and
+    # the last date seen is the oldest one, when the device was first known.
+    for alias, uuid, created in sp_qs:
         root = alias_to_root.get(alias)
-        if root and root not in latest_uuids:
+        if not root:
+            continue
+        if root not in latest_uuids:
             latest_uuids[root] = uuid
+        created_map[root] = created
 
     states_qs = State.objects.filter(snapshot_uuid__in=latest_uuids.values()).order_by('-date')
     uuid_to_state = {state.snapshot_uuid: state.state for state in states_qs}
     state_map = {root: str(uuid_to_state.get(uuid, "")) for root, uuid in latest_uuids.items()}
-
-    # check for earliest SystemProperty by root alias
-    earliest_dates_qs = SystemProperty.objects.filter(
-        owner=institution,
-        value__in=chids_page
-    ).values('value').annotate(first_seen=Min('created')).values_list('value', 'first_seen')
-    created_map = {val: first_seen for val, first_seen in earliest_dates_qs}
 
     return props_map, ben_map, default_ben_status, state_map, created_map
 
