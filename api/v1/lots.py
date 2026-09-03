@@ -89,7 +89,7 @@ def retrieveLotDevices(
 
 @router.post(
     "/{lot_id}/devices/",
-    response={200: OperationResult, 207: OperationResult, 400: MessageOut, 401: MessageOut, 404: MessageOut, 422: MessageOut},
+    response={200: OperationResult, 207: OperationResult, 400: MessageOut, 404: MessageOut, 409: MessageOut, 422: MessageOut},
     summary=_("Assign devices to lot"),
     description=_("""
     Add multiple devices to a specified lot in a single operation.
@@ -101,8 +101,8 @@ def retrieveLotDevices(
     Returns:
     - 200: All valid devices assigned
     - 207: Partial assignment (some invalid IDs)
-    - 401: Lot is archived
     - 404: Lot was not found
+    - 409: Lot is archived
     - 422: No valid device IDs provided
     """),
     tags=["Lots"],
@@ -113,7 +113,7 @@ def assignLotDevices(request, lot_id: str, data: DeviceIDInput):
     lot = find_lot(lot_id, user.institution)
 
     if not lot: raise HttpError(404, "Lot not found")
-    if lot.archived: raise HttpError(401, "Lot is archived")
+    if lot.archived: raise HttpError(409, "Lot is archived")
 
     valid_ids, invalid_ids = check_valid_ids(data.device_ids, user.institution)
     if not valid_ids: raise HttpError(422, "No valid device IDs provided")
@@ -134,7 +134,7 @@ def assignLotDevices(request, lot_id: str, data: DeviceIDInput):
 
 @router.delete(
     "/{lot_id}/devices/",
-    response={200: OperationResult, 207: OperationResult, 400: MessageOut, 404: MessageOut, 422: MessageOut},
+    response={200: OperationResult, 207: OperationResult, 400: MessageOut, 404: MessageOut, 409: MessageOut, 422: MessageOut},
     summary=_("Remove devices from lot"),
     description=_("""
     Remove multiple devices from a specified lot in a single operation.
@@ -146,6 +146,8 @@ def assignLotDevices(request, lot_id: str, data: DeviceIDInput):
     Returns:
     - 200: All valid devices removed
     - 207: Partial removal (some invalid IDs)
+    - 404: Lot was not found
+    - 409: Lot is archived
     - 422: No valid device IDs provided
     """),
     tags=["Lots"],
@@ -156,6 +158,7 @@ def remove_devices_from_lot(request, lot_id: str, data: DeviceIDInput):
     lot = find_lot(lot_id, user.institution)
 
     if not lot: raise HttpError(404, "Lot not found")
+    if lot.archived: raise HttpError(409, "Lot is archived")
 
     valid_ids, invalid_ids = check_valid_ids(data.device_ids, user.institution)
     if not valid_ids: raise HttpError(422, "No valid device IDs provided")
