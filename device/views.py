@@ -18,7 +18,7 @@ from action.models import DeviceLog, Note, State, StateDefinition
 from credentials.services import CredentialService
 from dashboard.mixins import DashboardView, Http403
 from device.forms import DeviceAttributeFormSet, DeviceMainForm
-from device.models import Device
+from device.models import Device, DeviceType
 from django_tables2 import RequestConfig
 from environmental_impact.algorithms.algorithm_factory import (
     FactoryEnvironmentImpactAlgorithm,
@@ -30,8 +30,9 @@ from evidence.models import (
     SystemProperty,
     UserProperty,
 )
-from evidence.tables import EvidenceTable
+from evidence.tables import EvidenceTable, CredentialTable
 from lot.models import LotTag
+from user.models import InstitutionLabelSettings
 if settings.DPP:
     from dpp.models import Proof
     from dpp.api_dlt import PROOF_TYPE
@@ -116,7 +117,6 @@ class NewDeviceView(DashboardView, FormView):
         form.save(attribute_formset=attribute_formset)
 
         return super().form_valid(form)
-
 
 class EditDeviceView(DashboardView, UpdateView):
     template_name = "new_device.html"
@@ -499,7 +499,7 @@ class IssueDigitalPassportView(DeviceLogMixin, View):
         if not device.last_evidence:
             logger.warning(f"DPP issuance failed: Device {pk} not found or has no initial evidence.")
             messages.error(request, _("Device not found."))
-            return redirect('device:list')
+            return redirect('product:list')
 
         device.initial()
         service = CredentialService(request.user)
@@ -515,7 +515,7 @@ class IssueDigitalPassportView(DeviceLogMixin, View):
             else:
                 logger.error(f"DPP issuance blocked. DID configuration error for device {pk}: {did_error}")
                 messages.error(request, _("Failed to issue Passport. DID configuration error: {error}").format(error=did_error))
-                return redirect('device:details', pk=pk)
+                return redirect('product:details', pk=pk)
 
         # gather database information for the dpp builder
         facility_info = service.get_facility_info(self.request)
@@ -538,7 +538,7 @@ class IssueDigitalPassportView(DeviceLogMixin, View):
         if error:
             logger.error(f"Failed to issue DPP for device {pk}: {error}")
             messages.error(request, _("Failed to issue Passport: {error}").format(error=error))
-            return redirect('device:details', pk=pk)
+            return redirect('product:details', pk=pk)
 
         logger.info(f"Successfully issued DPP for device {pk} (Credential UUID: {credential.uuid}).")
         messages.success(request, _("Digital Product Passport issued successfully!"))
@@ -561,10 +561,10 @@ class IssueDigitalPassportView(DeviceLogMixin, View):
         else:
             logger.info(f"Successfully updated DID endpoint to DPP URL for device {pk}.")
 
-        return redirect('device:details', pk=pk)
+        return redirect('product:details', pk=pk)
 
 
-class DeviceDPPView(TemplateView):
+class ProductDPPView(TemplateView):
     template_name = "dpp_credential.html"
 
     def get(self, request, *args, **kwargs):
@@ -588,7 +588,7 @@ class DeviceDPPView(TemplateView):
         if not self.latest_dpp_cred:
             logger.info(f"DeviceDPPView: No DPP credential found for device {self.pk}. Redirecting to details.")
             messages.info(request, _("A Digital Product Passport (DPP) has not been generated for this device yet."))
-            return redirect(reverse_lazy('device:details', args=[self.pk]))
+            return redirect(reverse_lazy('product:details', args=[self.pk]))
 
         # Handle JSON download early return
         if request.GET.get('format') == 'json':

@@ -269,7 +269,7 @@ class UpdateNoteView(LoginRequiredMixin, UpdateView):
     model = Note
     fields = ['description']
     pk_url_kwarg = 'pk'
-    success_url = reverse_lazy('device:details')
+    success_url = reverse_lazy('product:details')
 
     def get_object(self, queryset=None):
         return get_object_or_404(
@@ -310,7 +310,7 @@ class DeleteNoteView(LoginRequiredMixin, View):
 
     def post(self, request, *args, **kwargs):
         self.pk = kwargs['pk']
-        referer = request.META.get('HTTP_REFERER', reverse('device:details'))
+        referer = request.META.get('HTTP_REFERER', reverse('product:details'))
 
         self.object = get_object_or_404(
             self.model,

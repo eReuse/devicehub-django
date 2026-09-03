@@ -693,7 +693,7 @@ class Device:
             qr_payload = request.build_absolute_uri(path)
 
         elif settings.qr_content_type == QRContentType.DPP_URL:
-            path = reverse('device:dpp', kwargs={'pk': self.pk})
+            path = reverse('product:dpp', kwargs={'pk': self.pk})
             qr_payload = request.build_absolute_uri(path)
 
         elif settings.qr_content_type == QRContentType.DID:
