@@ -62,7 +62,6 @@ class CredentialProperty(Property):
         DIDDOC = 'DIDDOC', 'DID DOCUMENT'
 
     credential = models.JSONField()
-    #TODO: change for idhub assigned uuid
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     sysprop = models.ForeignKey(
         SystemProperty,
