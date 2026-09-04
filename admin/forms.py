@@ -90,8 +90,8 @@ class InstitutionLabelSettingsForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         dpp_enabled = False
-        if self.institution and hasattr(self.institution, 'integration_settings'):
-            dpp_enabled = self.institution.integration_settings.dpp_enabled
+        if self.instance.institution and hasattr(self.instance.institution, 'integration_settings'):
+            dpp_enabled = self.instance.institution.integration_settings.dpp_enabled
 
         if not dpp_enabled:
             excluded_choices = {QRContentType.DPP_URL, QRContentType.DID}
