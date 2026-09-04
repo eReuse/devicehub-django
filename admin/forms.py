@@ -7,6 +7,7 @@ from user.models import (
     Institution,
     InstitutionDPPSettings,
     InstitutionLabelSettings,
+    QRContentType,
 )
 
 class OrderingStateForm(forms.Form):
@@ -84,9 +85,25 @@ class InstitutionLabelSettingsForm(forms.ModelForm):
         data = self.cleaned_data.get('qr_printed_properties', [])
         return data
 
+    def __init__(self, *args, **kwargs):
+        self.institution = kwargs.pop('institution', None)
+        super().__init__(*args, **kwargs)
+
+        dpp_enabled = False
+        if self.institution and hasattr(self.institution, 'integration_settings'):
+            dpp_enabled = self.institution.integration_settings.dpp_enabled
+
+        if not dpp_enabled:
+            excluded_choices = {QRContentType.DPP_URL, QRContentType.DID}
+            self.fields['qr_content_type'].choices = [
+                choice for choice in self.fields['qr_content_type'].choices
+                if choice[0] not in excluded_choices
+            ]
+
 
 DPP_VERSION_CHOICES = [
     ('untp-0.7.0', 'UNTP v0.7.0'),
+    #('untp-1.0.0', 'UNTP v1.0.0'),
 ]
 
 

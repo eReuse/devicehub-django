@@ -10,13 +10,9 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from django.views import View
 from django.views.generic.base import ContextMixin, TemplateView
-from django.views.generic.base import ContextMixin, TemplateView
-from django.views.generic.edit import CreateView, DeleteView, UpdateView
 from django.views.generic.edit import CreateView, DeleteView, UpdateView
 
 from action.models import StateDefinition
-from action.models import StateDefinition
-from admin.email import NotifyActivateUserByEmail
 from admin.email import NotifyActivateUserByEmail
 from admin.forms import (
     FacilityClaimFormSet,
@@ -25,22 +21,11 @@ from admin.forms import (
     InstitutionLabelSettingsForm,
     OrderingStateForm,
 )
-from admin.forms import (
-    FacilityClaimFormSet,
-    InstitutionDPPSettingsForm,
-    InstitutionForm,
-    InstitutionLabelSettingsForm,
-    OrderingStateForm,
-)
-from admin.tables import UserTable
 from admin.tables import UserTable
 from credentials.services import CredentialService
-from credentials.services import CredentialService
-from dashboard.mixins import DashboardView, Http403
 from dashboard.mixins import DashboardView, Http403
 from device.models import DeviceType, DeviceTypeAttribute
 from django_tables2 import SingleTableView
-from lot.models import LotTag
 from lot.models import LotTag
 from user.models import (
     Institution,
