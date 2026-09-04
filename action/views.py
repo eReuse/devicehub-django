@@ -11,6 +11,7 @@ from django.views.generic.edit import FormView, UpdateView
 
 from action.forms import AddNoteForm, ChangeStateForm
 from action.models import DeviceLog, Note, State, StateDefinition
+from user.models import InstitutionDPPSettings
 from credentials.services import CredentialService
 from dashboard.mixins import DashboardView
 from device.models import Device
@@ -42,7 +43,9 @@ class ChangeStateView(LoginRequiredMixin, FormView):
         ).first()
         auto_issue_dte = state_def.auto_issue_dte if state_def else False
 
-        dpp_settings = self.request.user.institution.integration_settings
+        dpp_settings, _created = InstitutionDPPSettings.objects.get_or_create(
+            institution=self.request.user.institution
+        )
         is_dpp_active = dpp_settings.dpp_enabled if dpp_settings else False
 
         # apply local state changes and user notes
