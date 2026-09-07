@@ -1,3 +1,5 @@
+import json
+
 from typing import List, Optional, Union, Dict
 from datetime import datetime
 
@@ -258,6 +260,124 @@ class SnapshotResponse(BaseModel):
         ...,
         description=str(_("Public URL for sharing this device")),
         example="https://example.com/web/devices/0FCDC8/"
+    )
+
+
+class ProductTypeOut(Schema):
+    name: str = Field(
+        ...,
+        example="Laptop",
+        description=str(_("Name of the type, the value to send when registering a product"))
+    )
+    display_name: str = Field(
+        ...,
+        example=str(_t("Laptop")),
+        description=str(_("Label shown to operators, falls back to the name"))
+    )
+    icon: Optional[str] = Field(
+        default=None,
+        example="bi-laptop",
+        description=str(_("Icon assigned to this type"))
+    )
+    attributes: List[str] = Field(
+        ...,
+        example=["manufacturer", "model", "serial"],
+        description=str(_("Attribute names suggested for this type"))
+    )
+
+
+class ProductIn(Schema):
+    type: str = Field(
+        ...,
+        example="Laptop",
+        description=str(_("Product type, as configured by the institution"))
+    )
+    amount: int = Field(
+        default=1,
+        ge=1,
+        example=1,
+        description=str(_("How many identical products to register. Forced to 1 when a custom ID is given"))
+    )
+    custom_id: Optional[str] = Field(
+        default=None,
+        example="INV-001AF",
+        description=str(_("Operator-assigned identifier. Becomes the canonical ID of the product"))
+    )
+    attributes: Dict[str, str] = Field(
+        default_factory=dict,
+        example={"manufacturer": "Dell", "model": "Latitude 5490"},
+        description=str(_("Free-form attribute names and values describing the product, as a JSON object"))
+    )
+
+    @field_validator("attributes", mode="before")
+    @classmethod
+    def decode_attributes(cls, value):
+        """Form fields carry no nested objects, so attributes travel as JSON text."""
+        if not isinstance(value, str):
+            return value
+        if not value.strip():
+            return {}
+        try:
+            return json.loads(value)
+        except json.JSONDecodeError:
+            raise ValueError(str(_("must be a JSON object")))
+
+
+class ProductCreated(Schema):
+    ID: str = Field(
+        ...,
+        example="web25:8ccdf7bce112ecd667cabfd255e229999fc9ff242c0df789f17dbce47a605a5c",
+        description=str(_("Canonical identifier of the registered product"))
+    )
+    dhid: str = Field(
+        ...,
+        example="0FCDC8",
+        description=str(_("DeviceHub identifier (short code)"))
+    )
+    url: str = Field(
+        ...,
+        example="https://example.com/product/web25:8ccdf7bce112/",
+        description=str(_("Direct URL to access this product"))
+    )
+    public_url: str = Field(
+        ...,
+        example="https://example.com/product/web25:8ccdf7bce112/public/",
+        description=str(_("Public URL for sharing this product"))
+    )
+
+
+class ProductCreatedResponse(Schema):
+    status: str = Field(
+        ...,
+        example="success",
+        description=str(_("Operation status"))
+    )
+    products: List[ProductCreated] = Field(
+        ...,
+        description=str(_("The products that were registered"))
+    )
+
+
+class PhotoUploadedResponse(Schema):
+    status: str = Field(
+        ...,
+        example="success",
+        description=str(_("Operation status"))
+    )
+    ID: str = Field(
+        ...,
+        example="web25:8ccdf7bce112ecd667cabfd255e229999fc9ff242c0df789f17dbce47a605a5c",
+        description=str(_("Canonical identifier of the product the photo was linked to"))
+    )
+    uuid: str = Field(
+        ...,
+        example="6a3f5f6a-8c1b-4d0e-9a2b-3c4d5e6f7a8b",
+        description=str(_("Identifier of the photo evidence"))
+    )
+    url: str = Field(
+        ...,
+        example="https://example.com/evidence/6a3f5f6a-8c1b-4d0e-9a2b-3c4d5e6f7a8b/photo",
+        description=str(_("URL to retrieve the image"))
     )
 
 

@@ -2,19 +2,23 @@ import math
 import logging
 from django.db import transaction
 from django.shortcuts import get_object_or_404
-from ninja import Router, Query
+from django.urls import reverse
+from ninja import File, Form, Router, Query
 from ninja.errors import HttpError
+from ninja.files import UploadedFile
 from django.db import IntegrityError
 from django.utils.translation import gettext_lazy as _
 
 from evidence.models import UserProperty, RootAlias, SystemProperty
-from device.models import Device, ProductCache
+from evidence.forms import PhotoForm
+from device.forms import DeviceAttributeFormSet, DeviceMainForm
+from device.models import Device, DeviceType, ProductCache
 from action.models import DeviceLog
 
 from api.auth import GlobalAuth
-from api.v1.schemas import MessageOut, SuccessResponse, PropertyIn, DeviceWithLogsOut, BulkPropertyIn, OperationResult, DeviceListResponse
+from api.v1.schemas import MessageOut, SuccessResponse, PropertyIn, DeviceWithLogsOut, BulkPropertyIn, OperationResult, DeviceListResponse, ProductIn, ProductCreatedResponse, ProductTypeOut, PhotoUploadedResponse
 
-from api.v1.utils import get_device_instance, check_valid_ids, get_all_search_results, build_device_response_list, build_bulk_device_export_dict
+from api.v1.utils import get_device_instance, resolve_device_root, check_valid_ids, get_all_search_results, build_device_response_list, build_bulk_device_export_dict
 
 
 logger = logging.getLogger('django')
@@ -282,6 +286,177 @@ def list_all_devices(
         pagination={"total_items": total_items, "total_pages": total_pages, "current_page": page, "page_size": size},
         devices=devices_export
     )
+
+@router.get(
+    "/types/",
+    response={200: list[ProductTypeOut], 403: MessageOut},
+    summary=_("List the product types of the institution"),
+    description=_("""
+    Retrieves the product types an operator can choose from, each one with the
+    attribute names suggested for it.
+
+    These are the values accepted by the product registration endpoint: the type
+    goes in `type` and the suggested attributes are a starting point for
+    `attributes`, which is not restricted to them.
+    """),
+    tags=["Devices"],
+    auth=GlobalAuth()
+)
+def get_product_types(request):
+    device_types = DeviceType.objects.filter(
+        institution=request.auth.institution
+    ).order_by('order').prefetch_related('attributes')
+
+    return [
+        {
+            "name": device_type.name,
+            "display_name": device_type.display_name,
+            "icon": device_type.icon,
+            "attributes": [a.name for a in device_type.attributes.all()],
+        }
+        for device_type in device_types
+    ]
+
+
+API_FIELD_NAMES = {"photo_file": "photo"}
+
+
+def _attribute_formset(attributes):
+    """Feeds the web formset from a plain mapping of attribute names to values."""
+    data = {"form-TOTAL_FORMS": str(len(attributes)), "form-INITIAL_FORMS": "0"}
+    for position, (name, value) in enumerate(attributes.items()):
+        data[f"form-{position}-name"] = name
+        data[f"form-{position}-value"] = value
+    return DeviceAttributeFormSet(data)
+
+
+def _form_errors(form, formset=None):
+    messages = [
+        "{}: {}".format(API_FIELD_NAMES.get(field, field) or "__all__", " ".join(errors))
+        for field, errors in form.errors.items()
+    ]
+    if formset:
+        messages += [
+            "attributes: {}".format(" ".join(errors))
+            for form_errors in formset.errors for errors in form_errors.values()
+        ]
+    return "; ".join(messages)
+
+
+@router.post(
+    "/",
+    response={201: ProductCreatedResponse, 403: MessageOut, 422: MessageOut},
+    summary=_("Register a product manually"),
+    description=_("""
+    Register a product without a workbench snapshot, the same way the web form does.
+
+    The payload travels as form data, so a photo of the product can be attached
+    to the same request. Attributes go in a single field holding a JSON object.
+
+    The type must be one of the product types configured by the institution.
+    Any other characteristic is sent as a free-form attribute name/value pair.
+
+    A custom ID becomes the canonical identifier of the product and must not be
+    in use; giving one registers a single product regardless of the amount asked.
+    Attaching a photo registers a single product as well, and the photo is
+    stored as its own evidence linked to the product.
+
+    Returns:
+    - 201: Products registered
+    - 422: Unknown product type, custom ID already in use, rejected photo, or invalid payload
+    """),
+    tags=["Devices"],
+    auth=GlobalAuth(),
+)
+def create_product(request, data: Form[ProductIn], photo: UploadedFile = File(None)):
+    user = request.auth
+    institution = user.institution
+
+    device_types = DeviceType.objects.filter(institution=institution).order_by('order')
+
+    form = DeviceMainForm(
+        data={
+            "type": data.type,
+            "amount": data.amount,
+            "custom_id": data.custom_id or "",
+        },
+        files={"photo_file": photo} if photo else None,
+        user=user,
+        device_types=[(dt.name, dt.display_name) for dt in device_types],
+    )
+    formset = _attribute_formset(data.attributes)
+
+    if not form.is_valid() or not formset.is_valid():
+        raise HttpError(422, _form_errors(form, formset))
+
+    docs = form.save(attribute_formset=formset)
+
+    products = []
+    for doc in docs:
+        web_id = doc["WEB_ID"]
+        root = RootAlias.objects.filter(
+            owner=institution, alias=web_id
+        ).values_list('root', flat=True).first() or web_id
+
+        products.append({
+            "ID": root,
+            "dhid": Device.get_shortid_for(web_id, institution),
+            "url": request.build_absolute_uri(
+                reverse("product:details", args=(web_id,))),
+            "public_url": request.build_absolute_uri(
+                reverse("product:device_web", args=(web_id,))),
+        })
+
+    return 201, {"status": "success", "products": products}
+
+
+@router.post(
+    "/{device_id}/photo/",
+    response={201: PhotoUploadedResponse, 403: MessageOut, 404: MessageOut, 422: MessageOut},
+    summary=_("Attach a photo to an existing product"),
+    description=_("""
+    Upload a single photo and link it to a product that is already registered.
+
+    The product is identified in the path. Any identifier it answers to works:
+    the canonical one, a custom ID, or the id of one of its evidences; the photo
+    is always linked to the canonical id behind it.
+
+    The photo is stored as an evidence of its own, so the same image cannot be
+    uploaded twice.
+
+    Returns:
+    - 201: Photo stored and linked
+    - 404: No product answers to that identifier
+    - 422: Rejected photo
+    """),
+    tags=["Devices"],
+    auth=GlobalAuth(),
+)
+def upload_product_photo(request, device_id: str, photo: UploadedFile = File(...)):
+    user = request.auth
+    institution = user.institution
+
+    root = resolve_device_root(device_id, institution)
+    if not root:
+        raise HttpError(404, _("Product does not exist"))
+
+    form = PhotoForm(files={"photo_file": photo}, user=user)
+    if not form.is_valid():
+        raise HttpError(422, _form_errors(form))
+
+    doc = form.save()
+    photo_prop = SystemProperty.objects.get(uuid=doc["uuid"], key="photo25")
+    RootAlias.set_alias(
+        owner=institution, alias=photo_prop.value, new_root=root, user=user)
+
+    return 201, {
+        "status": "success",
+        "ID": root,
+        "uuid": doc["uuid"],
+        "url": request.build_absolute_uri(
+            reverse("evidence:photo_file", args=(doc["uuid"],))),
+    }
+
 
 @router.get(
     "/properties/keys/",
