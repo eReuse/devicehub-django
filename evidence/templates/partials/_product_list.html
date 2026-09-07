@@ -1,0 +1,33 @@
+{% load i18n %}
+{% if products %}
+<div class="col-md-6">
+    <h6 class="fw-bold" style="color: #545f71;"><i class="bi {{ icon }} me-2"></i>{% trans title %}</h6>
+    <ul class="list-group list-group-flush border rounded shadow-sm">
+        {% for item in products %}
+            <li class="list-group-item bg-light" style="font-size: 0.85em;">
+                <div class="d-flex justify-content-between align-items-start mb-1">
+                    <strong class="text-break">{{ item.product.name }}</strong>
+
+                    <div>
+                        {% if item.disposition %}
+                            <span class="badge bg-{{ disposition_color }} text-capitalize ms-1">{{ item.disposition }}</span>
+                        {% endif %}
+                        {% if item.quantity %}
+                            <span class="badge bg-secondary ms-1">{{ item.quantity.value }} {{ item.quantity.unit }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="d-flex flex-wrap gap-1 mt-2 mb-1">
+                    <span class="badge bg-dark text-white opacity-75">{% trans "Level:" %} {{ item.product.idGranularity|default:"Unknown"|title }}</span>
+                    {% if item.product.modelNumber %}<span class="badge bg-info text-dark">{% trans "Model:" %} {{ item.product.modelNumber }}</span>{% endif %}
+                    {% if item.product.batchNumber %}<span class="badge bg-warning text-dark">{% trans "Batch:" %} {{ item.product.batchNumber }}</span>{% endif %}
+                    {% if item.product.itemNumber %}<span class="badge bg-danger">{% trans "Item SN:" %} {{ item.product.itemNumber }}</span>{% endif %}
+                </div>
+
+                <div class="text-muted hash-value text-break mt-1" style="font-size: 0.75em;">{{ item.product.id }}</div>
+            </li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
