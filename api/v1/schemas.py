@@ -381,6 +381,24 @@ class PhotoUploadedResponse(Schema):
     )
 
 
+class EvidenceAliasOut(Schema):
+    status: str = Field(
+        ...,
+        example="success",
+        description=str(_("Operation status"))
+    )
+    alias: str = Field(
+        ...,
+        example="ereuse24:50d7033117db8f5d4b8b0f2b0a5a0e1f2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f",
+        description=str(_("Identifier of the evidence that was pointed elsewhere"))
+    )
+    root: str = Field(
+        ...,
+        example="custom_id:INV-001AF",
+        description=str(_("Canonical identifier the evidence resolves to now"))
+    )
+
+
 class DeviceLogOut(Schema):
     event: str = Field(
         ...,
