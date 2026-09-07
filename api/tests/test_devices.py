@@ -1,4 +1,5 @@
 from datetime import timedelta
+from urllib.parse import quote
 
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
@@ -72,6 +73,14 @@ class DevicePropertyTest(ApiTestCase):
     def test_delete_missing_property_returns_404(self):
         response = self.client.delete(self.url, **self.auth)
         self.assertEqual(response.status_code, 404)
+
+    def test_surrounding_blanks_in_the_device_id_are_ignored(self):
+        response = self.client.post(
+            "/api/v1/devices/{}/properties/invoice/".format(quote(
+                " {} ".format(self.root))),
+            {"value": "INV-1"}, content_type="application/json", **self.auth)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.json()["property"]["device_id"], self.root)
 
     def test_unknown_device_returns_404(self):
         response = self.client.get(
@@ -272,6 +281,16 @@ class BulkPropertyTest(ApiTestCase):
             content_type="application/json", **self.auth)
         self.assertEqual(response.status_code, 207)
         self.assertEqual(response.json()["invalid_ids"], ["INVALID"])
+
+    def test_surrounding_blanks_in_ids_are_ignored(self):
+        response = self.client.post(
+            self.url,
+            {"device_ids": [" {} ".format(r) for r in self.roots] + ["  "],
+             "key": "state", "value": "sold"},
+            content_type="application/json", **self.auth)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            UserProperty.objects.filter(key="state", value="sold").count(), 2)
 
     def test_no_valid_id_returns_422(self):
         response = self.client.post(

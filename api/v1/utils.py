@@ -28,6 +28,11 @@ def resolve_device_root(pk: str, owner, strict=False):
     Resolves a device hash/ID or Custom ID.
     Returns the canonical root ID for the first match found.
     """
+    pk = pk.strip()
+    if not pk:
+        # The partial strategies below would match every row on an empty id.
+        return None
+
     clean_pk = pk.split(":")[-1] if ":" in pk else pk
     base_qs = RootAlias.objects.filter(owner=owner)
 
@@ -61,7 +66,8 @@ def get_device_instance(pk: str, user):
 
 def check_valid_ids(device_ids, owner):
     """Processes a bulk list of IDs into valid canonical roots and invalid entries."""
-    valid_ids, invalid_ids, pending_ids = set(), set(), set(device_ids)
+    valid_ids, invalid_ids = set(), set()
+    pending_ids = {pk.strip() for pk in device_ids if pk.strip()}
     exact_matches = RootAlias.objects.filter(owner=owner, alias__in=pending_ids)
 
     for match in exact_matches:
