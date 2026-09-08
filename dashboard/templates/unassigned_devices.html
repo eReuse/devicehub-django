@@ -146,7 +146,7 @@
                                         data-bs-toggle="modal"
                                         data-bs-target="#bulkChangeStateModal-{{ state.id }}">
                                     <span class="font-monospace">{{ state.state }}</span>
-                                    <span class="badge {% if state.auto_issue_dte %}bg-secondary{% else %}btn-green-user{% endif %} rounded-pill-sm">{{ forloop.counter }}</span>
+                                    <span class="badge {% if state.auto_issue_dte and user.institution.integration_settings.dpp_enabled %}bg-primary{% else %}btn-green-user{% endif %} rounded-pill-sm">{{ forloop.counter }}</span>
                                 </button>
                             </li>
                             {% endfor %}
