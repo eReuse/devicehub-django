@@ -117,15 +117,17 @@
         <div class="col-lg-6">
           <h2 class="section-title">{% trans "Identifiers" %}</h2>
           <div class="info-row row">
-            <div class="col-md-4 info-label">{% trans "Chid" %}</div>
-            <div class="col-md-8 info-value">
-              <div class="hash-value">{{ object.id }}</div>
-            </div>
-          </div>
-          <div class="info-row row">
             <div class="col-md-4 info-label">{% trans "Short ID" %}</div>
             <div class="col-md-8 info-value">
               <div class="hash-value">{{ object.shortid }}</div>
+            </div>
+          </div>
+          <div class="info-row row">
+            <div class="col-md-4 info-label">{% trans "Alias Identifiers" %}</div>
+            <div class="col-md-8 info-value">
+              {% for chid in object.hids %}
+                <div class="hash-value">{{ chid|default:'' }}</div>
+              {% endfor %}
             </div>
           </div>
 

@@ -5,13 +5,6 @@
     <div class="tab-pane fade show active" id="details">
           <h5 class="card-title">{% trans 'Details' %}</h5>
           <hr>
-          <div class="row mb-3">
-            <div class="col-sm-4 text-muted fw-bold">{% trans 'Phid' %}
-            </div>
-            <div class="col-sm-8">{{ object.hid }}
-            </div>
-          </div>
-
           {% if object.is_eraseserver %}
           <div class="row mb-3">
             <div class="col-sm-4 text-muted fw-bold">{% trans 'Is an erase server' %}

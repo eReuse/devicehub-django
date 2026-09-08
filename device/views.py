@@ -264,11 +264,13 @@ class PublicDeviceWebView(TemplateView):
         return super().get(request, *args, **kwargs)
 
     def get_owner_for_device(self, pk):
-        prop = SystemProperty.objects.filter(value=pk).select_related('owner').first()
+        prop = SystemProperty.objects.filter(value=pk).select_related(
+            'owner').order_by("-created").first()
         if prop:
             return prop.owner
 
-        alias = RootAlias.objects.filter(root=pk).select_related('owner').first()
+        alias = RootAlias.objects.filter(root=pk).select_related(
+            'owner').order_by("-created").first()
         if alias:
             return alias.owner
 
