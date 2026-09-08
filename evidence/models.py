@@ -1,6 +1,7 @@
 import json
 import hashlib
 import re
+import uuid
 
 from dmidecode import DMIParse
 from django.db import models
@@ -51,6 +52,39 @@ class SystemProperty(Property):
     @property
     def hid(self):
         return self.value.split(":")[1]
+
+
+class CredentialProperty(Property):
+    class CredentialType(models.TextChoices):
+        DPP = 'DPP', 'Digital Product Passport'
+        DFR = 'DFR', 'Digital Facility Record'
+        DTE = 'DTE', 'Digital Traceability Event'
+        DIDDOC = 'DIDDOC', 'DID DOCUMENT'
+
+    credential = models.JSONField()
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    sysprop = models.ForeignKey(
+        SystemProperty,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='credentials'
+    )
+    description = models.CharField(
+        "Description",
+        max_length=255,
+        null=True,
+        blank=True,
+        help_text="E.g. 'Digital Facility Record' or 'Product Passport'"
+    )
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                check=~Q(key='DPP') | Q(sysprop__isnull=False),
+                name='credential_must_have_sysprop'
+            ),
+        ]
 
 
 class UserProperty(Property):
@@ -373,10 +407,16 @@ class Evidence:
         self.get_time()
 
     def get_properties(self):
-        # TODO is good not filter by institution?
         self.properties = SystemProperty.objects.filter(
             uuid=self.uuid
         ).order_by("created")
+
+    def get_last_dpp(self):
+        self.credentials = CredentialProperty.objects.filter(
+            sysprop__uuid=self.uuid,
+            key=CredentialProperty.CredentialType.DPP
+        ).order_by("-created")
+        return self.credentials.first()
 
     def get_owner(self):
         if not self.properties:

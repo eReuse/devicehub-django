@@ -1,42 +1,51 @@
-import json
 import logging
 
+from django.conf import settings
+from django.contrib import messages
+from django.db import IntegrityError, models
 from django.db.models import Q
 from django.http import JsonResponse
-from django.conf import settings
-from django.db import IntegrityError
-from django.urls import reverse_lazy, resolve
-from django.contrib import messages
-from django.shortcuts import get_object_or_404, redirect, Http404, render
-from django.db import transaction
+from django.shortcuts import Http404, get_object_or_404, redirect
+from django.urls import resolve, reverse_lazy
+from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
-from django.views.generic.edit import (
-    CreateView,
-    UpdateView,
-    FormView,
-    DeleteView,
-)
 from django.views.generic import ListView
-
 from django.views.generic.base import TemplateView
-from action.models import StateDefinition, State, DeviceLog, Note
-from dashboard.mixins import DashboardView, Http403
-from environmental_impact.algorithms.algorithm_factory import FactoryEnvironmentImpactAlgorithm
-from evidence.models import UserProperty, SystemProperty, Evidence, RootAlias
-from lot.models import LotTag
-from device.models import Device, DeviceType
-from device.forms import DeviceAttributeFormSet, DeviceMainForm
+from django.views.generic.edit import CreateView, DeleteView, FormView, UpdateView, View
 
-from evidence.tables import EvidenceTable
+from action.models import DeviceLog, Note, State, StateDefinition
+from credentials.services import CredentialService
+from dashboard.mixins import DashboardView, Http403
+from device.forms import DeviceAttributeFormSet, DeviceMainForm
+from device.models import Device, DeviceType
 from django_tables2 import RequestConfig
-from user.models import InstitutionSettings
+from environmental_impact.algorithms.algorithm_factory import (
+    FactoryEnvironmentImpactAlgorithm,
+)
+from evidence.models import (
+    CredentialProperty,
+    Evidence,
+    RootAlias,
+    SystemProperty,
+    UserProperty,
+)
+from evidence.tables import EvidenceTable, CredentialTable
+from lot.models import LotTag
+from user.models import InstitutionLabelSettings
 if settings.DPP:
     from dpp.models import Proof
     from dpp.api_dlt import PROOF_TYPE
 
 
 logger = logging.getLogger(__name__)
+
+
+class CosmeticGrade(models.TextChoices):
+    GRADE_A = 'GradeA', _('Grade A - Excellent (Like New)')
+    GRADE_B = 'GradeB', _('Grade B - Good (Minor Scratches)')
+    GRADE_C = 'GradeC', _('Grade C - Fair (Noticeable Wear)')
+    GRADE_D = 'GradeD', _('Grade D - Poor (Heavy Wear/Damaged)')
 
 
 class DeviceLogMixin(DashboardView):
@@ -59,6 +68,7 @@ class DeviceLogMixin(DashboardView):
             owner=institution, value__in=physicals
         ).order_by("-created").first()
         return prop.uuid if prop else None
+
 
 class NewDeviceView(DashboardView, FormView):
     template_name = "new_device.html"
@@ -107,7 +117,6 @@ class NewDeviceView(DashboardView, FormView):
         form.save(attribute_formset=attribute_formset)
 
         return super().form_valid(form)
-
 
 class EditDeviceView(DashboardView, UpdateView):
     template_name = "new_device.html"
@@ -200,8 +209,14 @@ class DetailsView(DashboardView, TemplateView ):
 
         ev_queryset = Evidence.get_device_evidences(self.request.user, uuids)
         evidence_table = EvidenceTable(ev_queryset, exclude =('device', ))
-
         RequestConfig(self.request).configure(evidence_table)
+
+        credential_queryset = CredentialProperty.objects.filter(
+            sysprop__in=self.object.properties,
+            owner=self.request.user.institution
+        ).order_by('-created')
+        credential_table = CredentialTable(credential_queryset)
+        RequestConfig(self.request, paginate={'per_page': 10}).configure(credential_table)
 
         state_definitions = StateDefinition.objects.filter(
             institution=self.request.user.institution
@@ -221,7 +236,8 @@ class DetailsView(DashboardView, TemplateView ):
             "device_states": device_states,
             "device_logs": device_logs,
             "device_notes": device_notes,
-            "table": evidence_table
+            "table": evidence_table,
+            "credential_table": credential_table,
         })
         return context
 
@@ -457,7 +473,7 @@ class DeviceBulkLabelView(DashboardView, ListView):
 
         if self.object_list:
             institution = self.request.user.institution
-            settings, _ = InstitutionSettings.objects.get_or_create(institution=institution)
+            settings, _ = InstitutionLabelSettings.objects.get_or_create(institution=institution)
 
             labels_data = []
             for device in self.object_list:
@@ -471,3 +487,129 @@ class DeviceBulkLabelView(DashboardView, ListView):
 
     def get_success_url(self):
         return self.request.META.get('HTTP_REFERER') or reverse_lazy('product:details')
+
+
+class IssueDigitalPassportView(DeviceLogMixin, View):
+
+    def post(self, request, *args, **kwargs):
+        pk = self.kwargs.get('device_id')
+        logger.info(f"User {request.user.id} requested Digital Product Passport issuance for device {pk}.")
+
+        device = Device(id=pk, owner=request.user.institution)
+        if not device.last_evidence:
+            logger.warning(f"DPP issuance failed: Device {pk} not found or has no initial evidence.")
+            messages.error(request, _("Device not found."))
+            return redirect('product:list')
+
+        device.initial()
+        service = CredentialService(request.user)
+
+        # ensure device has a did assigned
+        did_error = service.ensure_device_did(device)
+        did_warning_message = None
+
+        if did_error:
+            if "[404]" in did_error:
+                logger.warning(f"Device {pk} DID not owned by institution. Service endpoint will not be modified.")
+                did_warning_message = _("Passport issued but service endpoint not modified given that you don't own the DID.")
+            else:
+                logger.error(f"DPP issuance blocked. DID configuration error for device {pk}: {did_error}")
+                messages.error(request, _("Failed to issue Passport. DID configuration error: {error}").format(error=did_error))
+                return redirect('product:details', pk=pk)
+
+        # gather database information for the dpp builder
+        facility_info = service.get_facility_info(self.request)
+        traceability_info = service.get_traceability_info(device, self.request)
+        components = device.components_export() or {}
+        device_name = components.get('model', 'Unknown Device')
+
+        credential, error = service.issue_credential(
+            workflow_type='dpp',
+            build_kwargs={
+                'device': device,
+                'institution': request.user.institution,
+                'post_data': request.POST,
+                'facility_info': facility_info,
+                'traceability_info': traceability_info
+            },
+            description=str(_("Digital Product Passport - {device_name}").format(device_name=device_name))
+        )
+
+        if error:
+            logger.error(f"Failed to issue DPP for device {pk}: {error}")
+            messages.error(request, _("Failed to issue Passport: {error}").format(error=error))
+            return redirect('product:details', pk=pk)
+
+        logger.info(f"Successfully issued DPP for device {pk} (Credential UUID: {credential.uuid}).")
+        messages.success(request, _("Digital Product Passport issued successfully!"))
+
+        # add the devices dpp view to the did servicenedpoint
+        dpp_url = request.build_absolute_uri(
+            reverse('evidence:credential_detail', kwargs={'uuid': credential.uuid})
+        )
+        did_update_error = service.ensure_device_did(device, service_endpoint=dpp_url)
+
+        if did_update_error:
+            if "[404]" in did_update_error or "[403]" in did_update_error:
+                logger.warning(f"Failed to update DID endpoint for {pk} (Not owned).")
+                messages.warning(request, did_warning_message or _("Passport issued but service endpoint not modified given that you don't own the DID."))
+            else:
+                logger.error(f"DID endpoint update error for {pk}: {did_update_error}")
+                messages.error(request, _("DID configuration error during endpoint update: {error}").format(error=did_update_error))
+        elif did_warning_message:
+            messages.warning(request, did_warning_message)
+        else:
+            logger.info(f"Successfully updated DID endpoint to DPP URL for device {pk}.")
+
+        return redirect('product:details', pk=pk)
+
+
+class ProductDPPView(TemplateView):
+    template_name = "dpp_credential.html"
+
+    def get(self, request, *args, **kwargs):
+        self.pk = kwargs.get('pk')
+
+        root = RootAlias.objects.filter(alias=self.pk).first()
+        if root and root.root != self.pk:
+            logger.debug(f"Redirecting alias {self.pk} to root device {root.root}.")
+            return redirect(request.resolver_match.view_name, pk=root.root)
+
+        self.device = Device(id=self.pk, owner=request.user.institution)
+        if not self.device.last_evidence:
+            logger.warning(f"DeviceDPPView: No evidence found for device {self.pk}.")
+            raise Http404(_("No evidence found for this device."))
+
+        self.latest_dpp_cred = CredentialProperty.objects.filter(
+            sysprop__in=self.device.properties,
+            key=CredentialProperty.CredentialType.DPP
+        ).order_by('-created').first()
+
+        if not self.latest_dpp_cred:
+            logger.info(f"DeviceDPPView: No DPP credential found for device {self.pk}. Redirecting to details.")
+            messages.info(request, _("A Digital Product Passport (DPP) has not been generated for this device yet."))
+            return redirect(reverse_lazy('product:details', args=[self.pk]))
+
+        # Handle JSON download early return
+        if request.GET.get('format') == 'json':
+            logger.info(f"User downloaded JSON format of DPP for device {self.pk}.")
+            return self._serve_json_download()
+
+        return super().get(request, *args, **kwargs)
+
+    def _serve_json_download(self):
+        """Helper to encapsulate the JSON download response."""
+        credential_data = self.latest_dpp_cred.credential or {}
+        cred_id = credential_data.get('id', '').split(':')[-1]
+        filename = f"credential_{cred_id or self.device.id}.json"
+
+        response = JsonResponse(credential_data, json_dumps_params={'indent': 2})
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return response
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if self.latest_dpp_cred:
+            context['credential'] = self.latest_dpp_cred.credential
+
+        return context

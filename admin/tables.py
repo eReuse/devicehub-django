@@ -1,11 +1,9 @@
 # tables.py
-import django_tables2 as tables
-from django.utils.html import format_html
 from django.urls import reverse
+from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
-from django.utils import timezone
-from django.conf import settings
 
+import django_tables2 as tables
 from user.models import User
 
 class UserTable(tables.Table):

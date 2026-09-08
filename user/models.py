@@ -1,9 +1,16 @@
-from django.db import models
 from django.conf import settings
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
+from django.core.validators import (
+    MaxValueValidator,
+    MinValueValidator,
+    RegexValidator,
+    URLValidator,
+)
+from django.db import models
 from django.db.models import ProtectedError
-from django.core.validators import URLValidator, RegexValidator, MinValueValidator, MaxValueValidator
 from django.utils.translation import gettext_lazy as _
-from django.contrib.auth.models import BaseUserManager, AbstractBaseUser
+
+from evidence.models import CredentialProperty
 from utils.constants import ALGOS
 
 
@@ -14,7 +21,8 @@ class QRContentType(models.TextChoices):
     DEVICE_ID = 'INTERNAL', _("Internal Product ID")
     DEVICE_INVENTORY = 'INVENTORY', _("Product inventory URL")
     PUBLIC_VIEW = 'PUBLIC', _("Public Product View")
-    #DPP_VIEW = 'DPP', _("DPP view else ")
+    DPP_URL = 'DPP', _("DPP URL (DPP or Inventory)")
+    DID = 'DID', _("DID (Fallback to Short ID)")
 
 class LabelVersion(models.TextChoices):
     V1 = 'V1', _("Version 1 (Classic)")
@@ -23,6 +31,14 @@ class LabelVersion(models.TextChoices):
 class LabelOrientation(models.TextChoices):
     HORIZONTAL = 'HORIZONTAL', _("Horizontal (Landscape)")
     VERTICAL = 'VERTICAL', _("Vertical (Portrait)")
+
+PROCESS_CHOICES = [
+    ('9511', _('Repair of computers and peripheral equipment (9511)')),
+    ('3830', _('Materials recovery and recycling (3830)')),
+    ('3313', _('Repair of electronic and optical equipment (3313)')),
+    ('4649', _('Wholesale of other household goods (4649)')),
+    ('0000', _('Other / General Facility')),
+]
 
 def default_printed_properties():
     return ["ID"]
@@ -58,12 +74,12 @@ class Institution(models.Model):
     )
 
     facility_id_uri = models.URLField(
-        _("Facility ID (URI)"),
+        _("Facility ID"),
         max_length=500,
         blank=True,
         null=True,
         validators=[URLValidator(schemes=['http', 'https', 'did'])],
-        help_text=_("Globally unique URI for this facility (e.g., did:web:example.com).")
+        help_text=_("Global URI (or URL) for this facility (e.g., https://www.myweb.com).")
     )
     facility_description = models.TextField(
         _("Facility Description"),
@@ -117,17 +133,102 @@ class Institution(models.Model):
         help_text=_("The default algorithm used for product aggregation."),
     )
 
+    registered_id = models.CharField(
+        _("Registered ID"),
+        max_length=100,
+        blank=True,
+        null=True,
+        help_text=_("Business Registration Number (e.g., CUIT, VAT).")
+    )
+    process_category_code = models.CharField(
+        _("Primary Facility Activity"),
+        max_length=10,
+        choices=PROCESS_CHOICES,
+        default='0000',
+        help_text=_("UN ISIC classification for the primary operations.")
+    )
+
+    @property
+    def latest_facility_credential(self):
+        return self.credentialproperty_set.filter(
+            key=CredentialProperty.CredentialType.DFR
+        ).order_by('-created').first()
+
     def __str__(self):
         return self.name
 
-class InstitutionSettings(models.Model):
+
+class FacilityClaim(models.Model):
+    TOPIC_CHOICES = [
+        ("environment.waste", _("Environment - Waste")),
+        ("environment.energy", _("Environment - Energy")),
+        ("environment.emissions", _("Environment - Emissions")),
+        ("circularity.content", _("Circularity - Content")),
+        ("circularity.design", _("Circularity - Design")),
+        ("social.labour", _("Social - Labour")),
+        ("governance.compliance", _("Governance - Compliance")),
+    ]
+
+    institution = models.ForeignKey(
+        Institution,
+        on_delete=models.CASCADE,
+        related_name="claims"
+    )
+    description = models.CharField(
+        _("Claim Description"),
+        max_length=255,
+        help_text=_("E.g., Certified ISO 14001 Environmental Management System or Registered WEEE Processing Facility.")
+    )
+    topic_code = models.CharField(
+        _("Conformity Topic"),
+        max_length=50,
+        choices=TOPIC_CHOICES
+    )
+    admin_name = models.CharField(
+        _("Administering Body"),
+        max_length=255,
+        help_text=_("E.g., Environmental Protection Agency, Ministry of Environment, or ISO.")
+    )
+    admin_url = models.URLField(
+        _("Administering Body URL"),
+        blank=True,
+        null=True,
+        help_text=_("E.g., https://www.epa.gov/ or https://www.iso.org/")
+    )
+    assessment_date = models.DateField(
+        _("Assessment Date"),
+        blank=True,
+        null=True,
+        help_text=_("The date the audit or certification was granted.")
+    )
+    evidence_url = models.URLField(
+        _("Evidence URL"),
+        max_length=1024,
+        blank=True,
+        null=True,
+        help_text=_("Link to the certificate PDF or a Digital Conformity Credential (DCC).")
+    )
+    evidence_name = models.CharField(
+        _("Evidence Document Name"),
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text=_("E.g., 'ISO 14001 Certificate 2024.pdf'")
+    )
+
+    def __str__(self):
+        return f"{self.topic_code} - {self.admin_name}"
+
+class InstitutionLabelSettings(models.Model):
     institution = models.OneToOneField(
         Institution,
         on_delete=models.CASCADE,
-        related_name='settings',
         verbose_name=_("Institution"),
-        help_text=_("The institution these settings belong to.")
+        help_text=_("The institution these settings belong to."),
+        related_name='settings'
     )
+
+    # --- QR Settings ---
     qr_content_type = models.CharField(
         _("QR Code Content"),
         max_length=20,
@@ -192,8 +293,79 @@ class InstitutionSettings(models.Model):
         help_text=_("Base text size for properties. Header is scaled slightly larger.")
     )
 
+
+class InstitutionDPPSettings(models.Model):
+
+    DPP_SUPPORTED_VERSIONS = [
+        ('untp-0.7.0', _('UNTP Standard v0.7.0')),
+        # Future version could look like: ('untp-1.0.0', _('UNTP Standard v1.0.0')),
+    ]
+
+    institution = models.OneToOneField(
+        Institution,
+        on_delete=models.CASCADE,
+        verbose_name=_("Institution"),
+        related_name='integration_settings'
+    )
+
+    dpp_enabled = models.BooleanField(
+        default=False,
+        verbose_name=_("Enable DPP Features")
+    )
+
+    api_base_url = models.URLField(
+        _("Signing Service Base URL"),
+        max_length=1024,
+        blank=True,
+        null=True,
+        help_text=_("The root URL of the IdHub instance (e.g., https://idhub.example.com/api/v1/)")
+    )
+
+    signing_auth_token = models.CharField(
+        _("Signing API Token"),
+        max_length=1024,
+        blank=True,
+        null=True,
+        help_text=_("Bearer token for the signing service.")
+    )
+
+    issuer_did = models.CharField(
+        _("Issuer DID"),
+        max_length=255,
+        blank=True, null=True,
+        validators=[RegexValidator(r'^did:[a-z0-9]+:.+', _("Invalid DID format"))],
+        help_text=_("The DID used by this client on the signing service.")
+    )
+
+    active_dpp_standard = models.CharField(
+        _("Active Protocol Standard"),
+        max_length=50,
+        choices=DPP_SUPPORTED_VERSIONS,
+        default='untp-0.7.0',
+        help_text=_("The DPP standard version your backend will use to format the credentials.")
+    )
+
+    dpp_schema = models.CharField(
+        max_length=255,
+        default="DigitalProductPassport.json",
+        help_text="Active schema for Product Passports"
+    )
+
+    dte_schema = models.CharField(
+        max_length=255,
+        default="DigitalTraceabilityEvent.json",
+        help_text="Active schema for Traceability Events (Make/Move/Modify)"
+    )
+
+    dfr_schema = models.CharField(
+        max_length=255,
+        default="DigitalFacilityRecord.json",
+        help_text="Active schema for Facility Records"
+    )
+
     def __str__(self):
-        return f"Settings for {self.institution.name}"
+        return f"Config: {self.institution.name} ({self.api_base_url})"
+
 
 class UserManager(BaseUserManager):
     def create_user(self, email, institution, password=None, commit=True):

@@ -1,7 +1,6 @@
 from django.db import models
 
 from utils.constants import STR_EXTEND_SIZE
-from user.models import Institution
 
 
 class ProductCache(models.Model):
@@ -43,8 +42,7 @@ class ProductCache(models.Model):
         "megapixels", "max_resolution",
     )
 
-
-    owner = models.ForeignKey(Institution, on_delete=models.CASCADE)
+    owner = models.ForeignKey('user.institution', on_delete=models.CASCADE)
     root = models.CharField(max_length=STR_EXTEND_SIZE)
 
     shortid = models.CharField(max_length=STR_EXTEND_SIZE, default="")

@@ -1,28 +1,40 @@
 import logging
-from django_tables2 import SingleTableView
 from smtplib import SMTPException
+
 from django.contrib import messages
+from django.contrib.messages.views import SuccessMessageMixin
+from django.db import IntegrityError, transaction
+from django.shortcuts import Http404, get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
 from django.utils.functional import cached_property
-from django.shortcuts import get_object_or_404, redirect, Http404
 from django.utils.translation import gettext_lazy as _
-from django.contrib.messages.views import SuccessMessageMixin
-from django.views.generic.base import TemplateView, ContextMixin
-from django.views.generic.edit import (
-    CreateView,
-    UpdateView,
-    DeleteView,
-)
-from django.db import IntegrityError,   transaction
-from dashboard.mixins import DashboardView, Http403
-from admin.forms import OrderingStateForm, InstitutionSettingsForm, InstitutionForm
-from user.models import User, Institution, InstitutionSettings
-from admin.email import NotifyActivateUserByEmail
-from admin.tables import UserTable
-from action.models import StateDefinition
-from lot.models import LotTag
-from device.models import DeviceType, DeviceTypeAttribute
+from django.views import View
+from django.views.generic.base import ContextMixin, TemplateView
+from django.views.generic.edit import CreateView, DeleteView, UpdateView
 
+from action.models import StateDefinition
+from admin.email import NotifyActivateUserByEmail
+from admin.forms import (
+    FacilityClaimFormSet,
+    InstitutionDPPSettingsForm,
+    InstitutionForm,
+    InstitutionLabelSettingsForm,
+    OrderingStateForm,
+)
+from admin.tables import UserTable
+from credentials.services import CredentialService
+from dashboard.mixins import DashboardView, Http403
+from device.models import DeviceType, DeviceTypeAttribute
+from django_tables2 import SingleTableView
+from lot.models import LotTag
+from user.models import (
+    Institution,
+    InstitutionDPPSettings,
+    InstitutionLabelSettings,
+    User,
+)
+
+logger = logging.getLogger('django')
 
 class AdminView(DashboardView):
     def get(self, *args, **kwargs):
@@ -254,6 +266,11 @@ class InstitutionView(AdminView, UpdateView):
         kwargs = super().get_form_kwargs()
         return kwargs
 
+    def form_valid(self, form):
+        logger.info(f"User {self.request.user.id} updated organization profile.")
+        messages.success(self.request, _("Organization profile updated successfully."))
+        return super().form_valid(form)
+
 
 class StateDefinitionContextMixin(ContextMixin):
     def get_context_data(self, **kwargs):
@@ -284,9 +301,11 @@ class AddStateDefinitionView(AdminView, StateDefinitionContextMixin, CreateView)
         form.instance.user = self.request.user
         try:
             response = super().form_valid(form)
+            logger.info(f"User {self.request.user.id} created new state definition: '{form.instance.state}'.")
             messages.success(self.request, _("State definition successfully added."))
             return response
         except IntegrityError:
+            logger.warning(f"User {self.request.user.id} attempted to create duplicate state definition '{form.instance.state}'.")
             messages.error(self.request, _("State is already defined."))
             return self.form_invalid(form)
 
@@ -300,13 +319,17 @@ class DeleteStateDefinitionView(AdminView, StateDefinitionContextMixin, SuccessM
     success_url = reverse_lazy('admin:states_panel')
 
     def get_success_message(self, cleaned_data):
-        return f'State definition: {self.object.state}, has been deleted'
+        return _("State definition: {state}, has been deleted").format(state=self.object.state)
 
     def form_valid(self, form):
         if not self.object.institution == self.request.user.institution:
+            logger.warning(f"User {self.request.user.id} attempted to delete state definition belonging to another institution.")
             raise Http404
 
-        return super().form_valid(form)
+        state_name = self.object.state
+        response = super().form_valid(form)
+        logger.info(f"User {self.request.user.id} deleted state definition: '{state_name}'.")
+        return response
 
 
 class UpdateStateOrderView(AdminView, TemplateView):
@@ -347,9 +370,11 @@ class UpdateStateDefinitionView(AdminView, UpdateView):
     def form_valid(self, form):
         try:
             response = super().form_valid(form)
+            logger.info(f"User {self.request.user.id} updated state definition to '{form.instance.state}'.")
             messages.success(self.request, _("State definition updated successfully."))
             return response
         except IntegrityError:
+            logger.warning(f"User {self.request.user.id} attempted to rename state definition to existing name '{form.instance.state}'.")
             messages.error(self.request, _("State is already defined."))
             return self.form_invalid(form)
 
@@ -359,8 +384,8 @@ class UpdateStateDefinitionView(AdminView, UpdateView):
 
 
 class InstitutionLabelCustomizationView(AdminView, UpdateView):
-    model = InstitutionSettings
-    form_class = InstitutionSettingsForm
+    model = InstitutionLabelSettings
+    form_class = InstitutionLabelSettingsForm
     template_name = 'label_settings.html'
     success_url = reverse_lazy('admin:panel')
     breadcrumb = [(_("Admin"), reverse_lazy("admin:panel")), (_("Label Settings"), None)]
@@ -369,7 +394,7 @@ class InstitutionLabelCustomizationView(AdminView, UpdateView):
 
     def get_object(self, queryset=None):
         institution = self.request.user.institution
-        settings, created = InstitutionSettings.objects.get_or_create(institution=institution)
+        settings, created = InstitutionLabelSettings.objects.get_or_create(institution=institution)
         return settings
 
     def get_context_data(self, **kwargs):
@@ -377,6 +402,7 @@ class InstitutionLabelCustomizationView(AdminView, UpdateView):
         return context
 
     def form_valid(self, form):
+        logger.info(f"User {self.request.user.id} updated label print settings for institution {self.request.user.institution_id}.")
         messages.success(self.request, _("QR printing preferences saved successfully."))
         return super().form_valid(form)
 
@@ -621,3 +647,131 @@ class UpdateDeviceTypeAttributeOrderView(
 
         messages.success(self.request, _("Order changed successfully."))
         return redirect(self.get_success_url())
+
+
+class IssueDigitalFacilityRecordView(AdminView, View):
+
+    def post(self, request, *args, **kwargs):
+        logger.info(f"User {request.user.id} requested Digital Facility Record issuance.")
+        service = CredentialService(request.user)
+
+        credential, error = service.issue_credential(
+            workflow_type='facility',
+            build_kwargs={
+                'institution': request.user.institution,
+                'request_data': request.POST,
+            },
+            description="Digital Facility Record"
+        )
+
+        if error:
+            logger.error(f"Facility Record issuance failed for institution {request.user.institution_id}: {error}")
+            messages.error(request, _("Failed to issue Facility Record: {error}").format(error=error))
+        else:
+            logger.info(f"Successfully issued Facility Record for institution {request.user.institution_id}.")
+            messages.success(request, _("Facility Record issued successfully!"))
+
+        return redirect('admin:panel')
+
+
+class DPPConfigurationView(AdminView, UpdateView):
+    template_name = "dpp_settings.html"
+    model = InstitutionDPPSettings
+    form_class = InstitutionDPPSettingsForm
+    breadcrumb = [(_("Admin"), reverse_lazy("admin:panel")), (_("Digital Product Passport"), None)]
+    title = _("Integration & Digital Product Passports")
+    subtitle = _("Manage schemas, conformity claims, and automated traceability")
+
+    def get_success_url(self):
+        return reverse_lazy('admin:dpp_settings', kwargs={'pk': self.request.user.institution.pk})
+
+    def get_object(self, queryset=None):
+        obj, created = InstitutionDPPSettings.objects.get_or_create(
+            institution=self.request.user.institution
+        )
+        return obj
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        service = CredentialService(self.request.user)
+        self.schemas = service.fetch_schemas()
+        kwargs['schemas'] = self.schemas
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        institution = self.request.user.institution
+
+        context['subtitle'] = _("Digital Product Passport Configuration")
+        context['states'] = StateDefinition.objects.filter(institution=institution).order_by('order')
+
+        # locks for buttons
+        context['is_institution_complete'] = bool(institution.name and institution.country and institution.street_address)
+        context['api_connected'] = bool(getattr(self, 'schemas', False))
+
+        if 'claim_formset' not in kwargs:
+            context['claim_formset'] = FacilityClaimFormSet(
+                instance=institution,
+                prefix='claims'
+            )
+
+        return context
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        institution = self.request.user.institution
+        action = request.POST.get('action')
+
+        #check which form ahs been submitted
+        if action == 'save_dpp':
+            form = self.get_form()
+            if form.is_valid():
+                form.save()
+                messages.success(request, _("IdHub integration settings saved successfully."))
+
+                return redirect(f"{self.get_success_url()}#connection")
+            else:
+                messages.error(request, _("Please correct the errors in the integration settings."))
+                return self.render_to_response(self.get_context_data(form=form))
+
+        elif action == 'save_claims':
+            claim_formset = FacilityClaimFormSet(request.POST, instance=institution, prefix='claims')
+            if claim_formset.is_valid():
+                claim_formset.save()
+                messages.success(request, _("Facility Conformity Claims updated successfully."))
+                return redirect(f"{self.get_success_url()}#claims")
+            else:
+                messages.error(request, _("Please correct the errors in the conformity claims."))
+                return self.render_to_response(self.get_context_data(claim_formset=claim_formset))
+
+        elif action == 'save_states':
+            state_ids = request.POST.getlist('state_ids')
+            with transaction.atomic():
+                for sid in state_ids:
+                    is_checked = request.POST.get(f'state_dte_{sid}') == 'on'
+                    state_obj = StateDefinition.objects.filter(id=sid, institution=institution).first()
+
+                    if not state_obj:
+                        continue
+
+                    dte_config = {}
+                    prefix = 'dte_cfg_'
+                    suffix = f'_{sid}'
+
+                    has_config_data = False
+                    for key, value in request.POST.items():
+                        if key.startswith(prefix) and key.endswith(suffix):
+                            has_config_data = True
+                            clean_key = key[len(prefix):-len(suffix)]
+                            if value.strip():
+                                dte_config[clean_key] = value.strip()
+
+                    if has_config_data:
+                        state_obj.dte_config = dte_config
+
+                    state_obj.auto_issue_dte = is_checked
+                    state_obj.save()
+
+            messages.success(request, _("Traceability automation rules saved successfully."))
+            return redirect(f"{self.get_success_url()}#states")
+        return super().post(request, *args, **kwargs)

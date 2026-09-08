@@ -1,15 +1,24 @@
 from django.db import models
 from django.db.models import Max
+from django.db.models import Max
 from django.db.models.functions import Lower
 from django.urls import reverse
-
-from utils.constants import ALGOS
-from evidence.models import SystemProperty, UserProperty, Evidence, RootAlias
 from django.utils.dateparse import parse_datetime
-from lot.models import DeviceLot, DeviceBeneficiary
-from action.models import State
-from user.models import InstitutionSettings, LabelVersion, QRContentType, Institution
 from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext_lazy as _
+
+from action.models import State
+from device.product_cache import ProductCache
+from evidence.models import (
+    CredentialProperty,
+    Evidence,
+    RootAlias,
+    SystemProperty,
+    UserProperty,
+)
+from lot.models import DeviceBeneficiary, DeviceLot
+from user.models import Institution, LabelVersion, QRContentType
+from utils.constants import ALGOS
 
 
 class Device:
@@ -31,6 +40,7 @@ class Device:
         SWITCH = "Switch"
         ROUTER = "Router"
         ROUTERWIFI = "RouterWifi"
+
 
     def __init__(self, *args, **kwargs):
         # the id is the chid of the device
@@ -124,6 +134,20 @@ class Device:
 
         return self.properties
 
+    def get_last_property(self, exclude_photo=False):
+        properties = self.get_properties()
+
+        if not properties:
+            return None
+
+        if exclude_photo:
+            for prop in properties:
+                if prop.key != 'photo25':
+                    return prop
+            return None
+
+        return properties[0]
+
     def get_user_properties(self):
         if not self.owner:
             return UserProperty.objects.none()
@@ -137,6 +161,16 @@ class Device:
         for a in self.get_properties():
             if a.uuid not in self.uuids:
                 self.uuids.append(a.uuid)
+
+    @property
+    def did(self):
+        did_document = CredentialProperty.objects.filter(
+            sysprop__in=self.properties,
+            key=CredentialProperty.CredentialType.DIDDOC
+        ).order_by("created").first()
+
+        return getattr( did_document, "value", "")
+
 
     def get_hids(self):
         properties = self.get_properties()
@@ -298,7 +332,6 @@ class Device:
         )
         devices = [cls(id=r["root"], owner=institution) for r in rows]
         return devices, count
-
 
     @classmethod
     def get_properties_from_uuid(cls, uuid, institution):
@@ -596,7 +629,7 @@ class Device:
         if not self.last_evidence.is_legacy or not self.last_evidence:
             return hardware_info
 
-        if getattr(self.last_evidence, 'is_web_snapshot', False):
+        if self.is_websnapshot:
             doc = getattr(self.last_evidence, 'doc', {})
             kv_data = doc.get('kv', {})
 
@@ -655,7 +688,7 @@ class Device:
 
     def get_label_data(self, request, settings=None):
         if not settings:
-            settings, created= InstitutionSettings.objects.get_or_create(institution=self.owner)
+            settings, created= InstitutionLabelSettings.objects.get_or_create(institution=self.owner)
 
         if settings.qr_label_version == LabelVersion.V1:
             return {
@@ -673,6 +706,15 @@ class Device:
             path = reverse('product:details', kwargs={'pk': self.pk})
             qr_payload = request.build_absolute_uri(path)
 
+        elif settings.qr_content_type == QRContentType.DPP_URL:
+            path = reverse('product:dpp', kwargs={'pk': self.pk})
+            qr_payload = request.build_absolute_uri(path)
+
+        elif settings.qr_content_type == QRContentType.DID:
+            if self.did:
+                qr_payload = self.did
+            else:
+                qr_payload = self.shortid
         else:
             qr_payload = str(self.shortid)
 
@@ -895,4 +937,4 @@ class DeviceTypeAttribute(models.Model):
 # Registers the ProductCache ORM model under the `device` app. Django only
 # auto-imports `<app>.models`, so the read model defined in device/product_cache.py
 # must be imported here to be discovered by makemigrations.
-from device.product_cache import ProductCache  # noqa: E402,F401
+  # noqa: E402,F401

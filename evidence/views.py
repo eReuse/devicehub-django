@@ -2,29 +2,34 @@ import json
 import os
 
 from django.contrib import messages
-from django.http import HttpResponse, FileResponse, JsonResponse
-from django.utils.translation import gettext_lazy as _
-from django.shortcuts import get_object_or_404, redirect, Http404
-from django.views.generic.base import TemplateView
+from django.http import FileResponse, HttpResponse, JsonResponse
+from django.shortcuts import Http404, get_object_or_404, redirect
 from django.urls import reverse_lazy
-from django.views.generic.edit import (
-    DeleteView,
-    FormView,
-)
+from django.utils.translation import gettext_lazy as _
+from django.views.generic import DetailView
+from django.views.generic.base import TemplateView
+from django.views.generic.edit import DeleteView, FormView
 
 from action.models import DeviceLog
-from dashboard.mixins import  DashboardView, Http403
-from evidence.models import SystemProperty, RootAlias, Evidence, UserProperty
-from lot.models import DeviceLot, DeviceBeneficiary
+from credentials.services import CredentialService
+from dashboard.mixins import DashboardView, Http403
+from django_tables2 import SingleTableView
 from evidence.forms import (
+    EraseServerForm,
+    ImportForm,
+    PhotoForm,
     UploadForm,
     UserAliasForm,
-    ImportForm,
-    EraseServerForm,
-    PhotoForm
 )
-from django_tables2 import SingleTableView
+from evidence.models import (
+    CredentialProperty,
+    Evidence,
+    RootAlias,
+    SystemProperty,
+    UserProperty,
+)
 from evidence.tables import EvidenceTable
+from lot.models import DeviceBeneficiary, DeviceLot
 
 
 class ListEvidencesView(DashboardView, SingleTableView):
@@ -49,14 +54,23 @@ class UploadView(DashboardView, FormView):
 
     def form_valid(self, form):
         form.save(self.request.user)
-        messages.success(self.request, _("Evidence uploaded successfully."))
-        response = super().form_valid(form)
-        return response
+
+        if hasattr(form, 'evidences') and form.evidences:
+            count = len(form.evidences)
+            messages.success(
+                self.request,
+                _("Successfully processed %(count)d evidence file(s).") % {'count': count}
+            )
+
+        if hasattr(form, 'skipped_errors') and form.skipped_errors:
+            for error_msg in form.skipped_errors:
+                messages.warning(self.request, error_msg)
+
+        return super().form_valid(form)
 
     def form_invalid(self, form):
-        response = super().form_invalid(form)
-        return response
-
+        messages.error(self.request, _("Upload failed. Please check the errors below."))
+        return super().form_invalid(form)
 
 class ImportView(DashboardView, FormView):
     template_name = "upload.html"
@@ -254,6 +268,60 @@ class PhotoEvidenceView(DashboardView, TemplateView):
         # Serve the file
         response = FileResponse(open(file_path, 'rb'), content_type=photo_data.get('mime_type', 'image/jpeg'))
         return response
+
+
+class CredentialDetailView(DetailView):
+    model = CredentialProperty
+    context_object_name = 'credential_prop'
+    slug_field = 'uuid'
+    slug_url_kwarg = 'uuid'
+
+    def render_to_response(self, context, **response_kwargs):
+        """
+        Overridden to handle ?format=json for direct downloads.
+        """
+        if self.request.GET.get('format') == 'json':
+            credential_data = self.object.credential or {}
+
+            cred_id = credential_data.get('id', '').split(':')[-1]
+            filename = f"credential_{cred_id or self.object.pk}.json"
+
+            response = JsonResponse(credential_data, json_dumps_params={'indent': 2})
+            response['Content-Disposition'] = f'attachment; filename="{filename}"'
+            return response
+
+        return super().render_to_response(context, **response_kwargs)
+
+    def get_template_names(self):
+        obj = self.get_object()
+        credential = obj.credential or {}
+
+        subject = credential.get('credentialSubject', {})
+        types = credential.get('type', [])
+
+        if isinstance(subject, list):
+            return ["traceability_credential.html"]
+
+        if 'facility' in subject or 'DigitalFacilityRecord' in types:
+            return ["facility_credential.html"]
+
+        if 'product' in subject or 'DigitalProductPassport' in types:
+            return ["dpp_credential.html"]
+
+        return ["credential_base.html"]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        cred_prop = self.get_object()
+        credential = cred_prop.credential or {}
+        context['credential'] = credential
+
+        #use this credential's institution for searching the idhub instance
+        service = CredentialService(institution=cred_prop.owner)
+        context[ 'verification_url'] = service.get_full_url(append_path = "/verify")
+
+        return context
 
 
 class EraseServerView(DashboardView, FormView):

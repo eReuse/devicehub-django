@@ -28,6 +28,11 @@ class StateDefinition(models.Model):
 
     order = models.PositiveIntegerField(default=0)
     state = models.CharField(max_length=50)
+    dte_config = models.JSONField(default=dict, blank=True)
+
+    auto_issue_dte = models.BooleanField(
+        default=False,
+    )
 
     class Meta:
         ordering = ['order']

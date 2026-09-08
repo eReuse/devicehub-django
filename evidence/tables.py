@@ -3,10 +3,11 @@ import django_tables2 as tables
 from django.utils.html import format_html
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
-from django.utils import timezone
-from django.conf import settings
+from evidence.models import CredentialProperty
 from evidence.models import Evidence
 import logging
+
+from pyvckit.did import resolve_did_url
 
 
 logger = logging.getLogger('django')
@@ -31,6 +32,7 @@ class EvidenceTable(tables.Table):
     legacy = tables.Column(verbose_name=_("Legacy"), accessor="uuid")
     ev_type = tables.Column(verbose_name=_("Type"), accessor="uuid")
     device = tables.Column(verbose_name=_("Product"), accessor="value")
+    digital_passport = tables.Column(verbose_name=_("Digital Passport"), accessor="uuid", orderable=False)
 
     class Meta:
         template_name = "custom_table.html"
@@ -50,6 +52,12 @@ class EvidenceTable(tables.Table):
         self.evidence_map = {}
 
     def before_render(self, request):
+        try:
+            if not request.user.institution.integration_settings.dpp_enabled:
+                self.columns.hide('digital_passport')
+        except AttributeError:
+            self.columns.hide('digital_passport')
+
         if self.page:
             if hasattr(self.page.object_list, 'data'):
                 paginated_ids = [item.uuid for item in self.page.object_list.data]
@@ -60,6 +68,20 @@ class EvidenceTable(tables.Table):
                 }
             else:
                 self.evidence_map = {}
+
+    def render_digital_passport(self, value):
+
+        evidence = self.evidence_map.get(value)
+        dpp_prop=None
+        if evidence:
+            dpp_prop = evidence.get_last_dpp()
+        if dpp_prop:
+            url = reverse('evidence:credential_detail', kwargs={'uuid': dpp_prop.uuid})
+            return format_html(
+                '<a href="{}" class="btn btn-sm btn-outline-success">{}</a>',
+                url,
+                _("View")
+            )
 
     def render_device(self, value, record):
         try:
@@ -177,4 +199,79 @@ class EvidenceTable(tables.Table):
             '<span class="text-muted" title="{}">{}</span>',
             _("Error"),
             message,
+        )
+
+
+class CredentialTable(tables.Table):
+    created = tables.DateTimeColumn(
+        format="Y-m-d H:i",
+        verbose_name=_("Issued Date"),
+        orderable=True
+    )
+
+    key = tables.Column(
+        verbose_name=_("Credential Type"),
+        orderable=True
+    )
+
+    description = tables.Column(
+        verbose_name=_("Description"),
+        orderable=False
+    )
+
+    user = tables.Column(
+        verbose_name=_("Issuer"),
+        accessor='user.email',
+        orderable=True
+    )
+
+    actions = tables.Column(
+        verbose_name=_("Actions"),
+        empty_values=(),
+        orderable=False
+    )
+    msg = _("No credentials issued yet.")
+    empty_text = '<div class="text-muted text-center">{}</div>'.format(msg)
+
+    class Meta:
+        model = CredentialProperty
+        template_name = "custom_table.html"
+        fields = ("created", "key", "description", "user", "actions")
+        order_by = ("-created")
+
+    def render_key(self, value):
+        display_text = value
+        if value == CredentialProperty.CredentialType.DPP:
+            display_text = "Product Passport"
+        elif value == CredentialProperty.CredentialType.DFR:
+            display_text = "Facility Record"
+        elif value == CredentialProperty.CredentialType.DTE:
+            display_text = "Traceability Event"
+        elif value == CredentialProperty.CredentialType.DIDDOC:
+            display_text = "DID Document"
+
+        return format_html('<span class="fw-bold">{}</span>', display_text)
+
+
+    def render_actions(self, record):
+        try:
+            if record.key == CredentialProperty.CredentialType.DIDDOC:
+                url = resolve_did_url(record.value)
+            else:
+                url = reverse('evidence:credential_detail', kwargs={'uuid': record.uuid})
+
+            return format_html(
+                '''<a href="{}" class="btn btn-sm btn-outline-primary d-inline-flex align-items-center">
+                    <i class="bi bi-eye me-2"></i>{}
+                   </a>''',
+                url,
+                _("View")
+            )
+        except Exception:
+            return self.render_error_message()
+
+    def render_error_message(self, message=_("Error")):
+        return format_html(
+            '<span class="text-danger"><i class="bi bi-exclamation-circle-fill me-1"></i>{}</span>',
+            message
         )

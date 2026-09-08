@@ -1,18 +1,27 @@
 import logging
-
 import math
-from ninja import Router, Query
-from ninja.errors import HttpError
+
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 
-from lot.models import DeviceLot
-from evidence.models import UserProperty
 from api.auth import GlobalAuth
-from api.v1.schemas import DeviceIDInput, LotDevicesResponse, MessageOut, OperationResult
-
-from api.v1.utils import find_lot, check_valid_ids, get_all_search_results, build_device_response_list
-from device.models import ProductCache
+from api.v1.schemas import (
+    DeviceIDInput,
+    LotDevicesResponse,
+    MessageOut,
+    OperationResult,
+)
+from api.v1.utils import (
+    build_device_response_list,
+    check_valid_ids,
+    find_lot,
+    get_all_search_results,
+)
+from device.product_cache import ProductCache
+from evidence.models import UserProperty
+from lot.models import DeviceLot
+from ninja import Query, Router
+from ninja.errors import HttpError
 
 logger = logging.getLogger('django')
 router = Router(tags=["Lots"])
