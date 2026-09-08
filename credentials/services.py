@@ -190,7 +190,8 @@ class CredentialService:
 
         device = build_kwargs.get('device')
 
-        if not device and not getattr(device, 'last_evidence', None):
+        is_facility = workflow_type == "facility"
+        if not is_facility and not device and not getattr(device, 'last_evidence', None):
             logger.warning(f"Could not find last evidencce for device UUID")
             return None, "Last evidence not found."
 
@@ -209,8 +210,10 @@ class CredentialService:
             "credentialSubject": credential_subject
         }
 
-        ev_prop = device.get_last_property(exclude_photo=True)
-        return self._execute_issuance(endpoint, payload, db_key, description, ev_prop)
+        if not is_facility:
+            ev_prop = device.get_last_property(exclude_photo=True)
+            return self._execute_issuance(endpoint, payload, db_key, description, ev_prop )
+        return self._execute_issuance(endpoint, payload, db_key, description, None)
 
     def _validate_config(self, type_key: str) -> str | None:
         if not self.settings:
@@ -260,8 +263,9 @@ class CredentialService:
 
             final_uuid = extracted_uuid if extracted_uuid else uuid.uuid4()
 
+
             cred_prop = CredentialProperty.objects.create(
-                sysprop=sysprop_instance,
+                sysprop=sysprop_instance if sysprop_instance else None,
                 owner=self.institution,
                 key=db_key,
                 value=signed_credential.get('id'),

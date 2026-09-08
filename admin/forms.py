@@ -28,10 +28,6 @@ AVAILABLE_PROPERTIES = [
 
 
 class InstitutionForm(forms.ModelForm):
-    facility_id_uri = forms.CharField(
-        required=False,
-        widget=forms.TextInput(attrs={'placeholder': 'did:web:example.com'})
-    )
 
     class Meta:
         model = Institution
