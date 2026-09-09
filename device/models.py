@@ -1,14 +1,13 @@
 from django.db import models
 from django.db.models import Max
-from django.db.models import Max
 from django.db.models.functions import Lower
 from django.urls import reverse
 from django.utils.dateparse import parse_datetime
 from django.utils.translation import gettext_lazy as _
-from django.utils.translation import gettext_lazy as _
 
 from action.models import State
-from device.product_cache import ProductCache
+from device.product_cache import ProductCache # noqa: F401
+
 from evidence.models import (
     CredentialProperty,
     Evidence,
@@ -932,9 +931,3 @@ class DeviceTypeAttribute(models.Model):
 
     def __str__(self):
         return f"{self.device_type.name} - {self.name}"
-
-
-# Registers the ProductCache ORM model under the `device` app. Django only
-# auto-imports `<app>.models`, so the read model defined in device/product_cache.py
-# must be imported here to be discovered by makemigrations.
-  # noqa: E402,F401
