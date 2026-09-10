@@ -27,29 +27,30 @@ class BulkStateChangeInstitutionScopeTests(TestCase):
     def url_for(self, pk):
         return reverse("action:bulk_change_state", kwargs={"pk": pk})
 
-    def get(self, pk):
+    def post(self, pk):
         # the view redirects back to the referer, which a browser always sends
-        return self.client.get(self.url_for(pk), HTTP_REFERER="/dashboard/")
+        return self.client.post(self.url_for(pk), HTTP_REFERER="/dashboard/")
 
-    def test_state_from_another_institution_returns_404(self):
-        response = self.client.get(self.url_for(self.their_state.pk))
-        self.assertEqual(response.status_code, 404)
+    def test_state_from_another_institution_is_rejected(self):
+        response = self.post(self.their_state.pk)
+        self.assertEqual(response.status_code, 302)
         self.assertFalse(State.objects.exists())
 
-    def test_unknown_state_returns_404(self):
-        response = self.client.get(self.url_for(self.their_state.pk + 100))
-        self.assertEqual(response.status_code, 404)
+    def test_unknown_state_is_rejected(self):
+        response = self.post(self.their_state.pk + 100)
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(State.objects.exists())
 
     def test_own_state_is_accepted(self):
         state = StateDefinition.objects.create(
             institution=self.institution, state="Refurbished"
         )
-        response = self.get(state.pk)
+        response = self.post(state.pk)
         self.assertEqual(response.status_code, 302)
 
     def test_redirects_to_the_dashboard_without_a_referer(self):
         state = StateDefinition.objects.create(
             institution=self.institution, state="Repaired"
         )
-        response = self.client.get(self.url_for(state.pk))
+        response = self.client.post(self.url_for(state.pk))
         self.assertRedirects(response, reverse("dashboard:all_device"))

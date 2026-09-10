@@ -133,7 +133,7 @@ class PublicDeviceWebViewNotFoundTests(TestCase):
     def setUp(self):
         self.client = Client()
         self.unknown_id = "custom_id:ghost"
-        self.url = reverse('device:device_web',
+        self.url = reverse('product:device_web',
                            kwargs={'pk': self.unknown_id})
 
     def test_unknown_device_returns_404(self):
@@ -191,7 +191,7 @@ class PublicDeviceWebViewOwnerResolutionTests(TestCase):
     def test_device_is_built_once_with_the_resolved_owner(self, MockDevice):
         self.property_for(
             self.newer, self.shared_value, timezone.now())
-        url = reverse('device:device_web',
+        url = reverse('product:device_web',
                       kwargs={'pk': self.shared_value})
 
         self.client.get(url)

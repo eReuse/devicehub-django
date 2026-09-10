@@ -22,17 +22,17 @@ class MalformedDeviceIdTests(TestCase):
     def test_details_view_returns_404(self):
         self.client.login(username="u@example.com", password="testpass123")
         response = self.client.get(
-            reverse("device:details", kwargs={"pk": self.malformed}))
+            reverse("product:details", kwargs={"pk": self.malformed}))
         self.assertEqual(response.status_code, 404)
 
     def test_public_view_returns_404(self):
         response = self.client.get(
-            reverse("device:device_web", kwargs={"pk": self.malformed}))
+            reverse("product:device_web", kwargs={"pk": self.malformed}))
         self.assertEqual(response.status_code, 404)
 
     def test_public_json_view_returns_404(self):
         response = self.client.get(
-            reverse("device:device_web", kwargs={"pk": self.malformed}),
+            reverse("product:device_web", kwargs={"pk": self.malformed}),
             headers={"accept": "application/json"},
         )
         self.assertEqual(response.status_code, 404)

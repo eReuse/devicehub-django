@@ -6,7 +6,7 @@ from unittest.mock import patch
 
 from device.tests.test_mock_device import TestDevice
 from evidence.models import SystemProperty
-from user.models import User, Institution, InstitutionSettings, LabelVersion
+from user.models import User, Institution, InstitutionLabelSettings, LabelVersion
 
 
 class DeviceSingleLabelViewTests(TestCase):
@@ -22,10 +22,10 @@ class DeviceSingleLabelViewTests(TestCase):
         self.client.login(username='test@example.com', password='testpass123')
 
     def url_for(self, pk):
-        return reverse('device:single_label', kwargs={'pk': pk})
+        return reverse('product:single_label', kwargs={'pk': pk})
 
     def use_label_version(self, version):
-        settings, _ = InstitutionSettings.objects.get_or_create(
+        settings, _ = InstitutionLabelSettings.objects.get_or_create(
             institution=self.institution
         )
         settings.qr_label_version = version
