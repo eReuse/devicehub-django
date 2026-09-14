@@ -284,9 +284,17 @@ class PublicDeviceWebView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update({
-            'object': self.object
+            'object': self.object,
+            'viewer_is_owner': self.viewer_is_owner,
         })
         return context
+
+    @property
+    def viewer_is_owner(self):
+        # The url carries no institution, so having a session is not enough:
+        # it must be a session in the institution that owns the product.
+        user = self.request.user
+        return user.is_authenticated and user.institution == self.object.owner
 
     @property
     def public_fields(self):
@@ -299,22 +307,22 @@ class PublicDeviceWebView(TemplateView):
         }
 
     @property
-    def authenticated_fields(self):
+    def owner_fields(self):
         return {
             'serial_number': self.object.serial_number,
             'components': self.object.components,
         }
 
     def remove_serial_number_from(self, components):
-        for component in components:
-            if 'serial_number' in component:
-                del component['SerialNumber']
-        return components
+        return [
+            {k: v for k, v in c.items() if k != 'serialNumber'}
+            for c in components
+        ]
 
     def get_device_data(self):
         data = self.public_fields
-        if self.request.user.is_authenticated:
-            data.update(self.authenticated_fields)
+        if self.viewer_is_owner:
+            data.update(self.owner_fields)
         return data
 
     def get_json_response(self):

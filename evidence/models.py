@@ -470,6 +470,10 @@ class Evidence:
         if self.is_legacy():
             return
 
+        # A web snapshot carries no dmidecode/inxi payload, only its kv.
+        if self.is_web_snapshot():
+            return
+
         if self.doc.get("credentialSubject"):
             for ev in self.doc["evidence"]:
                 if "dmidecode" == ev.get("operation"):
@@ -480,8 +484,6 @@ class Evidence:
                     self.inxi = ev["output"]
                     if isinstance(ev["output"], str):
                         self.inxi = json.loads(ev["output"])
-        elif self.doc.get("WEB_ID"):
-            self.get_components()
         else:
             dmidecode_raw = self.doc["data"]["dmidecode"]
             inxi_raw = self.doc.get("data", {}).get("inxi")
@@ -527,9 +529,15 @@ class Evidence:
         self.set_components()
         return self.components
 
+    def get_kv(self):
+        """Free-form key/value attributes typed by hand on a web snapshot."""
+        if self.doc is None:
+            self.get_doc()
+        return self.doc.get("kv", {})
+
     def get_manufacturer(self):
         if self.is_web_snapshot():
-            return self.components.get("manufacturer", "")
+            return self.get_kv().get("manufacturer", "")
 
         if self.inxi or self.is_beta():
             return getattr(self, 'device_manufacturer', '')
@@ -546,7 +554,7 @@ class Evidence:
 
     def get_model(self):
         if self.is_web_snapshot():
-            return self.components.get("model", "")
+            return self.get_kv().get("model", "")
 
         if self.inxi or self.is_beta():
             return getattr(self, 'device_model', '')
@@ -564,7 +572,7 @@ class Evidence:
 
     def get_chassis(self):
         if self.is_web_snapshot():
-            return self.components.get("form_factor", self.components.get("type", "Websnapshot"))
+            return self.get_kv().get("form_factor", self.get_kv().get("type", "Websnapshot"))
 
         if self.is_photo_evidence():
             return "Image"
@@ -597,7 +605,7 @@ class Evidence:
 
     def get_serial_number(self):
         if self.is_web_snapshot():
-            return self.components.get("serial", "")
+            return self.get_kv().get("serial", "")
 
         if self.inxi or self.is_beta():
             return getattr(self, 'device_serial_number', '')
@@ -614,7 +622,7 @@ class Evidence:
 
     def get_version(self):
         if self.is_web_snapshot():
-            return self.components.get("version", "")
+            return self.get_kv().get("version", "")
 
         if self.inxi or self.is_beta():
             return getattr(self, 'device_version', '')
@@ -640,7 +648,7 @@ class Evidence:
 
     def get_cpu_model(self):
         if self.is_web_snapshot():
-            return self.components.get("cpu_model", self.components.get("cpu", ""))
+            return self.get_kv().get("cpu_model", self.get_kv().get("cpu", ""))
 
         model = ""
         for c in self.export_components():
@@ -650,7 +658,7 @@ class Evidence:
 
     def get_cpu_cores(self):
         if self.is_web_snapshot():
-            return self.components.get("cpu_cores", "")
+            return self.get_kv().get("cpu_cores", "")
 
         cores = ""
         for c in self.export_components():
@@ -660,7 +668,7 @@ class Evidence:
 
     def get_ram_total(self):
         if self.is_web_snapshot():
-            return self.components.get("ram_total", self.components.get("ram", ""))
+            return self.get_kv().get("ram_total", self.get_kv().get("ram", ""))
         # Sum the size of every populated RamModule instead of relying on the
         # motherboard's installedRam, which inxi frequently leaves empty.
         total = 0.0
@@ -700,7 +708,7 @@ class Evidence:
 
     def get_ram_type(self):
         if self.is_web_snapshot():
-            return self.components.get("ram_type", "")
+            return self.get_kv().get("ram_type", "")
 
         ram_type = ""
         for c in self.export_components():
@@ -712,7 +720,7 @@ class Evidence:
 
     def get_ram_slots(self):
         if self.is_web_snapshot():
-            return self.components.get("ram_slots", "")
+            return self.get_kv().get("ram_slots", "")
 
         rams = [c for c in self.export_components()
                 if c.get("type") == "RamModule"]
@@ -720,7 +728,7 @@ class Evidence:
 
     def get_ram_slots_used(self):
         if self.is_web_snapshot():
-            return self.components.get("slots_used", "")
+            return self.get_kv().get("slots_used", "")
 
         rams = [c for c in self.export_components()
                 if c.get("type") == "RamModule"]
@@ -731,7 +739,7 @@ class Evidence:
 
     def get_drive(self):
         if self.is_web_snapshot():
-            return self.components.get("drive", "")
+            return self.get_kv().get("drive", "")
 
         drives = []
         for c in self.export_components():
@@ -744,7 +752,7 @@ class Evidence:
 
     def get_gpu_model(self):
         if self.is_web_snapshot():
-            return self.components.get("gpu_model", "")
+            return self.get_kv().get("gpu_model", "")
 
         models = []
         for c in self.export_components():
@@ -787,7 +795,7 @@ class Evidence:
 
     def set_components(self):
         if self.is_web_snapshot():
-            self.components = self.doc.get("kv", {})
+            self.components = []
             return
         self.components = ParseSnapshot(self.doc).components
 
@@ -796,7 +804,7 @@ class Evidence:
 
     def get_cpu(self):
         if self.is_web_snapshot():
-            return self.components.get("cpu", "")
+            return self.get_kv().get("cpu", "")
 
         cpu_component = next(
             (c for c in self.components if c.get('type') == 'Processor'),
@@ -807,7 +815,7 @@ class Evidence:
 
     def get_ram(self):
         if self.is_web_snapshot():
-            return self.components.get("ram", "")
+            return self.get_kv().get("ram", "")
 
         ram_component = next(
             (c for c in self.components if c.get('type') == 'RamModule'),

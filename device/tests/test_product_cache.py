@@ -5,7 +5,7 @@ from django.test import TestCase
 from django.utils import timezone
 
 from user.models import Institution
-from evidence.models import SystemProperty
+from evidence.models import Evidence, SystemProperty
 from device.models import Device, ProductCache
 
 
@@ -384,6 +384,25 @@ class StorageReadingsTests(TestCase):
         reading = disks["S5"]["readings"][0]
         self.assertEqual(reading["uuid"], str(u))
         json.dumps(disks)  # must not raise
+
+    def test_web_snapshot_in_the_root_keeps_the_workbench_history(self):
+        # Aliasing a web snapshot onto a workbench one puts both evidences
+        # under the same root: the web one must contribute nothing without
+        # taking the parsed history down with it.
+        web = Evidence.__new__(Evidence)
+        web.doc = {"type": "WebSnapshot", "kv": {"cpu": "i5", "ram": "8 GiB"}}
+        web.components = []
+        web.created = "2025-02-01"
+        workbench = self._evidence("2025-01-01", [
+            {"type": "Storage", "serialNumber": "S6", "time of used": "3d 0h"},
+        ])
+
+        d = self._device(["web", "workbench"])  # newest first
+        with patch("device.models.Evidence",
+                   side_effect=lambda u: web if u == "web" else workbench):
+            disks = d.storage_readings()
+        self.assertEqual(list(disks.keys()), ["S6"])
+        self.assertEqual(len(disks["S6"]["readings"]), 1)
 
     def test_corrupt_evidence_skipped(self):
         good = self._evidence("2025-01-01", [

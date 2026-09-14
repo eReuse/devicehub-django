@@ -563,10 +563,6 @@ class Device:
             convert_str_time_to_hours,
         )
 
-        #check best way to input websnapshot storage hours
-        if self.is_websnapshot:
-            return self.components.get("storage_hours", {})
-
         self.get_uuids()
         disks = {}
         seen = {}  # serial -> set of uuids already recorded
@@ -630,15 +626,14 @@ class Device:
             'beneficiary_status': self.status_beneficiary or ""
         })
 
-        if not self.last_evidence or not self.last_evidence.is_legacy:
-            return hardware_info
-
+        # Before the is_legacy() gate: a web snapshot is never legacy, so its
+        # manually entered attributes would be dropped by the early return.
         if self.is_websnapshot:
             doc = getattr(self.last_evidence, 'doc', {})
-            kv_data = doc.get('kv', {})
+            hardware_info.update(doc.get('kv', {}))
+            return hardware_info
 
-            hardware_info.update(kv_data)
-
+        if not self.last_evidence or not self.last_evidence.is_legacy():
             return hardware_info
 
         storage_devices = []

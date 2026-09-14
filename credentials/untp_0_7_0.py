@@ -297,7 +297,7 @@ class UNTP070DPPBuilder(BaseUNTPBuilder):
 
         if device.is_websnapshot:
             #if the device is entered through form then grab all, defer compliance to the user
-            characteristics = device.components
+            characteristics = dict(device.last_user_evidence)
         else:
             characteristics = {
                 "chassis": components.get('type') or "Unknown",

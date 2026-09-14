@@ -106,7 +106,7 @@
             <div class="col-md-4 info-label">{% trans "Model" %}</div>
             <div class="col-md-8 info-value">{{ object.model|default:'-' }}</div>
           </div>
-          {% if user.is_authenticated and not object.is_websnapshot %}
+          {% if viewer_is_owner and not object.is_websnapshot %}
             <div class="info-row row">
               <div class="col-md-4 info-label">{% trans "Serial Number" %}</div>
               <div class="col-md-8 info-value">{{ object.serial_number|default:'' }}</div>
@@ -170,7 +170,7 @@
                   <p class="card-text">
                     {% for component_key, component_value in component.items %}
                       {% if component_key not in 'actions,type' %}
-                        {% if component_key != 'serialNumber' or user.is_authenticated %}
+                        {% if component_key != 'serialNumber' or viewer_is_owner %}
                           <strong>{{ component_key }}:</strong> {{ component_value }}<br />
                         {% endif %}
                       {% endif %}

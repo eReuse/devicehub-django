@@ -12,9 +12,9 @@
                     </span>
                 </div>
                 <div class="card-body">
-                    {% if object.components %}
+                    {% if object.last_user_evidence %}
                         <div class="row row-cols-1 row-cols-md-2 g-2">
-                            {% for key, value in object.components.items %}
+                            {% for key, value in object.last_user_evidence %}
                                 <div class="col">
                                     <div class="d-flex border-bottom pb-1">
                                         <span class="text-muted fw-bold me-2">{{ key }}:</span>

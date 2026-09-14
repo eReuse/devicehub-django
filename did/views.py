@@ -53,6 +53,7 @@ class PublicDeviceWebView(TemplateView):
             self.get_manuals()
         return self.context
 
+    # TODO: dead code — only used by get_device_data(), itself unused.
     @property
     def public_fields(self):
         return {
@@ -63,6 +64,7 @@ class PublicDeviceWebView(TemplateView):
             'components': self.remove_serial_number_from(self.object.components),
         }
 
+    # TODO: dead code — only used by get_device_data(), itself unused.
     @property
     def authenticated_fields(self):
         return {
@@ -70,12 +72,14 @@ class PublicDeviceWebView(TemplateView):
             'components': self.object.components,
         }
 
+    # TODO: dead code — only used by public_fields, itself unused.
     def remove_serial_number_from(self, components):
         for component in components:
             if 'serial_number' in component:
                 del component['SerialNumber']
         return components
 
+    # TODO: dead code — get_json_response() uses get_result() instead.
     def get_device_data(self):
         data = self.public_fields
         if self.request.user.is_authenticated:
