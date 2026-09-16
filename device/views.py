@@ -214,14 +214,14 @@ class DetailsView(DashboardView, TemplateView ):
                 request,
                 _("Environmental impact country override removed."),
             )
-            return redirect(reverse_lazy("device:details", args=[pk]) + "#environmental_impact")
+            return redirect(reverse_lazy("product:details", args=[pk]) + "#environmental_impact")
 
         if country_code not in AVAILABLE_COUNTRY_CODES:
             messages.error(
                 request,
                 _("Selected country is not available for environmental impact."),
             )
-            return redirect(reverse_lazy("device:details", args=[pk]) + "#environmental_impact")
+            return redirect(reverse_lazy("product:details", args=[pk]) + "#environmental_impact")
 
         DeviceEnvironmentalProfile.objects.update_or_create(
             device_chid=device_id,
@@ -233,7 +233,7 @@ class DetailsView(DashboardView, TemplateView ):
             _("Environmental impact country updated to %(country)s.")
             % {"country": country_code},
         )
-        return redirect(reverse_lazy("device:details", args=[pk]) + "#environmental_impact")
+        return redirect(reverse_lazy("product:details", args=[pk]) + "#environmental_impact")
 
     def _save_social_inclusion(self, request, pk):
         """Store the manager-set vulnerable-person marking for a device.
@@ -296,7 +296,7 @@ class DetailsView(DashboardView, TemplateView ):
             )
 
         messages.success(request, _("Social impact information updated."))
-        return redirect(reverse_lazy("device:details", args=[pk]) + "#social_impact")
+        return redirect(reverse_lazy("product:details", args=[pk]) + "#social_impact")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

@@ -23,7 +23,7 @@ class DeviceEnvironmentalProfileViewTests(TestCase):
 
     def _build_request(self, country_code):
         request = self.factory.post(
-            f"/device/{self.device_id}/",
+            f"/product/{self.device_id}/",
             {
                 "action": "save_environmental_profile",
                 "country_code": country_code,
@@ -49,7 +49,7 @@ class DeviceEnvironmentalProfileViewTests(TestCase):
         )
         self.assertEqual(profile.country, "NA")
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, f"/device/{self.device_id}/#environmental_impact")
+        self.assertEqual(response.url, f"/product/{self.device_id}/#environmental_impact")
 
     def test_save_environmental_profile_empty_value_removes_override(self):
         DeviceEnvironmentalProfile.objects.create(
@@ -68,7 +68,7 @@ class DeviceEnvironmentalProfileViewTests(TestCase):
             ).exists()
         )
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, f"/device/{self.device_id}/#environmental_impact")
+        self.assertEqual(response.url, f"/product/{self.device_id}/#environmental_impact")
 
     def test_save_environmental_profile_rejects_invalid_country_code(self):
         request = self._build_request("NAM")
@@ -82,4 +82,4 @@ class DeviceEnvironmentalProfileViewTests(TestCase):
             ).exists()
         )
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, f"/device/{self.device_id}/#environmental_impact")
+        self.assertEqual(response.url, f"/product/{self.device_id}/#environmental_impact")

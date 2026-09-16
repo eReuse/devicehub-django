@@ -155,7 +155,10 @@ class MobileSnapshotTests(TestCase):
     def test_no_manual_id_no_alias(self):
         Build(mobile_snapshot(None, app_uuid="uuid-C"), self.user)
 
-        self.assertEqual(RootAlias.objects.filter(owner=self.institution).count(), 0)
+        # only the self-referential row every SystemProperty gets; no custom_id link
+        aliases = RootAlias.objects.filter(owner=self.institution)
+        self.assertEqual(aliases.count(), 1)
+        self.assertEqual(aliases.first().root, aliases.first().alias)
         # still creates a device keyed by the app uuid fallback
         self.assertEqual(
             SystemProperty.objects.filter(key="ereuse24", owner=self.institution).count(),
