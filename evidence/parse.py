@@ -82,22 +82,18 @@ class Build:
         if not hid:
             return
 
-        alias = "ereuse24:{}".format(self.sign(hid))
+        alias = "ereuse24:{}".format(hid)
         root = "custom_id:{}".format(manual_id)
         if alias == root:
             return
 
-        owner = self.user.institution
-        # idempotent: (owner, alias) is unique; re-scans skip silently
-        if RootAlias.objects.filter(owner=owner, alias=alias).exists():
-            return
-
-        RootAlias.objects.create(
-            owner=owner,
-            user=self.user,
-            alias=alias,
-            root=root,
-        )
+        # The post_save signal already created a self-referential row for this
+        # chid; set_alias re-points it and keeps memberships/cache in sync.
+        # Idempotent on re-scans with the same manual id.
+        try:
+            RootAlias.set_alias(self.user.institution, alias, root, user=self.user)
+        except ValueError as err:
+            logger.warning("Could not link %s to %s: %s", alias, root, err)
 
     def create_mobile_user_properties(self):
         """Store derived hardware-test results as per-device UserProperty rows.
@@ -158,7 +154,7 @@ class Build:
         same join used for device enumeration. Includes the current evidence.
         """
         my_values = [
-            "{}:{}".format(k, self.sign(v))
+            "{}:{}".format(k, v)
             for k, v in self.build.algorithms.items()
         ]
         if not my_values:
