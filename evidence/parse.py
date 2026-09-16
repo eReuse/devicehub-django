@@ -109,6 +109,8 @@ class Build:
             return
 
         sibling_uuids = self._device_evidence_uuids()
+        chid = next(("{}:{}".format(k, v) for k, v in self.build.algorithms.items()), None)
+        device_id = RootAlias.resolve_root(self.user.institution, chid) if chid else None
         data = self.evidence.get("data", {})
         for key, value in self.mobile_annotations(data).items():
             if value in (None, ""):
@@ -132,6 +134,16 @@ class Build:
             )
             if prev is not None and prev != value:
                 self._log_device_event("{}: {} → {}".format(key, prev, value))
+
+            # Current value on the product, so it shows in its Properties tab.
+            if device_id:
+                UserProperty.objects.update_or_create(
+                    owner=self.user.institution,
+                    device_id=device_id,
+                    key=key,
+                    type=UserProperty.Type.USER,
+                    defaults={"value": value, "user": self.user},
+                )
 
             exists = UserProperty.objects.filter(
                 uuid=self.uuid, owner=self.user.institution, key=key

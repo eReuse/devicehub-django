@@ -164,3 +164,42 @@ class MobileSnapshotTests(TestCase):
             SystemProperty.objects.filter(key="ereuse24", owner=self.institution).count(),
             1,
         )
+
+    def test_properties_show_on_product_page(self):
+        from device.models import Device
+
+        Build(mobile_snapshot("AUCOOP-PAGE"), self.user)
+
+        device = Device(id="custom_id:AUCOOP-PAGE", owner=self.institution)
+        props = {p.key: p.value for p in device.get_user_properties()}
+        self.assertEqual(props.get("hwtest:verdict"), "OK")
+        self.assertEqual(props.get("hwtest:screen"), "PASS")
+        self.assertEqual(props.get("usage:power_on_hours"), "2700")
+
+    def test_rescan_updates_product_value_and_logs_change(self):
+        from action.models import DeviceLog
+
+        Build(mobile_snapshot("AUCOOP-RESCAN"), self.user)
+        second = mobile_snapshot("AUCOOP-RESCAN")
+        second["data"]["hwtest"]["results"][0]["status"] = "FAIL"
+        Build(second, self.user)
+
+        current = UserProperty.objects.filter(
+            owner=self.institution,
+            device_id="custom_id:AUCOOP-RESCAN",
+            key="hwtest:screen",
+        )
+        self.assertEqual(current.count(), 1)
+        self.assertEqual(current.first().value, "FAIL")
+        self.assertTrue(
+            DeviceLog.objects.filter(
+                snapshot_uuid=second["uuid"], event="hwtest:screen: PASS → FAIL"
+            ).exists()
+        )
+        # per-scan history is kept
+        self.assertEqual(
+            UserProperty.objects.filter(
+                owner=self.institution, key="hwtest:screen", device_id=None
+            ).count(),
+            2,
+        )
