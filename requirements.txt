@@ -23,6 +23,6 @@ psycopg2-binary==2.9.10
 gunicorn==21.2.0
 qrcode[pil]==8.2
 django-ninja==1.4.3
-git+https://github.com/ereuse/pyvckit.git@path_level_did_resolver
+git+https://github.com/ereuse/pyvckit.git@e3e1bbdae534223ee4b23818a8b62132f269d86e
 pyroaring==0.4.5
 openlocationcode
