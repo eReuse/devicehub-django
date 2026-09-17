@@ -203,6 +203,14 @@ class Build:
             status = result.get("status")
             if rid and status:
                 props["hwtest:{}".format(rid)] = status
+            if rid and result.get("note"):
+                props["hwtest:{}:note".format(rid)] = result["note"]
+
+        # OS data the obsolescence decision is based on.
+        android = data.get("android") or {}
+        props["android:version"] = android.get("android_version")
+        props["android:api_level"] = android.get("api_level")
+        props["android:security_patch"] = android.get("security_patch")
 
         # Estimate power-on hours from whatever raw wear signals the app shipped.
         estimate = estimate_power_on_hours(data.get("usage") or {})
