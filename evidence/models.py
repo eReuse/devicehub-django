@@ -11,7 +11,7 @@ from django.utils import timezone
 from django.conf import settings
 
 from django.db.models import Q
-from utils.constants import STR_EXTEND_SIZE, CHASSIS_DH
+from utils.constants import STR_EXTEND_SIZE, CHASSIS_DH, WORKBENCH_ANDROID
 from evidence.xapian import search
 from evidence.parse_details import ParseSnapshot
 from evidence.normal_parse_details import get_inxi, get_inxi_key
@@ -832,7 +832,7 @@ class Evidence:
         return self.doc.get("software") != "workbench-script"
 
     def is_mobile(self):
-        return self.doc.get("software") == "workbench-android"
+        return self.doc.get("software") == WORKBENCH_ANDROID
 
     def mobile_device(self):
         return self.doc.get("data", {}).get("device", {})

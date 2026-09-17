@@ -8,6 +8,9 @@ STR_BIG_SIZE = 128
 STR_EXTEND_SIZE = 256
 
 
+# Software field of the snapshots sent by the Android app
+WORKBENCH_ANDROID = "workbench-android"
+
 # Algorithms for build hids
 EREUSE24 = [
     "manufacturer",

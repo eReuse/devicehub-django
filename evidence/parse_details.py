@@ -6,6 +6,7 @@ from evidence import (
     old_parse_details,
     mobile_parse_details
 )
+from utils.constants import WORKBENCH_ANDROID
 
 
 logger = logging.getLogger('django')
@@ -23,7 +24,7 @@ class ParseSnapshot:
                snapshot,
                default=default
            )
-       elif snapshot.get("software") == "workbench-android":
+       elif snapshot.get("software") == WORKBENCH_ANDROID:
            self.build = mobile_parse_details.ParseSnapshot(
                snapshot,
                default=default

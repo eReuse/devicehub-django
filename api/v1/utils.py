@@ -5,6 +5,7 @@ import re
 from django.db.models import Q
 
 from action.models import State
+from device.models import Device
 from device.product_cache import ProductCache
 from evidence.models import RootAlias, SystemProperty, UserProperty
 from evidence.xapian import search
