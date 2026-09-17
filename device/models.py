@@ -27,6 +27,7 @@ class Device:
         LAPTOP = "Laptop"
         SERVER = "Server"
         SMARTPHONE = "Smartphone"
+        TABLET = "Tablet"
         GRAPHICCARD = "GraphicCard"
         HARDDRIVE = "HardDrive"
         SOLIDSTATEDRIVE = "SolidStateDrive"

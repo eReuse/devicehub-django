@@ -32,6 +32,7 @@ def mobile_snapshot(manual_id, app_uuid="app-uuid", ev_uuid=None):
                 "android_version": "15",
                 "api_level": 35,
                 "build_fingerprint": "google/...",
+                "security_patch": "2026-08-05",
             },
             "usage": {
                 "battery_cycle_count": 150,
@@ -44,7 +45,7 @@ def mobile_snapshot(manual_id, app_uuid="app-uuid", ev_uuid=None):
                 "results": [
                     {"id": "screen", "status": "PASS"},
                     {"id": "touch", "status": "PASS"},
-                    {"id": "charging", "status": "SKIP"},
+                    {"id": "charging", "status": "SKIP", "note": "no charger at hand"},
                 ],
             },
         },
@@ -136,6 +137,22 @@ class MobileSnapshotTests(TestCase):
         self.assertEqual(props.get("hwtest:screen"), "PASS")
         self.assertEqual(props.get("hwtest:touch"), "PASS")
         self.assertEqual(props.get("hwtest:charging"), "SKIP")
+        self.assertEqual(props.get("hwtest:charging:note"), "no charger at hand")
+        self.assertNotIn("hwtest:screen:note", props)
+
+    def test_android_os_data_become_user_properties(self):
+        snap = mobile_snapshot("AUCOOP-OS")
+        Build(snap, self.user)
+
+        props = {
+            p.key: p.value
+            for p in UserProperty.objects.filter(
+                uuid=snap["uuid"], owner=self.institution, type=UserProperty.Type.USER
+            )
+        }
+        self.assertEqual(props.get("android:version"), "15")
+        self.assertEqual(props.get("android:api_level"), "35")
+        self.assertEqual(props.get("android:security_patch"), "2026-08-05")
 
     def test_power_on_hours_estimated_into_user_property(self):
         snap = mobile_snapshot("AUCOOP-POH")
