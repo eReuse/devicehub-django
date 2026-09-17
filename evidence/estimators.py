@@ -111,3 +111,84 @@ def estimate_power_on_hours(signals):
         if result is not None:
             return result
     return None
+
+
+# --- Swappable estimator implementations ------------------------------------
+#
+# The strategies above are one way to turn signals into hours. The estimator
+# is expected to change often while real devices teach us which signals are
+# reliable, so the implementation in use is picked by name
+# (settings.MOBILE_POH_ESTIMATOR) from a registry. A new implementation:
+#
+#     @register_poh_estimator("battery_capacity_v1")
+#     class BatteryCapacityEstimator(PohEstimator):
+#         def estimate(self, data):
+#             signals = data.get("signals") or {}
+#             ...
+#
+# Implementations receive the whole snapshot ``data`` block (``usage``,
+# ``signals``, ``system_properties``, ``android``...), not just ``usage``, so
+# they can use any signal the app collected. Stored evidences keep every raw
+# signal: after switching implementation, ``manage.py reestimate_mobile_poh``
+# recomputes the products already registered.
+
+DEFAULT_POH_ESTIMATOR = "usage_chain_v1"
+
+_POH_ESTIMATORS = {}
+
+
+class PohEstimator:
+    """A named power-on hours estimator over a whole snapshot ``data`` block."""
+
+    name = ""
+
+    def estimate(self, data):
+        """Return a [PowerOnHoursEstimate], or None when it has nothing to go on."""
+        raise NotImplementedError
+
+
+def register_poh_estimator(name):
+    """Class decorator: make an implementation selectable by ``name``."""
+
+    def decorator(cls):
+        cls.name = name
+        _POH_ESTIMATORS[name] = cls
+        return cls
+
+    return decorator
+
+
+def available_poh_estimators():
+    return sorted(_POH_ESTIMATORS)
+
+
+def get_poh_estimator(name=None):
+    """Factory: the estimator called ``name``, or the one configured in settings."""
+    if name is None:
+        from django.conf import settings
+
+        name = getattr(settings, "MOBILE_POH_ESTIMATOR", DEFAULT_POH_ESTIMATOR)
+    try:
+        return _POH_ESTIMATORS[name]()
+    except KeyError:
+        raise ValueError(
+            "Unknown power-on hours estimator {!r}. Available: {}".format(
+                name, ", ".join(available_poh_estimators())
+            )
+        )
+
+
+def estimate_mobile_power_on_hours(data, estimator=None):
+    """Estimate power-on hours of a workbench-android snapshot ``data`` block
+    with the configured implementation (or ``estimator``)."""
+    if not data:
+        return None
+    return (estimator or get_poh_estimator()).estimate(data)
+
+
+@register_poh_estimator(DEFAULT_POH_ESTIMATOR)
+class UsageChainEstimator(PohEstimator):
+    """First usable strategy of ESTIMATORS over the ``usage`` block."""
+
+    def estimate(self, data):
+        return estimate_power_on_hours(data.get("usage") or {})

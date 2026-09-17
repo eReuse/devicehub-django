@@ -1,6 +1,6 @@
 import logging
 
-from evidence.estimators import estimate_power_on_hours
+from evidence.estimators import estimate_mobile_power_on_hours, get_poh_estimator
 from evidence.mixin_parse import BuildMix
 from evidence.models import RootAlias, UserProperty
 
@@ -164,10 +164,20 @@ class Build(BuildMix):
         props["android:api_level"] = android.get("api_level")
         props["android:security_patch"] = android.get("security_patch")
 
-        # Estimate power-on hours from whatever raw wear signals the app shipped.
-        estimate = estimate_power_on_hours(data.get("usage") or {})
-        if estimate:
-            props["usage:power_on_hours"] = estimate.hours
-            props["usage:power_on_hours_method"] = estimate.method
-            props["usage:power_on_hours_confidence"] = estimate.confidence
+        props.update(Build.usage_annotations(data))
         return props
+
+    @staticmethod
+    def usage_annotations(data, estimator=None):
+        """Power-on hours estimated from the raw signals the app shipped, with
+        the configured estimator implementation (see evidence/estimators.py)."""
+        estimator = estimator or get_poh_estimator()
+        estimate = estimate_mobile_power_on_hours(data, estimator)
+        if not estimate:
+            return {}
+        return {
+            "usage:power_on_hours": estimate.hours,
+            "usage:power_on_hours_method": estimate.method,
+            "usage:power_on_hours_confidence": estimate.confidence,
+            "usage:power_on_hours_estimator": estimator.name,
+        }

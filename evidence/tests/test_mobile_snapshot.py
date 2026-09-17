@@ -174,6 +174,41 @@ class MobileSnapshotTests(TestCase):
         self.assertEqual(props.get("usage:power_on_hours"), "2700")
         self.assertEqual(props.get("usage:power_on_hours_method"), "battery_cycle")
         self.assertEqual(props.get("usage:power_on_hours_confidence"), "MEDIUM")
+        self.assertEqual(props.get("usage:power_on_hours_estimator"), "usage_chain_v1")
+
+    def test_reestimate_command_applies_another_estimator(self):
+        from io import StringIO
+
+        from django.core.management import call_command
+
+        from action.models import DeviceLog
+        from evidence.tests.test_estimators import SignalsTestEstimator  # registers test_signals_v0
+
+        snap = mobile_snapshot("AUCOOP-REEST")
+        snap["data"]["signals"] = {"test_hours": 12345}
+        Build(snap, self.user)
+
+        out = StringIO()
+        call_command("reestimate_mobile_poh", "--estimator", SignalsTestEstimator.name, stdout=out)
+
+        props = {
+            p.key: p.value
+            for p in UserProperty.objects.filter(
+                owner=self.institution, device_id="custom_id:AUCOOP-REEST", type=UserProperty.Type.USER
+            )
+        }
+        self.assertEqual(props.get("usage:power_on_hours"), "12345")
+        self.assertEqual(props.get("usage:power_on_hours_estimator"), "test_signals_v0")
+        self.assertTrue(
+            DeviceLog.objects.filter(
+                snapshot_uuid=snap["uuid"], event="usage:power_on_hours: 2700 → 12345"
+            ).exists()
+        )
+
+        # Running it again changes nothing.
+        out = StringIO()
+        call_command("reestimate_mobile_poh", "--estimator", SignalsTestEstimator.name, stdout=out)
+        self.assertIn("Changed 0 properties", out.getvalue())
 
     def test_no_manual_id_no_alias(self):
         Build(mobile_snapshot(None, app_uuid="uuid-C"), self.user)

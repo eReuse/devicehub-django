@@ -48,6 +48,10 @@ INITIAL_ADMIN_PASSWORD = config("DEVICEHUB_INIT_ADMIN_PASSWORD_SECRET", default=
 
 EVIDENCES_DIR = config("DEVICEHUB_EVIDENCES_DIR", default=os.path.join(BASE_DIR, "db"))
 
+# Power-on hours estimator for workbench-android snapshots, by registered name
+# (see evidence/estimators.py). Change it and run `manage.py reestimate_mobile_poh`.
+MOBILE_POH_ESTIMATOR = config("DEVICEHUB_MOBILE_POH_ESTIMATOR", default="usage_chain_v1")
+
 
 # Application definition
 
