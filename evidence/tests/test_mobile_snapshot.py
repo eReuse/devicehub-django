@@ -130,7 +130,9 @@ class MobileSnapshotTests(TestCase):
         props = {
             p.key: p.value
             for p in UserProperty.objects.filter(
-                uuid=snap["uuid"], owner=self.institution, type=UserProperty.Type.USER
+                device_id="custom_id:{}".format(snap["data"]["device"]["manual_id"]),
+                owner=self.institution,
+                type=UserProperty.Type.USER,
             )
         }
         self.assertEqual(props.get("hwtest:verdict"), "OK")
@@ -147,7 +149,9 @@ class MobileSnapshotTests(TestCase):
         props = {
             p.key: p.value
             for p in UserProperty.objects.filter(
-                uuid=snap["uuid"], owner=self.institution, type=UserProperty.Type.USER
+                device_id="custom_id:{}".format(snap["data"]["device"]["manual_id"]),
+                owner=self.institution,
+                type=UserProperty.Type.USER,
             )
         }
         self.assertEqual(props.get("android:version"), "15")
@@ -161,7 +165,9 @@ class MobileSnapshotTests(TestCase):
         props = {
             p.key: p.value
             for p in UserProperty.objects.filter(
-                uuid=snap["uuid"], owner=self.institution, type=UserProperty.Type.USER
+                device_id="custom_id:{}".format(snap["data"]["device"]["manual_id"]),
+                owner=self.institution,
+                type=UserProperty.Type.USER,
             )
         }
         # 150 cycles * 18 h/cycle = 2700 (battery_cycle wins over weaker signals)
@@ -213,10 +219,63 @@ class MobileSnapshotTests(TestCase):
                 snapshot_uuid=second["uuid"], event="hwtest:screen: PASS → FAIL"
             ).exists()
         )
-        # per-scan history is kept
+
+    def test_rescan_removes_values_no_longer_reported(self):
+        from action.models import DeviceLog
+        from device.models import Device
+
+        Build(mobile_snapshot("AUCOOP-STALE"), self.user)
+        second = mobile_snapshot("AUCOOP-STALE")
+        second["data"]["hwtest"]["results"][2] = {"id": "charging", "status": "PASS"}
+        Build(second, self.user)
+
+        device = Device(id="custom_id:AUCOOP-STALE", owner=self.institution)
+        props = {p.key: p.value for p in device.get_user_properties()}
+        self.assertEqual(props.get("hwtest:charging"), "PASS")
+        self.assertNotIn("hwtest:charging:note", props)
+        self.assertTrue(
+            DeviceLog.objects.filter(
+                snapshot_uuid=second["uuid"],
+                event="hwtest:charging:note: no charger at hand → (removed)",
+            ).exists()
+        )
+
+    def test_rescan_without_block_keeps_its_values(self):
+        # A snapshot that does not carry a block (e.g. inventory without
+        # hwtest) says nothing about it: previous values stay.
+        from device.models import Device
+
+        Build(mobile_snapshot("AUCOOP-PARTIAL"), self.user)
+        second = mobile_snapshot("AUCOOP-PARTIAL")
+        del second["data"]["hwtest"]
+        Build(second, self.user)
+
+        device = Device(id="custom_id:AUCOOP-PARTIAL", owner=self.institution)
+        props = {p.key: p.value for p in device.get_user_properties()}
+        self.assertEqual(props.get("hwtest:screen"), "PASS")
+        self.assertEqual(props.get("hwtest:charging:note"), "no charger at hand")
+
+    def test_properties_are_only_stored_on_the_product(self):
+        # USER properties are keyed by product (device_id), never by evidence.
+        snap = mobile_snapshot("AUCOOP-ONLY-PRODUCT")
+        Build(snap, self.user)
+        Build(mobile_snapshot("AUCOOP-ONLY-PRODUCT"), self.user)
+
+        self.assertFalse(
+            UserProperty.objects.filter(owner=self.institution, device_id=None).exists()
+        )
         self.assertEqual(
             UserProperty.objects.filter(
-                owner=self.institution, key="hwtest:screen", device_id=None
+                owner=self.institution,
+                device_id="custom_id:AUCOOP-ONLY-PRODUCT",
+                key="hwtest:screen",
             ).count(),
-            2,
+            1,
         )
+
+    def test_other_parsers_do_not_accept_device_under_data(self):
+        # data.device is the Android shape only; the shared check is unchanged.
+        snap = mobile_snapshot("AUCOOP-OTHER")
+        snap["software"] = "workbench"
+        with self.assertRaises(Exception):
+            Build(snap, self.user)
