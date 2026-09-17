@@ -1,7 +1,7 @@
 import os
 from typing import List, Dict, Optional
 from device.models import Device
-from evidence.estimators import estimate_power_on_hours
+from evidence.estimators import estimate_mobile_power_on_hours
 from evidence.models import Evidence
 from utils.constants import WORKBENCH_ANDROID
 from .docs_renderer import render_docs
@@ -53,7 +53,7 @@ def get_mobile_poh_from_evidence(evidence: Evidence) -> int:
     if doc.get("software") != WORKBENCH_ANDROID:
         return 0
 
-    estimate = estimate_power_on_hours(doc.get("data", {}).get("usage") or {})
+    estimate = estimate_mobile_power_on_hours(doc.get("data") or {})
     if estimate:
         return estimate.hours
     return 0
