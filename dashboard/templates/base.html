@@ -211,7 +211,7 @@
                 <a class="admin {% if path == 'dashboard:unassigned' %}active {% endif %}nav-link fw-bold" href="{% url 'dashboard:unassigned' %}">
                   <i class="bi bi-inbox icon_sidebar"></i>
                   {{ tag.name }}
-                  <span class="badge bg-secondary rounded-pill ms-1">{{ unassigned_count }}</span>
+		  <span class="badge bg-secondary rounded-pill ms-1">{%if unassigned_count %}{{ unassigned_count }} {% endif %}</span>
                 </a>
           </li>
           {% endif %}{% endfor %}
