@@ -52,7 +52,7 @@ class Institution(models.Model):
         unique=True,
         help_text=_("Official registered name of the organization.")
     )
-    uuid = models.UUIDField(default=uuid.uuid4, editable=False)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     logo = models.CharField(
         _("Logo URL"),
         max_length=255,
