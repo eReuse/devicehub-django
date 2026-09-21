@@ -1,4 +1,7 @@
+import json
 from uuid import uuid4
+
+import qrcode
 
 from decouple import config
 from django.contrib import messages
@@ -7,7 +10,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
-from django.views.generic import DetailView
+from django.views.generic import DetailView, View
 from django.views.generic.base import TemplateView
 from django.views.generic.edit import CreateView, DeleteView, FormView, UpdateView
 
@@ -109,6 +112,37 @@ class TokenView(DashboardView, SingleTableView):
         Override the get_queryset method to filter events based on the user type.
         """
         return Token.objects.filter(owner=self.request.user).order_by("-id")
+
+
+class TokenQRView(DashboardView, View):
+    """PNG with the token and the DeviceHub URL, so a phone (DH-scan,
+    workbench-android) can read both instead of typing them.
+
+    The payload is JSON, ``{"url": ..., "token": ...}``, so the app fills in
+    the server and the credential in one scan. The image is served only to the
+    token owner and is never rendered until asked for: whoever sees the QR can
+    upload evidences as this institution.
+    """
+
+    def get(self, request, *args, **kwargs):
+        token = get_object_or_404(Token, pk=kwargs["pk"], owner=request.user)
+        image = qrcode.make(self.payload(request, token))
+        response = HttpResponse(content_type="image/png")
+        # Credential: never cached by the browser or a proxy in between.
+        response["Cache-Control"] = "no-store, private"
+        image.save(response, "PNG")
+        return response
+
+    @staticmethod
+    def payload(request, token):
+        """What the apps read: server and credential in one scan."""
+        return json.dumps(
+            {
+                "url": request.build_absolute_uri("/"),
+                "token": str(token.token),
+            },
+            separators=(",", ":"),
+        )
 
 
 class TokenDeleteView(DashboardView, DeleteView):
