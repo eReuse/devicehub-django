@@ -777,6 +777,22 @@ DEFAULT_PRODUCT_TYPES = {
         "raid_controller",
         "power_supply",
     ],
+    "Smartphone": [
+        "model",
+        "manufacturer",
+        "ram_total",
+        "storage",
+        "screen_size",
+        "battery_health",
+    ],
+    "Tablet": [
+        "model",
+        "manufacturer",
+        "ram_total",
+        "storage",
+        "screen_size",
+        "battery_health",
+    ],
     "GraphicCard": [
         "model",
         "manufacturer",
