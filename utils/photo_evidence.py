@@ -5,7 +5,7 @@ from django.conf import settings
 
 def get_photos_dir(user):
     tmp_snapshots = settings.EVIDENCES_DIR
-    photos_dir = os.path.join(tmp_snapshots, user, "photos")
+    photos_dir = os.path.join(tmp_snapshots, str(user), "photos")
     return photos_dir
 
 

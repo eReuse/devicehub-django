@@ -259,7 +259,7 @@ class PhotoEvidenceView(DashboardView, TemplateView):
         if not photo_filename:
             raise Http404("Photo filename not found")
 
-        photos_dir = get_photos_dir(evidence.owner.name)
+        photos_dir = get_photos_dir(evidence.owner.uuid)
         file_path = os.path.join(photos_dir, photo_filename)
 
         if not os.path.exists(file_path):
