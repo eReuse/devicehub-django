@@ -42,7 +42,7 @@
         <div id="single-device-note" class="alert alert-info d-flex align-items-center mb-4 shadow-sm d-none" role="alert">
             <div>
                 <strong>{% trans "Note:" %}</strong>
-                {% trans "Providing a Custom ID or uploading an image limits creation to a single product." %}
+                {% trans "Providing a Custom ID or uploading photos limits creation to a single product." %}
             </div>
         </div>
 
@@ -68,29 +68,20 @@
                         <label class="form-label fw-bold">{% trans "Optional Photo Evidence" %}</label>
                         <div class="drop-area rounded p-5 text-center" id="drop-zone">
                           <i class="bi bi-upload fs-1 mb-3"></i>
-                          <p class="mb-0">{% translate "Drag and drop here, or click to select manually" %}</p>
+                          <p class="mb-0">{% translate "Drag and drop photos here, or click to select them" %}</p>
                           {{ form.photo_file }}
                         </div>
                         <div class="d-grid gap-2 d-sm-flex mt-3">
                             <button type="button" class="btn btn-outline-secondary flex-fill" id="choose-photo-btn">
-                                <i class="bi bi-image me-1"></i> {% translate "Choose photo" %}
+                                <i class="bi bi-images me-1"></i> {% translate "Choose photos" %}
                             </button>
                             <button type="button" class="btn btn-outline-primary flex-fill" id="take-photo-btn">
                                 <i class="bi bi-camera me-1"></i> {% translate "Take photo" %}
                             </button>
                         </div>
+                        <p class="text-muted small mt-2 mb-0">{% translate "Up to 10 photos, 10 MB each. Taking another photo adds it to the same evidence." %}</p>
 
-                        <div class="mt-3 text-center" id="image-preview" style="display: none;">
-                            <div class="position-relative d-inline-block">
-                                <button type="button" id="remove-photo-btn" class="btn btn-danger btn-sm position-absolute top-0 start-100 translate-middle rounded-circle shadow" style="width: 28px; height: 28px; padding: 0; line-height: 1;">
-                                    <i class="bi bi-x fs-5"></i>
-                                </button>
-
-                                <img alt="Preview" class="img-fluid rounded border shadow-sm" id="preview-img"
-                                    style="max-height: 250px; object-fit: contain;">
-                                <p class="text-muted small mt-1 mb-0" id="preview-filename"></p>
-                            </div>
-                        </div>
+                        <div class="row g-2 mt-2" id="image-preview" style="display: none;"></div>
                         {% if form.photo_file.errors %}
                         <div class="text-center text-danger mt-2">
                             {{ form.photo_file.errors }}
@@ -179,6 +170,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const prv = document.getElementById("image-preview");
     const choosePhotoBtn = document.getElementById('choose-photo-btn');
     const takePhotoBtn = document.getElementById('take-photo-btn');
+    let selectedPhotos = [];
+    let previewUrls = [];
 
     const amountField = document.getElementById('id_amount');
     const customIdField = document.getElementById('id_custom_id');
@@ -186,7 +179,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
      const updateAmountState = () => {
         const hasCustomId = customIdField && customIdField.value.trim() !== '';
-        const hasPhoto = fi && fi.files && fi.files.length > 0;
+        const hasPhoto = selectedPhotos.length > 0;
 
         if (hasCustomId || hasPhoto) {
             // Lock amount
@@ -221,12 +214,25 @@ document.addEventListener('DOMContentLoaded', () => {
     if (dz && fi) {
         fi.style.display = 'none';
         const openPhotoPicker = (useCamera = false) => {
+            // Use a temporary picker so cancelling a second camera capture
+            // cannot clear photos already accumulated in the real form field.
+            const picker = document.createElement('input');
+            picker.type = 'file';
+            picker.accept = fi.accept || 'image/*';
+            picker.style.display = 'none';
             if (useCamera) {
-                fi.setAttribute('capture', 'environment');
+                picker.setAttribute('capture', 'environment');
             } else {
-                fi.removeAttribute('capture');
+                picker.multiple = true;
             }
-            fi.click();
+            document.body.append(picker);
+            const dispose = () => picker.remove();
+            picker.addEventListener('change', () => {
+                addPhotos(Array.from(picker.files || []));
+                dispose();
+            }, { once: true });
+            picker.addEventListener('cancel', dispose, { once: true });
+            picker.click();
         };
 
         dz.onclick = e => {
@@ -234,50 +240,86 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         choosePhotoBtn?.addEventListener('click', () => openPhotoPicker(false));
         takePhotoBtn?.addEventListener('click', () => openPhotoPicker(true));
-        fi.onchange = e => handle(e.target.files[0]);
 
         ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(ev => {
             dz.addEventListener(ev, e => {
                 e.preventDefault();
                 dz.classList.toggle('dragover', ['dragenter', 'dragover'].includes(ev));
                 if (ev === 'drop') {
-                    fi.files = e.dataTransfer.files;
-                    handle(fi.files[0]);
+                    addPhotos(Array.from(e.dataTransfer.files || []));
                 }
             });
         });
     }
 
-     const handle = file => {
-        if (!file?.type.startsWith('image/')) {
-            alert("invalid image");
-            fi.value = "";
-            prv.style.display = 'none';
-            updateAmountState();
-            return;
-        }
-        const r = new FileReader();
-        r.onload = e => {
-            document.getElementById("preview-img").src = e.target.result;
-            document.getElementById("preview-filename").textContent = `${file.name} (${(file.size/1048576).toFixed(1)} mb)`;
-            prv.style.display = 'block';
-            updateAmountState();
-        };
-        r.readAsDataURL(file);
+    const syncPhotoInput = () => {
+        const transfer = new DataTransfer();
+        selectedPhotos.forEach(file => transfer.items.add(file));
+        fi.files = transfer.files;
     };
 
-    const removePhotoBtn = document.getElementById('remove-photo-btn');
-    if (removePhotoBtn) {
-        removePhotoBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
+    const renderPreviews = () => {
+        previewUrls.forEach(url => URL.revokeObjectURL(url));
+        previewUrls = [];
+        prv.replaceChildren();
 
-            fi.value = "";
-            document.getElementById("preview-img").src = "";
-            prv.style.display = 'none';
+        selectedPhotos.forEach((file, index) => {
+            const column = document.createElement('div');
+            column.className = 'col-6 col-md-4';
 
-            updateAmountState();
+            const card = document.createElement('div');
+            card.className = 'card h-100 position-relative';
+
+            const remove = document.createElement('button');
+            remove.type = 'button';
+            remove.className = 'btn btn-danger btn-sm position-absolute top-0 end-0 m-1 rounded-circle shadow';
+            remove.style.zIndex = '1';
+            remove.setAttribute('aria-label', 'Remove photo');
+            remove.innerHTML = '<i class="bi bi-x"></i>';
+            remove.addEventListener('click', () => {
+                selectedPhotos.splice(index, 1);
+                syncPhotoInput();
+                renderPreviews();
+            });
+
+            const image = document.createElement('img');
+            const imageUrl = URL.createObjectURL(file);
+            previewUrls.push(imageUrl);
+            image.src = imageUrl;
+            image.alt = `Photo ${index + 1}`;
+            image.className = 'card-img-top';
+            image.style.height = '150px';
+            image.style.objectFit = 'cover';
+
+            const caption = document.createElement('p');
+            caption.className = 'card-body text-muted small p-2 mb-0 text-truncate';
+            caption.textContent = `${file.name} (${(file.size / 1048576).toFixed(1)} MB)`;
+
+            card.append(remove, image, caption);
+            column.append(card);
+            prv.append(column);
         });
-    }
+
+        prv.style.display = selectedPhotos.length ? '' : 'none';
+        updateAmountState();
+    };
+
+    const addPhotos = files => {
+        const images = files.filter(file => file.type.startsWith('image/'));
+        if (images.length !== files.length) {
+            alert('Only image files can be attached.');
+        }
+        const existing = new Set(selectedPhotos.map(file => `${file.name}:${file.size}:${file.lastModified}`));
+        const additions = images.filter(file => !existing.has(`${file.name}:${file.size}:${file.lastModified}`));
+        if (selectedPhotos.length + additions.length > 10) {
+            alert('You can attach at most 10 photos.');
+            additions.splice(10 - selectedPhotos.length);
+        }
+        selectedPhotos.push(...additions);
+        syncPhotoInput();
+        renderPreviews();
+    };
+
     // flatten suggestions for fast lookup
     const container = document.getElementById('formset-container');
     const total = document.getElementById('id_form-TOTAL_FORMS');
