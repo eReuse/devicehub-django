@@ -621,6 +621,13 @@ class Evidence:
             return ''
 
     def get_version(self):
+        if self.is_mobile():
+            return (
+                self.doc.get("data", {})
+                .get("android", {})
+                .get("android_version", "")
+            )
+
         if self.is_web_snapshot():
             return self.components.get("version", "")
 
