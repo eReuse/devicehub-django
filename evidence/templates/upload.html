@@ -8,147 +8,96 @@
   </div>
 </div>
 
-<style>
-  .drop-area {
-    width: 320px;
-    padding: 1.5rem;
-    background: white;
-    border: 2px dashed #ccc;
-    border-radius: 12px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.3s ease-in-out;
-  }
-
-  .drop-area:hover, .drop-area.dragover {
-    border-color: #007bff;
-    background: #f8f9fa;
-  }
-
-  .drop-area.dragover {
-    transform: scale(1.05);
-  }
-  </style>
-
-
 {% load django_bootstrap5 %}
-<form role="form" method="post" enctype="multipart/form-data" class="row d-flex justify-content-center ">
+<form role="form" method="post" enctype="multipart/form-data" class="row d-flex justify-content-center">
   {% csrf_token %}
 
-    <!-- Drag n drop -->
+  {% if "photo_file" in form.fields %}
+    <div class="col-lg-8 col-xl-6">
+      {% include "components/photo_picker.html" with photo_field=form.photo_file %}
+    </div>
+  {% else %}
+    <style>
+      .drop-area {
+        width: 320px;
+        padding: 1.5rem;
+        background: white;
+        border: 2px dashed #ccc;
+        border-radius: 12px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease-in-out;
+      }
+      .drop-area:hover, .drop-area.dragover {
+        border-color: #007bff;
+        background: #f8f9fa;
+      }
+    </style>
+
     <div class="drop-area rounded p-5 text-center" id="drop-zone">
-        <i class="bi bi-upload fs-1 mb-3"></i>
-        <p class="text-muted mb-0">{% translate "Drag and drop here, or click to select manually" %}</p>
-        {{ form.evidence_file }}
-        {{ form.file_import }}
-        {{ form.photo_file }}
+      <i class="bi bi-upload fs-1 mb-3"></i>
+      <p class="text-muted mb-0">{% translate "Drag and drop here, or click to select manually" %}</p>
+      {{ form.evidence_file }}
+      {{ form.file_import }}
     </div>
 
-    <!-- Image Preview -->
-    <div class="mt-3 text-center" id="image-preview" style="display: none;">
-        <img alt="Image preview" class="img-fluid rounded shadow-sm" id="preview-img" src=""
-             style="max-height: 300px; max-width: 100%;">
-        <p class="text-muted mt-2 mb-0" id="preview-filename"></p>
+    <div id="file-preview" class="mt-3 text-center">
+      <ul id="file-list" class="list-unstyled"></ul>
     </div>
 
-    <!-- File Preview -->
-    <div id="file-preview" class="mt-3 text-center ">
-    <ul id="file-list" class="list-unstyled"></ul>
-
-  {% if form.errors %}
-    <div class="text-center mt-2">
-      <ul class="list-unstyled text-danger mb-0">
-        {% for error in form.evidence_file.errors %}
-          <li class="font-weight-bold">{{ error }}</li>
-        {% endfor %}
-        {% for error in form.file_import.errors %}
-          <li>{{ error }}</li>
-        {% endfor %}
-        {% for error in form.photo_file.errors %}
-          <li>{{ error }}</li>
-        {% endfor %}
-      </ul>
-    </div>
+    {% if form.errors %}
+      <div class="text-center mt-2">
+        <ul class="list-unstyled text-danger mb-0">
+          {% for error in form.evidence_file.errors %}<li class="font-weight-bold">{{ error }}</li>{% endfor %}
+          {% for error in form.file_import.errors %}<li>{{ error }}</li>{% endfor %}
+        </ul>
+      </div>
+    {% endif %}
   {% endif %}
-
-  </div>
 
   <div class="d-flex justify-content-center gap-3 mt-4">
     <a class="btn btn-outline-secondary" href="{% url 'dashboard:unassigned' %}">{% translate "Cancel" %}</a>
-    <button type="submit" class="btn btn-success">
-      {% translate "Upload" %}
-    </button>
+    <button type="submit" class="btn btn-success">{% translate "Upload" %}</button>
   </div>
 </form>
 
+{% if "photo_file" not in form.fields %}
 <script>
-  const dropZone = document.getElementById("drop-zone");
-  const fileInput = document.getElementById("file-input");
-  const fileList = document.getElementById("file-list");
-  const imagePreview = document.getElementById("image-preview");
-  const previewImg = document.getElementById("preview-img");
-  const previewFilename = document.getElementById("preview-filename");
+  const dropZone = document.getElementById('drop-zone');
+  const fileInput = document.getElementById('file-input');
+  const fileList = document.getElementById('file-list');
 
-  dropZone.addEventListener('click', () => fileInput.click());
-  fileInput.onchange = (e) => showFiles(e.target.files);
-
-['dragover', 'dragleave', 'drop'].forEach(event => {
-    dropZone.addEventListener(event, (e) => {
-        e.preventDefault();
-        if (event === 'drop') {
-            const files = e.dataTransfer.files;
-            // display the files
-            showFiles(files);
-            // Handle file input on the form
-            if (fileInput.multiple) {
-                fileInput.files = files;
-            } else {
-                const dataTransfer = new DataTransfer();
-                if (files.length > 0) {
-                    dataTransfer.items.add(files[0]);
-                }
-                fileInput.files = dataTransfer.files;
-            }
-            updateFileList(files);
-        }
-    });
-});
-
- function showFiles(files) {
-    fileList.innerHTML = '';
-    if (files.length) {
+  if (dropZone && fileInput && fileList) {
+    const showFiles = files => {
+      fileList.replaceChildren();
       Array.from(files).forEach(file => {
-        fileList.innerHTML += `<li>${file.name}</li>`;
+        const item = document.createElement('li');
+        item.textContent = file.name;
+        fileList.append(item);
+      });
+    };
 
-        // Show image preview for image files
-        if (file.type.startsWith('image/')) {
-          const reader = new FileReader();
-          reader.onload = function (e) {
-            previewImg.src = e.target.result;
-            previewFilename.textContent = `${file.name} (${formatFileSize(file.size)})`;
-            imagePreview.style.display = 'block';
-          };
-          reader.readAsDataURL(file);
+    dropZone.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', event => showFiles(event.target.files));
+
+    ['dragover', 'dragleave', 'drop'].forEach(eventName => {
+      dropZone.addEventListener(eventName, event => {
+        event.preventDefault();
+        dropZone.classList.toggle('dragover', eventName === 'dragover');
+        if (eventName !== 'drop') return;
+
+        const files = event.dataTransfer.files;
+        showFiles(files);
+        if (fileInput.multiple) {
+          fileInput.files = files;
         } else {
-          // Hide image preview and device field for non-image files
-          imagePreview.style.display = 'none';
+          const transfer = new DataTransfer();
+          if (files.length) transfer.items.add(files[0]);
+          fileInput.files = transfer.files;
         }
       });
-    }
+    });
   }
-
-    function formatFileSize(bytes) {
-        if (bytes < 1024) return bytes + ' B';
-        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-        return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
-    }
-
-    // Auto-uppercase device ID input
-    const deviceIdInput = document.getElementById("{{ form.device_id.id_for_label }}");
-    if (deviceIdInput) {
-        deviceIdInput.addEventListener('input', function (e) {
-            this.value = this.value.toUpperCase();
-        });
-    }
 </script>
+{% endif %}
 {% endblock %}

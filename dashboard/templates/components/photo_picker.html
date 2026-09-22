@@ -1,0 +1,179 @@
+{% load i18n %}
+
+<style>
+  .photo-drop-area {
+    padding: 2rem;
+    background: #f8f9fa;
+    border: 2px dashed #dee2e6;
+    border-radius: 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+  }
+  .photo-drop-area:hover, .photo-drop-area.dragover {
+    border-color: #0d6efd;
+    background: #e9ecef;
+  }
+</style>
+
+<div id="photo-picker"
+     data-photo-count="0"
+     data-invalid-message="{% translate 'Only image files can be attached.' %}"
+     data-limit-message="{% translate 'You can attach at most 10 photos.' %}"
+     data-remove-label="{% translate 'Remove photo' %}">
+  <label class="form-label fw-bold">
+    {% if photo_picker_optional %}{% trans "Optional Photo Evidence" %}{% else %}{% trans "Photo Evidence" %}{% endif %}
+  </label>
+  <div class="photo-drop-area" id="photo-drop-zone">
+    <i class="bi bi-upload fs-1 mb-3"></i>
+    <p class="mb-0">{% translate "Drag and drop photos here, or click to select them" %}</p>
+    {{ photo_field }}
+  </div>
+
+  <div class="d-grid gap-2 d-sm-flex mt-3">
+    <button type="button" class="btn btn-outline-secondary flex-fill" id="choose-photo-btn">
+      <i class="bi bi-images me-1"></i> {% translate "Choose photos" %}
+    </button>
+    <button type="button" class="btn btn-outline-primary flex-fill" id="take-photo-btn">
+      <i class="bi bi-camera me-1"></i> {% translate "Take photo" %}
+    </button>
+  </div>
+  <p class="text-muted small mt-2 mb-0">
+    {% translate "Up to 10 photos, 10 MB each. Taking another photo adds it to the same evidence." %}
+  </p>
+
+  <div class="row g-2 mt-2" id="photo-previews" style="display: none;"></div>
+
+  {% if photo_field.errors %}
+    <div class="text-danger mt-2">{{ photo_field.errors }}</div>
+  {% endif %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const root = document.getElementById('photo-picker');
+  if (!root) return;
+
+  const dropZone = root.querySelector('#photo-drop-zone');
+  const fileInput = root.querySelector('input[type="file"]');
+  const previews = root.querySelector('#photo-previews');
+  const chooseButton = root.querySelector('#choose-photo-btn');
+  const takeButton = root.querySelector('#take-photo-btn');
+  let selectedPhotos = [];
+  let previewUrls = [];
+
+  if (!dropZone || !fileInput || !previews) return;
+  fileInput.style.display = 'none';
+
+  const notifyChange = () => {
+    root.dataset.photoCount = String(selectedPhotos.length);
+    root.dispatchEvent(new CustomEvent('photo-picker:change', {
+      detail: { count: selectedPhotos.length },
+    }));
+  };
+
+  const syncInput = () => {
+    const transfer = new DataTransfer();
+    selectedPhotos.forEach(file => transfer.items.add(file));
+    fileInput.files = transfer.files;
+  };
+
+  const renderPreviews = () => {
+    previewUrls.forEach(url => URL.revokeObjectURL(url));
+    previewUrls = [];
+    previews.replaceChildren();
+
+    selectedPhotos.forEach((file, index) => {
+      const column = document.createElement('div');
+      column.className = 'col-6 col-md-4';
+
+      const card = document.createElement('div');
+      card.className = 'card h-100 position-relative';
+
+      const remove = document.createElement('button');
+      remove.type = 'button';
+      remove.className = 'btn btn-danger btn-sm position-absolute top-0 end-0 m-1 rounded-circle shadow';
+      remove.style.zIndex = '1';
+      remove.setAttribute('aria-label', root.dataset.removeLabel);
+      remove.innerHTML = '<i class="bi bi-x"></i>';
+      remove.addEventListener('click', () => {
+        selectedPhotos.splice(index, 1);
+        syncInput();
+        renderPreviews();
+      });
+
+      const image = document.createElement('img');
+      const imageUrl = URL.createObjectURL(file);
+      previewUrls.push(imageUrl);
+      image.src = imageUrl;
+      image.alt = `${file.name}`;
+      image.className = 'card-img-top';
+      image.style.height = '150px';
+      image.style.objectFit = 'cover';
+
+      const caption = document.createElement('p');
+      caption.className = 'card-body text-muted small p-2 mb-0 text-truncate';
+      caption.textContent = `${file.name} (${(file.size / 1048576).toFixed(1)} MB)`;
+
+      card.append(remove, image, caption);
+      column.append(card);
+      previews.append(column);
+    });
+
+    previews.style.display = selectedPhotos.length ? '' : 'none';
+    notifyChange();
+  };
+
+  const addPhotos = files => {
+    const images = files.filter(file => file.type.startsWith('image/'));
+    if (images.length !== files.length) alert(root.dataset.invalidMessage);
+
+    const existing = new Set(
+      selectedPhotos.map(file => `${file.name}:${file.size}:${file.lastModified}`),
+    );
+    const additions = images.filter(
+      file => !existing.has(`${file.name}:${file.size}:${file.lastModified}`),
+    );
+    if (selectedPhotos.length + additions.length > 10) {
+      alert(root.dataset.limitMessage);
+      additions.splice(10 - selectedPhotos.length);
+    }
+
+    selectedPhotos.push(...additions);
+    syncInput();
+    renderPreviews();
+  };
+
+  const openPicker = (useCamera = false) => {
+    // A temporary picker means cancelling a later capture cannot clear the
+    // photos already accumulated in the form field.
+    const picker = document.createElement('input');
+    picker.type = 'file';
+    picker.accept = fileInput.accept || 'image/*';
+    picker.style.display = 'none';
+    if (useCamera) picker.setAttribute('capture', 'environment');
+    else picker.multiple = true;
+
+    document.body.append(picker);
+    const dispose = () => picker.remove();
+    picker.addEventListener('change', () => {
+      addPhotos(Array.from(picker.files || []));
+      dispose();
+    }, { once: true });
+    picker.addEventListener('cancel', dispose, { once: true });
+    picker.click();
+  };
+
+  dropZone.addEventListener('click', () => openPicker(false));
+  chooseButton?.addEventListener('click', () => openPicker(false));
+  takeButton?.addEventListener('click', () => openPicker(true));
+
+  ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+    dropZone.addEventListener(eventName, event => {
+      event.preventDefault();
+      dropZone.classList.toggle('dragover', ['dragenter', 'dragover'].includes(eventName));
+      if (eventName === 'drop') addPhotos(Array.from(event.dataTransfer.files || []));
+    });
+  });
+});
+</script>
