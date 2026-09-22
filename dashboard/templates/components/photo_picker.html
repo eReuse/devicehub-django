@@ -30,11 +30,8 @@
     {{ photo_field }}
   </div>
 
-  <div class="d-grid gap-2 d-sm-flex mt-3">
-    <button type="button" class="btn btn-outline-secondary flex-fill" id="choose-photo-btn">
-      <i class="bi bi-images me-1"></i> {% translate "Choose photos" %}
-    </button>
-    <button type="button" class="btn btn-outline-primary flex-fill" id="take-photo-btn">
+  <div class="d-grid mt-3">
+    <button type="button" class="btn btn-outline-primary" id="take-photo-btn">
       <i class="bi bi-camera me-1"></i> {% translate "Take photo" %}
     </button>
   </div>
@@ -57,7 +54,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const dropZone = root.querySelector('#photo-drop-zone');
   const fileInput = root.querySelector('input[type="file"]');
   const previews = root.querySelector('#photo-previews');
-  const chooseButton = root.querySelector('#choose-photo-btn');
   const takeButton = root.querySelector('#take-photo-btn');
   let selectedPhotos = [];
   let previewUrls = [];
@@ -165,7 +161,6 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   dropZone.addEventListener('click', () => openPicker(false));
-  chooseButton?.addEventListener('click', () => openPicker(false));
   takeButton?.addEventListener('click', () => openPicker(true));
 
   ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
