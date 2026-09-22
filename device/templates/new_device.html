@@ -71,6 +71,14 @@
                           <p class="mb-0">{% translate "Drag and drop here, or click to select manually" %}</p>
                           {{ form.photo_file }}
                         </div>
+                        <div class="d-grid gap-2 d-sm-flex mt-3">
+                            <button type="button" class="btn btn-outline-secondary flex-fill" id="choose-photo-btn">
+                                <i class="bi bi-image me-1"></i> {% translate "Choose photo" %}
+                            </button>
+                            <button type="button" class="btn btn-outline-primary flex-fill" id="take-photo-btn">
+                                <i class="bi bi-camera me-1"></i> {% translate "Take photo" %}
+                            </button>
+                        </div>
 
                         <div class="mt-3 text-center" id="image-preview" style="display: none;">
                             <div class="position-relative d-inline-block">
@@ -169,6 +177,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const dz = document.getElementById("drop-zone");
     const fi = dz?.querySelector('input[type="file"]');
     const prv = document.getElementById("image-preview");
+    const choosePhotoBtn = document.getElementById('choose-photo-btn');
+    const takePhotoBtn = document.getElementById('take-photo-btn');
 
     const amountField = document.getElementById('id_amount');
     const customIdField = document.getElementById('id_custom_id');
@@ -210,7 +220,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (dz && fi) {
         fi.style.display = 'none';
-        dz.onclick = () => fi.click();
+        const openPhotoPicker = (useCamera = false) => {
+            if (useCamera) {
+                fi.setAttribute('capture', 'environment');
+            } else {
+                fi.removeAttribute('capture');
+            }
+            fi.click();
+        };
+
+        dz.onclick = e => {
+            if (e.target !== fi) openPhotoPicker(false);
+        };
+        choosePhotoBtn?.addEventListener('click', () => openPhotoPicker(false));
+        takePhotoBtn?.addEventListener('click', () => openPhotoPicker(true));
         fi.onchange = e => handle(e.target.files[0]);
 
         ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(ev => {
