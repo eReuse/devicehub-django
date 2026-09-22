@@ -1,10 +1,12 @@
 {% load i18n %}
 
 <div class="tab-pane fade" id="components">
-    <h5 class="card-title mb-4">{% trans 'Components from last evidence' %}</h5>
+    <h5 class="card-title mb-4">
+        {% trans 'Current components' %}
+    </h5>
 
     <div class="container-fluid px-0">
-        {% if object.is_websnapshot %}
+        {% if product_projection.attributes %}
             <div class="card mb-3">
                 <div class="card-header py-2">
                     <span class="fw-bold text-primary">
@@ -12,9 +14,9 @@
                     </span>
                 </div>
                 <div class="card-body">
-                    {% if object.components %}
+                    {% if product_projection.attributes %}
                         <div class="row row-cols-1 row-cols-md-2 g-2">
-                            {% for key, value in object.components.items %}
+                            {% for key, value in product_projection.attributes.items %}
                                 <div class="col">
                                     <div class="d-flex border-bottom pb-1">
                                         <span class="text-muted fw-bold me-2">{{ key }}:</span>
@@ -28,9 +30,12 @@
                     {% endif %}
                 </div>
             </div>
-        {% else %}
+        {% endif %}
+
+        {% if product_projection %}
+        {% with components=product_projection.components %}
         <div class="row row-cols-1 row-cols-md-2 g-2">
-            {% for c in object.components %}
+            {% for c in components %}
             <div class="col">
                 <div class="card mb-0">
                     <div class="card-header py-1 px-2 d-flex justify-content-between align-items-center">
@@ -61,7 +66,31 @@
             </div>
             {% endfor %}
         </div>
-
-    {% endif %}
+        {% endwith %}
+        {% elif not object.is_websnapshot %}
+        <div class="row row-cols-1 row-cols-md-2 g-2">
+            {% for c in object.components %}
+            <div class="col">
+                <div class="card mb-0">
+                    <div class="card-header py-1 px-2 d-flex justify-content-between align-items-center">
+                        <span class="fw-bold">{{ c.type }}</span>
+                    </div>
+                    <div class="card-body py-1 px-2">
+                        <div class="row g-1">
+                            {% for k, v in c.items %}
+                            <div class="col-6">
+                                <div class="d-flex">
+                                    <span class="text-muted text-bold me-1">{{ k }}:</span>
+                                    <span>{{ v }}</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
     </div>
 </div>
