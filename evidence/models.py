@@ -840,6 +840,28 @@ class Evidence:
     def is_web_snapshot(self):
         return self.doc.get("type") == "WebSnapshot"
 
+    def get_photos(self):
+        """Return photo items from both collection and legacy evidence."""
+        if not self.doc:
+            self.get_doc()
+
+        photos = self.doc.get("photos")
+        if photos is not None:
+            return photos
+
+        photo = self.doc.get("photo")
+        if not photo:
+            return []
+
+        # Present the old one-photo shape like a one-item collection. OCR and
+        # barcode results used to live in the document-level data object.
+        item = photo.copy()
+        data = self.doc.get("data", {})
+        item["ocr"] = data.get("ocr", {})
+        item["barcodes"] = data.get("barcodes", [])
+        item["barcode_error"] = data.get("barcode_error")
+        return [item]
+
     def is_photo_evidence(self):
         return self.doc.get("type") == "photo25"
 

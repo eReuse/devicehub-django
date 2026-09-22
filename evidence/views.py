@@ -249,10 +249,14 @@ class PhotoEvidenceView(DashboardView, TemplateView):
         if not evidence.is_photo_evidence():
             raise Http404("This evidence is not a photo")
 
-        # Get photo data from document
-        photo_data = evidence.doc.get('photo')
-        if not photo_data:
+        photos = evidence.get_photos()
+        if not photos:
             raise Http404("Photo data not found")
+
+        index = kwargs.get('index', 0)
+        if index >= len(photos):
+            raise Http404("Photo not found")
+        photo_data = photos[index]
 
         # Construct file path
         photo_filename = photo_data.get('name')

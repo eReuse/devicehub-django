@@ -326,6 +326,12 @@ class BasePhotoMixin(forms.Form):
         if not photo:
             return None
 
+        self.photo_data_cache = self.prepare_photo_data(photo)
+        return photo
+
+    def prepare_photo_data(self, photo):
+        """Validate one image and return the data used by photo processing."""
+
         max_size = 10 * 1024 * 1024
         if photo.size > max_size:
             raise ValidationError(_("File size exceeds 10MB limit"), code="file_too_large")
@@ -354,7 +360,7 @@ class BasePhotoMixin(forms.Form):
         if os.path.exists(photo_path):
             raise ValidationError(_("Photo already exists."))
 
-        self.photo_data_cache = {
+        return {
             'file': photo,
             'content': file_content,
             'extension': file_ext,
@@ -364,8 +370,6 @@ class BasePhotoMixin(forms.Form):
             'name': name,
             'hash': sha256
         }
-
-        return photo
 
 
 class PhotoForm(BasePhotoMixin, forms.Form):

@@ -22,6 +22,7 @@ urlpatterns = [
     path("<uuid:pk>/eraseserver", views.EraseServerView.as_view(), name="erase_server"),
     path("<uuid:pk>/download", views.DownloadEvidenceView.as_view(), name="download"),
     path("<uuid:pk>/photo", views.PhotoEvidenceView.as_view(), name="photo_file"),
+    path("<uuid:pk>/photo/<int:index>", views.PhotoEvidenceView.as_view(), name="photo_file_index"),
     path("alias/<str:pk>/<uuid:snapshot_id>/delete", views.DeleteEvidenceAliasView.as_view(), name="delete_alias"),
     path("tag/<str:pk>/delete", views.DeleteEvidenceAliasView.as_view(), name="delete_tag"),
 

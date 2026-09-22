@@ -1,15 +1,23 @@
 import re
 from django import forms
 from django.db.models import Q
-from evidence.image_processing import process_photo_upload
+from evidence.image_processing import process_photo_uploads
 from evidence.models import SystemProperty, RootAlias
 from utils.device import create_property, create_doc, create_index
 from utils.save_snapshots import move_json, save_in_disk
 from evidence.forms import BasePhotoMixin, UserAliasForm
 from django.utils.translation import gettext_lazy as _
+from utils.forms import MultipleFileField, MultipleFileInput
 
 
 class DeviceMainForm(BasePhotoMixin):
+    photo_file = MultipleFileField(
+        required=False,
+        label="",
+        widget=MultipleFileInput(attrs={
+            'accept': 'image/jpeg,image/jpg,image/png,image/gif,image/webp',
+        }),
+    )
     type = forms.ChoiceField(choices=[])
     amount = forms.IntegerField(initial=1, min_value=1)
     custom_id = forms.CharField(required=False, label=_("Custom ID"))
@@ -40,6 +48,21 @@ class DeviceMainForm(BasePhotoMixin):
 
         return custom_id
 
+    def clean_photo_file(self):
+        photos = self.cleaned_data.get('photo_file') or []
+        if len(photos) > 10:
+            raise forms.ValidationError(_("You can attach at most 10 photos."))
+
+        self.photo_data_cache = []
+        seen_hashes = set()
+        for photo in photos:
+            photo_data = self.prepare_photo_data(photo)
+            if photo_data['hash'] in seen_hashes:
+                raise forms.ValidationError(_("The same photo was selected more than once."))
+            seen_hashes.add(photo_data['hash'])
+            self.photo_data_cache.append(photo_data)
+        return photos
+
     def generate_next_id(self, base_id, offset):
         if offset == 0: return base_id
         match = re.search(r'(\d+)$', base_id)
@@ -57,12 +80,12 @@ class DeviceMainForm(BasePhotoMixin):
         # custom_id is now guaranteed to be safe and duplicate-free
         custom_id = self.cleaned_data.get('custom_id')
 
-        photo_cache = getattr(self, 'photo_data_cache', None)
-        photo_doc = process_photo_upload(photo_cache, self.user)
+        photo_cache = getattr(self, 'photo_data_cache', [])
+        photo_doc = process_photo_uploads(photo_cache, self.user)
 
         amount = self.cleaned_data.get('amount') or 1
 
-        # for now, if a photo is uploaded, only create 1 device
+        # A photo collection belongs to one physical product.
         if photo_cache or custom_id:
             amount = 1
 

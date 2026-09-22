@@ -51,10 +51,10 @@ class Build:
             self.build = legacy_parse.Build(evidence_json)
         elif evidence_json.get("software") == WORKBENCH_ANDROID:
             self.build = mobile_parse.Build(evidence_json)
-        elif evidence_json.get("software") != "workbench-script":
-            self.build = old_parse.Build(evidence_json)
         elif evidence_json.get("data",{}).get("snapshot_type") == "Image":
             self.build = image_processing.Build(evidence_json)
+        elif evidence_json.get("software") != "workbench-script":
+            self.build = old_parse.Build(evidence_json)
         else:
             self.build = normal_parse.Build(evidence_json)
 
