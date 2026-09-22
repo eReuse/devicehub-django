@@ -96,6 +96,44 @@
         background-color: #cbd5e1;
         border-radius: 4px;
       }
+
+      #sidebarMenu .nav-link {
+        border-radius: 8px;
+        margin: 6px 12px;
+        padding: 0.7rem 0.8rem;
+        color: #495057;
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+      }
+
+      #sidebarMenu ul ul .nav-link {
+        margin: 1px 6px;
+        margin-bottom: 4px;
+      }
+
+      #sidebarMenu .icon_sidebar {
+        margin-right: 6px;
+        font-size: 1.1rem;
+      }
+
+      #sidebarMenu .nav-link:hover {
+        background-color: #e2e8f0;
+        color: #212529;
+        transform: translateX(3px);
+      }
+
+      #sidebarMenu .nav-link.active,
+      #sidebarMenu .nav-link.active2 {
+        background-color: rgba(86, 190, 172, 0.12);
+        color: #2b7a6c;
+        font-weight: 600;
+      }
+
+      #sidebarMenu .nav-link.active .icon_sidebar,
+      #sidebarMenu .nav-link.active2 .icon_sidebar {
+        color: #56beac;
+        filter: drop-shadow(0 0 3px rgba(86, 190, 172, 0.4));
+      }
+
     </style>
 
 
