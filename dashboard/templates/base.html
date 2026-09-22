@@ -83,6 +83,19 @@
           color: #56beac;
       }
 
+      /* --- Scrollable Sidebar --- */
+      #sidebarMenu .position-sticky {
+        height: calc(100vh - 56px);
+        overflow-y: auto;
+        overflow-x: hidden;
+      }
+      #sidebarMenu .position-sticky::-webkit-scrollbar {
+        width: 6px;
+      }
+      #sidebarMenu .position-sticky::-webkit-scrollbar-thumb {
+        background-color: #cbd5e1;
+        border-radius: 4px;
+      }
     </style>
 
 
