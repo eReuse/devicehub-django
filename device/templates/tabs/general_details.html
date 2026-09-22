@@ -24,11 +24,33 @@
           <div class="row mb-3">
             <div class="col-sm-4 text-muted fw-bold">{% trans 'Type' %}
             </div>
-            <div class="col-sm-8">{{ object.type }}
+            <div class="col-sm-8">
+              {% if product_projection %}
+                {{ product_projection.details.type }}
+              {% else %}
+                {{ object.type }}
+              {% endif %}
             </div>
           </div>
 
-          {% if object.is_websnapshot and object.last_user_evidence %}
+          {% if product_projection %}
+          <div class="row mb-3">
+            <div class="col-sm-4 text-muted fw-bold">{% trans 'Manufacturer' %}</div>
+            <div class="col-sm-8">{{ product_projection.details.manufacturer|default:'' }}</div>
+          </div>
+          <div class="row mb-3">
+            <div class="col-sm-4 text-muted fw-bold">{% trans 'Model' %}</div>
+            <div class="col-sm-8">{{ product_projection.details.model|default:'' }}</div>
+          </div>
+          <div class="row mb-3">
+            <div class="col-sm-4 text-muted fw-bold">{% trans 'Android version' %}</div>
+            <div class="col-sm-8">{{ product_projection.details.version|default:'' }}</div>
+          </div>
+          <div class="row mb-3">
+            <div class="col-sm-4 text-muted fw-bold">{% trans 'Serial Number' %}</div>
+            <div class="col-sm-8">{{ product_projection.details.serial|default:'' }}</div>
+          </div>
+          {% elif object.is_websnapshot and object.last_user_evidence %}
           {% for k, v in object.last_user_evidence %}
             <div class="row mb-3">
               <div class="col-sm-4 text-muted fw-bold">{{ k }}
