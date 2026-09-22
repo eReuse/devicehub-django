@@ -7,17 +7,9 @@ from utils.device import create_property, create_doc, create_index
 from utils.save_snapshots import move_json, save_in_disk
 from evidence.forms import BasePhotoMixin, UserAliasForm
 from django.utils.translation import gettext_lazy as _
-from utils.forms import MultipleFileField, MultipleFileInput
 
 
 class DeviceMainForm(BasePhotoMixin):
-    photo_file = MultipleFileField(
-        required=False,
-        label="",
-        widget=MultipleFileInput(attrs={
-            'accept': 'image/jpeg,image/jpg,image/png,image/gif,image/webp',
-        }),
-    )
     type = forms.ChoiceField(choices=[])
     amount = forms.IntegerField(initial=1, min_value=1)
     custom_id = forms.CharField(required=False, label=_("Custom ID"))
@@ -47,21 +39,6 @@ class DeviceMainForm(BasePhotoMixin):
                 raise forms.ValidationError(_("This Custom ID is already in use by another product."))
 
         return custom_id
-
-    def clean_photo_file(self):
-        photos = self.cleaned_data.get('photo_file') or []
-        if len(photos) > 10:
-            raise forms.ValidationError(_("You can attach at most 10 photos."))
-
-        self.photo_data_cache = []
-        seen_hashes = set()
-        for photo in photos:
-            photo_data = self.prepare_photo_data(photo)
-            if photo_data['hash'] in seen_hashes:
-                raise forms.ValidationError(_("The same photo was selected more than once."))
-            seen_hashes.add(photo_data['hash'])
-            self.photo_data_cache.append(photo_data)
-        return photos
 
     def generate_next_id(self, base_id, offset):
         if offset == 0: return base_id
