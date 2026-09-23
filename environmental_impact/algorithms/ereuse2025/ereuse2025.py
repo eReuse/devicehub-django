@@ -1,15 +1,24 @@
+from __future__ import annotations
+
 import os
+from typing import TYPE_CHECKING
+
 from device.models import Device
 from ..algorithm_interface import EnvironmentImpactAlgorithm
-from environmental_impact.models import EnvironmentalImpact
+from environmental_impact.models import EnvironmentalImpact, DeviceEnvironmentalProfile
 from environmental_impact.algorithms import common
 from .carbon_intensity import carbon_intensity
 from .lifecycle_extractors import get_evidences_data_from_device
 from .disk_change_detector import detect_disk_changes
 from .time_calculations import calculate_total_usage_time, calculate_reuse_time
 
+if TYPE_CHECKING:
+    from user.models import Institution
+
 
 class EReuse2025EnvironmentalImpactAlgorithm(EnvironmentImpactAlgorithm):
+
+    default_country_code = "ES"
 
     algorithm_constants = {
         "AVG_KWATTS_DESKTOP_IDLE": 0.039,
@@ -21,14 +30,20 @@ class EReuse2025EnvironmentalImpactAlgorithm(EnvironmentImpactAlgorithm):
         "AVG_KWATTS_DEFAULT_SLEEP": 0.001,  # TODO Default sleep power consumption?
     }
 
-    def get_device_environmental_impact(self, device: Device) -> EnvironmentalImpact:
+    def get_device_environmental_impact(
+        self, device: Device, institution: Institution | None = None
+    ) -> EnvironmentalImpact:
         env_impact = EnvironmentalImpact()
         env_impact.constants = self.algorithm_constants
         lifecycle_metrics = self._calculate_lifecycle_metrics(device)
         total_usage_time = lifecycle_metrics["total_usage_time"]
         device_type = self._get_normalized_device_type(device.type)
+        country_code = self._get_country_code(device, institution)
+        carbon_intensity_factor, country_warning = (
+            carbon_intensity.resolve_carbon_intensity_factor(country_code)
+        )
         kg_CO2e = self._compute_co2_emissions_while_in_use_with_lifecycle(
-            total_usage_time, device_type
+            total_usage_time, device_type, carbon_intensity_factor
         )
         env_impact.kg_CO2e.update(kg_CO2e)
         env_impact.docs = common.render_algorithm_docs(
@@ -40,14 +55,29 @@ class EReuse2025EnvironmentalImpactAlgorithm(EnvironmentImpactAlgorithm):
             "evidence_count": lifecycle_metrics["evidence_count"],
             "disk_change_count": lifecycle_metrics["disk_change_count"],
             "hours_in_sleep_mode": self._get_time_while_in_sleep_mode(total_usage_time),
-            "carbon_intensity_factor": (
-                carbon_intensity.get_carbon_intensity_factor_from(
-                    "ES"
-                )  # TODO Default to Spain for now
-            ),
+            "country_code": country_code,
+            "carbon_intensity_factor": carbon_intensity_factor,
             "device_type": device_type,
         }
+        if country_warning:
+            env_impact.relevant_input_data["warnings"] = [country_warning]
         return env_impact
+
+    def _get_country_code(
+        self, device: Device, institution: Institution | None = None
+    ) -> str:
+        owner = institution or getattr(device, "owner", None)
+        if getattr(owner, "pk", None):
+            profile = DeviceEnvironmentalProfile.objects.filter(
+                device_chid=device.id,
+                owner=owner,
+            ).first()
+            if profile and profile.country:
+                return profile.country.upper()
+        country_code = getattr(owner, "country", None)
+        if not country_code:
+            return self.default_country_code
+        return country_code.upper()
 
     def _get_normalized_device_type(self, device_type: str) -> str:
         if device_type in [Device.Types.DESKTOP, Device.Types.LAPTOP]:
@@ -86,7 +116,7 @@ class EReuse2025EnvironmentalImpactAlgorithm(EnvironmentImpactAlgorithm):
         }
 
     def _compute_co2_emissions_while_in_use_with_lifecycle(
-        self, total_usage_time: int, device_type: str
+        self, total_usage_time: int, device_type: str, carbon_intensity_factor: float
     ) -> dict:
         """Compute CO2 emissions using lifecycle total usage time."""
         energy_kwh_idle = self._compute_energy_consumption_in_kwh_while_idle(
@@ -94,9 +124,6 @@ class EReuse2025EnvironmentalImpactAlgorithm(EnvironmentImpactAlgorithm):
         )
         energy_kwh_sleeping = self._compute_energy_consumption_while_sleeping(
             total_usage_time, device_type
-        )
-        carbon_intensity_factor = carbon_intensity.get_carbon_intensity_factor_from(
-            "ES"
         )
         kgco2e_consumption_in_use = (
             carbon_intensity_factor * (energy_kwh_idle + energy_kwh_sleeping) / 1000
@@ -106,18 +133,21 @@ class EReuse2025EnvironmentalImpactAlgorithm(EnvironmentImpactAlgorithm):
             "carbon_intensity_factor": carbon_intensity_factor,
         }
 
-    def _compute_co2_emissions_while_in_use(self, device: Device) -> dict:
+    def _compute_co2_emissions_while_in_use(
+        self, device: Device, institution: Institution | None = None
+    ) -> dict:
         power_on_hours = common.get_poh_from_device(device)
         device_type = self._get_normalized_device_type(device.type)
+        country_code = self._get_country_code(device, institution)
+        carbon_intensity_factor, _ = carbon_intensity.resolve_carbon_intensity_factor(
+            country_code
+        )
         energy_kwh_idle = self._compute_energy_consumption_in_kwh_while_idle(
             power_on_hours, device_type
         )
         energy_kwh_sleeping = self._compute_energy_consumption_while_sleeping(
             power_on_hours, device_type
         )
-        carbon_intensity_factor = carbon_intensity.get_carbon_intensity_factor_from(
-            "ES"
-        )  # TODO Default to Spain for now
         kgco2e_consumption_in_use = (
             carbon_intensity_factor * (energy_kwh_idle + energy_kwh_sleeping) / 1000
         )
@@ -162,7 +192,7 @@ class EReuse2025EnvironmentalImpactAlgorithm(EnvironmentImpactAlgorithm):
         return time_in_sleep_mode * kwatts
 
     def get_lot_environmental_impact(
-        self, devices: list[Device]
+        self, devices: list[Device], institution: Institution | None = None
     ) -> EnvironmentalImpact:
         env_impact = EnvironmentalImpact()
         env_impact.constants = self.algorithm_constants
@@ -170,14 +200,23 @@ class EReuse2025EnvironmentalImpactAlgorithm(EnvironmentImpactAlgorithm):
         total_usage_time = 0
         total_reuse_time = 0
         device_types_count = {}
+        country_code = self.default_country_code
+        warnings = []
         for device in devices:
-            device_env_impact = self.get_device_environmental_impact(device)
+            device_env_impact = self.get_device_environmental_impact(device, institution)
             total_kg_CO2e["in_use"] += device_env_impact.kg_CO2e.get("in_use", 0.0)
             data = device_env_impact.relevant_input_data
             total_usage_time += data.get("total_usage_time", 0)
             total_reuse_time += data.get("reuse_time", 0)
             d_type = data.get("device_type", "Unknown")
             device_types_count[d_type] = device_types_count.get(d_type, 0) + 1
+            country_code = data.get("country_code", country_code)
+            for warning in data.get("warnings", []):
+                if warning not in warnings:
+                    warnings.append(warning)
+        carbon_intensity_factor, _ = carbon_intensity.resolve_carbon_intensity_factor(
+            country_code
+        )
         env_impact.kg_CO2e = total_kg_CO2e
         env_impact.docs = common.render_algorithm_docs(
             "docs.md", os.path.dirname(__file__)
@@ -190,8 +229,9 @@ class EReuse2025EnvironmentalImpactAlgorithm(EnvironmentImpactAlgorithm):
             "total_usage_time": total_usage_time,
             "total_reuse_time": total_reuse_time,
             "device_types_breakdown": device_types_str,
-            "carbon_intensity_factor": (
-                carbon_intensity.get_carbon_intensity_factor_from("ES")
-            ),
+            "country_code": country_code,
+            "carbon_intensity_factor": carbon_intensity_factor,
         }
+        if warnings:
+            env_impact.relevant_input_data["warnings"] = warnings
         return env_impact
