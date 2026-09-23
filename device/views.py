@@ -9,7 +9,7 @@ from django.shortcuts import Http404, get_object_or_404, redirect
 from django.urls import resolve, reverse_lazy
 from django.urls import reverse
 from django.utils.functional import cached_property
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext_lazy as _, get_language
 from django.views.generic import ListView
 from django.views.generic.base import TemplateView
 from django.views.generic.edit import CreateView, DeleteView, FormView, UpdateView, View
@@ -19,6 +19,20 @@ from credentials.services import CredentialService
 from dashboard.mixins import DashboardView, Http403
 from device.forms import DeviceAttributeFormSet, DeviceMainForm
 from device.models import Device, DeviceType
+from environmental_impact.algorithms.ereuse2025.carbon_intensity import (
+    get_available_country_choices,
+    get_available_country_codes,
+    get_country_label,
+)
+from environmental_impact.models import DeviceEnvironmentalProfile
+from environmental_impact.social_impact import (
+    compute_device_social_impact,
+    evidence_timeline,
+    expand_intervals_to_flagged_uuids,
+    SocialKeys,
+    TRUE_VALUE,
+    FALSE_VALUE,
+)
 from django_tables2 import RequestConfig
 from environmental_impact.algorithms.algorithm_factory import (
     FactoryEnvironmentImpactAlgorithm,
@@ -39,6 +53,7 @@ if settings.DPP:
 
 
 logger = logging.getLogger(__name__)
+AVAILABLE_COUNTRY_CODES = set(get_available_country_codes())
 
 
 class CosmeticGrade(models.TextChoices):
@@ -162,6 +177,12 @@ class DetailsView(DashboardView, TemplateView ):
         return super().get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
+        action = request.POST.get("action")
+        if action == "save_environmental_profile":
+            return self._save_environmental_profile(request, kwargs["pk"])
+        if action == "save_social_inclusion":
+            return self._save_social_inclusion(request, kwargs["pk"])
+
         url = request.POST.get("url")
 
         if url:
@@ -177,6 +198,105 @@ class DetailsView(DashboardView, TemplateView ):
                 pass
 
         return self.get(request, *args, **kwargs)
+
+    def _save_environmental_profile(self, request, pk):
+        institution = request.user.institution
+        root = RootAlias.objects.filter(owner=institution, alias=pk).first()
+        device_id = root.root if root else pk
+        country_code = (request.POST.get("country_code") or "").strip().upper()
+
+        if not country_code:
+            DeviceEnvironmentalProfile.objects.filter(
+                device_chid=device_id,
+                owner=institution,
+            ).delete()
+            messages.success(
+                request,
+                _("Environmental impact country override removed."),
+            )
+            return redirect(reverse_lazy("product:details", args=[pk]) + "#environmental_impact")
+
+        if country_code not in AVAILABLE_COUNTRY_CODES:
+            messages.error(
+                request,
+                _("Selected country is not available for environmental impact."),
+            )
+            return redirect(reverse_lazy("product:details", args=[pk]) + "#environmental_impact")
+
+        DeviceEnvironmentalProfile.objects.update_or_create(
+            device_chid=device_id,
+            owner=institution,
+            defaults={"country": country_code},
+        )
+        messages.success(
+            request,
+            _("Environmental impact country updated to %(country)s.")
+            % {"country": country_code},
+        )
+        return redirect(reverse_lazy("product:details", args=[pk]) + "#environmental_impact")
+
+    def _save_social_inclusion(self, request, pk):
+        """Store the manager-set vulnerable-person marking for a device.
+
+        The vulnerable-person gate is one device-level property on the last
+        evidence. The submitted (from, to) interval pairs are expanded into
+        per-evidence ``social:inclusion_use`` flags (one per marked span uuid),
+        which generalises to several disjoint inclusion periods. Existing flags
+        are cleared first so unmarking works.
+        """
+        institution = request.user.institution
+        root = RootAlias.objects.filter(owner=institution, alias=pk).first()
+        device_id = root.root if root else pk
+
+        device = Device(id=device_id, owner=institution)
+        device.initial()
+        last_evidence = device.last_evidence
+        if not last_evidence:
+            raise Http404
+
+        # Device-level vulnerable gate.
+        UserProperty.objects.update_or_create(
+            uuid=last_evidence.uuid,
+            key=SocialKeys.VULNERABLE,
+            defaults={
+                "value": (
+                    TRUE_VALUE if request.POST.get("vulnerable_person") else FALSE_VALUE
+                ),
+                "owner": institution,
+                "user": request.user,
+                "type": UserProperty.Type.USER,
+            },
+        )
+
+        # Expand the submitted intervals into per-evidence span flags.
+        timeline = evidence_timeline(device)
+        froms = request.POST.getlist("vulnerable_from")
+        tos = request.POST.getlist("vulnerable_to")
+        intervals = [
+            (f.strip(), t.strip())
+            for f, t in zip(froms, tos)
+            if f.strip()
+        ]
+        flagged = expand_intervals_to_flagged_uuids(timeline, intervals)
+
+        # Reset existing flags across the device, then set the marked spans.
+        UserProperty.objects.filter(
+            uuid__in=device.uuids,
+            owner=institution,
+            key=SocialKeys.INCLUSION_USE,
+        ).delete()
+        for uuid in flagged:
+            UserProperty.objects.create(
+                uuid=uuid,
+                key=SocialKeys.INCLUSION_USE,
+                value=TRUE_VALUE,
+                owner=institution,
+                user=request.user,
+                type=UserProperty.Type.USER,
+            )
+
+        messages.success(request, _("Social impact information updated."))
+        return redirect(reverse_lazy("product:details", args=[pk]) + "#social_impact")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -195,7 +315,8 @@ class DetailsView(DashboardView, TemplateView ):
         try:
             enviromental_impact_algorithm = FactoryEnvironmentImpactAlgorithm.run_environmental_impact_calculation()
             enviromental_impact = enviromental_impact_algorithm.get_device_environmental_impact(
-            self.object)
+                self.object, self.request.user.institution
+            )
             # If total usage time is 0, treat as unavailable data
             if (enviromental_impact and
                     enviromental_impact.relevant_input_data.get(
@@ -204,6 +325,16 @@ class DetailsView(DashboardView, TemplateView ):
         except Exception as err:
             logger.error("Environmental Impact Error: {}".format(err))
             enviromental_impact = None
+        environmental_profile = DeviceEnvironmentalProfile.objects.filter(
+            device_chid=self.object.id,
+            owner=self.request.user.institution,
+        ).first()
+        country_code = (
+            enviromental_impact.relevant_input_data.get("country_code")
+            if enviromental_impact
+            else None
+        )
+        language_code = get_language()
         last_evidence = self.object.get_last_evidence()
         uuids = self.object.uuids
 
@@ -232,6 +363,10 @@ class DetailsView(DashboardView, TemplateView ):
             'lot_tags': lot_tags,
             'dpps': dpps,
             'impact': enviromental_impact,
+            'social': compute_device_social_impact(self.object, self.request.user.institution),
+            'environmental_profile': environmental_profile,
+            'environmental_country_choices': get_available_country_choices(language_code),
+            'environmental_country_label': get_country_label(country_code, language_code),
             "state_definitions": state_definitions,
             "device_states": device_states,
             "device_logs": device_logs,

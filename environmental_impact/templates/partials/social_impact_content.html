@@ -1,0 +1,148 @@
+{% load i18n %}
+
+<div class="row mt-4">
+  <div class="col-sm-6">
+    <div class="card mb-3">
+      <div class="card-body">
+        <h6 class="card-title">{% trans 'Digital inclusion' %}</h6>
+        <table class="table table-sm mb-0">
+          <tbody>
+            <tr>
+              <th>{% trans 'Used by a vulnerable person' %}</th>
+              <td>
+                {% if social.vulnerable_person %}
+                  <span class="badge bg-success">{% trans 'Yes' %}</span>
+                {% else %}
+                  <span class="badge bg-secondary">{% trans 'No' %}</span>
+                {% endif %}
+              </td>
+            </tr>
+            <tr>
+              <th>{% trans 'Inclusion periods' %}</th>
+              <td>
+                {% if social.intervals %}
+                  <ul class="mb-0 ps-3">
+                    {% for iv in social.intervals %}
+                      <li>{{ iv.from }} &rarr; {{ iv.to }}</li>
+                    {% endfor %}
+                  </ul>
+                {% else %}
+                  <span class="text-muted">{% trans 'whole usage' %}</span>
+                {% endif %}
+              </td>
+            </tr>
+            <tr>
+              <th>{% trans 'Digital inclusion hours' %}</th>
+              <td>{{ social.digital_inclusion_hours|default:0 }} {% trans 'hours' %}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-sm-6">
+    <div class="card">
+      <div class="card-body">
+        <h6 class="card-title">{% trans 'Mark social impact' %}</h6>
+        <form method="post" class="row g-2">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="save_social_inclusion">
+
+          <div class="col-12 form-check">
+            <input class="form-check-input" type="checkbox" id="social_vulnerable" name="vulnerable_person"
+                   {% if social.vulnerable_person %}checked{% endif %}>
+            <label class="form-check-label" for="social_vulnerable">
+              {% trans 'This device was used by a vulnerable person' %}
+            </label>
+          </div>
+
+          <div class="col-12">
+            <label class="form-label small mb-1">{% trans 'Vulnerable-use intervals' %}</label>
+            <div id="socialIntervals">
+              {% for iv in social.intervals %}
+                <div class="row g-1 mb-1 social-interval-row align-items-center">
+                  <div class="col-sm-5">
+                    <select name="vulnerable_from" class="form-select form-select-sm">
+                      <option value="">{% trans 'From…' %}</option>
+                      {% for ev in social.timeline %}
+                        <option value="{{ ev.uuid }}" {% if iv.from_uuid == ev.uuid %}selected{% endif %}>{{ ev.date|default:ev.uuid }} ({{ ev.poh }}h)</option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                  <div class="col-sm-5">
+                    <select name="vulnerable_to" class="form-select form-select-sm">
+                      <option value="">{% trans 'Ongoing (latest)' %}</option>
+                      {% for ev in social.timeline %}
+                        <option value="{{ ev.uuid }}" {% if iv.to_uuid == ev.uuid %}selected{% endif %}>{{ ev.date|default:ev.uuid }} ({{ ev.poh }}h)</option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                  <div class="col-sm-2">
+                    <button type="button" class="btn btn-outline-danger btn-sm w-100 social-remove-interval" title="{% trans 'Remove interval' %}">&times;</button>
+                  </div>
+                </div>
+              {% endfor %}
+              {# always one blank row to add a new interval #}
+              <div class="row g-1 mb-1 social-interval-row align-items-center">
+                <div class="col-sm-5">
+                  <select name="vulnerable_from" class="form-select form-select-sm">
+                    <option value="">{% trans 'From…' %}</option>
+                    {% for ev in social.timeline %}
+                      <option value="{{ ev.uuid }}">{{ ev.date|default:ev.uuid }} ({{ ev.poh }}h)</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="col-sm-5">
+                  <select name="vulnerable_to" class="form-select form-select-sm">
+                    <option value="">{% trans 'Ongoing (latest)' %}</option>
+                    {% for ev in social.timeline %}
+                      <option value="{{ ev.uuid }}">{{ ev.date|default:ev.uuid }} ({{ ev.poh }}h)</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="col-sm-2">
+                  <button type="button" class="btn btn-outline-danger btn-sm w-100 social-remove-interval" title="{% trans 'Remove interval' %}">&times;</button>
+                </div>
+              </div>
+            </div>
+            <button type="button" class="btn btn-outline-secondary btn-sm" id="socialAddInterval">
+              + {% trans 'Add interval' %}
+            </button>
+            <div class="form-text">{% trans 'Leave intervals empty to credit the whole usage. Edit or remove a row to fix a mistake, then Save.' %}</div>
+          </div>
+
+          <div class="col-12 mt-2">
+            <button type="submit" class="btn btn-primary btn-sm">{% trans 'Save' %}</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    var container = document.getElementById('socialIntervals');
+    var addBtn = document.getElementById('socialAddInterval');
+    if (!container || !addBtn) return;
+
+    addBtn.addEventListener('click', function () {
+      var rows = container.querySelectorAll('.social-interval-row');
+      var clone = rows[rows.length - 1].cloneNode(true);
+      clone.querySelectorAll('select').forEach(function (s) { s.selectedIndex = 0; });
+      container.appendChild(clone);
+    });
+
+    // Remove an interval row; keep at least one (blank) row to add new ones.
+    container.addEventListener('click', function (e) {
+      if (!e.target.classList.contains('social-remove-interval')) return;
+      var rows = container.querySelectorAll('.social-interval-row');
+      if (rows.length > 1) {
+        e.target.closest('.social-interval-row').remove();
+      } else {
+        rows[0].querySelectorAll('select').forEach(function (s) { s.selectedIndex = 0; });
+      }
+    });
+  })();
+</script>
