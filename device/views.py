@@ -178,6 +178,72 @@ class DetailsView(DashboardView, TemplateView ):
 
         return self.get(request, *args, **kwargs)
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        self.object.initial()
+        lot_tags = LotTag.objects.filter(owner=self.request.user.institution)
+        dpps = []
+        if settings.DPP:
+            _dpps = Proof.objects.filter(
+                uuid__in=self.object.uuids,
+                type=PROOF_TYPE["IssueDPP"]
+            )
+            for x in _dpps:
+                dpp = "{}:{}".format(self.pk, x.signature)
+                dpps.append((dpp, x.signature[:10], x))
+        # TODO Specify algorithm via dropdown, if not specified, use default.
+        try:
+            enviromental_impact_algorithm = FactoryEnvironmentImpactAlgorithm.run_environmental_impact_calculation()
+            enviromental_impact = enviromental_impact_algorithm.get_device_environmental_impact(
+            self.object)
+            # If total usage time is 0, treat as unavailable data
+            if (enviromental_impact and
+                    enviromental_impact.relevant_input_data.get(
+                        'total_usage_time', 0) == 0):
+                enviromental_impact = None
+        except Exception as err:
+            logger.error("Environmental Impact Error: {}".format(err))
+            enviromental_impact = None
+        last_evidence = self.object.get_last_evidence()
+        uuids = self.object.uuids
+
+        ev_queryset = Evidence.get_device_evidences(self.request.user, uuids)
+        evidence_table = EvidenceTable(ev_queryset, exclude =('device', ))
+        RequestConfig(self.request).configure(evidence_table)
+
+        credential_queryset = CredentialProperty.objects.filter(
+            sysprop__in=self.object.properties,
+            owner=self.request.user.institution
+        ).order_by('-created')
+        credential_table = CredentialTable(credential_queryset)
+        RequestConfig(self.request, paginate={'per_page': 10}).configure(credential_table)
+
+        state_definitions = StateDefinition.objects.filter(
+            institution=self.request.user.institution
+        ).order_by('order')
+        device_states = State.objects.filter(snapshot_uuid__in=uuids).order_by('-date')
+        device_logs = DeviceLog.objects.filter(
+            snapshot_uuid__in=uuids).order_by('-date')
+        device_notes = Note.objects.filter(snapshot_uuid__in=uuids).order_by('-date')
+        product_photos, photo_evidences = self._get_product_photos()
+
+        context.update({
+            'object': self.object,
+            'snapshot': last_evidence,
+            'lot_tags': lot_tags,
+            'dpps': dpps,
+            'impact': enviromental_impact,
+            "state_definitions": state_definitions,
+            "device_states": device_states,
+            "device_logs": device_logs,
+            "device_notes": device_notes,
+            "table": evidence_table,
+            "credential_table": credential_table,
+            'product_photos': product_photos,
+            'photo_evidences': photo_evidences,
+        })
+        return context
+
     def _get_product_photos(self):
         """Collect every photo attached to this product, newest evidence first."""
         groups = []
@@ -212,72 +278,6 @@ class DetailsView(DashboardView, TemplateView ):
                 })
 
         return photos, groups
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        self.object.initial()
-        lot_tags = LotTag.objects.filter(owner=self.request.user.institution)
-        dpps = []
-        if settings.DPP:
-            _dpps = Proof.objects.filter(
-                uuid__in=self.object.uuids,
-                type=PROOF_TYPE["IssueDPP"]
-            )
-            for x in _dpps:
-                dpp = "{}:{}".format(self.pk, x.signature)
-                dpps.append((dpp, x.signature[:10], x))
-        # TODO Specify algorithm via dropdown, if not specified, use default.
-        try:
-            enviromental_impact_algorithm = FactoryEnvironmentImpactAlgorithm.run_environmental_impact_calculation()
-            enviromental_impact = enviromental_impact_algorithm.get_device_environmental_impact(
-            self.object)
-            # If total usage time is 0, treat as unavailable data
-            if (enviromental_impact and
-                    enviromental_impact.relevant_input_data.get(
-                        'total_usage_time', 0) == 0):
-                enviromental_impact = None
-        except Exception as err:
-            logger.error("Environmental Impact Error: {}".format(err))
-            enviromental_impact = None
-        last_evidence = self.object.get_last_evidence()
-        uuids = self.object.uuids
-        product_photos, photo_evidences = self._get_product_photos()
-
-        ev_queryset = Evidence.get_device_evidences(self.request.user, uuids)
-        evidence_table = EvidenceTable(ev_queryset, exclude =('device', ))
-        RequestConfig(self.request).configure(evidence_table)
-
-        credential_queryset = CredentialProperty.objects.filter(
-            sysprop__in=self.object.properties,
-            owner=self.request.user.institution
-        ).order_by('-created')
-        credential_table = CredentialTable(credential_queryset)
-        RequestConfig(self.request, paginate={'per_page': 10}).configure(credential_table)
-
-        state_definitions = StateDefinition.objects.filter(
-            institution=self.request.user.institution
-        ).order_by('order')
-        device_states = State.objects.filter(snapshot_uuid__in=uuids).order_by('-date')
-        device_logs = DeviceLog.objects.filter(
-            snapshot_uuid__in=uuids).order_by('-date')
-        device_notes = Note.objects.filter(snapshot_uuid__in=uuids).order_by('-date')
-
-        context.update({
-            'object': self.object,
-            'snapshot': last_evidence,
-            'product_photos': product_photos,
-            'photo_evidences': photo_evidences,
-            'lot_tags': lot_tags,
-            'dpps': dpps,
-            'impact': enviromental_impact,
-            "state_definitions": state_definitions,
-            "device_states": device_states,
-            "device_logs": device_logs,
-            "device_notes": device_notes,
-            "table": evidence_table,
-            "credential_table": credential_table,
-        })
-        return context
 
 
 class PublicDeviceWebView(TemplateView):
