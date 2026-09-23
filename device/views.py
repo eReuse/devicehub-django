@@ -19,6 +19,10 @@ from credentials.services import CredentialService
 from dashboard.mixins import DashboardView, Http403
 from device.forms import DeviceAttributeFormSet, DeviceMainForm
 from device.models import Device, DeviceType
+from django_tables2 import RequestConfig
+from environmental_impact.algorithms.algorithm_factory import (
+    FactoryEnvironmentImpactAlgorithm,
+)
 from environmental_impact.algorithms.ereuse2025.carbon_intensity import (
     get_available_country_choices,
     get_available_country_codes,
@@ -32,10 +36,6 @@ from environmental_impact.social_impact import (
     SocialKeys,
     TRUE_VALUE,
     FALSE_VALUE,
-)
-from django_tables2 import RequestConfig
-from environmental_impact.algorithms.algorithm_factory import (
-    FactoryEnvironmentImpactAlgorithm,
 )
 from evidence.models import (
     CredentialProperty,
