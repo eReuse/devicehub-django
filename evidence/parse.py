@@ -47,10 +47,12 @@ class Build:
             self.uuid = evidence_json.get("credentialSubject", {}).get("uuid")
         elif evidence_json.get("data",{}).get("lshw"):
             self.build = legacy_parse.Build(evidence_json)
-        elif evidence_json.get("software") != "workbench-script":
-            self.build = old_parse.Build(evidence_json)
+        # Photo evidences are not workbench-script snapshots, so this check
+        # must precede the generic legacy-parser fallback below.
         elif evidence_json.get("data",{}).get("snapshot_type") == "Image":
             self.build = image_processing.Build(evidence_json)
+        elif evidence_json.get("software") != "workbench-script":
+            self.build = old_parse.Build(evidence_json)
         else:
             self.build = normal_parse.Build(evidence_json)
 

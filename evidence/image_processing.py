@@ -1,6 +1,7 @@
 """
 Image processing utilities for OCR and barcode scanning.
 """
+import hashlib
 import uuid
 import shutil
 import logging
@@ -18,9 +19,18 @@ logger = logging.getLogger(__name__)
 
 
 class Build(BuildMix):
+    def has_hardware_data(self, data):
+        return bool(self.json.get("photo") or self.json.get("photos"))
+
     def get_details(self):
-        #only hash needed for photo25
-        self.hash = self.json.get("photo").get("hash", "")
+        # Old photo evidence stores one ``photo``. New evidence stores a
+        # ``photos`` collection and identifies the collection as a whole.
+        self.hash = self.json.get("photo_hash", "")
+        if not self.hash:
+            self.hash = self.json.get("photo", {}).get("hash", "")
+        if not self.hash and self.json.get("photos"):
+            self.hash = photo_bundle_hash(self.json["photos"])
+        self.type = "Image"
 
         return
 
@@ -35,50 +45,70 @@ class Build(BuildMix):
         return self.hash
 
 
-def build_json(photo_data, image_path):
-    processing_result = process_image(image_path)
+def photo_bundle_hash(photos):
+    """Stable identity for one evidence containing one or more photos."""
+    hashes = sorted(photo.get("hash", "") for photo in photos if photo.get("hash"))
+    if len(hashes) == 1:
+        return hashes[0]
+    return hashlib.sha256(("photo-bundle-v1\n" + "\n".join(hashes)).encode()).hexdigest()
 
-    photo_data.pop('content', None)
-    photo_data.pop('file', None)
+
+def build_json(photos):
     _uuid = str(uuid.uuid4())
 
-    doc = {
+    return {
         'uuid': _uuid,
         'endTime': datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
         'type': "photo25",
         'software': settings.APP_NAME,
-        'photo': photo_data,
+        'photo_hash': photo_bundle_hash(photos),
+        'photos': photos,
         'data': {
             'snapshot_type': "Image",
-            'ocr': {
-                'text': processing_result.get('ocr_text'),
-                'error': processing_result.get('ocr_error')
-            },
-        'barcodes': processing_result.get('barcodes', []),
-        'barcode_error': processing_result.get('barcode_error')
+            'photo_count': len(photos),
         }
     }
-    return doc
 
 
 def process_photo_upload(photo_data, user=None, algo_key='photo25'):
+    """Backward-compatible entry point for a one-photo evidence."""
     if not photo_data:
+        return None
+    return process_photo_uploads([photo_data], user=user, algo_key=algo_key)
+
+
+def process_photo_uploads(photo_data_list, user=None, algo_key='photo25'):
+    """Create one evidence document containing all supplied photos."""
+    if not photo_data_list:
         return None
 
     if not user:
         raise ValueError("User instance required for processing photo.")
 
-    # Save image file
-    file_path = save_photo_in_disk(photo_data, user.institution.name)
-    doc = build_json(photo_data, file_path)
+    photos = []
+    for photo_data in photo_data_list:
+        file_path = save_photo_in_disk(photo_data, user.institution.name)
+        processing_result = process_image(file_path)
+        photo = photo_data.copy()
+        photo.pop('content', None)
+        photo.pop('file', None)
+        photo['ocr'] = {
+            'text': processing_result.get('ocr_text'),
+            'error': processing_result.get('ocr_error'),
+        }
+        photo['barcodes'] = processing_result.get('barcodes', [])
+        photo['barcode_error'] = processing_result.get('barcode_error')
+        photos.append(photo)
+
+    doc = build_json(photos)
 
     path_name = save_in_disk(doc, user.institution.name)
     create_index(doc, user)
     move_json(path_name, user.institution.name)
 
-    # Create SystemProperty with key='photo25' so photo appears in evidence list
-    # Using photo hash as the value (similar to device CHID for snapshots)
-    prop_value = "{}:{}".format(algo_key, doc.get("photo", {}).get("hash", ""))
+    # One property represents the complete photo collection and is aliased to
+    # the product just like the previous one-photo evidence.
+    prop_value = "{}:{}".format(algo_key, doc["photo_hash"])
     SystemProperty.objects.create(
         uuid=doc.get("uuid", ""),
         key=algo_key,

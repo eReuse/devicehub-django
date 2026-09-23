@@ -9,11 +9,11 @@ import pandas as pd
 
 from action.models import DeviceLog
 from device.models import DeviceType
-from evidence.image_processing import process_photo_upload
+from evidence.image_processing import process_photo_uploads
 from evidence.models import RootAlias, SystemProperty, UserProperty
 from evidence.parse import Build
 from utils.device import create_doc, create_index, create_property
-from utils.forms import MultipleFileField
+from utils.forms import MultipleFileField, MultipleFileInput
 from utils.photo_evidence import get_photos_dir
 from utils.save_snapshots import move_json, save_in_disk
 
@@ -311,20 +311,31 @@ class EraseServerForm(forms.Form):
         )
 
 class BasePhotoMixin(forms.Form):
-    photo_file = forms.FileField(
+    photo_file = MultipleFileField(
         required=False,
         label="",
-        widget=forms.ClearableFileInput(attrs={
-            'class': 'visually-hidden',
-            'id': 'file-input',
+        widget=MultipleFileInput(attrs={
             'accept': 'image/jpeg,image/jpg,image/png,image/gif,image/webp',
-        })
+        }),
     )
 
     def clean_photo_file(self):
-        photo = self.cleaned_data.get('photo_file')
-        if not photo:
-            return None
+        photos = self.cleaned_data.get('photo_file') or []
+        if len(photos) > 10:
+            raise ValidationError(_("You can attach at most 10 photos."))
+
+        self.photo_data_cache = []
+        seen_hashes = set()
+        for photo in photos:
+            photo_data = self.prepare_photo_data(photo)
+            if photo_data['hash'] in seen_hashes:
+                raise ValidationError(_("The same photo was selected more than once."))
+            seen_hashes.add(photo_data['hash'])
+            self.photo_data_cache.append(photo_data)
+        return photos
+
+    def prepare_photo_data(self, photo):
+        """Validate one image and return the data used by photo processing."""
 
         max_size = 10 * 1024 * 1024
         if photo.size > max_size:
@@ -354,7 +365,7 @@ class BasePhotoMixin(forms.Form):
         if os.path.exists(photo_path):
             raise ValidationError(_("Photo already exists."))
 
-        self.photo_data_cache = {
+        return {
             'file': photo,
             'content': file_content,
             'extension': file_ext,
@@ -365,16 +376,20 @@ class BasePhotoMixin(forms.Form):
             'hash': sha256
         }
 
-        return photo
-
 
 class PhotoForm(BasePhotoMixin, forms.Form):
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user')
         super().__init__(*args, **kwargs)
 
+    def clean_photo_file(self):
+        photos = super().clean_photo_file()
+        if not photos:
+            raise ValidationError(_("Select at least one photo."))
+        return photos
+
     def save(self, commit=True):
         if not commit:
             return None
-        doc = process_photo_upload(self.photo_data_cache, user=self.user)
+        doc = process_photo_uploads(self.photo_data_cache, user=self.user)
         return doc

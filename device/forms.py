@@ -1,7 +1,7 @@
 import re
 from django import forms
 from django.db.models import Q
-from evidence.image_processing import process_photo_upload
+from evidence.image_processing import process_photo_uploads
 from evidence.models import SystemProperty, RootAlias
 from utils.device import create_property, create_doc, create_index
 from utils.save_snapshots import move_json, save_in_disk
@@ -57,12 +57,12 @@ class DeviceMainForm(BasePhotoMixin):
         # custom_id is now guaranteed to be safe and duplicate-free
         custom_id = self.cleaned_data.get('custom_id')
 
-        photo_cache = getattr(self, 'photo_data_cache', None)
-        photo_doc = process_photo_upload(photo_cache, self.user)
+        photo_cache = getattr(self, 'photo_data_cache', [])
+        photo_doc = process_photo_uploads(photo_cache, self.user)
 
         amount = self.cleaned_data.get('amount') or 1
 
-        # for now, if a photo is uploaded, only create 1 device
+        # A photo collection belongs to one physical product.
         if photo_cache or custom_id:
             amount = 1
 
