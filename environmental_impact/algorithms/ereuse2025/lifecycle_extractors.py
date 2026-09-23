@@ -2,7 +2,7 @@
 Extraction utilities for lifecycle data from device evidences.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional, Tuple, Dict
 from device.models import Device
 from .. import common
@@ -30,22 +30,41 @@ def _find_first_storage(components: List[Dict]) -> Optional[Dict]:
     return None
 
 
-def _get_evidence_sort_key(evidence) -> tuple[int, object]:
+def get_evidence_datetime(evidence) -> Optional[datetime]:
+    """Return when the evidence was taken, as an aware UTC datetime.
+
+    Snapshot formats disagree on timezones: legacy Workbench sends
+    ``...Z``/``+00:00`` while workbench-script sends naive local time.
+    Aware and naive datetimes cannot be compared, so naive values are
+    read as UTC. The upload time is only used when the document has no
+    usable date of its own.
+    """
     timestamp_candidates = [
-        evidence.doc.get("endTime"),
-        evidence.doc.get("timestamp"),
-        evidence.doc.get("date"),
-        evidence.get_time_created(),
+        lambda: evidence.doc.get("endTime"),
+        lambda: evidence.doc.get("timestamp"),
+        lambda: evidence.doc.get("date"),
+        evidence.get_time_created,
     ]
 
-    for value in timestamp_candidates:
+    for get_value in timestamp_candidates:
+        value = get_value()
         if not value:
             continue
         try:
-            return (0, datetime.fromisoformat(str(value)))
+            parsed = datetime.fromisoformat(str(value))
         except ValueError:
             continue
+        if parsed.tzinfo is None:
+            return parsed.replace(tzinfo=timezone.utc)
+        return parsed.astimezone(timezone.utc)
 
+    return None
+
+
+def _get_evidence_sort_key(evidence) -> tuple[int, object]:
+    evidence_datetime = get_evidence_datetime(evidence)
+    if evidence_datetime:
+        return (0, evidence_datetime)
     return (1, str(evidence.uuid))
 
 
