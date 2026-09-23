@@ -27,7 +27,7 @@
                     {% endfor %}
                   </ul>
                 {% else %}
-                  <span class="text-muted">{% trans 'whole usage' %}</span>
+                  <span class="text-muted">{% trans 'None marked' %}</span>
                 {% endif %}
               </td>
             </tr>
@@ -109,7 +109,7 @@
             <button type="button" class="btn btn-outline-secondary btn-sm" id="socialAddInterval">
               + {% trans 'Add interval' %}
             </button>
-            <div class="form-text">{% trans 'Leave intervals empty to credit the whole usage. Edit or remove a row to fix a mistake, then Save.' %}</div>
+            <div class="form-text">{% trans 'Inclusion hours are only counted within marked intervals. Edit or remove a row to fix a mistake, then Save.' %}</div>
           </div>
 
           <div class="col-12 mt-2">

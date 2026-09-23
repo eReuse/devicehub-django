@@ -108,7 +108,7 @@ class ComputeDeviceSocialImpactTests(unittest.TestCase):
         self.device.uuids = [p["uuid"] for p in LIFECYCLE]
         self.institution = Mock()
 
-    def _compute(self, vulnerable, flagged, usage_hours=1900):
+    def _compute(self, vulnerable, flagged):
         with patch(
             "environmental_impact.social_impact.evidence_timeline",
             return_value=LIFECYCLE,
@@ -118,9 +118,6 @@ class ComputeDeviceSocialImpactTests(unittest.TestCase):
         ), patch(
             "environmental_impact.social_impact.read_flagged_uuids",
             return_value=set(flagged),
-        ), patch(
-            "environmental_impact.social_impact.get_poh_from_device",
-            return_value=usage_hours,
         ):
             return compute_device_social_impact(self.device, self.institution)
 
@@ -128,9 +125,11 @@ class ComputeDeviceSocialImpactTests(unittest.TestCase):
         impact = self._compute(vulnerable=False, flagged={"A", "B"})
         self.assertEqual(impact.digital_inclusion_hours, 0)
 
-    def test_vulnerable_without_flags_credits_whole_usage(self):
-        impact = self._compute(vulnerable=True, flagged=set(), usage_hours=1900)
-        self.assertEqual(impact.digital_inclusion_hours, 1900)
+    def test_vulnerable_without_intervals_credits_zero_hours(self):
+        # Without an interval, earlier (e.g. commercial) use cannot be told
+        # apart from inclusion use, so nothing is credited.
+        impact = self._compute(vulnerable=True, flagged=set())
+        self.assertEqual(impact.digital_inclusion_hours, 0)
         self.assertEqual(impact.relevant_input_data["inclusion_periods"], 0)
 
     def test_two_disjoint_inclusion_periods(self):

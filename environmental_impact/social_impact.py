@@ -35,7 +35,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from evidence.models import Evidence, UserProperty
-from .algorithms.common import get_poh_from_device, get_poh_from_evidence
+from .algorithms.common import get_poh_from_evidence
 from .algorithms.ereuse2025.lifecycle_extractors import get_evidence_datetime
 
 if TYPE_CHECKING:
@@ -67,8 +67,8 @@ class SocialImpact:
         self.flagged_uuids: set = set()
         # Contiguous flagged periods for display: list of {"from", "to"} dates.
         self.intervals: list = []
-        # Power-on hours over flagged spans (or total usage when vulnerable but
-        # nothing marked). This is the reuse value environmental accounting
+        # Power-on hours over flagged spans only; no marked interval means no
+        # inclusion hours. This is the reuse value environmental accounting
         # alone never credits.
         self.digital_inclusion_hours: int = 0
         self.relevant_input_data: dict = {}
@@ -202,26 +202,23 @@ def compute_device_social_impact(
     impact.vulnerable_person = read_vulnerable_flag(device, institution)
     impact.flagged_uuids = read_flagged_uuids(device, institution)
 
-    usage_hours = get_poh_from_device(device)
     inclusion_hours = 0
 
-    if impact.vulnerable_person:
-        if impact.flagged_uuids:
-            inclusion_hours = inclusion_hours_from_flags(
-                impact.timeline, impact.flagged_uuids
-            )
-            impact.intervals = _flagged_intervals_for_display(
-                impact.timeline, impact.flagged_uuids
-            )
-        else:
-            # Vulnerable but no spans marked: credit the whole usage.
-            inclusion_hours = usage_hours
+    # Inclusion hours always need an evidence interval: without one we cannot
+    # tell vulnerable-person use from the device's earlier (e.g. commercial)
+    # life, so nothing is credited.
+    if impact.vulnerable_person and impact.flagged_uuids:
+        inclusion_hours = inclusion_hours_from_flags(
+            impact.timeline, impact.flagged_uuids
+        )
+        impact.intervals = _flagged_intervals_for_display(
+            impact.timeline, impact.flagged_uuids
+        )
 
     impact.digital_inclusion_hours = inclusion_hours
 
     impact.relevant_input_data = {
         "vulnerable_person": impact.vulnerable_person,
-        "usage_hours": usage_hours,
         "inclusion_periods": len(impact.intervals),
     }
     return impact
