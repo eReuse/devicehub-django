@@ -52,15 +52,6 @@ def _cpu_frequencies(raw):
     return ", ".join(formatted)
 
 
-def _temperature(deci_celsius):
-    if deci_celsius is None:
-        return None
-    try:
-        return "{:.1f} C".format(float(deci_celsius) / 10)
-    except (TypeError, ValueError):
-        return None
-
-
 def _number(value, digits=1):
     """Round noisy Android floats and return whole values as integers."""
     if value is None:
@@ -158,7 +149,6 @@ class ParseSnapshot:
             components.append(_clean({
                 "type": "RamModule",
                 "size": _gb(memory.get("total_bytes")),
-                "available": _gb(memory.get("available_bytes")),
                 "interface": "Integrated",
             }))
 
@@ -168,7 +158,6 @@ class ParseSnapshot:
                 "type": "Storage",
                 "partition": "Android data",
                 "size": _gb(storage.get("total_bytes")),
-                "free": _gb(storage.get("free_bytes")),
                 "interface": "Integrated",
             }))
 
@@ -190,18 +179,11 @@ class ParseSnapshot:
             health_code = battery.get("health_code") or signals.get("battery_health_code")
             components.append(_clean({
                 "type": "Battery",
-                "level_percent": battery.get("level_percent"),
                 "condition": _battery_health(health_code),
                 "health_percent": _number(usage.get("battery_health_percent")),
                 "design_capacity_mah": _number(signals.get("battery_design_capacity_mah")),
                 "cycles": usage.get("battery_cycle_count"),
                 "technology": battery.get("technology"),
-                "voltage_mv": battery.get("voltage_mv"),
-                "temperature": _temperature(
-                    battery.get("temperature_deci_c")
-                    if battery.get("temperature_deci_c") is not None
-                    else signals.get("battery_temperature_deci_c")
-                ),
             }))
 
         for cam in android.get("cameras", []):
