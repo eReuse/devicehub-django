@@ -41,16 +41,26 @@ class BuildMix:
                 data["dmidecode"] = evidence[0]
                 data["inxi"] = evidence[2]
 
-        dmidecode_raw = data.get("dmidecode")
-        inxi_raw = data.get("inxi")
-        device = self.json.get("device")
-        if not dmidecode_raw and not inxi_raw and not device:
+        if not self.has_hardware_data(data):
             txt = "snapshot without dmidecode and inxi datas"
             logger.error(txt)
             raise Exception(txt)
 
         self.get_details()
         self.generate_chids()
+
+    def has_hardware_data(self, data):
+        """Whether the snapshot carries data to identify the device.
+        Parsers with a different snapshot shape override it."""
+        dmidecode_raw = data.get("dmidecode")
+        inxi_raw = data.get("inxi")
+        device = self.json.get("device")
+        return bool(dmidecode_raw or inxi_raw or device)
+
+    def after_save(self, user, uuid):
+        """Hook run by evidence.parse.Build once the evidence is indexed and
+        annotated. Parsers that store more than the SystemProperty override it."""
+        pass
 
     def get_hid(self, algo):
         algorithm = ALGOS.get(algo, [])

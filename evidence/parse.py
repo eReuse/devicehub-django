@@ -5,11 +5,13 @@ import logging
 from evidence import legacy_parse
 from evidence import old_parse
 from evidence import normal_parse, image_processing
+from evidence import mobile_parse
 from evidence.parse_details import ParseSnapshot
 
 from evidence.models import SystemProperty
 from evidence.xapian import index
 from evidence.normal_parse_details import get_inxi_key, get_inxi
+from utils.constants import WORKBENCH_ANDROID
 from django.conf import settings
 
 if settings.DPP:
@@ -47,6 +49,8 @@ class Build:
             self.uuid = evidence_json.get("credentialSubject", {}).get("uuid")
         elif evidence_json.get("data",{}).get("lshw"):
             self.build = legacy_parse.Build(evidence_json)
+        elif evidence_json.get("software") == WORKBENCH_ANDROID:
+            self.build = mobile_parse.Build(evidence_json)
         elif evidence_json.get("software") != "workbench-script":
             self.build = old_parse.Build(evidence_json)
         elif evidence_json.get("data",{}).get("snapshot_type") == "Image":
@@ -62,6 +66,7 @@ class Build:
 
         self.index()
         self.create_annotations()
+        self.build.after_save(self.user, self.uuid)
         if settings.DPP:
             self.register_device_dlt()
 

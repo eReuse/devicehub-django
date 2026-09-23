@@ -26,6 +26,8 @@ class Device:
         DESKTOP = "Desktop"
         LAPTOP = "Laptop"
         SERVER = "Server"
+        SMARTPHONE = "Smartphone"
+        TABLET = "Tablet"
         GRAPHICCARD = "GraphicCard"
         HARDDRIVE = "HardDrive"
         SOLIDSTATEDRIVE = "SolidStateDrive"
@@ -787,6 +789,22 @@ DEFAULT_PRODUCT_TYPES = {
         "storage",
         "raid_controller",
         "power_supply",
+    ],
+    "Smartphone": [
+        "model",
+        "manufacturer",
+        "ram_total",
+        "storage",
+        "screen_size",
+        "battery_health",
+    ],
+    "Tablet": [
+        "model",
+        "manufacturer",
+        "ram_total",
+        "storage",
+        "screen_size",
+        "battery_health",
     ],
     "GraphicCard": [
         "model",

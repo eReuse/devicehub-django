@@ -5,6 +5,8 @@ ICONS = {
     "Desktop": "bi-pc-display",
     "Tower": "bi-pc",
     "Server": "bi-pc-display",
+    "Smartphone": "bi-phone",
+    "Tablet": "bi-tablet",
     "Motherboard": "bi-motherboard",
     "GraphicCard": "bi-gpu-card",
     "HardDrive": "bi-hdd",
