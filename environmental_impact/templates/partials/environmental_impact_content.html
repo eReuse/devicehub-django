@@ -1,4 +1,4 @@
-{% load i18n %}
+{% load i18n l10n %}
 
 {% if impact %}
   {% if impact.relevant_input_data.warnings %}
@@ -207,17 +207,18 @@
 <script>
   (function() {
     {% if impact %}
-    const co2kg = {{ impact.kg_CO2e.in_use|default:0 }};
+    // unlocalize: a localized decimal comma ("860,08") breaks the script.
+    const co2kg = {{ impact.kg_CO2e.in_use|default:0|unlocalize }};
+    const energyKwh = {% if is_lot_view %}{{ impact.relevant_input_data.total_energy_kwh|default:0|unlocalize }}{% else %}{{ impact.relevant_input_data.energy_kwh|default:0|unlocalize }}{% endif %};
     const kmPerKgCO2 = 5.5;
     const treesPerKgCO2 = 0.05;
-    const kwhPerKgCO2 = 2;
 
     const kmEl = document.getElementById('{{ comparison_prefix }}KmDriven');
     const treesEl = document.getElementById('{{ comparison_prefix }}TreesNeeded');
     const energyEl = document.getElementById('{{ comparison_prefix }}EnergyUsed');
     if (kmEl) kmEl.textContent = Math.round(co2kg * kmPerKgCO2).toLocaleString();
     if (treesEl) treesEl.textContent = Math.round(co2kg * treesPerKgCO2).toLocaleString();
-    if (energyEl) energyEl.textContent = Math.round(co2kg * kwhPerKgCO2).toLocaleString();
+    if (energyEl) energyEl.textContent = Math.round(energyKwh).toLocaleString();
 
     const canvas = document.getElementById('{{ chart_id }}');
     if (canvas) {

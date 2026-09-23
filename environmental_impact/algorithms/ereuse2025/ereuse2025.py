@@ -53,6 +53,9 @@ class EReuse2025EnvironmentalImpactAlgorithm(EnvironmentImpactAlgorithm):
             "evidence_count": lifecycle_metrics["evidence_count"],
             "disk_change_count": lifecycle_metrics["disk_change_count"],
             "hours_in_sleep_mode": self._get_time_while_in_sleep_mode(total_usage_time),
+            "energy_kwh": round(
+                self._compute_energy_consumption_in_kwh(total_usage_time, device_type), 2
+            ),
             "country_code": country_code,
             "carbon_intensity_factor": carbon_intensity_factor,
             "device_type": device_type,
@@ -113,19 +116,26 @@ class EReuse2025EnvironmentalImpactAlgorithm(EnvironmentImpactAlgorithm):
             "disk_change_count": len(disk_change_indices),
         }
 
-    def _compute_co2_emissions_while_in_use_with_lifecycle(
-        self, total_usage_time: int, device_type: str, carbon_intensity_factor: float
-    ) -> dict:
-        """Compute CO2 emissions using lifecycle total usage time."""
+    def _compute_energy_consumption_in_kwh(
+        self, total_usage_time: int, device_type: str
+    ) -> float:
+        """Estimated electricity used over the lifecycle (idle + sleep)."""
         energy_kwh_idle = self._compute_energy_consumption_in_kwh_while_idle(
             total_usage_time, device_type
         )
         energy_kwh_sleeping = self._compute_energy_consumption_while_sleeping(
             total_usage_time, device_type
         )
-        kgco2e_consumption_in_use = (
-            carbon_intensity_factor * (energy_kwh_idle + energy_kwh_sleeping) / 1000
+        return energy_kwh_idle + energy_kwh_sleeping
+
+    def _compute_co2_emissions_while_in_use_with_lifecycle(
+        self, total_usage_time: int, device_type: str, carbon_intensity_factor: float
+    ) -> dict:
+        """Compute CO2 emissions using lifecycle total usage time."""
+        energy_kwh = self._compute_energy_consumption_in_kwh(
+            total_usage_time, device_type
         )
+        kgco2e_consumption_in_use = carbon_intensity_factor * energy_kwh / 1000
         return {
             "in_use": kgco2e_consumption_in_use,
             "carbon_intensity_factor": carbon_intensity_factor,
@@ -212,9 +222,7 @@ class EReuse2025EnvironmentalImpactAlgorithm(EnvironmentImpactAlgorithm):
             device_types_count[d_type] = device_types_count.get(d_type, 0) + 1
             device_country = data.get("country_code")
             countries_count[device_country] = countries_count.get(device_country, 0) + 1
-            device_factor = data.get("carbon_intensity_factor")
-            if device_factor:
-                total_energy_kwh += device_kg_CO2e * 1000 / device_factor
+            total_energy_kwh += data.get("energy_kwh", 0.0)
             for warning in data.get("warnings", []):
                 if warning not in warnings:
                     warnings.append(warning)
@@ -252,6 +260,7 @@ class EReuse2025EnvironmentalImpactAlgorithm(EnvironmentImpactAlgorithm):
             "total_devices": len(devices),
             "total_usage_time": total_usage_time,
             "total_reuse_time": total_reuse_time,
+            "total_energy_kwh": round(total_energy_kwh, 2),
             "device_types_breakdown": device_types_str,
             "country_code": country_code,
             "carbon_intensity_factor": carbon_intensity_factor,

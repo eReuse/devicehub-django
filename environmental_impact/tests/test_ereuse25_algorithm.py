@@ -83,6 +83,7 @@ class EReuse2025AlgorithmTests(unittest.TestCase):
             "evidence_count",
             "disk_change_count",
             "hours_in_sleep_mode",
+            "energy_kwh",
             "country_code",
             "carbon_intensity_factor",
             "device_type",
@@ -497,3 +498,41 @@ class EReuse2025AlgorithmTests(unittest.TestCase):
             data["carbon_intensity_factor"], (2 * 47.619 + 44.179) / 3, places=3
         )
         self.assertGreater(impact.kg_CO2e["in_use"], 0)
+
+    @patch(
+        "environmental_impact.algorithms.common.render_algorithm_docs",
+        return_value="Algorithm Docs",
+    )
+    def test_device_impact_reports_energy_consistent_with_co2(self, mock_render_docs):
+        self.device.type = Device.Types.DESKTOP
+        institution = SimpleNamespace(country="FR")
+
+        impact = self.algorithm.get_device_environmental_impact(
+            self.device, institution=institution
+        )
+
+        data = impact.relevant_input_data
+        expected_kwh = self.algorithm._compute_energy_consumption_in_kwh(
+            data["total_usage_time"], Device.Types.DESKTOP
+        )
+        self.assertAlmostEqual(data["energy_kwh"], expected_kwh, places=2)
+        # CO2 = energy x country factor, so the energy card and the CO2 agree.
+        self.assertAlmostEqual(
+            impact.kg_CO2e["in_use"], data["energy_kwh"] * 44.179 / 1000, places=2
+        )
+
+    @patch(
+        "environmental_impact.algorithms.common.render_algorithm_docs",
+        return_value="Algorithm Docs",
+    )
+    def test_lot_impact_sums_device_energy(self, mock_render_docs):
+        devices = [self._lot_device("dev-1"), self._lot_device("dev-2")]
+
+        impact = self.algorithm.get_lot_environmental_impact(devices)
+        device_impact = self.algorithm.get_device_environmental_impact(devices[0])
+
+        self.assertAlmostEqual(
+            impact.relevant_input_data["total_energy_kwh"],
+            2 * device_impact.relevant_input_data["energy_kwh"],
+            places=2,
+        )
