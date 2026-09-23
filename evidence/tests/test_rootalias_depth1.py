@@ -93,12 +93,24 @@ class RootAliasDepth1Tests(TestCase):
     def test_set_alias_allows_pointing_to_missing_custom_id(self):
         self._sp("ereuse24:a1")
         RootAlias.set_alias(
-            self.institution, "ereuse24:a1", "custom_id:X",
+            self.institution, "ereuse24:a1", "custom_id:x",
         )
         ra = RootAlias.objects.get(
             owner=self.institution, alias="ereuse24:a1"
         )
-        self.assertEqual(ra.root, "custom_id:X")
+        self.assertEqual(ra.root, "custom_id:x")
+
+    def test_set_alias_normalizes_both_identifiers_to_lowercase(self):
+        self._sp("ereuse24:a1")
+
+        RootAlias.set_alias(
+            self.institution, "EREUSE24:A1", "CUSTOM_ID:Phone-01",
+        )
+
+        ra = RootAlias.objects.get(
+            owner=self.institution, alias="ereuse24:a1"
+        )
+        self.assertEqual(ra.root, "custom_id:phone-01")
 
     # -- set_alias rejects chains ---------------------------------------
 
@@ -160,25 +172,25 @@ class RootAliasSyncMembershipsTests(TestCase):
             DeviceLot.objects.filter(lot=self.lot).count(), 2
         )
 
-        RootAlias.set_alias(self.institution, "ereuse24:x1", "custom_id:A1")
-        RootAlias.set_alias(self.institution, "ereuse24:x2", "custom_id:A1")
+        RootAlias.set_alias(self.institution, "ereuse24:x1", "custom_id:a1")
+        RootAlias.set_alias(self.institution, "ereuse24:x2", "custom_id:a1")
 
         rows = DeviceLot.objects.filter(lot=self.lot)
         self.assertEqual(rows.count(), 1)
-        self.assertEqual(rows.first().device_id, "custom_id:A1")
+        self.assertEqual(rows.first().device_id, "custom_id:a1")
 
     def test_set_alias_rewrites_devicelot_to_new_root(self):
         self.lot.add("ereuse24:x1")
-        RootAlias.set_alias(self.institution, "ereuse24:x1", "custom_id:A1")
+        RootAlias.set_alias(self.institution, "ereuse24:x1", "custom_id:a1")
         self.assertEqual(
             DeviceLot.objects.get(lot=self.lot).device_id,
-            "custom_id:A1",
+            "custom_id:a1",
         )
 
     def test_set_alias_reset_to_self_ref_is_allowed(self):
         """Resetting alias -> alias must succeed even when the current
         root is not terminal (pre-existing custom edge)."""
-        RootAlias.set_alias(self.institution, "ereuse24:x1", "custom_id:A")
+        RootAlias.set_alias(self.institution, "ereuse24:x1", "custom_id:a")
         # "Delete" the alias — resets to self-reference.
         RootAlias.set_alias(self.institution, "ereuse24:x1", "ereuse24:x1")
         ra = RootAlias.objects.get(owner=self.institution, alias="ereuse24:x1")
@@ -203,16 +215,16 @@ class RootAliasSyncMembershipsTests(TestCase):
         row represents the remaining group members; do not touch it."""
         self.lot.add("ereuse24:x1")
         self.lot.add("ereuse24:x2")
-        RootAlias.set_alias(self.institution, "ereuse24:x1", "custom_id:A")
-        RootAlias.set_alias(self.institution, "ereuse24:x2", "custom_id:A")
+        RootAlias.set_alias(self.institution, "ereuse24:x1", "custom_id:a")
+        RootAlias.set_alias(self.institution, "ereuse24:x2", "custom_id:a")
         # one collapsed row now
         self.assertEqual(
             DeviceLot.objects.filter(lot=self.lot).count(), 1
         )
-        # x1 leaves the group; x2 remains under custom_id:A
+        # x1 leaves the group; x2 remains under custom_id:a
         RootAlias.set_alias(self.institution, "ereuse24:x1", "ereuse24:x1")
         row = DeviceLot.objects.get(lot=self.lot)
-        self.assertEqual(row.device_id, "custom_id:A")
+        self.assertEqual(row.device_id, "custom_id:a")
 
     def test_set_alias_collapses_existing_devicebeneficiary_rows(self):
         shop = LotSubscription.objects.create(
@@ -231,9 +243,9 @@ class RootAliasSyncMembershipsTests(TestCase):
             status=DeviceBeneficiary.Status.INTERESTED,
         )
 
-        RootAlias.set_alias(self.institution, "ereuse24:x1", "custom_id:A1")
-        RootAlias.set_alias(self.institution, "ereuse24:x2", "custom_id:A1")
+        RootAlias.set_alias(self.institution, "ereuse24:x1", "custom_id:a1")
+        RootAlias.set_alias(self.institution, "ereuse24:x2", "custom_id:a1")
 
         rows = DeviceBeneficiary.objects.filter(beneficiary=b)
         self.assertEqual(rows.count(), 1)
-        self.assertEqual(rows.first().device_id, "custom_id:A1")
+        self.assertEqual(rows.first().device_id, "custom_id:a1")

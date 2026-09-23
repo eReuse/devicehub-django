@@ -76,7 +76,22 @@ class MobileSnapshotTests(TestCase):
         )
         alias = RootAlias.objects.filter(owner=self.institution, alias=prop.value).first()
         self.assertIsNotNone(alias)
-        self.assertEqual(alias.root, "custom_id:AUCOOP-0042")
+        self.assertEqual(alias.root, "custom_id:aucoop-0042")
+
+    def test_manual_id_alias_change_is_logged_once(self):
+        from action.models import DeviceLog
+
+        first = mobile_snapshot("AUCOOP-LOG")
+        Build(first, self.user)
+        Build(mobile_snapshot("AUCOOP-LOG"), self.user)
+
+        logs = DeviceLog.objects.filter(
+            institution=self.institution,
+            event__contains="Evidence alias",
+        )
+        self.assertEqual(logs.count(), 1)
+        self.assertEqual(logs.first().snapshot_uuid, uuid.UUID(first["uuid"]))
+        self.assertIn("custom_id:aucoop-log", logs.first().event)
 
     def test_same_manual_id_collapses_to_one_device(self):
         # Two scans, same sticker, different app UUID (e.g. after factory reset).
@@ -130,7 +145,9 @@ class MobileSnapshotTests(TestCase):
         props = {
             p.key: p.value
             for p in UserProperty.objects.filter(
-                device_id="custom_id:{}".format(snap["data"]["device"]["manual_id"]),
+                device_id="custom_id:{}".format(
+                    snap["data"]["device"]["manual_id"].lower()
+                ),
                 owner=self.institution,
                 type=UserProperty.Type.USER,
             )
@@ -149,7 +166,9 @@ class MobileSnapshotTests(TestCase):
         props = {
             p.key: p.value
             for p in UserProperty.objects.filter(
-                device_id="custom_id:{}".format(snap["data"]["device"]["manual_id"]),
+                device_id="custom_id:{}".format(
+                    snap["data"]["device"]["manual_id"].lower()
+                ),
                 owner=self.institution,
                 type=UserProperty.Type.USER,
             )
@@ -165,7 +184,9 @@ class MobileSnapshotTests(TestCase):
         props = {
             p.key: p.value
             for p in UserProperty.objects.filter(
-                device_id="custom_id:{}".format(snap["data"]["device"]["manual_id"]),
+                device_id="custom_id:{}".format(
+                    snap["data"]["device"]["manual_id"].lower()
+                ),
                 owner=self.institution,
                 type=UserProperty.Type.USER,
             )
@@ -194,7 +215,7 @@ class MobileSnapshotTests(TestCase):
         props = {
             p.key: p.value
             for p in UserProperty.objects.filter(
-                owner=self.institution, device_id="custom_id:AUCOOP-REEST", type=UserProperty.Type.USER
+                owner=self.institution, device_id="custom_id:aucoop-reest", type=UserProperty.Type.USER
             )
         }
         self.assertEqual(props.get("usage:power_on_hours"), "12345")
@@ -228,7 +249,7 @@ class MobileSnapshotTests(TestCase):
 
         Build(mobile_snapshot("AUCOOP-PAGE"), self.user)
 
-        device = Device(id="custom_id:AUCOOP-PAGE", owner=self.institution)
+        device = Device(id="custom_id:aucoop-page", owner=self.institution)
         props = {p.key: p.value for p in device.get_user_properties()}
         self.assertEqual(props.get("hwtest:verdict"), "OK")
         self.assertEqual(props.get("hwtest:screen"), "PASS")
@@ -244,7 +265,7 @@ class MobileSnapshotTests(TestCase):
 
         current = UserProperty.objects.filter(
             owner=self.institution,
-            device_id="custom_id:AUCOOP-RESCAN",
+            device_id="custom_id:aucoop-rescan",
             key="hwtest:screen",
         )
         self.assertEqual(current.count(), 1)
@@ -264,7 +285,7 @@ class MobileSnapshotTests(TestCase):
         second["data"]["hwtest"]["results"][2] = {"id": "charging", "status": "PASS"}
         Build(second, self.user)
 
-        device = Device(id="custom_id:AUCOOP-STALE", owner=self.institution)
+        device = Device(id="custom_id:aucoop-stale", owner=self.institution)
         props = {p.key: p.value for p in device.get_user_properties()}
         self.assertEqual(props.get("hwtest:charging"), "PASS")
         self.assertNotIn("hwtest:charging:note", props)
@@ -285,7 +306,7 @@ class MobileSnapshotTests(TestCase):
         del second["data"]["hwtest"]
         Build(second, self.user)
 
-        device = Device(id="custom_id:AUCOOP-PARTIAL", owner=self.institution)
+        device = Device(id="custom_id:aucoop-partial", owner=self.institution)
         props = {p.key: p.value for p in device.get_user_properties()}
         self.assertEqual(props.get("hwtest:screen"), "PASS")
         self.assertEqual(props.get("hwtest:charging:note"), "no charger at hand")
@@ -302,7 +323,7 @@ class MobileSnapshotTests(TestCase):
         self.assertEqual(
             UserProperty.objects.filter(
                 owner=self.institution,
-                device_id="custom_id:AUCOOP-ONLY-PRODUCT",
+                device_id="custom_id:aucoop-only-product",
                 key="hwtest:screen",
             ).count(),
             1,

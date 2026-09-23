@@ -224,7 +224,28 @@ class RootAlias(models.Model):
         DeviceLot/DeviceBeneficiary rows are collapsed/migrated so the
         canonical invariant holds (same logic as migration 0012).
         """
+        requested_alias = alias
+        alias = alias.lower()
         existing = cls.objects.filter(owner=owner, alias=alias).first()
+        if existing is None and requested_alias != alias:
+            # Do not fork a legacy mixed-case identifier into a second row.
+            existing = cls.objects.filter(
+                owner=owner,
+                alias=requested_alias,
+            ).first()
+            if existing is not None:
+                alias = requested_alias
+
+        requested_root = new_root
+        new_root = new_root.lower()
+        if requested_root != new_root and cls.objects.filter(
+            owner=owner,
+            alias=requested_root,
+        ).exists():
+            # Existing data predating lowercase normalization keeps its
+            # identity; newly introduced roots always use lowercase.
+            new_root = requested_root
+
         old_root = existing.root if existing else None
 
         if new_root != alias:

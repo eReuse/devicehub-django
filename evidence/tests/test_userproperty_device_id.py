@@ -299,7 +299,7 @@ class DataMigrationLogicTests(TestCase):
 
         sp = SystemProperty.objects.filter(uuid=sp_uuid).first()
         root = RootAlias.resolve_root(self.inst, sp.value)
-        self.assertEqual(root, "custom_id:CANON")
+        self.assertEqual(root, "custom_id:canon")
 
     def test_duplicate_device_id_after_migration_deduplicated(self):
         sp1 = uuid.uuid4()

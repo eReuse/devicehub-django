@@ -67,15 +67,34 @@ class Build(BuildMix):
         if not self.manual_id or not chid:
             return
 
+        owner = self.user.institution
+        existing = RootAlias.objects.filter(
+            owner=owner,
+            alias=chid.lower(),
+        ).first()
+        old_root = existing.root if existing else None
+
         try:
-            RootAlias.set_alias(
-                self.user.institution,
+            alias = RootAlias.set_alias(
+                owner,
                 chid,
                 "custom_id:{}".format(self.manual_id),
                 user=self.user,
             )
         except ValueError as err:
             logger.warning("Could not link %s to custom_id:%s: %s", chid, self.manual_id, err)
+            return
+
+        if old_root == alias.root:
+            return
+        if old_root is None:
+            event = "<Created> Evidence alias. Value: '{}'".format(alias.root)
+        else:
+            event = (
+                "<Updated> Evidence alias. Old Value: '{}'. New Value: '{}'"
+                .format(old_root, alias.root)
+            )
+        self.log(event)
 
     def store_properties(self):
         """Store hardware-test results, OS data and usage estimation as
