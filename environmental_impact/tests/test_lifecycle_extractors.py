@@ -1,10 +1,12 @@
 import json
+from datetime import datetime, timezone
 from pathlib import Path
 from types import SimpleNamespace
 
 from django.test import TestCase
 
 from environmental_impact.algorithms.ereuse2025.lifecycle_extractors import (
+    get_evidence_datetime,
     get_evidences_data_from_device,
 )
 from environmental_impact.algorithms.ereuse2025.time_calculations import (
@@ -84,3 +86,42 @@ class LifecycleExtractorsTests(TestCase):
         )
         self.assertEqual([e.poh for e in evidences_data], [1086, 1109])
         self.assertEqual(calculate_reuse_time(evidences_data), 23)
+
+    def test_get_evidences_data_sorts_mixed_timezone_formats(self):
+        def evidence(uuid, doc, poh):
+            return SimpleNamespace(
+                uuid=uuid,
+                doc=doc,
+                inxi=True,
+                get_time_created=lambda: "2026-05-20T14:43:36.535743+00:00",
+                get_components=lambda: [
+                    {
+                        "type": "Storage",
+                        "time of used": poh,
+                        "serialNumber": "disk-1",
+                        "model": "disk-model",
+                        "manufacturer": "disk-maker",
+                    }
+                ],
+            )
+
+        # Legacy Workbench dates are aware, workbench-script dates are naive.
+        legacy = evidence("legacy", {"endTime": "2022-06-09T12:10:50.809Z"}, "45d 6h")
+        script = evidence("script", {"timestamp": "2025-12-06 09:00:00.000000"}, "46d 5h")
+        device = SimpleNamespace(evidences=[script, legacy])
+
+        evidences_data = get_evidences_data_from_device(device)
+
+        self.assertEqual([e.uuid for e in evidences_data], ["legacy", "script"])
+
+    def test_get_evidence_datetime_reads_naive_values_as_utc(self):
+        evidence = SimpleNamespace(
+            uuid="naive",
+            doc={"timestamp": "2025-12-06 09:00:00"},
+            get_time_created=lambda: None,
+        )
+
+        self.assertEqual(
+            get_evidence_datetime(evidence),
+            datetime(2025, 12, 6, 9, 0, tzinfo=timezone.utc),
+        )
