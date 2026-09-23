@@ -3,6 +3,35 @@
 
 <!-- Device Details -->
     <div class="tab-pane fade show active" id="details">
+          {% if product_photos %}
+          <div class="card mb-4">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+              <span class="fw-bold">
+                <i class="bi bi-images me-2"></i>{% trans "Photos" %}
+              </span>
+              <a href="#photos" class="btn btn-sm btn-outline-primary"
+                 data-open-product-photos>
+                {% trans "View all" %} ({{ product_photos|length }})
+              </a>
+            </div>
+            <div class="card-body">
+              <div class="row g-2">
+                {% for photo in product_photos|slice:":4" %}
+                  <div class="{% if forloop.first %}col-12 col-md-6{% else %}col-4 col-md-2{% endif %}">
+                    <a href="{% url 'evidence:photo_file_index' photo.evidence_uuid photo.index %}"
+                       target="_blank" rel="noopener noreferrer">
+                      <img src="{% url 'evidence:photo_file_index' photo.evidence_uuid photo.index %}"
+                           class="img-fluid rounded border w-100"
+                           alt="{% trans 'Product photo' %} {{ forloop.counter }}"
+                           style="height: {% if forloop.first %}260{% else %}130{% endif %}px; object-fit: contain; background: #f8f9fa;">
+                    </a>
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+          {% endif %}
+
           <h5 class="card-title">{% trans 'Details' %}</h5>
           <hr>
           <div class="row mb-3">
