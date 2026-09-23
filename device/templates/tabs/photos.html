@@ -1,0 +1,55 @@
+{% load i18n %}
+{% trans "Photo" as fallback_photo_name %}
+
+{% if product_photos %}
+<div class="tab-pane fade" id="photos">
+  <h5 class="card-title mb-4">
+    {% trans "Product photos" %}
+    <span class="badge bg-secondary ms-1">{{ product_photos|length }}</span>
+  </h5>
+
+  {% for evidence in photo_evidences %}
+    <div class="card mb-4">
+      <div class="card-header bg-light d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <div>
+          <i class="bi bi-camera me-2"></i>
+          <strong>{% trans "Photo evidence" %}</strong>
+          <span class="text-muted ms-2">{{ evidence.created }}</span>
+          {% if evidence.uploaded_by %}
+            <span class="text-muted ms-2">· {{ evidence.uploaded_by }}</span>
+          {% endif %}
+        </div>
+        <a href="{% url 'evidence:details' evidence.uuid %}" class="btn btn-sm btn-outline-secondary">
+          {% trans "View evidence" %}
+        </a>
+      </div>
+
+      <div class="card-body">
+        <div class="row g-3">
+          {% for photo in evidence.photos %}
+            <div class="col-sm-6 col-lg-4 col-xl-3">
+              <div class="card h-100">
+                <a href="{% url 'evidence:photo_file_index' photo.evidence_uuid photo.index %}"
+                   target="_blank" rel="noopener noreferrer">
+                  <img src="{% url 'evidence:photo_file_index' photo.evidence_uuid photo.index %}"
+                       class="card-img-top"
+                       alt="{% trans 'Product photo' %} {{ forloop.counter }}"
+                       style="height: 240px; object-fit: contain; background: #f8f9fa;">
+                </a>
+                <div class="card-body py-2 small">
+                  <div class="text-break fw-bold">
+                    {{ photo.original_name|default:fallback_photo_name }}
+                  </div>
+                  {% if photo.size %}
+                    <div class="text-muted">{{ photo.size|filesizeformat }}</div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+{% endif %}

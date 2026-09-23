@@ -178,6 +178,41 @@ class DetailsView(DashboardView, TemplateView ):
 
         return self.get(request, *args, **kwargs)
 
+    def _get_product_photos(self):
+        """Collect every photo attached to this product, newest evidence first."""
+        groups = []
+        photos = []
+
+        for evidence in self.object.evidences:
+            try:
+                if not evidence.is_photo_evidence():
+                    continue
+                evidence_photos = evidence.get_photos()
+            except Exception:
+                continue
+
+            group_photos = []
+            for index, photo in enumerate(evidence_photos):
+                if not isinstance(photo, dict):
+                    continue
+                item = {
+                    **photo,
+                    "evidence_uuid": evidence.uuid,
+                    "index": index,
+                }
+                group_photos.append(item)
+                photos.append(item)
+
+            if group_photos:
+                groups.append({
+                    "uuid": evidence.uuid,
+                    "created": evidence.created,
+                    "uploaded_by": evidence.uploaded_by,
+                    "photos": group_photos,
+                })
+
+        return photos, groups
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         self.object.initial()
@@ -206,6 +241,7 @@ class DetailsView(DashboardView, TemplateView ):
             enviromental_impact = None
         last_evidence = self.object.get_last_evidence()
         uuids = self.object.uuids
+        product_photos, photo_evidences = self._get_product_photos()
 
         ev_queryset = Evidence.get_device_evidences(self.request.user, uuids)
         evidence_table = EvidenceTable(ev_queryset, exclude =('device', ))
@@ -229,6 +265,8 @@ class DetailsView(DashboardView, TemplateView ):
         context.update({
             'object': self.object,
             'snapshot': last_evidence,
+            'product_photos': product_photos,
+            'photo_evidences': photo_evidences,
             'lot_tags': lot_tags,
             'dpps': dpps,
             'impact': enviromental_impact,

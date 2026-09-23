@@ -164,6 +164,13 @@
         <li class="nav-item">
           <a href="#components" class="nav-link" data-bs-toggle="tab" data-bs-target="#components">{% trans 'Components' %}</a>
         </li>
+        {% if product_photos %}
+        <li class="nav-item">
+          <a id="photos-tab" href="#photos" class="nav-link" data-bs-toggle="tab" data-bs-target="#photos">
+            {% trans 'Photos' %} <span class="badge bg-secondary">{{ product_photos|length }}</span>
+          </a>
+        </li>
+        {% endif %}
         <li class="nav-item">
           <a href="#evidences" class="nav-link" data-bs-toggle="tab" data-bs-target="#evidences">{% trans 'Evidences' %}</a>
         </li>
@@ -197,6 +204,8 @@
   {% include 'tabs/lots.html' %}
 
   {% include 'tabs/components.html' %}
+
+  {% include 'tabs/photos.html' %}
 
   {% include 'tabs/evidences.html' %}
 
@@ -256,6 +265,16 @@
           const targetId = event.target.getAttribute('data-bs-target')
           // Update URL
           history.pushState(null, null, targetId)
+        })
+      })
+
+      document.querySelectorAll('[data-open-product-photos]').forEach(link => {
+        link.addEventListener('click', function (event) {
+          event.preventDefault()
+          const photosTab = document.getElementById('photos-tab')
+          if (photosTab) {
+            bootstrap.Tab.getOrCreateInstance(photosTab).show()
+          }
         })
       })
     })
