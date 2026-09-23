@@ -12,6 +12,7 @@ and skip the customer-use gap in between.
 """
 
 import unittest
+from datetime import datetime, timezone
 from unittest.mock import Mock, patch
 
 from device.models import Device
@@ -144,15 +145,22 @@ class EvidenceTimelineTests(unittest.TestCase):
         device = Mock(spec=Device)
         device.uuids = ["u2", "u1"]
 
+        # u1 was taken first but uploaded last. workbench-script documents
+        # have a naive "timestamp" and no "endTime"; legacy ones are aware.
         evidences = {
-            "u1": Mock(created="2025-01-01"),
-            "u2": Mock(created="2025-05-01"),
+            "u1": Mock(
+                doc={"endTime": "2025-01-01T10:00:00Z"},
+                get_time_created=Mock(return_value="2026-09-23T11:00:02+00:00"),
+            ),
+            "u2": Mock(
+                doc={"timestamp": "2025-05-01 09:00:00.000000"},
+                get_time_created=Mock(return_value="2026-09-23T11:00:01+00:00"),
+            ),
         }
 
         def fake_evidence(uuid):
             ev = evidences[uuid]
             ev.get_doc = Mock()
-            ev.get_time = Mock()
             return ev
 
         def fake_poh(ev):
@@ -166,9 +174,16 @@ class EvidenceTimelineTests(unittest.TestCase):
         ):
             timeline = evidence_timeline(device)
 
-        # Sorted oldest-first regardless of uuids order.
+        # Sorted oldest-first by the evidence's own date, not upload order.
         self.assertEqual([t["uuid"] for t in timeline], ["u1", "u2"])
         self.assertEqual([t["poh"] for t in timeline], [100, 700])
+        self.assertEqual(
+            [t["date"] for t in timeline],
+            [
+                datetime(2025, 1, 1, 10, 0, tzinfo=timezone.utc),
+                datetime(2025, 5, 1, 9, 0, tzinfo=timezone.utc),
+            ],
+        )
 
 
 if __name__ == "__main__":

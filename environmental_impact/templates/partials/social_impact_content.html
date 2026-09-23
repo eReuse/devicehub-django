@@ -23,7 +23,7 @@
                 {% if social.intervals %}
                   <ul class="mb-0 ps-3">
                     {% for iv in social.intervals %}
-                      <li>{{ iv.from }} &rarr; {{ iv.to }}</li>
+                      <li>{{ iv.from|date:"Y-m-d H:i" }} &rarr; {{ iv.to|date:"Y-m-d H:i" }}</li>
                     {% endfor %}
                   </ul>
                 {% else %}
@@ -66,7 +66,7 @@
                     <select name="vulnerable_from" class="form-select form-select-sm">
                       <option value="">{% trans 'From…' %}</option>
                       {% for ev in social.timeline %}
-                        <option value="{{ ev.uuid }}" {% if iv.from_uuid == ev.uuid %}selected{% endif %}>{{ ev.date|default:ev.uuid }} ({{ ev.poh }}h)</option>
+                        <option value="{{ ev.uuid }}" {% if iv.from_uuid == ev.uuid %}selected{% endif %}>{{ ev.date|date:"Y-m-d H:i"|default:ev.uuid }} ({{ ev.poh }}h)</option>
                       {% endfor %}
                     </select>
                   </div>
@@ -74,7 +74,7 @@
                     <select name="vulnerable_to" class="form-select form-select-sm">
                       <option value="">{% trans 'Ongoing (latest)' %}</option>
                       {% for ev in social.timeline %}
-                        <option value="{{ ev.uuid }}" {% if iv.to_uuid == ev.uuid %}selected{% endif %}>{{ ev.date|default:ev.uuid }} ({{ ev.poh }}h)</option>
+                        <option value="{{ ev.uuid }}" {% if iv.to_uuid == ev.uuid %}selected{% endif %}>{{ ev.date|date:"Y-m-d H:i"|default:ev.uuid }} ({{ ev.poh }}h)</option>
                       {% endfor %}
                     </select>
                   </div>
@@ -89,7 +89,7 @@
                   <select name="vulnerable_from" class="form-select form-select-sm">
                     <option value="">{% trans 'From…' %}</option>
                     {% for ev in social.timeline %}
-                      <option value="{{ ev.uuid }}">{{ ev.date|default:ev.uuid }} ({{ ev.poh }}h)</option>
+                      <option value="{{ ev.uuid }}">{{ ev.date|date:"Y-m-d H:i"|default:ev.uuid }} ({{ ev.poh }}h)</option>
                     {% endfor %}
                   </select>
                 </div>
@@ -97,7 +97,7 @@
                   <select name="vulnerable_to" class="form-select form-select-sm">
                     <option value="">{% trans 'Ongoing (latest)' %}</option>
                     {% for ev in social.timeline %}
-                      <option value="{{ ev.uuid }}">{{ ev.date|default:ev.uuid }} ({{ ev.poh }}h)</option>
+                      <option value="{{ ev.uuid }}">{{ ev.date|date:"Y-m-d H:i"|default:ev.uuid }} ({{ ev.poh }}h)</option>
                     {% endfor %}
                   </select>
                 </div>

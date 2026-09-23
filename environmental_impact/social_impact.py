@@ -36,6 +36,7 @@ from typing import TYPE_CHECKING
 
 from evidence.models import Evidence, UserProperty
 from .algorithms.common import get_poh_from_device, get_poh_from_evidence
+from .algorithms.ereuse2025.lifecycle_extractors import get_evidence_datetime
 
 if TYPE_CHECKING:
     from device.models import Device
@@ -108,23 +109,24 @@ def read_flagged_uuids(device: "Device", institution: "Institution") -> set:
 def evidence_timeline(device: "Device") -> list:
     """Ordered (oldest-first) evidence timeline with power-on hours.
 
-    Each entry is ``{"uuid", "date", "poh"}``. One Xapian doc fetch per
-    evidence; fine for the handful of snapshots a device has today, but worth
-    caching if periodic snapshots make timelines long.
+    Each entry is ``{"uuid", "date", "poh"}``, where ``date`` is when the
+    evidence was taken (the same date the environmental calculation sorts
+    by), not when it was uploaded. Evidences without a date go last. One
+    Xapian doc fetch per evidence; fine for the handful of snapshots a device
+    has today, but worth caching if periodic snapshots make timelines long.
     """
     items = []
     for uuid in device.uuids or []:
         ev = Evidence(uuid)
         ev.get_doc()
-        ev.get_time()
         items.append(
             {
                 "uuid": str(uuid),
-                "date": ev.created,
+                "date": get_evidence_datetime(ev),
                 "poh": get_poh_from_evidence(ev),
             }
         )
-    items.sort(key=lambda x: x["date"] or "")
+    items.sort(key=lambda x: (x["date"] is None, x["date"] or 0, x["uuid"]))
     return items
 
 
