@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 from functools import lru_cache
 
@@ -9,6 +10,12 @@ from django.conf import settings
 
 DATA_FILENAME = "latest_carbon_intensity_by_country.json"
 
+logger = logging.getLogger(__name__)
+
+
+class CarbonIntensityDataError(RuntimeError):
+    pass
+
 
 def get_default_country_code() -> str:
     return settings.ENVIRONMENTAL_IMPACT_DEFAULT_COUNTRY
@@ -17,9 +24,22 @@ def get_default_country_code() -> str:
 @lru_cache(maxsize=1)
 def get_carbon_intensity_data() -> dict[str, float]:
     data_path = os.path.join(os.path.dirname(__file__), DATA_FILENAME)
-    with open(data_path, "r", encoding="utf-8") as data_file:
-        raw_data = json.load(data_file)
-    return {country_code: float(value) for country_code, value in raw_data.items()}
+    try:
+        with open(data_path, "r", encoding="utf-8") as data_file:
+            raw_data = json.load(data_file)
+        if not isinstance(raw_data, dict) or not raw_data:
+            raise ValueError("carbon-intensity data must be a non-empty object")
+
+        data = {}
+        for country_code, value in raw_data.items():
+            if not isinstance(country_code, str) or len(country_code) != 2:
+                raise ValueError(f"invalid country code: {country_code!r}")
+            data[country_code.upper()] = float(value)
+        return data
+    except (OSError, TypeError, ValueError) as error:
+        message = f"Unable to load versioned carbon-intensity data from {data_path}"
+        logger.exception(message)
+        raise CarbonIntensityDataError(message) from error
 
 
 @lru_cache(maxsize=1)
@@ -85,16 +105,24 @@ def get_carbon_intensity_factor_from(country_code: str) -> float:
 def resolve_carbon_intensity_factor(country_code: str | None) -> tuple[float, str | None]:
     default_country_code = get_default_country_code()
     normalized_country_code = (country_code or default_country_code).upper()
+    data = get_carbon_intensity_data()
 
-    try:
-        return get_carbon_intensity_factor_from(normalized_country_code), None
-    except KeyError:
-        fallback_factor = get_carbon_intensity_factor_from(default_country_code)
-        warning = (
-            f"Unknown country code '{normalized_country_code}'. "
-            f"Using {default_country_code} carbon intensity fallback."
+    if normalized_country_code in data:
+        return data[normalized_country_code], None
+
+    fallback_country_code = default_country_code
+    if fallback_country_code not in data:
+        raise CarbonIntensityDataError(
+            "Configured default country "
+            f"{default_country_code!r} is missing from the versioned "
+            "carbon-intensity data"
         )
-        return fallback_factor, warning
+    fallback_factor = data[fallback_country_code]
+    warning = (
+        f"Unknown country code '{normalized_country_code}'. "
+        f"Using {fallback_country_code} carbon intensity fallback."
+    )
+    return fallback_factor, warning
 
 
 class carbon_intensity:

@@ -1,6 +1,7 @@
 import io
 import json
 import os
+import tempfile
 
 import pandas as pd
 import requests
@@ -81,8 +82,27 @@ def save_latest_carbon_intensity_data(output_path: str | None = None) -> str:
     if not output_path:
         output_path = os.path.join(os.path.dirname(__file__), OUTPUT_FILENAME)
     data = fetch_latest_carbon_intensity_data()
-    with open(output_path, "w", encoding="utf-8") as output_file:
-        json.dump(data, output_file, sort_keys=True, indent=2)
+    output_path = os.path.abspath(output_path)
+    output_directory = os.path.dirname(output_path)
+    file_descriptor, temporary_path = tempfile.mkstemp(
+        dir=output_directory,
+        prefix=f".{os.path.basename(output_path)}.",
+        suffix=".tmp",
+    )
+    try:
+        with os.fdopen(file_descriptor, "w", encoding="utf-8") as output_file:
+            json.dump(data, output_file, sort_keys=True, indent=2)
+            output_file.write("\n")
+            output_file.flush()
+            os.fsync(output_file.fileno())
+        os.chmod(temporary_path, 0o644)
+        os.replace(temporary_path, output_path)
+    except Exception:
+        try:
+            os.unlink(temporary_path)
+        except FileNotFoundError:
+            pass
+        raise
     return output_path
 
 
