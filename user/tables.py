@@ -1,4 +1,5 @@
 import django_tables2 as tables
+from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 
@@ -48,6 +49,7 @@ class TokensTable(tables.Table):
             orderable=False,
             verbose_name="Edit"
             )
+    qr = tables.Column(verbose_name=_("QR"), empty_values=(), orderable=False)
     token = tables.Column(verbose_name=_("Token"), empty_values=())
     tag = tables.Column(verbose_name=_("Tag"), empty_values=())
 
@@ -56,6 +58,19 @@ class TokensTable(tables.Table):
 
     def render_edit_token(self):
         return format_html('<i class="bi bi-pencil-square"></i>')
+
+    def render_qr(self, record):
+        """Button only: the QR carries the token, so it stays hidden until
+        the user asks for it (token.html loads the image on click)."""
+        return format_html(
+            '<button type="button" class="btn btn-sm btn-outline-secondary js-token-qr"'
+            ' data-qr-url="{}" data-tag="{}" title="{}">'
+            '<i class="bi bi-qr-code"></i> {}</button>',
+            reverse("user:token_qr", args=[record.pk]),
+            record.tag or "",
+            _("Show the token as a QR code"),
+            _("Show QR"),
+        )
 
     # def render_token(self, record):
     #     return record.get_memberships()

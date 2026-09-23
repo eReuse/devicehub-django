@@ -23,4 +23,49 @@
 
   </div>
 </div>
+
+<div class="modal fade" id="tokenQrModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{% translate "Token QR code" %} <span id="tokenQrTag" class="text-muted"></span></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% translate 'Close' %}"></button>
+      </div>
+      <div class="modal-body text-center">
+        {# Loaded on open and dropped on close, so the credential is not left on screen. #}
+        <img id="tokenQrImage" alt="{% translate 'Token QR code' %}" class="img-fluid" />
+        <p class="text-danger small mt-3 mb-0">
+          {% translate "Anyone who scans this code can upload evidences as your institution. Do not share it or print it." %}
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extrascript %}
+<script>
+  (function () {
+    var modalEl = document.getElementById('tokenQrModal');
+    var image = document.getElementById('tokenQrImage');
+    var tag = document.getElementById('tokenQrTag');
+    if (!modalEl || !image) return;
+
+    var modal = null;
+
+    document.addEventListener('click', function (e) {
+      var button = e.target.closest('.js-token-qr');
+      if (!button) return;
+      image.src = button.dataset.qrUrl;
+      tag.textContent = button.dataset.tag || '';
+      modal = modal || new bootstrap.Modal(modalEl);
+      modal.show();
+    });
+
+    modalEl.addEventListener('hidden.bs.modal', function () {
+      image.removeAttribute('src');
+    });
+  })();
+</script>
 {% endblock %}
