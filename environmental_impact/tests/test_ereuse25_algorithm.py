@@ -1,6 +1,7 @@
 import unittest
 from unittest.mock import Mock, patch
 from types import SimpleNamespace
+from django.test import override_settings
 from environmental_impact.algorithms.ereuse2025.ereuse2025 import (
     EReuse2025EnvironmentalImpactAlgorithm,
 )
@@ -301,6 +302,24 @@ class EReuse2025AlgorithmTests(unittest.TestCase):
 
         self.assertEqual(impact.relevant_input_data["country_code"], "ES")
         self.assertEqual(impact.relevant_input_data["carbon_intensity_factor"], 146.154)
+
+    @override_settings(ENVIRONMENTAL_IMPACT_DEFAULT_COUNTRY="FR")
+    @patch(
+        "environmental_impact.algorithms.common.render_algorithm_docs",
+        return_value="Algorithm Docs",
+    )
+    def test_environmental_impact_uses_configured_default_country(
+        self, mock_render_docs
+    ):
+        self.device.type = Device.Types.DESKTOP
+        institution = SimpleNamespace(country=None)
+
+        impact = self.algorithm.get_device_environmental_impact(
+            self.device, institution=institution
+        )
+
+        self.assertEqual(impact.relevant_input_data["country_code"], "FR")
+        self.assertEqual(impact.relevant_input_data["carbon_intensity_factor"], 44.179)
 
     @patch(
         "environmental_impact.algorithms.common.render_algorithm_docs",

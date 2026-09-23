@@ -7,7 +7,7 @@ from device.models import Device
 from ..algorithm_interface import EnvironmentImpactAlgorithm
 from environmental_impact.models import EnvironmentalImpact, DeviceEnvironmentalProfile
 from environmental_impact.algorithms import common
-from .carbon_intensity import carbon_intensity
+from .carbon_intensity import carbon_intensity, get_default_country_code
 from .lifecycle_extractors import get_evidences_data_from_device
 from .disk_change_detector import detect_disk_changes
 from .time_calculations import calculate_total_usage_time, calculate_reuse_time
@@ -17,8 +17,6 @@ if TYPE_CHECKING:
 
 
 class EReuse2025EnvironmentalImpactAlgorithm(EnvironmentImpactAlgorithm):
-
-    default_country_code = "ES"
 
     algorithm_constants = {
         "AVG_KWATTS_DESKTOP_IDLE": 0.039,
@@ -76,7 +74,7 @@ class EReuse2025EnvironmentalImpactAlgorithm(EnvironmentImpactAlgorithm):
                 return profile.country.upper()
         country_code = getattr(owner, "country", None)
         if not country_code:
-            return self.default_country_code
+            return get_default_country_code()
         return country_code.upper()
 
     def _get_normalized_device_type(self, device_type: str) -> str:
@@ -200,7 +198,7 @@ class EReuse2025EnvironmentalImpactAlgorithm(EnvironmentImpactAlgorithm):
         total_usage_time = 0
         total_reuse_time = 0
         device_types_count = {}
-        country_code = self.default_country_code
+        country_code = get_default_country_code()
         warnings = []
         for device in devices:
             device_env_impact = self.get_device_environmental_impact(device, institution)

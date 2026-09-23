@@ -4,10 +4,14 @@ from functools import lru_cache
 
 from babel import Locale
 from babel.core import UnknownLocaleError
+from django.conf import settings
 
 
-DEFAULT_COUNTRY_CODE = "ES"
 DATA_FILENAME = "latest_carbon_intensity_by_country.json"
+
+
+def get_default_country_code() -> str:
+    return settings.ENVIRONMENTAL_IMPACT_DEFAULT_COUNTRY
 
 
 @lru_cache(maxsize=1)
@@ -74,20 +78,21 @@ def get_carbon_intensity_factor_from(country_code: str) -> float:
     """
     Get carbon intensity factor for a given ISO 3166-1 alpha-2 country code.
     """
-    normalized_country_code = (country_code or DEFAULT_COUNTRY_CODE).upper()
+    normalized_country_code = (country_code or get_default_country_code()).upper()
     return get_carbon_intensity_data()[normalized_country_code]
 
 
 def resolve_carbon_intensity_factor(country_code: str | None) -> tuple[float, str | None]:
-    normalized_country_code = (country_code or DEFAULT_COUNTRY_CODE).upper()
+    default_country_code = get_default_country_code()
+    normalized_country_code = (country_code or default_country_code).upper()
 
     try:
         return get_carbon_intensity_factor_from(normalized_country_code), None
     except KeyError:
-        fallback_factor = get_carbon_intensity_factor_from(DEFAULT_COUNTRY_CODE)
+        fallback_factor = get_carbon_intensity_factor_from(default_country_code)
         warning = (
             f"Unknown country code '{normalized_country_code}'. "
-            f"Using {DEFAULT_COUNTRY_CODE} carbon intensity fallback."
+            f"Using {default_country_code} carbon intensity fallback."
         )
         return fallback_factor, warning
 
