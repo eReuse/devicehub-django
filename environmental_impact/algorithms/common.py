@@ -1,7 +1,9 @@
 import os
 from typing import List, Dict, Optional
 from device.models import Device
+from evidence.estimators import estimate_mobile_power_on_hours
 from evidence.models import Evidence
+from utils.constants import WORKBENCH_ANDROID
 from .docs_renderer import render_docs
 
 
@@ -20,6 +22,10 @@ def get_poh_from_evidence(evidence: Evidence) -> int:
         int: Power-on hours, or 0 if unable to determine
     """
     try:
+        mobile_poh = get_mobile_poh_from_evidence(evidence)
+        if mobile_poh:
+            return mobile_poh
+
         # Check if it's legacy workbench (no inxi data)
         is_legacy_workbench = not evidence.inxi
         if is_legacy_workbench:
@@ -39,6 +45,16 @@ def get_poh_from_evidence(evidence: Evidence) -> int:
 
     except Exception:
         return 0  # Default fallback for any errors
+
+
+def get_mobile_poh_from_evidence(evidence: Evidence) -> int:
+    """Extract or estimate power-on hours from a workbench-android evidence."""
+    doc = getattr(evidence, "doc", None) or {}
+    if doc.get("software") != WORKBENCH_ANDROID:
+        return 0
+
+    estimate = estimate_mobile_power_on_hours(doc.get("data") or {})
+    return estimate.hours if estimate else 0
 
 
 def get_poh_from_device(device: Device) -> int:

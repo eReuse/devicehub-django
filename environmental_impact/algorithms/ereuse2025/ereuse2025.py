@@ -50,7 +50,11 @@ class EReuse2025EnvironmentalImpactAlgorithm(EnvironmentImpactAlgorithm):
         return env_impact
 
     def _get_normalized_device_type(self, device_type: str) -> str:
-        if device_type in [Device.Types.DESKTOP, Device.Types.LAPTOP]:
+        if device_type in [
+            Device.Types.DESKTOP,
+            Device.Types.LAPTOP,
+            Device.Types.SMARTPHONE,
+        ]:
             return device_type
         return "Unknown"
 
