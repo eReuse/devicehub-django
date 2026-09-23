@@ -19,6 +19,7 @@ from credentials.services import CredentialService
 from dashboard.mixins import DashboardView, Http403
 from device.forms import DeviceAttributeFormSet, DeviceMainForm
 from device.models import Device, DeviceType
+from device.product_projection import ProjectionFactory
 from django_tables2 import RequestConfig
 from environmental_impact.algorithms.algorithm_factory import (
     FactoryEnvironmentImpactAlgorithm,
@@ -206,6 +207,7 @@ class DetailsView(DashboardView, TemplateView ):
             enviromental_impact = None
         last_evidence = self.object.get_last_evidence()
         uuids = self.object.uuids
+        projection = ProjectionFactory.for_device(self.object)
 
         ev_queryset = Evidence.get_device_evidences(self.request.user, uuids)
         evidence_table = EvidenceTable(ev_queryset, exclude =('device', ))
@@ -229,6 +231,7 @@ class DetailsView(DashboardView, TemplateView ):
         context.update({
             'object': self.object,
             'snapshot': last_evidence,
+            'product_projection': projection,
             'lot_tags': lot_tags,
             'dpps': dpps,
             'impact': enviromental_impact,
@@ -259,6 +262,8 @@ class PublicDeviceWebView(TemplateView):
         if not self.object.get_last_evidence():
             raise Http404
 
+        self.projection = ProjectionFactory.for_device(self.object)
+
         if self.request.headers.get('Accept') == 'application/json':
             return self.get_json_response()
         return super().get(request, *args, **kwargs)
@@ -277,7 +282,8 @@ class PublicDeviceWebView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update({
-            'object': self.object
+            'object': self.object,
+            'product_projection': self.projection,
         })
         return context
 
