@@ -199,10 +199,32 @@ class DetailsView(DashboardView, TemplateView ):
 
         return self.get(request, *args, **kwargs)
 
+    def _get_owned_device_id(self, pk):
+        """Resolve ``pk`` only when it belongs to the current institution.
+
+        Device identifiers are not globally unique, and POST requests do not
+        pass through ``get()``. Resolve aliases within the current tenant and
+        require the identifier in its RootAlias catalog before changing data
+        associated with the device. The SystemProperty fallback covers legacy
+        rows created before RootAlias became the canonical catalog.
+        """
+        institution = self.request.user.institution
+        known_alias = RootAlias.objects.filter(owner=institution).filter(
+            Q(alias=pk) | Q(root=pk)
+        ).exists()
+        legacy_property = SystemProperty.objects.filter(
+            owner=institution,
+            value=pk,
+        ).exists()
+        if not known_alias and not legacy_property:
+            raise Http404
+
+        return RootAlias.resolve_root(institution, pk)
+
     def _save_environmental_profile(self, request, pk):
         institution = request.user.institution
-        root = RootAlias.objects.filter(owner=institution, alias=pk).first()
-        device_id = root.root if root else pk
+        self.request = request
+        device_id = self._get_owned_device_id(pk)
         country_code = (request.POST.get("country_code") or "").strip().upper()
 
         if not country_code:
@@ -245,9 +267,8 @@ class DetailsView(DashboardView, TemplateView ):
         are cleared first so unmarking works.
         """
         institution = request.user.institution
-        root = RootAlias.objects.filter(owner=institution, alias=pk).first()
-        device_id = root.root if root else pk
-
+        self.request = request
+        device_id = self._get_owned_device_id(pk)
         device = Device(id=device_id, owner=institution)
         device.initial()
         last_evidence = device.last_evidence
