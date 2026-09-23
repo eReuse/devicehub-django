@@ -279,11 +279,11 @@ class DetailsView(DashboardView, TemplateView ):
         UserProperty.objects.update_or_create(
             uuid=last_evidence.uuid,
             key=SocialKeys.VULNERABLE,
+            owner=institution,
             defaults={
                 "value": (
                     TRUE_VALUE if request.POST.get("vulnerable_person") else FALSE_VALUE
                 ),
-                "owner": institution,
                 "user": request.user,
                 "type": UserProperty.Type.USER,
             },
