@@ -64,6 +64,9 @@
                             class="form-select form-select-sm"
                             onchange="this.form.requestSubmit()"
                           >
+                            {% if impact.relevant_input_data.country_breakdown %}
+                              <option value="" disabled selected>{% trans 'Several countries' %}: {{ impact.relevant_input_data.country_breakdown }}</option>
+                            {% endif %}
                             <option value="">{% trans 'Use institution default' %}</option>
                             {% for country_code, country_label in environmental_country_choices %}
                               <option value="{{ country_code }}" {% if lot_country_override == country_code %}selected{% endif %}>{{ country_label }}</option>
@@ -97,7 +100,12 @@
               </tr>
               <tr>
                 <th>{% trans 'Carbon intensity factor' %}</th>
-                <td>{{ impact.relevant_input_data.carbon_intensity_factor|default:'-' }}</td>
+                <td>
+                  {{ impact.relevant_input_data.carbon_intensity_factor|default:'-' }}
+                  {% if impact.relevant_input_data.country_breakdown %}
+                    <span class="text-muted small">({% trans 'weighted average' %})</span>
+                  {% endif %}
+                </td>
               </tr>
             </tbody>
           </table>

@@ -198,23 +198,49 @@ class EReuse2025EnvironmentalImpactAlgorithm(EnvironmentImpactAlgorithm):
         total_usage_time = 0
         total_reuse_time = 0
         device_types_count = {}
-        country_code = get_default_country_code()
+        countries_count = {}
+        total_energy_kwh = 0.0
         warnings = []
         for device in devices:
             device_env_impact = self.get_device_environmental_impact(device, institution)
-            total_kg_CO2e["in_use"] += device_env_impact.kg_CO2e.get("in_use", 0.0)
+            device_kg_CO2e = device_env_impact.kg_CO2e.get("in_use", 0.0)
+            total_kg_CO2e["in_use"] += device_kg_CO2e
             data = device_env_impact.relevant_input_data
             total_usage_time += data.get("total_usage_time", 0)
             total_reuse_time += data.get("reuse_time", 0)
             d_type = data.get("device_type", "Unknown")
             device_types_count[d_type] = device_types_count.get(d_type, 0) + 1
-            country_code = data.get("country_code", country_code)
+            device_country = data.get("country_code")
+            countries_count[device_country] = countries_count.get(device_country, 0) + 1
+            device_factor = data.get("carbon_intensity_factor")
+            if device_factor:
+                total_energy_kwh += device_kg_CO2e * 1000 / device_factor
             for warning in data.get("warnings", []):
                 if warning not in warnings:
                     warnings.append(warning)
-        carbon_intensity_factor, _ = carbon_intensity.resolve_carbon_intensity_factor(
-            country_code
-        )
+
+        # Each device is converted with its own country factor. A lot that
+        # spans several countries has no single country, so report the
+        # breakdown and the energy-weighted factor that yields the total.
+        country_breakdown = None
+        if len(countries_count) > 1:
+            country_code = None
+            country_breakdown = ", ".join(
+                f"{code}: {count}"
+                for code, count in sorted(
+                    countries_count.items(), key=lambda item: (-item[1], item[0] or "")
+                )
+            )
+            carbon_intensity_factor = (
+                round(total_kg_CO2e["in_use"] * 1000 / total_energy_kwh, 3)
+                if total_energy_kwh
+                else None
+            )
+        else:
+            country_code = next(iter(countries_count), None) or get_default_country_code()
+            carbon_intensity_factor, _ = carbon_intensity.resolve_carbon_intensity_factor(
+                country_code
+            )
         env_impact.kg_CO2e = total_kg_CO2e
         env_impact.docs = common.render_algorithm_docs(
             "docs.md", os.path.dirname(__file__)
@@ -230,6 +256,8 @@ class EReuse2025EnvironmentalImpactAlgorithm(EnvironmentImpactAlgorithm):
             "country_code": country_code,
             "carbon_intensity_factor": carbon_intensity_factor,
         }
+        if country_breakdown:
+            env_impact.relevant_input_data["country_breakdown"] = country_breakdown
         if warnings:
             env_impact.relevant_input_data["warnings"] = warnings
         return env_impact

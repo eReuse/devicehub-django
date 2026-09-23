@@ -443,3 +443,57 @@ class EReuse2025AlgorithmTests(unittest.TestCase):
         lot_impact = self.algorithm.get_lot_environmental_impact(devices)
 
         self.assertAlmostEqual(lot_impact.kg_CO2e["in_use"], expected_total, places=6)
+
+    def _lot_device(self, device_id):
+        device = Mock(spec=Device)
+        device.id = device_id
+        device.type = Device.Types.LAPTOP
+        device.last_evidence = self.device.last_evidence
+        device.evidences = [self.device.last_evidence]
+        return device
+
+    @patch(
+        "environmental_impact.algorithms.common.render_algorithm_docs",
+        return_value="Algorithm Docs",
+    )
+    def test_lot_impact_reports_single_country(self, mock_render_docs):
+        devices = [self._lot_device("dev-1"), self._lot_device("dev-2")]
+
+        with patch.object(self.algorithm, "_get_country_code", return_value="NA"):
+            impact = self.algorithm.get_lot_environmental_impact(devices)
+
+        self.assertEqual(impact.relevant_input_data["country_code"], "NA")
+        self.assertEqual(impact.relevant_input_data["carbon_intensity_factor"], 47.619)
+        self.assertNotIn("country_breakdown", impact.relevant_input_data)
+
+    @patch(
+        "environmental_impact.algorithms.common.render_algorithm_docs",
+        return_value="Algorithm Docs",
+    )
+    def test_lot_impact_with_several_countries_reports_breakdown(
+        self, mock_render_docs
+    ):
+        devices = [
+            self._lot_device("dev-na-1"),
+            self._lot_device("dev-na-2"),
+            self._lot_device("dev-fr"),
+        ]
+        countries = {"dev-na-1": "NA", "dev-na-2": "NA", "dev-fr": "FR"}
+
+        with patch.object(
+            self.algorithm,
+            "_get_country_code",
+            side_effect=lambda device, institution=None: countries[device.id],
+        ):
+            impact = self.algorithm.get_lot_environmental_impact(devices)
+
+        data = impact.relevant_input_data
+        # No single country: the last device must not stand for the lot.
+        self.assertIsNone(data["country_code"])
+        self.assertEqual(data["country_breakdown"], "NA: 2, FR: 1")
+        # Every device has the same energy use, so the energy-weighted factor
+        # is the plain mean, and it reproduces the lot total.
+        self.assertAlmostEqual(
+            data["carbon_intensity_factor"], (2 * 47.619 + 44.179) / 3, places=3
+        )
+        self.assertGreater(impact.kg_CO2e["in_use"], 0)

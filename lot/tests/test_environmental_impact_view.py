@@ -3,6 +3,7 @@ from unittest.mock import patch
 
 from django.test import RequestFactory, TestCase
 
+from environmental_impact.models import DeviceEnvironmentalProfile
 from lot.views import LotEnvironmentalImpactView
 from user.models import Institution, User
 
@@ -50,3 +51,37 @@ class LotEnvironmentalImpactViewTests(TestCase):
         self.assertEqual(devices, [device_with_evidence])
         mock_device.assert_any_call(id="dev-1", owner=self.institution)
         mock_device.assert_any_call(id="dev-2", owner=self.institution)
+
+    def _view(self):
+        request = self.factory.get("/lot/1/environmental-impact")
+        request.user = self.user
+        view = LotEnvironmentalImpactView()
+        view.request = request
+        return view
+
+    def _profile(self, device_chid, country):
+        DeviceEnvironmentalProfile.objects.create(
+            device_chid=device_chid,
+            owner=self.institution,
+            country=country,
+        )
+
+    def test_lot_country_override_when_every_device_shares_it(self):
+        devices = [SimpleNamespace(id="dev-1"), SimpleNamespace(id="dev-2")]
+        self._profile("dev-1", "NA")
+        self._profile("dev-2", "NA")
+
+        self.assertEqual(self._view()._get_lot_country_override(devices), "NA")
+
+    def test_lot_country_override_empty_when_some_devices_use_default(self):
+        devices = [SimpleNamespace(id="dev-1"), SimpleNamespace(id="dev-2")]
+        self._profile("dev-1", "FR")
+
+        self.assertEqual(self._view()._get_lot_country_override(devices), "")
+
+    def test_lot_country_override_empty_when_overrides_differ(self):
+        devices = [SimpleNamespace(id="dev-1"), SimpleNamespace(id="dev-2")]
+        self._profile("dev-1", "NA")
+        self._profile("dev-2", "PL")
+
+        self.assertEqual(self._view()._get_lot_country_override(devices), "")

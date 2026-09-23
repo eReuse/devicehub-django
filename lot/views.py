@@ -439,14 +439,7 @@ class LotEnvironmentalImpactView(DashboardLotMixing, TemplateView):
         context = super().get_context_data(**kwargs)
         devices = self._get_devices_with_evidence()
         env_impact = self._compute_environmental_impact(devices)
-        distinct_countries = sorted(
-            set(
-                DeviceEnvironmentalProfile.objects.filter(
-                    owner=self.request.user.institution,
-                    device_chid__in=[device.id for device in devices],
-                ).values_list("country", flat=True)
-            )
-        )
+        lot_country_override = self._get_lot_country_override(devices)
         country_code = (
             env_impact.relevant_input_data.get("country_code")
             if env_impact
@@ -457,7 +450,7 @@ class LotEnvironmentalImpactView(DashboardLotMixing, TemplateView):
             'impact': env_impact,
             'device_count': len(devices),
             'devices_with_evidence': len(devices),
-            'lot_country_override': distinct_countries[0] if len(distinct_countries) == 1 else '',
+            'lot_country_override': lot_country_override,
             'environmental_country_choices': get_available_country_choices(language_code),
             'environmental_country_label': get_country_label(country_code, language_code),
             'breadcrumb': [
@@ -480,6 +473,26 @@ class LotEnvironmentalImpactView(DashboardLotMixing, TemplateView):
             if device.last_evidence:
                 devices_with_evidence.append(device)
         return devices_with_evidence
+
+    def _get_lot_country_override(self, devices) -> str:
+        """Country to preselect: only when every device has that override.
+
+        If some devices have no override they still use the institution
+        default, so no single country represents the lot.
+        """
+        if not devices:
+            return ''
+        override_countries = list(
+            DeviceEnvironmentalProfile.objects.filter(
+                owner=self.request.user.institution,
+                device_chid__in=[device.id for device in devices],
+            ).values_list("country", flat=True)
+        )
+        if len(override_countries) != len(devices):
+            return ''
+        if len(set(override_countries)) != 1:
+            return ''
+        return override_countries[0] or ''
 
     def _save_environmental_profile(self, request, pk):
         self.request = request
