@@ -1,6 +1,8 @@
 from django.contrib.messages.storage.fallback import FallbackStorage
 from django.contrib.sessions.middleware import SessionMiddleware
+from django.db import connection
 from django.test import RequestFactory, TestCase
+from django.test.utils import CaptureQueriesContext
 
 from environmental_impact.models import DeviceEnvironmentalProfile
 from lot.models import Lot, LotTag, DeviceLot
@@ -65,6 +67,62 @@ class LotEnvironmentalProfileViewTests(TestCase):
         )
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, f"/lot/{self.lot.pk}/environmental-impact")
+
+    def test_save_environmental_profile_updates_existing_and_creates_missing(self):
+        existing_profile = DeviceEnvironmentalProfile.objects.create(
+            device_chid=self.device_id,
+            owner=self.institution,
+            country="ES",
+        )
+        previous_updated = existing_profile.updated
+        request = self._build_request("NA")
+        view = LotEnvironmentalImpactView()
+        view.request = request
+
+        response = view._save_environmental_profile(request, self.lot.pk)
+
+        profiles = DeviceEnvironmentalProfile.objects.filter(
+            device_chid__in=[self.device_id, self.other_device_id],
+            owner=self.institution,
+        )
+        self.assertEqual(profiles.count(), 2)
+        self.assertEqual(set(profiles.values_list("country", flat=True)), {"NA"})
+        existing_profile.refresh_from_db()
+        self.assertGreater(existing_profile.updated, previous_updated)
+        self.assertEqual(response.status_code, 302)
+
+    def test_save_environmental_profile_uses_bulk_upsert(self):
+        DeviceLot.objects.bulk_create(
+            [
+                DeviceLot(
+                    lot=self.lot,
+                    device_id=f"ereuse24:bulk-{index}",
+                )
+                for index in range(100)
+            ]
+        )
+        request = self._build_request("NA")
+        view = LotEnvironmentalImpactView()
+        view.request = request
+
+        with CaptureQueriesContext(connection) as queries:
+            view._save_environmental_profile(request, self.lot.pk)
+
+        profile_table = DeviceEnvironmentalProfile._meta.db_table.lower()
+        profile_inserts = [
+            query["sql"]
+            for query in queries
+            if query["sql"].lstrip().lower().startswith("insert")
+            and profile_table in query["sql"].lower()
+        ]
+        self.assertEqual(len(profile_inserts), 1)
+        self.assertEqual(
+            DeviceEnvironmentalProfile.objects.filter(
+                owner=self.institution,
+                country="NA",
+            ).count(),
+            102,
+        )
 
     def test_save_environmental_profile_empty_value_removes_override(self):
         DeviceEnvironmentalProfile.objects.create(

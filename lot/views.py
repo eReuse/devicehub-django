@@ -509,12 +509,19 @@ class LotEnvironmentalImpactView(DashboardLotMixing, TemplateView):
             )
             return redirect(reverse_lazy("lot:environmental_impact", args=[pk]))
 
-        for device_id in device_ids:
-            DeviceEnvironmentalProfile.objects.update_or_create(
-                device_chid=device_id,
-                owner=request.user.institution,
-                defaults={"country": country_code},
-            )
+        DeviceEnvironmentalProfile.objects.bulk_create(
+            [
+                DeviceEnvironmentalProfile(
+                    device_chid=device_id,
+                    owner=request.user.institution,
+                    country=country_code,
+                )
+                for device_id in device_ids
+            ],
+            update_conflicts=True,
+            update_fields=["country", "updated"],
+            unique_fields=["device_chid", "owner"],
+        )
         messages.success(
             request,
             _("Environmental impact country updated to %(country)s for %(count)s devices.")
