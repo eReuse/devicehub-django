@@ -268,7 +268,7 @@ class RootAlias(models.Model):
 
     @classmethod
     def _sync_memberships(cls, owner, alias, new_root, old_root=None):
-        """Keep DeviceLot/DeviceBeneficiary canonical after an edge change.
+        """Keep device-related rows canonical after an alias edge change.
 
         Any row whose ``device_id`` is one of the new canonical family's
         physical aliases is rewritten to ``new_root`` and deduplicated
@@ -280,8 +280,8 @@ class RootAlias(models.Model):
         rows would be orphaned; migrate them to ``new_root`` so the
         device keeps its membership under its new identity.
         """
-        # Lazy imports to avoid a circular dependency at module load time
-        # (lot.models imports from evidence.models).
+        # Lazy imports avoid circular dependencies at module load time.
+        from environmental_impact.models import DeviceEnvironmentalProfile
         from lot.models import DeviceLot, DeviceBeneficiary
 
         physicals = set(cls.physical_aliases(owner, alias))
@@ -355,6 +355,20 @@ class RootAlias(models.Model):
         UserProperty.objects.filter(
             pk__in=winner_pks.values(),
         ).exclude(device_id=new_root).update(device_id=new_root)
+
+        # A country override belongs to the canonical device too. If two
+        # devices with profiles are merged, retain the most recently edited
+        # profile, remove the duplicate, and attach the survivor to new_root.
+        profiles = DeviceEnvironmentalProfile.objects.filter(
+            owner=owner,
+            device_chid__in=physicals,
+        ).order_by("-updated", "-pk")
+        winning_profile = profiles.first()
+        if winning_profile:
+            profiles.exclude(pk=winning_profile.pk).delete()
+            DeviceEnvironmentalProfile.objects.filter(
+                pk=winning_profile.pk,
+            ).exclude(device_chid=new_root).update(device_chid=new_root)
 
 
 @receiver(post_save, sender=SystemProperty)
