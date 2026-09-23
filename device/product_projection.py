@@ -1,6 +1,9 @@
 from dataclasses import dataclass, field
 
 from device.models import Device
+from environmental_impact.algorithms.ereuse2025.lifecycle_extractors import (
+    get_evidence_datetime,
+)
 from evidence.models import Evidence
 
 
@@ -144,15 +147,27 @@ class ProjectionFactory:
     @staticmethod
     def evidences_for(device):
         device.get_uuids()
-        evidences = []
-        for uuid in device.uuids:  # SystemProperty.created descending
+        dated_evidences = []
+        undated_evidences = []
+        for uuid in device.uuids:
             try:
                 evidence = Evidence(uuid)
-                if not evidence.is_photo_evidence():
-                    evidences.append(evidence)
+                if evidence.is_photo_evidence():
+                    continue
+                evidence_datetime = get_evidence_datetime(evidence)
+                if evidence_datetime:
+                    dated_evidences.append((evidence_datetime, evidence))
+                else:
+                    undated_evidences.append(evidence)
             except Exception:
                 continue
-        return evidences
+
+        dated_evidences.sort(
+            key=lambda item: (item[0], str(item[1].uuid)),
+            reverse=True,
+        )
+        undated_evidences.sort(key=lambda evidence: str(evidence.uuid))
+        return [evidence for _, evidence in dated_evidences] + undated_evidences
 
     @classmethod
     def detect_type(cls, evidences):
