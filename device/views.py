@@ -299,6 +299,41 @@ class DetailsView(DashboardView, TemplateView ):
         messages.success(request, _("Social impact information updated."))
         return redirect(reverse_lazy("product:details", args=[pk]) + "#social_impact")
 
+    def _get_product_photos(self):
+        """Collect every photo attached to this product, newest evidence first."""
+        groups = []
+        photos = []
+
+        for evidence in self.object.evidences:
+            try:
+                if not evidence.is_photo_evidence():
+                    continue
+                evidence_photos = evidence.get_photos()
+            except Exception:
+                continue
+
+            group_photos = []
+            for index, photo in enumerate(evidence_photos):
+                if not isinstance(photo, dict):
+                    continue
+                item = {
+                    **photo,
+                    "evidence_uuid": evidence.uuid,
+                    "index": index,
+                }
+                group_photos.append(item)
+                photos.append(item)
+
+            if group_photos:
+                groups.append({
+                    "uuid": evidence.uuid,
+                    "created": evidence.created,
+                    "uploaded_by": evidence.uploaded_by,
+                    "photos": group_photos,
+                })
+
+        return photos, groups
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         self.object.initial()
@@ -339,6 +374,7 @@ class DetailsView(DashboardView, TemplateView ):
         last_evidence = self.object.get_last_evidence()
         uuids = self.object.uuids
         projection = ProjectionFactory.for_device(self.object)
+        product_photos, photo_evidences = self._get_product_photos()
 
         ev_queryset = Evidence.get_device_evidences(self.request.user, uuids)
         evidence_table = EvidenceTable(ev_queryset, exclude =('device', ))
@@ -363,6 +399,8 @@ class DetailsView(DashboardView, TemplateView ):
             'object': self.object,
             'snapshot': last_evidence,
             'product_projection': projection,
+            'product_photos': product_photos,
+            'photo_evidences': photo_evidences,
             'lot_tags': lot_tags,
             'dpps': dpps,
             'impact': enviromental_impact,
@@ -397,6 +435,8 @@ class PublicDeviceWebView(TemplateView):
         if not self.object.get_last_evidence():
             raise Http404
 
+        self.projection = ProjectionFactory.for_device(self.object)
+
         if self.request.headers.get('Accept') == 'application/json':
             return self.get_json_response()
         return super().get(request, *args, **kwargs)
@@ -415,7 +455,8 @@ class PublicDeviceWebView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update({
-            'object': self.object
+            'object': self.object,
+            'product_projection': self.projection,
         })
         return context
 
