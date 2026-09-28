@@ -1,6 +1,6 @@
 FROM python:3.11.14-bookworm
 
-# last line is dependencies for weasyprint (for generating pdfs in lafede pilot) https://doc.courtbouillon.org/weasyprint/stable/first_steps.html#debian-11
+# last line is dependencies for weasyprint (PDF export of environmental impact reports) https://doc.courtbouillon.org/weasyprint/stable/first_steps.html#debian-11
 RUN apt update && \
     apt-get install -y \
     python3-xapian \
@@ -18,6 +18,7 @@ RUN apt update && \
     tesseract-ocr-spa \
     zbar-tools \
     imagemagick \
+    libpango-1.0-0 libpangoft2-1.0-0 libharfbuzz-subset0 fonts-dejavu-core \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /opt/devicehub-django

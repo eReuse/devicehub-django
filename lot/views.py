@@ -31,6 +31,7 @@ from environmental_impact.algorithms.ereuse2026.ereuse2026 import (
 )
 from environmental_impact.algorithms.ereuse2026.model import UnsupportedDevice, aggregate_lot
 from environmental_impact.lot_presenters import lot_impact_view
+from environmental_impact.pdf import PdfUnavailable, render_lot_report_pdf
 from environmental_impact.reuse import lot_direction
 from environmental_impact.algorithms.ereuse2025.carbon_intensity import (
     get_available_country_choices,
@@ -435,6 +436,25 @@ class LotPropertiesView(DashboardLotMixing, TemplateView):
 class LotEnvironmentalImpactView(DashboardLotMixing, TemplateView):
     template_name = "lot_environmental_impact.html"
     title = _("Environmental Impact")
+
+    def get(self, request, *args, **kwargs):
+        if request.GET.get("format") == "pdf":
+            return self._export_pdf(request, *args, **kwargs)
+        return super().get(request, *args, **kwargs)
+
+    def _export_pdf(self, request, *args, **kwargs):
+        """The selected report (supplier, recipient or refurbisher) as a PDF download."""
+        context = self.get_context_data(**kwargs)
+        lv = context.get("impact_lot_v2")
+        if not lv:
+            messages.error(request, _("There is no environmental impact to export for this lot."))
+            return redirect(reverse_lazy("lot:environmental_impact", args=[kwargs["pk"]]))
+        try:
+            return render_lot_report_pdf(request, lv, request.user.institution.name)
+        except PdfUnavailable as err:
+            logger.error(f"PDF export unavailable: {err}")
+            messages.error(request, _("PDF export is not available on this server (WeasyPrint is not installed)."))
+            return redirect(reverse_lazy("lot:environmental_impact", args=[kwargs["pk"]]) + f"?view={lv['view']}")
 
     def post(self, request, *args, **kwargs):
         action = request.POST.get("action")

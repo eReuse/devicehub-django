@@ -48,6 +48,10 @@
     <li class="nav-item"><a class="nav-link {% if lv.view == 'supplier' %}active{% endif %}" href="?view=supplier&for={{ lv.prepared_for|urlencode }}">{% trans 'Supplier report' %}</a></li>
     <li class="nav-item"><a class="nav-link {% if lv.view == 'recipient' %}active{% endif %}" href="?view=recipient&for={{ lv.prepared_for|urlencode }}">{% trans 'Recipient report' %}</a></li>
   </ul>
+  <a class="btn btn-green-admin btn-sm {% if lv.view == 'refurbisher' %}ms-auto{% endif %} order-last"
+     href="?view={{ lv.view }}&for={{ lv.prepared_for|urlencode }}&format=pdf">
+    <i class="bi bi-file-earmark-pdf"></i> {% trans 'Export PDF' %}
+  </a>
   {% if lv.view != 'refurbisher' %}
     <form method="get" class="d-flex gap-2 align-items-end ms-auto">
       <input type="hidden" name="view" value="{{ lv.view }}">
@@ -220,11 +224,11 @@
     </div>
     <div class="d-flex flex-column gap-2">
       <h6 class="mb-0 dh-title">{% trans 'The manufacturing footprint your devices still had' %}</h6>
-      <p class="small text-muted mb-0">{% trans "A device's manufacturing footprint is spread over its working life. Compared with a typical first life (ITU-T L.1410 App. XV), part of it was still unused when your devices were handed over; recycled devices lose that part. Second users take on a share by hours of use (APOS, Roura et al. 2026). Only devices with a usable power-on reading." %}</p>
+      <p class="small text-muted mb-0">{% trans "A device's manufacturing footprint is spread over its working life. Compared with a typical first life (ITU-T L.1410 App. XV), part of it was still unused when your devices were handed over; recycled devices lose that part. Only devices with a usable power-on reading. (The recipient report uses a different split, by hours of use, to say what each second user carries.)" %}</p>
       <div class="eil-flow">
         <div><b>{{ lv.unused_text }}</b><span class="small text-muted">{% blocktrans with n=L.devices_with_life1_reading %}still unused vs a typical first life when handed over ({{ n }} devices with a reading){% endblocktrans %}</span></div>
-        <div><b>{{ lv.passed_on_text }}</b><span class="small text-muted">{% trans 'taken on by second users (APOS share by hours of use)' %}</span></div>
-        <div><b>{{ lv.unused_lost_text }}</b><span class="small text-muted">{% trans 'unused and lost with the recycled devices' %}</span></div>
+        <div><b>{{ lv.unused_carried_text }}</b><span class="small text-muted">{% trans 'of that, carried into a second life by the reused devices' %}</span></div>
+        <div><b>{{ lv.unused_lost_text }}</b><span class="small text-muted">{% trans 'of that, lost with the recycled devices' %}</span></div>
       </div>
       {% if lv.median_life1 %}
         <p class="small dh-soft p-2 mb-0">{% blocktrans with h=lv.median_life1|floatformat:"0g" past=L.devices_past_typical_life n=L.devices_with_life1_reading %}Median use before handover: <strong>{{ h }} powered-on hours</strong>. {{ past }} of {{ n }} devices had already passed a typical first life. <strong>Handing devices over earlier</strong> passes on more of their manufacturing footprint and gives the next user more useful years.{% endblocktrans %}</p>
