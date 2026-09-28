@@ -14,13 +14,14 @@ from statistics import median
 from django.utils.translation import gettext_lazy as _, ngettext
 
 from environmental_impact.algorithms.ereuse2026.model import DeviceImpact, LotImpact
+from environmental_impact.presenters import ITU_STAGE
 from environmental_impact.reuse import lot_direction
 
 VIEWS = ("refurbisher", "supplier", "recipient")
 DEFAULT_VIEW = {"incoming": "supplier", "outgoing": "recipient"}
 
 STAGES = [
-    ("manufacture", _("Manufacture"), _("stages A+B")),
+    ("manufacture", _("Manufacture"), _("raw material and production")),
     ("transport", _("Transport"), _("all legs")),
     ("use1", _("Use, life 1"), _("first owners")),
     ("refurbish", _("Refurbish"), _("not modelled")),
@@ -104,7 +105,7 @@ def lot_impact_view(lot: LotImpact, rows: list[tuple[object, DeviceImpact]], tag
     negative_max = max((-v for *_, v in stage_values if v < 0), default=0.0)
     span = positive_max + negative_max or 1.0
     stages = [
-        {"key": k, "label": label, "note": note, "value": v, "text": kg(v) if v else "—",
+        {"key": k, "label": label, "note": note, "itu": ITU_STAGE[k], "value": v, "text": kg(v) if v else "—",
          "up": _pct(max(v, 0), span), "down": _pct(max(-v, 0), span)}
         for k, label, note, v in stage_values
     ]

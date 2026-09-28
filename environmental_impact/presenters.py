@@ -20,6 +20,13 @@ STAGE_LABELS = [
     ("end_of_life", _("End of life")),
 ]
 
+# ITU-T L.1410 stage of each bar: transport ends production (§7.2.3.3.3) and
+# refurbishment is production B1 for refurbished goods (Fig. 12).
+ITU_STAGE = {
+    "manufacture": "A+B", "transport": "B", "use1": "C",
+    "refurbish": "B", "use2": "C", "end_of_life": "D",
+}
+
 
 PROVENANCE_LABELS = {
     "life1_hours": _("Life 1 hours"),
@@ -182,7 +189,7 @@ def device_impact_view(impact: DeviceImpact, inputs: DeviceInputs, marks: set[st
 
     divisor = impact.lifetime_years or 1.0
     stages = [
-        {"key": key, "label": label, "value": impact.stages.get(key, 0.0) / divisor}
+        {"key": key, "label": label, "itu": ITU_STAGE[key], "value": impact.stages.get(key, 0.0) / divisor}
         for key, label in STAGE_LABELS
     ]
     stage_max = max(s["value"] for s in stages) or 1.0

@@ -1,6 +1,7 @@
 {% load i18n %}
 {% with L=lv.lot %}
 <div class="dh-impact">
+{% include "partials/_stage_palette.html" %}
 <style>
   .dh-impact{--dh-primary:#7a9f4f;--dh-secondary:#9cc666;--dh-dark:#545f71;--dh-light:#f8f9fa;
     --dh-teal:#56beac;--dh-teal-soft:#a3e3d7;--dh-green-soft:#c7e3a3;--dh-yellow:#efe3b4;--dh-orange:#f5b587;--dh-grey:#f3f3f3;--dh-line:#e3e6e9}
@@ -27,9 +28,9 @@
   .eil-cols{display:grid;grid-template-columns:repeat(6,1fr);gap:.4rem;height:170px}
   .eil-col{display:grid;grid-template-rows:1fr auto;height:100%;font-size:.75rem;text-align:center}
   .eil-col .up{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;border-bottom:1px solid var(--dh-dark)}
-  .eil-col .fill{width:60%;background:var(--dh-secondary);border-radius:3px 3px 0 0}
+  .eil-col .fill{width:60%;border-radius:3px 3px 0 0}
   .eil-col .down{display:flex;flex-direction:column;align-items:center;min-height:1.6rem}
-  .eil-col .down .fill{background:var(--dh-orange);border-radius:0 0 3px 3px}
+  .eil-col .down .fill{border-radius:0 0 3px 3px}
   .eil-doc{max-width:880px;margin-inline:auto}
   .eil-flow{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem}
   .eil-flow div{background:var(--dh-light);border-left:3px solid var(--dh-secondary);border-radius:.4rem;padding:.6rem .75rem}
@@ -148,13 +149,13 @@
       <div class="eil-cols" role="img" aria-label="{% trans 'Emissions by life-cycle stage' %}">
         {% for s in lv.stages %}
           <div class="eil-col">
-            <div class="up"><span>{% if s.value > 0 %}{{ s.text }}{% endif %}</span><div class="fill" style="height:{{ s.up }}%" title="{{ s.label }}: {{ s.text }}"></div></div>
-            <div class="down">{% if s.value < 0 %}<div class="fill" style="height:{{ s.down }}%;min-height:3px" title="{{ s.label }}: {{ s.text }}"></div><span>{{ s.text }}</span>{% elif not s.value %}<span class="text-muted">—</span>{% endif %}</div>
+            <div class="up"><span>{% if s.value > 0 %}{{ s.text }}{% endif %}</span><div class="fill st-{{ s.key }}" style="height:{{ s.up }}%{% if s.value <= 0 %};box-shadow:none{% endif %}" title="{{ s.label }} ({{ s.itu }}): {{ s.text }}"></div></div>
+            <div class="down">{% if s.value < 0 %}<div class="fill st-credit" style="height:{{ s.down }}%;min-height:3px" title="{{ s.label }} ({{ s.itu }}): {{ s.text }}"></div><span>{{ s.text }}</span>{% elif not s.value %}<span class="text-muted">—</span>{% endif %}</div>
           </div>
         {% endfor %}
       </div>
       <div class="d-grid mt-1" style="grid-template-columns:repeat(6,1fr);gap:.4rem;font-size:.72rem;text-align:center">
-        {% for s in lv.stages %}<span>{{ s.label }}<br><span class="text-muted">{{ s.note }}</span></span>{% endfor %}
+        {% for s in lv.stages %}<span>{{ s.label }}<span class="st-letter">{{ s.itu }} · {{ s.note }}</span></span>{% endfor %}
       </div>
       <div class="d-flex flex-wrap gap-3 small text-muted border-top mt-2 pt-2">
         <span>{% trans 'Total' %}: <strong class="text-body">{{ lv.stages_total_text }} CO₂e</strong></span>
