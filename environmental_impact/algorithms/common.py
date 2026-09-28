@@ -26,25 +26,40 @@ def get_poh_from_evidence(evidence: Evidence) -> int:
         if mobile_poh:
             return mobile_poh
 
-        # Check if it's legacy workbench (no inxi data)
-        is_legacy_workbench = not evidence.inxi
-        if is_legacy_workbench:
-            return 0
-        # Try to get components from evidence
         try:
-            components = evidence.get_components()
-            if components:
-                for comp in components:
-                    if comp.get("type") == "Storage":
-                        str_time = comp.get("time of used", "")
-                        if str_time:
-                            return convert_str_time_to_hours(str_time)
+            for comp in evidence.get_components() or []:
+                hours = storage_hours(comp)
+                if hours:
+                    return hours
         except (AttributeError, TypeError):
             pass
         return 0  # Default if no storage found or no time data
 
     except Exception:
         return 0  # Default fallback for any errors
+
+
+# inxi evidences type disks as "Storage"; legacy workbench as SSD/HDD.
+STORAGE_TYPES = ("Storage", "SolidStateDrive", "HardDrive")
+
+
+def is_storage(comp: Dict) -> bool:
+    return comp.get("type") in STORAGE_TYPES
+
+
+def storage_hours(comp: Dict) -> int:
+    """Power-on hours of a disk component, 0 when it reports none.
+
+    inxi evidences carry a "time of used" string ("245d 7h"); legacy
+    workbench parses smartctl's power_on_time into an integer "hours".
+    """
+    if not is_storage(comp):
+        return 0
+    str_time = comp.get("time of used")
+    if str_time:
+        return convert_str_time_to_hours(str_time)
+    hours = comp.get("hours")
+    return hours if isinstance(hours, int) and hours > 0 else 0
 
 
 def get_mobile_poh_from_evidence(evidence: Evidence) -> int:
