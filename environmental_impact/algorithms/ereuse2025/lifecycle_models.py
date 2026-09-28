@@ -37,9 +37,11 @@ class EvidenceData:
         uuid: str,
         index: int,
         poh: int,
-        disk_metadata: DiskMetadata
+        disk_metadata: DiskMetadata,
+        date=None,
     ):
         self.uuid = uuid
         self.index = index
         self.poh = poh
         self.disk_metadata = disk_metadata
+        self.date = date

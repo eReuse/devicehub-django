@@ -80,12 +80,14 @@ def get_evidences_data_from_device(device: Device) -> List[EvidenceData]:
                     model=candidate_comp.get("model", ""),
                     manufacturer=candidate_comp.get("manufacturer", ""),
                 )
+        sort_rank, sort_value = _get_evidence_sort_key(evidence)
         evidences_data.append(
             EvidenceData(
                 uuid=evidence.uuid,
                 index=idx,
                 poh=poh,
                 disk_metadata=disk_metadata,
+                date=sort_value if sort_rank == 0 else None,
             )
         )
     return evidences_data

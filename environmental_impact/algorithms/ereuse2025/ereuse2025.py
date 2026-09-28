@@ -66,18 +66,7 @@ class EReuse2025EnvironmentalImpactAlgorithm(EnvironmentImpactAlgorithm):
     def _get_country_code(
         self, device: Device, institution: Institution | None = None
     ) -> str:
-        owner = institution or getattr(device, "owner", None)
-        if getattr(owner, "pk", None):
-            profile = DeviceEnvironmentalProfile.objects.filter(
-                device_chid=device.id,
-                owner=owner,
-            ).first()
-            if profile and profile.country:
-                return profile.country.upper()
-        country_code = getattr(owner, "country", None)
-        if not country_code:
-            return self.default_country_code
-        return country_code.upper()
+        return common.get_device_country_code(device, institution, self.default_country_code)
 
     def _get_normalized_device_type(self, device_type: str) -> str:
         if device_type in [
