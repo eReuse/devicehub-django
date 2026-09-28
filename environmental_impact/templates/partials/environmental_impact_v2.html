@@ -19,9 +19,10 @@
   .ei2-seg{height:100%;border-radius:3px}
   .ei2-life1{background:var(--dh-teal)}
   .ei2-life2{background:var(--dh-secondary)}
-  .ei2-life2.projected{background:repeating-linear-gradient(45deg,var(--dh-green-soft) 0 5px,var(--dh-secondary) 5px 9px)}
   .ei2-life1.assumed{background:repeating-linear-gradient(45deg,var(--dh-teal-soft) 0 5px,var(--dh-teal) 5px 9px)}
   .ei2-typical{background:#cfd4d8}
+  .ei2-change>summary{display:inline-block;list-style:none}
+  .ei2-change>summary::-webkit-details-marker{display:none}
   .ei2-axis{position:relative;height:1.2rem;border-top:1px solid var(--dh-line);font-size:.72rem;color:var(--bs-secondary-color,#6c757d)}
   .ei2-axis span{position:absolute;top:.15rem;transform:translateX(-50%);white-space:nowrap}
   .ei2-axis span:first-child{transform:none}
@@ -60,17 +61,14 @@
       <span class="dh-badge dh-reused">{% trans 'In its second life' %}</span>
     {% endif %}
     <span class="text-muted small">
-      {% if i.reuse_source == 'mark' %}{% trans 'reuse start marked by hand' %}
-      {% elif i.reuse_source == 'transfer_state' %}{% trans 'reuse starts at its transfer state (e.g. DONATION)' %}
-      {% elif i.reuse_source == 'outgoing_lot' %}{% trans 'reuse starts when it went into an outgoing (Salida) lot' %}
-      {% else %}{% trans 'reuse detected from a second evidence' %}{% endif %}
+      {% blocktrans with d=v2.handover.scan.date|date:"Y-m-d" %}handed over at the {{ d }} scan{% endblocktrans %} · {{ v2.handover.note }}
     </span>
   {% elif i.recycled %}
     <span class="dh-badge dh-recycled">{% trans 'Recycled' %}</span>
     <span class="text-muted small">{% trans 'Its latest state sends it to recycling, with no second life before.' %}</span>
   {% else %}
     <span class="dh-badge dh-workshop">{% trans 'Not reused yet' %}</span>
-    <span class="text-muted small">{% trans 'Scan it again in its second life, or mark where reuse starts under “Method, inputs and sources”.' %}</span>
+    <span class="text-muted small">{% trans 'Scan it again in its second life, or mark it as handed over under “Method, inputs and sources”.' %}</span>
   {% endif %}
   <span class="text-muted small ms-auto">
     {{ i.device_type|capfirst }} ·
@@ -83,13 +81,13 @@
   <div class="card-body">
     <h6 class="card-title">{% trans 'Its story' %}</h6>
     {% if not i.life1_measured %}
-      <p class="small mb-2">{% if v2.reused and not i.life2_measured %}{% trans 'No hour reading from this device: both lives use standard figures.' %}{% else %}{% trans 'No hour reading for its first life: it uses a standard figure.' %}{% endif %}</p>
+      <p class="small mb-2">{% trans 'No hour reading for its first life: it uses a standard figure.' %}</p>
     {% endif %}
     <div class="ei2-story" role="img" aria-label="{% trans 'Powered-on hours in each life, compared with a typical first life' %}">
       <span class="ei2-rowlabel">{% trans 'This device' %}</span>
       <div class="ei2-lane">
         <div class="ei2-seg ei2-life1 {% if not i.life1_measured %}assumed{% endif %}" style="width:{{ v2.story.life1_width }}%" title="{% trans 'Life 1' %}: {{ i.life1_hours|floatformat:"0g" }} h"></div>
-        {% if v2.reused %}<div class="ei2-seg ei2-life2 {% if not i.life2_measured %}projected{% endif %}" style="width:{{ v2.story.life2_width }}%" title="{% trans 'Life 2' %}: {{ i.life2_hours|floatformat:"0g" }} h"></div>{% endif %}
+        {% if v2.reused and i.life2_measured %}<div class="ei2-seg ei2-life2" style="width:{{ v2.story.life2_width }}%" title="{% trans 'Life 2' %}: {{ i.life2_hours|floatformat:"0g" }} h"></div>{% endif %}
       </div>
       <span class="ei2-rowval">{{ v2.story.total_hours|floatformat:"0g" }} h</span>
 
@@ -113,13 +111,15 @@
         {% elif v2.reused %}{% blocktrans with d=v2.story.life1_date|date:"Y-m-d" %}read from the disk's power-on counter when it arrived at the refurbisher ({{ d }}).{% endblocktrans %}
         {% else %}{% blocktrans with d=v2.story.life1_date|date:"Y-m-d" %}read from the disk's power-on counter at its latest scan ({{ d }}). It has not started a second life yet.{% endblocktrans %}{% endif %}
         <span class="ei2-q">{% if not i.life1_measured %}○{% elif i.hours_estimated %}◐{% else %}●{% endif %}</span></div></li>
-      {% if v2.reused %}
-      <li><span class="ei2-swatch ei2-life2 {% if not i.life2_measured %}projected{% endif %}"></span>
+      {% if v2.reused and i.life2_measured %}
+      <li><span class="ei2-swatch ei2-life2"></span>
         <div><strong>{% trans 'Life 2' %} · {{ i.life2_hours|floatformat:"0g" }} h</strong>
-        {% if i.life2_measured and i.hours_estimated %}{% trans 'hours added since then, estimated from the Android signals of later scans.' %}
-        {% elif i.life2_measured %}{% trans 'hours added since then, read from later scans of the same disk.' %}
-        {% else %}{% blocktrans with y=v2.story.life2_years t=i.device_type %}estimate: a standard {{ y }} years of use for a {{ t }}. It becomes measured when the device is scanned again.{% endblocktrans %}{% endif %}
-        <span class="ei2-q">{% if not i.life2_measured %}○{% elif i.hours_estimated %}◐{% else %}●{% endif %}</span></div></li>
+        {% if i.hours_estimated %}{% trans 'hours added since then, estimated from the Android signals of later scans.' %}
+        {% else %}{% trans 'hours added since then, read from later scans of the same disk.' %}{% endif %}
+        <span class="ei2-q">{% if i.hours_estimated %}◐{% else %}●{% endif %}</span></div></li>
+      {% elif v2.reused %}
+      <li><span class="ei2-swatch"></span>
+        <div><strong>{% trans 'Life 2' %}</strong> {% trans 'just started: its hours show up once the device is scanned again.' %}</div></li>
       {% endif %}
       {% if i.life1_measured %}
       <li><span class="ei2-swatch ei2-typical"></span>
@@ -174,46 +174,63 @@
 <details class="card ei2-method mt-3">
   <summary class="card-body py-2">
     <span class="card-title mb-0">{% trans 'Method, inputs and sources' %}</span>
-    <span class="small text-muted ms-2">{% trans 'change the country or where the second life starts; every constant with its reference' %}</span>
+    <span class="small text-muted ms-2">{% trans 'correct the handover or the country; every constant with its reference' %}</span>
   </summary>
   <div class="card-body pt-0">
     <div class="row g-3">
       <div class="col-md-6">
-        <h6 class="ei2-sub">{% trans 'Where its second life starts' %}</h6>
-      <form method="post" class="d-flex flex-column gap-2">
-        {% csrf_token %}
-        <input type="hidden" name="action" value="save_reuse_start">
-        {% if v2.single_evidence %}
-          {% with ev=v2.timeline.0 %}
-          <select class="form-select form-select-sm" disabled aria-label="{% trans 'Only evidence' %}">
-            <option>{{ ev.date|date:"Y-m-d"|default:ev.uuid }} · {% if ev.has_reading %}{{ ev.poh|floatformat:"0g" }} h{% else %}{% trans 'no hour reading' %}{% endif %}</option>
-          </select>
-          {% if v2.reused and not v2.reused_by_mark %}
-            <div class="form-text mt-0">{% blocktrans with src=v2.reuse_source_label %}Already counted as reused ({{ src }}).{% endblocktrans %}</div>
+        <h6 class="ei2-sub">{% trans 'Handed over to its second owner' %}</h6>
+        {% with h=v2.handover %}
+        {# the answer first; correcting it is one click away #}
+        <div class="d-flex flex-wrap align-items-baseline gap-2">
+          {% if h.scan %}
+            <strong>{% blocktrans with d=h.scan.date|date:"Y-m-d"|default:h.scan.uuid %}at the {{ d }} scan{% endblocktrans %}</strong>
+            <span class="small">· {% if h.scan.has_reading %}{{ h.scan.poh|floatformat:"0g" }} h{% else %}{% trans 'no hour reading' %}{% endif %}</span>
           {% else %}
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" name="reuse_start" value="{{ ev.uuid }}" id="reuse_start" {% if ev.marked %}checked{% endif %}>
-              <label class="form-check-label small" for="reuse_start">{% trans 'Mark as reused: handed over after this scan' %}</label>
-            </div>
+            <strong>{% trans 'Not handed over yet' %}</strong>
           {% endif %}
-          <div class="form-text mt-0">{% blocktrans with h=v2.expected_life2_hours|floatformat:"0g" y=v2.story.life2_years %}With a single scan, second-life hours are not measured: they are a standard {{ y }}-year estimate of {{ h }} h. Scan it again later to measure them.{% endblocktrans %}</div>
-          {% endwith %}
-          {% if not v2.reused or v2.reused_by_mark %}
-            <div><button type="submit" class="btn btn-green-user btn-sm">{% trans 'Save' %}</button></div>
+        </div>
+        <div class="small text-muted">
+          {{ h.note }}
+          {% if h.by_hand %}·
+            <form method="post" class="d-inline">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="save_reuse_start">
+              <button type="submit" class="btn btn-link btn-sm p-0 align-baseline">{% trans 'undo' %}</button>
+            </form>
           {% endif %}
+        </div>
+
+        {% if h.single %}
+          {% if not h.scan %}
+            <form method="post" class="mt-2">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="save_reuse_start">
+              <input type="hidden" name="reuse_start" value="{{ h.last.uuid }}">
+              <button type="submit" class="btn btn-green-user btn-sm">{% blocktrans with d=h.last.date|date:"Y-m-d"|default:h.last.uuid %}Mark as handed over after the {{ d }} scan{% endblocktrans %}</button>
+            </form>
+          {% endif %}
+          <div class="form-text">{% trans 'Scan it again later to measure its second-life hours.' %}</div>
         {% else %}
-        <select name="reuse_start" id="reuse_start" class="form-select form-select-sm">
-          <option value="">{% trans 'Automatic: from intake, once there is a second evidence' %}</option>
-          {% for ev in v2.timeline %}
-            <option value="{{ ev.uuid }}" {% if ev.marked %}selected{% endif %}>
-              {{ ev.date|date:"Y-m-d"|default:ev.uuid }} · {% if ev.has_reading %}{{ ev.poh|floatformat:"0g" }} h{% else %}{% trans 'no hour reading' %}{% endif %}{% if ev.is_start and not ev.marked %} · {% trans 'current start' %}{% endif %}{% if ev.disk_changed %} · {% trans 'disk changed' %}{% endif %}
-            </option>
-          {% endfor %}
-        </select>
-        <div class="form-text mt-0">{% trans 'Pick the evidence taken when the device left the refurbisher, e.g. if it was scanned twice before delivery or delivered without a new scan.' %} {% trans 'Hours before that scan count as first life; hours measured on later scans, as second life.' %}</div>
-        <div><button type="submit" class="btn btn-green-user btn-sm">{% trans 'Save' %}</button></div>
+          <details class="ei2-change mt-2">
+            <summary class="btn btn-grey btn-sm">{% trans 'Change' %}</summary>
+            <form method="post" class="d-flex flex-column gap-1 mt-2">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="save_reuse_start">
+              {% for ev in v2.timeline %}
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="reuse_start" value="{{ ev.uuid }}" id="handover_{{ forloop.counter }}" {% if ev.uuid == h.selected_uuid %}checked{% endif %}>
+                  <label class="form-check-label small" for="handover_{{ forloop.counter }}">
+                    {{ ev.date|date:"Y-m-d"|default:ev.uuid }} · {% if ev.has_reading %}{{ ev.poh|floatformat:"0g" }} h{% else %}{% trans 'no hour reading' %}{% endif %}{% if ev.detected %} <span class="text-muted">({% trans 'detected' %})</span>{% endif %}{% if ev.disk_changed %} · {% trans 'disk changed' %}{% endif %}
+                  </label>
+                </div>
+              {% endfor %}
+              <div class="form-text mt-0">{% trans 'Hours before the chosen scan are first life; hours measured on later scans, second life.' %}</div>
+              <div><button type="submit" class="btn btn-green-user btn-sm">{% trans 'Save' %}</button></div>
+            </form>
+          </details>
         {% endif %}
-      </form>
+        {% endwith %}
       </div>
       <div class="col-md-6">
         <h6 class="ei2-sub">{% trans 'Electricity grid' %}</h6>

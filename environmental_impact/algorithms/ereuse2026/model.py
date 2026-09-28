@@ -60,6 +60,9 @@ class DeviceInputs:
     country: str
     reuse_start: int | None = None  # index in ``points`` where the second life starts
     reuse_source: str | None = None  # "mark" | "second_evidence"
+    # What the rules give without any hand mark, to show next to a mark that overrides it.
+    detected_start: int | None = None
+    detected_source: str | None = None
     bios_year: int | None = None
     factor_set: str = "base_carbone"
     hours_method: str = HOURS_COUNTER

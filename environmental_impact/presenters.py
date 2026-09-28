@@ -131,10 +131,47 @@ def _method(impact: DeviceImpact, factors: dict) -> dict:
     return {"constants": rows, "references": references}
 
 
+DETECTED_REASONS = {
+    "second_evidence": _("detected: there is a later scan"),
+    "transfer_state": _("detected: its transfer state (e.g. DONATION)"),
+    "outgoing_lot": _("detected: it went into an outgoing lot"),
+}
+
+
+def _handover(impact: DeviceImpact, inputs: DeviceInputs, timeline: list[dict]) -> dict:
+    """Which scan the device was handed over at, and why: shown as an answer, corrected on demand."""
+    points = inputs.points
+    # a mark on the scan the rules pick anyway changes nothing: show the detected reason
+    by_hand = (
+        impact.reused and inputs.reuse_source == "mark" and inputs.reuse_start != inputs.detected_start
+    )
+    if impact.reused:
+        source = inputs.detected_source if inputs.reuse_source == "mark" and not by_hand else inputs.reuse_source
+        note = _("set by hand") if by_hand else DETECTED_REASONS.get(source, "")
+    elif inputs.end_of_life:
+        note = _("its latest state sends it to recycling")
+    elif len(points) == 1:
+        note = _("only one scan")
+    else:
+        note = ""
+    # the scan pre-selected when correcting: the current start, else the latest scan
+    selected = inputs.reuse_start if impact.reused else len(points) - 1
+    return {
+        "scan": timeline[inputs.reuse_start] if impact.reused else None,
+        "note": note,
+        "by_hand": by_hand,
+        "single": len(points) == 1,
+        "last": timeline[-1],
+        "selected_uuid": timeline[selected]["uuid"],
+    }
+
+
 def device_impact_view(impact: DeviceImpact, inputs: DeviceInputs, marks: set[str]) -> dict:
     factors = load_factors()
     typical = factors["typical_first_life_hours"][impact.device_type]
-    h1, h2 = impact.life1_hours, impact.life2_hours if impact.reused else 0
+    # the story only draws hours read from the device; an estimated life 2 stays in the calculation
+    h1 = impact.life1_hours
+    h2 = impact.life2_hours if impact.reused and impact.life2_measured else 0
     story_max = max(typical, h1 + h2)
     story_step = _nice_step(story_max / 4)
     story_ticks = [
@@ -161,6 +198,7 @@ def device_impact_view(impact: DeviceImpact, inputs: DeviceInputs, marks: set[st
             "disk_changed": p.disk_changed,
             "marked": p.uuid in marks,
             "is_start": impact.reused and inputs.reuse_start == i,
+            "detected": inputs.detected_start == i,
         }
         for i, p in enumerate(inputs.points)
     ]
@@ -201,10 +239,7 @@ def device_impact_view(impact: DeviceImpact, inputs: DeviceInputs, marks: set[st
         "expected_life2_hours": factors["default_second_life"][impact.device_type]["hours"],
         "timeline": timeline,
         "has_mark": bool(marks),
-        # one evidence: nothing to choose, the picker becomes a "reused" switch
-        "single_evidence": len(inputs.points) == 1,
-        "reuse_source_label": REUSE_SOURCE_LABELS.get(impact.reuse_source) if impact.reused else None,
-        "reused_by_mark": impact.reuse_source == "mark",
+        "handover": _handover(impact, inputs, timeline),
         "bios_year": inputs.bios_year,
         "factor_label": factors["manufacturing"][impact.factor_set]["label"],
         "method": _method(impact, factors),

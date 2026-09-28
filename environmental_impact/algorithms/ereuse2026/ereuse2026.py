@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import re
+from dataclasses import replace
 from functools import lru_cache
 from typing import TYPE_CHECKING
 
@@ -100,7 +101,9 @@ def build_inputs(device: Device, institution: "Institution" | None, factor_set: 
     ]
 
     signals = read_reuse_signals(device, institution or getattr(device, "owner", None))
-    reuse_start, reuse_source = resolve_reuse([(p.uuid, p.date) for p in points], signals)
+    timeline = [(p.uuid, p.date) for p in points]
+    reuse_start, reuse_source = resolve_reuse(timeline, signals)
+    detected_start, detected_source = resolve_reuse(timeline, replace(signals, marks=set()))
 
     bios_year = None
     last = getattr(device, "last_evidence", None)
@@ -116,6 +119,8 @@ def build_inputs(device: Device, institution: "Institution" | None, factor_set: 
         country=common.get_device_country_code(device, institution, DEFAULT_COUNTRY_CODE),
         reuse_start=reuse_start,
         reuse_source=reuse_source,
+        detected_start=detected_start,
+        detected_source=detected_source,
         bios_year=bios_year,
         factor_set=factor_set,
         hours_method=HOURS_ANDROID_ESTIMATE if device_type in MOBILE_TYPES else HOURS_COUNTER,
