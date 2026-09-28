@@ -23,12 +23,22 @@
       "url": "https://ourworldindata.org/grapher/carbon-intensity-electricity"
     },
     "thesis": {
-      "title": "Roura Salietti, M. (2025). Reuse of ICT devices as commons. PhD thesis, UPC",
+      "title": "Roura Salietti, M. (2025). Reuse of ICT devices as commons: a property rights governance model for collective access. PhD thesis, Universitat Politècnica de Catalunya",
       "licence": "cited",
-      "url": "https://upcommons.upc.edu/"
+      "url": "https://upcommons.upc.edu/tesis"
     },
     "energy_star": {
-      "title": "Energy Star database averages, as used by DeviceHub's ereuse2025 algorithm",
+      "title": "ENERGY STAR (U.S. EPA) database averages, carried over from DeviceHub's ereuse2025 algorithm; the exact dataset was not recorded. Roura et al. (2026) cite ENERGY STAR (2020), Computer power management savings calculator",
+      "licence": "cited",
+      "url": "https://www.energystar.gov/"
+    },
+    "franquesa_2019a": {
+      "title": "Franquesa, D., Roura, M., Navarro, L. (2019). eReuse datasets: exploring life-cycle data of devices for measuring durability, 2013-10-08 to 2019-06-03, 8,458 observations of desktop and laptop computers. Technical report, CNDS, UPC",
+      "licence": "cited",
+      "url": "https://dsg.ac.upc.edu/ereuse-dataset"
+    },
+    "karpagam_2017": {
+      "title": "Karpagam, A., Pradeep, S., Prakash, R. (2017). Carbon footprint reduction through e-waste recycling and reuse: a case study of India. International Journal of Advanced Research in Science, Engineering and Technology 4(8), 4442–4447",
       "licence": "cited",
       "url": ""
     },

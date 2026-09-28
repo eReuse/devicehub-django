@@ -53,6 +53,84 @@ def _pct(value: float, largest: float) -> float:
     return round(max(0.0, min(100.0, 100 * value / largest)), 2)
 
 
+DEVICE_INPUT_KEYS = ("life1_hours", "life2_hours", "bios_year", "reuse_start")
+
+# Manufacturing factor set → entry in factors["sources"]
+FACTOR_SET_SOURCES = {
+    "base_carbone": "base_carbone",
+    "boavizta_median": "boavizta",
+    "ademe_arcep_2025": "ademe_arcep_2025",
+}
+
+
+def _method(impact: DeviceImpact, factors: dict) -> dict:
+    """Every constant behind the device's figures, with numbered references.
+
+    References are numbered in order of first use, so the list under the table
+    only holds the sources this device actually relies on.
+    """
+    sources, numbers, references = factors["sources"], {}, []
+
+    def cite(*keys):
+        for key in keys:
+            if key not in numbers:
+                numbers[key] = len(numbers) + 1
+                references.append({"n": numbers[key], **sources[key]})
+        return [numbers[key] for key in keys]
+
+    t = impact.device_type
+    mobile = t in ("smartphone", "tablet")
+    mf = factors["manufacturing"][impact.factor_set][t]
+    power = factors["power_kw"][t]
+    rows = []
+
+    def row(label, value, where, *keys):
+        rows.append({"label": label, "value": value, "where": where, "refs": cite(*keys)})
+
+    row(_("New device, making and shipping"), f"{impact.new_equivalent_kg:.1f} kg CO₂e",
+        mf["ref"], FACTOR_SET_SOURCES.get(impact.factor_set, "base_carbone"))
+    if mobile:
+        row(_("Electricity use"), f"{power['kwh_per_year']} kWh / year", power["ref"], "boavizta", "devicehub_estimator")
+    else:
+        sleep = factors["sleep_share"]["value"]
+        row(_("Power drawn"), f"{power['idle'] * 1000:g} W on · {power['sleep'] * 1000:g} W asleep "
+            f"({100 * sleep:.1f}% of the time)", _("idle power used for all time on"), "energy_star")
+    grid_to = impact.grid_life2 if impact.reused else impact.grid_now
+    row(_("Electricity grid"), f"{impact.grid_life1:.3f} → {grid_to:.3f} kg CO₂e/kWh ({impact.country})",
+        _("yearly carbon intensity by country"), "owid")
+    window = factors["first_life_grid_window_years"]
+    row(_("Grid years for life 1"), f"{window['value']} " + str(_("years before intake")), window["ref"], "thesis")
+    typical = factors["typical_first_life_hours"]
+    if mobile:
+        row(_("Typical first life"), f"{typical[t]:,} h", typical["mobile_ref"], "ademe_refurb_2022")
+    else:
+        row(_("Typical first life"), f"{typical[t]:,} h", typical["ref"], "franquesa_2019a", "thesis")
+    second = factors["default_second_life"]
+    if mobile:
+        row(_("Expected second life"), f"{second[t]['hours']:,} h ({second[t]['years']} y)",
+            second["mobile_ref"], "itu_l1410", "ademe_refurb_2022")
+    else:
+        row(_("Expected second life"), f"{second[t]['hours']:,} h ({second[t]['years']} y)", second["ref"], "thesis")
+    min_h1 = factors["min_valid_life1_hours"]
+    row(_("Shortest usable life-1 reading"), f"{min_h1['value']} h", min_h1["ref"], "thesis")
+    weight = factors["weight_kg"]
+    if mobile:
+        row(_("Weight"), f"{weight[t]} kg", weight["mobile_ref"], "boavizta")
+    else:
+        row(_("Weight"), f"{weight[t]} kg", weight["ref"], "thesis")
+    legs = factors["refurbisher_legs_km"]
+    row(_("Van trips via the refurbisher"), f"{legs['value']} km", legs["ref"], "thesis")
+    van = factors["van_kgco2e_per_tkm"]
+    row(_("Van emissions"), f"{van['value']} kg CO₂e / t·km", van["ref"], "base_carbone")
+    credit = factors["recycling_credit_kg"]
+    if mobile:
+        row(_("Recycling credit"), "0 kg", _("no published value for phones or tablets"), "thesis")
+    else:
+        row(_("Recycling credit"), f"{credit[t]} kg CO₂e", credit["ref"], "karpagam_2017", "thesis")
+    row(_("Allocation between owners"), "APOS", _("§3.3, p.4: burden split by powered-on hours"), "paper")
+    return {"constants": rows, "references": references}
+
+
 def device_impact_view(impact: DeviceImpact, inputs: DeviceInputs, marks: set[str]) -> dict:
     factors = load_factors()
     typical = factors["typical_first_life_hours"][impact.device_type]
@@ -94,6 +172,7 @@ def device_impact_view(impact: DeviceImpact, inputs: DeviceInputs, marks: set[st
             "source": p.source,
         }
         for p in impact.provenance
+        if p.key in DEVICE_INPUT_KEYS
     ]
 
     return {
@@ -123,4 +202,5 @@ def device_impact_view(impact: DeviceImpact, inputs: DeviceInputs, marks: set[st
         "has_mark": bool(marks),
         "bios_year": inputs.bios_year,
         "factor_label": factors["manufacturing"][impact.factor_set]["label"],
+        "method": _method(impact, factors),
     }
