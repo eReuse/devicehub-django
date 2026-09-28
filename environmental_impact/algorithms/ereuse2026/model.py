@@ -378,7 +378,7 @@ def _provenance(inputs, impact, f, mf, factor_set) -> list[Provenance]:
             "mark": "manual mark on an evidence",
             "transfer_state": "state that transfers the device (e.g. DONATION)",
             "outgoing_lot": "outgoing (Salida) lot",
-        }.get(inputs.reuse_source, "second evidence")))
+        }.get(inputs.reuse_source, "a later scan of the same device")))
     return rows
 
 

@@ -90,6 +90,20 @@ class PresenterTests(SimpleTestCase):
         view = self._view([EvidencePoint(E0, datetime(2019, 6, 3), 720)], reuse_start=None)
         self.assertFalse(view["reused"])
 
+    def test_constants_cite_references_numbered_by_first_use(self):
+        method = self._view([EvidencePoint(E0, datetime(2026, 1, 5), 1092)])["method"]
+        numbers = [r["n"] for r in method["references"]]
+        self.assertEqual(numbers, list(range(1, len(numbers) + 1)))
+        cited = [n for c in method["constants"] for n in c["refs"]]
+        self.assertEqual(sorted(set(cited)), numbers)  # nothing listed that no constant cites
+        self.assertTrue(method["references"][0]["title"].startswith("ADEME Base Carbone"))
+
+    def test_device_inputs_exclude_constants(self):
+        view = self._view([EvidencePoint(E0, datetime(2026, 1, 5), 1092)])
+        labels = [str(p["label"]) for p in view["provenance"]]
+        self.assertNotIn("Electricity grid", labels)
+        self.assertNotIn("New device footprint", labels)
+
 
 class ReadReuseSignalsTests(TestCase):
     """States and lots stored in the database become reuse signals."""

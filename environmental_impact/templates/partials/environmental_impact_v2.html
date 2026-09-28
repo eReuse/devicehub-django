@@ -38,6 +38,11 @@
   .ei2-collabels{display:grid;grid-template-columns:repeat(6,1fr);gap:.4rem;font-size:.75rem;text-align:center;color:var(--bs-secondary-color,#6c757d)}
   .ei2-fig{font-size:2rem;font-weight:700;line-height:1.1;color:var(--dh-dark)}
   .ei2-fig small{font-size:.9rem;font-weight:500;color:var(--bs-secondary-color,#6c757d)}
+  .ei2-method>summary{cursor:pointer;list-style:revert}
+  .ei2-method>summary .card-title{display:inline;border:0;padding:0}
+  .ei2-sub{font-size:.85rem;font-weight:600;color:var(--bs-secondary-color);text-transform:uppercase;letter-spacing:.03em}
+  .ei2-refs{padding-left:1.6rem}
+  .ei2-refs li{margin-bottom:.3rem;overflow-wrap:anywhere}
 </style>
 
 {% if i.warnings %}
@@ -64,7 +69,7 @@
     <span class="text-muted small">{% trans 'Its latest state sends it to recycling, with no second life before.' %}</span>
   {% else %}
     <span class="dh-badge dh-workshop">{% trans 'Not reused yet' %}</span>
-    <span class="text-muted small">{% trans 'Mark where reuse starts below, or scan it again in its second life.' %}</span>
+    <span class="text-muted small">{% trans 'Scan it again in its second life, or mark where reuse starts under “Method, inputs and sources”.' %}</span>
   {% endif %}
   <span class="text-muted small ms-auto">
     {{ i.device_type|capfirst }} ·
@@ -156,11 +161,16 @@
   </div>
 {% endif %}
 
-<div class="row g-3 mt-0">
-  {# Reuse start picker #}
-  <div class="col-md-6">
-    <div class="card h-100"><div class="card-body">
-      <h6 class="card-title">{% trans 'Where its second life starts' %}</h6>
+{# Method, inputs and sources: collapsed, for whoever needs to check or correct a figure #}
+<details class="card ei2-method mt-3">
+  <summary class="card-body py-2">
+    <span class="card-title mb-0">{% trans 'Method, inputs and sources' %}</span>
+    <span class="small text-muted ms-2">{% trans 'change the country or where the second life starts; every constant with its reference' %}</span>
+  </summary>
+  <div class="card-body pt-0">
+    <div class="row g-3">
+      <div class="col-md-6">
+        <h6 class="ei2-sub">{% trans 'Where its second life starts' %}</h6>
       <form method="post" class="d-flex flex-column gap-2">
         {% csrf_token %}
         <input type="hidden" name="action" value="save_reuse_start">
@@ -175,13 +185,9 @@
         <div class="form-text mt-0">{% trans 'Pick the evidence taken when the device left the refurbisher, e.g. if it was scanned twice before delivery or delivered without a new scan.' %}</div>
         <div><button type="submit" class="btn btn-green-user btn-sm">{% trans 'Save' %}</button></div>
       </form>
-    </div></div>
-  </div>
-
-  {# Country + method #}
-  <div class="col-md-6">
-    <div class="card h-100"><div class="card-body">
-      <h6 class="card-title">{% trans 'Method and inputs' %}</h6>
+      </div>
+      <div class="col-md-6">
+        <h6 class="ei2-sub">{% trans 'Electricity grid' %}</h6>
       <form method="post" class="mb-2">
         {% csrf_token %}
         <input type="hidden" name="action" value="save_environmental_profile">
@@ -193,20 +199,38 @@
           {% endfor %}
         </select>
       </form>
-      <table class="table table-sm small mb-2">
-        <tbody>
-          {% for p in v2.provenance %}
-            <tr><td>{% if p.measured %}●{% else %}○{% endif %} {{ p.label }}</td><td>{{ p.value }}</td><td class="text-muted">{{ p.source }}</td></tr>
-          {% endfor %}
-          <tr><td>○ {% trans 'Factor set' %}</td><td>{{ v2.factor_label }}</td><td class="text-muted">{{ i.method_version }}</td></tr>
-        </tbody>
-      </table>
+      </div>
+    </div>
+
+    <h6 class="ei2-sub mt-3">{% trans 'From this device' %}</h6>
+    <table class="table table-sm small mb-2">
+      <tbody>
+        {% for p in v2.provenance %}
+          <tr><td>{% if p.measured %}●{% else %}○{% endif %} {{ p.label }}</td><td>{{ p.value }}</td><td class="text-muted">{{ p.source }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <h6 class="ei2-sub mt-3">{% trans 'Constants' %}</h6>
+    <table class="table table-sm small mb-2">
+      <tbody>
+        {% for c in v2.method.constants %}
+          <tr><td>{{ c.label }}</td><td class="text-nowrap">{{ c.value }}</td><td class="text-muted">{{ c.where }} {% for n in c.refs %}<a href="#ei2-ref-{{ n }}">[{{ n }}]</a>{% endfor %}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <h6 class="ei2-sub mt-3">{% trans 'References' %}</h6>
+    <ol class="small ei2-refs">
+      {% for r in v2.method.references %}
+        <li id="ei2-ref-{{ r.n }}" value="{{ r.n }}">{{ r.title }}.{% if r.url %} <a href="{{ r.url }}" target="_blank" rel="noopener">{{ r.url }}</a>{% endif %}{% if r.licence and r.licence != 'cited' %} <span class="text-muted">({{ r.licence }})</span>{% endif %}</li>
+      {% endfor %}
+    </ol>
+    <p class="small text-muted">{% trans 'Method' %}: {{ i.method_version }} · {{ v2.factor_label }}</p>
       <button class="btn btn-grey btn-sm w-100" type="button" data-bs-toggle="collapse" data-bs-target="#deviceDocsV2" aria-expanded="false">{% trans 'How this is calculated' %}</button>
       <div class="collapse mt-2" id="deviceDocsV2"><div style="max-height:500px;overflow-y:auto;font-size:.875rem">{{ v2_docs|safe }}</div></div>
-    </div></div>
   </div>
-</div>
-
+</details>
 <p class="small fst-italic text-muted mt-2 mb-0">{% trans 'This LCA result cannot be compared to the result of another LCA unless all assumptions and modelling choices are equal.' %}</p>
 </div>
 {% endwith %}
