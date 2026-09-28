@@ -78,8 +78,10 @@ class PresenterTests(SimpleTestCase):
             EvidencePoint(E1, datetime(2022, 2, 11), 9439),
         ])
         story = view["story"]
-        self.assertLess(story["life1_width"], story["typical_left"])
+        self.assertLess(story["life1_width"], story["typical_width"])
+        self.assertEqual(story["typical_width"], 100.0)  # typical life is the longest bar here
         self.assertLessEqual(story["life1_width"] + story["life2_width"], 100)
+        self.assertEqual([t["hours"] for t in story["ticks"]], [0, 5000, 10000, 15000, 20000])
         self.assertEqual(view["per_hour_drop"], 48)
         self.assertEqual(max(s["height"] for s in view["stages"]), 100)
         self.assertTrue(view["timeline"][0]["is_start"])
