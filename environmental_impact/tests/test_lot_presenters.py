@@ -69,6 +69,26 @@ class LotPresenterTests(SimpleTestCase):
         self.assertIn("1 was refurbished and reused", view["supplier_ok"][0])
         self.assertIn(kg(self.lot.attributed_kg), view["recipient_ok"][0])
 
+    def test_inclusion_only_reaches_the_refurbisher_view(self):
+        inclusion = {"people": 2, "hours": 1234}
+        def view(v):
+            return lot_impact_view(self.lot, self.rows, tag_name="Entrada", view=v,
+                                   prepared_for="x", lot_name="L1", inclusion=inclusion)
+        self.assertEqual(view("refurbisher")["inclusion"], inclusion)
+        self.assertIsNone(view("supplier")["inclusion"])
+        self.assertIsNone(view("recipient")["inclusion"])
+
+    def test_carbon_cost_per_person(self):
+        view = self.view()
+        self.assertEqual(view["cost_per_person_reuse_text"], kg(self.lot.cost_second_users / self.lot.reused))
+        self.assertEqual(view["cost_per_person_new_text"], kg(self.lot.cost_with_new / self.lot.reused))
+
+    def test_social_wording_warns_against_impact_claims(self):
+        view = self.view()
+        self.assertTrue(any("gave 1 person a computer" in t for t in view["supplier_ok"]))
+        self.assertTrue(any("digital divide" in t for t in view["supplier_no"]))
+        self.assertTrue(any("digital divide" in t for t in view["recipient_no"]))
+
     def test_kg_switches_to_tonnes(self):
         self.assertEqual(kg(950), "950 kg")
         self.assertEqual(kg(5421), "5.4 t")
@@ -96,6 +116,19 @@ class LotTemplateTests(LotPresenterTests):
         self.assertIn("Devices from rsc@example.org", html)
         self.assertIn("lost with the recycled devices", html)
         self.assertIn("contribution shared along the reuse chain", html)
+
+    def render_with_inclusion(self, view):
+        request = RequestFactory().get("/lot/1/environmental-impact")
+        request.user = SimpleNamespace(institution=SimpleNamespace(name="Pangea"))
+        lv = lot_impact_view(self.lot, self.rows, tag_name="Entrada", view=view, prepared_for="x",
+                             lot_name="L1", inclusion={"people": 3, "hours": 4321})
+        return render_to_string("partials/lot_impact_v2.html", {"lv": lv, "lv_docs": "", "request": request})
+
+    def test_social_value_in_every_view_inclusion_only_internal(self):
+        for view in ("refurbisher", "supplier", "recipient"):
+            html = self.render_with_inclusion(view)
+            self.assertIn("Social value", html, view)
+            self.assertEqual("4,321" in html or "4321" in html, view == "refurbisher", view)
 
     def test_recipient_report(self):
         html = self.render("recipient")

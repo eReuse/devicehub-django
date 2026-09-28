@@ -80,7 +80,9 @@ def _row(device, d: DeviceImpact) -> dict:
 
 
 def lot_impact_view(lot: LotImpact, rows: list[tuple[object, DeviceImpact]], tag_name: str | None,
-                    view: str | None, prepared_for: str, lot_name: str) -> dict:
+                    view: str | None, prepared_for: str, lot_name: str, inclusion: dict | None = None) -> dict:
+    """``inclusion`` ({"people": n, "hours": h}, from the vulnerable-person marks) is sensitive:
+    it is only passed on to the refurbisher view, never to reports that leave the organisation."""
     view = view if view in VIEWS else default_view(tag_name)
     impacts = [d for _, d in rows]
     reused = [d for d in impacts if d.reused]
@@ -123,11 +125,20 @@ def lot_impact_view(lot: LotImpact, rows: list[tuple[object, DeviceImpact]], tag
         supplier_ok.append(ngettext(
             "%(n)s device was sent to recycling.", "%(n)s devices were sent to recycling.", lot.recycled
         ) % {"n": lot.recycled})
+    access_hours = lot.life2_hours_measured + lot.life2_hours_projected
+    if lot.reused:
+        supplier_ok.append(ngettext(
+            "The reused devices gave %(n)s person a computer, for about %(h)s hours of use (measured and projected).",
+            "The reused devices gave %(n)s people a computer, for about %(h)s hours of use (measured and projected).",
+            lot.reused,
+        ) % {"n": lot.reused, "h": f"{access_hours:,.0f}"})
+    social_no = _("“We closed the digital divide” or “we transformed lives”: hours of use show access, not impact.")
     supplier_no = [
         _("“We reduced our carbon footprint by %(a)s.” Avoided emissions are not a reduction of your own footprint.")
         % {"a": kg(lot.avoided)},
         _("“Carbon neutral”, “climate positive”, “offset” or “eco-friendly IT”."),
         _("Adding these figures to your Scope 1, 2 or 3 totals, or claiming them as yours alone."),
+        social_no,
     ]
     recipient_ok = [
         ngettext(
@@ -146,6 +157,7 @@ def lot_impact_view(lot: LotImpact, rows: list[tuple[object, DeviceImpact]], tag
         _("Claiming the supplier's or refurbisher's avoided emissions as your own reduction."),
         _("Mixing allocation methods between years. A stricter cut-off method (only the refurbisher's transport) "
           "would give %(cut)s; check with your auditor which one you report and keep it.") % {"cut": kg(legs_total)},
+        social_no,
     ]
 
     return {
@@ -161,7 +173,11 @@ def lot_impact_view(lot: LotImpact, rows: list[tuple[object, DeviceImpact]], tag
         "avoided_high_text": kg(lot.avoided_high),
         "cost_reuse_text": kg(lot.cost_second_users),
         "cost_new_text": kg(lot.cost_with_new),
-        "hours_total": lot.life2_hours_measured + lot.life2_hours_projected,
+        "hours_total": access_hours,
+        # social value (thesis §6.4 p.105; paper §3.2 p.3): access, local work, and the carbon cost of access
+        "cost_per_person_reuse_text": kg(lot.cost_second_users / lot.reused) if lot.reused else None,
+        "cost_per_person_new_text": kg(lot.cost_with_new / lot.reused) if lot.reused else None,
+        "inclusion": inclusion if view == "refurbisher" else None,
         "scenarios": scenarios,
         "stages": stages,
         "stages_total_text": kg(sum(lot.stages.values())),

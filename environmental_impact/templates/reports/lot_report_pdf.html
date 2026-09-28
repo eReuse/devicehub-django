@@ -88,7 +88,7 @@
   {# ================================================================ supplier #}
   <div class="hero">
     <div class="main">
-      <div class="eyebrow">{% trans 'Emissions avoided by reusing your devices' %}</div>
+      <div class="eyebrow">{% trans 'Environmental · emissions avoided by reusing your devices' %}</div>
       <div class="big">{{ lv.avoided_text }} <small>CO₂e</small></div>
       <p class="small muted">{% blocktrans count n=L.reused with lo=lv.avoided_low_text hi=lv.avoided_high_text %}Compared with giving the same person a new device. Range with manufacturer data: {{ lo }} – {{ hi }}; the headline uses the lower, public ADEME factor.{% plural %}Compared with giving the same {{ n }} people new devices. Range with manufacturer data: {{ lo }} – {{ hi }}; the headline uses the lower, public ADEME factor.{% endblocktrans %}</p>
       <div class="note">{% blocktrans %}This is a <b>contribution shared along the reuse chain</b> (you, the refurbisher and the people using the devices). It is reported apart from your own greenhouse-gas inventory and cannot be subtracted from it.{% endblocktrans %}</div>
@@ -115,6 +115,16 @@
     <div class="note">{% blocktrans with h=lv.median_life1|floatformat:"0g" past=L.devices_past_typical_life n=L.devices_with_life1_reading %}Median use before handover: <b>{{ h }} powered-on hours</b>. {{ past }} of {{ n }} devices had already passed a typical first life. <b>Handing devices over earlier</b> passes on more of their manufacturing footprint and gives the next user more useful years.{% endblocktrans %}</div>
   {% endif %}
 
+  <h2>{% trans 'Social value' %}</h2>
+  <table class="facts">
+    <tr><td>{% trans 'People with a computer through reuse' %}</td><td class="v">{{ L.reused }}</td></tr>
+    <tr><td>{% trans 'Hours of digital access (measured / projected)' %}</td><td class="v">{{ lv.hours_total|floatformat:"0g" }} h ({{ L.life2_hours_measured|floatformat:"0g" }} / {{ L.life2_hours_projected|floatformat:"0g" }})</td></tr>
+    {% if lv.cost_per_person_reuse_text %}<tr><td>{% trans 'Carbon cost of giving one person a computer' %}</td><td class="v">{% blocktrans with r=lv.cost_per_person_reuse_text n=lv.cost_per_person_new_text %}{{ r }} with reuse · {{ n }} with a new one{% endblocktrans %}</td></tr>{% endif %}
+    <tr><td>{% trans 'Local technician work' %}</td><td class="v">{{ L.technician_hours|floatformat:"0g" }} h</td></tr>
+    {% if lv.inclusion %}<tr><td>{% trans 'Digital inclusion hours (internal only)' %}</td><td class="v">{% if lv.inclusion.people %}{{ lv.inclusion.hours|floatformat:"0g" }} h · {{ lv.inclusion.people }} {% trans 'devices' %}{% else %}—{% endif %}</td></tr>{% endif %}
+  </table>
+  <p class="small muted">{% trans "Hours of use show that people had access to a computer, not how it changed their lives (Roura Salietti 2025, Annex D). The carbon cost per person is the extra CO₂e of serving the second users, divided by the people served (Roura et al. 2026)." %}</p>
+
   <h2>{% trans 'How you can use these figures' %}</h2>
   <table class="wording"><tr>
     <td class="ok"><b>✓ {% trans 'Accurate wording' %}</b><ul>{% for t in lv.supplier_ok %}<li>“{{ t }}”</li>{% endfor %}</ul></td>
@@ -125,7 +135,7 @@
   {# ================================================================ recipient #}
   <div class="hero">
     <div class="main">
-      <div class="eyebrow">{% trans 'Embodied emissions attributed to your devices' %}</div>
+      <div class="eyebrow">{% trans 'Environmental · embodied emissions attributed to your devices' %}</div>
       <div class="big">{{ lv.attributed_text }} <small>CO₂e</small></div>
       {% if lv.attributed_saving_percent is not None %}
         <p class="small muted">{% blocktrans with new=lv.new_equivalent_text pct=lv.attributed_saving_percent %}New equivalents would carry about <b>{{ new }}</b> ({{ pct }}% less with refurbished).{% endblocktrans %}</p>
@@ -147,6 +157,16 @@
           <td class="val">{{ b.text }}</td></tr>
     {% endfor %}
   </table>
+
+  <h2>{% trans 'Social value' %}</h2>
+  <table class="facts">
+    <tr><td>{% trans 'People with a computer through reuse' %}</td><td class="v">{{ L.reused }}</td></tr>
+    <tr><td>{% trans 'Hours of digital access (measured / projected)' %}</td><td class="v">{{ lv.hours_total|floatformat:"0g" }} h ({{ L.life2_hours_measured|floatformat:"0g" }} / {{ L.life2_hours_projected|floatformat:"0g" }})</td></tr>
+    {% if lv.cost_per_person_reuse_text %}<tr><td>{% trans 'Carbon cost of giving one person a computer' %}</td><td class="v">{% blocktrans with r=lv.cost_per_person_reuse_text n=lv.cost_per_person_new_text %}{{ r }} with reuse · {{ n }} with a new one{% endblocktrans %}</td></tr>{% endif %}
+    <tr><td>{% trans 'Local technician work' %}</td><td class="v">{{ L.technician_hours|floatformat:"0g" }} h</td></tr>
+    {% if lv.inclusion %}<tr><td>{% trans 'Digital inclusion hours (internal only)' %}</td><td class="v">{% if lv.inclusion.people %}{{ lv.inclusion.hours|floatformat:"0g" }} h · {{ lv.inclusion.people }} {% trans 'devices' %}{% else %}—{% endif %}</td></tr>{% endif %}
+  </table>
+  <p class="small muted">{% trans "Hours of use show that people had access to a computer, not how it changed their lives (Roura Salietti 2025, Annex D). The carbon cost per person is the extra CO₂e of serving the second users, divided by the people served (Roura et al. 2026)." %}</p>
 
   <h2>{% trans 'How you can use these figures' %}</h2>
   <table class="wording"><tr>
@@ -194,6 +214,15 @@
     {% endfor %}
   </table>
   <p class="small muted">{% blocktrans with total=lv.stages_total_text transport=lv.transport_text %}Total {{ total }} CO₂e over the devices' lives (not per year); transport, all legs: {{ transport }}. Excluded: refurbishment parts, packaging, cloud.{% endblocktrans %}</p>
+  <h2>{% trans 'Social value' %}</h2>
+  <table class="facts">
+    <tr><td>{% trans 'People with a computer through reuse' %}</td><td class="v">{{ L.reused }}</td></tr>
+    <tr><td>{% trans 'Hours of digital access (measured / projected)' %}</td><td class="v">{{ lv.hours_total|floatformat:"0g" }} h ({{ L.life2_hours_measured|floatformat:"0g" }} / {{ L.life2_hours_projected|floatformat:"0g" }})</td></tr>
+    {% if lv.cost_per_person_reuse_text %}<tr><td>{% trans 'Carbon cost of giving one person a computer' %}</td><td class="v">{% blocktrans with r=lv.cost_per_person_reuse_text n=lv.cost_per_person_new_text %}{{ r }} with reuse · {{ n }} with a new one{% endblocktrans %}</td></tr>{% endif %}
+    <tr><td>{% trans 'Local technician work' %}</td><td class="v">{{ L.technician_hours|floatformat:"0g" }} h</td></tr>
+    {% if lv.inclusion %}<tr><td>{% trans 'Digital inclusion hours (internal only)' %}</td><td class="v">{% if lv.inclusion.people %}{{ lv.inclusion.hours|floatformat:"0g" }} h · {{ lv.inclusion.people }} {% trans 'devices' %}{% else %}—{% endif %}</td></tr>{% endif %}
+  </table>
+  <p class="small muted">{% trans "Hours of use show that people had access to a computer, not how it changed their lives (Roura Salietti 2025, Annex D). The carbon cost per person is the extra CO₂e of serving the second users, divided by the people served (Roura et al. 2026)." %}</p>
 {% endif %}
 
 <p class="method">

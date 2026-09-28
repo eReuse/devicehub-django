@@ -30,7 +30,8 @@ from environmental_impact.algorithms.ereuse2026.ereuse2026 import (
     render_docs as render_impact_v2_docs,
 )
 from environmental_impact.algorithms.ereuse2026.model import UnsupportedDevice, aggregate_lot
-from environmental_impact.lot_presenters import lot_impact_view
+from environmental_impact.lot_presenters import default_view, lot_impact_view
+from environmental_impact.social_impact import compute_device_social_impact
 from environmental_impact.pdf import PdfUnavailable, render_lot_report_pdf
 from environmental_impact.reuse import lot_direction
 from environmental_impact.algorithms.ereuse2025.carbon_intensity import (
@@ -435,7 +436,7 @@ class LotPropertiesView(DashboardLotMixing, TemplateView):
 
 class LotEnvironmentalImpactView(DashboardLotMixing, TemplateView):
     template_name = "lot_environmental_impact.html"
-    title = _("Environmental Impact")
+    title = _("Impact")
 
     def get(self, request, *args, **kwargs):
         if request.GET.get("format") == "pdf":
@@ -493,7 +494,7 @@ class LotEnvironmentalImpactView(DashboardLotMixing, TemplateView):
                 (_("Lots"), reverse("dashboard:unassigned")),
                 (self.lot.type.name, reverse("lot:tags", args=[self.lot.type.pk])),
                 (self.lot.name, reverse("dashboard:lot", args=[self.lot.pk])),
-                (_("Environmental Impact"), None),
+                (_("Impact"), None),
             ],
         })
         return context
@@ -515,14 +516,33 @@ class LotEnvironmentalImpactView(DashboardLotMixing, TemplateView):
             return None
         tag_name = self.lot.type.name if self.lot.type else None
         prepared_for = (self.request.GET.get("for") or "").strip() or self._default_recipient(tag_name)
+        view = self.request.GET.get("view")
+        inclusion = None
+        if (view or default_view(tag_name)) == "refurbisher":
+            inclusion = self._inclusion_totals([device for device, _ in rows], institution)
         return lot_impact_view(
             aggregate_lot([d for _, d in rows], unsupported=unsupported),
             rows,
             tag_name=tag_name,
-            view=self.request.GET.get("view"),
+            view=view,
             prepared_for=prepared_for,
             lot_name=self.lot.name or "",
+            inclusion=inclusion,
         )
+
+    def _inclusion_totals(self, devices, institution):
+        """Digital-inclusion hours from the vulnerable-person marks (refurbisher view only)."""
+        people = hours = 0
+        for device in devices:
+            try:
+                social = compute_device_social_impact(device, institution)
+            except Exception as err:
+                logger.error(f"Social impact error for {device.id}: {err}")
+                continue
+            if social.vulnerable_person:
+                people += 1
+                hours += social.digital_inclusion_hours
+        return {"people": people, "hours": hours}
 
     def _default_recipient(self, tag_name):
         """Who a report is for, from the lot's donors or beneficiaries when known."""

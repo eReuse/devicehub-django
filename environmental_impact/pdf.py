@@ -16,9 +16,9 @@ from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
 TITLES = {
-    "supplier": (_("Environmental contribution report"), _("Devices from %(who)s")),
-    "recipient": (_("Embodied-carbon statement for refurbished equipment"), _("Refurbished devices delivered to %(who)s")),
-    "refurbisher": (_("Environmental impact of a lot"), _("Lot %(lot)s")),
+    "supplier": (_("Impact report · supplier"), _("Devices from %(who)s")),
+    "recipient": (_("Impact report · recipient"), _("Refurbished devices delivered to %(who)s")),
+    "refurbisher": (_("Impact report · refurbisher"), _("Lot %(lot)s")),
 }
 
 
