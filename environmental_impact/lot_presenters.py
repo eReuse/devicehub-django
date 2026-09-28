@@ -170,7 +170,6 @@ def lot_impact_view(lot: LotImpact, rows: list[tuple[object, DeviceImpact]], tag
         "median_life1": median(measured_life1) if measured_life1 else None,
         "unused_text": kg(lot.unused_kg),
         "unused_carried_text": kg(lot.unused_kg_carried),
-        "passed_on_text": kg(lot.passed_on_kg),
         "missing_life1": lot.devices - lot.devices_with_life1_reading,
         "measured_hours_percent": (
             round(100 * lot.life2_hours_measured / (lot.life2_hours_measured + lot.life2_hours_projected))
