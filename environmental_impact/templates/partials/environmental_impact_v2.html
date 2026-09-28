@@ -1,0 +1,230 @@
+{% load i18n %}
+{% with i=v2.impact %}
+<style>
+  .ei2-bar{height:18px;border-radius:3px}
+  .ei2-life1{background:var(--bs-secondary-bg-subtle,#dee2e6);border:1px solid var(--bs-border-color,#ced4da)}
+  .ei2-life2{background:var(--bs-primary,#0d6efd)}
+  .ei2-life2.projected{background:repeating-linear-gradient(45deg,rgba(13,110,253,.25) 0 5px,rgba(13,110,253,.6) 5px 8px)}
+  .ei2-track{position:relative;display:flex;gap:2px;padding-top:22px;padding-bottom:4px}
+  .ei2-marker{position:absolute;top:0;bottom:0;border-left:2px solid var(--bs-body-color,#212529)}
+  .ei2-marker span{position:absolute;top:0;right:4px;white-space:nowrap;font-size:.75rem;color:var(--bs-secondary-color,#6c757d)}
+  .ei2-hbar{display:grid;grid-template-columns:9.5rem 1fr 4.5rem;gap:.5rem;align-items:center;font-size:.875rem}
+  .ei2-hbar .fill{height:18px;border-radius:3px;background:var(--bs-secondary-bg-subtle,#dee2e6)}
+  .ei2-hbar .fill.hl{background:var(--bs-primary,#0d6efd)}
+  .ei2-cols{display:grid;grid-template-columns:repeat(6,1fr);gap:.4rem;align-items:end;height:140px;border-bottom:1px solid var(--bs-border-color,#ced4da)}
+  .ei2-col{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;font-size:.75rem}
+  .ei2-col .fill{width:60%;background:var(--bs-primary,#0d6efd);border-radius:3px 3px 0 0;min-height:1px}
+  .ei2-collabels{display:grid;grid-template-columns:repeat(6,1fr);gap:.4rem;font-size:.75rem;text-align:center;color:var(--bs-secondary-color,#6c757d)}
+  .ei2-fig{font-size:2rem;font-weight:600;line-height:1.1}
+  .ei2-fig small{font-size:.9rem;font-weight:500;color:var(--bs-secondary-color,#6c757d)}
+  .ei2-chip{font-size:.75rem;border:1px solid var(--bs-border-color,#ced4da);border-radius:999px;padding:.05rem .5rem}
+  .ei2-chip.measured{border-color:var(--bs-primary,#0d6efd)}
+</style>
+
+{% if i.warnings %}
+  <div class="alert alert-warning mt-3" role="alert">
+    <ul class="mb-0">{% for w in i.warnings %}<li>{{ w }}</li>{% endfor %}</ul>
+  </div>
+{% endif %}
+
+<div class="d-flex flex-wrap align-items-center gap-2 mt-3">
+  {% if v2.reused %}
+    <span class="badge bg-success">{% trans 'In its second life' %}</span>
+    <span class="text-muted small">
+      {% if i.reuse_source == 'mark' %}{% trans 'reuse start marked by hand' %}{% else %}{% trans 'reuse detected from a second evidence' %}{% endif %}
+    </span>
+  {% else %}
+    <span class="badge bg-secondary">{% trans 'Not reused yet' %}</span>
+    <span class="text-muted small">{% trans 'Mark where reuse starts below, or scan it again in its second life.' %}</span>
+  {% endif %}
+  <span class="text-muted small ms-auto">
+    {{ i.device_type|capfirst }} ·
+    {% if v2.bios_year %}{% blocktrans with year=v2.bios_year %}made ~{{ year }} (BIOS date){% endblocktrans %}{% else %}{% trans 'manufacture date unknown' %}{% endif %}
+  </span>
+</div>
+
+{# 1. Its story #}
+<div class="card mt-3">
+  <div class="card-body">
+    <h6 class="card-title">{% trans 'Its story' %}</h6>
+    <div class="ei2-track" role="img" aria-label="{% trans 'Powered-on hours in each life' %}">
+      <div class="ei2-bar ei2-life1" style="width:{{ v2.story.life1_width }}%" title="{% trans 'Life 1' %}: {{ i.life1_hours|floatformat:"0g" }} h"></div>
+      {% if v2.reused %}
+        <div class="ei2-bar ei2-life2 {% if not i.life2_measured %}projected{% endif %}" style="width:{{ v2.story.life2_width }}%" title="{% trans 'Life 2' %}: {{ i.life2_hours|floatformat:"0g" }} h"></div>
+      {% endif %}
+      <div class="ei2-marker" style="left:{{ v2.story.typical_left }}%"><span>{% blocktrans with h=v2.story.typical_hours|floatformat:"0g" %}typical first life {{ h }} h{% endblocktrans %}</span></div>
+    </div>
+    <div class="d-flex flex-wrap justify-content-between small text-muted">
+      <span>{% trans 'Life 1' %}: {{ i.life1_hours|floatformat:"0g" }} h{% if v2.story.intake %} · {% trans 'refurbished' %} {{ v2.story.intake|date:"Y-m" }}{% endif %}</span>
+      {% if v2.reused %}<span>{% trans 'Life 2' %}: {{ i.life2_hours|floatformat:"0g" }} h {% if i.life2_measured %}{% trans 'measured' %}{% else %}{% trans 'projected' %}{% endif %}</span>{% endif %}
+    </div>
+    <div class="d-flex flex-wrap gap-1 mt-2">
+      <span class="ei2-chip {% if i.life1_measured %}measured{% endif %}">
+        {% if i.life1_measured %}● {% if i.hours_estimated %}{% trans 'life-1 hours estimated from Android signals' %}{% else %}{% trans 'life-1 hours measured' %}{% endif %}{% else %}○ {% trans 'life-1 hours: no usable reading' %}{% endif %}
+      </span>
+      {% if v2.reused %}
+        <span class="ei2-chip {% if i.life2_measured %}measured{% endif %}">{% if i.life2_measured %}● {% trans 'life-2 hours from later evidences' %}{% else %}○ {% trans 'life-2 hours projected' %}{% endif %}</span>
+      {% endif %}
+      {% if i.life2_disk_swaps %}<span class="ei2-chip">{% blocktrans count n=i.life2_disk_swaps %}{{ n }} disk swap: span not counted{% plural %}{{ n }} disk swaps: spans not counted{% endblocktrans %}</span>{% endif %}
+      <span class="ei2-chip {% if v2.bios_year %}measured{% endif %}">{% if v2.bios_year %}● {% trans 'manufacture year from BIOS' %}{% else %}○ {% trans 'manufacture year unknown' %}{% endif %}</span>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mt-0">
+  {# 2. What it carries now #}
+  <div class="col-md-6">
+    <div class="card h-100"><div class="card-body">
+      <h6 class="card-title">{% trans 'What it carries now' %}</h6>
+      {% if v2.reused %}
+        <div class="ei2-fig">{{ i.attributed_kg|floatformat:0 }}<small> kg CO₂e {% trans 'embodied' %}</small></div>
+        <p class="small text-muted mb-0 mt-2">
+          {% if v2.unused_percent is not None %}
+            {% blocktrans with new=i.new_equivalent_kg|floatformat:0 pct=v2.unused_percent %}A new equivalent carries about {{ new }} kg. {{ pct }}% of its manufacturing footprint was still unused when it was donated; that share, plus the refurbisher's transport, is what its current owner carries (ITU-T L.1410 App. XV).{% endblocktrans %}
+          {% else %}
+            {% blocktrans with new=i.new_equivalent_kg|floatformat:0 %}No usable first-life reading, so it is counted as new ({{ new }} kg). A power-on reading at intake would lower this.{% endblocktrans %}
+          {% endif %}
+        </p>
+      {% else %}
+        <div class="ei2-fig">—</div>
+        <p class="small text-muted mb-0 mt-2">
+          {% if v2.unused_percent is not None %}
+            {% blocktrans with pct=v2.unused_percent %}{{ pct }}% of its manufacturing footprint is still unused. Its next owner will carry that share once it is reused.{% endblocktrans %}
+          {% else %}{% trans 'Shown once the device is in its second life.' %}{% endif %}
+        </p>
+      {% endif %}
+    </div></div>
+  </div>
+
+  {# 3. What each hour of use costs #}
+  <div class="col-md-6">
+    <div class="card h-100"><div class="card-body">
+      <h6 class="card-title">{% trans 'What each hour of use costs' %}</h6>
+      <div class="d-flex flex-column gap-2">
+        {% for row in v2.per_hour %}
+          <div class="ei2-hbar">
+            <span class="{% if row.highlight %}fw-semibold{% endif %}">{{ row.label }}</span>
+            <div><div class="fill {% if row.highlight %}hl{% endif %}" style="width:{{ row.width }}%"></div></div>
+            <span class="text-end">{{ row.value|floatformat:0 }} g/h</span>
+          </div>
+        {% endfor %}
+      </div>
+      <p class="small text-muted mb-0 mt-2">
+        {% if v2.per_hour_drop is not None %}
+          {% if v2.per_hour_drop <= 0 %}
+            {% blocktrans with h=i.life2_hours|floatformat:"0g" %}Its second life has barely started ({{ h }} h), so the footprint per hour has not dropped yet: the refurbisher's transport still weighs more than the extra hours.{% endblocktrans %}
+          {% elif v2.per_hour_drop >= 25 %}
+            {% blocktrans with d=v2.per_hour_drop %}Its second life cut the footprint per hour of use by {{ d }}%: manufacturing is shared over more hours.{% endblocktrans %}
+          {% else %}
+            {% blocktrans with d=v2.per_hour_drop %}Only {{ d }}% lower: it had already done a long first life, so its manufacturing was already spread over many hours.{% endblocktrans %}
+          {% endif %}
+        {% else %}
+          {% trans 'Manufacturing, transport and first-life electricity divided by its powered-on hours.' %}
+        {% endif %}
+      </p>
+    </div></div>
+  </div>
+
+  {# 4. Running it #}
+  <div class="col-md-6">
+    <div class="card h-100"><div class="card-body">
+      <h6 class="card-title">{% trans 'Running it' %}</h6>
+      {% if v2.reused %}
+        <div class="ei2-fig">{{ i.kwh_per_year|floatformat:0 }}<small> kWh / {% trans 'year' %}</small></div>
+        <p class="small text-muted mb-0 mt-2">
+          {% blocktrans with kg=i.kg_per_year|floatformat:1 country=i.country grid=i.grid_now|floatformat:3 h=i.hours_per_year|floatformat:0 %}≈ {{ kg }} kg CO₂e per year on the {{ country }} grid ({{ grid }} kg/kWh), at about {{ h }} hours of use a year{% endblocktrans %}
+          ({% if i.hours_per_year_measured %}{% trans 'measured' %}{% else %}{% trans 'estimate' %}{% endif %}).
+          {% trans 'Old and new devices are assumed to draw the same power.' %}
+        </p>
+      {% else %}
+        <div class="ei2-fig">—</div>
+        <p class="small text-muted mb-0 mt-2">{% trans 'Shown once the device is in its second life.' %}</p>
+      {% endif %}
+    </div></div>
+  </div>
+
+  {# 5. ITU stages #}
+  <div class="col-md-6">
+    <div class="card h-100"><div class="card-body">
+      <h6 class="card-title">{% trans 'Life-cycle stages (ITU-T L.1410)' %}</h6>
+      <div class="small text-muted mb-1">{% if v2.stages_per_year %}kg CO₂e / {% trans 'year' %}{% else %}kg CO₂e{% endif %}</div>
+      <div class="ei2-cols" role="img" aria-label="{% trans 'Emissions by life-cycle stage' %}">
+        {% for s in v2.stages %}
+          <div class="ei2-col"><span>{% if s.value %}{{ s.value|floatformat:1 }}{% else %}—{% endif %}</span><div class="fill" style="height:{{ s.height }}%" title="{{ s.label }}: {{ s.value|floatformat:1 }}"></div></div>
+        {% endfor %}
+      </div>
+      <div class="ei2-collabels mt-1">{% for s in v2.stages %}<span>{{ s.label }}</span>{% endfor %}</div>
+      <p class="small text-muted mb-0 mt-2">
+        {% if v2.stages_per_year %}
+          {% blocktrans with total=v2.stages_total|floatformat:0 years=i.lifetime_years|floatformat:1 %}Total {{ total }} kg CO₂e over about {{ years }} years of life, shown per year as L.1410 asks.{% endblocktrans %}
+        {% else %}
+          {% blocktrans with total=v2.stages_total|floatformat:0 %}Total {{ total }} kg CO₂e. Not shown per year: without a BIOS date its calendar lifetime is unknown.{% endblocktrans %}
+        {% endif %}
+      </p>
+    </div></div>
+  </div>
+</div>
+
+{% if v2.reused %}
+  <div class="alert alert-light border mt-3 small mb-0">
+    {% blocktrans with a=i.avoided|floatformat:0 lo=i.avoided_low|floatformat:0 hi=i.avoided_high|floatformat:0 %}Reusing it instead of buying a new one avoided about <strong>{{ a }} kg CO₂e</strong> (range {{ lo }}–{{ hi }} kg with manufacturer data). This is a contribution shared by everyone in its reuse chain; it is reported apart from any organisation's own emissions and cannot be subtracted from them.{% endblocktrans %}
+  </div>
+{% endif %}
+
+<div class="row g-3 mt-0">
+  {# Reuse start picker #}
+  <div class="col-md-6">
+    <div class="card h-100"><div class="card-body">
+      <h6 class="card-title">{% trans 'Where its second life starts' %}</h6>
+      <form method="post" class="d-flex flex-column gap-2">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="save_reuse_start">
+        <select name="reuse_start" id="reuse_start" class="form-select form-select-sm">
+          <option value="">{% trans 'Automatic: from intake, once there is a second evidence' %}</option>
+          {% for ev in v2.timeline %}
+            <option value="{{ ev.uuid }}" {% if ev.marked %}selected{% endif %}>
+              {{ ev.date|date:"Y-m-d"|default:ev.uuid }} · {{ ev.poh|floatformat:"0g" }} h{% if ev.is_start and not ev.marked %} · {% trans 'current start' %}{% endif %}{% if ev.disk_changed %} · {% trans 'disk changed' %}{% endif %}
+            </option>
+          {% endfor %}
+        </select>
+        <div class="form-text mt-0">{% trans 'Pick the evidence taken when the device left the refurbisher, e.g. if it was scanned twice before delivery or delivered without a new scan.' %}</div>
+        <div><button type="submit" class="btn btn-primary btn-sm">{% trans 'Save' %}</button></div>
+      </form>
+    </div></div>
+  </div>
+
+  {# Country + method #}
+  <div class="col-md-6">
+    <div class="card h-100"><div class="card-body">
+      <h6 class="card-title">{% trans 'Method and inputs' %}</h6>
+      <form method="post" class="mb-2">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="save_environmental_profile">
+        <label class="form-label small mb-1" for="country_code">{% trans 'Country of use (electricity grid)' %}</label>
+        <select id="country_code" name="country_code" class="form-select form-select-sm" onchange="this.form.requestSubmit()">
+          <option value="">{% trans 'Use institution default' %}</option>
+          {% for country_code, country_label in environmental_country_choices %}
+            <option value="{{ country_code }}" {% if environmental_profile.country == country_code %}selected{% endif %}>{{ country_label }}</option>
+          {% endfor %}
+        </select>
+      </form>
+      <table class="table table-sm small mb-2">
+        <tbody>
+          {% for p in v2.provenance %}
+            <tr><td>{% if p.measured %}●{% else %}○{% endif %} {{ p.label }}</td><td>{{ p.value }}</td><td class="text-muted">{{ p.source }}</td></tr>
+          {% endfor %}
+          <tr><td>○ {% trans 'Factor set' %}</td><td>{{ v2.factor_label }}</td><td class="text-muted">{{ i.method_version }}</td></tr>
+        </tbody>
+      </table>
+      <button class="btn btn-outline-secondary btn-sm w-100" type="button" data-bs-toggle="collapse" data-bs-target="#deviceDocsV2" aria-expanded="false">{% trans 'How this is calculated' %}</button>
+      <div class="collapse mt-2" id="deviceDocsV2"><div style="max-height:500px;overflow-y:auto;font-size:.875rem">{{ v2_docs|safe }}</div></div>
+    </div></div>
+  </div>
+</div>
+
+<div class="d-flex flex-wrap gap-2 align-items-start border rounded p-2 mt-3 small text-muted" style="border-style:dashed!important">
+  <strong class="text-body">{% trans 'Verifiable certificate: being explored, not built.' %}</strong>
+  {% trans 'The idea is to issue this page as a signed credential, so the figures cannot be edited after issue.' %}
+</div>
+<p class="small fst-italic text-muted mt-2 mb-0">{% trans 'This LCA result cannot be compared to the result of another LCA unless all assumptions and modelling choices are equal.' %}</p>
+{% endwith %}

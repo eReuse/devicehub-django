@@ -26,6 +26,13 @@ from environmental_impact.algorithms.ereuse2025.carbon_intensity import (
     get_country_label,
 )
 from environmental_impact.models import DeviceEnvironmentalProfile
+from environmental_impact.algorithms.ereuse2026.ereuse2026 import (
+    EReuse2026EnvironmentalImpactAlgorithm,
+    render_docs as render_impact_v2_docs,
+)
+from environmental_impact.algorithms.ereuse2026.model import UnsupportedDevice
+from environmental_impact.presenters import device_impact_view
+from environmental_impact.reuse import read_reuse_marks, save_reuse_mark
 from environmental_impact.social_impact import (
     compute_device_social_impact,
     evidence_timeline,
@@ -183,6 +190,8 @@ class DetailsView(DashboardView, TemplateView ):
             return self._save_environmental_profile(request, kwargs["pk"])
         if action == "save_social_inclusion":
             return self._save_social_inclusion(request, kwargs["pk"])
+        if action == "save_reuse_start":
+            return self._save_reuse_start(request, kwargs["pk"])
 
         url = request.POST.get("url")
 
@@ -299,6 +308,40 @@ class DetailsView(DashboardView, TemplateView ):
         messages.success(request, _("Social impact information updated."))
         return redirect(reverse_lazy("product:details", args=[pk]) + "#social_impact")
 
+    def _save_reuse_start(self, request, pk):
+        """Store where the device's second life starts (empty: automatic)."""
+        institution = request.user.institution
+        root = RootAlias.objects.filter(owner=institution, alias=pk).first()
+        device = Device(id=root.root if root else pk, owner=institution)
+        device.initial()
+        if not device.last_evidence:
+            raise Http404
+
+        uuid = (request.POST.get("reuse_start") or "").strip() or None
+        if uuid and uuid not in {str(u) for u in device.uuids}:
+            messages.error(request, _("That evidence does not belong to this device."))
+        else:
+            save_reuse_mark(device, institution, request.user, uuid)
+            if uuid:
+                messages.success(request, _("Second life now starts at the selected evidence."))
+            else:
+                messages.success(request, _("Second life is detected automatically again."))
+        return redirect(reverse_lazy("product:details", args=[pk]) + "#environmental_impact")
+
+    def _environmental_impact_v2(self):
+        """ereuse2026 view data, or None when the device type is not covered."""
+        institution = self.request.user.institution
+        try:
+            inputs, impact = EReuse2026EnvironmentalImpactAlgorithm().compute_with_inputs(
+                self.object, institution
+            )
+        except (UnsupportedDevice, ValueError):
+            return None
+        except Exception as err:
+            logger.error("Environmental Impact v2 Error: {}".format(err))
+            return None
+        return device_impact_view(impact, inputs, read_reuse_marks(self.object, institution))
+
     def _get_product_photos(self):
         """Collect every photo attached to this product, newest evidence first."""
         groups = []
@@ -361,6 +404,7 @@ class DetailsView(DashboardView, TemplateView ):
         except Exception as err:
             logger.error("Environmental Impact Error: {}".format(err))
             enviromental_impact = None
+        impact_v2 = self._environmental_impact_v2()
         environmental_profile = DeviceEnvironmentalProfile.objects.filter(
             device_chid=self.object.id,
             owner=self.request.user.institution,
@@ -404,6 +448,8 @@ class DetailsView(DashboardView, TemplateView ):
             'lot_tags': lot_tags,
             'dpps': dpps,
             'impact': enviromental_impact,
+            'impact_v2': impact_v2,
+            'impact_v2_docs': render_impact_v2_docs() if impact_v2 else "",
             'social': compute_device_social_impact(self.object, self.request.user.institution),
             'environmental_profile': environmental_profile,
             'environmental_country_choices': get_available_country_choices(language_code),
