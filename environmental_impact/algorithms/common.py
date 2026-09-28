@@ -204,3 +204,21 @@ def extract_disk_metadata_from_components(components: List[Dict]) -> Optional[Di
                 "manufacturer": comp.get("manufacturer", ""),
             }
     return None
+
+
+def get_device_country_code(device, institution=None, default: str = "ES") -> str:
+    """Country for a device's use phase: per-device override, else the owner's country."""
+    from environmental_impact.models import DeviceEnvironmentalProfile
+
+    owner = institution or getattr(device, "owner", None)
+    if getattr(owner, "pk", None):
+        profile = DeviceEnvironmentalProfile.objects.filter(
+            device_chid=device.id,
+            owner=owner,
+        ).first()
+        if profile and profile.country:
+            return profile.country.upper()
+    country_code = getattr(owner, "country", None)
+    if not country_code:
+        return default
+    return country_code.upper()
