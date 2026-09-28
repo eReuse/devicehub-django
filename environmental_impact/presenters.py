@@ -39,6 +39,14 @@ REUSE_SOURCE_LABELS = {
 }
 
 
+def _nice_step(raw: float) -> int:
+    """A round tick step (1, 2 or 5 × a power of ten) near ``raw``."""
+    if raw <= 0:
+        return 1
+    power = 10 ** (len(str(int(raw))) - 1) if raw >= 1 else 1
+    return min((m * power for m in (1, 2, 5, 10)), key=lambda step: abs(step - raw))
+
+
 def _pct(value: float, largest: float) -> float:
     if not largest:
         return 0.0
@@ -49,7 +57,13 @@ def device_impact_view(impact: DeviceImpact, inputs: DeviceInputs, marks: set[st
     factors = load_factors()
     typical = factors["typical_first_life_hours"][impact.device_type]
     h1, h2 = impact.life1_hours, impact.life2_hours if impact.reused else 0
-    story_max = max(typical, h1 + h2) * 1.06
+    story_max = max(typical, h1 + h2)
+    story_step = _nice_step(story_max / 4)
+    story_ticks = [
+        {"hours": t, "left": _pct(t, story_max)}
+        for t in range(0, int(story_max) + 1, story_step)
+    ]
+    life1_point = inputs.points[inputs.reuse_start] if impact.reused else inputs.points[-1]
 
     per_hour = [{"label": _("Life 1 only"), "value": impact.g_per_hour_life1, "highlight": False}]
     if impact.reused and impact.g_per_hour_total is not None:
@@ -107,9 +121,14 @@ def device_impact_view(impact: DeviceImpact, inputs: DeviceInputs, marks: set[st
         "story": {
             "life1_width": _pct(h1, story_max),
             "life2_width": _pct(h2, story_max),
-            "typical_left": _pct(typical, story_max),
+            "typical_width": _pct(typical, story_max),
             "typical_hours": typical,
+            "total_hours": h1 + h2,
+            "ticks": story_ticks,
+            # the evidence whose counter gives the life-1 hours (intake, or the latest scan if pending)
+            "life1_date": life1_point.date,
             "intake": inputs.points[inputs.reuse_start].date if impact.reused else None,
+            "life2_years": factors["default_second_life"][impact.device_type]["years"],
         },
         "per_hour": per_hour,
         "per_hour_drop": per_hour_drop,

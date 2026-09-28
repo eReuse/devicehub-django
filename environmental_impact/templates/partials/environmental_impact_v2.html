@@ -13,13 +13,22 @@
   .dh-impact .nav-pills .nav-link{color:var(--dh-dark);font-weight:600}
   .dh-impact .nav-pills .nav-link.active{background:var(--dh-teal-soft);color:#000}
   .dh-impact a:not(.nav-link){color:var(--dh-primary)}
-  .ei2-bar{height:18px;border-radius:3px}
-  .ei2-life1{background:var(--dh-grey);border:1px solid var(--dh-line)}
+  .ei2-story{display:grid;grid-template-columns:minmax(7rem,11rem) 1fr 5.5rem;gap:.35rem .75rem;align-items:center;font-size:.85rem}
+  .ei2-rowlabel{color:var(--dh-dark)} .ei2-rowval{text-align:right;font-weight:600;font-variant-numeric:tabular-nums}
+  .ei2-lane{display:flex;gap:2px;height:22px;background:var(--dh-light);border-radius:3px}
+  .ei2-seg{height:100%;border-radius:3px}
+  .ei2-life1{background:var(--dh-teal)}
   .ei2-life2{background:var(--dh-secondary)}
-  .ei2-life2.projected{background:repeating-linear-gradient(45deg,var(--dh-green-soft) 0 5px,var(--dh-secondary) 5px 8px)}
-  .ei2-track{position:relative;display:flex;gap:2px;padding-top:22px;padding-bottom:4px}
-  .ei2-marker{position:absolute;top:0;bottom:0;border-left:2px solid var(--dh-dark)}
-  .ei2-marker span{position:absolute;top:0;right:4px;white-space:nowrap;font-size:.75rem;color:var(--bs-secondary-color,#6c757d)}
+  .ei2-life2.projected{background:repeating-linear-gradient(45deg,var(--dh-green-soft) 0 5px,var(--dh-secondary) 5px 9px)}
+  .ei2-typical{background:#cfd4d8}
+  .ei2-axis{position:relative;height:1.2rem;border-top:1px solid var(--dh-line);font-size:.72rem;color:var(--bs-secondary-color,#6c757d)}
+  .ei2-axis span{position:absolute;top:.15rem;transform:translateX(-50%);white-space:nowrap}
+  .ei2-axis span:first-child{transform:none}
+  .ei2-legend{list-style:none;padding:0;margin:.9rem 0 .4rem;display:flex;flex-direction:column;gap:.45rem;font-size:.85rem}
+  .ei2-legend li{display:grid;grid-template-columns:1.1rem 1fr;gap:.5rem;align-items:start}
+  .ei2-legend strong{color:var(--dh-dark);margin-right:.35rem}
+  .ei2-swatch{width:1rem;height:.8rem;border-radius:2px;margin-top:.2rem}
+  .ei2-q{color:var(--dh-primary);margin-left:.25rem}
   .ei2-hbar{display:grid;grid-template-columns:9.5rem 1fr 4.5rem;gap:.5rem;align-items:center;font-size:.875rem}
   .ei2-hbar .fill{height:18px;border-radius:3px;background:var(--dh-grey);border:1px solid var(--dh-line)}
   .ei2-hbar .fill.hl{background:var(--dh-secondary);border-color:var(--dh-secondary)}
@@ -29,8 +38,6 @@
   .ei2-collabels{display:grid;grid-template-columns:repeat(6,1fr);gap:.4rem;font-size:.75rem;text-align:center;color:var(--bs-secondary-color,#6c757d)}
   .ei2-fig{font-size:2rem;font-weight:700;line-height:1.1;color:var(--dh-dark)}
   .ei2-fig small{font-size:.9rem;font-weight:500;color:var(--bs-secondary-color,#6c757d)}
-  .ei2-chip{font-size:.75rem;border:1px solid var(--bs-border-color,#ced4da);border-radius:999px;padding:.05rem .5rem}
-  .ei2-chip.measured{border-color:var(--dh-secondary);background:var(--dh-light)}
 </style>
 
 {% if i.warnings %}
@@ -69,55 +76,60 @@
 <div class="card mt-3">
   <div class="card-body">
     <h6 class="card-title">{% trans 'Its story' %}</h6>
-    <div class="ei2-track" role="img" aria-label="{% trans 'Powered-on hours in each life' %}">
-      <div class="ei2-bar ei2-life1" style="width:{{ v2.story.life1_width }}%" title="{% trans 'Life 1' %}: {{ i.life1_hours|floatformat:"0g" }} h"></div>
+    <div class="ei2-story" role="img" aria-label="{% trans 'Powered-on hours in each life, compared with a typical first life' %}">
+      <span class="ei2-rowlabel">{% trans 'This device' %}</span>
+      <div class="ei2-lane">
+        <div class="ei2-seg ei2-life1" style="width:{{ v2.story.life1_width }}%" title="{% trans 'Life 1' %}: {{ i.life1_hours|floatformat:"0g" }} h"></div>
+        {% if v2.reused %}<div class="ei2-seg ei2-life2 {% if not i.life2_measured %}projected{% endif %}" style="width:{{ v2.story.life2_width }}%" title="{% trans 'Life 2' %}: {{ i.life2_hours|floatformat:"0g" }} h"></div>{% endif %}
+      </div>
+      <span class="ei2-rowval">{{ v2.story.total_hours|floatformat:"0g" }} h</span>
+
+      <span class="ei2-rowlabel">{% blocktrans with t=i.device_type %}Typical first life ({{ t }}){% endblocktrans %}</span>
+      <div class="ei2-lane"><div class="ei2-seg ei2-typical" style="width:{{ v2.story.typical_width }}%"></div></div>
+      <span class="ei2-rowval">{{ v2.story.typical_hours|floatformat:"0g" }} h</span>
+
+      <span></span>
+      <div class="ei2-axis">{% for t in v2.story.ticks %}<span style="left:{{ t.left }}%">{{ t.hours|floatformat:"0g" }}{% if forloop.first %} h{% endif %}</span>{% endfor %}</div>
+      <span></span>
+    </div>
+
+    <ul class="ei2-legend">
+      <li><span class="ei2-swatch ei2-life1"></span>
+        <div><strong>{% trans 'Life 1' %} · {{ i.life1_hours|floatformat:"0g" }} h</strong>
+        {% if not i.life1_measured %}{% trans 'no usable reading (the counter was missing or reset), so a typical first life is assumed.' %}
+        {% elif i.hours_estimated %}{% blocktrans with d=v2.story.life1_date|date:"Y-m-d" %}estimated from battery cycles and other Android signals, at the scan of {{ d }}.{% endblocktrans %}
+        {% elif v2.reused %}{% blocktrans with d=v2.story.life1_date|date:"Y-m-d" %}read from the disk's power-on counter when it arrived at the refurbisher ({{ d }}).{% endblocktrans %}
+        {% else %}{% blocktrans with d=v2.story.life1_date|date:"Y-m-d" %}read from the disk's power-on counter at its latest scan ({{ d }}). It has not started a second life yet.{% endblocktrans %}{% endif %}
+        <span class="ei2-q">{% if not i.life1_measured %}○{% elif i.hours_estimated %}◐{% else %}●{% endif %}</span></div></li>
       {% if v2.reused %}
-        <div class="ei2-bar ei2-life2 {% if not i.life2_measured %}projected{% endif %}" style="width:{{ v2.story.life2_width }}%" title="{% trans 'Life 2' %}: {{ i.life2_hours|floatformat:"0g" }} h"></div>
+      <li><span class="ei2-swatch ei2-life2 {% if not i.life2_measured %}projected{% endif %}"></span>
+        <div><strong>{% trans 'Life 2' %} · {{ i.life2_hours|floatformat:"0g" }} h</strong>
+        {% if i.life2_measured and i.hours_estimated %}{% trans 'hours added since then, estimated from the Android signals of later scans.' %}
+        {% elif i.life2_measured %}{% trans 'hours added since then, read from later scans of the same disk.' %}
+        {% else %}{% blocktrans with y=v2.story.life2_years t=i.device_type %}estimate: a standard {{ y }} years of use for a {{ t }}. It becomes measured when the device is scanned again.{% endblocktrans %}{% endif %}
+        <span class="ei2-q">{% if not i.life2_measured %}○{% elif i.hours_estimated %}◐{% else %}●{% endif %}</span></div></li>
       {% endif %}
-      <div class="ei2-marker" style="left:{{ v2.story.typical_left }}%"><span>{% blocktrans with h=v2.story.typical_hours|floatformat:"0g" %}typical first life {{ h }} h{% endblocktrans %}</span></div>
-    </div>
-    <div class="d-flex flex-wrap justify-content-between small text-muted">
-      <span>{% trans 'Life 1' %}: {{ i.life1_hours|floatformat:"0g" }} h{% if v2.story.intake %} · {% trans 'refurbished' %} {{ v2.story.intake|date:"Y-m" }}{% endif %}</span>
-      {% if v2.reused %}<span>{% trans 'Life 2' %}: {{ i.life2_hours|floatformat:"0g" }} h {% if i.life2_measured %}{% trans 'measured' %}{% else %}{% trans 'projected' %}{% endif %}</span>{% endif %}
-    </div>
-    <div class="d-flex flex-wrap gap-1 mt-2">
-      <span class="ei2-chip {% if i.life1_measured %}measured{% endif %}">
-        {% if i.life1_measured %}● {% if i.hours_estimated %}{% trans 'life-1 hours estimated from Android signals' %}{% else %}{% trans 'life-1 hours measured' %}{% endif %}{% else %}○ {% trans 'life-1 hours: no usable reading' %}{% endif %}
-      </span>
-      {% if v2.reused %}
-        <span class="ei2-chip {% if i.life2_measured %}measured{% endif %}">{% if i.life2_measured %}● {% trans 'life-2 hours from later evidences' %}{% else %}○ {% trans 'life-2 hours projected' %}{% endif %}</span>
+      <li><span class="ei2-swatch ei2-typical"></span>
+        <div><strong>{% trans 'Typical first life' %} · {{ v2.story.typical_hours|floatformat:"0g" }} h</strong>
+        {% if v2.is_mobile %}{% trans 'about 3 years of use before a phone or tablet is refurbished (ADEME 2022). Used to judge how early it was handed over.' %}
+        {% else %}{% trans 'how long computers of this type usually last with their first owner (Franquesa et al. 2019, used in the thesis). Used to judge how early it was handed over.' %}{% endif %}</div></li>
+      <li><span class="ei2-swatch"></span>
+        <div><strong>{% if v2.bios_year %}{% blocktrans with y=v2.bios_year %}Made around {{ y }}{% endblocktrans %}{% else %}{% trans 'Manufacture year unknown' %}{% endif %}</strong>
+        {% if v2.bios_year %}{% trans 'from the BIOS date in the scan (assumes the BIOS was never updated).' %}{% else %}{% trans 'no BIOS date in the scan, so the life-cycle chart below shows totals, not per year.' %}{% endif %}
+        <span class="ei2-q">{% if v2.bios_year %}●{% else %}○{% endif %}</span></div></li>
+      {% if i.life2_disk_swaps %}
+      <li><span class="ei2-swatch"></span>
+        <div><strong>{% blocktrans count n=i.life2_disk_swaps %}{{ n }} disk swap{% plural %}{{ n }} disk swaps{% endblocktrans %}</strong>
+        {% trans 'the disk changed between two scans, so the hours of that period cannot be read from its counter and are not counted.' %}</div></li>
       {% endif %}
-      {% if i.life2_disk_swaps %}<span class="ei2-chip">{% blocktrans count n=i.life2_disk_swaps %}{{ n }} disk swap: span not counted{% plural %}{{ n }} disk swaps: spans not counted{% endblocktrans %}</span>{% endif %}
-      <span class="ei2-chip {% if v2.bios_year %}measured{% endif %}">{% if v2.bios_year %}● {% trans 'manufacture year from BIOS' %}{% else %}○ {% trans 'manufacture year unknown' %}{% endif %}</span>
-    </div>
+    </ul>
+    <p class="small text-muted mb-0">● {% trans 'measured from the device' %}{% if i.hours_estimated %} · ◐ {% trans "estimated from the device's own signals" %}{% endif %} · ○ {% trans 'standard assumption' %}</p>
   </div>
 </div>
 
 <div class="row g-3 mt-0">
-  {# 2. What it carries now #}
-  <div class="col-md-6">
-    <div class="card h-100"><div class="card-body">
-      <h6 class="card-title">{% trans 'What it carries now' %}</h6>
-      {% if v2.reused %}
-        <div class="ei2-fig">{{ i.attributed_kg|floatformat:0 }}<small> kg CO₂e {% trans 'embodied' %}</small></div>
-        <p class="small text-muted mb-0 mt-2">
-          {% if v2.apos_percent is not None %}
-            {% blocktrans with new=i.new_equivalent_kg|floatformat:0 pct=v2.apos_percent h1=i.life1_hours|floatformat:"0g" h2=v2.expected_life2_hours|floatformat:"0g" %}A new equivalent carries about {{ new }} kg. Its second life takes {{ pct }}% of its manufacturing and transport, in proportion to hours of use ({{ h1 }} h in its first life, {{ h2 }} h expected in its second), plus the refurbisher's transport. APOS allocation, as in Roura et al. (2026); fixed at handover.{% endblocktrans %}
-          {% else %}
-            {% blocktrans with new=i.new_equivalent_kg|floatformat:0 %}No usable first-life reading, so it is counted as new ({{ new }} kg). A power-on reading at intake would lower this.{% endblocktrans %}
-          {% endif %}
-        </p>
-      {% else %}
-        <div class="ei2-fig">—</div>
-        <p class="small text-muted mb-0 mt-2">
-          {% trans 'Shown once the device is in its second life: its second user then takes a share of its manufacturing, in proportion to hours of use.' %}
-        </p>
-      {% endif %}
-    </div></div>
-  </div>
-
-  {# 3. What each hour of use costs #}
-  <div class="col-md-6">
+  {# 2. What each hour of use costs #}
+  <div class="col-12">
     <div class="card h-100"><div class="card-body">
       <h6 class="card-title">{% trans 'What each hour of use costs' %}</h6>
       <div class="d-flex flex-column gap-2">
@@ -147,7 +159,7 @@
     </div></div>
   </div>
 
-  {# 4. Running it #}
+  {# 3. Running it #}
   <div class="col-md-6">
     <div class="card h-100"><div class="card-body">
       <h6 class="card-title">{% trans 'Running it' %}</h6>
@@ -165,7 +177,7 @@
     </div></div>
   </div>
 
-  {# 5. ITU stages #}
+  {# 4. ITU stages #}
   <div class="col-md-6">
     <div class="card h-100"><div class="card-body">
       <h6 class="card-title">{% trans 'Life-cycle stages (ITU-T L.1410)' %}</h6>
