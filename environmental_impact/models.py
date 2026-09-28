@@ -10,6 +10,10 @@ class EnvironmentalImpact:
         self.relevant_input_data: dict = {}
         self.constants: dict = {}
         self.docs: str = ""
+        # ereuse2026: the full per-device result, or the lot aggregate and its devices
+        self.model = None
+        self.lot = None
+        self.device_impacts: list = []
 
 
 class DeviceEnvironmentalProfile(models.Model):
