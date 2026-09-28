@@ -135,7 +135,14 @@ def _method(impact: DeviceImpact, factors: dict) -> dict:
     else:
         row(_("Recycling credit"), f"{credit[t]} kg CO₂e", credit["ref"], "karpagam_2017", "thesis")
     row(_("Allocation between owners"), "APOS", _("§3.3, p.4: burden split by powered-on hours"), "paper")
+    if impact.reused:
+        car = factors["car_kgco2e_per_km"]
+        row(_("Average car, for comparison"), f"{car['value']} kg CO₂e / km", car["ref"], "base_carbone")
     return {"constants": rows, "references": references}
+
+
+def _round_km(km: float) -> int:
+    return int(round(km, -1 if km < 1000 else -2))
 
 
 DETECTED_REASONS = {
@@ -247,6 +254,9 @@ def device_impact_view(impact: DeviceImpact, inputs: DeviceInputs, marks: set[st
         "timeline": timeline,
         "has_mark": bool(marks),
         "handover": _handover(impact, inputs, timeline),
+        # avoided emissions in everyday terms: km in an average car (rounded, it is an order of magnitude)
+        "avoided_car_km": _round_km(impact.avoided / factors["car_kgco2e_per_km"]["value"])
+        if impact.reused and impact.avoided else None,
         "bios_year": inputs.bios_year,
         "factor_label": factors["manufacturing"][impact.factor_set]["label"],
         "method": _method(impact, factors),

@@ -75,6 +75,7 @@
     {{ i.device_type|capfirst }} ·
     {% if v2.bios_year %}{% blocktrans with year=v2.bios_year %}made ~{{ year }} (BIOS date){% endblocktrans %}{% else %}{% trans 'manufacture date unknown' %}{% endif %}
   </span>
+  <a class="btn btn-green-admin btn-sm" href="?format=pdf"><i class="bi bi-file-earmark-pdf"></i> {% trans 'Export PDF' %}</a>
 </div>
 
 {# 1. Its story #}
@@ -146,7 +147,7 @@
   {# 2. ITU stages #}
   <div class="col-12">
     <div class="card h-100"><div class="card-body">
-      <h6 class="card-title">{% trans 'Life-cycle stages (ITU-T L.1410)' %}</h6>
+      <h6 class="card-title">{% trans 'Life-cycle stages' %}</h6>
       <div class="small text-muted mb-1">{% if v2.stages_per_year %}kg CO₂e / {% trans 'year' %}{% else %}kg CO₂e{% endif %}</div>
       <div class="ei2-cols" role="img" aria-label="{% trans 'Emissions by life-cycle stage' %}">
         {% for s in v2.stages %}
@@ -160,14 +161,16 @@
         {% else %}
           {% blocktrans with total=v2.stages_total|floatformat:0 %}Total {{ total }} kg CO₂e. Not shown per year: without a BIOS date its calendar lifetime is unknown.{% endblocktrans %}
         {% endif %}
+        <br>{% trans 'Stages A–D as defined in ITU-T L.1410 (2024).' %}
       </p>
     </div></div>
   </div>
 </div>
 
 {% if v2.reused %}
-  <div class="dh-soft border mt-3 small mb-0 p-3">
-    {% blocktrans with a=i.avoided|floatformat:0 lo=i.avoided_low|floatformat:0 hi=i.avoided_high|floatformat:0 %}Reusing it instead of buying a new one avoided about <strong>{{ a }} kg CO₂e</strong> (range {{ lo }}–{{ hi }} kg with manufacturer data). This is a contribution shared by everyone in its reuse chain; it is reported apart from any organisation's own emissions and cannot be subtracted from them.{% endblocktrans %}
+  <div class="dh-soft border mt-3 mb-0 p-3">
+    <div>{% blocktrans with a=i.avoided|floatformat:0 km=v2.avoided_car_km|floatformat:"0g" %}Reusing it instead of buying a new one avoided about <strong>{{ a }} kg CO₂e</strong>, roughly what an average car emits over <strong>{{ km }} km</strong>.{% endblocktrans %}</div>
+    <div class="small text-muted mt-1">{% blocktrans with lo=i.avoided_low|floatformat:0 hi=i.avoided_high|floatformat:0 %}Between {{ lo }} and {{ hi }} kg with manufacturer data. Shared by everyone in its reuse chain: it does not reduce any organisation's own emissions.{% endblocktrans %}</div>
   </div>
 {% endif %}
 

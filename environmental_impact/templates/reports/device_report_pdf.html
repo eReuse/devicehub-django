@@ -1,0 +1,183 @@
+{% load i18n %}<!doctype html>
+<html lang="{{ LANGUAGE_CODE|default:'en' }}">
+<head>
+<meta charset="utf-8">
+<title>{{ title }}</title>
+<style>
+  @page {
+    size: A4;
+    margin: 18mm 16mm 20mm 16mm;
+    @bottom-left { content: "{{ footer_left|safe }}"; font-size: 7.5pt; color: #7b8391; }
+    @bottom-right { content: "{% trans 'Page' %} " counter(page) " / " counter(pages); font-size: 7.5pt; color: #7b8391; }
+  }
+  :root { --primary:#7a9f4f; --secondary:#9cc666; --dark:#545f71; --light:#f8f9fa; --green-soft:#c7e3a3;
+          --teal:#56beac; --teal-soft:#a3e3d7; --yellow:#efe3b4; --orange:#f5b587; --grey:#f3f3f3; --line:#dfe3e6;
+          /* life-cycle stages: ITU-T L.1410 Fig. 14a hues in pastel, as on screen */
+          --st-a:#f2b8b5; --st-a-line:#d98580; --st-b:#f6e19c; --st-b-line:#d6b95a; --st-c:#aecbee; --st-c2:#d3e3f7;
+          --st-c-line:#7199cf; --st-d:#dcb4b4; --st-d-line:#b07878; --st-credit:#c7e3a3; --st-credit-line:#8fb85c; }
+  * { box-sizing: border-box; }
+  body { font-family: "DejaVu Sans", "Liberation Sans", Arial, sans-serif; font-size: 9.5pt; color: #1f2328; line-height: 1.4; }
+  h1 { font-size: 17pt; margin: 0 0 2mm; color: var(--dark); }
+  h2 { font-size: 11pt; color: var(--primary); border-bottom: 1.5pt solid var(--secondary); padding-bottom: 1.5mm; margin: 7mm 0 3mm; }
+  p { margin: 0 0 2mm; }
+  .eyebrow { font-size: 7.5pt; letter-spacing: .06em; text-transform: uppercase; font-weight: bold; color: var(--primary); }
+  .muted { color: #6b7280; }
+  .small { font-size: 8pt; }
+  .brand { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 3pt solid var(--teal); padding-bottom: 2mm; margin-bottom: 5mm; }
+  .brand .name { font-weight: bold; font-size: 11pt; color: var(--teal); letter-spacing: .04em; }
+  .meta { width: 100%; border-collapse: collapse; margin: 3mm 0 4mm; font-size: 8.5pt; }
+  .meta td { padding: 1.2mm 2mm; border-top: .5pt solid var(--line); border-bottom: .5pt solid var(--line); vertical-align: top; }
+  .meta .k { color: #6b7280; width: 20%; }
+  .status { margin: 0 0 4mm; font-size: 8.5pt; }
+  .badge { padding: .3mm 1.5mm; border-radius: 2mm; font-size: 7.5pt; font-weight: bold; color: var(--dark); }
+  .b-reused { background: var(--green-soft); } .b-recycled { background: var(--grey); } .b-workshop { background: var(--yellow); } .b-ended { background: var(--orange); }
+  .big { font-size: 26pt; font-weight: bold; color: var(--dark); line-height: 1.05; }
+  .big small { font-size: 10pt; color: #6b7280; font-weight: normal; }
+  .note { background: var(--light); border-left: 2.5pt solid var(--secondary); padding: 2mm 3mm; font-size: 8.5pt; margin-top: 2mm; }
+  .notice { background: var(--yellow); padding: 2mm 3mm; font-size: 8.5pt; margin: 3mm 0; }
+  .bars { width: 100%; border-collapse: collapse; font-size: 8.5pt; }
+  .bars td { padding: 1.2mm 1.5mm 1.2mm 0; vertical-align: middle; }
+  .bars .label { width: 30%; }
+  .bars .val { width: 16%; text-align: right; font-weight: bold; white-space: nowrap; }
+  .bars .src { width: 6%; text-align: center; color: var(--primary); }
+  .track { height: 4mm; }
+  .bar { height: 4mm; }
+  .life1 { background: var(--teal); } .life1.assumed { background: var(--teal-soft); }
+  .life2 { background: var(--secondary); } .typical { background: #cfd4d8; }
+  .st-manufacture { background: var(--st-a); border: .6pt solid var(--st-a-line); }
+  .st-transport, .st-refurbish { background: var(--st-b); border: .6pt solid var(--st-b-line); }
+  .st-use1 { background: var(--st-c); border: .6pt solid var(--st-c-line); }
+  .st-use2 { background: var(--st-c2); border: .6pt solid var(--st-c-line); }
+  .st-end_of_life { background: var(--st-d); border: .6pt solid var(--st-d-line); }
+  .st-credit { background: var(--st-credit); border: .6pt solid var(--st-credit-line); }
+  .letter { color: #6b7280; font-size: 7.5pt; }
+  table.list { width: 100%; border-collapse: collapse; font-size: 8pt; }
+  table.list th { text-align: left; background: var(--light); border-bottom: 1pt solid var(--dark); padding: 1.2mm 1.5mm; }
+  table.list td { padding: 1mm 1.5mm; border-bottom: .4pt solid var(--line); vertical-align: top; }
+  table.list tr { page-break-inside: avoid; }
+  ol.refs { font-size: 7.5pt; padding-left: 5mm; }
+  ol.refs li { margin-bottom: 1mm; overflow-wrap: anywhere; }
+  .method { font-size: 7.5pt; color: #6b7280; font-style: italic; margin-top: 5mm; border-top: .5pt solid var(--line); padding-top: 2mm; }
+  .annex { page-break-before: always; }
+</style>
+</head>
+<body>
+
+<div class="brand">
+  <div>
+    <div class="eyebrow">{% trans 'Impact report · device' %}</div>
+    <h1>{{ device_name }}</h1>
+  </div>
+  <div class="name">DEVICEHUB</div>
+</div>
+
+<table class="meta">
+  <tr><td class="k">{% trans 'Prepared by' %}</td><td>{{ institution_name }}</td><td class="k">{% trans 'Issued' %}</td><td>{{ issued|date:"Y-m-d" }}</td></tr>
+  <tr><td class="k">{% trans 'Device' %}</td><td>{{ device_shortid }} · {{ i.device_type|capfirst }}</td><td class="k">{% trans 'Made' %}</td><td>{% if v2.bios_year %}{% blocktrans with y=v2.bios_year %}around {{ y }} (BIOS date){% endblocktrans %}{% else %}{% trans 'unknown' %}{% endif %}</td></tr>
+  <tr><td class="k">{% trans 'Use location' %}</td><td>{{ i.country }}</td><td class="k">{% trans 'Method' %}</td><td>{{ i.method_version }} · {{ v2.factor_label }}</td></tr>
+</table>
+
+<div class="status">
+  {% if v2.reused %}
+    {% if i.second_life_ended %}<span class="badge b-ended">{% trans 'Second life ended: recycled' %}</span>
+    {% else %}<span class="badge b-reused">{% trans 'In its second life' %}</span>{% endif %}
+    {% blocktrans with d=v2.handover.scan.date|date:"Y-m-d" %}handed over at the {{ d }} scan{% endblocktrans %} · {{ v2.handover.note }}
+  {% elif i.recycled %}
+    <span class="badge b-recycled">{% trans 'Recycled' %}</span> {% trans 'Its latest state sends it to recycling, with no second life before.' %}
+  {% else %}
+    <span class="badge b-workshop">{% trans 'Not reused yet' %}</span> {% trans 'It has not been handed over to a second owner, so no reuse benefit is reported.' %}
+  {% endif %}
+</div>
+
+{% if v2.reused and i.avoided %}
+  <div class="eyebrow">{% trans 'Emissions avoided by reusing it' %}</div>
+  <div class="big">{{ i.avoided|floatformat:0 }} kg <small>CO₂e</small></div>
+  <p>{% blocktrans with km=v2.avoided_car_km|floatformat:"0g" %}Roughly what an average car emits over <b>{{ km }} km</b>. Compared with giving the same person a new device.{% endblocktrans %}</p>
+  <div class="note">{% blocktrans with lo=i.avoided_low|floatformat:0 hi=i.avoided_high|floatformat:0 %}Between {{ lo }} and {{ hi }} kg with manufacturer data. This is a <b>contribution shared by everyone in its reuse chain</b>: it is reported apart from any organisation's own emissions and cannot be subtracted from them.{% endblocktrans %}</div>
+{% endif %}
+
+<h2>{% trans 'Its story' %}</h2>
+{% if not i.life1_measured %}<p class="small">{% trans 'No hour reading for its first life: it uses a standard figure.' %}</p>{% endif %}
+<table class="bars">
+  <tr>
+    <td class="label">{% trans 'Life 1' %}</td>
+    <td><div class="track"><div class="bar life1 {% if not i.life1_measured %}assumed{% endif %}" style="width:{{ v2.story.life1_width }}%"></div></div></td>
+    <td class="val">{{ i.life1_hours|floatformat:"0g" }} h</td>
+    <td class="src">{% if not i.life1_measured %}○{% elif i.hours_estimated %}◐{% else %}●{% endif %}</td>
+  </tr>
+  {% if v2.reused %}
+  <tr>
+    <td class="label">{% trans 'Life 2' %}</td>
+    {% if i.life2_measured %}
+      <td><div class="track"><div class="bar life2" style="width:{{ v2.story.life2_width }}%"></div></div></td>
+      <td class="val">{{ i.life2_hours|floatformat:"0g" }} h</td>
+      <td class="src">{% if i.hours_estimated %}◐{% else %}●{% endif %}</td>
+    {% else %}
+      <td colspan="3" class="muted small">{% trans 'just started: its hours show up once the device is scanned again.' %}</td>
+    {% endif %}
+  </tr>
+  {% endif %}
+  {% if i.life1_measured %}
+  <tr>
+    <td class="label">{% blocktrans with t=i.device_type %}Typical first life ({{ t }}){% endblocktrans %}</td>
+    <td><div class="track"><div class="bar typical" style="width:{{ v2.story.typical_width }}%"></div></div></td>
+    <td class="val">{{ v2.story.typical_hours|floatformat:"0g" }} h</td>
+    <td class="src"></td>
+  </tr>
+  {% endif %}
+</table>
+<p class="small muted">{% trans 'Powered-on hours. ● measured from the device · ◐ estimated from device signals · ○ standard assumption.' %}</p>
+
+<h2>{% trans 'Life-cycle stages' %}</h2>
+<table class="bars">
+  {% for s in v2.stages %}
+  <tr>
+    <td class="label">{{ s.label }} <span class="letter">{{ s.itu }}</span></td>
+    <td><div class="track">{% if s.value > 0 %}<div class="bar st-{{ s.key }}" style="width:{{ s.height }}%"></div>{% elif s.value < 0 %}<div class="bar st-credit" style="width:3mm"></div>{% endif %}</div></td>
+    <td class="val">{% if s.value %}{{ s.value|floatformat:1 }}{% else %}—{% endif %}</td>
+    <td class="src"></td>
+  </tr>
+  {% endfor %}
+</table>
+<p class="small muted">
+  {% if v2.stages_per_year %}
+    {% blocktrans with total=v2.stages_total|floatformat:0 years=i.lifetime_years|floatformat:1 %}kg CO₂e per year. Total {{ total }} kg CO₂e over about {{ years }} years of life.{% endblocktrans %}
+  {% else %}
+    {% blocktrans with total=v2.stages_total|floatformat:0 %}kg CO₂e. Total {{ total }} kg CO₂e; not shown per year because there is no BIOS date.{% endblocktrans %}
+  {% endif %}
+  {% trans 'Stages A–D as defined in ITU-T L.1410 (2024).' %}
+</p>
+
+<h2>{% trans 'From this device' %}</h2>
+<table class="list">
+  <tbody>
+  {% for p in v2.provenance %}
+    <tr><td>{% if p.measured %}●{% else %}○{% endif %} {{ p.label }}</td><td>{{ p.value }}</td><td class="muted">{{ p.source }}</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+<p class="method">{% trans 'This LCA result cannot be compared to the result of another LCA unless all assumptions and modelling choices are equal.' %}</p>
+
+<div class="annex">
+  <h2>{% trans 'Constants' %}</h2>
+  <table class="list">
+    <thead><tr><th>{% trans 'Constant' %}</th><th>{% trans 'Value' %}</th><th>{% trans 'Where it comes from' %}</th></tr></thead>
+    <tbody>
+    {% for c in v2.method.constants %}
+      <tr><td>{{ c.label }}</td><td style="white-space:nowrap">{{ c.value }}</td><td class="muted">{{ c.where }} {% for n in c.refs %}[{{ n }}]{% endfor %}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+
+  <h2>{% trans 'References' %}</h2>
+  <ol class="refs">
+    {% for r in v2.method.references %}
+      <li value="{{ r.n }}">{{ r.title }}.{% if r.url %} {{ r.url }}{% endif %}{% if r.licence and r.licence != 'cited' %} ({{ r.licence }}){% endif %}</li>
+    {% endfor %}
+  </ol>
+  <p class="small muted">{% trans 'Method' %}: {{ i.method_version }} · {{ v2.factor_label }} · {% trans 'device' %} {{ device_id }}</p>
+</div>
+
+</body>
+</html>

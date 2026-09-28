@@ -207,6 +207,11 @@
     "source": "base_carbone",
     "ref": "Base Carbone 43735, VUL < 3.5 t, diesel B7"
   },
+  "car_kgco2e_per_km": {
+    "value": 0.256,
+    "source": "base_carbone",
+    "ref": "Base Carbone 43791, Voiture, motorisation moyenne (2023), incl. vehicle manufacturing; only used to put avoided emissions into words"
+  },
   "typical_first_life_hours": {
     "source": "thesis",
     "ref": "Table 13, p.114 (Franquesa et al. 2019a, SubDurabilityMean)",
