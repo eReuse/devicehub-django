@@ -80,10 +80,16 @@ class ProductCache(models.Model):
         which case any stale row is removed.
         """
         from device.models import Device
+        from evidence.models import Evidence
 
         device = Device(id=root, owner=owner)
         device.get_uuids()
         if not device.uuids:
+            cls.objects.filter(owner=owner, root=root).delete()
+            return None
+
+        #delete entry if device is only of type image
+        if device.type == Evidence.FALLBACK_IMAGE_TYPE:
             cls.objects.filter(owner=owner, root=root).delete()
             return None
 

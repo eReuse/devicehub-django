@@ -391,6 +391,8 @@ def ensure_root_alias_self_reference(sender, instance, created, **kwargs):
 
 
 class Evidence:
+    FALLBACK_IMAGE_TYPE = "Image"
+
     def __init__(self, uuid):
         self.uuid = uuid
         self.uploaded_by = None
@@ -559,10 +561,10 @@ class Evidence:
 
     def get_chassis(self):
         if self.is_web_snapshot():
-            return self.components.get("form_factor", self.components.get("type", "Websnapshot"))
+            return self.doc.get("device", "").get("type", "")
 
         if self.is_photo_evidence():
-            return "Image"
+            return self.FALLBACK_IMAGE_TYPE
 
         if self.is_legacy():
             return self.doc.get('device', {}).get('model', '')

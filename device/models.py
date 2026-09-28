@@ -290,6 +290,7 @@ class Device:
         """
         return (
             RootAlias.objects.filter(owner=institution)
+            .exclude(root__startswith="photo25:")
             .values("root")
             .annotate(latest=Max("updated"))
             .order_by("-latest")
@@ -331,10 +332,13 @@ class Device:
     def get_all(cls, institution, offset=0, limit=None):
         qry = cls._roots_queryset(institution)
         rows = qry[offset:] if limit is None else qry[offset:offset+limit]
+
         count = (
             RootAlias.objects.filter(owner=institution)
+            .exclude(root__startswith="photo25:")
             .values("root").distinct().count()
         )
+
         devices = [cls(id=r["root"], owner=institution) for r in rows]
         return devices, count
 
@@ -383,11 +387,17 @@ class Device:
 
     @property
     def type(self):
-        self.get_last_evidence()
-        if self.last_evidence and self.last_evidence.doc.get("type", "") == "WebSnapshot":
-            return self.last_evidence.doc.get("device", {}).get("type", "")
+        self.get_evidences()
 
-        return self.last_evidence.get_chassis()
+        if not self.evidences:
+            return "NA"
+
+        for evidence in reversed(self.evidences):
+            chassis = evidence.get_chassis()
+            if chassis != Evidence.FALLBACK_IMAGE_TYPE:
+                return chassis
+
+        return Evidence.FALLBACK_IMAGE_TYPE
 
     @property
     def model(self):
