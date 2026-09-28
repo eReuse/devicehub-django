@@ -1,0 +1,259 @@
+{
+  "version": "v0",
+  "retrieved": "2026-09-28",
+  "sources": {
+    "base_carbone": {
+      "title": "ADEME Base Carbone®, from ADEME (Lhotellier et al., March 2018) Modélisation et évaluation ACV de produits de consommation et biens d'équipement",
+      "licence": "Licence Ouverte / Open Licence 2.0",
+      "url": "https://data.ademe.fr/datasets/base-carboner"
+    },
+    "boavizta": {
+      "title": "Boavizta environmental-footprint-data, manufacturer PCF sheets 2018–2023 (p10 / median / p90)",
+      "licence": "ODbL 1.0",
+      "url": "https://github.com/Boavizta/environmental-footprint-data"
+    },
+    "ademe_arcep_2025": {
+      "title": "ADEME/Arcep study, 2025 update, as published on Impact CO₂",
+      "licence": "cross-check only, licence not stated",
+      "url": "https://impactco2.fr/outils/numerique"
+    },
+    "owid": {
+      "title": "Our World in Data, carbon intensity of electricity",
+      "licence": "CC BY 4.0",
+      "url": "https://ourworldindata.org/grapher/carbon-intensity-electricity"
+    },
+    "thesis": {
+      "title": "Roura Salietti, M. (2025). Reuse of ICT devices as commons. PhD thesis, UPC",
+      "licence": "cited",
+      "url": "https://upcommons.upc.edu/"
+    },
+    "energy_star": {
+      "title": "Energy Star database averages, as used by DeviceHub's ereuse2025 algorithm",
+      "licence": "cited",
+      "url": ""
+    },
+    "itu_l1410": {
+      "title": "Recommendation ITU-T L.1410 (11/2024), Appendix XV (ADEME depreciation approach)",
+      "licence": "cited",
+      "url": "https://www.itu.int/rec/T-REC-L.1410"
+    },
+    "ademe_refurb_2022": {
+      "title": "ADEME (2022) Évaluation de l'impact environnemental d'un ensemble de produits reconditionnés",
+      "licence": "cited",
+      "url": "https://librairie.ademe.fr/economie-circulaire-et-dechets/5241-evaluation-de-l-impact-environnemental-d-un-ensemble-de-produits-reconditionnes.html"
+    },
+    "devicehub_estimator": {
+      "title": "DeviceHub mobile power-on-hours estimator (evidence/estimators.py): ~18 powered-on hours per battery cycle",
+      "licence": "code",
+      "url": ""
+    }
+  },
+  "manufacturing": {
+    "base_carbone": {
+      "label": "ADEME Base Carbone",
+      "desktop": {
+        "A": 82.9,
+        "B": 10.7,
+        "transport": 75.4,
+        "ref": "Base Carbone 27003, Ordinateur fixe bureautique"
+      },
+      "laptop": {
+        "A": 120.0,
+        "B": 4.54,
+        "transport": 31.7,
+        "ref": "Base Carbone 27002, Ordinateur portable"
+      },
+      "smartphone": {
+        "A": 26.5,
+        "B": 1.06,
+        "transport": 5.27,
+        "ref": "Base Carbone 27012, Smartphone 5 pouces"
+      },
+      "tablet": {
+        "A": 49.0,
+        "B": 1.39,
+        "transport": 12.8,
+        "ref": "Base Carbone 27007, Tablette classique 9-11 pouces"
+      }
+    },
+    "boavizta_median": {
+      "label": "Boavizta median",
+      "desktop": {
+        "A": null,
+        "B": 248.8,
+        "transport": 15.1,
+        "ref": "Boavizta median, n=157"
+      },
+      "laptop": {
+        "A": null,
+        "B": 235.9,
+        "transport": 12.6,
+        "ref": "Boavizta median, n=226"
+      },
+      "smartphone": {
+        "A": null,
+        "B": 52.8,
+        "transport": 3.0,
+        "ref": "Boavizta median, n=50"
+      },
+      "tablet": {
+        "A": null,
+        "B": 71.3,
+        "transport": 5.4,
+        "ref": "Boavizta median, n=22"
+      }
+    },
+    "ademe_arcep_2025": {
+      "label": "ADEME/Arcep 2025",
+      "desktop": {
+        "A": null,
+        "B": 203.0,
+        "transport": 1.85,
+        "ref": "Impact CO₂, ordinateur fixe professionnel"
+      },
+      "laptop": {
+        "A": null,
+        "B": 170.0,
+        "transport": 12.3,
+        "ref": "Impact CO₂, ordinateur portable"
+      },
+      "smartphone": {
+        "A": null,
+        "B": 77.0,
+        "transport": 2.27,
+        "ref": "Impact CO₂, smartphone (construction 77 + assembly & distribution 2.27)"
+      }
+    }
+  },
+  "manufacturing_band": {
+    "source": "boavizta",
+    "desktop": {
+      "p10": 185.0,
+      "p90": 413.0,
+      "transport": 15.1
+    },
+    "laptop": {
+      "p10": 131.9,
+      "p90": 317.2,
+      "transport": 12.6
+    },
+    "smartphone": {
+      "p10": 20.8,
+      "p90": 73.7,
+      "transport": 3.0
+    },
+    "tablet": {
+      "p10": 18.9,
+      "p90": 122.6,
+      "transport": 5.4
+    }
+  },
+  "power_kw": {
+    "source": "energy_star",
+    "desktop": {
+      "idle": 0.039,
+      "sleep": 0.0016
+    },
+    "laptop": {
+      "idle": 0.016,
+      "sleep": 0.0005
+    },
+    "smartphone": {
+      "kwh_per_year": 7.0,
+      "powered_on_hours_per_year": 6574.5,
+      "ref": "Boavizta median yearly_tec (n=16); hours from DeviceHub estimator convention (18 h/day)"
+    },
+    "tablet": {
+      "kwh_per_year": 14.75,
+      "powered_on_hours_per_year": 6574.5,
+      "ref": "Boavizta median yearly_tec (n=10); hours from DeviceHub estimator convention (18 h/day)"
+    }
+  },
+  "sleep_share": {
+    "value": 0.2562,
+    "source": "energy_star"
+  },
+  "weight_kg": {
+    "source": "thesis",
+    "ref": "Table 13, p.112 (Swico / Ecoinvent defaults)",
+    "desktop": 11.3,
+    "laptop": 3.15,
+    "smartphone": 0.17,
+    "tablet": 0.73,
+    "mobile_ref": "Boavizta medians: smartphone n=15, tablet n=7"
+  },
+  "refurbisher_legs_km": {
+    "value": 400,
+    "source": "thesis",
+    "ref": "Table 13, p.113: 200 km first user → refurbisher, 200 km refurbisher → second user"
+  },
+  "van_kgco2e_per_tkm": {
+    "value": 0.842,
+    "source": "base_carbone",
+    "ref": "Base Carbone 43735, VUL < 3.5 t, diesel B7"
+  },
+  "typical_first_life_hours": {
+    "source": "thesis",
+    "ref": "Table 13, p.114 (Franquesa et al. 2019a, SubDurabilityMean)",
+    "desktop": 20998,
+    "laptop": 5673,
+    "smartphone": 19724,
+    "tablet": 19724,
+    "mobile_ref": "ADEME 2022: smartphones and tablets refurbished after a 3-year first life; 3 × 6,574.5 powered-on hours"
+  },
+  "default_second_life": {
+    "source": "thesis",
+    "ref": "Table 13, p.114",
+    "desktop": {
+      "hours": 3600,
+      "years": 3
+    },
+    "laptop": {
+      "hours": 2880,
+      "years": 2
+    },
+    "smartphone": {
+      "hours": 13149,
+      "years": 2
+    },
+    "tablet": {
+      "hours": 13149,
+      "years": 2
+    },
+    "mobile_ref": "ITU-T L.1410 App. XV / ADEME 2022: refurbished smartphones kept 2 years; tablets assumed the same"
+  },
+  "recycling_credit_kg": {
+    "source": "thesis",
+    "ref": "Table 13, p.115 (Karpagam et al. 2017); computers only, no source for phones or tablets",
+    "desktop": -4.5,
+    "laptop": -4.5,
+    "smartphone": 0.0,
+    "tablet": 0.0
+  },
+  "technician_hours": {
+    "source": "thesis",
+    "ref": "Table 13, p.115 (Solidança estimates)",
+    "reuse": {
+      "desktop": 2.0,
+      "laptop": 3.0,
+      "smartphone": null,
+      "tablet": null
+    },
+    "recycle": {
+      "desktop": 0.7,
+      "laptop": 0.8,
+      "smartphone": null,
+      "tablet": null
+    }
+  },
+  "min_valid_life1_hours": {
+    "value": 4,
+    "source": "thesis",
+    "ref": "Annex C, p.180: first-use records under four hours are excluded"
+  },
+  "first_life_grid_window_years": {
+    "value": 6,
+    "source": "thesis",
+    "ref": "§6.6.1, p.117"
+  }
+}
