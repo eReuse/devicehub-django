@@ -72,7 +72,7 @@ class PresenterTests(SimpleTestCase):
         )
         return device_impact_view(compute_device(inputs, load_factors(), load_grid()), inputs, set(marks))
 
-    def test_story_widths_and_per_hour_drop(self):
+    def test_story_widths_and_stages(self):
         view = self._view([
             EvidencePoint(E0, datetime(2017, 12, 1), 3696),
             EvidencePoint(E1, datetime(2022, 2, 11), 9439),
@@ -82,35 +82,13 @@ class PresenterTests(SimpleTestCase):
         self.assertEqual(story["typical_width"], 100.0)  # typical life is the longest bar here
         self.assertLessEqual(story["life1_width"] + story["life2_width"], 100)
         self.assertEqual([t["hours"] for t in story["ticks"]], [0, 5000, 10000, 15000, 20000])
-        self.assertEqual(view["per_hour_drop"], 48)
         self.assertEqual(max(s["height"] for s in view["stages"]), 100)
         self.assertTrue(view["timeline"][0]["is_start"])
         self.assertEqual(view["provenance"][0]["label"], "Life 1 hours")
 
-    def test_barely_started_second_life_can_raise_cost_per_hour(self):
-        view = self._view([
-            EvidencePoint(E0, datetime(2025, 11, 6), 27283),
-            EvidencePoint(E1, datetime(2025, 12, 6), 27328),
-        ])
-        self.assertLessEqual(view["per_hour_drop"], 0)
-        self.assertEqual(view["per_hour_rise_cause"], "transport")
-
-    def test_rise_blamed_on_electricity_when_it_outweighs_transport(self):
-        inputs = DeviceInputs(
-            device_type="desktop", country="ES", reuse_start=0, reuse_source="second_evidence",
-            points=[EvidencePoint(E0, datetime(2020, 1, 1), 30000), EvidencePoint(E1, datetime(2024, 1, 1), 40000)],
-        )
-        impact = compute_device(inputs, load_factors(), load_grid())
-        impact.stages["use2"] = 500.0  # far more than the ~3.8 kg van legs
-        impact.g_per_hour_total = impact.g_per_hour_life1 * 1.1
-        view = device_impact_view(impact, inputs, set())
-        self.assertEqual(view["per_hour_rise_cause"], "electricity")
-
-    def test_pending_device_has_single_per_hour_row(self):
+    def test_pending_device_is_not_reused(self):
         view = self._view([EvidencePoint(E0, datetime(2019, 6, 3), 720)], reuse_start=None)
         self.assertFalse(view["reused"])
-        self.assertEqual(len(view["per_hour"]), 1)
-        self.assertIsNone(view["per_hour_drop"])
 
 
 class ReadReuseSignalsTests(TestCase):

@@ -128,57 +128,8 @@
 </div>
 
 <div class="row g-3 mt-0">
-  {# 2. What each hour of use costs #}
+  {# 2. ITU stages #}
   <div class="col-12">
-    <div class="card h-100"><div class="card-body">
-      <h6 class="card-title">{% trans 'What each hour of use costs' %}</h6>
-      <div class="d-flex flex-column gap-2">
-        {% for row in v2.per_hour %}
-          <div class="ei2-hbar">
-            <span class="{% if row.highlight %}fw-semibold{% endif %}">{{ row.label }}</span>
-            <div><div class="fill {% if row.highlight %}hl{% endif %}" style="width:{{ row.width }}%"></div></div>
-            <span class="text-end">{{ row.value|floatformat:0 }} g/h</span>
-          </div>
-        {% endfor %}
-      </div>
-      <p class="small text-muted mb-0 mt-2">
-        {% if v2.per_hour_drop is not None %}
-          {% if v2.per_hour_drop <= 0 and v2.per_hour_rise_cause == 'transport' %}
-            {% blocktrans with h=i.life2_hours|floatformat:"0g" %}Its second life has barely started ({{ h }} h), so the footprint per hour has not dropped yet: the refurbisher's transport still weighs more than the extra hours.{% endblocktrans %}
-          {% elif v2.per_hour_drop <= 0 %}
-            {% blocktrans %}The footprint per hour has not dropped: each hour of its second life emits more electricity CO₂e than its first life averaged, usually because it now runs on a more carbon-intensive grid.{% endblocktrans %}
-          {% elif v2.per_hour_drop >= 25 %}
-            {% blocktrans with d=v2.per_hour_drop %}Its second life cut the footprint per hour of use by {{ d }}%: manufacturing is shared over more hours.{% endblocktrans %}
-          {% else %}
-            {% blocktrans with d=v2.per_hour_drop %}Only {{ d }}% lower: it had already done a long first life, so its manufacturing was already spread over many hours.{% endblocktrans %}
-          {% endif %}
-        {% else %}
-          {% trans 'Manufacturing, transport and first-life electricity divided by its powered-on hours.' %}
-        {% endif %}
-      </p>
-    </div></div>
-  </div>
-
-  {# 3. Running it #}
-  <div class="col-md-6">
-    <div class="card h-100"><div class="card-body">
-      <h6 class="card-title">{% trans 'Running it' %}</h6>
-      {% if v2.reused %}
-        <div class="ei2-fig">{{ i.kwh_per_year|floatformat:0 }}<small> kWh / {% trans 'year' %}</small></div>
-        <p class="small text-muted mb-0 mt-2">
-          {% blocktrans with kg=i.kg_per_year|floatformat:1 country=i.country grid=i.grid_now|floatformat:3 h=i.hours_per_year|floatformat:0 %}≈ {{ kg }} kg CO₂e per year on the {{ country }} grid ({{ grid }} kg/kWh), at about {{ h }} hours of use a year{% endblocktrans %}
-          ({% if i.hours_per_year_measured %}{% trans 'measured' %}{% else %}{% trans 'estimate' %}{% endif %}).
-          {% trans 'Old and new devices are assumed to draw the same power.' %}
-        </p>
-      {% else %}
-        <div class="ei2-fig">—</div>
-        <p class="small text-muted mb-0 mt-2">{% trans 'Shown once the device is in its second life.' %}</p>
-      {% endif %}
-    </div></div>
-  </div>
-
-  {# 4. ITU stages #}
-  <div class="col-md-6">
     <div class="card h-100"><div class="card-body">
       <h6 class="card-title">{% trans 'Life-cycle stages (ITU-T L.1410)' %}</h6>
       <div class="small text-muted mb-1">{% if v2.stages_per_year %}kg CO₂e / {% trans 'year' %}{% else %}kg CO₂e{% endif %}</div>

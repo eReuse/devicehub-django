@@ -65,23 +65,6 @@ def device_impact_view(impact: DeviceImpact, inputs: DeviceInputs, marks: set[st
     ]
     life1_point = inputs.points[inputs.reuse_start] if impact.reused else inputs.points[-1]
 
-    per_hour = [{"label": _("Life 1 only"), "value": impact.g_per_hour_life1, "highlight": False}]
-    if impact.reused and impact.g_per_hour_total is not None:
-        per_hour.append({"label": _("With its second life"), "value": impact.g_per_hour_total, "highlight": True})
-    per_hour_max = max(row["value"] for row in per_hour)
-    for row in per_hour:
-        row["width"] = _pct(row["value"], per_hour_max)
-    per_hour_drop = None
-    per_hour_rise_cause = None
-    if len(per_hour) == 2 and per_hour[0]["value"]:
-        per_hour_drop = round(100 * (1 - per_hour[1]["value"] / per_hour[0]["value"]))
-        if per_hour_drop <= 0:
-            # The second life adds the refurbisher's van legs plus its own electricity.
-            # Name whichever of the two outweighs the other, instead of assuming one.
-            new_transport = impact.new_equivalent_kg - impact.stages["manufacture"]
-            legs = max(0.0, impact.stages["transport"] - new_transport)
-            per_hour_rise_cause = "transport" if legs >= impact.stages["use2"] else "electricity"
-
     divisor = impact.lifetime_years or 1.0
     stages = [
         {"key": key, "label": label, "value": impact.stages.get(key, 0.0) / divisor}
@@ -130,9 +113,6 @@ def device_impact_view(impact: DeviceImpact, inputs: DeviceInputs, marks: set[st
             "intake": inputs.points[inputs.reuse_start].date if impact.reused else None,
             "life2_years": factors["default_second_life"][impact.device_type]["years"],
         },
-        "per_hour": per_hour,
-        "per_hour_drop": per_hour_drop,
-        "per_hour_rise_cause": per_hour_rise_cause,
         "stages": stages,
         "stages_per_year": bool(impact.lifetime_years),
         "stages_total": impact.total_kg,
