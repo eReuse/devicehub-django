@@ -4,5 +4,9 @@
 {% block content %}
   {% include 'tabs.html' %}
 
-  {% include 'partials/environmental_impact_content.html' with show_country_override=True is_lot_view=True chart_id='lotImpactChart' docs_collapse_id='lotDocsCollapse' comparison_prefix='lot' override_collapse_id='lotCountryOverrideCollapse' %}
+  {% if impact_lot_v2 %}
+    {% include 'partials/lot_impact_v2.html' with lv=impact_lot_v2 lv_docs=impact_v2_docs %}
+  {% else %}
+    {% include 'partials/environmental_impact_content.html' with show_country_override=True is_lot_view=True chart_id='lotImpactChart' docs_collapse_id='lotDocsCollapse' comparison_prefix='lot' override_collapse_id='lotCountryOverrideCollapse' %}
+  {% endif %}
 {% endblock %}

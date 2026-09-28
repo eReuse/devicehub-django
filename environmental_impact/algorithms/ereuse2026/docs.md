@@ -1,12 +1,20 @@
 # `eReuse2026` Environmental Impact Algorithm (method v0)
 
 This algorithm estimates the climate impact (GWP100, kg CO₂e) of reusing a
-computer. It follows two sources:
+computer. It follows these sources:
 
+- **Roura, Navarro, Meseguer & Giménez (2026)**, *Assessing the impacts of
+  computer reuse for digital inclusion from product information*, Cleaner
+  Production Letters 10, 100123 (open access, CC BY 4.0): the scenario model,
+  the use-phase formulas and the APOS allocation.
 - **Roura Salietti (2025)**, *Reuse of ICT devices as commons*, PhD thesis, UPC,
-  chapter 6: the scenario model and the use-phase formulas.
+  chapter 6 and annexes: the extended version, with the life-cycle inventory
+  defaults (Table 13) and the case studies.
 - **Recommendation ITU-T L.1410 (11/2024)**: life-cycle stages A–D and, in
   Appendix XV, the depreciation approach for refurbished goods.
+
+Where the paper and the thesis differ (for example the Ecoinvent version behind
+their tables), this method notes which one it follows and why.
 
 It replaces `ereuse2025`, which counted only the electricity used. Counting only
 electricity makes a reused device look worse the more it is used; this method
@@ -18,7 +26,7 @@ adds manufacturing, transport and the comparison with buying new.
 |---|---|---|
 | What did reuse avoid, compared with giving the second user a new computer? | `avoided = S3 − S2` | donor, refurbisher |
 | What did serving the second user cost? | `cost = S2 − S1` | refurbisher, funder |
-| What does the device carry now? | `attributed` (ITU App. XV) | current owner |
+| What does the device carry now? | `attributed` (APOS, paper p.4) | current owner |
 | What does each hour of use cost? | g CO₂e per powered-on hour | everyone |
 
 Avoided emissions are a **contribution shared along the reuse chain**. They are
@@ -31,12 +39,37 @@ subtracted from it.
   evidence's disk power-on hours. Readings under 4 h count as missing (thesis
   Annex C); then the typical first life is used instead (desktop 20,998 h, laptop
   5,673 h).
-- **Reuse starts** at a manual mark on an evidence; without one, a device with a
-  second evidence is reused from its first evidence (intake). A device with one
-  evidence and no mark is *pending*.
+- **Reuse starts** at the first of these signals:
+  1. a manual mark on an evidence (device tab);
+  2. a *transfer* state, e.g. the default `DONATION`, for a device sold or
+     donated on its own: reuse starts at the evidence the state was set on;
+  3. membership of an outgoing lot (default tag `Salida`): reuse starts at the
+     last evidence before the lot was created, because lot membership has no date;
+  4. a second evidence: reuse started at the first one (intake).
+
+  A device with none of them is *in the workshop* (pending).
+- **Recycling**: when a device's latest state has the disposition `recycled` or
+  `disposed` (the default `DISMANTLE`), its life has ended. With a signal 1–3
+  before it, it was reused and its second life is over; otherwise it went to
+  recycling without a second life. A second evidence alone does not count here,
+  since a device scanned twice in the workshop and then dismantled was never
+  reused. Recycling adds the −4.5 kg credit to the end-of-life stage.
+- States are recognised by their DTE configuration (UNTP event type
+  `MoveEvent` for a transfer, disposition `recycled`/`disposed` for the end of
+  life). Only states without any configuration fall back to the default names
+  `DONATION` and `DISMANTLE`.
 - **Life 2** hours are the power-on increases after the start. A span where the
   disk changed cannot be measured and is skipped. If nothing is measured, the
   thesis default applies (desktop 3,600 h over 3 years, laptop 2,880 h over 2).
+
+## Lot reports
+
+Every lot offers three views, and the operator picks one: **refurbisher**
+(operations), **supplier report** (for whoever handed the devices over, donated
+or sold) and **recipient report** (for whoever received them). The lot's tag only
+chooses the view that opens first: `Entrada` → supplier, `Salida` → recipient,
+anything else → refurbisher. Reports state how many devices are still in the
+workshop, since their figures are provisional.
 
 ## Formulas
 
@@ -59,12 +92,20 @@ $$S_3 = (M+T+U_1) + R + 2(M+T) + 2U_2$$
 
 so $S_3 - S_2 = M + T + R - L$ and $S_2 - S_1 = L + U_2 - R$.
 
-Unused manufacturing share and what the current owner carries (ITU-T L.1410
-App. XV, ADEME):
+What the current owner carries follows the APOS allocation stated in the paper
+(p.4): the old device's production and transport are split between users in
+proportion to the hours each gets. It is fixed at handover with the expected
+second-life hours $\hat{Uh}_2$ (thesis defaults), so re-scans do not change a
+figure a recipient may already have reported:
 
-$$u = \max\left(0,\ 1 - \frac{Uh_1}{D_{typical}}\right) \qquad A = u \cdot M + L$$
+$$s = \frac{\hat{Uh}_2}{Uh_1 + \hat{Uh}_2} \qquad A = s \cdot (M + T) + L$$
 
 A device without a usable life-1 reading is counted as new: $A = M + T$.
+
+The supplier report also shows the ITU-T L.1410 App. XV / ADEME view: the share of
+manufacturing still unused compared with a typical first life,
+$u = \max(0,\ 1 - Uh_1 / D_{typical})$. It is a different question (how early
+devices were handed over), not an alternative figure for the owner.
 
 ## Factor set v0
 
@@ -104,7 +145,8 @@ The full set, with every source, is in `factors.json`.
 - Refurbishment parts (detected disk swaps are listed, not counted).
 - Packaging and cloud use.
 - Newer devices drawing less power than old ones.
-- Recycling as an outcome: DeviceHub does not detect it yet.
+- Lot membership dates: an outgoing lot uses the lot creation date to pick the
+  evidence where reuse starts.
 - Servers and loose components.
 
 > This LCA result cannot be compared to the result of another LCA unless all

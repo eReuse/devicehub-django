@@ -46,6 +46,11 @@
       "title": "DeviceHub mobile power-on-hours estimator (evidence/estimators.py): ~18 powered-on hours per battery cycle",
       "licence": "code",
       "url": ""
+    },
+    "paper": {
+      "title": "Roura, M., Navarro, L., Meseguer, R., Giménez, S. (2026). Assessing the impacts of computer reuse for digital inclusion from product information. Cleaner Production Letters 10, 100123",
+      "licence": "CC BY 4.0",
+      "url": "https://doi.org/10.1016/j.clpl.2025.100123"
     }
   },
   "manufacturing": {
