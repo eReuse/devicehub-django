@@ -1,0 +1,318 @@
+{% load i18n %}
+{% with L=lv.lot %}
+<div class="dh-impact">
+<style>
+  .dh-impact{--dh-primary:#7a9f4f;--dh-secondary:#9cc666;--dh-dark:#545f71;--dh-light:#f8f9fa;
+    --dh-teal:#56beac;--dh-teal-soft:#a3e3d7;--dh-green-soft:#c7e3a3;--dh-yellow:#efe3b4;--dh-orange:#f5b587;--dh-grey:#f3f3f3;--dh-line:#e3e6e9}
+  .dh-impact h6.card-title,.dh-impact h6.dh-title{color:var(--dh-primary);font-weight:700;border-bottom:2px solid var(--dh-secondary);padding-bottom:.35rem}
+  .dh-impact .dh-badge{display:inline-block;font-size:.75rem;font-weight:600;padding:.2rem .55rem;border-radius:999px;color:var(--dh-dark)}
+  .dh-impact .dh-reused{background:var(--dh-green-soft)} .dh-impact .dh-recycled{background:var(--dh-grey);border:1px solid var(--dh-line)}
+  .dh-impact .dh-workshop{background:var(--dh-yellow)} .dh-impact .dh-ended{background:var(--dh-orange)}
+  .dh-impact .dh-notice{background:var(--dh-yellow);color:var(--dh-dark);border-radius:.4rem;padding:.6rem .8rem;font-size:.875rem}
+  .dh-impact .dh-soft{background:var(--dh-light);border-radius:.4rem}
+  .dh-impact .nav-pills .nav-link{color:var(--dh-dark);font-weight:600}
+  .dh-impact .nav-pills .nav-link.active{background:var(--dh-teal-soft);color:#000}
+  .dh-impact a:not(.nav-link){color:var(--dh-primary)}
+  .eil-tiles{display:grid;grid-template-columns:minmax(0,1.4fr) repeat(3,minmax(0,1fr));gap:.75rem}
+  @media (max-width:900px){.eil-tiles{grid-template-columns:1fr 1fr}.eil-tiles .main{grid-column:1/-1}}
+  .eil-tile{background:#fff;border:1px solid var(--dh-line);border-radius:.5rem;padding:.9rem 1rem;display:flex;flex-direction:column;gap:.25rem}
+  .eil-tile.main{border-color:var(--dh-secondary);box-shadow:inset 4px 0 0 var(--dh-secondary)}
+  .eil-eyebrow{font-size:.7rem;letter-spacing:.05em;text-transform:uppercase;font-weight:600;color:var(--dh-primary)}
+  .eil-big{font-size:2.6rem;font-weight:700;line-height:1.05;color:var(--dh-dark)}
+  .eil-val{font-size:1.5rem;font-weight:700;line-height:1.1;color:var(--dh-dark)}
+  .eil-val small,.eil-big small{font-size:.85rem;font-weight:500;color:var(--bs-secondary-color,#6c757d);margin-left:.2rem}
+  .eil-hbar{display:grid;grid-template-columns:10rem 1fr 5rem 6rem;gap:.5rem;align-items:center;font-size:.875rem}
+  .eil-hbar .fill{height:20px;border-radius:3px;background:var(--dh-grey);border:1px solid var(--dh-line)}
+  .eil-hbar .fill.hl{background:var(--dh-secondary);border-color:var(--dh-secondary)}
+  .eil-cols{display:grid;grid-template-columns:repeat(6,1fr);gap:.4rem;height:170px}
+  .eil-col{display:grid;grid-template-rows:1fr auto;height:100%;font-size:.75rem;text-align:center}
+  .eil-col .up{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;border-bottom:1px solid var(--dh-dark)}
+  .eil-col .fill{width:60%;background:var(--dh-secondary);border-radius:3px 3px 0 0}
+  .eil-col .down{display:flex;flex-direction:column;align-items:center;min-height:1.6rem}
+  .eil-col .down .fill{background:var(--dh-orange);border-radius:0 0 3px 3px}
+  .eil-doc{max-width:880px;margin-inline:auto}
+  .eil-flow{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem}
+  .eil-flow div{background:var(--dh-light);border-left:3px solid var(--dh-secondary);border-radius:.4rem;padding:.6rem .75rem}
+  .eil-flow b{display:block;font-size:1.3rem;color:var(--dh-dark)}
+  .eil-wording{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
+  @media (max-width:700px){.eil-wording,.eil-flow{grid-template-columns:1fr}}
+  .eil-wording .ok{background:var(--dh-green-soft);border-radius:.4rem;padding:.75rem .9rem}
+  .eil-wording .no{background:var(--dh-grey);border-radius:.4rem;padding:.75rem .9rem}
+  .eil-wording ul{margin:0;padding-left:1.1rem;display:flex;flex-direction:column;gap:.4rem;font-size:.875rem}
+</style>
+
+{# view picker + who the report is for #}
+<div class="d-flex flex-wrap align-items-end gap-3 mt-3">
+  <ul class="nav nav-pills">
+    <li class="nav-item"><a class="nav-link {% if lv.view == 'refurbisher' %}active{% endif %}" href="?view=refurbisher">{% trans 'Refurbisher' %}</a></li>
+    <li class="nav-item"><a class="nav-link {% if lv.view == 'supplier' %}active{% endif %}" href="?view=supplier&for={{ lv.prepared_for|urlencode }}">{% trans 'Supplier report' %}</a></li>
+    <li class="nav-item"><a class="nav-link {% if lv.view == 'recipient' %}active{% endif %}" href="?view=recipient&for={{ lv.prepared_for|urlencode }}">{% trans 'Recipient report' %}</a></li>
+  </ul>
+  {% if lv.view != 'refurbisher' %}
+    <form method="get" class="d-flex gap-2 align-items-end ms-auto">
+      <input type="hidden" name="view" value="{{ lv.view }}">
+      <div>
+        <label for="prepared_for" class="form-label small mb-1">{% trans 'Prepared for' %}</label>
+        <input id="prepared_for" name="for" class="form-control form-control-sm" value="{{ lv.prepared_for }}" style="min-width:16rem">
+      </div>
+      <button class="btn btn-green-user btn-sm" type="submit">{% trans 'Update' %}</button>
+    </form>
+  {% endif %}
+</div>
+{% if lv.tag_name %}
+  <p class="small text-muted mt-2 mb-0">
+    {% blocktrans with tag=lv.tag_name %}Lot type “{{ tag }}”.{% endblocktrans %}
+    {% if lv.direction == 'incoming' %}{% trans 'Incoming lots open the supplier report by default.' %}
+    {% elif lv.direction == 'outgoing' %}{% trans 'Outgoing lots open the recipient report by default; their devices count as delivered.' %}
+    {% else %}{% trans 'This lot type opens the refurbisher view by default.' %}{% endif %}
+  </p>
+{% endif %}
+
+{% if L.pending %}
+  <div class="dh-notice mt-3 mb-0">
+    {% blocktrans count n=L.pending with total=L.devices %}{{ n }} of {{ total }} devices has not left the workshop yet (no reuse or recycling recorded), so the figures are provisional.{% plural %}{{ n }} of {{ total }} devices have not left the workshop yet (no reuse or recycling recorded), so the figures are provisional.{% endblocktrans %}
+  </div>
+{% endif %}
+{% if L.unsupported %}
+  <p class="small text-muted mt-2 mb-0">{% blocktrans count n=L.unsupported %}{{ n }} device is not covered by the method (e.g. a server) and is left out.{% plural %}{{ n }} devices are not covered by the method (e.g. servers) and are left out.{% endblocktrans %}</p>
+{% endif %}
+
+{% if lv.view == 'refurbisher' %}
+  {# ------------------------------------------------------------ refurbisher #}
+  <div class="eil-tiles mt-3">
+    <div class="eil-tile main">
+      <span class="eil-eyebrow">{% trans 'CO₂e avoided' %}</span>
+      <span class="eil-big">{{ lv.avoided_text }}<small>CO₂e</small></span>
+      <span class="small text-muted">{% blocktrans count n=L.reused with lo=lv.avoided_low_text hi=lv.avoided_high_text %}compared with giving the same person a new device. With manufacturer data: {{ lo }} – {{ hi }}.{% plural %}compared with giving the same {{ n }} people new devices. With manufacturer data: {{ lo }} – {{ hi }}.{% endblocktrans %}</span>
+    </div>
+    <div class="eil-tile">
+      <span class="eil-eyebrow">{% trans 'Reused' %}</span>
+      <span class="eil-val">{{ L.reused }}<small>{% blocktrans with n=L.devices %}of {{ n }} devices{% endblocktrans %}</small></span>
+      <span class="small text-muted">{% blocktrans with r=L.recycled p=L.pending %}{{ r }} recycled · {{ p }} in the workshop{% endblocktrans %}</span>
+    </div>
+    <div class="eil-tile">
+      <span class="eil-eyebrow">{% trans 'Hours of use in second lives' %}</span>
+      <span class="eil-val">{{ lv.hours_total|floatformat:"0g" }}<small>h</small></span>
+      <span class="small text-muted">{% blocktrans with m=L.life2_hours_measured|floatformat:"0g" p=L.life2_hours_projected|floatformat:"0g" %}{{ m }} h measured · {{ p }} h projected{% endblocktrans %}</span>
+    </div>
+    <div class="eil-tile">
+      <span class="eil-eyebrow">{% trans 'Technician work' %}</span>
+      <span class="eil-val">{{ L.technician_hours|floatformat:"0g" }}<small>h</small></span>
+      <span class="small text-muted">{% if L.technician_hours_unknown %}{% blocktrans count n=L.technician_hours_unknown %}+ {{ n }} device with no labour source (phones, tablets){% plural %}+ {{ n }} devices with no labour source (phones, tablets){% endblocktrans %}{% else %}{% trans 'refurbishing and preparing for recycling' %}{% endif %}</span>
+    </div>
+  </div>
+
+  <div class="dh-soft border mt-3 p-3 small d-flex flex-wrap gap-4 align-items-start">
+    <div>
+      <span class="eil-eyebrow">{% trans 'Data quality' %}</span>
+      <div class="mt-1">
+        {% if lv.measured_hours_percent is not None %}
+          {% blocktrans with m=lv.measured_hours_percent %}<strong>{{ m }}%</strong> of second-life hours measured, the rest projected.{% endblocktrans %}
+        {% else %}{% trans 'No second-life hours yet.' %}{% endif %}
+      </div>
+    </div>
+    {% if lv.missing_life1 %}
+      <div class="flex-grow-1" style="max-width:60ch">
+        <span class="eil-eyebrow">{% trans 'Scan at intake' %}</span>
+        <div class="mt-1">{% blocktrans count n=lv.missing_life1 %}<strong>{{ n }} device</strong> has no usable first-life reading and is counted with defaults. First-life hours move the results more than any other input (Roura et al. 2026, Fig. 2), so a scan at intake improves every figure here.{% plural %}<strong>{{ n }} devices</strong> have no usable first-life reading and are counted with defaults. First-life hours move the results more than any other input (Roura et al. 2026, Fig. 2), so a scan at intake improves every figure here.{% endblocktrans %}</div>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="row g-3 mt-0">
+    <div class="col-lg-6"><div class="card h-100"><div class="card-body">
+      <h6 class="card-title">{% trans 'What reuse bought' %}</h6>
+      <p class="small text-muted">{% trans 'Three ways to meet the same need for the reused devices. The first owners got new devices in every case; the question is how the second users are served.' %}</p>
+      <div class="d-flex flex-column gap-2">
+        {% for s in lv.scenarios %}
+          <div class="eil-hbar">
+            <span class="{% if s.highlight %}fw-semibold{% endif %}">{{ s.key }} · {{ s.label }}</span>
+            <div><div class="fill {% if s.highlight %}hl{% endif %}" style="width:{{ s.width }}%"></div></div>
+            <span class="text-end fw-semibold">{{ s.text }}</span>
+            <span class="text-end small text-muted">{% if s.key == 'S1' %}{{ s.served }}{% else %}+{{ s.served }}{% endif %}</span>
+          </div>
+        {% endfor %}
+      </div>
+      {% if L.reused %}
+        <p class="small dh-soft p-2 mt-3 mb-0">{% blocktrans count n=L.reused with r=lv.cost_reuse_text new=lv.cost_new_text %}Giving a person a device cost <strong>{{ r }}</strong> CO₂e through reuse, instead of <strong>{{ new }}</strong> with a new one.{% plural %}Giving {{ n }} people a device cost <strong>{{ r }}</strong> CO₂e through reuse, instead of <strong>{{ new }}</strong> with new ones.{% endblocktrans %} {% trans 'Most of that cost is electricity in the second life, so it depends on the grid; the avoided manufacturing does not.' %}</p>
+      {% endif %}
+    </div></div></div>
+
+    <div class="col-lg-6"><div class="card h-100"><div class="card-body">
+      <h6 class="card-title">{% trans 'Where the carbon goes' %}</h6>
+      <p class="small text-muted">{% trans 'Life-cycle stages of the devices in this lot (ITU-T L.1410), split by life. Totals over their lives, not per year.' %}</p>
+      <div class="eil-cols" role="img" aria-label="{% trans 'Emissions by life-cycle stage' %}">
+        {% for s in lv.stages %}
+          <div class="eil-col">
+            <div class="up"><span>{% if s.value > 0 %}{{ s.text }}{% endif %}</span><div class="fill" style="height:{{ s.up }}%" title="{{ s.label }}: {{ s.text }}"></div></div>
+            <div class="down">{% if s.value < 0 %}<div class="fill" style="height:{{ s.down }}%;min-height:3px" title="{{ s.label }}: {{ s.text }}"></div><span>{{ s.text }}</span>{% elif not s.value %}<span class="text-muted">—</span>{% endif %}</div>
+          </div>
+        {% endfor %}
+      </div>
+      <div class="d-grid mt-1" style="grid-template-columns:repeat(6,1fr);gap:.4rem;font-size:.72rem;text-align:center">
+        {% for s in lv.stages %}<span>{{ s.label }}<br><span class="text-muted">{{ s.note }}</span></span>{% endfor %}
+      </div>
+      <div class="d-flex flex-wrap gap-3 small text-muted border-top mt-2 pt-2">
+        <span>{% trans 'Total' %}: <strong class="text-body">{{ lv.stages_total_text }} CO₂e</strong></span>
+        <span>{% trans 'Transport, all legs' %}: <strong class="text-body">{{ lv.transport_text }}</strong></span>
+        <span>{% trans 'Use location' %}: <strong class="text-body">{{ lv.grids|join:", " }}</strong></span>
+        <span>{% trans 'Excluded' %}: <strong class="text-body">{% trans 'refurbishment parts, packaging, cloud' %}</strong></span>
+      </div>
+      <p class="small fst-italic text-muted mt-2 mb-0">{% trans 'This LCA result cannot be compared to the result of another LCA unless all assumptions and modelling choices are equal.' %}</p>
+    </div></div></div>
+  </div>
+
+  <div class="card mt-3"><div class="card-body">
+    <h6 class="card-title">{% trans 'Devices' %}</h6>
+    <p class="small text-muted">● {% trans 'measured from the device evidence' %} · ○ {% trans 'default where evidence is missing' %}</p>
+    <div class="table-responsive" style="max-height:520px">
+      <table class="table table-sm table-hover small align-middle text-nowrap">
+        <thead class="sticky-top bg-body"><tr>
+          <th>{% trans 'Device' %}</th><th>{% trans 'Type' %}</th><th>{% trans 'Outcome' %}</th>
+          <th class="text-end">{% trans 'Life 1 h' %}</th><th class="text-end">{% trans 'Life 2 h' %}</th>
+          <th class="text-end">{% trans '2nd-life share' %}</th><th class="text-end">{% trans 'Avoided' %}</th>
+        </tr></thead>
+        <tbody>
+          {% for r in lv.rows %}
+            <tr>
+              <td><a href="{% url 'product:details' r.id %}#environmental_impact"><span class="font-monospace text-muted">{{ r.shortid }}</span> {{ r.name }}</a></td>
+              <td>{{ r.type }}</td>
+              <td>
+                {% if r.status == 'reused' %}<span class="dh-badge {% if r.ended %}dh-ended{% else %}dh-reused{% endif %}">{% if r.ended %}{% trans 'Reused, now recycled' %}{% else %}{% trans 'Reused' %}{% endif %}</span>
+                {% elif r.status == 'recycled' %}<span class="dh-badge dh-recycled">{% trans 'Recycled' %}</span>
+                {% else %}<span class="dh-badge dh-workshop">{% trans 'In the workshop' %}</span>{% endif %}
+              </td>
+              <td class="text-end">{{ r.life1|floatformat:"0g" }} {% if r.life1_measured %}●{% else %}○{% endif %}</td>
+              <td class="text-end">{% if r.life2 is not None %}{{ r.life2|floatformat:"0g" }} {% if r.life2_measured %}●{% else %}○{% endif %}{% else %}—{% endif %}</td>
+              <td class="text-end">{% if r.apos_percent is not None %}{{ r.apos_percent }}%{% elif r.status == 'reused' %}<span class="text-muted">{% trans 'as new' %}</span>{% else %}—{% endif %}</td>
+              <td class="text-end">{% if r.avoided is not None %}{{ r.avoided|floatformat:0 }} kg{% else %}—{% endif %}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div></div>
+
+{% elif lv.view == 'supplier' %}
+  {# ------------------------------------------------------------ supplier #}
+  <div class="card mt-3 eil-doc"><div class="card-body d-flex flex-column gap-4 p-4">
+    <div>
+      <span class="eil-eyebrow">{% trans 'Environmental contribution report' %}</span>
+      <h5 class="mt-1 mb-1">{% blocktrans with who=lv.prepared_for %}Devices from {{ who }}{% endblocktrans %}</h5>
+      <p class="small text-muted mb-0">{% blocktrans with inst=request.user.institution.name lot=lv.lot_name n=L.devices %}Prepared by {{ inst }} for lot “{{ lot }}”. It covers the {{ n }} devices received and what happened to each of them.{% endblocktrans %}</p>
+    </div>
+    <div class="row g-3 align-items-start">
+      <div class="col-md-7 d-flex flex-column gap-2">
+        <span class="eil-eyebrow">{% trans 'Emissions avoided by reusing your devices' %}</span>
+        <span class="eil-big">{{ lv.avoided_text }}<small>CO₂e</small></span>
+        <span class="small text-muted">{% blocktrans count n=L.reused with lo=lv.avoided_low_text hi=lv.avoided_high_text %}Compared with giving the same person a new device. Range with manufacturer data: {{ lo }} – {{ hi }}; the headline uses the lower, public ADEME factor.{% plural %}Compared with giving the same {{ n }} people new devices. Range with manufacturer data: {{ lo }} – {{ hi }}; the headline uses the lower, public ADEME factor.{% endblocktrans %}</span>
+        <p class="small dh-soft p-2 mb-0">{% blocktrans %}This is a <strong>contribution shared along the reuse chain</strong> (you, the refurbisher and the people using the devices). It is reported apart from your own greenhouse-gas inventory and cannot be subtracted from it.{% endblocktrans %}</p>
+      </div>
+      <div class="col-md-5">
+        <table class="table table-sm small mb-0">
+          <tr><td>{% trans 'Devices received' %}</td><td class="text-end fw-semibold">{{ L.devices }}</td></tr>
+          <tr><td>{% trans 'Reused by people or organisations' %}</td><td class="text-end fw-semibold">{{ L.reused }}</td></tr>
+          <tr><td>{% trans 'Sent to recycling' %}</td><td class="text-end fw-semibold">{{ L.recycled }}</td></tr>
+          <tr><td>{% trans 'Still in the workshop' %}</td><td class="text-end fw-semibold">{{ L.pending }}</td></tr>
+          <tr><td>{% trans 'Second-life hours measured / projected' %}</td><td class="text-end fw-semibold">{{ L.life2_hours_measured|floatformat:"0g" }} / {{ L.life2_hours_projected|floatformat:"0g" }}</td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="d-flex flex-column gap-2">
+      <h6 class="mb-0 dh-title">{% trans 'The manufacturing footprint your devices still had' %}</h6>
+      <p class="small text-muted mb-0">{% trans "A device's manufacturing footprint is spread over its working life. Compared with a typical first life (ITU-T L.1410 App. XV), part of it was still unused when your devices were handed over; recycled devices lose that part. Second users take on a share by hours of use (APOS, Roura et al. 2026). Only devices with a usable power-on reading." %}</p>
+      <div class="eil-flow">
+        <div><b>{{ lv.unused_text }}</b><span class="small text-muted">{% blocktrans with n=L.devices_with_life1_reading %}still unused vs a typical first life when handed over ({{ n }} devices with a reading){% endblocktrans %}</span></div>
+        <div><b>{{ lv.passed_on_text }}</b><span class="small text-muted">{% trans 'taken on by second users (APOS share by hours of use)' %}</span></div>
+        <div><b>{{ lv.unused_lost_text }}</b><span class="small text-muted">{% trans 'unused and lost with the recycled devices' %}</span></div>
+      </div>
+      {% if lv.median_life1 %}
+        <p class="small dh-soft p-2 mb-0">{% blocktrans with h=lv.median_life1|floatformat:"0g" past=L.devices_past_typical_life n=L.devices_with_life1_reading %}Median use before handover: <strong>{{ h }} powered-on hours</strong>. {{ past }} of {{ n }} devices had already passed a typical first life. <strong>Handing devices over earlier</strong> passes on more of their manufacturing footprint and gives the next user more useful years.{% endblocktrans %}</p>
+      {% endif %}
+    </div>
+    <div class="d-flex flex-column gap-2">
+      <h6 class="mb-0 dh-title">{% trans 'How you can use these figures' %}</h6>
+      <div class="eil-wording">
+        <div class="ok"><strong class="small" style="color:var(--dh-primary)">✓ {% trans 'Accurate wording' %}</strong><ul class="mt-2">{% for t in lv.supplier_ok %}<li>“{{ t }}”</li>{% endfor %}</ul></div>
+        <div class="no"><strong class="small">✗ {% trans 'Avoid' %}</strong><ul class="mt-2">{% for t in lv.supplier_no %}<li>{{ t }}</li>{% endfor %}</ul></div>
+      </div>
+    </div>
+    {% include 'partials/lot_impact_v2_footer.html' %}
+  </div></div>
+
+{% else %}
+  {# ------------------------------------------------------------ recipient #}
+  <div class="card mt-3 eil-doc"><div class="card-body d-flex flex-column gap-4 p-4">
+    <div>
+      <span class="eil-eyebrow">{% trans 'Embodied-carbon statement for refurbished equipment' %}</span>
+      <h5 class="mt-1 mb-1">{% blocktrans with who=lv.prepared_for %}Refurbished devices delivered to {{ who }}{% endblocktrans %}</h5>
+      <p class="small text-muted mb-0">{% blocktrans with inst=request.user.institution.name n=L.reused %}Prepared by {{ inst }}. What these {{ n }} refurbished devices carry in embodied emissions, for your own greenhouse-gas accounting of purchased equipment.{% endblocktrans %}</p>
+    </div>
+    <div class="row g-3 align-items-start">
+      <div class="col-md-7 d-flex flex-column gap-2">
+        <span class="eil-eyebrow">{% trans 'Embodied emissions attributed to your devices' %}</span>
+        <span class="eil-big">{{ lv.attributed_text }}<small>CO₂e</small></span>
+        {% if lv.attributed_saving_percent is not None %}
+          <span class="small text-muted">{% blocktrans with new=lv.new_equivalent_text pct=lv.attributed_saving_percent %}New equivalents would carry about <strong>{{ new }}</strong> ({{ pct }}% less with refurbished).{% endblocktrans %}</span>
+        {% endif %}
+      </div>
+      <div class="col-md-5">
+        <table class="table table-sm small mb-0">
+          <tr><td>{% trans 'Devices delivered' %}</td><td class="text-end fw-semibold">{{ L.reused }}</td></tr>
+          <tr><td>{% trans 'Electricity per year (all devices)' %}</td><td class="text-end fw-semibold">{{ L.kwh_per_year|floatformat:"0g" }} kWh · {{ lv.kg_per_year_text }}</td></tr>
+          <tr><td>{% trans 'No usable reading, counted as new' %}</td><td class="text-end fw-semibold">{{ L.counted_as_new }}</td></tr>
+          <tr><td>{% trans 'Your grid' %}</td><td class="text-end fw-semibold">{{ lv.grids|join:", " }}</td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="d-flex flex-column gap-2">
+      {% for b in lv.recipient_bars %}
+        <div class="eil-hbar" style="grid-template-columns:12rem 1fr 5rem">
+          <span class="{% if b.highlight %}fw-semibold{% endif %}">{{ b.label }}</span>
+          <div><div class="fill {% if b.highlight %}hl{% endif %}" style="width:{{ b.width }}%"></div></div>
+          <span class="text-end fw-semibold">{{ b.text }}</span>
+        </div>
+      {% endfor %}
+    </div>
+    <div>
+      <h6 class="dh-title">{% trans 'Per device' %}</h6>
+      <div class="table-responsive" style="max-height:360px">
+        <table class="table table-sm small align-middle text-nowrap">
+          <thead class="sticky-top bg-body"><tr>
+            <th>{% trans 'Device' %}</th><th>{% trans 'Type' %}</th><th class="text-end">{% trans 'Life 1 h' %}</th>
+            <th class="text-end">{% trans '2nd-life share' %}</th><th class="text-end">{% trans 'Attributed' %}</th>
+            <th class="text-end">{% trans 'New equivalent' %}</th><th class="text-end">{% trans 'Electricity / yr' %}</th>
+          </tr></thead>
+          <tbody>
+            {% for r in lv.rows %}{% if r.status == 'reused' %}
+              <tr>
+                <td><span class="font-monospace text-muted">{{ r.shortid }}</span> {{ r.name }}</td>
+                <td>{{ r.type }}</td>
+                <td class="text-end">{% if r.life1_measured %}{{ r.life1|floatformat:"0g" }} ●{% else %}<span class="text-muted">{% trans 'no reading' %}</span>{% endif %}</td>
+                <td class="text-end">{% if r.apos_percent is not None %}{{ r.apos_percent }}%{% else %}<span class="text-muted">{% trans 'counted as new' %}</span>{% endif %}</td>
+                <td class="text-end">{{ r.attributed|floatformat:0 }} kg</td>
+                <td class="text-end">{{ r.new_equivalent|floatformat:0 }} kg</td>
+                <td class="text-end">{{ r.kwh_per_year|floatformat:0 }} kWh {% if r.hours_per_year_measured %}●{% else %}○{% endif %}</td>
+              </tr>
+            {% endif %}{% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="d-flex flex-column gap-2">
+      <h6 class="mb-0 dh-title">{% trans 'How you can use these figures' %}</h6>
+      <div class="eil-wording">
+        <div class="ok"><strong class="small text-success">✓ {% trans 'Accurate wording' %}</strong><ul class="mt-2">{% for t in lv.recipient_ok %}<li>“{{ t }}”</li>{% endfor %}</ul></div>
+        <div class="no"><strong class="small">✗ {% trans 'Avoid' %}</strong><ul class="mt-2">{% for t in lv.recipient_no %}<li>{{ t }}</li>{% endfor %}</ul></div>
+      </div>
+    </div>
+    {% include 'partials/lot_impact_v2_footer.html' %}
+  </div></div>
+{% endif %}
+
+<div class="card mt-3"><div class="card-body">
+  <button class="btn btn-grey btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#lotDocsV2" aria-expanded="false">{% trans 'How this is calculated' %}</button>
+  <div class="collapse mt-2" id="lotDocsV2"><div style="max-height:500px;overflow-y:auto;font-size:.875rem">{{ lv_docs|safe }}</div></div>
+</div></div>
+</div>
+{% endwith %}

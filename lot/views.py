@@ -25,6 +25,13 @@ from lot.tables import LotTable, BeneficiaryTable
 from device.models import Device
 from evidence.models import SystemProperty, RootAlias
 from environmental_impact.algorithms.algorithm_factory import FactoryEnvironmentImpactAlgorithm
+from environmental_impact.algorithms.ereuse2026.ereuse2026 import (
+    EReuse2026EnvironmentalImpactAlgorithm,
+    render_docs as render_impact_v2_docs,
+)
+from environmental_impact.algorithms.ereuse2026.model import UnsupportedDevice, aggregate_lot
+from environmental_impact.lot_presenters import lot_impact_view
+from environmental_impact.reuse import lot_direction
 from environmental_impact.algorithms.ereuse2025.carbon_intensity import (
     get_available_country_choices,
     get_available_country_codes,
@@ -455,6 +462,8 @@ class LotEnvironmentalImpactView(DashboardLotMixing, TemplateView):
         language_code = get_language()
         context.update({
             'impact': env_impact,
+            'impact_lot_v2': self._environmental_impact_v2(devices),
+            'impact_v2_docs': render_impact_v2_docs(),
             'device_count': len(devices),
             'devices_with_evidence': len(devices),
             'lot_country_override': distinct_countries[0] if len(distinct_countries) == 1 else '',
@@ -468,6 +477,43 @@ class LotEnvironmentalImpactView(DashboardLotMixing, TemplateView):
             ],
         })
         return context
+
+    def _environmental_impact_v2(self, devices):
+        """ereuse2026 lot views, or None when no device in the lot is covered."""
+        institution = self.request.user.institution
+        algorithm = EReuse2026EnvironmentalImpactAlgorithm()
+        rows, unsupported = [], 0
+        for device in devices:
+            try:
+                rows.append((device, algorithm.compute(device, institution)))
+            except (UnsupportedDevice, ValueError):
+                unsupported += 1
+            except Exception as err:
+                logger.error(f"Lot Environmental Impact v2 Error for {device.id}: {err}")
+                unsupported += 1
+        if not rows:
+            return None
+        tag_name = self.lot.type.name if self.lot.type else None
+        prepared_for = (self.request.GET.get("for") or "").strip() or self._default_recipient(tag_name)
+        return lot_impact_view(
+            aggregate_lot([d for _, d in rows], unsupported=unsupported),
+            rows,
+            tag_name=tag_name,
+            view=self.request.GET.get("view"),
+            prepared_for=prepared_for,
+            lot_name=self.lot.name or "",
+        )
+
+    def _default_recipient(self, tag_name):
+        """Who a report is for, from the lot's donors or beneficiaries when known."""
+        direction = lot_direction(tag_name)
+        if direction == "incoming":
+            emails = Donor.objects.filter(lot=self.lot).values_list("email", flat=True)
+        elif direction == "outgoing":
+            emails = Beneficiary.objects.filter(lot=self.lot).values_list("email", flat=True)
+        else:
+            emails = []
+        return ", ".join(sorted(set(emails))) or (self.lot.name or "")
 
     def _get_devices_with_evidence(self) -> list[Device]:
         device_ids = self.lot.devicelot_set.all().values_list(
