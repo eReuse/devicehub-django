@@ -20,6 +20,7 @@
   .ei2-life1{background:var(--dh-teal)}
   .ei2-life2{background:var(--dh-secondary)}
   .ei2-life2.projected{background:repeating-linear-gradient(45deg,var(--dh-green-soft) 0 5px,var(--dh-secondary) 5px 9px)}
+  .ei2-life1.assumed{background:repeating-linear-gradient(45deg,var(--dh-teal-soft) 0 5px,var(--dh-teal) 5px 9px)}
   .ei2-typical{background:#cfd4d8}
   .ei2-axis{position:relative;height:1.2rem;border-top:1px solid var(--dh-line);font-size:.72rem;color:var(--bs-secondary-color,#6c757d)}
   .ei2-axis span{position:absolute;top:.15rem;transform:translateX(-50%);white-space:nowrap}
@@ -81,17 +82,23 @@
 <div class="card mt-3">
   <div class="card-body">
     <h6 class="card-title">{% trans 'Its story' %}</h6>
+    {% if not i.life1_measured %}
+      <p class="small mb-2">{% if v2.reused and not i.life2_measured %}{% trans 'No hour reading from this device: both lives use standard figures.' %}{% else %}{% trans 'No hour reading for its first life: it uses a standard figure.' %}{% endif %}</p>
+    {% endif %}
     <div class="ei2-story" role="img" aria-label="{% trans 'Powered-on hours in each life, compared with a typical first life' %}">
       <span class="ei2-rowlabel">{% trans 'This device' %}</span>
       <div class="ei2-lane">
-        <div class="ei2-seg ei2-life1" style="width:{{ v2.story.life1_width }}%" title="{% trans 'Life 1' %}: {{ i.life1_hours|floatformat:"0g" }} h"></div>
+        <div class="ei2-seg ei2-life1 {% if not i.life1_measured %}assumed{% endif %}" style="width:{{ v2.story.life1_width }}%" title="{% trans 'Life 1' %}: {{ i.life1_hours|floatformat:"0g" }} h"></div>
         {% if v2.reused %}<div class="ei2-seg ei2-life2 {% if not i.life2_measured %}projected{% endif %}" style="width:{{ v2.story.life2_width }}%" title="{% trans 'Life 2' %}: {{ i.life2_hours|floatformat:"0g" }} h"></div>{% endif %}
       </div>
       <span class="ei2-rowval">{{ v2.story.total_hours|floatformat:"0g" }} h</span>
 
+      {# only meaningful against a measured life 1; otherwise life 1 is this very value #}
+      {% if i.life1_measured %}
       <span class="ei2-rowlabel">{% blocktrans with t=i.device_type %}Typical first life ({{ t }}){% endblocktrans %}</span>
       <div class="ei2-lane"><div class="ei2-seg ei2-typical" style="width:{{ v2.story.typical_width }}%"></div></div>
       <span class="ei2-rowval">{{ v2.story.typical_hours|floatformat:"0g" }} h</span>
+      {% endif %}
 
       <span></span>
       <div class="ei2-axis">{% for t in v2.story.ticks %}<span style="left:{{ t.left }}%">{{ t.hours|floatformat:"0g" }}{% if forloop.first %} h{% endif %}</span>{% endfor %}</div>
@@ -99,7 +106,7 @@
     </div>
 
     <ul class="ei2-legend">
-      <li><span class="ei2-swatch ei2-life1"></span>
+      <li><span class="ei2-swatch ei2-life1 {% if not i.life1_measured %}assumed{% endif %}"></span>
         <div><strong>{% trans 'Life 1' %} · {{ i.life1_hours|floatformat:"0g" }} h</strong>
         {% if not i.life1_measured %}{% trans 'no usable reading (the counter was missing or reset), so a typical first life is assumed.' %}
         {% elif i.hours_estimated %}{% blocktrans with d=v2.story.life1_date|date:"Y-m-d" %}estimated from battery cycles and other Android signals, at the scan of {{ d }}.{% endblocktrans %}
@@ -114,10 +121,12 @@
         {% else %}{% blocktrans with y=v2.story.life2_years t=i.device_type %}estimate: a standard {{ y }} years of use for a {{ t }}. It becomes measured when the device is scanned again.{% endblocktrans %}{% endif %}
         <span class="ei2-q">{% if not i.life2_measured %}○{% elif i.hours_estimated %}◐{% else %}●{% endif %}</span></div></li>
       {% endif %}
+      {% if i.life1_measured %}
       <li><span class="ei2-swatch ei2-typical"></span>
         <div><strong>{% trans 'Typical first life' %} · {{ v2.story.typical_hours|floatformat:"0g" }} h</strong>
         {% if v2.is_mobile %}{% trans 'about 3 years of use before a phone or tablet is refurbished (ADEME 2022). Used to judge how early it was handed over.' %}
         {% else %}{% trans 'how long computers of this type usually last with their first owner (Franquesa et al. 2019, used in the thesis). Used to judge how early it was handed over.' %}{% endif %}</div></li>
+      {% endif %}
       <li><span class="ei2-swatch"></span>
         <div><strong>{% if v2.bios_year %}{% blocktrans with y=v2.bios_year %}Made around {{ y }}{% endblocktrans %}{% else %}{% trans 'Manufacture year unknown' %}{% endif %}</strong>
         {% if v2.bios_year %}{% trans 'from the BIOS date in the scan (assumes the BIOS was never updated).' %}{% else %}{% trans 'no BIOS date in the scan, so the life-cycle chart below shows totals, not per year.' %}{% endif %}
@@ -174,16 +183,36 @@
       <form method="post" class="d-flex flex-column gap-2">
         {% csrf_token %}
         <input type="hidden" name="action" value="save_reuse_start">
+        {% if v2.single_evidence %}
+          {% with ev=v2.timeline.0 %}
+          <select class="form-select form-select-sm" disabled aria-label="{% trans 'Only evidence' %}">
+            <option>{{ ev.date|date:"Y-m-d"|default:ev.uuid }} · {% if ev.has_reading %}{{ ev.poh|floatformat:"0g" }} h{% else %}{% trans 'no hour reading' %}{% endif %}</option>
+          </select>
+          {% if v2.reused and not v2.reused_by_mark %}
+            <div class="form-text mt-0">{% blocktrans with src=v2.reuse_source_label %}Already counted as reused ({{ src }}).{% endblocktrans %}</div>
+          {% else %}
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="reuse_start" value="{{ ev.uuid }}" id="reuse_start" {% if ev.marked %}checked{% endif %}>
+              <label class="form-check-label small" for="reuse_start">{% trans 'Mark as reused: handed over after this scan' %}</label>
+            </div>
+          {% endif %}
+          <div class="form-text mt-0">{% blocktrans with h=v2.expected_life2_hours|floatformat:"0g" y=v2.story.life2_years %}With a single scan, second-life hours are not measured: they are a standard {{ y }}-year estimate of {{ h }} h. Scan it again later to measure them.{% endblocktrans %}</div>
+          {% endwith %}
+          {% if not v2.reused or v2.reused_by_mark %}
+            <div><button type="submit" class="btn btn-green-user btn-sm">{% trans 'Save' %}</button></div>
+          {% endif %}
+        {% else %}
         <select name="reuse_start" id="reuse_start" class="form-select form-select-sm">
           <option value="">{% trans 'Automatic: from intake, once there is a second evidence' %}</option>
           {% for ev in v2.timeline %}
             <option value="{{ ev.uuid }}" {% if ev.marked %}selected{% endif %}>
-              {{ ev.date|date:"Y-m-d"|default:ev.uuid }} · {{ ev.poh|floatformat:"0g" }} h{% if ev.is_start and not ev.marked %} · {% trans 'current start' %}{% endif %}{% if ev.disk_changed %} · {% trans 'disk changed' %}{% endif %}
+              {{ ev.date|date:"Y-m-d"|default:ev.uuid }} · {% if ev.has_reading %}{{ ev.poh|floatformat:"0g" }} h{% else %}{% trans 'no hour reading' %}{% endif %}{% if ev.is_start and not ev.marked %} · {% trans 'current start' %}{% endif %}{% if ev.disk_changed %} · {% trans 'disk changed' %}{% endif %}
             </option>
           {% endfor %}
         </select>
-        <div class="form-text mt-0">{% trans 'Pick the evidence taken when the device left the refurbisher, e.g. if it was scanned twice before delivery or delivered without a new scan.' %}</div>
+        <div class="form-text mt-0">{% trans 'Pick the evidence taken when the device left the refurbisher, e.g. if it was scanned twice before delivery or delivered without a new scan.' %} {% trans 'Hours before that scan count as first life; hours measured on later scans, as second life.' %}</div>
         <div><button type="submit" class="btn btn-green-user btn-sm">{% trans 'Save' %}</button></div>
+        {% endif %}
       </form>
       </div>
       <div class="col-md-6">

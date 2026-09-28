@@ -26,9 +26,10 @@ class SaveReuseStartTests(TestCase):
         self.device_id = "ereuse24:test-device"
 
     def _post(self, value):
-        request = RequestFactory().post(
-            f"/product/{self.device_id}/", {"action": "save_reuse_start", "reuse_start": value}
-        )
+        data = {"action": "save_reuse_start"}
+        if value is not None:  # None: an unticked checkbox, which posts nothing
+            data["reuse_start"] = value
+        request = RequestFactory().post(f"/product/{self.device_id}/", data)
         request.user = self.user
         SessionMiddleware(lambda r: None).process_request(request)
         request.session.save()
@@ -58,16 +59,21 @@ class SaveReuseStartTests(TestCase):
         self._post("")
         self.assertEqual(self._marks(), [])
 
+    def test_unticked_switch_goes_back_to_automatic(self):
+        self._post(E0)
+        self._post(None)
+        self.assertEqual(self._marks(), [])
+
     def test_rejects_an_evidence_of_another_device(self):
         self._post("5f0c3b0e-0000-4000-8000-0000000000ff")
         self.assertEqual(self._marks(), [])
 
 
 class PresenterTests(SimpleTestCase):
-    def _view(self, points, reuse_start=0, marks=frozenset()):
+    def _view(self, points, reuse_start=0, marks=frozenset(), source="second_evidence"):
         inputs = DeviceInputs(
             device_type="desktop", points=points, country="ES",
-            reuse_start=reuse_start, reuse_source="second_evidence" if reuse_start is not None else None,
+            reuse_start=reuse_start, reuse_source=source if reuse_start is not None else None,
             bios_year=2013,
         )
         return device_impact_view(compute_device(inputs, load_factors(), load_grid()), inputs, set(marks))
@@ -89,6 +95,29 @@ class PresenterTests(SimpleTestCase):
     def test_pending_device_is_not_reused(self):
         view = self._view([EvidencePoint(E0, datetime(2019, 6, 3), 720)], reuse_start=None)
         self.assertFalse(view["reused"])
+
+    def test_single_evidence_marked_by_hand_uses_default_life2(self):
+        view = self._view([EvidencePoint(E0, datetime(2026, 1, 5), 1092)], source="mark", marks={E0})
+        self.assertTrue(view["single_evidence"])
+        self.assertTrue(view["reused_by_mark"])
+        self.assertEqual(view["impact"].life2_hours, view["expected_life2_hours"])
+
+    def test_counter_at_zero_is_no_reading(self):
+        view = self._view([EvidencePoint(E0, datetime(2025, 1, 23), 0)], source="mark", marks={E0})
+        self.assertFalse(view["impact"].life1_measured)
+        self.assertFalse(view["timeline"][0]["has_reading"])
+
+    def test_single_evidence_reused_by_state_is_not_a_mark(self):
+        view = self._view([EvidencePoint(E0, datetime(2026, 1, 5), 1092)], source="transfer_state")
+        self.assertFalse(view["reused_by_mark"])
+        self.assertEqual(str(view["reuse_source_label"]), "Transfer state")
+
+    def test_several_evidences_keep_the_picker(self):
+        view = self._view([
+            EvidencePoint(E0, datetime(2017, 12, 1), 3696),
+            EvidencePoint(E1, datetime(2022, 2, 11), 9439),
+        ])
+        self.assertFalse(view["single_evidence"])
 
     def test_constants_cite_references_numbered_by_first_use(self):
         method = self._view([EvidencePoint(E0, datetime(2026, 1, 5), 1092)])["method"]
