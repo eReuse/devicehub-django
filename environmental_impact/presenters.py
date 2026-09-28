@@ -157,6 +157,7 @@ def device_impact_view(impact: DeviceImpact, inputs: DeviceInputs, marks: set[st
             "uuid": p.uuid,
             "date": p.date,
             "poh": p.poh,
+            "has_reading": bool(p.poh),  # a counter at 0 means no reading, not zero hours
             "disk_changed": p.disk_changed,
             "marked": p.uuid in marks,
             "is_start": impact.reused and inputs.reuse_start == i,
@@ -200,6 +201,10 @@ def device_impact_view(impact: DeviceImpact, inputs: DeviceInputs, marks: set[st
         "expected_life2_hours": factors["default_second_life"][impact.device_type]["hours"],
         "timeline": timeline,
         "has_mark": bool(marks),
+        # one evidence: nothing to choose, the picker becomes a "reused" switch
+        "single_evidence": len(inputs.points) == 1,
+        "reuse_source_label": REUSE_SOURCE_LABELS.get(impact.reuse_source) if impact.reused else None,
+        "reused_by_mark": impact.reuse_source == "mark",
         "bios_year": inputs.bios_year,
         "factor_label": factors["manufacturing"][impact.factor_set]["label"],
         "method": _method(impact, factors),
