@@ -70,10 +70,11 @@ class SaveReuseStartTests(TestCase):
 
 
 class PresenterTests(SimpleTestCase):
-    def _view(self, points, reuse_start=0, marks=frozenset(), source="second_evidence"):
+    def _view(self, points, reuse_start=0, marks=frozenset(), source="second_evidence", detected=None):
         inputs = DeviceInputs(
             device_type="desktop", points=points, country="ES",
             reuse_start=reuse_start, reuse_source=source if reuse_start is not None else None,
+            detected_start=detected, detected_source="second_evidence" if detected is not None else None,
             bios_year=2013,
         )
         return device_impact_view(compute_device(inputs, load_factors(), load_grid()), inputs, set(marks))
@@ -98,26 +99,56 @@ class PresenterTests(SimpleTestCase):
 
     def test_single_evidence_marked_by_hand_uses_default_life2(self):
         view = self._view([EvidencePoint(E0, datetime(2026, 1, 5), 1092)], source="mark", marks={E0})
-        self.assertTrue(view["single_evidence"])
-        self.assertTrue(view["reused_by_mark"])
-        self.assertEqual(view["impact"].life2_hours, view["expected_life2_hours"])
+        h = view["handover"]
+        self.assertTrue(h["single"])
+        self.assertTrue(h["by_hand"])
+        self.assertEqual(str(h["note"]), "set by hand")
+        self.assertEqual(view["impact"].life2_hours, view["expected_life2_hours"])  # still in the calculation
+        self.assertEqual(view["story"]["life2_width"], 0)  # but not drawn in the story
+        self.assertEqual(view["story"]["total_hours"], 1092)
+
+    def test_single_evidence_not_handed_over(self):
+        view = self._view([EvidencePoint(E0, datetime(2026, 1, 5), 1092)], reuse_start=None)
+        h = view["handover"]
+        self.assertIsNone(h["scan"])
+        self.assertEqual(str(h["note"]), "only one scan")
+        self.assertEqual(h["last"]["uuid"], E0)
 
     def test_counter_at_zero_is_no_reading(self):
         view = self._view([EvidencePoint(E0, datetime(2025, 1, 23), 0)], source="mark", marks={E0})
         self.assertFalse(view["impact"].life1_measured)
         self.assertFalse(view["timeline"][0]["has_reading"])
 
-    def test_single_evidence_reused_by_state_is_not_a_mark(self):
-        view = self._view([EvidencePoint(E0, datetime(2026, 1, 5), 1092)], source="transfer_state")
-        self.assertFalse(view["reused_by_mark"])
-        self.assertEqual(str(view["reuse_source_label"]), "Transfer state")
-
-    def test_several_evidences_keep_the_picker(self):
+    def test_detected_handover_says_why(self):
         view = self._view([
             EvidencePoint(E0, datetime(2017, 12, 1), 3696),
             EvidencePoint(E1, datetime(2022, 2, 11), 9439),
-        ])
-        self.assertFalse(view["single_evidence"])
+        ], detected=0)
+        h = view["handover"]
+        self.assertFalse(h["single"])
+        self.assertFalse(h["by_hand"])
+        self.assertEqual(h["scan"]["uuid"], E0)
+        self.assertEqual(str(h["note"]), "detected: there is a later scan")
+        self.assertTrue(view["timeline"][0]["detected"])
+
+    def test_mark_on_the_detected_scan_reads_as_detected(self):
+        view = self._view([
+            EvidencePoint(E0, datetime(2026, 3, 23), 4439),
+            EvidencePoint(E1, datetime(2026, 4, 10), 4448),
+        ], reuse_start=0, source="mark", marks={E0}, detected=0)
+        h = view["handover"]
+        self.assertFalse(h["by_hand"])
+        self.assertEqual(str(h["note"]), "detected: there is a later scan")
+
+    def test_mark_overriding_detection_keeps_the_detected_scan(self):
+        view = self._view([
+            EvidencePoint(E0, datetime(2026, 3, 23), 4439),
+            EvidencePoint(E1, datetime(2026, 4, 10), 4448),
+        ], reuse_start=1, source="mark", marks={E1}, detected=0)
+        h = view["handover"]
+        self.assertTrue(h["by_hand"])
+        self.assertEqual(h["selected_uuid"], E1)
+        self.assertEqual([t["detected"] for t in view["timeline"]], [True, False])
 
     def test_constants_cite_references_numbered_by_first_use(self):
         method = self._view([EvidencePoint(E0, datetime(2026, 1, 5), 1092)])["method"]
