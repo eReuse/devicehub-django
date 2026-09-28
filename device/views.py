@@ -31,6 +31,7 @@ from environmental_impact.algorithms.ereuse2026.ereuse2026 import (
     render_docs as render_impact_v2_docs,
 )
 from environmental_impact.algorithms.ereuse2026.model import UnsupportedDevice
+from environmental_impact.pdf import PdfUnavailable, render_device_report_pdf
 from environmental_impact.presenters import device_impact_view
 from environmental_impact.reuse import read_reuse_marks, save_reuse_mark
 from environmental_impact.social_impact import (
@@ -182,7 +183,24 @@ class DetailsView(DashboardView, TemplateView ):
         if self.object.owner != self.request.user.institution:
             raise Http403
 
+        if request.GET.get("format") == "pdf":
+            return self._export_impact_pdf(request, kwargs["pk"])
         return super().get(request, *args, **kwargs)
+
+    def _export_impact_pdf(self, request, pk):
+        """The environmental impact tab as a PDF download, like the lot reports."""
+        back = redirect(reverse_lazy("product:details", args=[pk]) + "#environmental_impact")
+        self.object.initial()
+        v2 = self._environmental_impact_v2()
+        if not v2:
+            messages.error(request, _("There is no environmental impact to export for this device."))
+            return back
+        try:
+            return render_device_report_pdf(request, v2, self.object, request.user.institution.name)
+        except PdfUnavailable as err:
+            logger.error(f"PDF export unavailable: {err}")
+            messages.error(request, _("PDF export is not available on this server (WeasyPrint is not installed)."))
+            return back
 
     def post(self, request, *args, **kwargs):
         action = request.POST.get("action")

@@ -62,3 +62,38 @@ def render_lot_report_pdf(request, lv: dict, institution_name: str) -> HttpRespo
     response = HttpResponse(pdf, content_type="application/pdf")
     response["Content-Disposition"] = f'attachment; filename="{report_filename(view, lv["lot_name"], issued)}"'
     return response
+
+
+def device_report_filename(shortid: str, issued) -> str:
+    return f"impact-device-{slugify(shortid) or 'device'}-{issued:%Y-%m-%d}.pdf"
+
+
+def render_device_report_pdf(request, v2: dict, device, institution_name: str) -> HttpResponse:
+    """The device's environmental impact tab as an A4 PDF, from the same view data."""
+    try:
+        from weasyprint import HTML
+    except (ImportError, OSError) as err:  # OSError: missing Pango/Cairo libraries
+        raise PdfUnavailable(str(err)) from err
+
+    issued = timezone.now().date()
+    shortid = getattr(device, "shortid", "") or str(device.id)
+    name = " ".join(x for x in (device.manufacturer, device.model) if x) or shortid
+    html = render_to_string(
+        "reports/device_report_pdf.html",
+        {
+            "v2": v2,
+            "i": v2["impact"],
+            "title": f"{_('Impact report · device')} · {shortid}",
+            "device_name": name,
+            "device_shortid": shortid,
+            "device_id": device.id,
+            "institution_name": institution_name,
+            "issued": issued,
+            "footer_left": _css_string(f"{institution_name} · {shortid} · {v2['impact'].method_version}"),
+        },
+        request=request,
+    )
+    pdf = HTML(string=html, base_url=request.build_absolute_uri("/")).write_pdf()
+    response = HttpResponse(pdf, content_type="application/pdf")
+    response["Content-Disposition"] = f'attachment; filename="{device_report_filename(shortid, issued)}"'
+    return response
