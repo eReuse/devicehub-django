@@ -1,0 +1,133 @@
+{% load i18n %}
+
+<div class="tab-pane fade" id="images">
+
+    <div class="card-header bg-light py-3 mb-4">
+        <div class="d-flex justify-content-between align-items-center">
+            <h3 class="h6 mb-0">
+                <i class="bi bi-images me-2"></i>
+                {% trans "Device Images & OCR Data" %}
+            </h3>
+            <span class="badge bg-primary">
+                {{ image_evidences|length }} {% trans "images" %}
+            </span>
+        </div>
+    </div>
+
+    {% if image_evidences %}
+        <div class="d-flex flex-column gap-4">
+            {% for evidence in image_evidences %}
+                <div class="card shadow-sm border-0">
+                    <div class="row g-0">
+
+                        <div class="col-md-5 col-lg-4 bg-light d-flex align-items-center justify-content-center p-3 border-end">
+                            <a href="{% url 'evidence:details' evidence.uuid %}" class="w-100 text-center">
+                                <img src="{% url 'evidence:photo_file' evidence.uuid %}"
+                                     class="img-fluid rounded"
+                                     alt="{% trans 'Evidence photo' %}"
+                                     style="max-height: 350px; width: 100%; object-fit: contain;">
+                            </a>
+                        </div>
+
+                        <div class="col-md-7 col-lg-8">
+                            <div class="card-body d-flex flex-column h-100">
+
+                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                    <div>
+                                        <h5 class="card-title mb-1">
+                                            <a href="{% url 'evidence:details' evidence.uuid %}" class="text-decoration-none">
+                                                ID: {{ evidence.uuid }}
+                                            </a>
+                                        </h5>
+                                        <small class="text-muted">
+                                            <i class="bi bi-clock"></i> {{ evidence.created }}
+                                            {% if evidence.uploaded_by %}
+                                                &bull; <i class="bi bi-person"></i> {{ evidence.uploaded_by }}
+                                            {% endif %}
+                                        </small>
+                                    </div>
+                                    <div class="btn-group shadow-sm" role="group">
+                                        <!-- Download Image -->
+                                        <a href="{% url 'evidence:photo_file' evidence.uuid %}"
+                                           download
+                                           class="btn btn-sm btn-outline-secondary"
+                                           title="{% trans 'Download Image File' %}">
+                                            <i class="bi bi-image"></i>
+                                        </a>
+
+                                        <!-- Download JSON Evidence -->
+                                        <a href="{% url 'evidence:download' evidence.uuid %}"
+                                           class="btn btn-sm btn-outline-secondary"
+                                           title="{% trans 'Download JSON Evidence' %}">
+                                            <i class="bi bi-filetype-json"></i>
+                                        </a>
+                                    </div>
+                                </div>
+
+                                <!-- barcodes -->
+                                {% if evidence.doc.data.barcodes %}
+                                    <h6 class="text-dark mt-2 mb-2"><i class="bi bi-upc-scan"></i> {% trans "Barcodes detected" %}</h6>
+                                    <div class="d-flex flex-wrap gap-2 mb-3">
+                                        {% for barcode in evidence.doc.data.barcodes %}
+                                            <span class="badge bg-white border text-dark">
+                                                <span class="text-muted me-1">{{ barcode.type }}:</span>
+                                                <code class="text-dark fs-6">{{ barcode.data }}</code>
+                                            </span>
+                                        {% endfor %}
+                                    </div>
+                                {% elif evidence.doc.data.barcode_error %}
+                                    <div class="alert alert-warning py-1 px-2 small mb-3">
+                                        <i class="bi bi-exclamation-triangle"></i> {{ evidence.doc.data.barcode_error }}
+                                    </div>
+                                {% endif %}
+
+                                <!-- OCR Text -->
+                                <h6 class="text-dark mb-2"><i class="bi bi-file-text"></i> {% trans "Extracted Text (OCR)" %}</h6>
+                                {% if evidence.doc.data.ocr.text %}
+                                    <div class="bg-light p-3 rounded border small text-dark flex-grow-1 mb-3"
+                                         style="max-height: 150px; overflow-y: auto; white-space: pre-wrap; font-family: monospace;">{{ evidence.doc.data.ocr.text }}</div>
+                                {% elif evidence.doc.data.ocr.error %}
+                                    <div class="alert alert-danger py-1 px-2 small flex-grow-1 mb-3">
+                                        <i class="bi bi-exclamation-triangle"></i> {{ evidence.doc.data.ocr.error }}
+                                    </div>
+                                {% else %}
+                                    <div class="bg-light p-3 rounded border small text-muted flex-grow-1 mb-3 fst-italic">
+                                        {% trans "No text detected in this image." %}
+                                    </div>
+                                {% endif %}
+
+                                <!-- details -->
+                                <div>
+                                    <button class="btn btn-sm btn-link text-decoration-none p-0 text-muted" type="button" data-bs-toggle="collapse" data-bs-target="#meta-{{ evidence.uuid }}">
+                                        <i class="bi bi-info-circle"></i> {% trans "File Details" %}
+                                    </button>
+                                    <div class="collapse mt-2" id="meta-{{ evidence.uuid }}">
+                                        <div class="card card-body bg-light border-0 py-2 px-3 small text-muted">
+                                            <div class="row">
+                                                <div class="col-sm-6"><strong>{% trans "File:" %}</strong> {{ evidence.doc.photo.original_name|default:"N/A" }}</div>
+                                                <div class="col-sm-6"><strong>{% trans "Size:" %}</strong> {{ evidence.doc.photo.size|filesizeformat }}</div>
+                                                <div class="col-sm-6"><strong>{% trans "Type:" %}</strong> {{ evidence.doc.photo.mime_type|default:"N/A" }}</div>
+                                                <div class="col-sm-12 text-truncate" title="{{ evidence.doc.photo.hash }}">
+                                                    <strong>{% trans "Hash:" %}</strong> <code>{{ evidence.doc.photo.hash|default:"N/A" }}</code>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="card border-0 bg-light">
+            <div class="card-body text-center py-5">
+                <i class="bi bi-camera-fill fs-1 text-secondary mb-3 d-block"></i>
+                <h5 class="text-muted">{% trans "No images found for this product" %}</h5>
+            </div>
+        </div>
+    {% endif %}
+
+</div>

@@ -173,6 +173,9 @@
         </li>
     {% endif %}
         <li class="nav-item">
+          <a href="#images" class="nav-link" data-bs-toggle="tab" data-bs-target="#images">{% trans 'Images' %}</a>
+        </li>
+        <li class="nav-item">
           <a class="nav-link" href="{% url 'product:device_web' object.web_pk %}" target="_blank">Web</a>
         </li>
         <li class="nav-item">
@@ -203,6 +206,8 @@
   {% include 'tabs/dpps.html' %}
 
   {% include 'tabs/environmental_impact.html' %}
+
+  {% include 'tabs/images.html' %}
 
   <!-- Add a note popup -->
   <div class="modal fade" id="addNoteModal" tabindex="-1" aria-labelledby="addNoteModalLabel" aria-hidden="true">
