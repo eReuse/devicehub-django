@@ -1,24 +1,36 @@
 {% load i18n %}
 {% with i=v2.impact %}
+<div class="dh-impact">
 <style>
+  .dh-impact{--dh-primary:#7a9f4f;--dh-secondary:#9cc666;--dh-dark:#545f71;--dh-light:#f8f9fa;
+    --dh-teal:#56beac;--dh-teal-soft:#a3e3d7;--dh-green-soft:#c7e3a3;--dh-yellow:#efe3b4;--dh-orange:#f5b587;--dh-grey:#f3f3f3;--dh-line:#e3e6e9}
+  .dh-impact h6.card-title,.dh-impact h6.dh-title{color:var(--dh-primary);font-weight:700;border-bottom:2px solid var(--dh-secondary);padding-bottom:.35rem}
+  .dh-impact .dh-badge{display:inline-block;font-size:.75rem;font-weight:600;padding:.2rem .55rem;border-radius:999px;color:var(--dh-dark)}
+  .dh-impact .dh-reused{background:var(--dh-green-soft)} .dh-impact .dh-recycled{background:var(--dh-grey);border:1px solid var(--dh-line)}
+  .dh-impact .dh-workshop{background:var(--dh-yellow)} .dh-impact .dh-ended{background:var(--dh-orange)}
+  .dh-impact .dh-notice{background:var(--dh-yellow);color:var(--dh-dark);border-radius:.4rem;padding:.6rem .8rem;font-size:.875rem}
+  .dh-impact .dh-soft{background:var(--dh-light);border-radius:.4rem}
+  .dh-impact .nav-pills .nav-link{color:var(--dh-dark);font-weight:600}
+  .dh-impact .nav-pills .nav-link.active{background:var(--dh-teal-soft);color:#000}
+  .dh-impact a:not(.nav-link){color:var(--dh-primary)}
   .ei2-bar{height:18px;border-radius:3px}
-  .ei2-life1{background:var(--bs-secondary-bg-subtle,#dee2e6);border:1px solid var(--bs-border-color,#ced4da)}
-  .ei2-life2{background:var(--bs-primary,#0d6efd)}
-  .ei2-life2.projected{background:repeating-linear-gradient(45deg,rgba(13,110,253,.25) 0 5px,rgba(13,110,253,.6) 5px 8px)}
+  .ei2-life1{background:var(--dh-grey);border:1px solid var(--dh-line)}
+  .ei2-life2{background:var(--dh-secondary)}
+  .ei2-life2.projected{background:repeating-linear-gradient(45deg,var(--dh-green-soft) 0 5px,var(--dh-secondary) 5px 8px)}
   .ei2-track{position:relative;display:flex;gap:2px;padding-top:22px;padding-bottom:4px}
-  .ei2-marker{position:absolute;top:0;bottom:0;border-left:2px solid var(--bs-body-color,#212529)}
+  .ei2-marker{position:absolute;top:0;bottom:0;border-left:2px solid var(--dh-dark)}
   .ei2-marker span{position:absolute;top:0;right:4px;white-space:nowrap;font-size:.75rem;color:var(--bs-secondary-color,#6c757d)}
   .ei2-hbar{display:grid;grid-template-columns:9.5rem 1fr 4.5rem;gap:.5rem;align-items:center;font-size:.875rem}
-  .ei2-hbar .fill{height:18px;border-radius:3px;background:var(--bs-secondary-bg-subtle,#dee2e6)}
-  .ei2-hbar .fill.hl{background:var(--bs-primary,#0d6efd)}
+  .ei2-hbar .fill{height:18px;border-radius:3px;background:var(--dh-grey);border:1px solid var(--dh-line)}
+  .ei2-hbar .fill.hl{background:var(--dh-secondary);border-color:var(--dh-secondary)}
   .ei2-cols{display:grid;grid-template-columns:repeat(6,1fr);gap:.4rem;align-items:end;height:140px;border-bottom:1px solid var(--bs-border-color,#ced4da)}
   .ei2-col{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;font-size:.75rem}
-  .ei2-col .fill{width:60%;background:var(--bs-primary,#0d6efd);border-radius:3px 3px 0 0;min-height:1px}
+  .ei2-col .fill{width:60%;background:var(--dh-secondary);border-radius:3px 3px 0 0;min-height:1px}
   .ei2-collabels{display:grid;grid-template-columns:repeat(6,1fr);gap:.4rem;font-size:.75rem;text-align:center;color:var(--bs-secondary-color,#6c757d)}
-  .ei2-fig{font-size:2rem;font-weight:600;line-height:1.1}
+  .ei2-fig{font-size:2rem;font-weight:700;line-height:1.1;color:var(--dh-dark)}
   .ei2-fig small{font-size:.9rem;font-weight:500;color:var(--bs-secondary-color,#6c757d)}
   .ei2-chip{font-size:.75rem;border:1px solid var(--bs-border-color,#ced4da);border-radius:999px;padding:.05rem .5rem}
-  .ei2-chip.measured{border-color:var(--bs-primary,#0d6efd)}
+  .ei2-chip.measured{border-color:var(--dh-secondary);background:var(--dh-light)}
 </style>
 
 {% if i.warnings %}
@@ -29,12 +41,22 @@
 
 <div class="d-flex flex-wrap align-items-center gap-2 mt-3">
   {% if v2.reused %}
-    <span class="badge bg-success">{% trans 'In its second life' %}</span>
+    {% if i.second_life_ended %}
+      <span class="dh-badge dh-ended">{% trans 'Second life ended: recycled' %}</span>
+    {% else %}
+      <span class="dh-badge dh-reused">{% trans 'In its second life' %}</span>
+    {% endif %}
     <span class="text-muted small">
-      {% if i.reuse_source == 'mark' %}{% trans 'reuse start marked by hand' %}{% else %}{% trans 'reuse detected from a second evidence' %}{% endif %}
+      {% if i.reuse_source == 'mark' %}{% trans 'reuse start marked by hand' %}
+      {% elif i.reuse_source == 'transfer_state' %}{% trans 'reuse starts at its transfer state (e.g. DONATION)' %}
+      {% elif i.reuse_source == 'outgoing_lot' %}{% trans 'reuse starts when it went into an outgoing (Salida) lot' %}
+      {% else %}{% trans 'reuse detected from a second evidence' %}{% endif %}
     </span>
+  {% elif i.recycled %}
+    <span class="dh-badge dh-recycled">{% trans 'Recycled' %}</span>
+    <span class="text-muted small">{% trans 'Its latest state sends it to recycling, with no second life before.' %}</span>
   {% else %}
-    <span class="badge bg-secondary">{% trans 'Not reused yet' %}</span>
+    <span class="dh-badge dh-workshop">{% trans 'Not reused yet' %}</span>
     <span class="text-muted small">{% trans 'Mark where reuse starts below, or scan it again in its second life.' %}</span>
   {% endif %}
   <span class="text-muted small ms-auto">
@@ -79,8 +101,8 @@
       {% if v2.reused %}
         <div class="ei2-fig">{{ i.attributed_kg|floatformat:0 }}<small> kg CO₂e {% trans 'embodied' %}</small></div>
         <p class="small text-muted mb-0 mt-2">
-          {% if v2.unused_percent is not None %}
-            {% blocktrans with new=i.new_equivalent_kg|floatformat:0 pct=v2.unused_percent %}A new equivalent carries about {{ new }} kg. {{ pct }}% of its manufacturing footprint was still unused when it was donated; that share, plus the refurbisher's transport, is what its current owner carries (ITU-T L.1410 App. XV).{% endblocktrans %}
+          {% if v2.apos_percent is not None %}
+            {% blocktrans with new=i.new_equivalent_kg|floatformat:0 pct=v2.apos_percent h1=i.life1_hours|floatformat:"0g" h2=v2.expected_life2_hours|floatformat:"0g" %}A new equivalent carries about {{ new }} kg. Its second life takes {{ pct }}% of its manufacturing and transport, in proportion to hours of use ({{ h1 }} h in its first life, {{ h2 }} h expected in its second), plus the refurbisher's transport. APOS allocation, as in Roura et al. (2026); fixed at handover.{% endblocktrans %}
           {% else %}
             {% blocktrans with new=i.new_equivalent_kg|floatformat:0 %}No usable first-life reading, so it is counted as new ({{ new }} kg). A power-on reading at intake would lower this.{% endblocktrans %}
           {% endif %}
@@ -88,9 +110,7 @@
       {% else %}
         <div class="ei2-fig">—</div>
         <p class="small text-muted mb-0 mt-2">
-          {% if v2.unused_percent is not None %}
-            {% blocktrans with pct=v2.unused_percent %}{{ pct }}% of its manufacturing footprint is still unused. Its next owner will carry that share once it is reused.{% endblocktrans %}
-          {% else %}{% trans 'Shown once the device is in its second life.' %}{% endif %}
+          {% trans 'Shown once the device is in its second life: its second user then takes a share of its manufacturing, in proportion to hours of use.' %}
         </p>
       {% endif %}
     </div></div>
@@ -111,8 +131,10 @@
       </div>
       <p class="small text-muted mb-0 mt-2">
         {% if v2.per_hour_drop is not None %}
-          {% if v2.per_hour_drop <= 0 %}
+          {% if v2.per_hour_drop <= 0 and v2.per_hour_rise_cause == 'transport' %}
             {% blocktrans with h=i.life2_hours|floatformat:"0g" %}Its second life has barely started ({{ h }} h), so the footprint per hour has not dropped yet: the refurbisher's transport still weighs more than the extra hours.{% endblocktrans %}
+          {% elif v2.per_hour_drop <= 0 %}
+            {% blocktrans %}The footprint per hour has not dropped: each hour of its second life emits more electricity CO₂e than its first life averaged, usually because it now runs on a more carbon-intensive grid.{% endblocktrans %}
           {% elif v2.per_hour_drop >= 25 %}
             {% blocktrans with d=v2.per_hour_drop %}Its second life cut the footprint per hour of use by {{ d }}%: manufacturing is shared over more hours.{% endblocktrans %}
           {% else %}
@@ -156,7 +178,7 @@
       <div class="ei2-collabels mt-1">{% for s in v2.stages %}<span>{{ s.label }}</span>{% endfor %}</div>
       <p class="small text-muted mb-0 mt-2">
         {% if v2.stages_per_year %}
-          {% blocktrans with total=v2.stages_total|floatformat:0 years=i.lifetime_years|floatformat:1 %}Total {{ total }} kg CO₂e over about {{ years }} years of life, shown per year as L.1410 asks.{% endblocktrans %}
+          {% blocktrans with total=v2.stages_total|floatformat:0 years=i.lifetime_years|floatformat:1 %}Total {{ total }} kg CO₂e over about {{ years }} years of life.{% endblocktrans %}
         {% else %}
           {% blocktrans with total=v2.stages_total|floatformat:0 %}Total {{ total }} kg CO₂e. Not shown per year: without a BIOS date its calendar lifetime is unknown.{% endblocktrans %}
         {% endif %}
@@ -166,7 +188,7 @@
 </div>
 
 {% if v2.reused %}
-  <div class="alert alert-light border mt-3 small mb-0">
+  <div class="dh-soft border mt-3 small mb-0 p-3">
     {% blocktrans with a=i.avoided|floatformat:0 lo=i.avoided_low|floatformat:0 hi=i.avoided_high|floatformat:0 %}Reusing it instead of buying a new one avoided about <strong>{{ a }} kg CO₂e</strong> (range {{ lo }}–{{ hi }} kg with manufacturer data). This is a contribution shared by everyone in its reuse chain; it is reported apart from any organisation's own emissions and cannot be subtracted from them.{% endblocktrans %}
   </div>
 {% endif %}
@@ -188,7 +210,7 @@
           {% endfor %}
         </select>
         <div class="form-text mt-0">{% trans 'Pick the evidence taken when the device left the refurbisher, e.g. if it was scanned twice before delivery or delivered without a new scan.' %}</div>
-        <div><button type="submit" class="btn btn-primary btn-sm">{% trans 'Save' %}</button></div>
+        <div><button type="submit" class="btn btn-green-user btn-sm">{% trans 'Save' %}</button></div>
       </form>
     </div></div>
   </div>
@@ -216,15 +238,12 @@
           <tr><td>○ {% trans 'Factor set' %}</td><td>{{ v2.factor_label }}</td><td class="text-muted">{{ i.method_version }}</td></tr>
         </tbody>
       </table>
-      <button class="btn btn-outline-secondary btn-sm w-100" type="button" data-bs-toggle="collapse" data-bs-target="#deviceDocsV2" aria-expanded="false">{% trans 'How this is calculated' %}</button>
+      <button class="btn btn-grey btn-sm w-100" type="button" data-bs-toggle="collapse" data-bs-target="#deviceDocsV2" aria-expanded="false">{% trans 'How this is calculated' %}</button>
       <div class="collapse mt-2" id="deviceDocsV2"><div style="max-height:500px;overflow-y:auto;font-size:.875rem">{{ v2_docs|safe }}</div></div>
     </div></div>
   </div>
 </div>
 
-<div class="d-flex flex-wrap gap-2 align-items-start border rounded p-2 mt-3 small text-muted" style="border-style:dashed!important">
-  <strong class="text-body">{% trans 'Verifiable certificate: being explored, not built.' %}</strong>
-  {% trans 'The idea is to issue this page as a signed credential, so the figures cannot be edited after issue.' %}
-</div>
 <p class="small fst-italic text-muted mt-2 mb-0">{% trans 'This LCA result cannot be compared to the result of another LCA unless all assumptions and modelling choices are equal.' %}</p>
+</div>
 {% endwith %}

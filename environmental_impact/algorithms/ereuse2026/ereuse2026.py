@@ -14,7 +14,7 @@ from environmental_impact.algorithms.ereuse2025.carbon_intensity import get_carb
 from environmental_impact.algorithms.ereuse2025.disk_change_detector import detect_disk_changes
 from environmental_impact.algorithms.ereuse2025.lifecycle_extractors import get_evidences_data_from_device
 from environmental_impact.models import EnvironmentalImpact
-from environmental_impact.reuse import read_reuse_marks, resolve_reuse_start
+from environmental_impact.reuse import read_reuse_signals, resolve_reuse
 from utils.constants import CHASSIS_DH
 
 from .model import (
@@ -99,8 +99,8 @@ def build_inputs(device: Device, institution: "Institution" | None, factor_set: 
         for i, e in enumerate(evidences)
     ]
 
-    marks = read_reuse_marks(device, institution or getattr(device, "owner", None))
-    reuse_start, reuse_source = resolve_reuse_start([p.uuid for p in points], marks)
+    signals = read_reuse_signals(device, institution or getattr(device, "owner", None))
+    reuse_start, reuse_source = resolve_reuse([(p.uuid, p.date) for p in points], signals)
 
     bios_year = None
     last = getattr(device, "last_evidence", None)
@@ -119,6 +119,7 @@ def build_inputs(device: Device, institution: "Institution" | None, factor_set: 
         bios_year=bios_year,
         factor_set=factor_set,
         hours_method=HOURS_ANDROID_ESTIMATE if device_type in MOBILE_TYPES else HOURS_COUNTER,
+        end_of_life=signals.end_of_life,
     )
 
 
