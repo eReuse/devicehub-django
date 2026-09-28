@@ -212,7 +212,8 @@ def get_all_search_results(query_str, institution):
         if x not in seen:
             seen.add(x)
             combined.append(x)
-    return combined
+    filtered_combined = [cid for cid in combined if not cid.startswith("photo25:")]
+    return filtered_combined
 
 
 # bulk orm queries - - -
