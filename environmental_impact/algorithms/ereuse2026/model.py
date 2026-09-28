@@ -13,9 +13,13 @@ The model combines two lenses, both from the sources in
   giving the second user a new computer; ``cost_second_user = S2 - S1`` is
   what serving that user cost. Old and new devices are assumed to draw the
   same power, as in the thesis, so use-phase terms cancel in ``avoided``.
-* **Attributional** (ITU-T L.1410, stages A-D and Appendix XV): the device's
-  own life-cycle stages, and the part of its manufacturing footprint still
-  unused when it was donated, which the current owner carries.
+* **Attributional**: the device's own life-cycle stages (ITU-T L.1410 A-D)
+  and what its second user carries. That share follows the APOS allocation
+  stated in Roura et al. (2026, p.4): the old device's production and
+  transport are split between users by the hours each gets, fixed at handover
+  with the expected second-life hours. The ITU-T L.1410 App. XV / ADEME
+  depreciation ("unused compared with a typical first life") is kept as
+  ``unused_share`` for the supplier report's advice to hand devices over earlier.
 
 All masses are kg CO2e, energy kWh, time powered-on hours unless named
 otherwise.
@@ -59,6 +63,8 @@ class DeviceInputs:
     bios_year: int | None = None
     factor_set: str = "base_carbone"
     hours_method: str = HOURS_COUNTER
+    # Latest state says the device went to recycling (disposition recycled/disposed).
+    end_of_life: bool = False
 
 
 @dataclass
@@ -73,7 +79,7 @@ class Provenance:
 class DeviceImpact:
     method_version: str
     device_type: str
-    status: str  # "reused" | "pending"
+    status: str  # "reused" | "pending" | "recycled"
     reuse_source: str | None
     factor_set: str
     country: str
@@ -100,9 +106,13 @@ class DeviceImpact:
     avoided_high: float | None = None
     cost_second_user: float | None = None
     # current owner's view (ITU L.1410 App. XV)
+    # ITU L.1410 App. XV / ADEME: manufacturing still unused vs a typical first life
     unused_share: float | None = None
     unused_kg: float | None = None
-    attributed_kg: float | None = None
+    # APOS (Roura et al. 2026): second user's share of the old device's production + transport
+    apos_share: float | None = None
+    passed_on_kg: float | None = None  # apos_share × (manufacturing + transport)
+    attributed_kg: float | None = None  # passed_on_kg + refurbisher legs
     new_equivalent_kg: float = 0.0
     # per hour of use, g CO2e
     g_per_hour_life1: float | None = None
@@ -114,6 +124,8 @@ class DeviceImpact:
     kg_per_year: float | None = None
     # calendar life, for the per-year ITU view
     lifetime_years: float | None = None
+    # A reused device that has since gone to recycling: its second life is over.
+    second_life_ended: bool = False
     technician_hours: float | None = 0.0  # None: no source for this device type
     provenance: list = field(default_factory=list)
     warnings: list = field(default_factory=list)
@@ -121,6 +133,10 @@ class DeviceImpact:
     @property
     def reused(self) -> bool:
         return self.status == "reused"
+
+    @property
+    def recycled(self) -> bool:
+        return self.status == "recycled"
 
     @property
     def total_kg(self) -> float:
@@ -226,6 +242,7 @@ def compute_device(inputs: DeviceInputs, factors: dict, grid: GridSeries) -> Dev
         warnings.append(warning)
     points = inputs.points
     reused = inputs.reuse_start is not None
+    recycled = inputs.end_of_life and not reused
     start = inputs.reuse_start if reused else len(points) - 1
 
     # life 1: hours on the counter when the first life ended (or so far, if pending)
@@ -257,7 +274,7 @@ def compute_device(inputs: DeviceInputs, factors: dict, grid: GridSeries) -> Dev
     impact = DeviceImpact(
         method_version=METHOD_VERSION,
         device_type=t,
-        status="reused" if reused else "pending",
+        status="reused" if reused else ("recycled" if recycled else "pending"),
         reuse_source=inputs.reuse_source if reused else None,
         factor_set=factor_set,
         country=country,
@@ -280,8 +297,11 @@ def compute_device(inputs: DeviceInputs, factors: dict, grid: GridSeries) -> Dev
         "use1": use1,
         "refurbish": 0.0,  # not modelled in v0 (thesis p.115)
         "use2": use2,
-        "end_of_life": 0.0,  # recycling is not detected yet
+        "end_of_life": rec if inputs.end_of_life else 0.0,
     }
+    impact.second_life_ended = reused and inputs.end_of_life
+    if recycled:
+        impact.technician_hours = f["technician_hours"]["recycle"].get(t)
 
     if life1_measured:
         impact.unused_share = max(0.0, 1 - h1 / typical)
@@ -299,7 +319,13 @@ def compute_device(inputs: DeviceInputs, factors: dict, grid: GridSeries) -> Dev
         impact.avoided_low = band["p10"] + band["transport"] + rec - legs
         impact.avoided_high = band["p90"] + band["transport"] + rec - legs
         # current owner: unused manufacturing + delivery; no usable reading -> counted as new
-        impact.attributed_kg = (impact.unused_kg + legs) if life1_measured else M + T
+        if life1_measured:
+            expected_h2 = life2_default["hours"]  # fixed at handover, not re-counted at each scan
+            impact.apos_share = expected_h2 / (h1 + expected_h2)
+            impact.passed_on_kg = impact.apos_share * (M + T)
+            impact.attributed_kg = impact.passed_on_kg + legs
+        else:  # no usable reading: counted as new (conservative)
+            impact.attributed_kg = M + T
         impact.g_per_hour_total = 1000 * (life1_total + legs + use2) / (h1 + h2)
         impact.technician_hours = f["technician_hours"]["reuse"].get(t)
 
@@ -348,8 +374,11 @@ def _provenance(inputs, impact, f, mf, factor_set) -> list[Provenance]:
             "life2_hours", f"{impact.life2_hours} h", impact.life2_measured,
             f"{hours_source} after reuse start" if impact.life2_measured
             else f"thesis default second life ({f['default_second_life']['ref']})"))
-        rows.append(Provenance("reuse_start", inputs.reuse_source or "", True,
-                               "manual mark" if inputs.reuse_source == "mark" else "second evidence"))
+        rows.append(Provenance("reuse_start", inputs.reuse_source or "", True, {
+            "mark": "manual mark on an evidence",
+            "transfer_state": "state that transfers the device (e.g. DONATION)",
+            "outgoing_lot": "outgoing (Salida) lot",
+        }.get(inputs.reuse_source, "second evidence")))
     return rows
 
 
@@ -362,6 +391,8 @@ class LotImpact:
     devices: int = 0
     reused: int = 0
     pending: int = 0
+    recycled: int = 0
+    second_lives_ended: int = 0
     unsupported: int = 0
     s1: float = 0.0
     s2: float = 0.0
@@ -377,6 +408,8 @@ class LotImpact:
     technician_hours_unknown: int = 0  # reused devices of a type with no labour source
     unused_kg: float = 0.0
     unused_kg_carried: float = 0.0
+    passed_on_kg: float = 0.0  # APOS share taken on by second users
+    unused_kg_lost: float = 0.0  # recycled before a second life
     devices_with_life1_reading: int = 0
     devices_past_typical_life: int = 0
     attributed_kg: float = 0.0
@@ -401,9 +434,20 @@ def aggregate_lot(impacts: list[DeviceImpact], unsupported: int = 0) -> LotImpac
             lot.unused_kg += d.unused_kg
             if d.unused_share == 0:
                 lot.devices_past_typical_life += 1
+        if d.recycled:
+            lot.recycled += 1
+            if d.unused_kg is not None:
+                lot.unused_kg_lost += d.unused_kg
+            if d.technician_hours is None:
+                lot.technician_hours_unknown += 1
+            else:
+                lot.technician_hours += d.technician_hours
+            continue
         if not d.reused:
             lot.pending += 1
             continue
+        if d.second_life_ended:
+            lot.second_lives_ended += 1
         lot.reused += 1
         lot.s1 += d.s1
         lot.s2 += d.s2
@@ -422,6 +466,8 @@ def aggregate_lot(impacts: list[DeviceImpact], unsupported: int = 0) -> LotImpac
             lot.technician_hours += d.technician_hours
         if d.unused_kg is not None:
             lot.unused_kg_carried += d.unused_kg
+        if d.passed_on_kg is not None:
+            lot.passed_on_kg += d.passed_on_kg
         else:
             lot.counted_as_new += 1
         lot.attributed_kg += d.attributed_kg

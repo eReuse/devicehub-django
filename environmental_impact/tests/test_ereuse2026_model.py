@@ -17,7 +17,13 @@ from environmental_impact.algorithms.ereuse2026.model import (
     compute_device,
 )
 from environmental_impact.algorithms.ereuse2025.lifecycle_models import DiskMetadata, EvidenceData
-from environmental_impact.reuse import resolve_reuse_start
+from environmental_impact.reuse import (
+    ReuseSignals,
+    classify_state,
+    lot_direction,
+    resolve_reuse,
+    resolve_reuse_start,
+)
 
 
 def point(uuid, date, poh, disk_changed=False):
@@ -57,10 +63,21 @@ class ReusedDeviceTests(unittest.TestCase):
         self.assertAlmostEqual(self.impact.avoided, self.impact.s3 - self.impact.s2)
         self.assertLess(self.impact.avoided_low, self.impact.avoided_high)
 
-    def test_current_owner_carries_unused_manufacturing(self):
-        self.assertAlmostEqual(self.impact.unused_share, 1 - 3696 / 20998, places=6)
-        self.assertAlmostEqual(self.impact.attributed_kg, 80.9, delta=0.2)
+    def test_current_owner_carries_apos_share_fixed_at_handover(self):
+        # APOS (Roura et al. 2026, p.4): split by hours, with the expected 3,600 h second life
+        self.assertAlmostEqual(self.impact.apos_share, 3600 / (3696 + 3600), places=6)
+        self.assertAlmostEqual(self.impact.attributed_kg, 87.2, delta=0.1)
         self.assertAlmostEqual(self.impact.new_equivalent_kg, 169.0, places=1)
+
+    def test_measured_second_life_does_not_change_the_attribution(self):
+        longer = compute_device(
+            optiplex_746(points=[point("e0", "2017-12-01", 3696), point("e1", "2024-02-11", 20000)]),
+            load_factors(), load_grid(),
+        )
+        self.assertAlmostEqual(longer.attributed_kg, self.impact.attributed_kg, places=6)
+
+    def test_itu_depreciation_kept_for_the_supplier_report(self):
+        self.assertAlmostEqual(self.impact.unused_share, 1 - 3696 / 20998, places=6)
 
     def test_second_life_halves_footprint_per_hour(self):
         self.assertAlmostEqual(self.impact.g_per_hour_life1, 58, delta=1)
@@ -118,13 +135,14 @@ class EdgeCaseTests(unittest.TestCase):
         self.assertEqual(impact.life2_disk_swaps, 1)
         self.assertEqual(impact.life2_hours, 3600)
 
-    def test_device_past_typical_life_carries_only_delivery(self):
+    def test_device_past_typical_life_still_carries_an_apos_share(self):
         impact = compute_device(
             optiplex_746(points=[point("e0", "2019-06-03", 25000), point("e1", "2020-06-03", 26000)]),
             load_factors(), load_grid(),
         )
-        self.assertEqual(impact.unused_share, 0)
-        self.assertAlmostEqual(impact.attributed_kg, 11.3 / 1000 * 400 * 0.842, places=6)
+        self.assertEqual(impact.unused_share, 0)  # nothing unused vs a typical first life
+        legs = 11.3 / 1000 * 400 * 0.842
+        self.assertAlmostEqual(impact.attributed_kg, 3600 / (25000 + 3600) * 169.0 + legs, delta=0.05)
 
     def test_servers_are_not_covered(self):
         with self.assertRaises(UnsupportedDevice):
@@ -220,6 +238,81 @@ class DeviceTypeTests(unittest.TestCase):
             self.assertEqual(model_device_type(raw), expected, raw)
 
 
+class ReuseSignalTests(unittest.TestCase):
+    POINTS = [
+        ("e0", datetime(2024, 1, 10)),
+        ("e1", datetime(2024, 2, 10)),
+        ("e2", datetime(2024, 9, 10)),
+    ]
+
+    def test_states_classified_by_dte_config_first(self):
+        self.assertEqual(classify_state("ANYTHING", {"disposition": "recycled"}), "end_of_life")
+        self.assertEqual(classify_state("ANYTHING", {"disposition": "disposed"}), "end_of_life")
+        self.assertEqual(classify_state("ENTREGA", {"event_type": "MoveEvent", "disposition": "active"}), "transfer")
+        # a configured state is never guessed from its name
+        self.assertIsNone(classify_state("DISMANTLE", {"disposition": "active"}))
+
+    def test_default_names_only_when_unconfigured(self):
+        self.assertEqual(classify_state("DISMANTLE", {}), "end_of_life")
+        self.assertEqual(classify_state("donation", None), "transfer")
+        self.assertIsNone(classify_state("REPAIR", {}))
+
+    def test_lot_direction_from_default_tag_names(self):
+        self.assertEqual(lot_direction("Entrada"), "incoming")
+        self.assertEqual(lot_direction(" SALIDA "), "outgoing")
+        self.assertIsNone(lot_direction("Temporal"))
+
+    def test_priority_mark_transfer_lot_second_evidence(self):
+        both = ReuseSignals(marks={"e2"}, transfer_uuid="e1", outgoing_since=datetime(2024, 3, 1))
+        self.assertEqual(resolve_reuse(self.POINTS, both), (2, "mark"))
+        both.marks = set()
+        self.assertEqual(resolve_reuse(self.POINTS, both), (1, "transfer_state"))
+        both.transfer_uuid = None
+        self.assertEqual(resolve_reuse(self.POINTS, both), (1, "outgoing_lot"))
+        self.assertEqual(resolve_reuse(self.POINTS, ReuseSignals(marks=set())), (0, "second_evidence"))
+
+    def test_outgoing_lot_before_any_evidence_uses_the_latest(self):
+        signals = ReuseSignals(marks=set(), outgoing_since=datetime(2020, 1, 1))
+        self.assertEqual(resolve_reuse(self.POINTS, signals), (2, "outgoing_lot"))
+
+    def test_scanned_twice_then_dismantled_was_never_reused(self):
+        self.assertEqual(resolve_reuse(self.POINTS, ReuseSignals(marks=set(), end_of_life=True)), (None, None))
+
+    def test_transfer_then_dismantled_is_reuse_that_ended(self):
+        signals = ReuseSignals(marks=set(), transfer_uuid="e0", end_of_life=True)
+        self.assertEqual(resolve_reuse(self.POINTS, signals), (0, "transfer_state"))
+
+
+class EndOfLifeTests(unittest.TestCase):
+    def test_recycled_without_second_life(self):
+        impact = compute_device(
+            optiplex_746(points=[point("e0", "2019-06-03", 9000)], reuse_start=None, reuse_source=None, end_of_life=True),
+            load_factors(), load_grid(),
+        )
+        self.assertEqual(impact.status, "recycled")
+        self.assertEqual(impact.stages["end_of_life"], -4.5)
+        self.assertIsNone(impact.avoided)
+        self.assertEqual(impact.technician_hours, 0.7)
+
+    def test_reused_then_recycled_keeps_second_life_and_adds_credit(self):
+        impact = compute_device(optiplex_746(end_of_life=True), load_factors(), load_grid())
+        self.assertEqual(impact.status, "reused")
+        self.assertTrue(impact.second_life_ended)
+        self.assertEqual(impact.stages["end_of_life"], -4.5)
+        self.assertIsNotNone(impact.avoided)
+
+    def test_lot_counts_recycled_and_lost_manufacturing(self):
+        recycled = compute_device(
+            optiplex_746(points=[point("e0", "2019-06-03", 9000)], reuse_start=None, reuse_source=None, end_of_life=True),
+            load_factors(), load_grid(),
+        )
+        ended = compute_device(optiplex_746(end_of_life=True), load_factors(), load_grid())
+        lot = aggregate_lot([recycled, ended])
+        self.assertEqual((lot.recycled, lot.reused, lot.pending, lot.second_lives_ended), (1, 1, 0, 1))
+        self.assertAlmostEqual(lot.unused_kg_lost, recycled.unused_kg)
+        self.assertAlmostEqual(lot.technician_hours, 0.7 + 2.0)
+
+
 class BiosYearTests(unittest.TestCase):
     def test_parses_common_date_formats(self):
         for raw in ("12/24/2012", "2012-12-24", "A04 12/24/2012"):
@@ -258,7 +351,7 @@ class AdapterTests(unittest.TestCase):
         device.last_evidence.get_components.return_value = [{"type": "Motherboard", "biosDate": "05/14/2013"}]
         return device
 
-    @patch("environmental_impact.algorithms.ereuse2026.ereuse2026.read_reuse_marks", return_value=set())
+    @patch("environmental_impact.algorithms.ereuse2026.ereuse2026.read_reuse_signals", return_value=ReuseSignals(marks=set()))
     @patch("environmental_impact.algorithms.ereuse2026.ereuse2026.common.get_device_country_code", return_value="ES")
     @patch("environmental_impact.algorithms.ereuse2026.ereuse2026.get_evidences_data_from_device")
     def test_device_impact_from_evidences(self, evidences, _country, _marks):
@@ -278,7 +371,7 @@ class AdapterTests(unittest.TestCase):
         with self.assertRaises(UnsupportedDevice):
             EReuse2026EnvironmentalImpactAlgorithm().compute(self._device("Server"))
 
-    @patch("environmental_impact.algorithms.ereuse2026.ereuse2026.read_reuse_marks", return_value=set())
+    @patch("environmental_impact.algorithms.ereuse2026.ereuse2026.read_reuse_signals", return_value=ReuseSignals(marks=set()))
     @patch("environmental_impact.algorithms.ereuse2026.ereuse2026.common.get_device_country_code", return_value="ES")
     @patch("environmental_impact.algorithms.ereuse2026.ereuse2026.get_evidences_data_from_device")
     def test_lot_skips_unsupported_devices(self, evidences, _country, _marks):

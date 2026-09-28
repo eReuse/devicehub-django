@@ -13,15 +13,18 @@ class Command(BaseCommand):
         parser.add_argument('institution_name', type=str, help='The name of the institution')
 
     def handle(self, *args, **kwargs):
+        # DONATION and DISMANTLE carry a DTE config so the environmental impact
+        # recognises them whatever their (translated) name: a transfer starts a
+        # device's second life, a recycled disposition ends it.
         default_states = [
-            _("INBOX"),
-            _("VISUAL INSPECTION"),
-            _("REPAIR"),
-            _("INSTALL"),
-            _("TEST"),
-            _("PACKAGING"),         
-            _("DONATION"),
-            _("DISMANTLE")
+            (_("INBOX"), {}),
+            (_("VISUAL INSPECTION"), {}),
+            (_("REPAIR"), {}),
+            (_("INSTALL"), {}),
+            (_("TEST"), {}),
+            (_("PACKAGING"), {}),
+            (_("DONATION"), {"event_type": "MoveEvent", "disposition": "active"}),
+            (_("DISMANTLE"), {"disposition": "recycled"}),
         ]
 
         institution_name = kwargs['institution_name']
@@ -32,10 +35,11 @@ class Command(BaseCommand):
             logger.error(txt, institution.name)
             return
 
-        for state in default_states:
+        for state, dte_config in default_states:
             state_def, created = StateDefinition.objects.get_or_create(
                 institution=institution,
-                state=state
+                state=state,
+                defaults={"dte_config": dte_config},
             )
             if created:
                 self.stdout.write(self.style.SUCCESS(f'Successfully created state: {state}'))

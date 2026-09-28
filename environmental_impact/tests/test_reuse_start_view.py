@@ -91,9 +91,75 @@ class PresenterTests(SimpleTestCase):
             EvidencePoint(E1, datetime(2025, 12, 6), 27328),
         ])
         self.assertLessEqual(view["per_hour_drop"], 0)
+        self.assertEqual(view["per_hour_rise_cause"], "transport")
+
+    def test_rise_blamed_on_electricity_when_it_outweighs_transport(self):
+        inputs = DeviceInputs(
+            device_type="desktop", country="ES", reuse_start=0, reuse_source="second_evidence",
+            points=[EvidencePoint(E0, datetime(2020, 1, 1), 30000), EvidencePoint(E1, datetime(2024, 1, 1), 40000)],
+        )
+        impact = compute_device(inputs, load_factors(), load_grid())
+        impact.stages["use2"] = 500.0  # far more than the ~3.8 kg van legs
+        impact.g_per_hour_total = impact.g_per_hour_life1 * 1.1
+        view = device_impact_view(impact, inputs, set())
+        self.assertEqual(view["per_hour_rise_cause"], "electricity")
 
     def test_pending_device_has_single_per_hour_row(self):
         view = self._view([EvidencePoint(E0, datetime(2019, 6, 3), 720)], reuse_start=None)
         self.assertFalse(view["reused"])
         self.assertEqual(len(view["per_hour"]), 1)
         self.assertIsNone(view["per_hour_drop"])
+
+
+class ReadReuseSignalsTests(TestCase):
+    """States and lots stored in the database become reuse signals."""
+
+    def setUp(self):
+        from action.models import StateDefinition
+        from lot.models import LotTag
+
+        self.institution = Institution.objects.create(name="Signals", country="ES")
+        self.device = MagicMock()
+        self.device.id = "ereuse24:signals"
+        self.device.uuids = [E0, E1]
+        StateDefinition.objects.create(institution=self.institution, state="DONATION")
+        StateDefinition.objects.create(institution=self.institution, state="DISMANTLE")
+        StateDefinition.objects.create(
+            institution=self.institution, state="ENTREGADO",
+            dte_config={"event_type": "MoveEvent", "disposition": "active"},
+        )
+        self.salida = LotTag.objects.create(name="Salida", owner=self.institution)
+        self.entrada = LotTag.objects.create(name="Entrada", owner=self.institution)
+
+    def _state(self, name, uuid):
+        from action.models import State
+        State.objects.create(institution=self.institution, state=name, snapshot_uuid=uuid)
+
+    def _signals(self):
+        from environmental_impact.reuse import read_reuse_signals
+        return read_reuse_signals(self.device, self.institution)
+
+    def test_default_donation_state_is_a_transfer(self):
+        self._state("DONATION", E1)
+        self.assertEqual(self._signals().transfer_uuid, E1)
+
+    def test_configured_move_event_is_a_transfer(self):
+        self._state("ENTREGADO", E0)
+        self.assertEqual(self._signals().transfer_uuid, E0)
+
+    def test_latest_state_dismantle_ends_life(self):
+        self._state("DONATION", E0)
+        self._state("DISMANTLE", E1)
+        signals = self._signals()
+        self.assertTrue(signals.end_of_life)
+        self.assertEqual(signals.transfer_uuid, E0)
+
+    def test_only_outgoing_lots_count(self):
+        from lot.models import DeviceLot, Lot
+
+        incoming = Lot.objects.create(name="in", owner=self.institution, type=self.entrada)
+        DeviceLot.objects.create(lot=incoming, device_id=self.device.id)
+        self.assertIsNone(self._signals().outgoing_since)
+        outgoing = Lot.objects.create(name="out", owner=self.institution, type=self.salida)
+        DeviceLot.objects.create(lot=outgoing, device_id=self.device.id)
+        self.assertEqual(self._signals().outgoing_since, outgoing.created)

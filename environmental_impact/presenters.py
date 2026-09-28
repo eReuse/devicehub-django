@@ -31,6 +31,14 @@ PROVENANCE_LABELS = {
 }
 
 
+REUSE_SOURCE_LABELS = {
+    "mark": _("Marked by hand"),
+    "transfer_state": _("Transfer state"),
+    "outgoing_lot": _("Outgoing lot"),
+    "second_evidence": _("Second evidence"),
+}
+
+
 def _pct(value: float, largest: float) -> float:
     if not largest:
         return 0.0
@@ -50,8 +58,15 @@ def device_impact_view(impact: DeviceImpact, inputs: DeviceInputs, marks: set[st
     for row in per_hour:
         row["width"] = _pct(row["value"], per_hour_max)
     per_hour_drop = None
+    per_hour_rise_cause = None
     if len(per_hour) == 2 and per_hour[0]["value"]:
         per_hour_drop = round(100 * (1 - per_hour[1]["value"] / per_hour[0]["value"]))
+        if per_hour_drop <= 0:
+            # The second life adds the refurbisher's van legs plus its own electricity.
+            # Name whichever of the two outweighs the other, instead of assuming one.
+            new_transport = impact.new_equivalent_kg - impact.stages["manufacture"]
+            legs = max(0.0, impact.stages["transport"] - new_transport)
+            per_hour_rise_cause = "transport" if legs >= impact.stages["use2"] else "electricity"
 
     divisor = impact.lifetime_years or 1.0
     stages = [
@@ -75,7 +90,12 @@ def device_impact_view(impact: DeviceImpact, inputs: DeviceInputs, marks: set[st
     ]
 
     provenance = [
-        {"label": PROVENANCE_LABELS.get(p.key, p.key), "value": p.value, "measured": p.measured, "source": p.source}
+        {
+            "label": PROVENANCE_LABELS.get(p.key, p.key),
+            "value": REUSE_SOURCE_LABELS.get(p.value, p.value) if p.key == "reuse_start" else p.value,
+            "measured": p.measured,
+            "source": p.source,
+        }
         for p in impact.provenance
     ]
 
@@ -93,10 +113,13 @@ def device_impact_view(impact: DeviceImpact, inputs: DeviceInputs, marks: set[st
         },
         "per_hour": per_hour,
         "per_hour_drop": per_hour_drop,
+        "per_hour_rise_cause": per_hour_rise_cause,
         "stages": stages,
         "stages_per_year": bool(impact.lifetime_years),
         "stages_total": impact.total_kg,
         "unused_percent": round(100 * impact.unused_share) if impact.unused_share is not None else None,
+        "apos_percent": round(100 * impact.apos_share) if impact.apos_share is not None else None,
+        "expected_life2_hours": factors["default_second_life"][impact.device_type]["hours"],
         "timeline": timeline,
         "has_mark": bool(marks),
         "bios_year": inputs.bios_year,
