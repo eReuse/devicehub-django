@@ -39,14 +39,25 @@ class TestComponentExtraction(TestCase):
         poh = get_poh_from_device(device)
         self.assertEqual(poh, 0)
 
-    def test_get_power_on_hours_handles_legacy_devices(self):
-        """Test that legacy devices (no inxi) return 0."""
-        # Create mock device with legacy workbench (no inxi)
+    def test_get_power_on_hours_from_legacy_devices(self):
+        """Legacy devices (no inxi) read the first disk that reports hours."""
         device = Mock()
         device.last_evidence = Mock()
         device.last_evidence.inxi = None  # Legacy workbench
-        poh = get_poh_from_device(device)
-        self.assertEqual(poh, 0)
+        components = [
+            {"type": "SolidStateDrive", "model": "256GB", "hours": 0},  # disk without the counter
+            {"type": "SolidStateDrive", "model": "500GB", "hours": 17703},
+        ]
+        device.last_evidence.get_components = Mock(return_value=components)
+        self.assertEqual(get_poh_from_device(device), 17703)
+
+    def test_get_power_on_hours_legacy_without_hours_is_zero(self):
+        """Legacy devices whose disks report no counter return 0."""
+        device = Mock()
+        device.last_evidence = Mock()
+        device.last_evidence.inxi = None
+        device.last_evidence.get_components = Mock(return_value=[{"type": "HardDrive", "hours": 0}])
+        self.assertEqual(get_poh_from_device(device), 0)
 
     def test_extract_disk_metadata(self):
         """Test disk metadata extraction from storage component."""

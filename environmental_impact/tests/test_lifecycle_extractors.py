@@ -108,3 +108,21 @@ class LifecycleExtractorsTests(TestCase):
         evidences_data = get_evidences_data_from_device(device)
 
         self.assertEqual([e.poh for e in evidences_data], [2700])
+
+    def test_get_evidences_data_reads_legacy_workbench_disk_hours(self):
+        legacy = SimpleNamespace(
+            uuid="legacy-evidence",
+            doc={"software": "workbench-script", "timestamp": "2025-01-23 10:00:00"},
+            inxi=None,
+            get_time_created=lambda: "2025-01-23T10:00:00Z",
+            get_components=lambda: [
+                {"type": "SolidStateDrive", "serialNumber": "liteon", "hours": 0},
+                {"type": "SolidStateDrive", "serialNumber": "samsung", "model": "500GB", "hours": 17703},
+            ],
+        )
+        device = SimpleNamespace(evidences=[legacy])
+
+        evidences_data = get_evidences_data_from_device(device)
+
+        self.assertEqual([e.poh for e in evidences_data], [17703])
+        self.assertEqual(evidences_data[0].disk_metadata.serial, "samsung")

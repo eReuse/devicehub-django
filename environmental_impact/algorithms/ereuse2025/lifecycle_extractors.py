@@ -6,27 +6,23 @@ from datetime import datetime
 from typing import List, Optional, Tuple, Dict
 from device.models import Device
 from .. import common
-from ..common import convert_str_time_to_hours
 from .lifecycle_models import EvidenceData, DiskMetadata
 
 
 def _find_storage_with_poh(components: List[Dict]) -> Tuple[int, Optional[Dict]]:
     """Try to find storage component that has usage time."""
-    if components:
-        for comp in components:
-            if comp.get("type") == "Storage":
-                str_time = comp.get("time of used", "")
-                if str_time:
-                    return convert_str_time_to_hours(str_time), comp
+    for comp in components or []:
+        hours = common.storage_hours(comp)
+        if hours:
+            return hours, comp
     return 0, None
 
 
 def _find_first_storage(components: List[Dict]) -> Optional[Dict]:
     """Find the first storage component as fallback."""
-    if components:
-        for comp in components:
-            if comp.get("type") == "Storage":
-                return comp
+    for comp in components or []:
+        if common.is_storage(comp):
+            return comp
     return None
 
 
@@ -67,19 +63,17 @@ def get_evidences_data_from_device(device: Device) -> List[EvidenceData]:
         components = evidence.get_components()
         poh = common.get_mobile_poh_from_evidence(evidence)
         disk_metadata = DiskMetadata("", "", "")
-        # Only process if not legacy (inxi present)
-        if getattr(evidence, "inxi", None) or poh:
-            storage_poh, candidate_comp = _find_storage_with_poh(components)
-            if storage_poh:
-                poh = storage_poh
-            if not candidate_comp:
-                candidate_comp = _find_first_storage(components)
-            if candidate_comp:
-                disk_metadata = DiskMetadata(
-                    serial=candidate_comp.get("serialNumber", ""),
-                    model=candidate_comp.get("model", ""),
-                    manufacturer=candidate_comp.get("manufacturer", ""),
-                )
+        storage_poh, candidate_comp = _find_storage_with_poh(components)
+        if storage_poh:
+            poh = storage_poh
+        if not candidate_comp:
+            candidate_comp = _find_first_storage(components)
+        if candidate_comp:
+            disk_metadata = DiskMetadata(
+                serial=candidate_comp.get("serialNumber", ""),
+                model=candidate_comp.get("model", ""),
+                manufacturer=candidate_comp.get("manufacturer", ""),
+            )
         sort_rank, sort_value = _get_evidence_sort_key(evidence)
         evidences_data.append(
             EvidenceData(
