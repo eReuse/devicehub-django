@@ -1,0 +1,46 @@
+{% comment %}Shared look of the impact views (device tab and lot reports): DeviceHub tokens, type scale,
+badges, notes, tables and references. Stage colours: ITU-T L.1410 Fig. 14a hues (A red, B yellow,
+C blue, D dark red, credit below zero green) softened to pastels; the outline keeps each bar visible.{% endcomment %}
+<style>
+  .dh-impact{--dh-primary:#7a9f4f;--dh-secondary:#9cc666;--dh-dark:#545f71;--dh-light:#f8f9fa;
+    --dh-teal:#56beac;--dh-teal-soft:#a3e3d7;--dh-green-soft:#c7e3a3;--dh-yellow:#efe3b4;--dh-orange:#f5b587;--dh-grey:#f3f3f3;--dh-line:#e3e6e9;
+    --dh-muted:#5d6878;
+    --st-a:#f2b8b5;--st-a-line:#d98580;--st-b:#f6e19c;--st-b-line:#d6b95a;
+    --st-c:#aecbee;--st-c2:#d3e3f7;--st-c-line:#7199cf;--st-d:#dcb4b4;--st-d-line:#b07878;
+    --st-credit:#c7e3a3;--st-credit-line:#8fb85c;
+    line-height:1.5}
+  /* readability: a slightly darker grey for secondary text, and the same small size everywhere */
+  .dh-impact .text-muted{color:var(--dh-muted)!important}
+  .dh-impact .small,.dh-impact small{font-size:.86rem}
+  .dh-impact .card-body{padding:1.1rem 1.25rem}
+  .dh-impact h6.card-title,.dh-impact h6.dh-title{color:var(--dh-primary);font-size:1.02rem;font-weight:700;border-bottom:2px solid var(--dh-secondary);padding-bottom:.4rem;margin-bottom:.75rem}
+  .dh-impact .dh-eyebrow,.dh-impact .eil-eyebrow,.dh-impact .ei2-sub{font-size:.72rem;letter-spacing:.05em;text-transform:uppercase;font-weight:700;color:var(--dh-primary)}
+  .dh-impact .eil-note,.dh-impact .dh-note{font-size:.86rem;color:var(--dh-muted);line-height:1.45}
+  .dh-impact .dh-badge{display:inline-block;font-size:.75rem;font-weight:600;padding:.2rem .55rem;border-radius:999px;color:var(--dh-dark)}
+  .dh-impact .dh-reused{background:var(--dh-green-soft)} .dh-impact .dh-recycled{background:var(--dh-grey);border:1px solid var(--dh-line)}
+  .dh-impact .dh-workshop{background:var(--dh-yellow)} .dh-impact .dh-ended{background:var(--dh-orange)}
+  .dh-impact .dh-notice{background:var(--dh-yellow);color:var(--dh-dark);border-radius:.4rem;padding:.6rem .8rem;font-size:.875rem}
+  .dh-impact .dh-soft{background:var(--dh-light);border-radius:.4rem}
+  .dh-impact .nav-pills .nav-link{color:var(--dh-dark);font-weight:600}
+  .dh-impact .nav-pills .nav-link.active{background:var(--dh-teal-soft);color:#000}
+  .dh-impact a:not(.nav-link):not(.btn){color:var(--dh-primary)}
+  .dh-impact sup a{text-decoration:none;font-weight:600}
+  /* tables: aligned figures, quiet headers */
+  .dh-impact table{font-variant-numeric:tabular-nums}
+  .dh-impact table thead th{font-weight:600;color:var(--dh-dark);border-bottom:1.5px solid var(--dh-dark);white-space:nowrap}
+  .dh-impact table td{border-color:var(--dh-line)}
+  .dh-impact .eil-unit{display:block;font-size:.72rem;font-weight:500;color:var(--dh-muted)}
+  /* references: the same numbered list in every view */
+  .dh-impact .dh-refs,.dh-impact .ei2-refs,.dh-impact .eil-sources{font-size:.84rem;padding-left:1.5rem;margin-bottom:.5rem}
+  .dh-impact .dh-refs li,.dh-impact .ei2-refs li,.dh-impact .eil-sources li{margin-bottom:.4rem;overflow-wrap:anywhere}
+  /* big figures */
+  .dh-impact .eil-prefix{font-size:1rem;font-weight:600;color:var(--dh-muted);margin-right:.35rem;vertical-align:.35em}
+  /* life-cycle stages */
+  .dh-impact .fill.st-manufacture{background:var(--st-a);box-shadow:inset 0 0 0 1px var(--st-a-line)}
+  .dh-impact .fill.st-transport,.dh-impact .fill.st-refurbish{background:var(--st-b);box-shadow:inset 0 0 0 1px var(--st-b-line)}
+  .dh-impact .fill.st-use1{background:var(--st-c);box-shadow:inset 0 0 0 1px var(--st-c-line)}
+  .dh-impact .fill.st-use2{background:var(--st-c2);box-shadow:inset 0 0 0 1px var(--st-c-line)}
+  .dh-impact .fill.st-end_of_life{background:var(--st-d);box-shadow:inset 0 0 0 1px var(--st-d-line)}
+  .dh-impact .fill.st-credit{background:var(--st-credit);box-shadow:inset 0 0 0 1px var(--st-credit-line)}
+  .dh-impact .st-letter{display:block;font-size:.7rem;color:var(--dh-muted)}
+</style>

@@ -5,63 +5,16 @@
 <meta charset="utf-8">
 <title>{{ title }}</title>
 <style>
-  @page {
-    size: A4;
-    margin: 18mm 16mm 20mm 16mm;
-    @bottom-left { content: "{{ footer_left|safe }}"; font-size: 7.5pt; color: #7b8391; }
-    @bottom-right { content: "{% trans 'Page' %} " counter(page) " / " counter(pages); font-size: 7.5pt; color: #7b8391; }
-  }
-  :root { --primary:#7a9f4f; --secondary:#9cc666; --dark:#545f71; --light:#f8f9fa; --green-soft:#c7e3a3;
-          --yellow:#efe3b4; --orange:#f5b587; --grey:#f3f3f3; --line:#dfe3e6; }
-  * { box-sizing: border-box; }
-  body { font-family: "DejaVu Sans", "Liberation Sans", Arial, sans-serif; font-size: 9.5pt; color: #1f2328; line-height: 1.4; }
-  h1 { font-size: 17pt; margin: 0 0 2mm; color: var(--dark); }
-  h2 { font-size: 11pt; color: var(--primary); border-bottom: 1.5pt solid var(--secondary); padding-bottom: 1.5mm; margin: 7mm 0 3mm; }
-  p { margin: 0 0 2mm; }
-  .eyebrow { font-size: 7.5pt; letter-spacing: .06em; text-transform: uppercase; font-weight: bold; color: var(--primary); }
-  .muted { color: #6b7280; }
-  .small { font-size: 8pt; }
-  .brand { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 3pt solid #56beac; padding-bottom: 2mm; margin-bottom: 5mm; }
-  .brand .name { font-weight: bold; font-size: 11pt; color: #56beac; letter-spacing: .04em; }
-  .meta { width: 100%; border-collapse: collapse; margin: 3mm 0 4mm; font-size: 8.5pt; }
-  .meta td { padding: 1.2mm 2mm; border-top: .5pt solid var(--line); border-bottom: .5pt solid var(--line); vertical-align: top; }
-  .meta .k { color: #6b7280; width: 22%; }
+{% include "reports/_pdf_base_style.html" %}
   .hero { display: flex; gap: 6mm; align-items: flex-start; }
   .hero .main { flex: 1.3; }
   .hero .side { flex: 1; }
-  .big { font-size: 28pt; font-weight: bold; color: var(--dark); line-height: 1.05; }
-  .big small { font-size: 10pt; color: #6b7280; font-weight: normal; }
-  .note { background: var(--light); border-left: 2.5pt solid var(--secondary); padding: 2mm 3mm; font-size: 8.5pt; margin-top: 2mm; }
-  .notice { background: var(--yellow); padding: 2mm 3mm; font-size: 8.5pt; margin: 3mm 0; }
-  table.facts { width: 100%; border-collapse: collapse; font-size: 8.5pt; }
-  table.facts td { padding: 1.3mm 0; border-bottom: .5pt solid var(--line); }
-  table.facts td.v { text-align: right; font-weight: bold; }
-  .bars { width: 100%; border-collapse: collapse; font-size: 8.5pt; }
-  .bars td { padding: 1.2mm 1.5mm 1.2mm 0; vertical-align: middle; }
-  .bars .label { width: 34%; }
-  .bars .val { width: 16%; text-align: right; font-weight: bold; }
-  .bar { height: 4mm; background: var(--grey); border: .5pt solid var(--line); }
-  .bar.hl { background: var(--secondary); border-color: var(--secondary); }
-  .bar.neg { background: var(--orange); border-color: var(--orange); }
-  .flow { width: 100%; border-collapse: separate; border-spacing: 2mm 0; margin-left: -2mm; }
-  .flow td { background: var(--light); border-left: 2.5pt solid var(--secondary); padding: 2mm 3mm; width: 33%; vertical-align: top; font-size: 8pt; }
-  .flow b { display: block; font-size: 13pt; color: var(--dark); }
   .wording { width: 100%; border-collapse: separate; border-spacing: 2mm 0; margin-left: -2mm; }
   .wording td { width: 50%; vertical-align: top; padding: 2.5mm 3mm; font-size: 8.5pt; }
   .wording .ok { background: var(--green-soft); }
   .wording .no { background: var(--grey); }
   .wording ul { margin: 1.5mm 0 0; padding-left: 4mm; }
   .wording li { margin-bottom: 1.5mm; }
-  table.devices { width: 100%; border-collapse: collapse; font-size: 7.5pt; }
-  table.devices th { text-align: left; background: var(--light); border-bottom: 1pt solid var(--dark); padding: 1.2mm 1.5mm; }
-  table.devices td { padding: 1mm 1.5mm; border-bottom: .4pt solid var(--line); }
-  table.devices .n { text-align: right; white-space: nowrap; }
-  table.devices tr { page-break-inside: avoid; }
-  .badge { padding: .3mm 1.5mm; border-radius: 2mm; font-size: 7pt; font-weight: bold; color: var(--dark); }
-  .b-reused { background: var(--green-soft); } .b-recycled { background: var(--grey); } .b-workshop { background: var(--yellow); } .b-ended { background: var(--orange); }
-  .method { font-size: 7.5pt; color: #6b7280; font-style: italic; margin-top: 5mm; border-top: .5pt solid var(--line); padding-top: 2mm; }
-  .annex { page-break-before: always; }
-  .mono { font-family: "DejaVu Sans Mono", monospace; }
 </style>
 </head>
 <body>
@@ -89,8 +42,9 @@
   <div class="hero">
     <div class="main">
       <div class="eyebrow">{% trans 'Environmental · emissions avoided by reusing your devices' %}</div>
-      <div class="big">{{ lv.avoided_text }} <small>CO₂e</small></div>
-      <p class="small muted">{% blocktrans count n=L.reused with lo=lv.avoided_low_text hi=lv.avoided_high_text %}Compared with giving the same person a new device. Range with manufacturer data: {{ lo }} – {{ hi }}; the headline uses the lower, public ADEME factor.{% plural %}Compared with giving the same {{ n }} people new devices. Range with manufacturer data: {{ lo }} – {{ hi }}; the headline uses the lower, public ADEME factor.{% endblocktrans %}</p>
+      <div class="big">{% if lv.avoided_below_range %}<small>{% trans 'at least' %}</small> {% endif %}{{ lv.avoided_text }} <small>CO₂e</small></div>
+      {% if lv.avoided_car_km %}<p>{% blocktrans with km=lv.avoided_car_km|floatformat:"0g" %}Roughly what an average car emits over <b>{{ km }} km</b>.{% endblocktrans %}{% if lv.view == 'refurbisher' %} <sup>1</sup>{% endif %}</p>{% endif %}
+      <p class="small muted">{% blocktrans count n=L.reused with lo=lv.avoided_low_text hi=lv.avoided_high_text %}Compared with giving the same person a new device, with public ADEME factors; {{ lo }}–{{ hi }} with manufacturer data.{% plural %}Compared with giving the same {{ n }} people new devices, with public ADEME factors; {{ lo }}–{{ hi }} with manufacturer data.{% endblocktrans %}</p>
       <div class="note">{% blocktrans %}This is a <b>contribution shared along the reuse chain</b> (you, the refurbisher and the people using the devices). It is reported apart from your own greenhouse-gas inventory and cannot be subtracted from it.{% endblocktrans %}</div>
     </div>
     <div class="side">
@@ -99,28 +53,22 @@
         <tr><td>{% trans 'Reused by people or organisations' %}</td><td class="v">{{ L.reused }}</td></tr>
         <tr><td>{% trans 'Sent to recycling' %}</td><td class="v">{{ L.recycled }}</td></tr>
         <tr><td>{% trans 'Still in the workshop' %}</td><td class="v">{{ L.pending }}</td></tr>
-        <tr><td>{% trans 'Second-life hours measured / projected' %}</td><td class="v">{{ L.life2_hours_measured|floatformat:"0g" }} / {{ L.life2_hours_projected|floatformat:"0g" }}</td></tr>
+        <tr><td>{% trans 'Hours of use measured so far' %}</td><td class="v">{{ lv.hours_measured|floatformat:"0g" }} h</td></tr>
       </table>
     </div>
   </div>
 
-  <h2>{% trans 'The manufacturing footprint your devices still had' %}</h2>
-  <p class="small muted">{% trans "A device's manufacturing footprint is spread over its working life. Compared with a typical first life (ITU-T L.1410 App. XV), part of it was still unused when your devices were handed over; recycled devices lose that part. Only devices with a usable power-on reading. (The recipient report uses a different split, by hours of use, to say what each second user carries.)" %}</p>
-  <table class="flow"><tr>
-    <td><b>{{ lv.unused_text }}</b>{% blocktrans with n=L.devices_with_life1_reading %}still unused vs a typical first life when handed over ({{ n }} devices with a reading){% endblocktrans %}</td>
-    <td><b>{{ lv.unused_carried_text }}</b>{% trans 'of that, carried into a second life by the reused devices' %}</td>
-    <td><b>{{ lv.unused_lost_text }}</b>{% trans 'of that, lost with the recycled devices' %}</td>
-  </tr></table>
   {% if lv.median_life1 %}
-    <div class="note">{% blocktrans with h=lv.median_life1|floatformat:"0g" past=L.devices_past_typical_life n=L.devices_with_life1_reading %}Median use before handover: <b>{{ h }} powered-on hours</b>. {{ past }} of {{ n }} devices had already passed a typical first life. <b>Handing devices over earlier</b> passes on more of their manufacturing footprint and gives the next user more useful years.{% endblocktrans %}</div>
+    <h2>{% trans 'When your devices were handed over' %}</h2>
+    <div class="note">{% blocktrans with h=lv.median_life1|floatformat:"0g" past=L.devices_past_typical_life n=L.devices_with_life1_reading %}Your devices had been used a median of <b>{{ h }} hours</b> when you handed them over, and {{ past }} of {{ n }} had already passed the usual first life of a computer. <b>Handing devices over earlier</b> gives the next user more useful years.{% endblocktrans %}</div>
   {% endif %}
 
   <h2>{% trans 'Social value' %}</h2>
   <table class="facts">
     <tr><td>{% trans 'People with a computer through reuse' %}</td><td class="v">{{ L.reused }}</td></tr>
-    <tr><td>{% trans 'Hours of digital access (measured / projected)' %}</td><td class="v">{{ lv.hours_total|floatformat:"0g" }} h ({{ L.life2_hours_measured|floatformat:"0g" }} / {{ L.life2_hours_projected|floatformat:"0g" }})</td></tr>
+    <tr><td>{% trans 'Hours of use measured so far' %}{% if lv.awaiting_scan %} <span class="muted">· {% blocktrans count n=lv.awaiting_scan %}{{ n }} device not scanned again yet{% plural %}{{ n }} devices not scanned again yet{% endblocktrans %}</span>{% endif %}</td><td class="v">{{ lv.hours_measured|floatformat:"0g" }} h</td></tr>
     {% if lv.cost_per_person_reuse_text %}<tr><td>{% trans 'Carbon cost of giving one person a computer' %}</td><td class="v">{% blocktrans with r=lv.cost_per_person_reuse_text n=lv.cost_per_person_new_text %}{{ r }} with reuse · {{ n }} with a new one{% endblocktrans %}</td></tr>{% endif %}
-    <tr><td>{% trans 'Local technician work' %}</td><td class="v">{{ L.technician_hours|floatformat:"0g" }} h</td></tr>
+    <tr><td>{% trans 'Local technician work' %} <span class="muted">· {% trans 'estimate' %}</span></td><td class="v">≈ {{ L.technician_hours|floatformat:"0g" }} h</td></tr>
     {% if lv.inclusion %}<tr><td>{% trans 'Digital inclusion hours (internal only)' %}</td><td class="v">{% if lv.inclusion.people %}{{ lv.inclusion.hours|floatformat:"0g" }} h · {{ lv.inclusion.people }} {% trans 'devices' %}{% else %}—{% endif %}</td></tr>{% endif %}
   </table>
   <p class="small muted">{% trans "Hours of use show that people had access to a computer, not how it changed their lives (Roura Salietti 2025, Annex D). The carbon cost per person is the extra CO₂e of serving the second users, divided by the people served (Roura et al. 2026)." %}</p>
@@ -140,12 +88,11 @@
       {% if lv.attributed_saving_percent is not None %}
         <p class="small muted">{% blocktrans with new=lv.new_equivalent_text pct=lv.attributed_saving_percent %}New equivalents would carry about <b>{{ new }}</b> ({{ pct }}% less with refurbished).{% endblocktrans %}</p>
       {% endif %}
-      <p class="small muted">{% trans "Each device's second life takes a share of its manufacturing and transport in proportion to hours of use (APOS allocation, Roura et al. 2026), fixed at handover, plus the refurbisher's transport. Devices without a usable first-life reading are counted as new." %}</p>
+      <p class="small muted">{% trans "Each device's second life takes a share of its manufacturing and transport in proportion to hours of use (APOS, the allocation stated in Roura et al. 2026), fixed at handover, plus the refurbisher's transport. The per-owner figures are DeviceHub's derivation, not published results. Devices without a usable first-life reading are counted as new." %}</p>
     </div>
     <div class="side">
       <table class="facts">
         <tr><td>{% trans 'Devices delivered' %}</td><td class="v">{{ L.reused }}</td></tr>
-        <tr><td>{% trans 'Electricity per year (all devices)' %}</td><td class="v">{{ L.kwh_per_year|floatformat:"0g" }} kWh · {{ lv.kg_per_year_text }}</td></tr>
         <tr><td>{% trans 'No usable reading, counted as new' %}</td><td class="v">{{ L.counted_as_new }}</td></tr>
       </table>
     </div>
@@ -161,9 +108,9 @@
   <h2>{% trans 'Social value' %}</h2>
   <table class="facts">
     <tr><td>{% trans 'People with a computer through reuse' %}</td><td class="v">{{ L.reused }}</td></tr>
-    <tr><td>{% trans 'Hours of digital access (measured / projected)' %}</td><td class="v">{{ lv.hours_total|floatformat:"0g" }} h ({{ L.life2_hours_measured|floatformat:"0g" }} / {{ L.life2_hours_projected|floatformat:"0g" }})</td></tr>
+    <tr><td>{% trans 'Hours of use measured so far' %}{% if lv.awaiting_scan %} <span class="muted">· {% blocktrans count n=lv.awaiting_scan %}{{ n }} device not scanned again yet{% plural %}{{ n }} devices not scanned again yet{% endblocktrans %}</span>{% endif %}</td><td class="v">{{ lv.hours_measured|floatformat:"0g" }} h</td></tr>
     {% if lv.cost_per_person_reuse_text %}<tr><td>{% trans 'Carbon cost of giving one person a computer' %}</td><td class="v">{% blocktrans with r=lv.cost_per_person_reuse_text n=lv.cost_per_person_new_text %}{{ r }} with reuse · {{ n }} with a new one{% endblocktrans %}</td></tr>{% endif %}
-    <tr><td>{% trans 'Local technician work' %}</td><td class="v">{{ L.technician_hours|floatformat:"0g" }} h</td></tr>
+    <tr><td>{% trans 'Local technician work' %} <span class="muted">· {% trans 'estimate' %}</span></td><td class="v">≈ {{ L.technician_hours|floatformat:"0g" }} h</td></tr>
     {% if lv.inclusion %}<tr><td>{% trans 'Digital inclusion hours (internal only)' %}</td><td class="v">{% if lv.inclusion.people %}{{ lv.inclusion.hours|floatformat:"0g" }} h · {{ lv.inclusion.people }} {% trans 'devices' %}{% else %}—{% endif %}</td></tr>{% endif %}
   </table>
   <p class="small muted">{% trans "Hours of use show that people had access to a computer, not how it changed their lives (Roura Salietti 2025, Annex D). The carbon cost per person is the extra CO₂e of serving the second users, divided by the people served (Roura et al. 2026)." %}</p>
@@ -179,50 +126,76 @@
   <div class="hero">
     <div class="main">
       <div class="eyebrow">{% trans 'CO₂e avoided' %}</div>
-      <div class="big">{{ lv.avoided_text }} <small>CO₂e</small></div>
-      <p class="small muted">{% blocktrans count n=L.reused with lo=lv.avoided_low_text hi=lv.avoided_high_text %}compared with giving the same person a new device. With manufacturer data: {{ lo }} – {{ hi }}.{% plural %}compared with giving the same {{ n }} people new devices. With manufacturer data: {{ lo }} – {{ hi }}.{% endblocktrans %}</p>
+      <div class="big">{% if lv.avoided_below_range %}<small>{% trans 'at least' %}</small> {% endif %}{{ lv.avoided_text }} <small>CO₂e</small></div>
+      {% if lv.avoided_car_km %}<p>{% blocktrans with km=lv.avoided_car_km|floatformat:"0g" %}Roughly what an average car emits over <b>{{ km }} km</b>.{% endblocktrans %}{% if lv.view == 'refurbisher' %} <sup>1</sup>{% endif %}</p>{% endif %}
+      <p class="small muted">{% blocktrans with lo=lv.avoided_low_text hi=lv.avoided_high_text %}vs new devices · {{ lo }}–{{ hi }} with manufacturer data{% endblocktrans %} <sup>2</sup></p>
     </div>
     <div class="side">
       <table class="facts">
         <tr><td>{% trans 'Reused' %}</td><td class="v">{{ L.reused }} / {{ L.devices }}</td></tr>
         <tr><td>{% trans 'Recycled · in the workshop' %}</td><td class="v">{{ L.recycled }} · {{ L.pending }}</td></tr>
-        <tr><td>{% trans 'Hours of use in second lives' %}</td><td class="v">{{ lv.hours_total|floatformat:"0g" }} h</td></tr>
-        <tr><td>{% trans 'Second-life hours measured' %}</td><td class="v">{% if lv.measured_hours_percent is not None %}{{ lv.measured_hours_percent }}%{% else %}—{% endif %}</td></tr>
-        <tr><td>{% trans 'Technician work' %}</td><td class="v">{{ L.technician_hours|floatformat:"0g" }} h</td></tr>
+        <tr><td>{% trans 'Hours of use measured so far' %}</td><td class="v">{{ lv.hours_measured|floatformat:"0g" }} h</td></tr>
+        <tr><td>{% trans 'Scanned again in their second life' %}</td><td class="v">{{ lv.scanned_again }} / {{ L.reused }}</td></tr>
+        <tr><td>{% trans 'Technician work (estimate)' %}</td><td class="v">≈ {{ L.technician_hours|floatformat:"0g" }} h</td></tr>
       </table>
+      <p class="small muted"><sup>3</sup> Technician work: {% blocktrans with d=lv.technician_rates.reuse.desktop|floatformat:"-1" l=lv.technician_rates.reuse.laptop|floatformat:"-1" rd=lv.technician_rates.recycle.desktop|floatformat:"-1" rl=lv.technician_rates.recycle.laptop|floatformat:"-1" %}estimate: {{ d }} h per desktop and {{ l }} h per laptop refurbished, {{ rd }} h and {{ rl }} h prepared for recycling (Solidança){% endblocktrans %}.</p>
     </div>
   </div>
 
-  <h2>{% trans 'What reuse bought' %}</h2>
-  <table class="bars">
-    {% for s in lv.scenarios %}
-      <tr><td class="label">{% if s.highlight %}<b>{{ s.key }} · {{ s.label }}</b>{% else %}{{ s.key }} · {{ s.label }}{% endif %}</td>
-          <td><div class="bar {% if s.highlight %}hl{% endif %}" style="width:{{ s.width }}%"></div></td>
-          <td class="val">{{ s.text }}</td></tr>
-    {% endfor %}
-  </table>
-  {% if L.reused %}
-    <div class="note">{% blocktrans count n=L.reused with r=lv.cost_reuse_text new=lv.cost_new_text %}Giving a person a device cost <b>{{ r }}</b> CO₂e through reuse, instead of <b>{{ new }}</b> with a new one.{% plural %}Giving {{ n }} people a device cost <b>{{ r }}</b> CO₂e through reuse, instead of <b>{{ new }}</b> with new ones.{% endblocktrans %}</div>
+  {% if lv.rows_awaiting_scan or lv.rows_missing_life1 %}
+    <div class="note">
+      <b>{% trans 'What would improve these figures' %}</b><br>
+      {% if lv.rows_awaiting_scan %}{% blocktrans count n=lv.rows_awaiting_scan|length %}Scan when it comes back: {{ n }} reused device has no second-life scan yet{% plural %}Scan when they come back: {{ n }} reused devices have no second-life scan yet{% endblocktrans %} (<span class="mono">{% for r in lv.rows_awaiting_scan %}{{ r.shortid }}{% if not forloop.last %}, {% endif %}{% endfor %}</span>).<br>{% endif %}
+      {% if lv.rows_missing_life1 %}{% blocktrans count n=lv.rows_missing_life1|length %}Scan at intake: {{ n }} device has no usable first-life reading{% plural %}Scan at intake: {{ n }} devices have no usable first-life reading{% endblocktrans %} (<span class="mono">{% for r in lv.rows_missing_life1 %}{{ r.shortid }}{% if not forloop.last %}, {% endif %}{% endfor %}</span>).{% endif %}
+    </div>
   {% endif %}
 
-  <h2>{% trans 'Where the carbon goes (ITU-T L.1410 stages)' %}</h2>
+  <h2>{% trans 'What giving these computers cost' %}</h2>
+  {% if L.reused %}
+    <p>{% blocktrans count n=L.reused with r=lv.cost_reuse_text new=lv.cost_new_text %}Giving {{ n }} person a computer added <b>{{ r }}</b> CO₂e with this refurbished one, against <b>{{ new }}</b> if it had been a new one. Recycling it instead would have given nobody a computer.{% plural %}Giving {{ n }} people a computer added <b>{{ r }}</b> CO₂e with these refurbished ones, against <b>{{ new }}</b> if they had been new ones. Recycling them instead would have given nobody a computer.{% endblocktrans %}</p>
+    <table class="bars">
+      {% for b in lv.giving %}
+        <tr><td class="label">{% if b.highlight %}<b>{{ b.label }}</b>{% else %}{{ b.label }}{% endif %}</td>
+            <td><div class="bar {% if b.highlight %}hl{% endif %}" style="width:{{ b.width }}%"></div></td>
+            <td class="val">{{ b.text }}</td></tr>
+      {% endfor %}
+    </table>
+    <table class="facts small" style="margin-top:3mm">
+      <tr><td class="muted">{% trans 'Scenarios (Roura et al. 2026)' %}</td><td class="v muted">{% trans 'Total' %}</td><td class="v muted">{% trans 'Per hour of use' %}</td></tr>
+      {% for sc in lv.scenarios %}
+        <tr><td>{{ sc.key }} · {{ sc.label }}</td><td class="v">{{ sc.text }}</td><td class="v">{% if sc.g_per_hour is not None %}{{ sc.g_per_hour }} g/h{% else %}—{% endif %}</td></tr>
+      {% endfor %}
+    </table>
+    <p class="small muted">{% trans 'In total, reuse adds emissions over recycling because more people are using a computer; per hour of use it is the lowest of the three. Hours include the standard estimate for second lives not scanned yet.' %}</p>
+  {% endif %}
+
+  <h2>{% trans 'Where the carbon goes' %}</h2>
   <table class="bars">
     {% for s in lv.stages %}
-      <tr><td class="label">{{ s.label }} <span class="muted small">{{ s.note }}</span></td>
-          <td>{% if s.value > 0 %}<div class="bar hl" style="width:{{ s.up }}%"></div>{% elif s.value < 0 %}<div class="bar neg" style="width:{{ s.down }}%"></div>{% endif %}</td>
+      <tr><td class="label">{{ s.label }} <span class="muted small">{{ s.itu }} · {{ s.note }}</span></td>
+          <td>{% if s.value > 0 %}<div class="bar st-{{ s.key }}" style="width:{{ s.up }}%"></div>{% elif s.value < 0 %}<div class="bar st-credit" style="width:{{ s.down }}%"></div>{% endif %}</td>
           <td class="val">{{ s.text }}</td></tr>
     {% endfor %}
   </table>
-  <p class="small muted">{% blocktrans with total=lv.stages_total_text transport=lv.transport_text %}Total {{ total }} CO₂e over the devices' lives (not per year); transport, all legs: {{ transport }}. Excluded: refurbishment parts, packaging, cloud.{% endblocktrans %}</p>
+  <p class="small muted">{% blocktrans with total=lv.stages_total_text transport=lv.transport_text %}Total {{ total }} CO₂e over the devices' lives (not per year); transport, all legs: {{ transport }}. Excluded: refurbishment parts, packaging, cloud.{% endblocktrans %} {% trans 'Stages A–D as defined in ITU-T L.1410 (2024).' %}</p>
   <h2>{% trans 'Social value' %}</h2>
   <table class="facts">
     <tr><td>{% trans 'People with a computer through reuse' %}</td><td class="v">{{ L.reused }}</td></tr>
-    <tr><td>{% trans 'Hours of digital access (measured / projected)' %}</td><td class="v">{{ lv.hours_total|floatformat:"0g" }} h ({{ L.life2_hours_measured|floatformat:"0g" }} / {{ L.life2_hours_projected|floatformat:"0g" }})</td></tr>
+    <tr><td>{% trans 'Hours of use measured so far' %}{% if lv.awaiting_scan %} <span class="muted">· {% blocktrans count n=lv.awaiting_scan %}{{ n }} device not scanned again yet{% plural %}{{ n }} devices not scanned again yet{% endblocktrans %}</span>{% endif %}</td><td class="v">{{ lv.hours_measured|floatformat:"0g" }} h</td></tr>
     {% if lv.cost_per_person_reuse_text %}<tr><td>{% trans 'Carbon cost of giving one person a computer' %}</td><td class="v">{% blocktrans with r=lv.cost_per_person_reuse_text n=lv.cost_per_person_new_text %}{{ r }} with reuse · {{ n }} with a new one{% endblocktrans %}</td></tr>{% endif %}
-    <tr><td>{% trans 'Local technician work' %}</td><td class="v">{{ L.technician_hours|floatformat:"0g" }} h</td></tr>
+    <tr><td>{% trans 'Local technician work' %} <span class="muted">· {% trans 'estimate' %}</span></td><td class="v">≈ {{ L.technician_hours|floatformat:"0g" }} h</td></tr>
     {% if lv.inclusion %}<tr><td>{% trans 'Digital inclusion hours (internal only)' %}</td><td class="v">{% if lv.inclusion.people %}{{ lv.inclusion.hours|floatformat:"0g" }} h · {{ lv.inclusion.people }} {% trans 'devices' %}{% else %}—{% endif %}</td></tr>{% endif %}
   </table>
   <p class="small muted">{% trans "Hours of use show that people had access to a computer, not how it changed their lives (Roura Salietti 2025, Annex D). The carbon cost per person is the extra CO₂e of serving the second users, divided by the people served (Roura et al. 2026)." %}</p>
+{% endif %}
+
+{% if lv.view == 'refurbisher' %}
+  <h2>{% trans 'Sources' %}</h2>
+  <ol class="refs">
+    {% for src in lv.sources %}
+      <li value="{{ src.n }}"><b>{{ src.label }}.</b> {{ src.detail }} {% for r in src.refs %}{{ r.title }}{% if r.licence and r.licence != 'cited' %} ({{ r.licence }}){% endif %}.{% if r.url %} {{ r.url }}{% endif %}{% if not forloop.last %} · {% endif %}{% endfor %}</li>
+    {% endfor %}
+  </ol>
 {% endif %}
 
 <p class="method">
@@ -233,27 +206,32 @@
 {# ------------------------------------------------------------ device annex #}
 <div class="annex">
   <h2>{% trans 'Annex: devices in this lot' %}</h2>
-  <p class="small muted">● {% trans 'measured from the device evidence' %} · ○ {% trans 'default where evidence is missing' %}</p>
+  <p class="small muted">{% trans 'Powered-on hours read from each device.' %}</p>
   <table class="devices">
     <thead><tr>
-      <th>{% trans 'Device' %}</th><th>{% trans 'Type' %}</th><th>{% trans 'Outcome' %}</th>
-      <th class="n">{% trans 'Life 1 h' %}</th><th class="n">{% trans 'Life 2 h' %}</th>
-      {% if lv.view == 'recipient' %}<th class="n">{% trans 'Attributed' %}</th><th class="n">{% trans 'New equivalent' %}</th>
-      {% else %}<th class="n">{% trans '2nd-life share' %}</th><th class="n">{% trans 'Avoided' %}</th>{% endif %}
+      <th>{% trans 'Device' %}</th>
+      {% if lv.view == 'recipient' %}
+        <th class="n">{% trans 'Used before you got it' %}</th><th class="n">{% trans 'Counts in your inventory' %}<span class="unit">kg CO₂e</span></th><th class="n">{% trans 'If bought new' %}<span class="unit">kg CO₂e</span></th>
+      {% elif lv.view == 'supplier' %}
+        <th>{% trans 'What happened' %}</th><th class="n">{% trans 'Used before' %}</th><th class="n">{% trans 'Used since' %}</th>
+      {% else %}
+        <th>{% trans 'Type' %}</th><th>{% trans 'Outcome' %}</th><th class="n">{% trans 'Life 1 h' %}</th><th class="n">{% trans 'Life 2 h' %}</th><th class="n">{% trans 'Avoided' %}<span class="unit">kg CO₂e</span></th>
+      {% endif %}
     </tr></thead>
     <tbody>
       {% for r in lv.rows %}{% if lv.view != 'recipient' or r.status == 'reused' %}
         <tr>
           <td><span class="mono muted">{{ r.shortid }}</span> {{ r.name }}</td>
-          <td>{{ r.type }}</td>
-          <td>{% if r.status == 'reused' %}<span class="badge {% if r.ended %}b-ended{% else %}b-reused{% endif %}">{% if r.ended %}{% trans 'Reused, now recycled' %}{% else %}{% trans 'Reused' %}{% endif %}</span>{% elif r.status == 'recycled' %}<span class="badge b-recycled">{% trans 'Recycled' %}</span>{% else %}<span class="badge b-workshop">{% trans 'In the workshop' %}</span>{% endif %}</td>
-          <td class="n">{{ r.life1|floatformat:"0g" }} {% if r.life1_measured %}●{% else %}○{% endif %}</td>
-          <td class="n">{% if r.life2 is not None %}{{ r.life2|floatformat:"0g" }} {% if r.life2_measured %}●{% else %}○{% endif %}{% else %}—{% endif %}</td>
           {% if lv.view == 'recipient' %}
-            <td class="n">{{ r.attributed|floatformat:0 }} kg</td><td class="n">{{ r.new_equivalent|floatformat:0 }} kg</td>
+            <td class="n">{% if r.life1_measured %}{{ r.life1|floatformat:"0g" }} h{% else %}<span class="muted">{% trans 'no reading, counted as new' %}</span>{% endif %}</td>
+            <td class="n"><b>{{ r.attributed|floatformat:0 }}</b></td>
+            <td class="n muted">{{ r.new_equivalent|floatformat:0 }}</td>
           {% else %}
-            <td class="n">{% if r.apos_percent is not None %}{{ r.apos_percent }}%{% elif r.status == 'reused' %}{% trans 'as new' %}{% else %}—{% endif %}</td>
-            <td class="n">{% if r.avoided is not None %}{{ r.avoided|floatformat:0 }} kg{% else %}—{% endif %}</td>
+            {% if lv.view != 'supplier' %}<td>{{ r.type }}</td>{% endif %}
+            <td>{% if r.status == 'reused' %}<span class="badge {% if r.ended %}b-ended{% else %}b-reused{% endif %}">{% if r.ended %}{% trans 'Reused, now recycled' %}{% else %}{% trans 'Reused' %}{% endif %}</span>{% elif r.status == 'recycled' %}<span class="badge b-recycled">{% trans 'Recycled' %}</span>{% else %}<span class="badge b-workshop">{% trans 'In the workshop' %}</span>{% endif %}</td>
+            <td class="n">{% if r.life1_measured %}{{ r.life1|floatformat:"0g" }} h{% else %}<span class="muted">{% trans 'no reading' %}</span>{% endif %}</td>
+            <td class="n">{% if r.status != 'reused' %}—{% elif r.life2_measured %}{{ r.life2|floatformat:"0g" }} h{% else %}<span class="muted">{% trans 'not scanned yet' %}</span>{% endif %}</td>
+            {% if lv.view != 'supplier' %}<td class="n">{% if r.avoided is not None %}{{ r.avoided|floatformat:0 }}{% else %}—{% endif %}</td>{% endif %}
           {% endif %}
         </tr>
       {% endif %}{% endfor %}

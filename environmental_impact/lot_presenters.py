@@ -14,7 +14,8 @@ from statistics import median
 from django.utils.translation import gettext_lazy as _, ngettext
 
 from environmental_impact.algorithms.ereuse2026.model import DeviceImpact, LotImpact
-from environmental_impact.presenters import ITU_STAGE
+from environmental_impact.algorithms.ereuse2026.ereuse2026 import load_factors
+from environmental_impact.presenters import ITU_STAGE, round_km
 from environmental_impact.reuse import lot_direction
 
 VIEWS = ("refurbisher", "supplier", "recipient")
@@ -80,6 +81,30 @@ def _row(device, d: DeviceImpact) -> dict:
     }
 
 
+def _sources(factors: dict) -> list[dict]:
+    """Numbered notes behind the refurbisher tiles, with full citations from factors.json."""
+    src = factors["sources"]
+    car, tech = factors["car_kgco2e_per_km"], factors["technician_hours"]
+
+    def cite(*keys):
+        return [src[k] for k in keys]
+
+    return [
+        {"n": 1, "label": _("Car equivalence"),
+         "detail": f"{car['value']} kg CO₂e/km. {car['ref']}.", "refs": cite("base_carbone")},
+        {"n": 2, "label": _("Avoided emissions"),
+         "detail": _("Compared with giving the same people new devices. The headline uses the public ADEME "
+                     "Base Carbone factors; the range uses manufacturer data (Boavizta p10–p90)."),
+         "refs": cite("base_carbone", "boavizta")},
+        {"n": 3, "label": _("Technician work"),
+         "detail": _("Estimate per device: %(rd)s h per desktop and %(rl)s h per laptop refurbished, "
+                     "%(cd)s h and %(cl)s h prepared for recycling. %(ref)s.")
+         % {"rd": f"{tech['reuse']['desktop']:g}", "rl": f"{tech['reuse']['laptop']:g}",
+            "cd": f"{tech['recycle']['desktop']:g}", "cl": f"{tech['recycle']['laptop']:g}", "ref": tech["ref"]},
+         "refs": cite("thesis")},
+    ]
+
+
 def lot_impact_view(lot: LotImpact, rows: list[tuple[object, DeviceImpact]], tag_name: str | None,
                     view: str | None, prepared_for: str, lot_name: str, inclusion: dict | None = None) -> dict:
     """``inclusion`` ({"people": n, "hours": h}, from the vulnerable-person marks) is sensitive:
@@ -95,9 +120,22 @@ def lot_impact_view(lot: LotImpact, rows: list[tuple[object, DeviceImpact]], tag
         {"key": "S2", "label": _("Reuse (this lot)"), "value": lot.s2, "served": lot.reused, "highlight": True},
         {"key": "S3", "label": _("New devices"), "value": lot.s3, "served": lot.reused, "highlight": False},
     ]
+    # per hour of use (paper §3, p.4): S1 serves the donors only, S2 and S3 donors and second users
+    hours_s1 = sum(d.life1_hours + d.life2_hours for d in reused)
+    hours_s23 = sum(d.life1_hours + 2 * d.life2_hours for d in reused)
     for s in scenarios:
         s["width"] = _pct(s["value"], scenario_max)
         s["text"] = kg(s["value"])
+        hours = hours_s1 if s["key"] == "S1" else hours_s23
+        s["g_per_hour"] = round(1000 * s["value"] / hours) if hours else None
+
+    # what giving the second users a computer added, over recycling (which gives them nothing)
+    giving = [
+        {"label": _("Refurbished"), "value": lot.cost_second_users, "text": kg(lot.cost_second_users),
+         "width": _pct(lot.cost_second_users, lot.cost_with_new), "highlight": True},
+        {"label": _("New"), "value": lot.cost_with_new, "text": kg(lot.cost_with_new),
+         "width": 100.0 if lot.cost_with_new else 0.0, "highlight": False},
+    ]
 
     # stages: positive bars share one scale, the recycling credit is drawn below zero
     stage_values = [(k, label, note, lot.stages.get(k, 0.0)) for k, label, note in STAGES]
@@ -111,6 +149,7 @@ def lot_impact_view(lot: LotImpact, rows: list[tuple[object, DeviceImpact]], tag
     ]
 
     measured_life1 = [d.life1_hours for d in impacts if d.life1_measured]
+    device_rows = sorted((_row(dev, d) for dev, d in rows), key=lambda r: (r["status"] != "reused", -(r["avoided"] or 0)))
     grids = sorted({d.country for d in impacts})
     legs_total = sum(_legs(d) for d in reused)
 
@@ -119,20 +158,32 @@ def lot_impact_view(lot: LotImpact, rows: list[tuple[object, DeviceImpact]], tag
                  lot.devices) % {"n": lot.devices}
         + ngettext("%(r)s was refurbished and reused", "%(r)s were refurbished and reused",
                    lot.reused) % {"r": lot.reused}
-        + _(", contributing to avoiding an estimated %(a)s CO₂e compared with providing new ones (range %(lo)s–%(hi)s).")
+        + (_(", contributing to avoiding at least %(a)s CO₂e compared with providing new ones "
+             "(%(lo)s–%(hi)s with manufacturer data).")
+           if lot.avoided and lot.avoided_low and lot.avoided < lot.avoided_low else
+           _(", contributing to avoiding an estimated %(a)s CO₂e compared with providing new ones "
+             "(%(lo)s–%(hi)s with manufacturer data)."))
         % {"a": kg(lot.avoided), "lo": kg(lot.avoided_low), "hi": kg(lot.avoided_high)},
     ]
     if lot.recycled:
         supplier_ok.append(ngettext(
             "%(n)s device was sent to recycling.", "%(n)s devices were sent to recycling.", lot.recycled
         ) % {"n": lot.recycled})
-    access_hours = lot.life2_hours_measured + lot.life2_hours_projected
-    if lot.reused:
+    # only hours read from later scans are reported; projected second lives stay in the calculation
+    hours_measured = lot.life2_hours_measured
+    awaiting_scan = sum(1 for d in reused if not d.life2_measured)
+    if lot.reused and hours_measured:
         supplier_ok.append(ngettext(
-            "The reused devices gave %(n)s person a computer, for about %(h)s hours of use (measured and projected).",
-            "The reused devices gave %(n)s people a computer, for about %(h)s hours of use (measured and projected).",
+            "The reused devices gave %(n)s person a computer, with %(h)s hours of use measured so far.",
+            "The reused devices gave %(n)s people a computer, with %(h)s hours of use measured so far.",
             lot.reused,
-        ) % {"n": lot.reused, "h": f"{access_hours:,.0f}"})
+        ) % {"n": lot.reused, "h": f"{hours_measured:,.0f}"})
+    elif lot.reused:
+        supplier_ok.append(ngettext(
+            "The reused devices gave %(n)s person a computer.",
+            "The reused devices gave %(n)s people a computer.",
+            lot.reused,
+        ) % {"n": lot.reused})
     social_no = _("“We closed the digital divide” or “we transformed lives”: hours of use show access, not impact.")
     supplier_no = [
         _("“We reduced our carbon footprint by %(a)s.” Avoided emissions are not a reduction of your own footprint.")
@@ -143,15 +194,13 @@ def lot_impact_view(lot: LotImpact, rows: list[tuple[object, DeviceImpact]], tag
     ]
     recipient_ok = [
         ngettext(
-            "Our %(n)s refurbished device carries an estimated %(a)s CO₂e of embodied emissions (APOS "
-            "allocation by hours of use, Roura et al. 2026), against about %(new)s for a new equivalent.",
-            "Our %(n)s refurbished devices carry an estimated %(a)s CO₂e of embodied emissions (APOS "
-            "allocation by hours of use, Roura et al. 2026), against about %(new)s for new equivalents.",
+            "Our %(n)s refurbished device carries an estimated %(a)s CO₂e of embodied emissions, against "
+            "about %(new)s for a new equivalent (manufacturing split between owners by hours of use, APOS).",
+            "Our %(n)s refurbished devices carry an estimated %(a)s CO₂e of embodied emissions, against "
+            "about %(new)s for new equivalents (manufacturing split between owners by hours of use, APOS).",
             lot.reused,
         )
         % {"n": lot.reused, "a": kg(lot.attributed_kg), "new": kg(lot.new_equivalent_kg)},
-        _("Their electricity use is estimated at %(kwh)s kWh per year (%(kg)s CO₂e).")
-        % {"kwh": f"{lot.kwh_per_year:,.0f}", "kg": kg(lot.kg_per_year)},
     ]
     recipient_no = [
         _("“Zero-emission” or “carbon-neutral” devices: refurbished devices still carry emissions and use electricity."),
@@ -170,33 +219,39 @@ def lot_impact_view(lot: LotImpact, rows: list[tuple[object, DeviceImpact]], tag
         "lot": lot,
         "grids": grids,
         "avoided_text": kg(lot.avoided),
+        # avoided emissions in everyday terms, same factor and rounding as the device tab
+        "avoided_car_km": round_km(lot.avoided / load_factors()["car_kgco2e_per_km"]["value"])
+        if lot.avoided and lot.avoided > 0 else None,
         "avoided_low_text": kg(lot.avoided_low),
         "avoided_high_text": kg(lot.avoided_high),
         "cost_reuse_text": kg(lot.cost_second_users),
         "cost_new_text": kg(lot.cost_with_new),
-        "hours_total": access_hours,
+        "hours_measured": hours_measured,
+        "awaiting_scan": awaiting_scan,
+        "scanned_again": lot.reused - awaiting_scan,
         # social value (thesis §6.4 p.105; paper §3.2 p.3): access, local work, and the carbon cost of access
         "cost_per_person_reuse_text": kg(lot.cost_second_users / lot.reused) if lot.reused else None,
         "cost_per_person_new_text": kg(lot.cost_with_new / lot.reused) if lot.reused else None,
         "inclusion": inclusion if view == "refurbisher" else None,
         "scenarios": scenarios,
+        "giving": giving,
+        # a constant per device type (thesis Table 13, p.115, Solidança estimates), not a measurement
+        "technician_rates": load_factors()["technician_hours"],
+        "sources": _sources(load_factors()),
+        # the public ADEME factor can sit below every manufacturer figure: then it is a floor, "at least"
+        "avoided_below_range": bool(lot.avoided and lot.avoided_low and lot.avoided < lot.avoided_low),
         "stages": stages,
         "stages_total_text": kg(sum(lot.stages.values())),
         "transport_text": kg(lot.stages.get("transport", 0.0)),
-        "rows": sorted((_row(dev, d) for dev, d in rows), key=lambda r: (r["status"] != "reused", -(r["avoided"] or 0))),
+        "rows": device_rows,
+        # what the refurbisher can do: scan these devices
+        "rows_awaiting_scan": [r for r in device_rows if r["status"] == "reused" and not r["life2_measured"]],
+        "rows_missing_life1": [r for r in device_rows if not r["life1_measured"]],
         "median_life1": median(measured_life1) if measured_life1 else None,
-        "unused_text": kg(lot.unused_kg),
-        "unused_carried_text": kg(lot.unused_kg_carried),
         "missing_life1": lot.devices - lot.devices_with_life1_reading,
-        "measured_hours_percent": (
-            round(100 * lot.life2_hours_measured / (lot.life2_hours_measured + lot.life2_hours_projected))
-            if (lot.life2_hours_measured + lot.life2_hours_projected) else None
-        ),
-        "unused_lost_text": kg(lot.unused_kg_lost),
         "attributed_text": kg(lot.attributed_kg),
         "new_equivalent_text": kg(lot.new_equivalent_kg),
         "attributed_saving_percent": round(100 * (1 - lot.attributed_kg / lot.new_equivalent_kg)) if lot.new_equivalent_kg else None,
-        "kg_per_year_text": kg(lot.kg_per_year),
         "recipient_bars": [
             {"label": _("These refurbished devices"), "value": lot.attributed_kg, "text": kg(lot.attributed_kg),
              "width": _pct(lot.attributed_kg, lot.new_equivalent_kg), "highlight": True},
