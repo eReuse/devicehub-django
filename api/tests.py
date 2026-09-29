@@ -1,6 +1,6 @@
 import uuid
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from api.models import Token
 from action.models import DeviceLog, Note, State, StateDefinition
@@ -50,6 +50,30 @@ class DeviceLookupApiTests(TestCase):
         resp = self.get_logs("custom_id:000132")
 
         self.assertEqual(resp.status_code, 404)
+
+    def test_malformed_token_is_unauthorized(self):
+        resp = self.client.get(
+            "/api/v1/devices/custom_id:000123/state/",
+            HTTP_AUTHORIZATION="Bearer not-a-uuid",
+        )
+
+        self.assertEqual(resp.status_code, 401)
+
+    @override_settings(CORS_ALLOWED_ORIGINS=["https://guide.example.org"])
+    def test_state_api_allows_configured_browser_origin(self):
+        resp = self.client.options(
+            "/api/v1/devices/custom_id:000123/state/",
+            HTTP_ORIGIN="https://guide.example.org",
+            HTTP_ACCESS_CONTROL_REQUEST_METHOD="POST",
+            HTTP_ACCESS_CONTROL_REQUEST_HEADERS="authorization, content-type",
+        )
+
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(
+            resp.headers["Access-Control-Allow-Origin"],
+            "https://guide.example.org",
+        )
+        self.assertIn("authorization", resp.headers["Access-Control-Allow-Headers"])
 
     def test_get_state_lists_available_states(self):
         resp = self.state_request()
