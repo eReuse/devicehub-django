@@ -1,19 +1,8 @@
 {% load i18n %}
 {% with i=v2.impact %}
 <div class="dh-impact">
-{% include "partials/_stage_palette.html" %}
+{% include "partials/_impact_base_style.html" %}
 <style>
-  .dh-impact{--dh-primary:#7a9f4f;--dh-secondary:#9cc666;--dh-dark:#545f71;--dh-light:#f8f9fa;
-    --dh-teal:#56beac;--dh-teal-soft:#a3e3d7;--dh-green-soft:#c7e3a3;--dh-yellow:#efe3b4;--dh-orange:#f5b587;--dh-grey:#f3f3f3;--dh-line:#e3e6e9}
-  .dh-impact h6.card-title,.dh-impact h6.dh-title{color:var(--dh-primary);font-weight:700;border-bottom:2px solid var(--dh-secondary);padding-bottom:.35rem}
-  .dh-impact .dh-badge{display:inline-block;font-size:.75rem;font-weight:600;padding:.2rem .55rem;border-radius:999px;color:var(--dh-dark)}
-  .dh-impact .dh-reused{background:var(--dh-green-soft)} .dh-impact .dh-recycled{background:var(--dh-grey);border:1px solid var(--dh-line)}
-  .dh-impact .dh-workshop{background:var(--dh-yellow)} .dh-impact .dh-ended{background:var(--dh-orange)}
-  .dh-impact .dh-notice{background:var(--dh-yellow);color:var(--dh-dark);border-radius:.4rem;padding:.6rem .8rem;font-size:.875rem}
-  .dh-impact .dh-soft{background:var(--dh-light);border-radius:.4rem}
-  .dh-impact .nav-pills .nav-link{color:var(--dh-dark);font-weight:600}
-  .dh-impact .nav-pills .nav-link.active{background:var(--dh-teal-soft);color:#000}
-  .dh-impact a:not(.nav-link){color:var(--dh-primary)}
   .ei2-story{display:grid;grid-template-columns:minmax(7rem,11rem) 1fr 5.5rem;gap:.35rem .75rem;align-items:center;font-size:.85rem}
   .ei2-rowlabel{color:var(--dh-dark)} .ei2-rowval{text-align:right;font-weight:600;font-variant-numeric:tabular-nums}
   .ei2-lane{display:flex;gap:2px;height:22px;background:var(--dh-light);border-radius:3px}
@@ -43,9 +32,6 @@
   .ei2-fig small{font-size:.9rem;font-weight:500;color:var(--bs-secondary-color,#6c757d)}
   .ei2-method>summary{cursor:pointer;list-style:revert}
   .ei2-method>summary .card-title{display:inline;border:0;padding:0}
-  .ei2-sub{font-size:.85rem;font-weight:600;color:var(--bs-secondary-color);text-transform:uppercase;letter-spacing:.03em}
-  .ei2-refs{padding-left:1.6rem}
-  .ei2-refs li{margin-bottom:.3rem;overflow-wrap:anywhere}
 </style>
 
 {% if i.warnings %}
@@ -169,8 +155,8 @@
 
 {% if v2.reused %}
   <div class="dh-soft border mt-3 mb-0 p-3">
-    <div>{% blocktrans with a=i.avoided|floatformat:0 km=v2.avoided_car_km|floatformat:"0g" %}Reusing it instead of buying a new one avoided about <strong>{{ a }} kg CO₂e</strong>, roughly what an average car emits over <strong>{{ km }} km</strong>.{% endblocktrans %}</div>
-    <div class="small text-muted mt-1">{% blocktrans with lo=i.avoided_low|floatformat:0 hi=i.avoided_high|floatformat:0 %}Between {{ lo }} and {{ hi }} kg with manufacturer data. Shared by everyone in its reuse chain: it does not reduce any organisation's own emissions.{% endblocktrans %}</div>
+    <div>{% if v2.avoided_below_range %}{% blocktrans with a=i.avoided|floatformat:0 km=v2.avoided_car_km|floatformat:"0g" %}Reusing it instead of buying a new one avoided at least <strong>{{ a }} kg CO₂e</strong>, roughly what an average car emits over <strong>{{ km }} km</strong>.{% endblocktrans %}{% else %}{% blocktrans with a=i.avoided|floatformat:0 km=v2.avoided_car_km|floatformat:"0g" %}Reusing it instead of buying a new one avoided about <strong>{{ a }} kg CO₂e</strong>, roughly what an average car emits over <strong>{{ km }} km</strong>.{% endblocktrans %}{% endif %}</div>
+    <div class="small text-muted mt-1">{% blocktrans with lo=i.avoided_low|floatformat:0 hi=i.avoided_high|floatformat:0 %}{{ lo }}–{{ hi }} kg with manufacturer data. Shared by everyone in its reuse chain: it does not reduce any organisation's own emissions.{% endblocktrans %}</div>
   </div>
 {% endif %}
 

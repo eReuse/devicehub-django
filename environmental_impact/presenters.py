@@ -141,7 +141,7 @@ def _method(impact: DeviceImpact, factors: dict) -> dict:
     return {"constants": rows, "references": references}
 
 
-def _round_km(km: float) -> int:
+def round_km(km: float) -> int:
     return int(round(km, -1 if km < 1000 else -2))
 
 
@@ -255,7 +255,9 @@ def device_impact_view(impact: DeviceImpact, inputs: DeviceInputs, marks: set[st
         "has_mark": bool(marks),
         "handover": _handover(impact, inputs, timeline),
         # avoided emissions in everyday terms: km in an average car (rounded, it is an order of magnitude)
-        "avoided_car_km": _round_km(impact.avoided / factors["car_kgco2e_per_km"]["value"])
+        "avoided_below_range": bool(impact.reused and impact.avoided and impact.avoided_low
+                                    and impact.avoided < impact.avoided_low),
+        "avoided_car_km": round_km(impact.avoided / factors["car_kgco2e_per_km"]["value"])
         if impact.reused and impact.avoided else None,
         "bios_year": inputs.bios_year,
         "factor_label": factors["manufacturing"][impact.factor_set]["label"],

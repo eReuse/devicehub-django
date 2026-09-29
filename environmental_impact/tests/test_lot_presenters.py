@@ -108,14 +108,80 @@ class LotTemplateTests(LotPresenterTests):
 
     def test_refurbisher_view(self):
         html = self.render("refurbisher")
-        self.assertIn("What reuse bought", html)
+        self.assertIn("What giving these computers cost", html)
+        self.assertIn("Recycling it instead would have given nobody a computer", html)
         self.assertIn("1 of 3 devices has not left the workshop", html)
+        self.assertIn("2 h per desktop and 3 h per laptop refurbished, 0.7 h and 0.8 h prepared for recycling", html)
+        self.assertIn('id="eil-src-3"', html)  # the tile's superscript points at its source
+        self.assertIn("Nothing to do", html)  # the fixture has every reading it needs
 
     def test_supplier_report(self):
         html = self.render("supplier")
         self.assertIn("Devices from rsc@example.org", html)
-        self.assertIn("lost with the recycled devices", html)
+        self.assertIn("When your devices were handed over", html)
         self.assertIn("contribution shared along the reuse chain", html)
+
+    def test_reports_show_measured_hours_only(self):
+        # the fixture's reused device has a measured second life; nothing projected is quoted
+        for view in ("refurbisher", "supplier", "recipient"):
+            html = self.render(view)
+            self.assertNotIn("projected", html, view)
+            self.assertNotIn("kWh", html, view)
+            self.assertIn("5,743", html, view)
+
+    def test_giving_compares_reuse_with_new_not_recycling(self):
+        lv = self.view(view="refurbisher")
+        reuse, new = lv["giving"]
+        self.assertAlmostEqual(reuse["value"], self.lot.s2 - self.lot.s1)
+        self.assertAlmostEqual(new["value"], self.lot.s3 - self.lot.s1)
+        self.assertEqual(new["width"], 100.0)
+
+    def test_reuse_is_cheapest_per_hour_of_use(self):
+        per_hour = {s["key"]: s["g_per_hour"] for s in self.view(view="refurbisher")["scenarios"]}
+        self.assertLess(per_hour["S2"], per_hour["S1"])
+        self.assertLess(per_hour["S2"], per_hour["S3"])
+
+    def test_devices_to_scan_are_listed(self):
+        impacts = [impact([3696]), impact([0], reuse_start=None)]  # reused without a later scan; no reading
+        rows = [(device(i), d) for i, d in enumerate(impacts)]
+        lv = lot_impact_view(aggregate_lot(impacts), rows, tag_name="Salida", view="refurbisher",
+                             prepared_for="x", lot_name="L2")
+        self.assertEqual([r["shortid"] for r in lv["rows_awaiting_scan"]], ["ABC0"])
+        self.assertEqual([r["shortid"] for r in lv["rows_missing_life1"]], ["ABC1"])
+
+    def test_headline_below_manufacturer_range_reads_at_least(self):
+        lv = self.view(view="supplier")
+        self.assertTrue(lv["avoided_below_range"])  # desktop: ADEME 161 kg < Boavizta p10
+        self.assertIn("at least", self.render("supplier"))
+        self.assertTrue(lv["supplier_ok"][0].count("at least"))
+
+    def test_supplier_lists_what_happened_to_each_device(self):
+        html = self.render("supplier")
+        self.assertIn("Your devices", html)
+        self.assertIn("Used since", html)
+        self.assertIn("In the workshop", html)
+
+    def test_recipient_columns_in_plain_words(self):
+        html = self.render("recipient")
+        for text in ("Used before you got it", "Counts in your inventory", "If bought new"):
+            self.assertIn(text, html)
+        self.assertNotIn("Your share", html)
+
+    def test_avoided_emissions_in_car_km(self):
+        lv = self.view(view="supplier")
+        self.assertEqual(lv["avoided_car_km"], 630)  # 161 kg / 0.256 kg per km, rounded to tens
+        self.assertIn("630 km", self.render("supplier"))
+
+    def test_awaiting_scan_is_counted(self):
+        lv = self.view(view="supplier")
+        self.assertEqual(lv["hours_measured"], 5743)
+        self.assertEqual(lv["awaiting_scan"], 0)
+        self.assertEqual(lv["scanned_again"], 1)
+
+    def test_recipient_labels_the_per_owner_split_as_derived(self):
+        html = self.render("recipient")
+        self.assertIn("DeviceHub's derivation", html)
+        self.assertNotIn("2nd-life share", self.render("refurbisher"))
 
     def render_with_inclusion(self, view):
         request = RequestFactory().get("/lot/1/environmental-impact")
