@@ -295,6 +295,26 @@ class DeviceWithLogsOut(Schema):
     )
 
 
+class DeviceStateOut(Schema):
+    device_id: str
+    current_state: Optional[str] = None
+    available_states: List[str]
+
+
+class DeviceStateUpdateIn(Schema):
+    state: str = Field(..., min_length=1, max_length=50)
+    expected_previous_state: Optional[str] = Field(
+        ...,
+        description=str(_("State observed by the client before this update")),
+    )
+    comment: Optional[str] = Field(default=None, max_length=200)
+
+
+class DeviceStateUpdateOut(DeviceStateOut):
+    previous_state: Optional[str] = None
+    changed: bool
+
+
 class BulkPropertyIn(Schema):
     device_ids: List[str] = Field(
         ...,
