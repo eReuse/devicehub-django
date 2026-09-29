@@ -235,16 +235,22 @@ def fetch_bulk_device_data(chids_page, institution, lot=None):
     aliases_qs = RootAlias.objects.filter(owner=institution, root__in=chids_page).values_list('alias', 'root')
     alias_to_root = {alias: root for alias, root in aliases_qs}
 
-    sp_qs = SystemProperty.objects.filter(owner=institution, value__in=alias_to_root.keys()).order_by('-created').values_list('value', 'uuid')
-    latest_uuids = {}
+    sp_qs = SystemProperty.objects.filter(owner=institution, value__in=alias_to_root.keys()).values_list('value', 'uuid')
+    uuid_to_root = {}
     for alias, uuid in sp_qs:
         root = alias_to_root.get(alias)
-        if root and root not in latest_uuids:
-            latest_uuids[root] = uuid
+        if root:
+            uuid_to_root[uuid] = root
 
-    states_qs = State.objects.filter(snapshot_uuid__in=latest_uuids.values()).order_by('-date')
-    uuid_to_state = {state.snapshot_uuid: state.state for state in states_qs}
-    state_map = {root: str(uuid_to_state.get(uuid, "")) for root, uuid in latest_uuids.items()}
+    states_qs = State.objects.filter(
+        institution=institution,
+        snapshot_uuid__in=uuid_to_root,
+    ).order_by('-date')
+    state_map = {}
+    for state in states_qs:
+        root = uuid_to_root.get(state.snapshot_uuid)
+        if root and root not in state_map:
+            state_map[root] = state.state
 
     return props_map, ben_map, default_ben_status, state_map
 
