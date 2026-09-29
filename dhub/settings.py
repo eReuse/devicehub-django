@@ -41,6 +41,10 @@ ALLOWED_HOSTS = config('DEVICEHUB_ALLOWED_HOSTS', default=DEVICEHUB_HOST, cast=C
 assert DEVICEHUB_HOST in ALLOWED_HOSTS, f"DEVICEHUB_HOST {DEVICEHUB_HOST} is not in ALLOWED_HOSTS {ALLOWED_HOSTS}"
 
 CSRF_TRUSTED_ORIGINS = config('DEVICEHUB_CSRF_TRUSTED_ORIGINS', default=f'https://{DEVICEHUB_HOST}', cast=Csv())
+CORS_ALLOWED_ORIGINS = config('DEVICEHUB_CORS_ALLOWED_ORIGINS', default='', cast=Csv())
+# Test instances only: any origin may call /api/v1/ (bearer tokens, no cookies).
+CORS_ALLOW_ALL_ORIGINS = config('DEVICEHUB_CORS_ALLOW_ALL_ORIGINS', default=False, cast=bool)
+CORS_URLS_REGEX = r'^/api/v1/.*$'
 
 
 INITIAL_ADMIN_EMAIL = config("DEVICEHUB_INIT_ADMIN_EMAIL", default='admin@example.org')
@@ -63,6 +67,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "corsheaders",
     'django_extensions',
     'django_bootstrap5',
     'django_tables2',
@@ -90,6 +95,7 @@ DJANGO_TABLES2_TEMPLATE = "django_tables2/bootstrap5.html"
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     'django.middleware.locale.LocaleMiddleware',
     "django.middleware.csrf.CsrfViewMiddleware",

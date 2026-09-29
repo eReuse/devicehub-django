@@ -2,15 +2,27 @@ import math
 import logging
 from ninja import Router, Query
 from ninja.errors import HttpError
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from django.utils.translation import gettext_lazy as _
 
 from evidence.models import UserProperty, RootAlias, SystemProperty
 from device.models import Device, ProductCache
-from action.models import DeviceLog
+from action.models import DeviceLog, Note, State, StateDefinition
+from user.models import InstitutionDPPSettings
 
 from api.auth import GlobalAuth
-from api.v1.schemas import MessageOut, SuccessResponse, PropertyIn, DeviceWithLogsOut, BulkPropertyIn, OperationResult, DeviceListResponse
+from api.v1.schemas import (
+    BulkPropertyIn,
+    DeviceListResponse,
+    DeviceStateOut,
+    DeviceStateUpdateIn,
+    DeviceStateUpdateOut,
+    DeviceWithLogsOut,
+    MessageOut,
+    OperationResult,
+    PropertyIn,
+    SuccessResponse,
+)
 
 from api.v1.utils import get_device_instance, check_valid_ids, get_all_search_results, build_device_response_list, build_bulk_device_export_dict
 
@@ -117,6 +129,144 @@ def get_device_logs(request, device_id: str):
     except Exception as e:
         logger.exception(f"Error fetching logs for {device_id}")
         raise HttpError(500, "Internal server error")
+
+
+def _device_state_data(device, institution, lock=False):
+    aliases = RootAlias.physical_aliases(institution, device.id)
+    properties = SystemProperty.objects.filter(
+        owner=institution,
+        value__in=aliases,
+    ).order_by('-created')
+    if lock:
+        properties = properties.select_for_update()
+
+    evidence_uuids = list(properties.values_list('uuid', flat=True))
+    if not evidence_uuids:
+        raise HttpError(404, "Device does not have any evidence")
+
+    current = State.objects.filter(
+        institution=institution,
+        snapshot_uuid__in=evidence_uuids,
+    ).order_by('-date').first()
+    available_states = list(
+        StateDefinition.objects.filter(institution=institution)
+        .order_by('order')
+        .values_list('state', flat=True)
+    )
+    return evidence_uuids[0], current, available_states
+
+
+@router.get(
+    "/{device_id}/state/",
+    response={200: DeviceStateOut, 403: MessageOut, 404: MessageOut},
+    summary=_("Get a device's current state"),
+    tags=["Device States"],
+    auth=GlobalAuth(),
+)
+def get_device_state(request, device_id: str):
+    device = get_device_instance(device_id, request.auth)
+    _snapshot_uuid, current, available_states = _device_state_data(
+        device, request.auth.institution
+    )
+    return {
+        "device_id": device.id,
+        "current_state": current.state if current else None,
+        "available_states": available_states,
+    }
+
+
+@router.post(
+    "/{device_id}/state/",
+    response={
+        200: DeviceStateUpdateOut,
+        403: MessageOut,
+        404: MessageOut,
+        409: MessageOut,
+        422: MessageOut,
+    },
+    summary=_("Change a device's state"),
+    tags=["Device States"],
+    auth=GlobalAuth(),
+)
+def update_device_state(request, device_id: str, data: DeviceStateUpdateIn):
+    user = request.auth
+    institution = user.institution
+    device = get_device_instance(device_id, user)
+
+    with transaction.atomic():
+        snapshot_uuid, current, available_states = _device_state_data(
+            device, institution, lock=True
+        )
+        previous_state = current.state if current else None
+
+        # A retried request is successful even if its precondition now looks stale.
+        if previous_state == data.state:
+            return {
+                "device_id": device.id,
+                "previous_state": previous_state,
+                "current_state": previous_state,
+                "available_states": available_states,
+                "changed": False,
+            }
+
+        if previous_state != data.expected_previous_state:
+            raise HttpError(409, "Device state changed since it was read")
+
+        state_definition = StateDefinition.objects.filter(
+            institution=institution,
+            state=data.state,
+        ).first()
+        if not state_definition:
+            raise HttpError(422, "State is not valid for this institution")
+
+        dpp_enabled = InstitutionDPPSettings.objects.filter(
+            institution=institution,
+            dpp_enabled=True,
+        ).exists()
+        if state_definition.auto_issue_dte and dpp_enabled:
+            raise HttpError(
+                409,
+                "This state issues a traceability credential; use the DeviceHub web interface",
+            )
+
+        State.objects.create(
+            snapshot_uuid=snapshot_uuid,
+            state=data.state,
+            user=user,
+            institution=institution,
+        )
+        DeviceLog.objects.create(
+            snapshot_uuid=snapshot_uuid,
+            event=_("<Created> State '{new}'. Previous State: '{prev}'").format(
+                new=data.state,
+                prev=previous_state or _("None"),
+            ),
+            user=user,
+            institution=institution,
+        )
+
+        comment = (data.comment or '').strip()
+        if comment:
+            Note.objects.create(
+                snapshot_uuid=snapshot_uuid,
+                description=comment,
+                user=user,
+                institution=institution,
+            )
+            DeviceLog.objects.create(
+                snapshot_uuid=snapshot_uuid,
+                event=_("<Created> Note: '{}'").format(comment),
+                user=user,
+                institution=institution,
+            )
+
+    return {
+        "device_id": device.id,
+        "previous_state": previous_state,
+        "current_state": data.state,
+        "available_states": available_states,
+        "changed": True,
+    }
 
 
 @router.post(
