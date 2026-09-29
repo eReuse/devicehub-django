@@ -75,6 +75,18 @@ class DeviceLookupApiTests(TestCase):
         )
         self.assertIn("authorization", resp.headers["Access-Control-Allow-Headers"])
 
+    @override_settings(CORS_ALLOW_ALL_ORIGINS=True)
+    def test_state_api_can_allow_any_origin(self):
+        resp = self.client.options(
+            "/api/v1/devices/custom_id:000123/state/",
+            HTTP_ORIGIN="http://localhost:8765",
+            HTTP_ACCESS_CONTROL_REQUEST_METHOD="POST",
+        )
+
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.headers["Access-Control-Allow-Origin"], "*")
+        self.assertNotIn("Access-Control-Allow-Credentials", resp.headers)
+
     def test_get_state_lists_available_states(self):
         resp = self.state_request()
 

@@ -42,6 +42,8 @@ assert DEVICEHUB_HOST in ALLOWED_HOSTS, f"DEVICEHUB_HOST {DEVICEHUB_HOST} is not
 
 CSRF_TRUSTED_ORIGINS = config('DEVICEHUB_CSRF_TRUSTED_ORIGINS', default=f'https://{DEVICEHUB_HOST}', cast=Csv())
 CORS_ALLOWED_ORIGINS = config('DEVICEHUB_CORS_ALLOWED_ORIGINS', default='', cast=Csv())
+# Test instances only: any origin may call /api/v1/ (bearer tokens, no cookies).
+CORS_ALLOW_ALL_ORIGINS = config('DEVICEHUB_CORS_ALLOW_ALL_ORIGINS', default=False, cast=bool)
 CORS_URLS_REGEX = r'^/api/v1/.*$'
 
 # DeviceHub is served behind nginx, which terminates TLS and forwards the
