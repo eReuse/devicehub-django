@@ -67,7 +67,7 @@ TODO Leandro
 
 ## More details
 
-Merges PRs
+Merged PRs
 
 <details>
 
