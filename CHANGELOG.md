@@ -53,7 +53,7 @@ Merged PRs
 - 2026-03-10 fix search by shortid and xapian ([#139](https://farga.pangea.org/ereuse/pyvckit/pulls/139))
 - 2026-03-10 Implement clear assign beneficiary ([#138](https://farga.pangea.org/ereuse/pyvckit/pulls/138))
 - 2026-03-10 Fix paginator style inconsistency ([#135](https://farga.pangea.org/ereuse/pyvckit/pulls/135))
-  - 2026-03-04 subscription and beneficiary view: Minor UX fixes ([#137](https://farga.pangea.org/ereuse/pyvckit/pulls/137))
+- 2026-03-04 subscription and beneficiary view: Minor UX fixes ([#137](https://farga.pangea.org/ereuse/pyvckit/pulls/137))
 
 </details>
 
