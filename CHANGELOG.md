@@ -13,9 +13,13 @@
 
 # v2026.2
 
+## Highlights
+
 TODO Leandro
 
-Merged PRs:
+## More details
+
+Merged PRs
 
 <details>
 
@@ -57,9 +61,13 @@ Full Changelog: https://github.com/eReuse/IdHub/commits/v2026.2
 
 # v2026.1
 
+## Highlights
+
 TODO Leandro
 
-Merges PRs:
+## More details
+
+Merges PRs
 
 <details>
 
