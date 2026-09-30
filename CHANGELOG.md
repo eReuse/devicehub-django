@@ -1,5 +1,7 @@
 # Unreleased
 
+(Actual proyecto ISOC)
+
 - 2026-09-18 dashboard_inbox ([#198](https://farga.pangea.org/ereuse/pyvckit/pulls/198))
 - 2026-09-08 Support for UNTP 0.7.0 credential custody and management ([#188](https://farga.pangea.org/ereuse/pyvckit/pulls/188))
 - 2026-09-01 ProductHub: (1) dynamic product types, (2) devices -> products ([#145](https://farga.pangea.org/ereuse/pyvckit/pulls/145))
@@ -10,6 +12,12 @@
 - 2026-08-04 Select default lot type ([#152](https://farga.pangea.org/ereuse/pyvckit/pulls/152))
 
 # v2026.2
+
+TODO Leandro
+
+Merged PRs:
+
+<details>
 
 - 2026-07-28 Dashboard with overall info about the inventory ([#105](https://farga.pangea.org/ereuse/pyvckit/pulls/105))
 - 2026-07-21 gquery_588 ([#187](https://farga.pangea.org/ereuse/pyvckit/pulls/187))
@@ -43,7 +51,17 @@
 - 2026-03-10 Fix paginator style inconsistency ([#135](https://farga.pangea.org/ereuse/pyvckit/pulls/135))
   - 2026-03-04 subscription and beneficiary view: Minor UX fixes ([#137](https://farga.pangea.org/ereuse/pyvckit/pulls/137))
 
+</details>
+
+Full Changelog: https://github.com/eReuse/IdHub/commits/v2026.2
+
 # v2026.1
+
+TODO Leandro
+
+Merges PRs:
+
+<details>
 
 - 2026-02-24 fix/devices_performance ([#125](https://farga.pangea.org/ereuse/pyvckit/pulls/125))
 - 2026-02-17 bugfix beneficiary assignment ([#129](https://farga.pangea.org/ereuse/pyvckit/pulls/129))
@@ -80,6 +98,10 @@
 - 2025-05-30 bugfix_snapshot_empty ([#78](https://farga.pangea.org/ereuse/pyvckit/pulls/78))
 - 2025-05-28 Bugfix for Webform not showing up ([#81](https://farga.pangea.org/ereuse/pyvckit/pulls/81))
 
+</details>
+
+Full Changelog: https://github.com/eReuse/IdHub/commits/v2026.1
+
 # v2025.1
 
 - DPP/DLT functionality ([#36](https://farga.pangea.org/ereuse/devicehub-django/pulls/36))
@@ -106,3 +128,7 @@
 - Login changes rebase ([#69](https://farga.pangea.org/ereuse/devicehub-django/pulls/69))
 - Allow reorder of Lot groups ([#70](https://farga.pangea.org/ereuse/devicehub-django/pulls/70))
 - env-impact-224/initial-itu-l-1024 ([#74](https://farga.pangea.org/ereuse/devicehub-django/pulls/74))
+
+</details>
+
+Full Changelog: https://github.com/eReuse/IdHub/commits/v2025.1
