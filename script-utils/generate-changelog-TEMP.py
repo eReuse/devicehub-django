@@ -24,7 +24,7 @@ def get_commit_subjects(from_ref):
         capture_output=True,
         text=True,
     )
-    forge_link = "https://farga.pangea.org/ereuse/pyvckit/pulls"
+    forge_link = "https://farga.pangea.org/ereuse/devicehub-django/pulls"
     return [
         re.sub(
             r"^([0-9- ]+) Merge pull request '(.*)' \(#(\d+)\) from .*",
