@@ -1,6 +1,20 @@
 # Unreleased
 
-(Actual proyecto ISOC)
+(Ongoing ISOC project)
+
+## Highlights
+
+- **ProductHub**: dynamic product types, and devices become products.
+- **UNTP 0.7.0 support** for credential custody and management.
+- **Dashboard inbox**, extending the new dashboard.
+- **Lots and beneficiaries**: re-assign returned devices (even across lots), beneficiaries paginator, and default lot type selection.
+- **Demo data and tests**: environment option for B2C demo data, and test fixes.
+
+## More details
+
+Merged PRs
+
+<details>
 
 - 2026-09-18 dashboard_inbox ([#198](https://farga.pangea.org/ereuse/devicehub-django/pulls/198))
 - 2026-09-08 Support for UNTP 0.7.0 credential custody and management ([#188](https://farga.pangea.org/ereuse/devicehub-django/pulls/188))
@@ -11,11 +25,18 @@
 - 2026-08-11 Implement beneficiaries paginator ([#155](https://farga.pangea.org/ereuse/devicehub-django/pulls/155))
 - 2026-08-04 Select default lot type ([#152](https://farga.pangea.org/ereuse/devicehub-django/pulls/152))
 
+</details>
+
 # v2026.2
 
 ## Highlights
 
-TODO Leandro
+- **Dashboard**: new, with overall information about the inventory.
+- **Faster tables**: caching, fixed sorting and search, and select-all for devices.
+- **Customization**: custom IDs for devices and lots, and customizable QR labels.
+- **More robust evidence handling**: image linking to websnapshots, better parsing and error handling, and improved migration from devicehub-teal (legacy) with new backup/restore commands.
+- **Multitenant security**: fixes for data isolation vulnerabilities between tenants.
+- **UX and beneficiary workflow improvements**: breadcrumbs, paginator, clearing beneficiaries, and richer exports.
 
 ## More details
 
@@ -63,7 +84,13 @@ Full Changelog: https://github.com/eReuse/IdHub/commits/v2026.2
 
 ## Highlights
 
-TODO Leandro
+- **QR codes** in device details, with print support and the short ID shown next to the QR.
+- **Photographic evidence**, plus a new evidences table and user panel.
+- **Environmental impact** calculation for lots.
+- **Root alias** for devices, with better search and device queries (and performance fixes).
+- **Import/export**: improved file upload, device list export, and a migration script from the legacy version.
+- **Better UI**: redesigned lots view, beneficiary view, side navigation, tokens view and navbar responsiveness, plus clearer error handling.
+- **Deployment and operations**: Postgres service with reverse proxy in Docker, database backup, and protection of the admin user.
 
 ## More details
 
@@ -112,6 +139,21 @@ Full Changelog: https://github.com/eReuse/IdHub/commits/v2026.1
 
 # v2025.1
 
+## Highlights
+
+- **DPP/DLT integration**: digital product passports, with a link to the DID document in device details and IdHub added to the Docker deployment.
+- **Environmental impact**: first implementation, as presented at the demo day.
+- **Richer device data**: reworked properties, states and notes, a device log, better `inxi` parsing, and upload of legacy snapshots.
+- **Lots**: lot tags for admins, lot groups that can be reordered, and initial demo data.
+- **UI**: localization, login changes, improved evidence details, and fixes to search and pagination.
+- **Quickstart deployment** and README updated for this release.
+
+## More details
+
+Merged PRs
+
+<details>
+    
 - DPP/DLT functionality ([#36](https://farga.pangea.org/ereuse/devicehub-django/pulls/36))
 - Properties rework, States, StatesDefinitions, DeviceLog, and Notes ([#37](https://farga.pangea.org/ereuse/devicehub-django/pulls/37))
 - inxi (take 2) ([#38](https://farga.pangea.org/ereuse/devicehub-django/pulls/38))
