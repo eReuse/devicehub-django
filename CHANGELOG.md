@@ -4,11 +4,11 @@
 
 ## Highlights
 
-- **ProductHub**: dynamic product types, and devices become products.
+- **Towards generic product management**: extend with dynamic product types, and devices become products.
 - **UNTP 0.7.0 support** for credential custody and management.
-- **Dashboard inbox**, extending the new dashboard.
+- **Simpler navigation menu**: Dashboard and Inbox are now one click away, and Inbox shows a counter when it has devices.
 - **Lots and beneficiaries**: re-assign returned devices (even across lots), beneficiaries paginator, and default lot type selection.
-- **Demo data and tests**: environment option for B2C demo data, and test fixes.
+- **Demo data and tests**: improved demo to see B2C data, and fixed test suite errors.
 
 ## More details
 
@@ -31,10 +31,11 @@ Merged PRs
 
 ## Highlights
 
-- **Dashboard**: new, with overall information about the inventory.
-- **Faster tables**: caching, fixed sorting and search, and select-all for devices.
-- **Customization**: custom IDs for devices and lots, and customizable QR labels.
-- **More robust evidence handling**: image linking to websnapshots, better parsing and error handling, and improved migration from devicehub-teal (legacy) with new backup/restore commands.
+- **Dashboard**: new view with overall information about the inventory.
+- **Faster tables**: caching, fixed sorting and search for devices.
+- **Customizable QR labels**: admins can now pick the content included in the QR label including the logo, the device properties to print, and the label size and font.
+- **Root alias**: bugfixes related to custom IDs for devices and lots.
+- **More robust evidence handling**: image linking to websnapshots, better parsing and error handling, and improved migration from devicehub-teal (legacy) with new backup/restore commands (that include database and evidences).
 - **Multitenant security**: fixes for data isolation vulnerabilities between tenants.
 - **UX and beneficiary workflow improvements**: breadcrumbs, paginator, clearing beneficiaries, and richer exports.
 
@@ -87,10 +88,10 @@ Full Changelog: https://github.com/eReuse/IdHub/commits/v2026.2
 - **QR codes** in device details, with print support and the short ID shown next to the QR.
 - **Photographic evidence**, plus a new evidences table and user panel.
 - **Environmental impact** calculation for lots.
-- **Root alias** for devices, with better search and device queries (and performance fixes).
+- **Root alias** for devices ID flexibility, with better search and device queries (and performance fixes).
 - **Import/export**: improved file upload, device list export, and a migration script from the legacy version.
-- **Better UI**: redesigned lots view, beneficiary view, side navigation, tokens view and navbar responsiveness, plus clearer error handling.
-- **Deployment and operations**: Postgres service with reverse proxy in Docker, database backup, and protection of the admin user.
+- **Better UI**: redesigned lots view, beneficiary view, side navigation, tokens view, and navbar responsiveness, plus clearer error handling.
+- **Deployment and operations**: Postgres service with reverse proxy in Docker, database backup and restore with dbbackup.
 
 ## More details
 
