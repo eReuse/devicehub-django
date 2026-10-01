@@ -139,21 +139,6 @@ Full Changelog: https://github.com/eReuse/IdHub/commits/v2026.1
 
 # v2025.1
 
-## Highlights
-
-- **DPP/DLT integration**: digital product passports, with a link to the DID document in device details and IdHub added to the Docker deployment.
-- **Environmental impact**: first implementation, as presented at the demo day.
-- **Richer device data**: reworked properties, states and notes, a device log, better `inxi` parsing, and upload of legacy snapshots.
-- **Lots**: lot tags for admins, lot groups that can be reordered, and initial demo data.
-- **UI**: localization, login changes, improved evidence details, and fixes to search and pagination.
-- **Quickstart deployment** and README updated for this release.
-
-## More details
-
-Merged PRs
-
-<details>
-    
 - DPP/DLT functionality ([#36](https://farga.pangea.org/ereuse/devicehub-django/pulls/36))
 - Properties rework, States, StatesDefinitions, DeviceLog, and Notes ([#37](https://farga.pangea.org/ereuse/devicehub-django/pulls/37))
 - inxi (take 2) ([#38](https://farga.pangea.org/ereuse/devicehub-django/pulls/38))
@@ -178,7 +163,5 @@ Merged PRs
 - Login changes rebase ([#69](https://farga.pangea.org/ereuse/devicehub-django/pulls/69))
 - Allow reorder of Lot groups ([#70](https://farga.pangea.org/ereuse/devicehub-django/pulls/70))
 - env-impact-224/initial-itu-l-1024 ([#74](https://farga.pangea.org/ereuse/devicehub-django/pulls/74))
-
-</details>
 
 Full Changelog: https://github.com/eReuse/IdHub/commits/v2025.1
