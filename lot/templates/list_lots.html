@@ -34,15 +34,34 @@
   </div>
   <form method="post">
     {% csrf_token %}
-    {% for group_name, lots in form.grouped_lots.items %}
+
+    {% for group, lots in form.grouped_lots.items %}
       <div class="card mb-1">
         <div class="card-header d-flex justify-content-between align-items-center" data-bs-toggle="collapse" data-bs-target="#collapse{{ forloop.counter }}" aria-expanded="false" aria-controls="collapse{{ forloop.counter }}" style="cursor: pointer;">
-          <h5 class="mb-0">{{ group_name }} <small class="text-muted">({{ lots|length }} {% trans "open Lot/s"  %})</small>
+
+          <h5 class="mb-0 d-flex align-items-center">
+            {{ group.name|default:"No group" }}
+            <small class="text-muted ms-2">({{ lots|length }} {% trans "open Lot/s"  %})</small>
+
+            {% if group and group.exclusive_devices %}
+              <span class="badge bg-warning text-dark ms-3 fw-normal" style="font-size: 0.8rem;">
+                <i class="bi bi-arrow-left-right me-1"></i> {% trans "Exclusive Group" %}
+              </span>
+            {% endif %}
           </h5>
+
           <i class="bi bi-chevron-down"></i>
         </div>
         <div id="collapse{{ forloop.counter }}" class="collapse">
           <div class="card-body">
+
+            {% if group and group.exclusive_devices %}
+              <div class="alert alert-info py-2 d-flex align-items-start mb-3" role="alert">
+                <i class="bi bi-info-circle-fill me-2 mt-1"></i>
+                <small>{% trans "Assigning products to a lot in this group will <strong>move them</strong>, automatically removing them from any other lot they currently belong to within this group." %}</small>
+              </div>
+            {% endif %}
+
             <div class="lot-grid">
               {% for lot in lots %}
                 <div class="form-check lot-item ms-2">

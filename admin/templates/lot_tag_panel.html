@@ -21,14 +21,11 @@
     </caption>
   <thead class="table-light">
     <tr>
-      <th scope="col" width="1%" class="text-start">
-      </th>
-      <th scope="col" width="5%" class="text-center">
-      #</th>
-      <th scope="col">{% trans "Lot Group Name" %}
-      </th>
-      <th scope="col" width="15%" class="text-center">{% trans "Actions" %}
-      </th>
+      <th scope="col" width="1%" class="text-start"></th>
+      <th scope="col" width="5%" class="text-center">#</th>
+      <th scope="col">{% trans "Lot Group Name" %}</th>
+      <th scope="col" width="15%" class="text-center">{% trans "Behavior" %}</th>
+      <th scope="col" width="15%" class="text-center">{% trans "Actions" %}</th>
     </tr>
   </thead>
   <tbody id="sortable_list">
@@ -45,6 +42,17 @@
         </td>
         <td class="font-monospace">
           {{ tag.name }}
+        </td>
+        <td class="text-center">
+          {% if tag.exclusive_devices %}
+            <span class="badge bg-primary rounded-pill fw-normal" data-bs-toggle="tooltip" data-bs-placement="top" title="{% trans 'Devices move between lots. A device cannot be in multiple lots of this group at once.' %}">
+              <i class="bi bi-arrow-left-right me-1"></i> {% trans "Exclusive" %}
+            </span>
+          {% else %}
+            <span class="badge bg-secondary rounded-pill fw-normal" data-bs-toggle="tooltip" data-bs-placement="top" title="{% trans 'Standard behavior. Devices can be in multiple lots of this group simultaneously.' %}">
+              <i class="bi bi-files me-1"></i> {% trans "Standard" %}
+            </span>
+          {% endif %}
         </td>
 
         <!-- action buttons -->
@@ -99,11 +107,23 @@
         <form method="post" action="{% url 'admin:add_lot_tag' %}">
           {% csrf_token %}
           <div class="mb-3">
-            <label for="lotTagInput" class="form-label">{% trans "Tag" %}</label>
+            <label for="lotTagInput" class="form-label">{% trans "Tag Name" %}</label>
             <input type="text" class="form-control" id="lotTagInput" name="name" maxlength="50" required>
             <div class="form-text">{% trans "Maximum 50 characters." %}</div>
           </div>
-          <div class="modal-footer">
+
+          <div class="mb-3 mt-4">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" role="switch" id="exclusiveDevicesInput" name="exclusive_devices">
+              <label class="form-check-label fw-bold" for="exclusiveDevicesInput">{% trans "Exclusive Devices" %}</label>
+            </div>
+            <div class="alert alert-info py-2 mt-2 mb-0 d-flex align-items-start" role="alert">
+              <i class="bi bi-info-circle-fill me-2 mt-1"></i>
+              <small>{% trans "If enabled, assigning a device to a lot will <strong>automatically move it</strong> from any other lot within this specific group." %}</small>
+            </div>
+          </div>
+
+          <div class="modal-footer px-0 pb-0 mt-4 border-0">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Close" %}</button>
             <button type="submit" class="btn btn-primary">{% trans "Add Lot tag" %}</button>
           </div>
@@ -127,13 +147,37 @@
           </h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
         </div>
+
         <div class="modal-body">
           <div class="mb-3">
-            <label for="editLotTagInput{{ tag.id }}" class="form-label">{% trans "Tag" %}</label>
+            <label for="editLotTagInput{{ tag.id }}" class="form-label">{% trans "Tag Name" %}</label>
             <input type="text" class="form-control" id="editLotTagInput{{ tag.id }}" name="name" maxlength="50" value="{{ tag.name }}" required>
             <div class="form-text">{% trans "Maximum 50 characters." %}</div>
+          </div>
+
+          <div class="mb-3 mt-4">
+            <label class="form-label d-block text-muted">{% trans "Behavior Type" %}</label>
+
+            {% if tag.exclusive_devices %}
+              <div class="p-2 bg-light border rounded text-muted">
+                <i class="bi bi-arrow-left-right me-2 text-warning"></i>
+                <strong>{% trans "Exclusive Devices" %}</strong>
+                <p class="mb-0 small mt-1">{% trans "Assigning a device moves it from any other lot in this group." %}</p>
+              </div>
+            {% else %}
+              <div class="p-2 bg-light border rounded text-muted">
+                <i class="bi bi-files me-2"></i>
+                <strong>{% trans "Standard Devices" %}</strong>
+                <p class="mb-0 small mt-1">{% trans "Devices can belong to multiple lots in this group." %}</p>
+              </div>
+            {% endif %}
+
+            <div class="form-text mt-2 text-secondary">
+              <i class="bi bi-lock-fill"></i> {% trans "This setting can only be defined upon creation and cannot be changed." %}
+            </div>
+
             {% if tag.id == 1 %}
-              <p class="text-muted text-end mt-3">{% trans "INBOX can only be edited, not deleted." %}</p>
+              <p class="text-muted text-end mt-3 mb-0 small">{% trans "Note: INBOX can only be edited, not deleted." %}</p>
             {% endif %}
           </div>
 
@@ -147,7 +191,6 @@
   </div>
 </div>
 {% endfor %}
-
 
 <!-- delete lot tag definition Modal -->
 {% for tag in lot_tags_edit %}
@@ -165,9 +208,8 @@
         {% if tag.lot_set.first %}
         <div class="alert alert-warning text-center" role="alert">
             <strong class="text-bold mb-0"> {% trans "This lot group has" %} {{tag.lot_set.count}} {% trans "lot/s." %}</strong>
-
         </div>
-	      {% else %}
+          {% else %}
             <p class="mb-0 text-muted mt-2">{% trans "Are you sure you want to delete this lot group?" %}</p>
         {% endif %}
 
@@ -191,15 +233,15 @@
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
             {% trans "Cancel" %}
           </button>
-	  {% if tag.lot_set.first %}
+      {% if tag.lot_set.first %}
           <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" disabled>
             {% trans "Delete" %}
           </button>
-  	  {% else %}
+        {% else %}
           <button type="submit" class="btn btn-danger">
             {% trans "Delete" %}
           </button>
-  	  {% endif %}
+        {% endif %}
         </form>
       </div>
     </div>
@@ -209,6 +251,14 @@
 {% endfor %}
 
 <script>
+  // Initialize Bootstrap tooltips for the new badges
+  document.addEventListener("DOMContentLoaded", function() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+      return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+  });
+
   //following https://dev.to/nemecek_f/django-how-to-let-user-re-order-sort-table-of-content-with-drag-and-drop-3nlp
   const saveOrderingButton = document.getElementById('saveOrderBtn');
   const orderingForm = document.getElementById('orderingForm');

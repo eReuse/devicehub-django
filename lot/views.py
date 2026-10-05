@@ -221,7 +221,21 @@ class AddToLotView(DashboardView, FormView):
         form.devices = self.get_session_devices()
         form.save()
         response = super().form_valid(form)
+
+        selected_lots = form._lots
+        exclusive_groups = set()
+
+        for lot in selected_lots:
+            if lot.type and lot.type.exclusive_devices:
+                exclusive_groups.add(lot.type.name)
+
         messages.success(self.request, _("Products assigned to Lot."))
+
+        if exclusive_groups:
+            groups_str = ", ".join(exclusive_groups)
+            msg = _("Note: For the exclusive group(s) '%(groups)s', products were moved instead of being assigned to multiple lots.") % {'groups': groups_str}
+            messages.info(self.request, msg)
+
         return response
 
     def get_success_url(self):

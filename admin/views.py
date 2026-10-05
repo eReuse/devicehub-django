@@ -149,7 +149,7 @@ class AddLotTagView(AdminView, CreateView):
     breadcrumb = [(_("Admin"), reverse_lazy("admin:panel")), (_("Lot Groups"), reverse_lazy("admin:tag_panel")), (_("New lot tag"), None)]
     success_url = reverse_lazy('admin:tag_panel')
     model = LotTag
-    fields = ('name',)
+    fields = ('name', 'exclusive_devices')
 
     def form_valid(self, form):
         form.instance.owner = self.request.user.institution
