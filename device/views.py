@@ -207,6 +207,7 @@ class DetailsView(DashboardView, TemplateView ):
         last_evidence = self.object.get_last_evidence()
         uuids = self.object.uuids
 
+        image_evidences = [ev for ev in self.object.evidences if ev.is_photo_evidence()]
         ev_queryset = Evidence.get_device_evidences(self.request.user, uuids)
         evidence_table = EvidenceTable(ev_queryset, exclude =('device', ))
         RequestConfig(self.request).configure(evidence_table)
@@ -238,6 +239,7 @@ class DetailsView(DashboardView, TemplateView ):
             "device_notes": device_notes,
             "table": evidence_table,
             "credential_table": credential_table,
+            "image_evidences": image_evidences,
         })
         return context
 
