@@ -19,6 +19,7 @@ class LotTag(models.Model):
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     inbox = models.BooleanField(default=False)
     order = models.PositiveIntegerField(default=0)
+    exclusive_devices = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name
@@ -63,6 +64,13 @@ class Lot(models.Model):
         aliases = RootAlias.physical_aliases(self.owner, v)
         if DeviceLot.objects.filter(lot=self, device_id__in=aliases).exists():
             return
+
+        if self.type.exclusive_devices:
+            DeviceLot.objects.filter(
+                lot__type=self.type,
+                device_id__in=aliases
+            ).delete()
+
         DeviceLot.objects.create(
             lot=self, device_id=RootAlias.resolve_root(self.owner, v)
         )
