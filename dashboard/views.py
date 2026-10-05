@@ -8,25 +8,19 @@ from tablib import Dataset
 from django.db.models import Count
 from collections import Counter
 from django.utils.translation import gettext_lazy as _
-from django.core.cache import cache
-from django.contrib import messages
-from django.views.generic.edit import FormView
-from django.shortcuts import Http404, get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
-from django.utils.dateparse import parse_datetime
 from django.utils import timezone
 from django.http import HttpResponse
 from dashboard.tables import ProductCacheTable
 from dashboard.mixins import DashboardView
 from django.views.generic.base import TemplateView
 
-from django_tables2 import RequestConfig
 from django_tables2.views import SingleTableMixin
-from django_tables2.export.export import TableExport
 from django_tables2.export.views import ExportMixin
 
 from action.models import StateDefinition, State
-from django.db.models import Q, Subquery, OuterRef
+from django.db.models import Q
 
 from dashboard.mixins import InventaryMixin, DetailsMixin, DeviceTableMixin, ProductCacheTableMixin
 from evidence.models import SystemProperty, RootAlias, UserProperty
@@ -684,10 +678,17 @@ class SearchView(DeviceTableMixin, InventaryMixin):
             owner=institution,
             uuid__in=uuids,
         ).values_list("uuid", "value")
-        uuid_to_value = {str(u): v for u, v in props}
 
-        return [uuid_to_value[uuid] for uuid in uuids if uuid in uuid_to_value]
+        # resolve those values to canonical roots
+        values = [v for u, v in props]
+        alias_map = dict(
+            RootAlias.objects.filter(owner=institution, alias__in=values)
+            .values_list("alias", "root")
+        )
 
+        uuid_to_root = {str(u): alias_map.get(v, v) for u, v in props}
+
+        return [uuid_to_root[uuid] for uuid in uuids if uuid in uuid_to_root]
 
 class InventoryOverviewView(DashboardView, TemplateView):
     template_name = 'inventory_overview.html'
