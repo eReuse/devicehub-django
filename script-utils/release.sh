@@ -74,7 +74,7 @@ main() {
         CHANGELOG_CONTENT="$(awk '/^# /{if(m)exit; m=1} m' CHANGELOG.md)"
         exit 1
 
-        git tag -a "${VERSION}" -m "${CHANGELOG_CONTENT}"
+        git tag -a "${VERSION}" --cleanup=verbatim -m "${CHANGELOG_CONTENT}"
 
         exit 1
 
