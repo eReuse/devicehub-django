@@ -5,7 +5,7 @@
 set -e
 set -u
 # DEBUG
-set -x
+# set -x
 
 get_next_version() {
         current_year="$(date +'%Y')"
@@ -19,7 +19,7 @@ get_next_version() {
 }
 
 next_changelog() {
-        CHANGELOG_CONTENT="$(python ./script-utils/generate-changelog.py)"
+        CHANGELOG_CONTENT="$(python ./script-utils/generate-changelog-merge-detail.py)"
         get_next_version
 
         cat <<EOF
