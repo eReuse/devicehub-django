@@ -1,5 +1,7 @@
 #!/bin/sh
 
+# Propagate new CHANGELOG data to git tag and software roge releases
+
 set -e
 set -u
 # DEBUG
@@ -23,60 +25,14 @@ do_codeberg_release() {
                           "${VERSION}" "${VERSION}" "${release_message}")"
 }
 
-get_next_version() {
-        current_year="$(date +'%Y')"
-        previous_number=$(git tag --list \
-                                  | grep "${current_year}" \
-                                  | sed "s/${current_year}\.//" \
-                                  | sort -n \
-                                  | tail -1)
-        number="$(( ${previous_number:-0} + 1 ))"
-        VERSION="v$(echo "${current_year}.${number}")"
-}
-
-autochangelog() {
-        CHANGELOG_CONTENT="$(python ./script-utils/generate-changelog.py)"
-        get_next_version
-
-        cat > CHANGELOG.md.new <<EOF
-# ${VERSION}
-
-## Highlights
-
-TODO manually
-
-## More details
-
-Merged PRs
-
-<details>
-${CHANGELOG_CONTENT}
-</details>
-
-$(cat CHANGELOG.md)
-EOF
-        mv CHANGELOG.md.new CHANGELOG.md
-}
-
 main() {
-        if [ -n "$(git status --porcelain)" ]; then
-                echo "You have uncommitted changes in git"
-                exit 1
-        fi
-
         cd "$(dirname "$0")/.."
-
-        # TODO commented, we add highlights
-        # autochangelog
 
         # get unreleased CHANGELOG
         # awk: if find Match (m) the regex (to next heading) just print that
         CHANGELOG_CONTENT="$(awk '/^# /{if(m)exit; m=1} m' CHANGELOG.md)"
-        exit 1
 
         git tag -a "${VERSION}" --cleanup=verbatim -m "${CHANGELOG_CONTENT}"
-
-        exit 1
 
         git push origin "${VERSION}"
 
@@ -84,7 +40,7 @@ main() {
         sleep 5
 
         do_codeberg_release
-        # TODO github release
+        # TODO do_github_release
 
         echo "Released ${VERSION}"
 }
