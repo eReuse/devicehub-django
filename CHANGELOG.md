@@ -77,7 +77,7 @@ Merged PRs
 
 </details>
 
-Full Changelog: https://github.com/eReuse/IdHub/commits/v2026.2
+Full Changelog: https://github.com/eReuse/devicehub-django/commits/v2026.2
 
 # v2026.1
 
@@ -134,7 +134,7 @@ Merged PRs
 
 </details>
 
-Full Changelog: https://github.com/eReuse/IdHub/commits/v2026.1
+Full Changelog: https://github.com/eReuse/devicehub-django/commits/v2026.1
 
 # v2025.1
 
