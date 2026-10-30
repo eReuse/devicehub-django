@@ -15,6 +15,7 @@ from utils.constants import STR_EXTEND_SIZE, CHASSIS_DH
 from evidence.xapian import search
 from evidence.parse_details import ParseSnapshot
 from evidence.normal_parse_details import get_inxi, get_inxi_key
+from action.models import State, StateDefinition
 
 from device.product_cache import ProductCache
 
@@ -371,6 +372,7 @@ def ensure_root_alias_self_reference(sender, instance, created, **kwargs):
     existing = RootAlias.objects.filter(
         owner=instance.owner, alias=instance.value,
     ).first()
+    is_new_device = False
     if existing is None:
         RootAlias.objects.create(
             owner=instance.owner,
@@ -380,9 +382,22 @@ def ensure_root_alias_self_reference(sender, instance, created, **kwargs):
             created=instance.created,
             updated=instance.created,
         )
+        is_new_device = True
     elif instance.created > existing.updated:
         RootAlias.objects.filter(pk=existing.pk).update(
             updated=instance.created,
+        )
+
+    if is_new_device:
+        state_def = StateDefinition.objects.filter(
+           order=1,
+           institution=instance.owner
+        ).first()
+        State.objects.create(
+            snapshot_uuid=instance.uuid,
+            state=state_def.state,
+            user= instance.user,
+            institution= instance.owner,
         )
 
     # A new evidence changes the device's latest state: refresh its read model.
@@ -750,15 +765,20 @@ class Evidence:
         return ", ".join(models)
 
     def get_alias(self):
-        aliases = [ x.value for x in self.properties ]
+        if not self.properties:
+            return None
+
+        aliases = [x.value for x in self.properties]
+
         alias_obj = RootAlias.objects.filter(
-            alias__in = aliases,
-        ).order_by("-updated")
+            alias__in=aliases,
+            owner=self.owner
+        ).order_by("-updated").first()
 
         if alias_obj:
-            return alias_obj[0].root
+            return alias_obj.root
         else:
-            return self.properties[0].value
+            return aliases[0]
 
     @classmethod
     def get_all(cls, user):
