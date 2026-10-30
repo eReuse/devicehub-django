@@ -1,12 +1,14 @@
-from django.db import models, connection
-from django.db.models import Max
-from user.models import User, Institution
+from django.apps import apps
 from django.core.exceptions import ValidationError
+from django.db import models
+from django.db.models import Max
+from django.db.models.signals import post_delete, post_save
+from django.dispatch import receiver
 
 class State(models.Model):
     date = models.DateTimeField(auto_now_add=True)
-    institution = models.ForeignKey(Institution, on_delete=models.SET_NULL, null=True)
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    institution = models.ForeignKey('user.institution', on_delete=models.SET_NULL, null=True)
+    user = models.ForeignKey('user.user', on_delete=models.SET_NULL, null=True)
 
     state = models.CharField(max_length=50)
     snapshot_uuid = models.UUIDField()
@@ -24,7 +26,7 @@ class State(models.Model):
 
 
 class StateDefinition(models.Model):
-    institution = models.ForeignKey(Institution, on_delete=models.CASCADE)
+    institution = models.ForeignKey('user.institution', on_delete=models.CASCADE)
 
     order = models.PositiveIntegerField(default=0)
     state = models.CharField(max_length=50)
@@ -47,7 +49,6 @@ class StateDefinition(models.Model):
             self.order = (max_order or 0) + 1
         super().save(*args, **kwargs)
 
-
     def delete(self, *args, **kwargs):
         institution = self.institution
         order = self.order
@@ -55,14 +56,36 @@ class StateDefinition(models.Model):
         # Adjust the order of other instances
         StateDefinition.objects.filter(institution=institution, order__gt=order).update(order=models.F('order') - 1)
 
-
     def __str__(self):
         return f"{self.institution.name} - {self.state}"
 
 
+@receiver(post_save, sender='user.Institution')
+def ensure_default_state_definition(sender, instance, created, **kwargs):
+    if created:
+        StateDefinition.objects.get_or_create(
+            institution=instance,
+            state='INBOX',
+            defaults={'order': 1}
+        )
+
+@receiver(post_delete, sender=StateDefinition)
+def prevent_empty_state_definitions(sender, instance, **kwargs):
+    Institution = apps.get_model('user', 'Institution')
+
+    if Institution.objects.filter(pk=instance.institution_id).exists():
+
+        if not StateDefinition.objects.filter(institution_id=instance.institution_id).exists():
+            StateDefinition.objects.create(
+                institution_id=instance.institution_id,
+                state='INBOX',
+                order=1
+            )
+
+
 class Note(models.Model):
-    institution = models.ForeignKey(Institution, on_delete=models.CASCADE)
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    institution = models.ForeignKey('user.institution', on_delete=models.CASCADE)
+    user = models.ForeignKey('user.user', on_delete=models.SET_NULL, null=True, blank=True)
     date = models.DateTimeField(auto_now_add=True)
     description = models.TextField()
     snapshot_uuid = models.UUIDField()
@@ -75,8 +98,8 @@ class Note(models.Model):
 
 
 class DeviceLog(models.Model):
-    institution = models.ForeignKey(Institution, on_delete=models.CASCADE)
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    institution = models.ForeignKey('user.institution', on_delete=models.CASCADE)
+    user = models.ForeignKey('user.user', on_delete=models.SET_NULL, null=True, blank=True)
     date = models.DateTimeField(auto_now_add=True)
     event = models.CharField(max_length=255)
     snapshot_uuid = models.UUIDField()

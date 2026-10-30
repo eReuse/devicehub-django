@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 import logging
 from django.core.management.base import BaseCommand
-from action.models import StateDefinition, Institution
+from action.models import StateDefinition
+from user.models import Institution
 from django.utils.translation import gettext as _
 
 logger = logging.getLogger('django')
