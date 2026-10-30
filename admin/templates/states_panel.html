@@ -2,90 +2,115 @@
 {% load i18n django_bootstrap5 %}
 
 {% block content %}
-<div class="row">
-  <div class="col">
-    <h3>{{ subtitle }}</h3>
-  </div>
-  <div class="col text-end">
-    <button type="button" class="btn btn-green-admin" data-bs-toggle="modal" data-bs-target="#addStateModal">
-      {% trans "Add" %}
-    </button>
-  </div>
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2>{{ subtitle }}</h2>
 </div>
-<div class="row mt-4">
-  <div class="col">
+
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-light py-2">
+    <div class="d-flex justify-content-between align-items-center">
+      <h3 class="h6 mb-0">
+        <i class="bi bi-ui-checks-grid me-2"></i>
+        {% trans "State Definitions" %}
+      </h3>
+
+      <div class="d-flex align-items-center">
+        <form id="orderingForm" method="post" action="{% url 'admin:update_state_order' %}" class="m-0 me-2">
+          {% csrf_token %}
+          <input type="hidden" id="orderingInput" name="ordering">
+          <button id="saveOrderBtn" type="button" class="btn btn-success btn-sm d-none">
+            <small>{% trans "Update Order" %}</small>
+          </button>
+        </form>
+
+        <button type="button" class="btn btn-green-admin text-sm m-1" data-bs-toggle="modal" data-bs-target="#addStateModal">
+          <small>{% trans "Add state" %}</small>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card-body p-0">
     {% if state_definitions %}
-  <table class="table table-hover table-bordered align-middle">
-    <caption class="text-muted small">
-      {% trans 'Move and drag state definitions to reorder' %}
-    </caption>
-  <thead class="table-light">
-    <tr>
-      <th scope="col" width="1%" class="text-start">
-      </th>
-      <th scope="col" width="5%" class="text-center">
-      #</th>
-      <th scope="col">{% trans "State Definition" %}
-      </th>
-      <th scope="col" width="15%" class="text-center">{% trans "Actions" %}
-      </th>
-    </tr>
-  </thead>
-  <tbody id="sortable_list">
-    {% for state_definition in state_definitions %}
-      <tr
-        data-lookup="{{ state_definition.id }}"
-        style="cursor: grab;"
-        class="align-items-center">
+      <div class="table-responsive custom-hover-shadow custom_table">
+        <table class="table table-hover table-bordered align-middle mb-0">
+          <thead class="text-center">
+            <tr>
+              <th scope="col" style="width: 1%;"></th>
+              <th scope="col" style="width: 1%;">#</th>
+              <th scope="col" class="text-start">{% trans "State Definition" %}</th>
+              <th scope="col" width="20%" class="text-end pe-4">{% trans "Actions" %}</th>
+            </tr>
+          </thead>
+          <tbody id="sortable_list" class="text-center">
+            {% for state_definition in state_definitions %}
+              <tr data-lookup="{{ state_definition.id }}" class="bg-white border-bottom">
 
-        <td class="">
-          <i class="bi bi-grip-vertical" aria-hidden="true">
-            </i>
-        </td>
-        <td class="text-center">
-          <strong>{{ state_definition.order }} </strong>
-        </td>
-        <td class="font-monospace">
-          {{ state_definition.state }}
-        </td>
+                <td class="px-2 py-2 drag-handle text-muted" style="cursor: grab;" title="{% trans 'Drag to reorder' %}">
+                  <i class="bi bi-grip-vertical fs-5" aria-hidden="true"></i>
+                </td>
 
-        <!-- action buttons -->
-        <td>
-          <div class="btn-group float-end">
-            <button 
-              type="button" 
-              class="btn btn-sm btn-outline-info d-flex align-items-center" 
-              data-bs-toggle="modal"  data-bs-target="#editStateModal{{ state_definition.id }}">
-              <i class="bi bi-pencil me-1"></i>
-              {% trans 'Edit' %}
-            </button>
-            <button 
-              type="button" class="btn btn-sm btn-outline-danger d-flex align-items-center" 
-              data-bs-toggle="modal" 
-              data-bs-target="#deleteStateModal{{ state_definition.id }}" >
-              <i class="bi bi-trash me-1"></i>
-              {% trans 'Delete' %}
-            </button>
-          </div>
-        </td>
-      </tr>
-    {% endfor %}
-  </tbody>
-  </table>
+                <td class="px-2 py-2">
+                  <strong>{{ state_definition.order }}</strong>
+                </td>
 
-  <form id="orderingForm" method="post" action="{% url 'admin:update_state_order' %}">
-        {% csrf_token %}
-        <input type="hidden" id="orderingInput" name="ordering">
-         <button id="saveOrderBtn" class="btn btn-success mt-5 float-start collapse" >{% trans "Update Order" %}</button>
-      </form>
+                <td class="ps-3 py-2 text-start font-monospace">
+                  {{ state_definition.state }}
+                  {% if forloop.first %}
+                    <span class="badge bg-info text-dark ms-2" style="font-size: 0.7rem;">{% trans "Default" %}</span>
+                  {% endif %}
+                </td>
+
+                <td class="pe-4 py-2">
+                  <div class="d-flex justify-content-end gap-2">
 
 
-    {% else %}  
-      <div class="alert alert-primary text-center mt-5" role="alert">
+                    <!-- action buttons -->
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-info d-flex text-primary align-items-center"
+                    data-bs-toggle="modal"  data-bs-target="#editStateModal{{ state_definition.id }}">
+                    {% trans 'Edit' %}
+                  </button>
+
+                  <button type="button"
+                          class="btn btn-sm btn-outline-danger shadow-sm px-2 d-inline-flex align-items-center justify-content-center"
+                          style="width: 32px; height: 32px; transition: all 0.2s;"
+                          data-bs-toggle="modal"
+                          data-bs-target="#deleteStateModal{{ state_definition.id }}"
+                          aria-label="{% trans 'Delete' %} {{ state_definition.state }}"
+                          title="{% trans 'Delete this state definition' %}">
+                    <i class="bi bi-trash3" aria-hidden="true"></i>
+                  </button>
+
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="alert alert-primary text-center m-4" role="alert">
         {% trans "No states found on current organization" %}
       </div>
     {% endif %}
   </div>
+
+  {% if state_definitions %}
+  <div class="card-footer bg-white text-muted small py-3">
+    <div class="d-flex flex-column gap-1">
+      <div>
+        <i class="bi bi-arrows-move me-1"></i>
+        {% trans "Drag and drop rows using the grip icon to reorder your state definitions." %}
+      </div>
+      <div>
+        <i class="bi bi-info-circle me-1"></i>
+        {% trans "Note: The state in position #1 will be used as the default state for all newly created products." %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
 </div>
 
 <!-- add state definition Modal -->
@@ -197,37 +222,37 @@
 
 
 <script>
-  //following https://dev.to/nemecek_f/django-how-to-let-user-re-order-sort-table-of-content-with-drag-and-drop-3nlp
-  const saveOrderingButton = document.getElementById('saveOrderBtn');
-  const orderingForm = document.getElementById('orderingForm');
-  const formInput = orderingForm.querySelector('#orderingInput');
-  const sortable_table = document.getElementById('sortable_list');
+  document.addEventListener('DOMContentLoaded', function() {
+    const saveOrderingButton = document.getElementById('saveOrderBtn');
+    const orderingForm = document.getElementById('orderingForm');
+    const formInput = orderingForm.querySelector('#orderingInput');
+    const sortable_table = document.getElementById('sortable_list');
 
-  const sortable = new Sortable(sortable_table, {
-      animation: 150,
-      swapThreshold: 0.10,
-      onChange: () => {
-        //TODO: change hide/show animation to a nicer one 
-        const collapse = new bootstrap.Collapse(saveOrderingButton, {
-          toggle: false
-        });
-        collapse.show();
-      }
-    });
+    if (sortable_table) {
+      const sortable = new Sortable(sortable_table, {
+        animation: 150,
+        handle: '.drag-handle',
+        swapThreshold: 0.10,
+        onChange: () => {
+          saveOrderingButton.classList.remove('d-none');
+        }
+      });
 
- function saveOrdering() {
-    const rows = sortable_table.querySelectorAll('tr');
-    let ids = [];
-    for (let row of rows) {
-        ids.push(row.dataset.lookup);
+      saveOrderingButton.addEventListener('click', function() {
+        const rows = sortable_table.querySelectorAll('tr');
+        let ids = [];
+        for (let row of rows) {
+          ids.push(row.dataset.lookup);
+        }
+        formInput.value = ids.join(',');
+
+        this.innerHTML = '<small><span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>{% trans "Saving..." %}</small>';
+        this.classList.add('disabled');
+
+        orderingForm.submit();
+      });
     }
-    formInput.value = ids.join(',');
-    orderingForm.submit();
- }
-
- saveOrderingButton.addEventListener('click', saveOrdering);
-
+  });
 </script>
-
 
 {% endblock %}
