@@ -4,7 +4,7 @@ from smtplib import SMTPException
 from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db import IntegrityError, transaction
-from django.shortcuts import Http404, get_object_or_404, redirect
+from django.shortcuts import Http404, get_object_or_404, redirect, HttpResponseRedirect
 from django.urls import reverse, reverse_lazy
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
@@ -326,7 +326,17 @@ class DeleteStateDefinitionView(AdminView, StateDefinitionContextMixin, SuccessM
             logger.warning(f"User {self.request.user.id} attempted to delete state definition belonging to another institution.")
             raise Http404
 
+        total_states = StateDefinition.objects.filter(institution=self.request.user.institution).count()
         state_name = self.object.state
+
+        if total_states <= 1:
+            logger.warning(f"User {self.request.user.id} attempted to delete the last state '{state_name}'. Blocked.")
+            messages.error(
+                self.request,
+                _("You cannot delete '{state}'. Your organization must have at least one active state definition.").format(state=state_name)
+            )
+            return HttpResponseRedirect(self.success_url)
+
         response = super().form_valid(form)
         logger.info(f"User {self.request.user.id} deleted state definition: '{state_name}'.")
         return response
