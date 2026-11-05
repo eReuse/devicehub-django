@@ -294,7 +294,7 @@ class AddStateDefinitionView(AdminView, StateDefinitionContextMixin, CreateView)
     breadcrumb = [(_("Admin"), reverse_lazy("admin:panel")), (_("States"), reverse_lazy("admin:states_panel")), (_("New state"), None)]
     success_url = reverse_lazy('admin:states_panel')
     model = StateDefinition
-    fields = ('state',)
+    fields = ('state', 'description')
 
     def form_valid(self, form):
         form.instance.institution = self.request.user.institution
@@ -370,7 +370,7 @@ class UpdateStateOrderView(AdminView, TemplateView):
 class UpdateStateDefinitionView(AdminView, UpdateView):
     model = StateDefinition
     template_name = 'states_panel.html'
-    fields = ['state']
+    fields = ['state', 'description']
     success_url = reverse_lazy('admin:states_panel')
     pk_url_kwarg = 'pk'
 
