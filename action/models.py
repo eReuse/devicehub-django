@@ -4,6 +4,7 @@ from django.db import models
 from django.db.models import Max
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
+from django.utils.translation import gettext as _
 
 class State(models.Model):
     date = models.DateTimeField(auto_now_add=True)
@@ -30,6 +31,7 @@ class StateDefinition(models.Model):
 
     order = models.PositiveIntegerField(default=0)
     state = models.CharField(max_length=50)
+    description = models.CharField(max_length=255, blank=True, default='')
     dte_config = models.JSONField(default=dict, blank=True)
 
     auto_issue_dte = models.BooleanField(
@@ -66,6 +68,7 @@ def ensure_default_state_definition(sender, instance, created, **kwargs):
         StateDefinition.objects.get_or_create(
             institution=instance,
             state='INBOX',
+            description= _("Initial state for newly received or registered devices."),
             defaults={'order': 1}
         )
 
@@ -81,7 +84,6 @@ def prevent_empty_state_definitions(sender, instance, **kwargs):
                 state='INBOX',
                 order=1
             )
-
 
 class Note(models.Model):
     institution = models.ForeignKey('user.institution', on_delete=models.CASCADE)
