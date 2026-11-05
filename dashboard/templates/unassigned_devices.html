@@ -138,15 +138,33 @@
                         <button type="button" id="addStateDropdown" class="btn btn-green-admin dropdown-toggle" data-bs-toggle="dropdown">
                             {% trans "Change state" %}
                         </button>
-                        <ul class="dropdown-menu" style="width: 120%;">
+
+                        <ul class="dropdown-menu shadow" style="min-width: 100%; max-width: 350px;">
                             {% for state in state_definitions %}
-                            <li style="width: 100%;">
+                            <li>
                                 <button type="button"
-                                        class="dropdown-item d-flex justify-content-between align-items-center"
+                                        class="dropdown-item d-flex justify-content-between align-items-center gap-3"
                                         data-bs-toggle="modal"
                                         data-bs-target="#bulkChangeStateModal-{{ state.id }}">
-                                    <span class="font-monospace">{{ state.state }}</span>
-                                    <span class="badge {% if state.auto_issue_dte and user.institution.integration_settings.dpp_enabled %}bg-primary{% else %}btn-green-user{% endif %} rounded-pill-sm">{{ forloop.counter }}</span>
+
+                                    <span class="font-monospace text-truncate" title="{{ state.state }}">
+                                        {{ state.state }}
+                                    </span>
+
+                                    <span class="d-flex align-items-center gap-2 flex-shrink-0">
+                                        {% if state.description %}
+                                        <i class="bi bi-info-circle text-muted"
+                                        data-bs-toggle="tooltip"
+                                        data-bs-placement="left"
+                                        title="{{ state.description }}"
+                                        style="font-size: 0.9em;"></i>
+                                        {% endif %}
+
+                                        <span class="badge {% if state.auto_issue_dte and user.institution.integration_settings.dpp_enabled %}bg-primary{% else %}btn-green-user{% endif %} rounded-pill-sm">
+                                            {{ forloop.counter }}
+                                        </span>
+                                    </span>
+
                                 </button>
                             </li>
                             {% endfor %}
