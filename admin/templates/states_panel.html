@@ -39,6 +39,7 @@
               <th scope="col" style="width: 1%;"></th>
               <th scope="col" style="width: 1%;">#</th>
               <th scope="col" class="text-start">{% trans "State Definition" %}</th>
+              <th scope="col" class="text-start">{% trans "Description" %}</th>
               <th scope="col" width="20%" class="text-end pe-4">{% trans "Actions" %}</th>
             </tr>
           </thead>
@@ -59,6 +60,10 @@
                   {% if forloop.first %}
                     <span class="badge bg-info text-dark ms-2" style="font-size: 0.7rem;">{% trans "Default" %}</span>
                   {% endif %}
+                </td>
+
+                <td class="ps-3 py-2 text-start text-muted small text-break">
+                  {{ state_definition.description|default:"-" }}
                 </td>
 
                 <td class="pe-4 py-2">
@@ -130,6 +135,13 @@
             <input type="text" class="form-control" id="stateInput" name="state" maxlength="50" required>
             <div class="form-text">{% trans "Maximum 50 characters." %}</div>
           </div>
+
+          <div class="mb-3">
+            <label for="descInput" class="form-label">{% trans "Description" %}</label>
+            <textarea class="form-control" id="descInput" name="description" rows="2" maxlength="255"></textarea>
+            <div class="form-text">{% trans "Maximum 255 characters. Optional." %}</div>
+          </div>
+
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Close" %}</button>
             <button type="submit" class="btn btn-primary">{% trans "Add state definition" %}</button>
@@ -158,13 +170,20 @@
           <div class="alert alert-warning text-center" role="alert">
             {% trans "Existing products with this state will not have their state names changed." %}
           </div>
+
           <div class="mb-3">
             <label for="editStateInput{{ state_definition.id }}" class="form-label">{% trans "State" %}</label>
             <input type="text" class="form-control" id="editStateInput{{ state_definition.id }}" name="state" maxlength="50" value="{{ state_definition.state }}" required>
             <div class="form-text">{% trans "Maximum 50 characters." %}</div>
           </div>
 
-        <p class="text-muted text-end">{% trans "Any changes in order will not be saved." %}</p>
+          <div class="mb-3">
+            <label for="editDescInput{{ state_definition.id }}" class="form-label">{% trans "Description" %}</label>
+            <textarea class="form-control" id="editDescInput{{ state_definition.id }}" name="description" rows="2" maxlength="255">{{ state_definition.description }}</textarea>
+            <div class="form-text">{% trans "Maximum 255 characters. Optional." %}</div>
+          </div>
+
+        <p class="text-muted text-end mb-0 mt-3">{% trans "Any changes in order will not be saved." %}</p>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
@@ -196,6 +215,9 @@
           <span class="badge bg-secondary me-3 display-6">{{ state_definition.order }}</span>
           <div>
             <p class="mb-0 fw-bold">{{ state_definition.state }}</p>
+            {% if state_definition.description %}
+              <p class="mb-0 small text-muted">{{ state_definition.description }}</p>
+            {% endif %}
           </div>
         </div>
 
