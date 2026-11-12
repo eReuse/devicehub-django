@@ -4,6 +4,7 @@ import json
 import uuid as uuidlib
 from unittest.mock import patch
 
+from django.http import Http404
 from django.test import TestCase, RequestFactory
 from django.urls import reverse
 from django.utils import timezone
@@ -17,6 +18,10 @@ from lot.models import (
 )
 from dashboard.views import (
     LotDashboardView, AllDevicesView, UnassignedDevicesView, SearchView,
+    StateDevicesView,
+)
+from dashboard.mixins import (
+    STATE_COUNTS_SESSION_KEY, roots_by_current_state, state_counts_summary,
 )
 
 
@@ -823,3 +828,152 @@ class SearchViewCustomIdPublicRedirectTests(TestCase):
         self.assertEqual(
             response.url,
             reverse("product:details", kwargs={"pk": "custom_id:tstid1"}))
+
+
+class StateDevicesTests(TestCase):
+    """The sidebar "States" entry lists the non-empty states with a device
+    counter, and StateDevicesView lists the devices whose current state is
+    the selected one, Inbox-style (ProductCache read model, no Xapian)."""
+
+    def setUp(self):
+        self.institution = Institution.objects.create(name="Inst")
+        self.user = User.objects.create(
+            email="u@test.local", institution=self.institution)
+        self.uuids = {}
+        for v in ["ereuse24:aaaaaa", "ereuse24:bbbbbb", "ereuse24:cccccc"]:
+            sp = SystemProperty.objects.create(
+                owner=self.institution, uuid=uuidlib.uuid4(), value=v)
+            self.uuids[v] = sp.uuid
+        self.definitions = {
+            name: StateDefinition.objects.create(
+                institution=self.institution, state=name)
+            for name in ["Received", "Repaired", "Recycled"]
+        }
+
+    def _set_state(self, root, state):
+        return State.objects.create(
+            institution=self.institution, user=self.user,
+            state=state, snapshot_uuid=self.uuids[root])
+
+    def _view(self, state="Repaired", **params):
+        req = RequestFactory().get("/", params)
+        req.user = self.user
+        req.session = {}
+        view = StateDevicesView()
+        view.request = req
+        view.kwargs = {"pk": self.definitions[state].pk}
+        return view
+
+    def test_devices_grouped_by_current_state(self):
+        self._set_state("ereuse24:aaaaaa", "Repaired")
+        self._set_state("ereuse24:bbbbbb", "Repaired")
+        self._set_state("ereuse24:cccccc", "Received")
+
+        grouped = roots_by_current_state(self.institution)
+        self.assertEqual(
+            set(grouped["Repaired"]), {"ereuse24:aaaaaa", "ereuse24:bbbbbb"})
+        self.assertEqual(grouped["Received"], ["ereuse24:cccccc"])
+
+    def test_only_the_latest_state_of_a_device_counts(self):
+        self._set_state("ereuse24:aaaaaa", "Received")
+        self._set_state("ereuse24:aaaaaa", "Repaired")
+
+        grouped = roots_by_current_state(self.institution)
+        self.assertEqual(grouped, {"Repaired": ["ereuse24:aaaaaa"]})
+
+    def test_summary_lists_only_non_empty_states_in_definition_order(self):
+        self._set_state("ereuse24:aaaaaa", "Repaired")
+        self._set_state("ereuse24:bbbbbb", "Repaired")
+        self._set_state("ereuse24:cccccc", "Received")
+
+        summary = state_counts_summary(self.institution)
+        self.assertEqual(
+            [(s["state"], s["count"]) for s in summary],
+            [("Received", 1), ("Repaired", 2)])
+        self.assertEqual(summary[0]["id"], self.definitions["Received"].pk)
+
+    def test_states_of_other_institutions_are_not_counted(self):
+        other = Institution.objects.create(name="Other")
+        StateDefinition.objects.create(institution=other, state="Repaired")
+        sp = SystemProperty.objects.create(
+            owner=other, uuid=uuidlib.uuid4(), value="ereuse24:dddddd")
+        State.objects.create(
+            institution=other, state="Repaired", snapshot_uuid=sp.uuid)
+
+        self.assertEqual(state_counts_summary(self.institution), [])
+
+    def test_view_lists_only_devices_in_the_selected_state(self):
+        self._set_state("ereuse24:aaaaaa", "Repaired")
+        self._set_state("ereuse24:bbbbbb", "Received")
+
+        view = self._view("Repaired")
+        root_ids, count = view.get_device_ids()
+        self.assertEqual(count, 1)
+        self.assertEqual(root_ids, ["ereuse24:aaaaaa"])
+        rows = view.build_product_cache_rows(root_ids)
+        self.assertEqual(rows[0]["current_state"], "Repaired")
+
+    def test_view_does_not_touch_xapian(self):
+        self._set_state("ereuse24:aaaaaa", "Repaired")
+
+        view = self._view("Repaired")
+        with patch("evidence.xapian.search") as s, \
+                patch("evidence.xapian.index") as i:
+            root_ids, _ = view.get_device_ids()
+            rows = view.build_product_cache_rows(list(root_ids))
+        s.assert_not_called()
+        i.assert_not_called()
+        self.assertEqual(len(rows), 1)
+
+    def test_state_of_another_institution_is_not_found(self):
+        other = Institution.objects.create(name="Other")
+        foreign = StateDefinition.objects.create(
+            institution=other, state="Repaired")
+
+        view = self._view("Repaired")
+        view.kwargs = {"pk": foreign.pk}
+        with self.assertRaises(Http404):
+            view.get_device_ids()
+
+    def test_sidebar_counts_are_cached_in_the_session(self):
+        self._set_state("ereuse24:aaaaaa", "Repaired")
+
+        view = self._view("Repaired")
+        counts = view.get_state_counts()
+        self.assertEqual(
+            [(c["state"], c["count"]) for c in counts], [("Repaired", 1)])
+        self.assertEqual(
+            view.request.session[STATE_COUNTS_SESSION_KEY], counts)
+
+        # a session hit is served as is, without recomputing
+        self._set_state("ereuse24:bbbbbb", "Repaired")
+        self.assertEqual(view.get_state_counts(), counts)
+
+    def test_state_page_renders_menu_entry_and_refreshes_counts(self):
+        LotTag.objects.create(
+            name="Inbox", owner=self.institution, inbox=True)
+        self._set_state("ereuse24:aaaaaa", "Repaired")
+        self._set_state("ereuse24:bbbbbb", "Received")
+        self.client.force_login(self.user)
+        session = self.client.session
+        session[STATE_COUNTS_SESSION_KEY] = []  # stale sidebar counters
+        session.save()
+
+        url = reverse(
+            "dashboard:state", args=[self.definitions["Repaired"].pk])
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["count"], 1)
+        self.assertEqual(
+            [(c["state"], c["count"])
+             for c in response.context["state_counts"]],
+            [("Received", 1), ("Repaired", 1)])
+        self.assertEqual(
+            self.client.session[STATE_COUNTS_SESSION_KEY],
+            response.context["state_counts"])
+        self.assertContains(response, url)
+        self.assertContains(response, reverse(
+            "dashboard:state", args=[self.definitions["Received"].pk]))
+        self.assertNotContains(response, reverse(
+            "dashboard:state", args=[self.definitions["Recycled"].pk]))

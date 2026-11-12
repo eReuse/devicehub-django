@@ -13,7 +13,7 @@ from action.forms import AddNoteForm, ChangeStateForm
 from action.models import DeviceLog, Note, State, StateDefinition
 from user.models import InstitutionDPPSettings
 from credentials.services import CredentialService
-from dashboard.mixins import DashboardView
+from dashboard.mixins import DashboardView, STATE_COUNTS_SESSION_KEY
 from device.models import Device
 
 
@@ -47,6 +47,9 @@ class ChangeStateView(LoginRequiredMixin, FormView):
             institution=self.request.user.institution
         )
         is_dpp_active = dpp_settings.dpp_enabled if dpp_settings else False
+
+        # the sidebar "States" counters are about to change
+        self.request.session.pop(STATE_COUNTS_SESSION_KEY, None)
 
         # apply local state changes and user notes
         with transaction.atomic():
@@ -175,6 +178,9 @@ class BulkStateChangeView(DashboardView, View):
             return self.get_success_url()
 
         logger.info(f"User {request.user.id} initiating bulk state change to '{new_state}' for {len(selected_devices)} products.")
+
+        # the sidebar "States" counters are about to change
+        request.session.pop(STATE_COUNTS_SESSION_KEY, None)
 
         error_count = 0
         local_success_count = 0

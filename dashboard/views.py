@@ -29,6 +29,7 @@ from action.models import StateDefinition, State
 from django.db.models import Q, Subquery, OuterRef
 
 from dashboard.mixins import InventaryMixin, DetailsMixin, DeviceTableMixin, ProductCacheTableMixin
+from dashboard.mixins import roots_by_current_state, state_counts_summary
 from evidence.models import SystemProperty, RootAlias, UserProperty
 from user.models import UserProfile
 from evidence.xapian import search
@@ -80,6 +81,58 @@ class AllDevicesView(ProductCacheTableMixin, InventaryMixin):
             .values("root").distinct().count()
         )
         return root_ids, count
+
+
+class StateDevicesView(ProductCacheTableMixin, InventaryMixin):
+    """Devices whose current state is the given StateDefinition, listed
+    like the Inbox."""
+    template_name = "unassigned_devices.html"
+    section = _("States")
+    title = _("States")
+
+    @property
+    def state_definition(self):
+        if not hasattr(self, "_state_definition"):
+            self._state_definition = get_object_or_404(
+                StateDefinition,
+                pk=self.kwargs["pk"],
+                institution=self.request.user.institution,
+            )
+        return self._state_definition
+
+    def get_roots_by_state(self):
+        if not hasattr(self, "_roots_by_state"):
+            self._roots_by_state = roots_by_current_state(
+                self.request.user.institution)
+        return self._roots_by_state
+
+    def get_device_ids(self, offset=0, limit=None):
+        institution = self.request.user.institution
+        roots = self.get_roots_by_state().get(self.state_definition.state, [])
+        count = len(roots)
+        if not roots:
+            return [], 0
+        qry = Device._roots_queryset(institution).filter(root__in=roots)
+        qry = self.sorted_roots(qry, institution)
+        rows = qry[offset:] if limit is None else qry[offset:offset + limit]
+        root_ids = [r["root"] for r in rows]
+        return root_ids, count
+
+    def get_context_data(self, **kwargs):
+        state = self.state_definition
+        context = super().get_context_data(**kwargs)
+        # The grouping was already computed for the list, so refresh the
+        # sidebar counters for free here.
+        counts = state_counts_summary(
+            self.request.user.institution, self.get_roots_by_state())
+        self.set_state_counts(counts)
+        context.update({
+            "title": "{} - {}".format(_("State"), state.state),
+            "breadcrumb": [(_("States"), None), (state.state, None)],
+            "state_counts": counts,
+            "selected_state_id": state.pk,
+        })
+        return context
 
 
 class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMixin):
