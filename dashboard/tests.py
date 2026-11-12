@@ -4,6 +4,7 @@ import json
 import uuid as uuidlib
 from unittest.mock import patch
 
+from django.core.cache import cache
 from django.http import Http404
 from django.test import TestCase, RequestFactory
 from django.urls import reverse
@@ -21,7 +22,7 @@ from dashboard.views import (
     StateDevicesView,
 )
 from dashboard.mixins import (
-    STATE_COUNTS_SESSION_KEY, roots_by_current_state, state_counts_summary,
+    state_counts_cache_key, roots_by_current_state, state_counts_summary,
 )
 
 
@@ -836,6 +837,7 @@ class StateDevicesTests(TestCase):
     the selected one, Inbox-style (ProductCache read model, no Xapian)."""
 
     def setUp(self):
+        cache.clear()
         self.institution = Institution.objects.create(name="Inst")
         self.user = User.objects.create(
             email="u@test.local", institution=self.institution)
@@ -858,7 +860,6 @@ class StateDevicesTests(TestCase):
     def _view(self, state="Repaired", **params):
         req = RequestFactory().get("/", params)
         req.user = self.user
-        req.session = {}
         view = StateDevicesView()
         view.request = req
         view.kwargs = {"pk": self.definitions[state].pk}
@@ -935,7 +936,7 @@ class StateDevicesTests(TestCase):
         with self.assertRaises(Http404):
             view.get_device_ids()
 
-    def test_sidebar_counts_are_cached_in_the_session(self):
+    def test_sidebar_counts_are_cached_per_institution(self):
         self._set_state("ereuse24:aaaaaa", "Repaired")
 
         view = self._view("Repaired")
@@ -943,11 +944,24 @@ class StateDevicesTests(TestCase):
         self.assertEqual(
             [(c["state"], c["count"]) for c in counts], [("Repaired", 1)])
         self.assertEqual(
-            view.request.session[STATE_COUNTS_SESSION_KEY], counts)
+            cache.get(state_counts_cache_key(self.institution)), counts)
 
-        # a session hit is served as is, without recomputing
+        # a cache hit is served as is, without recomputing
         self._set_state("ereuse24:bbbbbb", "Repaired")
         self.assertEqual(view.get_state_counts(), counts)
+
+    def test_bulk_state_change_drops_the_cached_counts(self):
+        self.client.force_login(self.user)
+        cache.set(state_counts_cache_key(self.institution), [])
+
+        self.client.post(
+            reverse("action:bulk_change_state",
+                    args=[self.definitions["Repaired"].pk]),
+            {"devices": ["ereuse24:aaaaaa"]},
+            HTTP_REFERER=reverse("dashboard:all_device"))
+
+        self.assertIsNone(
+            cache.get(state_counts_cache_key(self.institution)))
 
     def test_state_page_renders_menu_entry_and_refreshes_counts(self):
         LotTag.objects.create(
@@ -955,9 +969,8 @@ class StateDevicesTests(TestCase):
         self._set_state("ereuse24:aaaaaa", "Repaired")
         self._set_state("ereuse24:bbbbbb", "Received")
         self.client.force_login(self.user)
-        session = self.client.session
-        session[STATE_COUNTS_SESSION_KEY] = []  # stale sidebar counters
-        session.save()
+        # stale sidebar counters
+        cache.set(state_counts_cache_key(self.institution), [])
 
         url = reverse(
             "dashboard:state", args=[self.definitions["Repaired"].pk])
@@ -970,7 +983,7 @@ class StateDevicesTests(TestCase):
              for c in response.context["state_counts"]],
             [("Received", 1), ("Repaired", 1)])
         self.assertEqual(
-            self.client.session[STATE_COUNTS_SESSION_KEY],
+            cache.get(state_counts_cache_key(self.institution)),
             response.context["state_counts"])
         self.assertContains(response, url)
         self.assertContains(response, reverse(

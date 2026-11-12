@@ -2,6 +2,7 @@ import logging
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.cache import cache
 from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
@@ -13,7 +14,7 @@ from action.forms import AddNoteForm, ChangeStateForm
 from action.models import DeviceLog, Note, State, StateDefinition
 from user.models import InstitutionDPPSettings
 from credentials.services import CredentialService
-from dashboard.mixins import DashboardView, STATE_COUNTS_SESSION_KEY
+from dashboard.mixins import DashboardView, state_counts_cache_key
 from device.models import Device
 
 
@@ -48,9 +49,6 @@ class ChangeStateView(LoginRequiredMixin, FormView):
         )
         is_dpp_active = dpp_settings.dpp_enabled if dpp_settings else False
 
-        # the sidebar "States" counters are about to change
-        self.request.session.pop(STATE_COUNTS_SESSION_KEY, None)
-
         # apply local state changes and user notes
         with transaction.atomic():
             State.objects.create(
@@ -82,6 +80,9 @@ class ChangeStateView(LoginRequiredMixin, FormView):
                     user=self.request.user,
                     institution=self.request.user.institution,
                 )
+
+        # the sidebar "States" counters have changed
+        cache.delete(state_counts_cache_key(self.request.user.institution))
 
         # DTE issuance
         if auto_issue_dte and is_dpp_active:
@@ -179,9 +180,6 @@ class BulkStateChangeView(DashboardView, View):
 
         logger.info(f"User {request.user.id} initiating bulk state change to '{new_state}' for {len(selected_devices)} products.")
 
-        # the sidebar "States" counters are about to change
-        request.session.pop(STATE_COUNTS_SESSION_KEY, None)
-
         error_count = 0
         local_success_count = 0
 
@@ -232,6 +230,9 @@ class BulkStateChangeView(DashboardView, View):
             except Exception as e:
                 logger.exception(f"Unexpected error during bulk state update for device {dev.id}: {str(e)}")
                 error_count += 1
+
+        # the sidebar "States" counters have changed
+        cache.delete(state_counts_cache_key(request.user.institution))
 
         if local_success_count > 0:
             messages.success(request, _("State changed to '{state}' successfully for {count} products.").format(state=new_state, count=local_success_count))

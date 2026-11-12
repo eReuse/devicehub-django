@@ -1,5 +1,6 @@
 from django.urls import resolve
 from django.conf import settings
+from django.core.cache import cache
 from django.shortcuts import get_object_or_404, redirect, Http404
 from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import PermissionDenied
@@ -17,7 +18,11 @@ from django.db.models import F, Subquery, OuterRef
 
 
 UNASSIGNED_COUNT_SESSION_KEY = "unassigned_count"
-STATE_COUNTS_SESSION_KEY = "state_counts"
+STATE_COUNTS_TIMEOUT = 250
+
+
+def state_counts_cache_key(institution):
+    return f"state_counts_{institution.id}"
 
 
 def roots_by_current_state(institution):
@@ -123,21 +128,25 @@ class DashboardView(LoginRequiredMixin):
 
     def get_state_counts(self):
         """Sidebar "States" entries (non-empty states + device counters),
-        held in the user's session.
+        cached per institution.
 
-        Like the Inbox badge, computing this means scanning the institution's
-        evidences and states, so it is only calculated on a session miss. The
-        States views refresh it with set_state_counts() and the state-change
-        views drop it so the next page recomputes it.
+        Computing this means scanning the institution's evidences and
+        states, so it is only calculated on a cache miss. The States views
+        refresh it with set_state_counts() and the state-change views drop
+        it so the next page recomputes it; anything else that moves a device
+        between states (e.g. a new evidence) shows up when the entry expires.
         """
-        counts = self.request.session.get(STATE_COUNTS_SESSION_KEY)
+        institution = self.request.user.institution
+        counts = cache.get(state_counts_cache_key(institution))
         if counts is None:
-            counts = state_counts_summary(self.request.user.institution)
-            self.request.session[STATE_COUNTS_SESSION_KEY] = counts
+            counts = state_counts_summary(institution)
+            self.set_state_counts(counts)
         return counts
 
     def set_state_counts(self, counts):
-        self.request.session[STATE_COUNTS_SESSION_KEY] = counts
+        cache.set(
+            state_counts_cache_key(self.request.user.institution),
+            counts, timeout=STATE_COUNTS_TIMEOUT)
 
     def get_unassigned_count(self):
         """Inbox badge value, held in the user's session.
