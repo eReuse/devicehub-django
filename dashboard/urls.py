@@ -7,6 +7,7 @@ urlpatterns = [
     path("", views.UnassignedDevicesView.as_view(), name="unassigned"),
     path("all", views.AllDevicesView.as_view(), name="all_device"),
     path("<int:pk>/", views.LotDashboardView.as_view(), name="lot"),
+    path("state/none/", views.NoStateDevicesView.as_view(), name="state_none"),
     path("state/<int:pk>/", views.StateDevicesView.as_view(), name="state"),
     path("search", views.SearchView.as_view(), name="search"),
     path("overview", views.InventoryOverviewView.as_view(), name="overview"),

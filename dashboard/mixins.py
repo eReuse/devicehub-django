@@ -71,19 +71,29 @@ def roots_by_current_state(institution):
 
 def state_counts_summary(institution, grouped=None):
     """Non-empty states of ``institution`` with how many devices each holds,
-    in the order of their StateDefinition. JSON-serialisable (session-safe).
+    in the order of their StateDefinition. The devices without a state are
+    counted in a last entry with no id/state (the "No state" pseudo-state).
+    JSON-serialisable (cache-safe).
     """
     if grouped is None:
         grouped = roots_by_current_state(institution)
-    if not grouped:
-        return []
-    return [
-        {"id": pk, "state": state, "count": len(grouped[state])}
-        for pk, state in StateDefinition.objects.filter(
-            institution=institution
-        ).order_by("order").values_list("pk", "state")
-        if grouped.get(state)
-    ]
+    counts = []
+    if grouped:
+        counts = [
+            {"id": pk, "state": state, "count": len(grouped[state])}
+            for pk, state in StateDefinition.objects.filter(
+                institution=institution
+            ).order_by("order").values_list("pk", "state")
+            if grouped.get(state)
+        ]
+    total = (
+        RootAlias.objects.filter(owner=institution)
+        .values("root").distinct().count()
+    )
+    no_state = total - sum(len(roots) for roots in grouped.values())
+    if no_state > 0:
+        counts.append({"id": None, "state": None, "count": no_state})
+    return counts
 
 
 class Http403(PermissionDenied):

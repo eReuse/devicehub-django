@@ -19,7 +19,7 @@ from lot.models import (
 )
 from dashboard.views import (
     LotDashboardView, AllDevicesView, UnassignedDevicesView, SearchView,
-    StateDevicesView,
+    StateDevicesView, NoStateDevicesView,
 )
 from dashboard.mixins import (
     state_counts_cache_key, roots_by_current_state, state_counts_summary,
@@ -901,7 +901,9 @@ class StateDevicesTests(TestCase):
         State.objects.create(
             institution=other, state="Repaired", snapshot_uuid=sp.uuid)
 
-        self.assertEqual(state_counts_summary(self.institution), [])
+        self.assertEqual(
+            state_counts_summary(self.institution),
+            [{"id": None, "state": None, "count": 3}])
 
     def test_view_lists_only_devices_in_the_selected_state(self):
         self._set_state("ereuse24:aaaaaa", "Repaired")
@@ -913,6 +915,26 @@ class StateDevicesTests(TestCase):
         self.assertEqual(root_ids, ["ereuse24:aaaaaa"])
         rows = view.build_product_cache_rows(root_ids)
         self.assertEqual(rows[0]["current_state"], "Repaired")
+
+    def test_devices_without_state_are_counted_in_a_last_entry(self):
+        self._set_state("ereuse24:aaaaaa", "Repaired")
+
+        summary = state_counts_summary(self.institution)
+        self.assertEqual(
+            summary[-1], {"id": None, "state": None, "count": 2})
+
+    def test_no_state_view_lists_only_devices_without_state(self):
+        self._set_state("ereuse24:aaaaaa", "Repaired")
+
+        req = RequestFactory().get("/")
+        req.user = self.user
+        view = NoStateDevicesView()
+        view.request = req
+        view.kwargs = {}
+        root_ids, count = view.get_device_ids()
+        self.assertEqual(count, 2)
+        self.assertEqual(
+            set(root_ids), {"ereuse24:bbbbbb", "ereuse24:cccccc"})
 
     def test_view_does_not_touch_xapian(self):
         self._set_state("ereuse24:aaaaaa", "Repaired")
@@ -942,7 +964,8 @@ class StateDevicesTests(TestCase):
         view = self._view("Repaired")
         counts = view.get_state_counts()
         self.assertEqual(
-            [(c["state"], c["count"]) for c in counts], [("Repaired", 1)])
+            [(c["state"], c["count"]) for c in counts],
+            [("Repaired", 1), (None, 2)])
         self.assertEqual(
             cache.get(state_counts_cache_key(self.institution)), counts)
 
@@ -981,7 +1004,7 @@ class StateDevicesTests(TestCase):
         self.assertEqual(
             [(c["state"], c["count"])
              for c in response.context["state_counts"]],
-            [("Received", 1), ("Repaired", 1)])
+            [("Received", 1), ("Repaired", 1), (None, 1)])
         self.assertEqual(
             cache.get(state_counts_cache_key(self.institution)),
             response.context["state_counts"])

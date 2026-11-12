@@ -118,8 +118,14 @@ class StateDevicesView(ProductCacheTableMixin, InventaryMixin):
         root_ids = [r["root"] for r in rows]
         return root_ids, count
 
+    def get_state_name(self):
+        return self.state_definition.state
+
+    def get_selected_state_id(self):
+        return self.state_definition.pk
+
     def get_context_data(self, **kwargs):
-        state = self.state_definition
+        state_name = self.get_state_name()
         context = super().get_context_data(**kwargs)
         # The grouping was already computed for the list, so refresh the
         # sidebar counters for free here.
@@ -127,12 +133,35 @@ class StateDevicesView(ProductCacheTableMixin, InventaryMixin):
             self.request.user.institution, self.get_roots_by_state())
         self.set_state_counts(counts)
         context.update({
-            "title": "{} - {}".format(_("State"), state.state),
-            "breadcrumb": [(_("States"), None), (state.state, None)],
+            "title": "{} - {}".format(_("State"), state_name),
+            "breadcrumb": [(_("States"), None), (state_name, None)],
             "state_counts": counts,
-            "selected_state_id": state.pk,
+            "selected_state_id": self.get_selected_state_id(),
         })
         return context
+
+
+class NoStateDevicesView(StateDevicesView):
+    """Devices without a current state (the "No state" pseudo-state)."""
+
+    def get_state_name(self):
+        return _("No state")
+
+    def get_selected_state_id(self):
+        return None
+
+    def get_device_ids(self, offset=0, limit=None):
+        institution = self.request.user.institution
+        with_state = [
+            root for roots in self.get_roots_by_state().values()
+            for root in roots
+        ]
+        qry = Device._roots_queryset(institution).exclude(root__in=with_state)
+        count = qry.count()
+        qry = self.sorted_roots(qry, institution)
+        rows = qry[offset:] if limit is None else qry[offset:offset + limit]
+        root_ids = [r["root"] for r in rows]
+        return root_ids, count
 
 
 class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMixin):
