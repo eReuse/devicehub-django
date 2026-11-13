@@ -253,6 +253,8 @@ class RootAlias(models.Model):
 
         if old_root != new_root:
             cls._sync_memberships(owner, alias, new_root, old_root=old_root)
+            from action.entry_state import drop_redundant_entry_states
+            drop_redundant_entry_states(owner, alias, new_root)
             # The read model follows the canonical change: rebuild the gaining
             # root; rebuild the losing root if it still has aliases, else drop
             # it (``alias`` was its last child, mirroring _sync_memberships).
@@ -388,11 +390,14 @@ def ensure_root_alias_self_reference(sender, instance, created, **kwargs):
             updated=instance.created,
         )
 
+    state_def = None
     if is_new_device:
         state_def = StateDefinition.objects.filter(
            order=1,
            institution=instance.owner
         ).first()
+    # Institutions created before INBOX existed may have no states at all.
+    if state_def:
         State.objects.create(
             snapshot_uuid=instance.uuid,
             state=state_def.state,

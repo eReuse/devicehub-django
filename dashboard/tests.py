@@ -91,7 +91,8 @@ class LotExportTests(TestCase):
 
         rows = self._rows(self._view().create_export("csv"))
         self.assertEqual(rows["AAAAAA"]["current_state"], "Repaired")
-        self.assertEqual(rows["BBBBBB"]["current_state"], "")
+        # every new device starts in the entry state (INBOX)
+        self.assertEqual(rows["BBBBBB"]["current_state"], "INBOX")
 
     def test_user_properties_concatenated(self):
         UserProperty.objects.create(
@@ -159,7 +160,7 @@ class LotExportGoldenTests(TestCase):
     GOLDEN_ROWS = sorted([
         "AAAAAA,Laptop,Dell,Latitude,i7,4,Repaired,8,DDR4,2,1,SSD,Intel,"
         "(color:blue) ,SN-A,,Available",
-        "BBBBBB,Laptop,HP,EliteBook,i5,2,,16,DDR4,2,2,NVMe,AMD,,SN-B,,Confirmed",
+        "BBBBBB,Laptop,HP,EliteBook,i5,2,INBOX,16,DDR4,2,2,NVMe,AMD,,SN-B,,Confirmed",
     ])
 
     def setUp(self):
@@ -270,7 +271,8 @@ class LotTableDataTests(TestCase):
 
         rows = {r['id']: r for r in self._view().get_table_data()}
         self.assertEqual(rows['ereuse24:aaaaaa']['current_state'], "Repaired")
-        self.assertEqual(rows['ereuse24:bbbbbb']['current_state'], '--')
+        # every new device starts in the entry state (INBOX)
+        self.assertEqual(rows['ereuse24:bbbbbb']['current_state'], 'INBOX')
 
     def test_sort_by_current_state(self):
         StateDefinition.objects.create(
@@ -278,6 +280,10 @@ class LotTableDataTests(TestCase):
         State.objects.create(
             institution=self.institution, user=self.user,
             state="Repaired", snapshot_uuid=self.uuids["ereuse24:bbbbbb"])
+        # A device registered before entry states existed has no state at all.
+        State.objects.filter(
+            snapshot_uuid=self.uuids["ereuse24:aaaaaa"]).delete()
+        ProductCache.rebuild(self.institution, "ereuse24:aaaaaa")
 
         rows = self._view(sort="current_state").get_table_data()
         # Device with a state sorts ahead of the one whose state is None.
@@ -342,7 +348,8 @@ class ProductCacheDeviceListTests(TestCase):
         rows = {r['id']: r for r in view.build_product_cache_rows(
             ["ereuse24:aaaaaa", "ereuse24:bbbbbb"])}
         self.assertEqual(rows['ereuse24:aaaaaa']['current_state'], "Repaired")
-        self.assertEqual(rows['ereuse24:bbbbbb']['current_state'], '--')
+        # every new device starts in the entry state (INBOX)
+        self.assertEqual(rows['ereuse24:bbbbbb']['current_state'], 'INBOX')
 
     def test_inbox_excludes_assigned_devices(self):
         lot = Lot.objects.create(

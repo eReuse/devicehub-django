@@ -91,36 +91,39 @@ class DeviceLookupApiTests(TestCase):
         resp = self.state_request()
 
         self.assertEqual(resp.status_code, 200, resp.content)
-        self.assertIsNone(resp.json()["current_state"])
-        self.assertEqual(resp.json()["available_states"], ["INSTALL", "TEST"])
+        self.assertEqual(resp.json()["current_state"], "INBOX")
+        self.assertEqual(resp.json()["available_states"], ["INBOX", "INSTALL", "TEST"])
 
     def test_post_state_creates_state_note_and_logs(self):
         resp = self.state_request("post", {
             "state": "INSTALL",
-            "expected_previous_state": None,
+            "expected_previous_state": "INBOX",
             "comment": "Ready for installation",
         })
 
         self.assertEqual(resp.status_code, 200, resp.content)
         self.assertTrue(resp.json()["changed"])
         self.assertEqual(resp.json()["current_state"], "INSTALL")
-        self.assertEqual(State.objects.get().state, "INSTALL")
+        self.assertEqual(
+            list(State.objects.order_by("date").values_list("state", flat=True)),
+            ["INBOX", "INSTALL"],
+        )
         self.assertEqual(Note.objects.get().description, "Ready for installation")
         self.assertEqual(DeviceLog.objects.count(), 2)
 
     def test_post_state_is_idempotent(self):
-        payload = {"state": "INSTALL", "expected_previous_state": None}
+        payload = {"state": "INSTALL", "expected_previous_state": "INBOX"}
         self.assertEqual(self.state_request("post", payload).status_code, 200)
 
         resp = self.state_request("post", payload)
 
         self.assertEqual(resp.status_code, 200, resp.content)
         self.assertFalse(resp.json()["changed"])
-        self.assertEqual(State.objects.count(), 1)
+        self.assertEqual(State.objects.count(), 2)
 
     def test_post_state_advances_from_expected_state(self):
         self.assertEqual(self.state_request("post", {
-            "state": "INSTALL", "expected_previous_state": None,
+            "state": "INSTALL", "expected_previous_state": "INBOX",
         }).status_code, 200)
 
         resp = self.state_request("post", {
@@ -130,7 +133,7 @@ class DeviceLookupApiTests(TestCase):
         self.assertEqual(resp.status_code, 200, resp.content)
         self.assertEqual(resp.json()["previous_state"], "INSTALL")
         self.assertEqual(resp.json()["current_state"], "TEST")
-        self.assertEqual(State.objects.count(), 2)
+        self.assertEqual(State.objects.count(), 3)
 
     def test_post_state_rejects_stale_previous_state(self):
         State.objects.create(
@@ -142,11 +145,11 @@ class DeviceLookupApiTests(TestCase):
 
         resp = self.state_request("post", {
             "state": "TEST",
-            "expected_previous_state": None,
+            "expected_previous_state": "INBOX",
         })
 
         self.assertEqual(resp.status_code, 409, resp.content)
-        self.assertEqual(State.objects.count(), 1)
+        self.assertEqual(State.objects.count(), 2)
 
     def test_logs_keep_state_from_older_evidence(self):
         State.objects.create(
