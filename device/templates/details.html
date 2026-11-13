@@ -116,7 +116,7 @@
                               {% if active_standard == 'untp-0.7.0' %}
                                   {% include "dte_config_untp_070.html" with state_obj=state is_admin=False %}
                               {% elif active_standard == 'untp-1.0.0' %}
-                                  <div class="alert alert-info py-2">UNTP 1.0.0 fields will render here.</div>
+                                  <div class="alert alert-info py-2">{% trans "UNTP 1.0.0 fields will render here." %}</div>
                               {% else %}
                                   <div class="text-muted">{% trans "No configuration fields required for current schema." %}</div>
                               {% endif %}
@@ -258,7 +258,7 @@
             <div class="mb-3">
               <input type="hidden" name="snapshot_uuid" value="{{ object.last_uuid }}">
               <label for="noteDescription" class="form-label">{% trans "Note" %}</label>
-              <textarea class="form-control" id="noteDescription" name="note" placeholder="Max 250 characters" name="note" rows="3" required></textarea>
+              <textarea class="form-control" id="noteDescription" name="note" placeholder="{% trans 'Max 250 characters' %}" name="note" rows="3" required></textarea>
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>

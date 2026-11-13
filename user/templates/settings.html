@@ -18,7 +18,7 @@
     {% for field, error in form.errors.items %}
       {{ error }}<br />
     {% endfor %}
-    <button class="btn-close" type="button" data-dismiss="alert" aria-label="Close"></button>
+    <button class="btn-close" type="button" data-dismiss="alert" aria-label="{% trans 'Close' %}"></button>
   </div>
 </div>
 {% endif %}

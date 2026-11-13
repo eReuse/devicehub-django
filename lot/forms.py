@@ -129,7 +129,7 @@ class LotSubscriptionForm(forms.Form):
             existing_display = existing.get_type_display()
             if existing.type == LotSubscription.Type[self._type.upper()]:
                 raise ValidationError(
-                    _("%(user) is already subscribed as %(type)s"),
+                    _("%(user)s is already subscribed as %(type)s"),
                     params={"user": self._user, "type": type_display},
                 )
             else:

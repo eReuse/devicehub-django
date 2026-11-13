@@ -272,7 +272,7 @@
             {% for message in messages %}
               <div class="alert {{ message.tags|default:'info' }} alert-dismissible fade show mt-3" role="alert">
                 {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{% trans 'Close' %}">
                 </button>
               </div>
             {% endfor %}
@@ -289,7 +289,7 @@
 	          <form method="get" action="{% url 'dashboard:search' %}">
               {% csrf_token %}
               <div class="input-group rounded">
-                <input type="search" name="gquery" class="form-control rounded" {% if search and path == 'dashboard:search' %}value="{{ search }}" {% endif %}placeholder="{% trans "Search your product" %}" aria-label="Search" aria-describedby="search-addon" />
+                <input type="search" name="gquery" class="form-control rounded" {% if search and path == 'dashboard:search' %}value="{{ search }}" {% endif %}placeholder="{% trans "Search your product" %}" aria-label="{% trans 'Search' %}" aria-describedby="search-addon" />
         	<span class="input-group-text border-0" id="search-addon">
         	  <i class="fas fa-search"></i>
         	</span>
