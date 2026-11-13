@@ -10,8 +10,8 @@ from django.utils.translation import gettext_lazy as _
 
 
 class DeviceMainForm(BasePhotoMixin):
-    type = forms.ChoiceField(choices=[])
-    amount = forms.IntegerField(initial=1, min_value=1)
+    type = forms.ChoiceField(choices=[], label=_("Type"))
+    amount = forms.IntegerField(initial=1, min_value=1, label=_("Amount"))
     custom_id = forms.CharField(required=False, label=_("Custom ID"))
 
     def __init__(self, *args, **kwargs):
@@ -119,11 +119,13 @@ class DeviceMainForm(BasePhotoMixin):
 class DeviceAttributeForm(forms.Form):
     name = forms.CharField(
         required=False,
-        widget=forms.TextInput(attrs={'placeholder': 'Attribute Name', 'class': 'form-control'})
+        label=_("Name"),
+        widget=forms.TextInput(attrs={'placeholder': _('Attribute Name'), 'class': 'form-control'})
     )
     value = forms.CharField(
         required=False,
-        widget=forms.TextInput(attrs={'placeholder': 'Value', 'class': 'form-control'})
+        label=_("Value"),
+        widget=forms.TextInput(attrs={'placeholder': _('Value'), 'class': 'form-control'})
     )
 
 

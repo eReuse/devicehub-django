@@ -43,12 +43,13 @@ class TokensTable(tables.Table):
                 "a": {
                     "type": "button",
                     "class": "text-primary",
-                    "title": "Remove",
+                    "title": _("Edit"),
                 }
             },
             orderable=False,
-            verbose_name="Edit"
+            verbose_name=_("Edit")
             )
+    is_active = tables.BooleanColumn(verbose_name=_("Active"))
     qr = tables.Column(verbose_name=_("QR"), empty_values=(), orderable=False)
     token = tables.Column(verbose_name=_("Token"), empty_values=())
     tag = tables.Column(verbose_name=_("Tag"), empty_values=())
