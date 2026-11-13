@@ -1,148 +1,826 @@
+from collections import Counter
+import csv
+from functools import reduce
+from io import BytesIO
 import json
 import logging
+import operator
 import re
 from urllib.parse import parse_qsl
 
-from tablib import Dataset
-
-from django.db.models import Count
-from collections import Counter
-from django.utils.translation import gettext_lazy as _
-from django.core.cache import cache
-from django.contrib import messages
-from django.views.generic.edit import FormView
-from django.shortcuts import Http404, get_object_or_404, redirect
+from django.db.models import Count, Q
+from django.http import HttpResponse, HttpResponseForbidden, StreamingHttpResponse
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
-from django.utils.dateparse import parse_datetime
 from django.utils import timezone
-from django.http import HttpResponse
-from dashboard.tables import ProductCacheTable
-from dashboard.mixins import DashboardView
+from django.utils.translation import gettext_lazy as _
 from django.views.generic.base import TemplateView
-
-from django_tables2 import RequestConfig
-from django_tables2.views import SingleTableMixin
-from django_tables2.export.export import TableExport
 from django_tables2.export.views import ExportMixin
+from django_tables2.views import SingleTableMixin
+from openpyxl import Workbook
 
-from action.models import StateDefinition, State
-from django.db.models import Q, Subquery, OuterRef
-
-from dashboard.mixins import InventaryMixin, DetailsMixin, DeviceTableMixin, ProductCacheTableMixin
-from evidence.models import SystemProperty, RootAlias, UserProperty
-from user.models import UserProfile
-from evidence.xapian import search
+from action.models import State, StateDefinition
+from dashboard.mixins import DashboardView
+from dashboard.mixins import (
+    DashboardView,
+    DetailsMixin,
+    DeviceTableMixin,
+    InventaryMixin,
+)
+from dashboard.tables import ProductCacheTable
 from device.models import Device, DeviceType
 from device.product_cache import ProductCache
-from lot.models import Lot, LotSubscription, Donor, DeviceLot, DeviceBeneficiary
+from evidence.models import RootAlias, SystemProperty, UserProperty
+from evidence.xapian import search
+from lot.models import DeviceBeneficiary, DeviceLot, Donor, Lot, LotSubscription
+from user.models import UserProfile
+
+
 
 logger = logging.getLogger('django')
 
-class UnassignedDevicesView(ProductCacheTableMixin, InventaryMixin):
+
+
+class FilteredProductCacheMixin(ExportMixin, SingleTableMixin, InventaryMixin):
+    """
+    Shared filtering, sorting, pagination, and streaming export mixin for
+    LotDashboardView, AllDevicesView, and UnassignedDevicesView.
+    """
     template_name = "unassigned_devices.html"
-    section = _("Inbox")
-    title = _("Inbox")
-    breadcrumb = [(_('Products'), reverse_lazy("dashboard:all_device")), (_('Inbox'), None)]
-
-    def get_device_ids(self, offset=0, limit=None):
-        institution = self.request.user.institution
-        qry = Device.queryset_orm_unassigned(institution)
-        # Counted off the same queryset that yields the rows, so the paginator
-        # total can never disagree with what the list actually holds.
-        count = qry.count()
-        qry = self.sorted_roots(qry, institution)
-        rows = qry[offset:] if limit is None else qry[offset:offset + limit]
-        root_ids = [r["root"] for r in rows]
-        return root_ids, count
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        # The paginator total is the badge value, so refresh it for free here.
-        self.set_unassigned_count(context["count"])
-        context["unassigned_count"] = context["count"]
-        return context
-
-
-class AllDevicesView(ProductCacheTableMixin, InventaryMixin):
-    template_name = "unassigned_devices.html"
-    section = _("All")
-    title = _("All Products")
-    breadcrumb = [(_('Products'), reverse_lazy("dashboard:all_device")), (_('All'), None)]
-
-    def get_device_ids(self, offset=0, limit=None):
-        institution = self.request.user.institution
-        qry = Device._roots_queryset(institution)
-        qry = self.sorted_roots(qry, institution)
-        rows = qry[offset:] if limit is None else qry[offset:offset + limit]
-        root_ids = [r["root"] for r in rows]
-        count = (
-            RootAlias.objects.filter(owner=institution)
-            .values("root").distinct().count()
-        )
-        return root_ids, count
-
-
-class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMixin):
-    template_name = "unassigned_devices.html"
-    section = "dashboard_lot"
-    breadcrumb = [(_('Products'), reverse_lazy("dashboard:all_device")), (_('Products'), None)]
     paginate_by = 10
     paginate_choices = [10, 20, 50, 100, 0]
     table_class = ProductCacheTable
-    model = Lot
-    export_formats = ['csv']
-    export_name = 'lot_devices_export'
-    table_pagination = {
-        'per_page': paginate_by,
-        'page': 1
-    }
+    export_formats = ['csv', 'xlsx']
+    export_name = 'devices_export'
+    allow_lot_filter = False
 
-    def _get_chids_qs(self):
-        return self.object.devicelot_set.all().values_list(
-            "device_id", flat=True
-        ).distinct()
+    UNASSIGNED_LOT_TOKEN = "__unassigned__"
+    STANDARD_FIELDS = ['type', 'manufacturer', 'model', 'cpu_model']
+    EXPORT_CHUNK_SIZE = 1000
 
-    def get_context_data(self, **kwargs):
-        # super() creates and paginates the table via SingleTableMixin
-        context = super().get_context_data(**kwargs)
-        lot = context.get('object')
-        subscriptions = LotSubscription.objects.filter(
-            lot=lot,
-            user=self.request.user
+    # -------------------------------------------------------------------------
+    # 1. Base Scope & Alias Helpers
+    # -------------------------------------------------------------------------
+
+    def get_base_chids(self):
+        """Override in subclass to return iterable of canonical root IDs for the view."""
+        raise NotImplementedError
+
+    def _get_cached_base_chids(self):
+        """Cache base device IDs on the view instance so we only query them once per request."""
+        if not hasattr(self, '_cached_base_chids'):
+            raw = self.get_base_chids()
+            # Handle both flat string querysets and `.values("root")` dict querysets
+            self._cached_base_chids = [
+                r["root"] if isinstance(r, dict) else r for r in raw
+            ]
+        return self._cached_base_chids
+
+    def _get_state_definitions(self):
+        return StateDefinition.objects.filter(
+            institution=self.request.user.institution
+        ).order_by('order')
+
+    def _expand_aliases(self, root_ids):
+        """Map physical aliases back to their canonical root ID in a single query."""
+        institution = self.request.user.institution
+        root_set = set(root_ids)
+        alias_to_root = {}
+        alias_ids = set(root_set)
+
+        for ra in RootAlias.objects.filter(owner=institution, root__in=root_set).values('alias', 'root'):
+            alias_to_root[ra['alias']] = ra['root']
+            alias_ids.add(ra['alias'])
+
+        return alias_to_root, alias_ids
+
+    def _resolve_states_for_roots(self, root_ids):
+        """Return `{root_id: latest_state_str}` for the given root IDs."""
+        if not root_ids:
+            return {}
+        institution = self.request.user.institution
+        alias_to_root, alias_ids = self._expand_aliases(root_ids)
+
+        # Latest snapshot UUID per canonical root
+        root_latest_uuid = {}
+        for sp in SystemProperty.objects.filter(
+            owner=institution, value__in=alias_ids
+        ).order_by('-created').values('value', 'uuid').iterator(chunk_size=2000):
+            root = alias_to_root.get(sp['value'], sp['value'])
+            root_latest_uuid.setdefault(root, sp['uuid'])
+
+        # Latest state per snapshot UUID
+        uuid_to_root = {uuid: root for root, uuid in root_latest_uuid.items()}
+        state_by_root = {}
+        for st in State.objects.filter(
+            snapshot_uuid__in=root_latest_uuid.values()
+        ).order_by('-date').values('snapshot_uuid', 'state').iterator(chunk_size=2000):
+            root = uuid_to_root.get(st['snapshot_uuid'])
+            if root is not None:
+                state_by_root.setdefault(root, st['state'])
+
+        return state_by_root
+
+    def _resolve_beneficiary_status_for_roots(self, root_ids):
+        """Return `{root_id: highest_beneficiary_status_int}` for the given root IDs."""
+        if not root_ids:
+            return {}
+        alias_to_root, alias_ids = self._expand_aliases(root_ids)
+
+        status_by_root = {}
+        for db in DeviceBeneficiary.objects.filter(device_id__in=alias_ids).values('device_id', 'status'):
+            root = alias_to_root.get(db['device_id'], db['device_id'])
+            if root not in status_by_root or db['status'] > status_by_root[root]:
+                status_by_root[root] = db['status']
+
+        return status_by_root
+
+    # -------------------------------------------------------------------------
+    # 2. Filtering Pipeline
+    # -------------------------------------------------------------------------
+
+
+    def _has_active_filter_params(self, request_get=None):
+        """Return True if any search or filter parameter is present in the URL."""
+        if request_get is None:
+            request_get = self.request.GET
+
+        if (request_get.get('lquery') or request_get.get('gquery') or '').strip():
+            return True
+
+        filter_keys = (
+            self.STANDARD_FIELDS
+            + list(ProductCache.DATA_FIELDS)
+            + ['state', 'up_key', 'up_val', 'device_id', 'lot']
         )
-        is_shop = subscriptions.filter(type=LotSubscription.Type.SHOP).first()
-        is_circuit_manager = subscriptions.filter(
-            type=LotSubscription.Type.CIRCUIT_MANAGER
-        ).first()
+        return any(
+            any(v.strip() for v in request_get.getlist(k))
+            for k in filter_keys
+        )
 
-        donor = Donor.objects.filter(lot=lot).first()
+    def _search_roots(self, base_chids, request_get):
+        """Filter `base_chids` using SQL pushdown first, then lightweight memory checks."""
+        if not base_chids:
+            return []
 
-        # Rows are fully populated by get_table_data from the projection read
-        # model; no per-row Device construction (and thus no Xapian) here.
+        # Fast path: if no filters or search query are active, return all base IDs immediately
+        if not self._has_active_filter_params(request_get):
+            return list(base_chids)
+
+        institution = self.request.user.institution
+        candidate_ids = set(base_chids)
+        data_fields = list(ProductCache.DATA_FIELDS)
+
+        # 1. Lot Filter (only in AllDevicesView)
+        if self.allow_lot_filter:
+            f_lots = [v.strip() for v in request_get.getlist('lot') if v.strip()]
+            if f_lots:
+                lot_op = 'and' if request_get.get('lot_op', 'or').strip().lower() == 'and' else 'or'
+                none_label = str(_("None")).strip().lower()
+                unassigned_tokens = {self.UNASSIGNED_LOT_TOKEN.lower(), "none", none_label}
+
+                per_lot_sets = []
+                all_assigned_cache = None
+
+                for val in f_lots:
+                    if val.lower() in unassigned_tokens:
+                        if all_assigned_cache is None:
+                            all_assigned_cache = set(
+                                DeviceLot.objects.filter(lot__owner=institution, device_id__in=candidate_ids)
+                                .values_list('device_id', flat=True)
+                            )
+                        per_lot_sets.append(candidate_ids - all_assigned_cache)
+                    else:
+                        matched = set(
+                            DeviceLot.objects.filter(
+                                lot__owner=institution,
+                                device_id__in=candidate_ids,
+                                lot__name__iexact=val,
+                            ).values_list('device_id', flat=True)
+                        )
+                        per_lot_sets.append(matched)
+
+                if per_lot_sets:
+                    if lot_op == 'and':
+                        lot_matched = reduce(operator.and_, per_lot_sets)
+                    else:
+                        lot_matched = reduce(operator.or_, per_lot_sets)
+
+                    candidate_ids &= lot_matched
+                    if not candidate_ids:
+                        return []
+        # 2. Device ID Filter (matches either full root or 6-char shortid)
+        f_device_ids = [v.strip().lower() for v in request_get.getlist('device_id') if v.strip()]
+        if f_device_ids:
+            id_q = reduce(operator.or_, (Q(root__icontains=v) | Q(shortid__icontains=v) for v in f_device_ids))
+            candidate_ids &= set(
+                ProductCache.objects.filter(owner=institution, root__in=candidate_ids)
+                .filter(id_q)
+                .values_list('root', flat=True)
+            )
+            if not candidate_ids:
+                return []
+
+        # 3. UserProperty Key & Value Filters
+        f_up_keys = [k.strip() for k in request_get.getlist('up_key') if k.strip()]
+        if f_up_keys:
+            key_q = reduce(operator.or_, (Q(key__icontains=k) for k in f_up_keys))
+            candidate_ids &= set(
+                UserProperty.objects.filter(
+                    owner=institution, device_id__in=candidate_ids, type=UserProperty.Type.USER
+                ).filter(key_q).values_list('device_id', flat=True)
+            )
+            if not candidate_ids:
+                return []
+
+        f_up_vals = [v.strip() for v in request_get.getlist('up_val') if v.strip()]
+        if f_up_vals:
+            val_q = reduce(operator.or_, (Q(value__icontains=v) for v in f_up_vals))
+            candidate_ids &= set(
+                UserProperty.objects.filter(
+                    owner=institution, device_id__in=candidate_ids, type=UserProperty.Type.USER
+                ).filter(val_q).values_list('device_id', flat=True)
+            )
+            if not candidate_ids:
+                return []
+
+        # 4. Standard ProductCache Columns (type, manufacturer, model, cpu_model)
+        active_std = {
+            f: [v.strip() for v in request_get.getlist(f) if v.strip()]
+            for f in self.STANDARD_FIELDS
+        }
+        if any(active_std.values()):
+            pc_qs = ProductCache.objects.filter(owner=institution, root__in=candidate_ids)
+            for f, vals in active_std.items():
+                if vals:
+                    pc_qs = pc_qs.filter(reduce(operator.or_, (Q(**{f"{f}__icontains": v}) for v in vals)))
+            candidate_ids &= set(pc_qs.values_list('root', flat=True))
+            if not candidate_ids:
+                return []
+
+        # 5. JSON `data` Fields & Global Search Bar (`lquery`)
+        active_data = {
+            f: [v.strip().lower() for v in request_get.getlist(f) if v.strip()]
+            for f in data_fields
+        }
+        global_query = (request_get.get('lquery') or request_get.get('gquery') or '').strip().lower()
+        has_data_filter = any(active_data.values())
+
+        if has_data_filter or global_query:
+            projections = {
+                p.root: p for p in ProductCache.objects.filter(
+                    owner=institution, root__in=candidate_ids
+                ).only('root', 'shortid', 'serial', 'type', 'manufacturer', 'model', 'cpu_model', 'data')
+            }
+            user_props = {}
+            if global_query:
+                for up in UserProperty.objects.filter(
+                    owner=institution, device_id__in=candidate_ids, type=UserProperty.Type.USER
+                ).values('device_id', 'key', 'value'):
+                    user_props.setdefault(up['device_id'], []).append(
+                        f"{str(up['key']).lower()} {str(up['value']).lower()}"
+                    )
+
+            filtered_ids = set()
+            for did in candidate_ids:
+                p = projections.get(did)
+                data = (p.data if p and p.data else {})
+
+                if has_data_filter:
+                    if any(
+                        vals and not any(v in str(data.get(f, '')).lower() for v in vals)
+                        for f, vals in active_data.items()
+                    ):
+                        continue
+
+                if global_query:
+                    p_short = (p.shortid if p else did.split(':')[-1][:6]).lower()
+                    searchable = " ".join([
+                        (p.manufacturer if p else '') or '',
+                        (p.type if p else '') or '',
+                        (p.model if p else '') or '',
+                        (p.cpu_model if p else '') or '',
+                        p_short,
+                        (p.serial if p else '') or '',
+                        did.lower(),
+                        " ".join(user_props.get(did, [])),
+                    ]).lower()
+                    if global_query not in searchable:
+                        continue
+
+                filtered_ids.add(did)
+
+            candidate_ids = filtered_ids
+            if not candidate_ids:
+                return []
+
+        # 6. State Filter
+        f_states = [s.strip().lower() for s in request_get.getlist('state') if s.strip()]
+        if f_states:
+            state_by_root = self._resolve_states_for_roots(candidate_ids)
+            candidate_ids = {
+                did for did in candidate_ids
+                if (state_by_root.get(did) or '').lower() in f_states
+            }
+
+        return list(candidate_ids)
+
+    # -------------------------------------------------------------------------
+    # 3. Sorting, Pagination & Table Hydration
+    # -------------------------------------------------------------------------
+
+    def _sort_and_paginate_ids(self, matched_ids):
+        """Sort matched IDs and return only the slice needed for the current page."""
+        if not matched_ids:
+            return []
+
+        institution = self.request.user.institution
+        sort_param = self.request.GET.get('sort', '-last_updated')
+        reverse = sort_param.startswith('-')
+        sort_field = sort_param.lstrip('-')
 
         limit = int(self.request.GET.get('limit', self.paginate_by))
         page = int(self.request.GET.get('page', 1))
-        search = self.request.GET.get('lquery', '')
-        if search:
-            count = getattr(self, '_search_count', None)
-            if count is None:
-                count = len(list(context['table'].rows))
+        offset = (page - 1) * limit if limit else 0
+
+        if sort_field in ('type', 'manufacturer', 'model', 'last_updated'):
+            sort_map = dict(
+                ProductCache.objects.filter(owner=institution, root__in=matched_ids)
+                .values_list('root', sort_field)
+            )
+            val_ids = [d for d in matched_ids if sort_map.get(d) is not None]
+            none_ids = [d for d in matched_ids if sort_map.get(d) is None]
+            sorted_ids = sorted(val_ids, key=lambda d: sort_map[d], reverse=reverse) + none_ids
+
+        elif sort_field == 'current_state':
+            state_map = self._resolve_states_for_roots(matched_ids)
+            val_ids = [d for d in matched_ids if state_map.get(d)]
+            none_ids = [d for d in matched_ids if not state_map.get(d)]
+            sorted_ids = sorted(val_ids, key=lambda d: state_map[d].lower(), reverse=reverse) + none_ids
+
+        elif sort_field == 'status_beneficiary':
+            status_map = self._resolve_beneficiary_status_for_roots(matched_ids)
+            sorted_ids = sorted(matched_ids, key=lambda d: status_map.get(d, 0), reverse=reverse)
+
         else:
-            count = getattr(self, '_total_count', 0)
+            short_map = dict(
+                ProductCache.objects.filter(owner=institution, root__in=matched_ids)
+                .values_list('root', 'shortid')
+            )
+            sorted_ids = sorted(
+                matched_ids,
+                key=lambda d: short_map.get(d) or d.split(':')[-1][:6].upper(),
+                reverse=reverse
+            )
+
+        return sorted_ids[offset:offset + limit] if limit else sorted_ids
+
+    def _build_table_rows(self, page_ids):
+        """Hydrate row dictionaries strictly for the devices visible on the current page."""
+        if not page_ids:
+            return []
+
+        institution = self.request.user.institution
+        projections = {
+            p.root: p for p in ProductCache.objects.filter(owner=institution, root__in=page_ids)
+        }
+        state_by_root = self._resolve_states_for_roots(page_ids)
+        status_by_root = self._resolve_beneficiary_status_for_roots(page_ids)
+        available = DeviceBeneficiary.Status.AVAILABLE.label
+
+        rows = []
+        for did in page_ids:
+            p = projections.get(did)
+            state = state_by_root.get(did)
+            status = status_by_root.get(did)
+            rows.append({
+                'id': did,
+                'link_pk': did,
+                'shortid': p.shortid if p else did.split(':')[-1][:6].upper(),
+                'type': p.type if p else '',
+                'manufacturer': p.manufacturer if p else '',
+                'model': p.model if p else '',
+                'cpu': p.cpu_model if p else '',
+                'current_state': state or '--',
+                'status_beneficiary': (
+                    DeviceBeneficiary.Status(status).label if status is not None else available
+                ),
+                'last_updated': (p.last_updated if p else None) or '--',
+            })
+        return rows
+
+    def get_table_data(self):
+        base_chids = self._get_cached_base_chids()
+        matched_ids = self._search_roots(base_chids, self.request.GET)
+        self._matched_count = len(matched_ids)
+
+        if not matched_ids:
+            return []
+        page_ids = self._sort_and_paginate_ids(matched_ids)
+        return self._build_table_rows(page_ids)
+
+    def get_all_device_ids(self):
+        return self._search_roots(self._get_cached_base_chids(), self.request.GET)
+
+    def get_table_kwargs(self):
+        kwargs = super().get_table_kwargs()
+        self.table_pagination = False
+        kwargs['type_display'] = DeviceType.display_map(self.request.user.institution)
+
+        lot = getattr(self, 'object', None)
+        if not lot or not lot.beneficiary_set.exists():
+            kwargs['exclude'] = ('status_beneficiary',)
+
+        sort = self.request.GET.get('sort', '')
+        if sort:
+            kwargs['order_by'] = sort
+        return kwargs
+
+    # -------------------------------------------------------------------------
+    # 4. Single Unified Context Builder
+    # -------------------------------------------------------------------------
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        institution = self.request.user.institution
+        limit = int(self.request.GET.get('limit', self.paginate_by))
+        page = int(self.request.GET.get('page', 1))
+
+        base_chids = self._get_cached_base_chids()
+        base_pc = ProductCache.objects.filter(owner=institution, root__in=base_chids)
+        data_fields = list(ProductCache.DATA_FIELDS)
+
+        # Build autocomplete options for standard and JSON fields
+        std_options = {}
+        for f in self.STANDARD_FIELDS:
+            vals = base_pc.exclude(**{f: ''}).exclude(**{f"{f}__isnull": True}).values_list(f, flat=True).distinct()
+            if vals:
+                std_options[f] = set(vals)
+
+        data_options = {}
+        for d in base_pc.exclude(data={}).values_list('data', flat=True).iterator(chunk_size=2000):
+            if not d:
+                continue
+            for k, v in d.items():
+                if k in data_fields and v and str(v).strip():
+                    data_options.setdefault(k, set()).add(str(v).strip())
+
+        user_props_qs = UserProperty.objects.filter(
+            owner=institution, device_id__in=base_chids, type=UserProperty.Type.USER
+        )
+        up_keys = set(user_props_qs.values_list('key', flat=True).distinct())
+        up_vals = set(user_props_qs.values_list('value', flat=True).distinct())
+
+        none_label = str(_("None"))
+        lot_options, active_lots = [], []
+        lot_op = 'or'
+
+        if self.allow_lot_filter:
+            db_lots = list(
+                Lot.objects.filter(owner=institution)
+                .exclude(name__isnull=True).exclude(name='')
+                .order_by('archived', 'name')
+                .values_list('name', flat=True)
+                .distinct()
+            )
+            lot_options = [none_label] + [l for l in db_lots if l.lower() != none_label.lower()]
+
+            raw_lots = [l.strip() for l in self.request.GET.getlist('lot') if l.strip()]
+            unassigned_tokens = {self.UNASSIGNED_LOT_TOKEN.lower(), "none", none_label.lower()}
+            for l_val in raw_lots:
+                normalized = none_label if l_val.lower() in unassigned_tokens else l_val
+                if normalized not in active_lots:
+                    active_lots.append(normalized)
+
+            lot_op = 'and' if self.request.GET.get('lot_op', 'or').strip().lower() == 'and' else 'or'
+
+        filter_blocks = []
+        all_options = {**std_options, **data_options}
+        for f in self.STANDARD_FIELDS + data_fields:
+            opts = all_options.get(f)
+            active_vals = [v.strip() for v in self.request.GET.getlist(f) if v.strip()]
+            if opts or active_vals:
+                filter_blocks.append({
+                    'name': f,
+                    'title': f.replace('_', ' ').title(),
+                    'options': sorted(list(opts)) if opts else [],
+                    'active': active_vals,
+                })
+
+        # Helper to build chip removal URLs
+        def make_remove_url(param_name, val_to_remove):
+            qd = self.request.GET.copy()
+            qd.pop('page', None)
+            if param_name == 'lquery':
+                qd.pop('lquery', None)
+                qd.pop('gquery', None)
+            elif param_name == 'lot':
+                unassigned_tokens = {self.UNASSIGNED_LOT_TOKEN.lower(), "none", none_label.lower()}
+                target = str(val_to_remove).strip().lower()
+                vals = [
+                    v for v in qd.getlist('lot')
+                    if v.strip() and not (
+                        (target in unassigned_tokens and v.strip().lower() in unassigned_tokens)
+                        or v.strip().lower() == target
+                    )
+                ]
+                if vals:
+                    qd.setlist('lot', vals)
+                else:
+                    qd.pop('lot', None)
+            else:
+                vals = [
+                    v for v in qd.getlist(param_name)
+                    if v.strip() and v.lower() != str(val_to_remove).lower()
+                ]
+                if vals:
+                    qd.setlist(param_name, vals)
+                else:
+                    qd.pop(param_name, None)
+            encoded = qd.urlencode()
+            return f"?{encoded}" if encoded else "?"
+
+        search_query = (self.request.GET.get('lquery') or self.request.GET.get('gquery') or '').strip()
+        active_states = [s.lower() for s in self.request.GET.getlist('state') if s.strip()]
+        active_up_keys = [k.strip() for k in self.request.GET.getlist('up_key') if k.strip()]
+        active_up_vals = [v.strip() for v in self.request.GET.getlist('up_val') if v.strip()]
+        active_device_ids = [v.strip() for v in self.request.GET.getlist('device_id') if v.strip()]
+
+        # Build unified Active Filters list for the ribbon
+        active_filters = []
+        if search_query:
+            active_filters.append({'category': _('Search'), 'value': search_query, 'remove_url': make_remove_url('lquery', search_query)})
+        for v in active_device_ids:
+            active_filters.append({'category': _('ID'), 'value': v, 'remove_url': make_remove_url('device_id', v)})
+
+        lot_cat_label = _("Lot (AND)") if (lot_op == 'and' and len(active_lots) > 1) else _("Lot")
+        for l_val in active_lots:
+            active_filters.append({'category': lot_cat_label, 'value': l_val, 'remove_url': make_remove_url('lot', l_val)})
+
+        for s in active_states:
+            active_filters.append({'category': _('State'), 'value': s, 'remove_url': make_remove_url('state', s)})
+        for k in active_up_keys:
+            active_filters.append({'category': _('Key'), 'value': k, 'remove_url': make_remove_url('up_key', k)})
+        for v in active_up_vals:
+            active_filters.append({'category': _('Value'), 'value': v, 'remove_url': make_remove_url('up_val', v)})
+        for block in filter_blocks:
+            for val in block['active']:
+                active_filters.append({'category': block['title'], 'value': val, 'remove_url': make_remove_url(block['name'], val)})
+
+        clear_qd = self.request.GET.copy()
+        for k in list(clear_qd.keys()):
+            if k not in ('limit', 'sort'):
+                clear_qd.pop(k, None)
+        clear_all_url = f"?{clear_qd.urlencode()}" if clear_qd else "?"
+
+        count = getattr(self, '_matched_count', len(base_chids))
         total_pages = (count + limit - 1) // limit if limit else 1
 
         context.update({
-            'title': "{} {} - {}".format(_("Lot"), lot.name, _("Products")),
-            'lot': lot,
             'count': count,
             'page': page,
             'total_pages': total_pages,
             'paginate_choices': self.paginate_choices,
             'state_definitions': self._get_state_definitions(),
             'limit': limit,
-            'search': search,
-            'query_param': 'lquery',
+            'search': search_query,
             'sort': self.request.GET.get('sort', ''),
+            'can_export': self.can_export(),
+
+            # Filter UI context
+            'show_filter_bar': True,
+            'allow_lot_filter': self.allow_lot_filter,
+            'unassigned_lot_token': self.UNASSIGNED_LOT_TOKEN,
+            'none_lot_label': none_label,
+            'lot_op': lot_op,
+            'lot_options': lot_options,
+            'active_lots': active_lots,
+            'active_device_ids': active_device_ids,
+            'filter_blocks': filter_blocks,
+            'active_states': active_states,
+            'up_keys_options': sorted(list(up_keys)),
+            'up_vals_options': sorted(list(up_vals)),
+            'active_up_keys': active_up_keys,
+            'active_up_vals': active_up_vals,
+            'lquery': search_query,
+            'active_filters': active_filters,
+            'active_filter_count': len(active_filters),
+            'has_active_filters': bool(active_filters),
+            'clear_all_url': clear_all_url,
+        })
+        return context
+    # -------------------------------------------------------------------------
+    # 5. Guarded & Streamed Export
+    # -------------------------------------------------------------------------
+
+    def can_export(self):
+        """Disallow exporting the entire unfiltered system in AllDevicesView."""
+        is_unscoped_system_view = self.allow_lot_filter and not getattr(self, 'object', None)
+        if is_unscoped_system_view and not self._has_active_filter_params():
+            return False
+        return True
+
+    def get(self, request, *args, **kwargs):
+        export_format = request.GET.get(self.export_trigger_param)
+        if export_format in self.export_formats:
+            if not self.can_export():
+                return HttpResponseForbidden(
+                    _("Exporting all system devices without filters is not allowed. Please apply at least one filter first.")
+                )
+            return self.create_export(export_format)
+        return super().get(request, *args, **kwargs)
+
+    def _iter_export_rows(self, device_ids):
+        institution = self.request.user.institution
+        available = str(DeviceBeneficiary.Status.AVAILABLE.label)
+
+        for i in range(0, len(device_ids), self.EXPORT_CHUNK_SIZE):
+            chunk_ids = device_ids[i:i + self.EXPORT_CHUNK_SIZE]
+            projections = {
+                p.root: p for p in ProductCache.objects.filter(owner=institution, root__in=chunk_ids)
+            }
+            state_by_root = self._resolve_states_for_roots(chunk_ids)
+            status_by_root = self._resolve_beneficiary_status_for_roots(chunk_ids)
+
+            user_props = {}
+            for up in UserProperty.objects.filter(
+                owner=institution, device_id__in=chunk_ids, type=UserProperty.Type.USER
+            ).values('device_id', 'key', 'value'):
+                user_props.setdefault(up['device_id'], []).append(f"({up['key']}:{up['value']}) ")
+
+            for did in chunk_ids:
+                p = projections.get(did)
+                data = p.data if p and p.data else {}
+                state = state_by_root.get(did)
+                status = status_by_root.get(did)
+                last_updated = p.last_updated if p else None
+                if last_updated and timezone.is_aware(last_updated):
+                    last_updated = timezone.make_naive(last_updated)
+
+                yield [
+                    p.shortid if p else did.split(':')[-1][:6].upper(),
+                    p.type if p else '',
+                    p.manufacturer if p else '',
+                    p.model if p else '',
+                    p.cpu_model if p else '',
+                    data.get('cpu_cores', ''),
+                    state or '',
+                    data.get('ram_total', ''),
+                    data.get('ram_type', ''),
+                    data.get('ram_slots', ''),
+                    data.get('slots_used', ''),
+                    data.get('drive', ''),
+                    data.get('gpu_model', ''),
+                    "".join(user_props.get(did, [])),
+                    p.serial if p else '',
+                    last_updated or '',
+                    str(DeviceBeneficiary.Status(status).label) if status is not None else available,
+                ]
+
+    def get_export_filename(self):
+        """
+        Dynamically generates a safe filename including the base scope,
+        applied filters, and the current date/time.
+        """
+        lot = getattr(self, 'object', None)
+        base_name = f"{lot.name}_lot" if lot and lot.name else self.export_name
+
+        # 1. Sanitize the base name (in case a lot name has spaces or special chars)
+        base_name = re.sub(r'[\s/\\,;:|]+', '_', base_name.strip())
+        base_name = re.sub(r'[^a-zA-Z0-9\-_]', '', base_name)
+
+        # 2. Get current date (e.g., 2026-11-15)
+        date_str = timezone.now().strftime("%Y-%m-%d")
+
+        # 3. Extract and sanitize active filters from the URL
+        exclude_params = {getattr(self, 'export_trigger_param', '_export'), 'limit', 'page', 'sort'}
+        filter_parts = []
+
+        for key, v_list in self.request.GET.lists():
+            if key not in exclude_params:
+                for val in v_list:
+                    if val.strip():
+                        # Clean up values (e.g. "__unassigned__" -> "unassigned", "in stock" -> "in_stock")
+                        clean_val = val.strip().replace('__', '')
+                        clean_val = re.sub(r'[\s/\\,;:|]+', '_', clean_val)
+                        clean_val = re.sub(r'[^a-zA-Z0-9\-_]', '', clean_val)
+
+                        # Shorten keys slightly (e.g. "device_id" -> "deviceid")
+                        clean_key = re.sub(r'[^a-zA-Z0-9]', '', key)
+
+                        if clean_val:
+                            filter_parts.append(f"{clean_key}-{clean_val}")
+
+        # Join filters and cap the length so the OS doesn't reject extremely long filenames
+        filter_str = "_".join(filter_parts)
+        if len(filter_str) > 60:
+            filter_str = filter_str[:57] + "..."
+
+        # 4. Construct final filename
+        if filter_str:
+            return f"{base_name}_{filter_str}_{date_str}"
+        return f"{base_name}_{date_str}"
+
+    def create_export(self, export_format):
+        headers = [
+            'ID', 'type', 'manufacturer', 'model', 'cpu_model', 'cpu_cores', 'current_state',
+            'ram_total', 'ram_type', 'ram_slots', 'slots_used', 'drive', 'gpu_model',
+            'user_properties', 'serial', 'last_updated', 'beneficiary_status'
+        ]
+
+        # Use our new dynamic filename generator
+        filename = self.get_export_filename()
+        device_ids = list(self.get_all_device_ids())
+
+        # 1. Streamed CSV Export (Instant start, near-zero RAM)
+        if export_format == 'csv':
+            class EchoBuffer:
+                def write(self, value):
+                    return value
+
+            def csv_stream():
+                writer = csv.writer(EchoBuffer())
+                yield writer.writerow(headers)
+                for row in self._iter_export_rows(device_ids):
+                    yield writer.writerow(row)
+
+            response = StreamingHttpResponse(csv_stream(), content_type='text/csv; charset=utf-8')
+            response['Content-Disposition'] = f'attachment; filename="{filename}.csv"'
+            return response
+
+        # 2. Write-Only XLSX Export (Low-memory streaming XML writer)
+        if export_format == 'xlsx':
+            wb = Workbook(write_only=True)
+            ws = wb.create_sheet(title="Devices")
+            ws.append(headers)
+            for row in self._iter_export_rows(device_ids):
+                ws.append(row)
+
+            buffer = BytesIO()
+            wb.save(buffer)
+            buffer.seek(0)
+
+            return HttpResponse(
+                content=buffer.getvalue(),
+                content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                headers={'Content-Disposition': f'attachment; filename="{filename}.xlsx"'}
+            )
+
+        return super().create_export(export_format)
+
+class UnassignedDevicesView(FilteredProductCacheMixin):
+    section = _("Inbox")
+    title = _("Inbox")
+    breadcrumb = [(_('Products'), reverse_lazy("dashboard:all_device")), (_('Inbox'), None)]
+    export_name = "inbox_devices"
+    allow_lot_filter = False
+
+    def get_base_chids(self):
+        return Device.queryset_orm_unassigned(self.request.user.institution)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        base_total = len(self._get_cached_base_chids())
+        self.set_unassigned_count(base_total)
+        context["unassigned_count"] = base_total
+        return context
+
+
+class AllDevicesView(FilteredProductCacheMixin):
+    section = _("All")
+    title = _("All Products")
+    breadcrumb = [(_('Products'), reverse_lazy("dashboard:all_device")), (_('All'), None)]
+    export_name = "all_devices"
+    allow_lot_filter = True
+
+    def get_base_chids(self):
+        return Device._roots_queryset(self.request.user.institution)
+
+
+class LotDashboardView(FilteredProductCacheMixin, DetailsMixin):
+    section = "dashboard_lot"
+    breadcrumb = [(_('Products'), reverse_lazy("dashboard:all_device")), (_('Products'), None)]
+    model = Lot
+    export_name = 'lot_devices_export'
+    allow_lot_filter = False
+
+    def get_base_chids(self):
+        if not hasattr(self, 'object') or self.object is None:
+            self.object = get_object_or_404(self.model, pk=self.kwargs['pk'], owner=self.request.user.institution)
+        return self.object.devicelot_set.all().values_list("device_id", flat=True).distinct()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        lot = context.get('object') or self.object
+
+        subscriptions = LotSubscription.objects.filter(lot=lot, user=self.request.user)
+        is_shop = subscriptions.filter(type=LotSubscription.Type.SHOP).first()
+        is_circuit_manager = subscriptions.filter(type=LotSubscription.Type.CIRCUIT_MANAGER).first()
+        donor = Donor.objects.filter(lot=lot).first()
+
+        context.update({
+            'title': "{} {} - {}".format(_("Lot"), lot.name, _("Products")),
+            'lot': lot,
             'breadcrumb': [
                 (_("Lots"), reverse_lazy("dashboard:unassigned")),
                 (lot.type.name, reverse_lazy("lot:tags", args=[lot.type.pk])),
@@ -154,321 +832,6 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
             'donor': donor,
         })
         return context
-
-    def get_table_data(self):
-        search = self.request.GET.get('lquery', '').lower()
-        chids = list(self._get_chids_qs())
-
-        # Both paths read the ProductCache read model (no per-device Device
-        # construction, and thus no Xapian read/parse per row). Search just
-        # narrows the canonical roots before the shared sort + pagination.
-        if search:
-            device_ids = self._search_roots(chids, search)
-            self._search_count = len(device_ids)
-        else:
-            device_ids = chids
-            self._total_count = len(device_ids)
-
-        if not device_ids:
-            return []
-
-        rows_by_id, sort_keys = self._build_table_rows(device_ids)
-
-        # Phase 3: sort in Python
-        sort_param = self.request.GET.get('sort', '-last_updated')
-        reverse = sort_param.startswith('-')
-        sort_field = sort_param.lstrip('-')
-
-        def get_sort_val(did):
-            keys = sort_keys[did]
-            if sort_field in keys:
-                return keys[sort_field]
-            return rows_by_id[did]['shortid']  # shortid fallback
-
-        none_ids = [did for did in device_ids if get_sort_val(did) is None]
-        val_ids  = [did for did in device_ids if get_sort_val(did) is not None]
-        sorted_ids = sorted(val_ids, key=get_sort_val, reverse=reverse) + none_ids
-
-        limit = int(self.request.GET.get('limit', self.paginate_by))
-        page  = int(self.request.GET.get('page', 1))
-        offset = (page - 1) * limit if limit else 0
-        page_ids = sorted_ids[offset:offset + limit] if limit else sorted_ids
-
-        return [rows_by_id[did] for did in page_ids]
-
-    def get_table_kwargs(self):
-        kwargs = super().get_table_kwargs()
-        # Pagination is handled at SQL level; disable django-tables2 pagination
-        self.table_pagination = False
-        kwargs['type_display'] = DeviceType.display_map(
-            self.request.user.institution
-        )
-
-        if not self.object.beneficiary_set.exists():
-            kwargs['exclude'] = ('status_beneficiary',)
-
-        # Rows are already ordered in get_table_data; mirror the request sort
-        # onto the table so the header arrows point at the active column.
-        sort = self.request.GET.get('sort', '')
-        if sort:
-            kwargs['order_by'] = sort
-
-        return kwargs
-
-    def _get_state_definitions(self):
-        return StateDefinition.objects.filter(
-            institution=self.request.user.institution
-        ).order_by('order')
-
-    def get_all_device_ids(self):
-        if not hasattr(self, 'object') or self.object is None:
-            self.object = get_object_or_404(
-                self.model,
-                pk=self.kwargs['pk'],
-                owner=self.request.user.institution,
-            )
-        chids = list(self._get_chids_qs())
-        search = self.request.GET.get('lquery', '').lower()
-        if search:
-            chids = self._search_roots(chids, search)
-        return chids
-
-    def _search_roots(self, device_ids, search_query):
-        """Filter canonical roots by ``search_query`` against the ProductCache
-        read model, matching the same device fields without constructing
-        Device objects (no Xapian read/parse per device).
-
-        Whitespace separates terms and a device must match all of them (AND).
-        A ``term:field`` token restricts that term to one field; a bare term
-        matches any field plus the device's user properties.
-        """
-        projections, state_by_root, status_by_root = self._batch_device_data(
-            device_ids)
-        available = DeviceBeneficiary.Status.AVAILABLE.label
-
-        # (value, field) per whitespace-separated term; field is None for a
-        # bare term (matches any field + user properties).
-        terms = []
-        for token in search_query.lower().split():
-            value, field = token, None
-            if ':' in token:
-                value, field = token.rsplit(':', 1)
-                field = field.strip()
-            value = value.strip()
-            if value:
-                terms.append((value, field))
-        if not terms:
-            return list(device_ids)
-
-        # User properties are only consulted when a bare (fieldless) term exists.
-        user_props = {}
-        if any(field is None for _, field in terms):
-            for up in UserProperty.objects.filter(
-                owner=self.request.user.institution, device_id__in=device_ids,
-                type=UserProperty.Type.USER,
-            ).values('device_id', 'key', 'value'):
-                user_props.setdefault(up['device_id'], []).extend(
-                    [str(up['key']).lower(), str(up['value']).lower()])
-
-        matched = []
-        for did in device_ids:
-            p = projections.get(did)
-            data = p.data if p else {}
-            status = status_by_root.get(did)
-            fields = {
-                'shortid': (p.shortid if p else '').lower(),
-                'type': (p.type if p else '').lower(),
-                'manufacturer': (p.manufacturer if p else '').lower(),
-                'model': (p.model if p else '').lower(),
-                'current_state': (state_by_root.get(did) or '').lower(),
-                'status_beneficiary': (
-                    DeviceBeneficiary.Status(status).label
-                    if status is not None else available).lower(),
-                'serial': (p.serial if p else '').lower(),
-                'cpu': (p.cpu_model if p else '').lower(),
-                'total_ram': str(data.get('ram_total', '')).lower(),
-            }
-            props = user_props.get(did, [])
-
-            def term_matches(value, field):
-                if field is not None:
-                    val = fields.get(field)
-                    return val is not None and value in val
-                return (any(value in v for v in fields.values())
-                        or any(value in v for v in props))
-
-            if all(term_matches(value, field) for value, field in terms):
-                matched.append(did)
-        return matched
-
-    def _batch_device_data(self, device_ids):
-        """Batch the projection + relational data for ``device_ids`` (canonical
-        roots), resolving evidence aliases. Fixed query count, no Xapian.
-        Returns three dicts keyed by root: projection rows, current state and
-        beneficiary status. Shared by the list view and the export.
-        """
-        institution = self.request.user.institution
-
-        projections = {
-            p.root: p for p in ProductCache.objects.filter(
-                owner=institution, root__in=device_ids)
-        }
-
-        # alias -> root, plus the full physical-id set, in one query.
-        alias_to_root = {}
-        alias_ids = set(device_ids)
-        for ra in RootAlias.objects.filter(
-            owner=institution, root__in=device_ids
-        ).values('alias', 'root'):
-            alias_to_root[ra['alias']] = ra['root']
-            alias_ids.add(ra['alias'])
-
-        # newest evidence uuid per root (across its physical aliases).
-        root_latest_uuid = {}
-        for sp in SystemProperty.objects.filter(
-            owner=institution, value__in=alias_ids
-        ).order_by('-created').values('value', 'uuid'):
-            root = alias_to_root.get(sp['value'], sp['value'])
-            root_latest_uuid.setdefault(root, sp['uuid'])
-
-        # current state per root via its latest uuid.
-        uuid_to_root = {uuid: root for root, uuid in root_latest_uuid.items()}
-        state_by_root = {}
-        for st in State.objects.filter(
-            snapshot_uuid__in=root_latest_uuid.values()
-        ).order_by('-date').values('snapshot_uuid', 'state'):
-            root = uuid_to_root.get(st['snapshot_uuid'])
-            if root is not None:
-                state_by_root.setdefault(root, st['state'])
-
-        # beneficiary status per root (any physical id may carry the row).
-        status_by_root = {}
-        for db in DeviceBeneficiary.objects.filter(
-            device_id__in=alias_ids,
-        ).values('device_id', 'status'):
-            root = alias_to_root.get(db['device_id'], db['device_id'])
-            if root not in status_by_root or db['status'] > status_by_root[root]:
-                status_by_root[root] = db['status']
-
-        return projections, state_by_root, status_by_root
-
-    def _build_table_rows(self, device_ids):
-        """Full list-view rows from the projection, keyed by root. Returns
-        (rows_by_id, sort_keys); sort_keys holds the raw sortable values
-        (datetime / state string / status int) for the Python sort."""
-        projections, state_by_root, status_by_root = self._batch_device_data(
-            device_ids)
-
-        available = DeviceBeneficiary.Status.AVAILABLE.label
-        rows_by_id, sort_keys = {}, {}
-        for did in device_ids:
-            p = projections.get(did)
-            state = state_by_root.get(did)
-            status = status_by_root.get(did)
-            rows_by_id[did] = {
-                'id': did,
-                'link_pk': did,
-                'shortid': p.shortid if p else did.split(':')[1][:6].upper(),
-                'type': p.type if p else '',
-                'manufacturer': p.manufacturer if p else '',
-                'model': p.model if p else '',
-                'cpu': p.cpu_model if p else '',
-                'current_state': state or '--',
-                'status_beneficiary': (
-                    DeviceBeneficiary.Status(status).label
-                    if status is not None else available),
-                'last_updated': (p.last_updated if p else None) or '--',
-            }
-            sort_keys[did] = {
-                'type': p.type if p else None,
-                'manufacturer': p.manufacturer if p else None,
-                'model': p.model if p else None,
-                'last_updated': p.last_updated if p else None,
-                'current_state': state,
-                'status_beneficiary': status if status is not None else 0,
-            }
-        return rows_by_id, sort_keys
-
-    def _export_rows(self, device_ids):
-        """Assemble export rows for ``device_ids`` (canonical roots) using the
-        ProductCache read model plus batched relational queries. Reads no
-        evidence (Xapian): hardware fields come from the projection, the rest
-        from Postgres in a fixed number of queries regardless of device count.
-        """
-        institution = self.request.user.institution
-        projections, state_by_root, status_by_root = self._batch_device_data(
-            device_ids)
-
-        # user properties per canonical device id.
-        user_props = {}
-        for up in UserProperty.objects.filter(
-            owner=institution, device_id__in=device_ids,
-            type=UserProperty.Type.USER,
-        ).values('device_id', 'key', 'value'):
-            user_props.setdefault(up['device_id'], []).append(
-                "({}:{}) ".format(up['key'], up['value']))
-
-        available = DeviceBeneficiary.Status.AVAILABLE.label
-        rows = []
-        for did in device_ids:
-            p = projections.get(did)
-            data = p.data if p else {}
-            state = state_by_root.get(did)
-            status = status_by_root.get(did)
-            # openpyxl (xlsx export) rejects tz-aware datetimes, so strip the
-            # tzinfo at this export boundary.
-            last_updated = p.last_updated if p else None
-            if last_updated and timezone.is_aware(last_updated):
-                last_updated = timezone.make_naive(last_updated)
-            rows.append([
-                p.shortid if p else did.split(':')[1][:6].upper(),
-                p.type if p else '',
-                p.manufacturer if p else '',
-                p.model if p else '',
-                p.cpu_model if p else '',
-                data.get('cpu_cores', ''),
-                state or '',
-                data.get('ram_total', ''),
-                data.get('ram_type', ''),
-                data.get('ram_slots', ''),
-                data.get('slots_used', ''),
-                data.get('drive', ''),
-                data.get('gpu_model', ''),
-                "".join(user_props.get(did, [])),
-                p.serial if p else '',
-                last_updated or '',
-                DeviceBeneficiary.Status(status).label
-                if status is not None else available,
-            ])
-        return rows
-
-    def create_export(self, export_format):
-        if export_format in ('csv', 'xlsx'):
-            device_ids = list(self.get_all_device_ids())
-
-            headers = [
-                'ID', 'type', 'manufacturer', 'model', 'cpu_model', 'cpu_cores', 'current_state',
-                'ram_total', 'ram_type', 'ram_slots', 'slots_used', 'drive', 'gpu_model', 'user_properties','serial', 'last_updated', 'beneficiary_status'
-            ]
-            data = Dataset(headers=headers)
-            for row in self._export_rows(device_ids):
-                data.append(row)
-
-            content_types = {
-                'csv': 'text/csv',
-                'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            }
-            response = HttpResponse(
-                content=data.export(export_format),
-                content_type=content_types[export_format],
-                headers={
-                    'Content-Disposition': f'attachment; filename="{self.object.name}_lot.{export_format}"'
-                }
-            )
-            return response
-
-        return super().create_export(export_format)
-
 
 class SearchView(DeviceTableMixin, InventaryMixin):
     template_name = "unassigned_devices.html"

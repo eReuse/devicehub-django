@@ -11,359 +11,862 @@
     </div>
     {% endif %}
 
-    {% if path == "dashboard:lot" %}
-    <div class="d-flex justify-content-end align-items-stretch mb-2">
-        <form method="get" class="input-group w-100 w-md-75 me-3">
-            <input
-                type="text"
-                name="lquery"
-                class="form-control"
-                placeholder="{% trans 'Search products within lot (append :field for filters)' %}"
-                value="{{ search }}">
-            <div class="input-group-append">
-                <button type="submit" class="btn btn-outline-secondary h-100" style="border-radius: 0 4px 4px 0;">
-                    <i class="bi bi-search"></i>
-                </button>
-                <span class="ms-3"
-                      data-bs-toggle="tooltip"
-                      data-bs-html="true"
-                      title="
-                               <strong>{% trans 'Available filters:' %}</strong><br/>
-                                   :shortid<br/>
-                                   :type<br/>
-                                   :manufacturer<br/>
-                                   :cpu<br/>
-                                   :total_ram (in GiB)<br/>
-                                   :current_state<br/>
-                                   {% trans 'for example i5:cpu ' %}
-                                 ">
-                        <i class="h5 bi bi-info-circle text-muted"></i>
+    {% if show_filter_bar %}
+    <div class="card filter-control-card shadow-sm mb-3 bg-white">
+        <div class="card-body p-3">
+            <div class="d-flex flex-column flex-md-row align-items-stretch align-items-md-center gap-2">
+                <!-- Filter Drawer Trigger -->
+                <button class="btn {% if has_active_filters %}btn-green-admin{% else %}btn-outline-green{% endif %} d-inline-flex align-items-center justify-content-center gap-2 flex-shrink-0 px-3"
+                        type="button"
+                        data-bs-toggle="offcanvas"
+                        data-bs-target="#filterOffcanvas"
+                        aria-controls="filterOffcanvas">
+                    <i class="bi bi-sliders2"></i>
+                    <span class="fw-semibold">{% trans "Filters" %}</span>
+                    {% if active_filter_count %}
+                    <span class="badge rounded-pill bg-white text-green-theme fw-bold ms-1">
+                        {{ active_filter_count }}
                     </span>
-            </div>
-        </form>
-    </div>
-    {% endif %}
-
-    {% if count > 0 %}
-    <!-- Main Table Section -->
-    <div class="mb-4">
-        <form method="post" id="devices-form">
-        {% csrf_token %}
-        <input type="hidden" name="select_all_pages" id="select-all-pages-flag" value="false">
-        <!-- Table Actions -->
-        <div class="pb-4 pt-3">
-            <!-- First row -->
-            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-                <!-- Table title -->
-                <h5 class="mb-0">
-                    {% if lot.name %}
-                    {% if lot.archived %}
-                    <i class="bi bi-archive text-warning small"></i> {{ lot.name }}
-                    <small class="text-muted ps-1"> {% trans "archived" %}</small>
-                    {% else %}
-                    <i class="bi bi-folder2-open small"></i> {{ lot.name }}
-                    <small class="text-muted ps-1"> {% trans "open" %}</small>
                     {% endif %}
-                    {% else %}
-                    <i class="bi bi-devices"></i> {% trans "Product Management" %}
-                    {% endif %}
-                </h5>
+                </button>
 
-                <!-- First row second cell-->
-                <div class="d-flex flex-wrap align-items-center gap-2">
-                    <!-- Export dropdown -->
-                    {% if lot %}
-                    <div class="dropdown flex-shrink-0">
-                        <button class="btn btn-outline-success dropdown-toggle" type="button" id="exportDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi bi-download"></i>
-                            {% if search %}
-                            {% trans 'Export filtered' %}
-                            {% else %}
-                            {% trans 'Export All' %}
-                            {% endif %}
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-sm-end" aria-labelledby="exportDropdown">
-                            <li>
-                                <a class="dropdown-item" href="{% export_url 'csv' %}">
-                                    <i class="bi bi-filetype-csv"></i>
-                                    {% trans '.csv' %}
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="{% export_url 'xlsx' %}">
-                                    <i class="bi bi-filetype-xlsx"></i>
-                                    {% trans '.xlsx' %}
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-
-            <!-- Second row  -->
-            {% csrf_token %}
-            <div class="d-flex flex-wrap-reverse flex-sm-wrap justify-content-start align-items-center gap-2">
-                <!-- Select checkbox + dropdown label -->
-                {% if count > 0 %}
-                <div class="d-flex align-items-center gap-1 flex-shrink-0">
-                    <input type="checkbox" id="select-all-checkbox" class="form-check-input mt-0">
-                    <div class="dropdown">
-                        <span class="form-check-label text-muted dropdown-toggle ps-1"
-                              data-bs-toggle="dropdown" aria-expanded="false"
-                              style="cursor: pointer; user-select: none;">
-                            {% trans "Select" %}
-                            <span id="selection-count" class="badge bg-secondary d-none ms-1"></span>
+                <!-- Search Bar -->
+                <form method="get" class="flex-grow-1 m-0">
+                    <div class="input-group search-group-green">
+                        <span class="input-group-text bg-light border-end-0 text-green-theme">
+                            <i class="bi bi-search"></i>
                         </span>
-                        <ul class="dropdown-menu" aria-labelledby="selectDropdown">
-                            <li>
-                                <a class="dropdown-item" id="select-page-option" href="#">
-                                    {% trans "Select page" %}
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" id="select-all-option" href="#">
-                                    {% trans "Select all" %} {{ count }} {% trans "products" %}
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-                {% endif %}
-
-                <!-- Second row first cell-->
-                <div class="d-flex flex-wrap align-items-center gap-2">
-                    <!-- Change state dropdown -->
-                    <div class="dropdown flex-shrink-0">
-                        <button type="button" id="addStateDropdown" class="btn btn-green-admin dropdown-toggle" data-bs-toggle="dropdown">
-                            {% trans "Change state" %}
-                        </button>
-                        <ul class="dropdown-menu" style="width: 120%;">
-                            {% for state in state_definitions %}
-                            <li style="width: 100%;">
-                                <button type="button"
-                                        class="dropdown-item d-flex justify-content-between align-items-center"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#bulkChangeStateModal-{{ state.id }}">
-                                    <span class="font-monospace">{{ state.state }}</span>
-                                    <span class="badge {% if state.auto_issue_dte and user.institution.integration_settings.dpp_enabled %}bg-primary{% else %}btn-green-user{% endif %} rounded-pill-sm">{{ forloop.counter }}</span>
-                                </button>
-                            </li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-                    <!-- Assign to lot button -->
-                    <button disabled id="add-button" class="btn btn-green-user flex-shrink-0 gap-2" type="submit" name="url" value="{% url 'lot:add_devices' %}" style="white-space: nowrap;">
-                        <i class="bi bi-folder-symlink mr-2"></i> {% trans 'Assign to lot' %}
-                    </button>
-
-                    <button disabled id="print-labels-button" class="btn btn-outline-dark flex-shrink-0 gap-2" type="submit" name="url" value="{% url 'product:bulk_labels' %}" style="white-space: nowrap;">
-                        <i class="bi bi-qr-code"></i> {% trans 'Print Labels' %}
-                    </button>
-
-                    <!-- Unassign Lot button -->
-                    {# If a lot is archived, then dont render the unassign button  #}
-                    {% if lot.name and not lot.archived %}
-                    <button id="remove-button" class="btn btn-danger flex-shrink-0 gap-2" type="submit" disabled
-                            value="{% url 'lot:del_devices' lot.id %}" name="url">
-                        <i class="bi bi-folder-minus"></i> {% trans 'Unassign from lot' %}
-                    </button>
-                    {% endif %}
-
-                    {% if lot and is_shop %}
-                    <button id="add-beneficiary-button"  name="url" value="{% url 'lot:beneficiary' lot.id %}" class="btn btn-primary" disabled>
-                        {% trans 'Add to beneficiary' %}
-                    </button>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-
-            <!-- Table and pagination -->
-            <div class="table-responsive">
-                {% render_table table %}
-            </div>
-            {% for state in state_definitions %}
-            <div class="modal fade" id="bulkChangeStateModal-{{ state.id }}" tabindex="-1" aria-hidden="true">
-                <div class="modal-dialog">
-                    <div class="modal-content text-start">
-                        <div class="modal-header">
-                            <h5 class="modal-title">
-                                {% trans "Change State to" %} <strong class="text-primary">{{ state.state }}</strong>
-                            </h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
-                        </div>
-                        <div class="modal-body">
-                        {% if not state.auto_issue_dte and user.institution.integration_settings.dpp_enabled%}
-                            <div class="alert alert-secondary small mb-4">
-                                {% trans "Automatic Digital Traceability Events (DTEs) are disabled for bulk operations." %}
-                            </div>
-                        {% elif state.auto_issue_dte and user.institution.integration_settings.dpp_enabled %}
-                            <div class="alert alert-secondary small mb-4">
-                                {% trans "Automatic Digital Traceability Events (DTEs) are disabled for bulk operations." %}
-                            </div>
+                        <input type="search"
+                               name="lquery"
+                               class="form-control border-start-0 ps-0 shadow-none"
+                               placeholder="{% if lot %}{% trans 'Search products within lot (ID, serial, model, CPU, properties)...' %}{% else %}{% trans 'Search products (ID, serial, model, CPU, properties)...' %}{% endif %}"
+                               value="{{ search }}">
+                        {% if search %}
+                        <a href="?{% for k, v_list in request.GET.lists %}{% if k != 'lquery' and k != 'page' %}{% for v in v_list %}{{ k }}={{ v|urlencode }}&{% endfor %}{% endif %}{% endfor %}"
+                           class="btn btn-outline-secondary border-start-0 border-end-0 text-muted"
+                           title="{% trans 'Clear search' %}">
+                            <i class="bi bi-x-lg"></i>
+                        </a>
                         {% endif %}
-
-                            <div class="mb-3">
-                                <label class="form-label">{% trans "Comment (Optional)" %}</label>
-                                <textarea class="form-control" name="comment_{{ state.id }}" rows="3" placeholder="{% trans 'Leave a note about why these devices are changing state...' %}"></textarea>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
-                            <button type="submit" class="btn btn-green-user" formaction="{% url 'action:bulk_change_state' state.id %}">{% trans "Confirm Local Change" %}</button>
-                        </div>
+                        <button type="submit" class="btn btn-green-user px-3 fw-medium">
+                            {% trans "Search" %}
+                        </button>
                     </div>
-                </div>
-            </div>
-            {% endfor %}
-        </form>
 
-        <div class="d-flex flex-wrap align-items-center gap-2 justify-content-end p-2">
-          <!-- Number of devices info-->
-            <div class="d-flex justify-content-center text-muted align-items-center gap-1">
-                <i class="bi bi-laptop"></i> {% if not lot.name %} {% trans "Showing" %} {% endif %} {{count}} {% trans "Product/s" %}
-            </div>
-
-            <!-- Device limit per page picker -->
-            <div class="flex-shrink-0">
-                <form method="get" class="d-inline">
-                    <div class="input-group input-group-sm">
-                        <label class="input-group-text" for="limit">{% trans "Show" %}</label>
-                        <select name="limit" id="limit" class="form-select" onchange="this.form.submit()">
-                            {% for choice in paginate_choices %}
-                            {% if choice != 0 %}
-                            <option value="{{ choice }}" {% if limit == choice %}selected{% endif %}>
-                                {{ choice }}
-                            </option>
-                            {% endif %}
+                    {% for key, val_list in request.GET.lists %}
+                        {% if key != 'lquery' and key != 'page' %}
+                            {% for val in val_list %}
+                                {% if val %}
+                                <input type="hidden" name="{{ key }}" value="{{ val }}">
+                                {% endif %}
                             {% endfor %}
-                        </select>
-                        <label class="input-group-text" for="limit">{% trans "products" %}</label>
-                    </div>
-                    {% for key, value in request.GET.items %}
-                    {% if key != 'limit' %}
-                    <input type="hidden" name="{{ key }}" value="{{ value }}">
-                    {% endif %}
+                        {% endif %}
                     {% endfor %}
                 </form>
             </div>
+
+            <!-- Persistent Applied Filters Ribbon -->
+            <div class="filter-status-box d-flex flex-wrap align-items-center gap-2 mt-3 px-3 py-2 rounded-2">
+                <span class="text-secondary small fw-bold text-uppercase d-inline-flex align-items-center me-1" style="letter-spacing: 0.03em;">
+                    <i class="bi {% if has_active_filters %}bi-funnel-fill text-green-theme{% else %}bi-funnel text-muted{% endif %} me-1"></i>
+                    {% trans "Applied Filters:" %}
+                </span>
+
+                {% if has_active_filters %}
+                    {% for item in active_filters %}
+                    <span class="filter-chip d-inline-flex align-items-center gap-1 rounded-pill px-2 py-1">
+                        <span class="filter-chip-cat">{{ item.category }}:</span>
+                        <strong class="filter-chip-val">{{ item.value }}</strong>
+                        <a href="{{ item.remove_url }}"
+                           class="filter-chip-remove ms-1 d-inline-flex align-items-center text-decoration-none"
+                           title="{% trans 'Remove filter' %}"
+                           aria-label="{% trans 'Remove' %} {{ item.category }} {{ item.value }}">
+                            <i class="bi bi-x-circle-fill"></i>
+                        </a>
+                    </span>
+                    {% endfor %}
+
+                    <a href="{{ clear_all_url }}" class="btn btn-link btn-sm text-danger text-decoration-none fw-semibold ms-auto p-0">
+                        <i class="bi bi-trash3 me-1"></i>{% trans "Clear all" %}
+                    </a>
+                {% else %}
+                    <span class="text-muted small fst-italic">{% trans "No filters applied" %}</span>
+                {% endif %}
+            </div>
         </div>
     </div>
 
-    {% else %}
-    <div class="text-center text-muted py-5">
-        <i class="bi bi-inbox h1"></i>
-        <p class="mt-2">{% trans "No products found" %}</p>
+    <!-- Offcanvas Filter Drawer -->
+    <div class="offcanvas offcanvas-start bg-white" tabindex="-1" id="filterOffcanvas" aria-labelledby="filterOffcanvasLabel">
+        <div class="offcanvas-header border-bottom filter-drawer-header">
+            <h6 class="offcanvas-title fw-bold text-dark d-flex align-items-center gap-2 mb-0" id="filterOffcanvasLabel">
+                <i class="bi bi-sliders2 text-green-theme"></i>
+                {% trans "Filter Products" %}
+                {% if active_filter_count %}
+                <span class="badge btn-green-user rounded-pill">{{ active_filter_count }}</span>
+                {% endif %}
+            </h6>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="{% trans 'Close' %}"></button>
+        </div>
+
+        <div class="offcanvas-body p-0">
+            <form method="get"
+                  id="advanced-filter-form"
+                  class="d-flex flex-column h-100"
+                  onsubmit="this.querySelectorAll('input.filter-text-input').forEach(i => { if (!i.value.trim()) i.disabled = true; });">
+
+                <!-- Preservation of variables -->
+                {% if search %}<input type="hidden" name="lquery" value="{{ search }}">{% endif %}
+                {% if request.GET.limit %}<input type="hidden" name="limit" value="{{ request.GET.limit }}">{% endif %}
+                {% if request.GET.sort %}<input type="hidden" name="sort" value="{{ request.GET.sort }}">{% endif %}
+
+                {% if allow_lot_filter %}
+                    {% for val in active_lots %}
+                        <input type="hidden" name="lot" value="{{ val }}">
+                    {% endfor %}
+                {% endif %}
+                {% for val in active_device_ids %}<input type="hidden" name="device_id" value="{{ val }}">{% endfor %}
+                {% for val in active_up_keys %}<input type="hidden" name="up_key" value="{{ val }}">{% endfor %}
+                {% for val in active_up_vals %}<input type="hidden" name="up_val" value="{{ val }}">{% endfor %}
+                {% for block in filter_blocks %}
+                    {% for val in block.active %}
+                    <input type="hidden" name="{{ block.name }}" value="{{ val }}">
+                    {% endfor %}
+                {% endfor %}
+
+                <div class="p-3 overflow-auto flex-grow-1">
+                    <!--Lot Filter Section -->
+                    {% if allow_lot_filter %}
+                    <details class="filter-group border-bottom pb-3 mb-3" open>
+                        <summary class="d-flex justify-content-between align-items-center fw-bold small text-uppercase text-secondary py-1">
+                            <span>
+                                {% trans "Lot Assignment" %}
+                                {% if active_lots %}
+                                <span class="badge btn-green-user rounded-pill ms-1">{{ active_lots|length }}</span>
+                                {% endif %}
+                            </span>
+                            <i class="bi bi-chevron-down filter-chevron"></i>
+                        </summary>
+                        <div class="mt-2 pt-1">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <span class="text-muted" style="font-size: 0.75rem;">{% trans "Match mode:" %}</span>
+                                <div class="btn-group btn-group-sm" role="group" aria-label="{% trans 'Lot match operator' %}">
+                                    <input type="radio"
+                                           class="btn-check"
+                                           name="lot_op"
+                                           id="lot_op_or"
+                                           value="or"
+                                           {% if lot_op != 'and' %}checked{% endif %}>
+                                    <label class="btn btn-outline-green py-0 px-2"
+                                           for="lot_op_or"
+                                           style="font-size: 0.72rem;"
+                                           title="{% trans 'Device is in any of the selected lots' %}">
+                                        {% trans "Either" %}
+                                    </label>
+
+                                    <input type="radio"
+                                           class="btn-check"
+                                           name="lot_op"
+                                           id="lot_op_and"
+                                           value="and"
+                                           {% if lot_op == 'and' %}checked{% endif %}>
+                                    <label class="btn btn-outline-green py-0 px-2"
+                                           for="lot_op_and"
+                                           style="font-size: 0.72rem;"
+                                           title="{% trans 'Device must be in all selected lots simultaneously' %}">
+                                        {% trans "All" %}
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="input-group input-group-sm">
+                                <input list="list_lots"
+                                       name="lot"
+                                       class="form-control filter-text-input"
+                                       placeholder="{% trans 'Select lot or' %} &quot;{{ none_lot_label }}&quot;...">
+                                <button type="submit" class="btn btn-outline-green" title="{% trans 'Add lot filter' %}">
+                                    <i class="bi bi-plus-lg"></i>
+                                </button>
+                            </div>
+                            <datalist id="list_lots">
+                                {% for opt in lot_options %}
+                                    {% if opt not in active_lots %}<option value="{{ opt }}">{% endif %}
+                                {% endfor %}
+                            </datalist>
+
+                            {% if active_lots %}
+                            <div class="d-flex flex-wrap align-items-center gap-1 mt-2">
+                                {% for val in active_lots %}
+                                    <span class="drawer-active-tag">
+                                        <i class="bi bi-check2 text-green-theme me-1"></i>{{ val }}
+                                    </span>
+                                    {% if not forloop.last %}
+                                    <span class="text-green-theme fw-bold" style="font-size: 0.65rem;">
+                                        {% if lot_op == 'and' %}{% trans "AND" %}{% else %}{% trans "OR" %}{% endif %}
+                                    </span>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </details>
+                    {% endif %}
+
+                    <!-- Current State Section -->
+                    <details class="filter-group border-bottom pb-3 mb-3" open>
+                        <summary class="d-flex justify-content-between align-items-center fw-bold small text-uppercase text-secondary py-1">
+                            <span>
+                                {% trans "Current State" %}
+                                {% if active_states %}
+                                <span class="badge btn-green-user rounded-pill ms-1">{{ active_states|length }}</span>
+                                {% endif %}
+                            </span>
+                            <i class="bi bi-chevron-down filter-chevron"></i>
+                        </summary>
+                        <div class="mt-2 pt-1 d-flex flex-column gap-1">
+                            {% for s in state_definitions %}
+                            <div class="form-check">
+                                <input class="form-check-input filter-checkbox-green"
+                                       type="checkbox"
+                                       name="state"
+                                       value="{{ s.state|lower }}"
+                                       id="state_{{ forloop.counter }}"
+                                       {% if s.state|lower in active_states %}checked{% endif %}>
+                                <label class="form-check-label small text-dark user-select-none w-100" for="state_{{ forloop.counter }}">
+                                    {{ s.state }}
+                                </label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </details>
+
+                    <!--User Properties Section -->
+                    <details class="filter-group border-bottom pb-3 mb-3" {% if active_up_keys or active_up_vals %}open{% endif %}>
+                        <summary class="d-flex justify-content-between align-items-center fw-bold small text-uppercase text-secondary py-1">
+                            <span>
+                                {% trans "User Properties" %}
+                                {% if active_up_keys or active_up_vals %}
+                                <span class="badge btn-green-user rounded-pill ms-1">
+                                    {{ active_up_keys|length|add:active_up_vals|length }}
+                                </span>
+                                {% endif %}
+                            </span>
+                            <i class="bi bi-chevron-down filter-chevron"></i>
+                        </summary>
+                        <div class="mt-2 pt-1">
+                            <div class="mb-3">
+                                <label class="form-label small text-muted mb-1">{% trans "Property Key" %}</label>
+                                <div class="input-group input-group-sm">
+                                    <input list="list_up_keys" name="up_key" class="form-control filter-text-input" placeholder="{% trans 'e.g. Tag, Origin...' %}">
+                                    <button type="submit" class="btn btn-outline-green" title="{% trans 'Add filter' %}">
+                                        <i class="bi bi-plus-lg"></i>
+                                    </button>
+                                </div>
+                                <datalist id="list_up_keys">
+                                    {% for opt in up_keys_options %}
+                                        {% if opt not in active_up_keys %}<option value="{{ opt }}">{% endif %}
+                                    {% endfor %}
+                                </datalist>
+                                {% if active_up_keys %}
+                                <div class="d-flex flex-wrap gap-1 mt-2">
+                                    {% for val in active_up_keys %}
+                                    <span class="drawer-active-tag">
+                                        <i class="bi bi-check2 text-green-theme me-1"></i>{{ val }}
+                                    </span>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <div>
+                                <label class="form-label small text-muted mb-1">{% trans "Property Value" %}</label>
+                                <div class="input-group input-group-sm">
+                                    <input list="list_up_vals" name="up_val" class="form-control filter-text-input" placeholder="{% trans 'Filter by value...' %}">
+                                    <button type="submit" class="btn btn-outline-green" title="{% trans 'Add filter' %}">
+                                        <i class="bi bi-plus-lg"></i>
+                                    </button>
+                                </div>
+                                <datalist id="list_up_vals">
+                                    {% for opt in up_vals_options %}
+                                        {% if opt not in active_up_vals %}<option value="{{ opt }}">{% endif %}
+                                    {% endfor %}
+                                </datalist>
+                                {% if active_up_vals %}
+                                <div class="d-flex flex-wrap gap-1 mt-2">
+                                    {% for val in active_up_vals %}
+                                    <span class="drawer-active-tag">
+                                        <i class="bi bi-check2 text-green-theme me-1"></i>{{ val }}
+                                    </span>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </details>
+
+                    <!-- 3. Device ID Section -->
+                    <details class="filter-group border-bottom pb-3 mb-3" {% if active_device_ids %}open{% endif %}>
+                        <summary class="d-flex justify-content-between align-items-center fw-bold small text-uppercase text-secondary py-1">
+                            <span>
+                                {% trans "Device ID" %}
+                                {% if active_device_ids %}
+                                <span class="badge btn-green-user rounded-pill ms-1">{{ active_device_ids|length }}</span>
+                                {% endif %}
+                            </span>
+                            <i class="bi bi-chevron-down filter-chevron"></i>
+                        </summary>
+                        <div class="mt-2 pt-1">
+                            <div class="input-group input-group-sm">
+                                <input type="text"
+                                       name="device_id"
+                                       class="form-control filter-text-input"
+                                       placeholder="{% trans 'Search by full or short ID...' %}">
+                                <button type="submit" class="btn btn-outline-green" title="{% trans 'Add filter' %}">
+                                    <i class="bi bi-plus-lg"></i>
+                                </button>
+                            </div>
+
+                            {% if active_device_ids %}
+                            <div class="d-flex flex-wrap gap-1 mt-2">
+                                {% for val in active_device_ids %}
+                                <span class="drawer-active-tag">
+                                    <i class="bi bi-check2 text-green-theme me-1"></i>{{ val }}
+                                </span>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </details>
+
+                    <!--  Harwdare filters -->
+                    {% for block in filter_blocks %}
+                    <details class="filter-group border-bottom pb-3 mb-3" {% if block.active or forloop.counter <= 2 %}open{% endif %}>
+                        <summary class="d-flex justify-content-between align-items-center fw-bold small text-uppercase text-secondary py-1">
+                            <span>
+                                {{ block.title }}
+                                {% if block.active %}
+                                <span class="badge btn-green-user rounded-pill ms-1">{{ block.active|length }}</span>
+                                {% endif %}
+                            </span>
+                            <i class="bi bi-chevron-down filter-chevron"></i>
+                        </summary>
+                        <div class="mt-2 pt-1">
+                            <div class="input-group input-group-sm">
+                                <input list="list_{{ block.name }}"
+                                       name="{{ block.name }}"
+                                       class="form-control filter-text-input"
+                                       placeholder="{% trans 'Select or type' %} {{ block.title|lower }}...">
+                                <button type="submit" class="btn btn-outline-green" title="{% trans 'Add filter' %}">
+                                    <i class="bi bi-plus-lg"></i>
+                                </button>
+                            </div>
+                            <datalist id="list_{{ block.name }}">
+                                {% for opt in block.options %}
+                                    {% if opt not in block.active %}<option value="{{ opt }}">{% endif %}
+                                {% endfor %}
+                            </datalist>
+
+                            {% if block.active %}
+                            <div class="d-flex flex-wrap gap-1 mt-2">
+                                {% for val in block.active %}
+                                <span class="drawer-active-tag">
+                                    <i class="bi bi-check2 text-green-theme me-1"></i>{{ val }}
+                                </span>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </details>
+                    {% endfor %}
+                </div>
+
+                <!-- Footer -->
+                <div class="p-3 border-top filter-drawer-footer d-flex gap-2 mt-auto">
+                    {% if has_active_filters %}
+                    <a href="{{ clear_all_url }}" class="btn btn-outline-danger btn-sm w-50 fw-semibold">
+                        {% trans "Reset All" %}
+                    </a>
+                    <button type="submit" class="btn btn-green-admin btn-sm w-50 fw-semibold">
+                        {% trans "Apply Filters" %}
+                    </button>
+                    {% else %}
+                    <button type="submit" class="btn btn-green-admin btn-sm w-100 fw-semibold">
+                        {% trans "Apply Filters" %}
+                    </button>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
     </div>
     {% endif %}
 
+    <div class="row">
+        <div class="col-12" id="mainContent">
+            {% if count > 0 %}
+            <div class="mb-4">
+                <form method="post" id="devices-form">
+                {% csrf_token %}
+                <input type="hidden" name="select_all_pages" id="select-all-pages-flag" value="false">
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
+                <div class="pb-4 pt-3">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                        <h5 class="mb-0">
+                            {% if lot.name %}
+                            {% if lot.archived %}
+                            <i class="bi bi-archive text-warning small"></i> {{ lot.name }}
+                            <small class="text-muted ps-1"> {% trans "archived" %}</small>
+                            {% else %}
+                            <i class="bi bi-folder2-open text-green-theme small"></i> {{ lot.name }}
+                            <small class="text-muted ps-1"> {% trans "open" %}</small>
+                            {% endif %}
+                            {% else %}
+                            <i class="bi bi-devices text-green-theme"></i> {{ title|default:_("Product Management") }}
+                            {% endif %}
+                        </h5>
 
-            const masterCheckbox = document.getElementById('select-all-checkbox');
-            const checkboxes = document.querySelectorAll('input[name="devices"]');
-            const addButton = document.getElementById('add-button');
-            const printButton = document.getElementById('print-labels-button');
-            const removeButton = document.getElementById('remove-button');
-            const changeStateButton = document.getElementById('addStateDropdown');
-            const addBeneficiaryButton = document.getElementById('add-beneficiary-button');
-            const selectAllFlag = document.getElementById('select-all-pages-flag');
-            const selectionCount = document.getElementById('selection-count');
-            const totalCount = {{ count }};
-            const totalPages = {{ total_pages|default:1 }};
+                        <!--Export Dropdown -->
+                        <div class="d-flex flex-wrap align-items-center gap-2">
+                            {% if show_filter_bar %}
+                                {% if can_export %}
+                                <div class="dropdown flex-shrink-0">
+                                    <button class="btn btn-outline-green dropdown-toggle" type="button" id="exportDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="bi bi-download me-1"></i>
+                                        {% if search or has_active_filters %}
+                                        {% trans 'Export filtered' %} ({{ count }})
+                                        {% else %}
+                                        {% trans 'Export All' %} ({{ count }})
+                                        {% endif %}
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-sm-end" aria-labelledby="exportDropdown">
+                                        <li>
+                                            <a class="dropdown-item" href="{% export_url 'csv' %}">
+                                                <i class="bi bi-filetype-csv text-green-theme me-1"></i>
+                                                {% trans '.csv' %}
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item" href="{% export_url 'xlsx' %}">
+                                                <i class="bi bi-filetype-xlsx text-green-theme me-1"></i>
+                                                {% trans '.xlsx' %}
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                                {% else %}
+                                <span class="d-inline-block" tabindex="0" title="{% trans 'Apply at least one filter or search query to export products' %}">
+                                    <button class="btn btn-outline-secondary" type="button" disabled>
+                                        <i class="bi bi-download me-1"></i>
+                                        {% trans "Apply filter to export" %}
+                                    </button>
+                                </span>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
 
-            let selectAllMode = false;
+                    <div class="d-flex flex-wrap-reverse flex-sm-wrap justify-content-start align-items-center gap-2">
+                        <!-- Select checkbox  -->
+                        {% if count > 0 %}
+                        <div class="d-flex align-items-center gap-1 flex-shrink-0">
+                            <input type="checkbox" id="select-all-checkbox" class="form-check-input filter-checkbox-green mt-0">
+                            <div class="dropdown">
+                                <span class="form-check-label text-muted dropdown-toggle ps-1"
+                                      data-bs-toggle="dropdown" aria-expanded="false"
+                                      style="cursor: pointer; user-select: none;">
+                                    {% trans "Select" %}
+                                    <span id="selection-count" class="badge btn-green-user d-none ms-1"></span>
+                                </span>
+                                <ul class="dropdown-menu" aria-labelledby="selectDropdown">
+                                    <li>
+                                        <a class="dropdown-item" id="select-page-option" href="#">
+                                            {% trans "Select page" %}
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" id="select-all-option" href="#">
+                                            {% trans "Select all" %} {{ count }} {% trans "products" %}
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        {% endif %}
 
-            function updateButtons() {
-                const anyChecked = selectAllMode || document.querySelectorAll('.select-checkbox:checked').length > 0;
-                addButton.disabled = !anyChecked;
-                changeStateButton.classList.toggle('disabled', !anyChecked);
-                if (printButton) printButton.disabled = !anyChecked;
-                if (removeButton) removeButton.disabled = !anyChecked;
-                if (addBeneficiaryButton) addBeneficiaryButton.disabled = (selectAllMode && totalPages > 1) || !anyChecked;
+                        <div class="d-flex flex-wrap align-items-center gap-2">
+                            <!-- Change state dropdown -->
+                            <div class="dropdown flex-shrink-0">
+                                <button type="button" id="addStateDropdown" class="btn btn-green-admin dropdown-toggle" data-bs-toggle="dropdown">
+                                    {% trans "Change state" %}
+                                </button>
+                                <ul class="dropdown-menu" style="width: 120%;">
+                                    {% for state in state_definitions %}
+                                    <li style="width: 100%;">
+                                        <button type="button"
+                                                class="dropdown-item d-flex justify-content-between align-items-center"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#bulkChangeStateModal-{{ state.id }}">
+                                            <span class="font-monospace">{{ state.state }}</span>
+                                            <span class="badge {% if state.auto_issue_dte and user.institution.integration_settings.dpp_enabled %}bg-primary{% else %}btn-green-user{% endif %} rounded-pill-sm">{{ forloop.counter }}</span>
+                                        </button>
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+
+                            <!-- Assign to lot button -->
+                            <button disabled id="add-button" class="btn btn-green-user flex-shrink-0 gap-2" type="submit" name="url" value="{% url 'lot:add_devices' %}" style="white-space: nowrap;">
+                                <i class="bi bi-folder-symlink mr-2"></i> {% trans 'Assign to lot' %}
+                            </button>
+
+                            <button disabled id="print-labels-button" class="btn btn-outline-dark flex-shrink-0 gap-2" type="submit" name="url" value="{% url 'product:bulk_labels' %}" style="white-space: nowrap;">
+                                <i class="bi bi-qr-code"></i> {% trans 'Print Labels' %}
+                            </button>
+
+                            <!-- Unassign Lot button -->
+                            {% if lot.name and not lot.archived %}
+                            <button id="remove-button" class="btn btn-danger flex-shrink-0 gap-2" type="submit" disabled
+                                    value="{% url 'lot:del_devices' lot.id %}" name="url">
+                                <i class="bi bi-folder-minus"></i> {% trans 'Unassign from lot' %}
+                            </button>
+                            {% endif %}
+
+                            {% if lot and is_shop %}
+                            <button id="add-beneficiary-button" name="url" value="{% url 'lot:beneficiary' lot.id %}" class="btn btn-green-admin" disabled>
+                                {% trans 'Add to beneficiary' %}
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Table and pagination -->
+                <div class="table-responsive">
+                    {% render_table table %}
+                </div>
+
+                {% for state in state_definitions %}
+                <div class="modal fade" id="bulkChangeStateModal-{{ state.id }}" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content text-start">
+                            <div class="modal-header">
+                                <h5 class="modal-title">
+                                    {% trans "Change State to" %} <strong class="text-green-theme">{{ state.state }}</strong>
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
+                            </div>
+                            <div class="modal-body">
+                                {% if not state.auto_issue_dte and user.institution.integration_settings.dpp_enabled %}
+                                <div class="alert alert-secondary small mb-4">
+                                    {% trans "Automatic Digital Traceability Events (DTEs) are disabled for bulk operations." %}
+                                </div>
+                                {% elif state.auto_issue_dte and user.institution.integration_settings.dpp_enabled %}
+                                <div class="alert alert-secondary small mb-4">
+                                    {% trans "Automatic Digital Traceability Events (DTEs) are disabled for bulk operations." %}
+                                </div>
+                                {% endif %}
+
+                                <div class="mb-3">
+                                    <label class="form-label">{% trans "Comment (Optional)" %}</label>
+                                    <textarea class="form-control" name="comment_{{ state.id }}" rows="3" placeholder="{% trans 'Leave a note about why these devices are changing state...' %}"></textarea>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+                                <button type="submit" class="btn btn-green-user" formaction="{% url 'action:bulk_change_state' state.id %}">{% trans "Confirm Local Change" %}</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+                </form>
+
+                <div class="d-flex flex-wrap align-items-center gap-2 justify-content-end p-2">
+                    <div class="d-flex justify-content-center text-muted align-items-center gap-1">
+                        <i class="bi bi-laptop text-green-theme"></i> {% if not lot.name %} {% trans "Showing" %} {% endif %} {{count}} {% trans "Product/s" %}
+                    </div>
+
+                    <!-- Device limit per page picker -->
+                    <div class="flex-shrink-0">
+                        <form method="get" class="d-inline">
+                            <div class="input-group input-group-sm">
+                                <label class="input-group-text" for="limit">{% trans "Show" %}</label>
+                                <select name="limit" id="limit" class="form-select" onchange="this.form.submit()">
+                                    {% for choice in paginate_choices %}
+                                    {% if choice != 0 %}
+                                    <option value="{{ choice }}" {% if limit == choice %}selected{% endif %}>
+                                        {{ choice }}
+                                    </option>
+                                    {% endif %}
+                                    {% endfor %}
+                                </select>
+                                <label class="input-group-text" for="limit">{% trans "products" %}</label>
+                            </div>
+                            {% for key, val_list in request.GET.lists %}
+                                {% if key != 'limit' and key != 'page' %}
+                                    {% for val in val_list %}
+                                        <input type="hidden" name="{{ key }}" value="{{ val }}">
+                                    {% endfor %}
+                                {% endif %}
+                            {% endfor %}
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            {% else %}
+            <div class="card filter-control-card shadow-sm text-center py-5 my-3 bg-white">
+                <div class="card-body">
+                    <i class="bi bi-funnel text-green-theme display-5"></i>
+                    <h6 class="mt-3 fw-semibold text-dark">{% trans "No products match your current filters" %}</h6>
+                    <p class="text-muted small mb-3">{% trans "Try removing some active filters or clearing your search query." %}</p>
+                    {% if has_active_filters %}
+                    <a href="{{ clear_all_url }}" class="btn btn-outline-green btn-sm">
+                        <i class="bi bi-arrow-counterclockwise me-1"></i>{% trans "Reset all filters" %}
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    :root {
+        --refurb-green: #3d9988;
+        --refurb-green-light: #56beac;
+        --refurb-green-dark: #296b5f;
+        --refurb-mint-bg: #f2f9f7;
+        --refurb-mint-chip: #e3f5f1;
+        --refurb-mint-border: #a7dcd1;
+        --refurb-forest-text: #134e4a;
+    }
+
+    .text-green-theme {
+        color: var(--refurb-green) !important;
+    }
+
+    .btn-outline-green {
+        color: var(--refurb-green-dark);
+        border: 1px solid var(--refurb-green);
+        background-color: transparent;
+        transition: all 0.15s ease-in-out;
+    }
+    .btn-outline-green:hover,
+    .btn-outline-green:focus,
+    .btn-check:checked + .btn-outline-green {
+        color: #ffffff !important;
+        background-color: var(--refurb-green) !important;
+        border-color: var(--refurb-green) !important;
+    }
+
+    .filter-control-card {
+        border: 1px solid #dceee9;
+        border-top: 3px solid var(--refurb-green-light);
+    }
+    .search-group-green:focus-within {
+        box-shadow: 0 0 0 0.2rem rgba(86, 190, 172, 0.25);
+        border-radius: 0.375rem;
+    }
+    .search-group-green:focus-within .form-control,
+    .search-group-green:focus-within .input-group-text {
+        border-color: var(--refurb-green-light);
+    }
+
+    .filter-status-box {
+        background-color: var(--refurb-mint-bg);
+        border: 1px solid #d4ece7;
+        min-height: 42px;
+    }
+
+    .filter-chip {
+        background-color: var(--refurb-mint-chip);
+        border: 1px solid var(--refurb-mint-border);
+        color: var(--refurb-forest-text);
+        font-size: 0.8125rem;
+        line-height: 1.2;
+        transition: background-color 0.15s ease, border-color 0.15s ease;
+    }
+    .filter-chip:hover {
+        background-color: #d0ede6;
+        border-color: var(--refurb-green-light);
+    }
+    .filter-chip-cat {
+        color: #2c6e63;
+        font-weight: 500;
+    }
+    .filter-chip-val {
+        color: #0b3733;
+        font-weight: 600;
+    }
+    .filter-chip-remove {
+        color: var(--refurb-green-dark);
+        opacity: 0.75;
+        transition: opacity 0.15s ease, color 0.15s ease, transform 0.15s ease;
+    }
+    .filter-chip-remove:hover {
+        color: #dc2626;
+        opacity: 1;
+        transform: scale(1.1);
+    }
+
+    .filter-drawer-header,
+    .filter-drawer-footer {
+        background-color: var(--refurb-mint-bg);
+    }
+    .drawer-active-tag {
+        display: inline-flex;
+        align-items: center;
+        background-color: var(--refurb-mint-chip);
+        border: 1px solid var(--refurb-mint-border);
+        color: var(--refurb-forest-text);
+        font-size: 0.75rem;
+        font-weight: 500;
+        padding: 0.2rem 0.55rem;
+        border-radius: 0.375rem;
+    }
+
+    .filter-checkbox-green:checked {
+        background-color: var(--refurb-green);
+        border-color: var(--refurb-green);
+    }
+    .filter-checkbox-green:focus,
+    .filter-text-input:focus {
+        border-color: var(--refurb-green-light);
+        box-shadow: 0 0 0 0.2rem rgba(86, 190, 172, 0.25);
+    }
+
+    details.filter-group > summary {
+        list-style: none;
+        cursor: pointer;
+        user-select: none;
+        transition: color 0.15s ease;
+    }
+    details.filter-group > summary:hover {
+        color: var(--refurb-green-dark) !important;
+    }
+    details.filter-group > summary::-webkit-details-marker {
+        display: none;
+    }
+    details.filter-group > summary .filter-chevron {
+        transition: transform 0.2s ease;
+        color: var(--refurb-green);
+    }
+    details.filter-group[open] > summary .filter-chevron {
+        transform: rotate(180deg);
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const masterCheckbox = document.getElementById('select-all-checkbox');
+        const checkboxes = document.querySelectorAll('input[name="devices"]');
+        const addButton = document.getElementById('add-button');
+        const printButton = document.getElementById('print-labels-button');
+        const removeButton = document.getElementById('remove-button');
+        const changeStateButton = document.getElementById('addStateDropdown');
+        const addBeneficiaryButton = document.getElementById('add-beneficiary-button');
+        const selectAllFlag = document.getElementById('select-all-pages-flag');
+        const selectionCount = document.getElementById('selection-count');
+        const totalCount = {{ count }};
+        const totalPages = {{ total_pages|default:1 }};
+
+        let selectAllMode = false;
+
+        function updateButtons() {
+            const anyChecked = selectAllMode || document.querySelectorAll('.select-checkbox:checked').length > 0;
+            if(addButton) addButton.disabled = !anyChecked;
+            if(changeStateButton) changeStateButton.classList.toggle('disabled', !anyChecked);
+            if(printButton) printButton.disabled = !anyChecked;
+            if(removeButton) removeButton.disabled = !anyChecked;
+            if(addBeneficiaryButton) addBeneficiaryButton.disabled = (selectAllMode && totalPages > 1) || !anyChecked;
+        }
+
+        function updateMasterCheckbox() {
+            if(!masterCheckbox) return;
+            const checkedCount = document.querySelectorAll('.select-checkbox:checked').length;
+            if (selectAllMode || checkedCount === checkboxes.length && checkboxes.length > 0) {
+                masterCheckbox.checked = true;
+                masterCheckbox.indeterminate = false;
+            } else if (checkedCount === 0) {
+                masterCheckbox.checked = false;
+                masterCheckbox.indeterminate = false;
+            } else {
+                masterCheckbox.checked = false;
+                masterCheckbox.indeterminate = true;
             }
+        }
 
-            function updateMasterCheckbox() {
-                const checkedCount = document.querySelectorAll('.select-checkbox:checked').length;
-                if (selectAllMode || checkedCount === checkboxes.length) {
-                    masterCheckbox.checked = true;
-                    masterCheckbox.indeterminate = false;
-                } else if (checkedCount === 0) {
-                    masterCheckbox.checked = false;
-                    masterCheckbox.indeterminate = false;
-                } else {
-                    masterCheckbox.checked = false;
-                    masterCheckbox.indeterminate = true;
-                }
-            }
-
-            function updateSelectionCount() {
-                if (selectAllMode) {
-                    selectionCount.textContent = totalCount;
+        function updateSelectionCount() {
+            if(!selectionCount) return;
+            if (selectAllMode) {
+                selectionCount.textContent = totalCount;
+                selectionCount.classList.remove('d-none');
+            } else {
+                const n = document.querySelectorAll('.select-checkbox:checked').length;
+                if (n > 0) {
+                    selectionCount.textContent = n;
                     selectionCount.classList.remove('d-none');
                 } else {
-                    const n = document.querySelectorAll('.select-checkbox:checked').length;
-                    if (n > 0) {
-                        selectionCount.textContent = n;
-                        selectionCount.classList.remove('d-none');
-                    } else {
-                        selectionCount.classList.add('d-none');
-                    }
+                    selectionCount.classList.add('d-none');
                 }
             }
+        }
 
-            // Master checkbox: toggle all on/off
+        if(masterCheckbox) {
             masterCheckbox.addEventListener('change', () => {
                 if (masterCheckbox.checked) {
-                    // Select page by default when checking manually
                     checkboxes.forEach(cb => cb.checked = true);
                 } else {
                     selectAllMode = false;
-                    selectAllFlag.value = 'false';
+                    if(selectAllFlag) selectAllFlag.value = 'false';
                     checkboxes.forEach(cb => cb.checked = false);
                 }
                 updateSelectionCount();
                 updateButtons();
             });
+        }
 
-            document.getElementById('select-page-option').addEventListener('click', (e) => {
+        const selectPageBtn = document.getElementById('select-page-option');
+        if(selectPageBtn) {
+            selectPageBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 selectAllMode = false;
-                selectAllFlag.value = 'false';
+                if(selectAllFlag) selectAllFlag.value = 'false';
                 checkboxes.forEach(cb => cb.checked = true);
                 updateMasterCheckbox();
                 updateSelectionCount();
                 updateButtons();
             });
+        }
 
-            document.getElementById('select-all-option').addEventListener('click', (e) => {
+        const selectAllBtn = document.getElementById('select-all-option');
+        if(selectAllBtn) {
+            selectAllBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 selectAllMode = true;
-                selectAllFlag.value = 'true';
+                if(selectAllFlag) selectAllFlag.value = 'true';
                 checkboxes.forEach(cb => cb.checked = true);
                 updateMasterCheckbox();
                 updateSelectionCount();
                 updateButtons();
             });
+        }
 
-            checkboxes.forEach(checkbox => {
-                checkbox.addEventListener('change', () => {
-                    if (selectAllMode) {
-                        selectAllMode = false;
-                        selectAllFlag.value = 'false';
-                    }
-                    updateMasterCheckbox();
-                    updateSelectionCount();
-                    updateButtons();
-                });
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', () => {
+                if (selectAllMode) {
+                    selectAllMode = false;
+                    if(selectAllFlag) selectAllFlag.value = 'false';
+                }
+                updateMasterCheckbox();
+                updateSelectionCount();
+                updateButtons();
             });
-
-            // Initialize button states on reload
-            updateButtons();
-            updateSelectionCount();
-
         });
-    </script>{% endblock %}
-</div>
+
+        updateButtons();
+        updateSelectionCount();
+    });
+</script>
+{% endblock %}
