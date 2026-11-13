@@ -92,8 +92,9 @@
 
         <div class="d-flex justify-content-end gap-2 py-4 mt-2">
             <a class="btn btn-light border" href="{% url 'dashboard:unassigned' %}">{% translate "Cancel" %}</a>
-            <button type="submit" class="btn btn-success px-5 shadow-sm">
-                <i class="bi bi-check2-circle me-1"></i> {% translate "Save Product" %}
+            <button type="submit" id="save-product-btn" class="btn btn-success px-5 shadow-sm">
+                <span class="idle-label"><i class="bi bi-check2-circle me-1"></i> {% translate "Save Product" %}</span>
+                <span class="busy-label d-none"><span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> {% translate "Saving…" %}</span>
             </button>
         </div>
     </form>
@@ -219,6 +220,27 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     updateAmountState();
+
+    // Uploading a camera photo can take several seconds on a slow network.
+    // Block a second submit so the product is not posted twice (the second
+    // post fails with a duplicate Custom ID and looks like nothing was saved).
+    const mainForm = document.getElementById('main-form');
+    const saveBtn = document.getElementById('save-product-btn');
+    const setBusy = busy => {
+        mainForm.dataset.submitting = busy ? '1' : '';
+        saveBtn.disabled = busy;
+        saveBtn.querySelector('.idle-label').classList.toggle('d-none', busy);
+        saveBtn.querySelector('.busy-label').classList.toggle('d-none', !busy);
+    };
+    mainForm?.addEventListener('submit', e => {
+        if (mainForm.dataset.submitting) {
+            e.preventDefault();
+            return;
+        }
+        setBusy(true);
+    });
+    // Coming back with the browser's back button restores the page from cache.
+    window.addEventListener('pageshow', e => { if (e.persisted) setBusy(false); });
 });
 </script>
 
