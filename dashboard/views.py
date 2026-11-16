@@ -323,23 +323,37 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
             alias_to_root[ra['alias']] = ra['root']
             alias_ids.add(ra['alias'])
 
-        # newest evidence uuid per root (across its physical aliases).
-        root_latest_uuid = {}
+        # gather all uuids
+        uuid_to_root = {}
         for sp in SystemProperty.objects.filter(
             owner=institution, value__in=alias_ids
-        ).order_by('-created').values('value', 'uuid'):
+        ).values('value', 'uuid'):
             root = alias_to_root.get(sp['value'], sp['value'])
-            root_latest_uuid.setdefault(root, sp['uuid'])
+            uuid_to_root[str(sp['uuid'])] = root
 
-        # current state per root via its latest uuid.
-        uuid_to_root = {uuid: root for root, uuid in root_latest_uuid.items()}
-        state_by_root = {}
+        # $get the default state (order 0)
+        default_state_def = StateDefinition.objects.filter(
+            institution=institution
+        ).order_by('order').first()
+        default_state_name = str(default_state_def.state) if default_state_def else None
+
+        # collect states of device aggregation
+        states_per_root = {}
         for st in State.objects.filter(
-            snapshot_uuid__in=root_latest_uuid.values()
+            snapshot_uuid__in=list(uuid_to_root.keys())
         ).order_by('-date').values('snapshot_uuid', 'state'):
-            root = uuid_to_root.get(st['snapshot_uuid'])
+
+            root = uuid_to_root.get(str(st['snapshot_uuid']))
             if root is not None:
-                state_by_root.setdefault(root, st['state'])
+                states_per_root.setdefault(root, []).append(str(st['state']))
+
+        # process the states
+        state_by_root = {}
+        for root, states in states_per_root.items():
+            if len(states) > 1 and default_state_name and states[0] == default_state_name:
+                state_by_root[root] = states[1]
+            else:
+                state_by_root[root] = states[0]
 
         # beneficiary status per root (any physical id may carry the row).
         status_by_root = {}
