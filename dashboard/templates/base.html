@@ -231,6 +231,35 @@
                 </ul>
               </li>
               <li class="nav-item">
+                <a class="admin {% if 'dashboard:state' in path %}active {% endif %}nav-link fw-bold" data-bs-toggle="collapse" data-bs-target="#ul_states" aria-expanded="false" aria-controls="ul_states" href="javascript:void()">
+                  <i class="bi bi-tags icon_sidebar"></i>
+                  {% trans 'States' %}
+                </a>
+                <ul class="flex-column mb-2 ul_sidebar accordion-collapse {% if 'dashboard:state' in path %}expanded{% else %}collapse{% endif %}" id="ul_states" data-bs-parent="#sidebarMenu">
+                  {% for state_count in state_counts %}
+                  {% if state_count.id %}
+                  <li class="nav-items">
+                    <a class="nav-link{% if path == 'dashboard:state' and state_count.id == selected_state_id %} active2{% endif %}" href="{% url 'dashboard:state' state_count.id %}">
+                      {{ state_count.state }}
+                      <span class="badge bg-secondary rounded-pill ms-1">{{ state_count.count }}</span>
+                    </a>
+                  </li>
+                  {% else %}
+                  <li class="nav-items">
+                    <a class="nav-link fst-italic text-muted{% if path == 'dashboard:state_none' %} active2{% endif %}" href="{% url 'dashboard:state_none' %}">
+                      {% trans 'No state' %}
+                      <span class="badge bg-secondary rounded-pill ms-1">{{ state_count.count }}</span>
+                    </a>
+                  </li>
+                  {% endif %}
+                  {% empty %}
+                  <li class="nav-items">
+                    <span class="nav-link text-muted">{% trans 'No products' %}</span>
+                  </li>
+                  {% endfor %}
+                </ul>
+              </li>
+              <li class="nav-item">
                 <a class="admin {% if 'evidence:' in path or path == 'product:add' %}active {% endif %}nav-link fw-bold" data-bs-toggle="collapse" data-bs-target="#ul_evidences" aria-expanded="false" aria-controls="ul_evidences" href="javascript:void()">
                   <i class="bi bi-card-list icon_sidebar"></i>
                   {% trans 'Evidences' %}

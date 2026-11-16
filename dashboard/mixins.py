@@ -1,5 +1,6 @@
 from django.urls import resolve
 from django.conf import settings
+from django.core.cache import cache
 from django.shortcuts import get_object_or_404, redirect, Http404
 from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import PermissionDenied
@@ -17,6 +18,82 @@ from django.db.models import F, Subquery, OuterRef
 
 
 UNASSIGNED_COUNT_SESSION_KEY = "unassigned_count"
+STATE_COUNTS_TIMEOUT = 250
+
+
+def state_counts_cache_key(institution):
+    return f"state_counts_{institution.id}"
+
+
+def roots_by_current_state(institution):
+    """Group the institution's devices by their current state.
+
+    Returns ``{state name: [canonical root, ...]}``. The current state of a
+    device is the newest State attached to its latest evidence uuid (across
+    its physical aliases), the same rule the device tables use for their
+    "current state" column. Devices without a state are left out.
+    Fixed query count, no Xapian.
+    """
+    states = State.objects.filter(institution=institution)
+    if not states.exists():
+        return {}
+
+    alias_to_root = dict(
+        RootAlias.objects.filter(owner=institution)
+        .values_list("alias", "root")
+    )
+
+    # newest evidence uuid per root (across its physical aliases).
+    seen_roots = set()
+    uuid_to_roots = {}
+    for value, uuid in SystemProperty.objects.filter(
+        owner=institution
+    ).order_by("-created").values_list("value", "uuid").iterator(
+        chunk_size=2000
+    ):
+        root = alias_to_root.get(value, value)
+        if root not in seen_roots:
+            seen_roots.add(root)
+            uuid_to_roots.setdefault(uuid, []).append(root)
+
+    # newest state per root via its latest uuid.
+    resolved = set()
+    grouped = {}
+    for uuid, state in states.order_by("-date").values_list(
+        "snapshot_uuid", "state"
+    ).iterator(chunk_size=2000):
+        for root in uuid_to_roots.get(uuid, ()):
+            if root not in resolved:
+                resolved.add(root)
+                grouped.setdefault(state, []).append(root)
+    return grouped
+
+
+def state_counts_summary(institution, grouped=None):
+    """Non-empty states of ``institution`` with how many devices each holds,
+    in the order of their StateDefinition. The devices without a state are
+    counted in a last entry with no id/state (the "No state" pseudo-state).
+    JSON-serialisable (cache-safe).
+    """
+    if grouped is None:
+        grouped = roots_by_current_state(institution)
+    counts = []
+    if grouped:
+        counts = [
+            {"id": pk, "state": state, "count": len(grouped[state])}
+            for pk, state in StateDefinition.objects.filter(
+                institution=institution
+            ).order_by("order").values_list("pk", "state")
+            if grouped.get(state)
+        ]
+    total = (
+        RootAlias.objects.filter(owner=institution)
+        .values("root").distinct().count()
+    )
+    no_state = total - sum(len(roots) for roots in grouped.values())
+    if no_state > 0:
+        counts.append({"id": None, "state": None, "count": no_state})
+    return counts
 
 
 class Http403(PermissionDenied):
@@ -54,9 +131,32 @@ class DashboardView(LoginRequiredMixin):
             'path': resolve(self.request.path).view_name,
             'user': self.request.user,
             'lot_tags': lot_tags,
-            'unassigned_count': self.get_unassigned_count()
+            'unassigned_count': self.get_unassigned_count(),
+            'state_counts': self.get_state_counts(),
         })
         return context
+
+    def get_state_counts(self):
+        """Sidebar "States" entries (non-empty states + device counters),
+        cached per institution.
+
+        Computing this means scanning the institution's evidences and
+        states, so it is only calculated on a cache miss. The States views
+        refresh it with set_state_counts() and the state-change views drop
+        it so the next page recomputes it; anything else that moves a device
+        between states (e.g. a new evidence) shows up when the entry expires.
+        """
+        institution = self.request.user.institution
+        counts = cache.get(state_counts_cache_key(institution))
+        if counts is None:
+            counts = state_counts_summary(institution)
+            self.set_state_counts(counts)
+        return counts
+
+    def set_state_counts(self, counts):
+        cache.set(
+            state_counts_cache_key(self.request.user.institution),
+            counts, timeout=STATE_COUNTS_TIMEOUT)
 
     def get_unassigned_count(self):
         """Inbox badge value, held in the user's session.
