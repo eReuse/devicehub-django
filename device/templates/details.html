@@ -35,7 +35,7 @@
           <a class="btn btn-green-admin dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" style="cursor: pointer;">
             {% trans "Change state" %}
             {% if device_states %}
-              ({{ device_states.0.state }})
+              ({{ object.get_current_state.state }})
             {% else %}
               ( {% trans "None" %} )
             {% endif %}

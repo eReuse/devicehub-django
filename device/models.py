@@ -7,7 +7,7 @@ from django.utils.dateparse import parse_datetime
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import gettext_lazy as _
 
-from action.models import State
+from action.models import State, StateDefinition
 from device.product_cache import ProductCache
 from evidence.models import (
     CredentialProperty,
@@ -253,7 +253,25 @@ class Device:
             self.get_uuids()
         if not self.uuids:
             return None
-        return State.objects.filter(snapshot_uuid__in=self.uuids).order_by('-date').first()
+
+        recent_states = list(
+            State.objects.filter(snapshot_uuid__in=self.uuids).order_by('-date')[:2]
+        )
+
+        if not recent_states:
+            return None
+
+        latest_state = recent_states[0]
+
+        if len(recent_states) > 1:
+            default_state_def = StateDefinition.objects.filter(
+                institution_id=latest_state.institution_id
+            ).order_by('order').first()
+
+            if default_state_def and latest_state.state == default_state_def.state:
+                return recent_states[1]
+
+        return latest_state
 
     def get_lots(self):
         # A lot row may have been stored with either the physical ID or the
