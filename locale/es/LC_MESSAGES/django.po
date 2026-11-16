@@ -2997,3 +2997,11 @@ msgstr "Administrador"
 #: user/views.py:31
 msgid "Download Settings"
 msgstr "Descargar preferencias"
+
+#: dashboard/templates/base.html:250 dashboard/views.py:148
+msgid "No state"
+msgstr "Sin estado"
+
+#: dashboard/templates/base.html:257
+msgid "No products"
+msgstr "Sin productos"
