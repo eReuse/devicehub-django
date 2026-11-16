@@ -853,6 +853,10 @@ class StateDevicesTests(TestCase):
             sp = SystemProperty.objects.create(
                 owner=self.institution, uuid=uuidlib.uuid4(), value=v)
             self.uuids[v] = sp.uuid
+        # New products start in the entry state (INBOX). Drop it so these
+        # tests start from products without a state, like the ones created
+        # before the entry state existed.
+        State.objects.filter(institution=self.institution).delete()
         self.definitions = {
             name: StateDefinition.objects.create(
                 institution=self.institution, state=name)
@@ -922,6 +926,16 @@ class StateDevicesTests(TestCase):
         self.assertEqual(root_ids, ["ereuse24:aaaaaa"])
         rows = view.build_product_cache_rows(root_ids)
         self.assertEqual(rows[0]["current_state"], "Repaired")
+
+    def test_new_products_are_counted_in_the_entry_state(self):
+        SystemProperty.objects.create(
+            owner=self.institution, uuid=uuidlib.uuid4(),
+            value="ereuse24:dddddd")
+
+        summary = state_counts_summary(self.institution)
+        self.assertEqual(
+            [(s["state"], s["count"]) for s in summary],
+            [("INBOX", 1), (None, 3)])
 
     def test_devices_without_state_are_counted_in_a_last_entry(self):
         self._set_state("ereuse24:aaaaaa", "Repaired")
