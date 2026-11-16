@@ -8,8 +8,8 @@ from django.utils.translation import gettext as _
 
 class State(models.Model):
     date = models.DateTimeField(auto_now_add=True)
-    institution = models.ForeignKey('user.institution', on_delete=models.SET_NULL, null=True)
-    user = models.ForeignKey('user.user', on_delete=models.SET_NULL, null=True)
+    institution = models.ForeignKey('user.Institution', on_delete=models.SET_NULL, null=True)
+    user = models.ForeignKey('user.User', on_delete=models.SET_NULL, null=True)
 
     state = models.CharField(max_length=50)
     snapshot_uuid = models.UUIDField()
@@ -27,7 +27,7 @@ class State(models.Model):
 
 
 class StateDefinition(models.Model):
-    institution = models.ForeignKey('user.institution', on_delete=models.CASCADE)
+    institution = models.ForeignKey('user.Institution', on_delete=models.CASCADE)
 
     order = models.PositiveIntegerField(default=0)
     state = models.CharField(max_length=50)
@@ -72,18 +72,6 @@ def ensure_default_state_definition(sender, instance, created, **kwargs):
             defaults={'order': 1}
         )
 
-@receiver(post_delete, sender=StateDefinition)
-def prevent_empty_state_definitions(sender, instance, **kwargs):
-    Institution = apps.get_model('user', 'Institution')
-
-    if Institution.objects.filter(pk=instance.institution_id).exists():
-
-        if not StateDefinition.objects.filter(institution_id=instance.institution_id).exists():
-            StateDefinition.objects.create(
-                institution_id=instance.institution_id,
-                state='INBOX',
-                order=1
-            )
 
 class Note(models.Model):
     institution = models.ForeignKey('user.institution', on_delete=models.CASCADE)
