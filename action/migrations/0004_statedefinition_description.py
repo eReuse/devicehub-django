@@ -3,10 +3,69 @@
 from django.db import migrations, models
 
 
+def backfill_missing_states(apps, schema_editor):
+    State = apps.get_model("action", "State")
+    StateDefinition = apps.get_model("action", "StateDefinition")
+    SystemProperty = apps.get_model("evidence", "SystemProperty")
+    Institution = apps.get_model("user", "Institution")
+    RootAlias = apps.get_model("evidence", "RootAlias")
+
+    # get the default state for each institution (first one on order)
+    default_states = {}
+    for institution in Institution.objects.all():
+        first_state = StateDefinition.objects.filter(institution=institution).order_by('order').first()
+        default_states[institution.pk] = first_state.state if first_state else "INBOX"
+
+    # grab al the uuids with states
+    stated_uuids = set(State.objects.values_list('snapshot_uuid', flat=True))
+
+    # get the uuids, and roots of products
+    aliases = RootAlias.objects.values('owner_id', 'alias', 'root')
+    alias_to_root = {(a['owner_id'], a['alias']): a['root'] for a in aliases}
+
+    root_has_state = set()
+    root_latest_uuid = {}
+
+    # iterate all system evidences, check if it has a state, and flag the rootalias if so
+    for sp in SystemProperty.objects.order_by('created').values('owner_id', 'value', 'uuid'):
+        owner_id = sp['owner_id']
+        uuid_val = sp['uuid']
+
+        root = alias_to_root.get((owner_id, sp['value']), sp['value'])
+        root_key = (owner_id, root)
+
+        root_latest_uuid[root_key] = uuid_val
+
+        if uuid_val in stated_uuids:
+            root_has_state.add(root_key)
+
+    # if a root doesnt have a state, create one on the last evidence
+    new_states = []
+    for root_key, latest_uuid in root_latest_uuid.items():
+        if root_key not in root_has_state:
+            owner_id = root_key[0]
+            new_states.append(
+                State(
+                    institution_id=owner_id,
+                    state=default_states.get(owner_id, "INBOX"),
+                    snapshot_uuid=latest_uuid,
+                )
+            )
+
+    if new_states:
+        State.objects.bulk_create(new_states, batch_size=1000)
+
+
+def reverse_backfill(apps, schema_editor):
+    pass
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
         ("action", "0003_statedefinition_auto_issue_dte_and_more"),
+        ("evidence", "0011_rootalias_rootalias_ids_have_algorithm_prefix_and_more"),
+        ("user", "0010_alter_institution_facility_id_uri"),
     ]
 
     operations = [
@@ -14,5 +73,10 @@ class Migration(migrations.Migration):
             model_name="statedefinition",
             name="description",
             field=models.CharField(blank=True, default="", max_length=255),
+        ),
+
+        migrations.RunPython(
+            backfill_missing_states,
+            reverse_backfill
         ),
     ]
