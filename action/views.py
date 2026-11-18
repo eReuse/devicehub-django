@@ -16,6 +16,7 @@ from user.models import InstitutionDPPSettings
 from credentials.services import CredentialService
 from dashboard.mixins import DashboardView, state_counts_cache_key
 from device.models import Device
+from user.contributor import check_can_see, can_see
 
 
 logger = logging.getLogger('django')
@@ -30,6 +31,7 @@ class ChangeStateView(LoginRequiredMixin, FormView):
         new_state = form.cleaned_data['new_state']
         snapshot_uuid = form.cleaned_data['snapshot_uuid']
         self.device_id = form.cleaned_data['device_id']
+        check_can_see(self.request.user, self.device_id)
         comment = form.cleaned_data.get('comment', '').strip()
 
         device = Device(id=self.device_id, owner=self.request.user.institution)
@@ -172,7 +174,10 @@ class BulkStateChangeView(DashboardView, View):
         if posted_devices:
             request.session['devices'] = posted_devices
 
-        selected_devices = self.get_session_devices()
+        selected_devices = [
+            dev for dev in self.get_session_devices()
+            if can_see(request.user, dev.id)
+        ]
 
         if not selected_devices:
             messages.error(request, _("No products selected"))

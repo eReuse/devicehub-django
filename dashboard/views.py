@@ -32,6 +32,7 @@ from dashboard.mixins import InventaryMixin, DetailsMixin, DeviceTableMixin, Pro
 from dashboard.mixins import roots_by_current_state, state_counts_summary
 from evidence.models import SystemProperty, RootAlias, UserProperty
 from user.models import UserProfile
+from user.contributor import restrict_roots, visible_roots
 from evidence.xapian import search
 from device.models import Device, DeviceType
 from device.product_cache import ProductCache
@@ -47,7 +48,8 @@ class UnassignedDevicesView(ProductCacheTableMixin, InventaryMixin):
 
     def get_device_ids(self, offset=0, limit=None):
         institution = self.request.user.institution
-        qry = Device.queryset_orm_unassigned(institution)
+        qry = restrict_roots(
+            Device.queryset_orm_unassigned(institution), self.request.user)
         # Counted off the same queryset that yields the rows, so the paginator
         # total can never disagree with what the list actually holds.
         count = qry.count()
@@ -72,14 +74,18 @@ class AllDevicesView(ProductCacheTableMixin, InventaryMixin):
 
     def get_device_ids(self, offset=0, limit=None):
         institution = self.request.user.institution
-        qry = Device._roots_queryset(institution)
+        qry = restrict_roots(
+            Device._roots_queryset(institution), self.request.user)
+        restricted = visible_roots(self.request.user) is not None
+        count = qry.count() if restricted else None
         qry = self.sorted_roots(qry, institution)
         rows = qry[offset:] if limit is None else qry[offset:offset + limit]
         root_ids = [r["root"] for r in rows]
-        count = (
-            RootAlias.objects.filter(owner=institution)
-            .values("root").distinct().count()
-        )
+        if count is None:
+            count = (
+                RootAlias.objects.filter(owner=institution)
+                .values("root").distinct().count()
+            )
         return root_ids, count
 
 
@@ -109,10 +115,13 @@ class StateDevicesView(ProductCacheTableMixin, InventaryMixin):
     def get_device_ids(self, offset=0, limit=None):
         institution = self.request.user.institution
         roots = self.get_roots_by_state().get(self.state_definition.state, [])
-        count = len(roots)
         if not roots:
             return [], 0
-        qry = Device._roots_queryset(institution).filter(root__in=roots)
+        qry = restrict_roots(
+            Device._roots_queryset(institution).filter(root__in=roots),
+            self.request.user)
+        count = (len(roots) if visible_roots(self.request.user) is None
+                 else qry.count())
         qry = self.sorted_roots(qry, institution)
         rows = qry[offset:] if limit is None else qry[offset:offset + limit]
         root_ids = [r["root"] for r in rows]
@@ -156,7 +165,9 @@ class NoStateDevicesView(StateDevicesView):
             root for roots in self.get_roots_by_state().values()
             for root in roots
         ]
-        qry = Device._roots_queryset(institution).exclude(root__in=with_state)
+        qry = restrict_roots(
+            Device._roots_queryset(institution).exclude(root__in=with_state),
+            self.request.user)
         count = qry.count()
         qry = self.sorted_roots(qry, institution)
         rows = qry[offset:] if limit is None else qry[offset:offset + limit]
@@ -615,6 +626,10 @@ class SearchView(DeviceTableMixin, InventaryMixin):
 
         query_str = query[0]
 
+        roots = visible_roots(user)
+        if roots is not None:
+            return self._contributor_devices(user, query_str, roots, offset, limit)
+
         # 1. Shortid search (DB only, no JSON)
         sp_ids = self._search_shortid_ids(query_str)
         sp_count = len(sp_ids)
@@ -639,6 +654,26 @@ class SearchView(DeviceTableMixin, InventaryMixin):
         devices = [Device(id=x, owner=user.institution) for x in distinct_page_ids]
 
         return devices, total
+
+    def _contributor_devices(self, user, query_str, roots, offset, limit):
+        """Search for a contributor: every match, narrowed to their own
+        products, then paged. Contributors hold few products, so fetching
+        all matches is cheap."""
+        institution = user.institution
+        candidates = self._search_shortid_ids(query_str)
+        candidates += self._search_xapian_page(query_str, 0, 9999)
+        alias_map = dict(
+            RootAlias.objects.filter(owner=institution, alias__in=candidates)
+            .values_list("alias", "root")
+        )
+        mine = set(roots.values_list("root", flat=True))
+        ids = []
+        for value in candidates:
+            root = alias_map.get(value, value)
+            if root in mine and root not in ids:
+                ids.append(root)
+        page = ids[offset:] if limit is None else ids[offset:offset + limit]
+        return [Device(id=x, owner=institution) for x in page], len(ids)
 
     def _build_shortid_qry(self, terms, field):
         exact_qry = Q()

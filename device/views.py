@@ -1,5 +1,6 @@
 import logging
 
+from user.contributor import check_can_see
 from django.conf import settings
 from django.contrib import messages
 from django.db import IntegrityError, models
@@ -177,6 +178,7 @@ class DetailsView(DashboardView, TemplateView ):
         if root and root.root != self.pk:
             return redirect(reverse_lazy('product:details', args=[root.root]))
 
+        check_can_see(request.user, self.pk)
         self.object = Device(id=self.pk, owner=self.request.user.institution)
         if not self.object.last_evidence:
             raise Http404
@@ -597,6 +599,7 @@ class AddUserPropertyView(DeviceLogMixin, CreateView):
             Q(alias=pk) | Q(root=pk)
         ).exists():
             raise Http404
+        check_can_see(self.request.user, pk)
         return super().get_form_kwargs()
 
     def get_success_url(self):

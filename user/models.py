@@ -438,6 +438,8 @@ class User(AbstractBaseUser):
     is_admin = models.BooleanField(_("is admin"), default=False)
     is_circuit_manager = models.BooleanField(_("is circuitmanager"), default=False)
     is_shop = models.BooleanField(_("is shop"), default=False)
+    # Only sees the products it registered (ereuse/projectes#965).
+    is_contributor = models.BooleanField(_("is contributor"), default=False)
     first_name = models.CharField(_("First name"), max_length=255, blank=True, null=True)
     last_name = models.CharField(_("Last name"), max_length=255, blank=True, null=True)
     accept_gdpr = models.BooleanField(default=False)
