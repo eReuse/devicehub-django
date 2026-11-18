@@ -45,11 +45,12 @@ class LotExportTests(TestCase):
         view = LotDashboardView()
         view.request = req
         view.kwargs = {"pk": self.lot.pk}
+        view.object = self.lot
         return view
 
     def _rows(self, response):
-        text = response.content.decode()
-        reader = csv.DictReader(io.StringIO(text))
+        raw = response.getvalue() if response.streaming else response.content
+        reader = csv.DictReader(io.StringIO(raw.decode()))
         return {row["ID"]: row for row in reader}
 
     def test_export_does_not_touch_xapian(self):
@@ -208,14 +209,15 @@ class LotExportGoldenTests(TestCase):
         view = LotDashboardView()
         view.request = req
         view.kwargs = {"pk": self.lot.pk}
+        view.object = self.lot
         return view
 
     def test_export_csv_matches_golden(self):
         response = self._view().create_export("csv")
-        lines = response.content.decode().splitlines()
+        raw = response.getvalue() if response.streaming else response.content
+        lines = raw.decode().splitlines()
         self.assertEqual(lines[0], self.GOLDEN_HEADER)
         self.assertEqual(sorted(lines[1:]), self.GOLDEN_ROWS)
-
 
 class LotTableDataTests(TestCase):
     """get_table_data builds list-view rows from the ProductCache read
@@ -309,15 +311,13 @@ class ProductCacheDeviceListTests(TestCase):
 
     def test_all_devices_ids_and_count(self):
         view = self._view(AllDevicesView)
-        root_ids, count = view.get_device_ids()
-        self.assertEqual(count, 2)
-        self.assertEqual(
-            set(root_ids), {"ereuse24:aaaaaa", "ereuse24:bbbbbb"})
+        rows = view.get_table_data()
+        self.assertEqual(view.page_obj.paginator.count, 2)
+        self.assertEqual(set(r['id'] for r in rows), {"ereuse24:aaaaaa", "ereuse24:bbbbbb"})
 
     def test_rows_carry_projection_shortid_and_link_pk(self):
         view = self._view(AllDevicesView)
-        rows = {r['id']: r for r in view.build_product_cache_rows(
-            ["ereuse24:aaaaaa", "ereuse24:bbbbbb"])}
+        rows = {r['id']: r for r in view.get_table_data()}
         self.assertEqual(rows['ereuse24:aaaaaa']['shortid'], "AAAAAA")
         self.assertEqual(rows['ereuse24:aaaaaa']['link_pk'], 'ereuse24:aaaaaa')
 
@@ -325,8 +325,7 @@ class ProductCacheDeviceListTests(TestCase):
         view = self._view(AllDevicesView)
         with patch("evidence.xapian.search") as s, \
                 patch("evidence.xapian.index") as i:
-            root_ids, _ = view.get_device_ids()
-            rows = view.build_product_cache_rows(list(root_ids))
+            rows = view.get_table_data()
         s.assert_not_called()
         i.assert_not_called()
         self.assertEqual(len(rows), 2)
@@ -339,8 +338,7 @@ class ProductCacheDeviceListTests(TestCase):
             state="Repaired", snapshot_uuid=self.uuids["ereuse24:aaaaaa"])
 
         view = self._view(AllDevicesView)
-        rows = {r['id']: r for r in view.build_product_cache_rows(
-            ["ereuse24:aaaaaa", "ereuse24:bbbbbb"])}
+        rows = {r['id']: r for r in view.get_table_data()}
         self.assertEqual(rows['ereuse24:aaaaaa']['current_state'], "Repaired")
         self.assertEqual(rows['ereuse24:bbbbbb']['current_state'], '--')
 
@@ -350,9 +348,9 @@ class ProductCacheDeviceListTests(TestCase):
         lot.add("ereuse24:aaaaaa")
 
         view = self._view(UnassignedDevicesView)
-        root_ids, count = view.get_device_ids()
-        self.assertEqual(count, 1)
-        self.assertEqual(root_ids, ["ereuse24:bbbbbb"])
+        rows = view.get_table_data()
+        self.assertEqual(view.page_obj.paginator.count, 1)
+        self.assertEqual([r['id'] for r in rows], ["ereuse24:bbbbbb"])
 
     def _set_projection(self, root, **fields):
         ProductCache.objects.update_or_create(
@@ -363,35 +361,35 @@ class ProductCacheDeviceListTests(TestCase):
         self._set_projection("ereuse24:bbbbbb", manufacturer="Alpha")
 
         view = self._view(AllDevicesView, sort="manufacturer")
-        root_ids, _ = view.get_device_ids()
-        self.assertEqual(root_ids, ["ereuse24:bbbbbb", "ereuse24:aaaaaa"])
+        rows = view.get_table_data()
+        self.assertEqual([r['id'] for r in rows], ["ereuse24:bbbbbb", "ereuse24:aaaaaa"])
 
         view = self._view(AllDevicesView, sort="-manufacturer")
-        root_ids, _ = view.get_device_ids()
-        self.assertEqual(root_ids, ["ereuse24:aaaaaa", "ereuse24:bbbbbb"])
+        rows = view.get_table_data()
+        self.assertEqual([r['id'] for r in rows], ["ereuse24:aaaaaa", "ereuse24:bbbbbb"])
 
     def test_sort_by_type_orders_by_projection_column(self):
         self._set_projection("ereuse24:aaaaaa", type="Server")
         self._set_projection("ereuse24:bbbbbb", type="Laptop")
 
         view = self._view(AllDevicesView, sort="type")
-        root_ids, _ = view.get_device_ids()
-        self.assertEqual(root_ids, ["ereuse24:bbbbbb", "ereuse24:aaaaaa"])
+        rows = view.get_table_data()
+        self.assertEqual([r['id'] for r in rows], ["ereuse24:bbbbbb", "ereuse24:aaaaaa"])
 
     def test_sort_applies_to_inbox_too(self):
         self._set_projection("ereuse24:aaaaaa", model="M2")
         self._set_projection("ereuse24:bbbbbb", model="M1")
 
         view = self._view(UnassignedDevicesView, sort="model")
-        root_ids, _ = view.get_device_ids()
-        self.assertEqual(root_ids, ["ereuse24:bbbbbb", "ereuse24:aaaaaa"])
+        rows = view.get_table_data()
+        self.assertEqual([r['id'] for r in rows], ["ereuse24:bbbbbb", "ereuse24:aaaaaa"])
 
     def test_unknown_sort_keeps_default_latest_order(self):
         # default order is -latest: the most recently seen root comes first
         # (bbbbbb's SystemProperty was created after aaaaaa's in setUp).
         view = self._view(AllDevicesView, sort="bogus")
-        root_ids, _ = view.get_device_ids()
-        self.assertEqual(root_ids, ["ereuse24:bbbbbb", "ereuse24:aaaaaa"])
+        rows = view.get_table_data()
+        self.assertEqual([r['id'] for r in rows], ["ereuse24:bbbbbb", "ereuse24:aaaaaa"])
 
 
 class LotSortTests(TestCase):

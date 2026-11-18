@@ -152,7 +152,7 @@ class ProductQueryBuilder:
         if target_field := sort_map.get(sort_field):
             qs = qs.order_by(f"{prefix}{target_field}", 'root')
         else:
-            qs = qs.order_by('shortid', 'root')
+            qs = qs.order_by('-last_updated', '-pk')
 
         if limit == 0:
             return qs

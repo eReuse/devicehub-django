@@ -119,6 +119,21 @@ class FilteredProductCacheMixin(ExportMixin, SingleTableMixin, InventaryMixin):
         is_unscoped_system_view = self.allow_lot_filter and not getattr(self, 'object', None)
         return not (is_unscoped_system_view and not self.get_query_builder().has_active_filter_params())
 
+    def create_export(self, export_format):
+        query_builder = self.get_query_builder()
+        device_queryset = query_builder.build_queryset(self._get_cached_base_chids())
+
+        lot = getattr(self, 'object', None)
+        base_name = f"{lot.name}_lot" if lot and lot.name else self.export_name
+
+        exporter = DeviceExportService(
+            institution=self.request.user.institution,
+            device_qs=device_queryset,
+            request_get=self.request.GET,
+            base_name=base_name,
+        )
+        return exporter.create_export(export_format)
+
     def get(self, request, *args, **kwargs):
         export_format = request.GET.get(self.export_trigger_param)
 
