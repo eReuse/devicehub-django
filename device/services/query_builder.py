@@ -34,6 +34,40 @@ class ProductQueryBuilder:
         vals = [v.strip() for v in self.request_get.getlist(key) if v.strip()]
         return [v.lower() for v in vals] if lower else vals
 
+    def get_available_fields(self, base_chids):
+        """Return the subset of STANDARD_FIELDS + DATA_FIELDS that have at least one
+        non-empty value in the current device selection."""
+        base_qs = ProductCache.objects.filter(owner=self.institution, root__in=base_chids)
+        available = []
+
+        for field in self.STANDARD_FIELDS:
+            if base_qs.exclude(**{field: ''}).exclude(**{f"{field}__isnull": True}).exists() or self._clean_list(field):
+                available.append(field)
+
+        present_json_keys = set()
+        if base_qs.exclude(data={}).exists():
+            from django.db import connection
+            sql, params = base_qs.exclude(data={}).values_list('root', flat=True).query.sql_with_params()
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    f"""
+                    SELECT DISTINCT kv.key
+                    FROM device_productcache pc,
+                         jsonb_each_text(pc.data::jsonb) AS kv(key, val)
+                    WHERE pc.root IN ({sql})
+                      AND kv.val IS NOT NULL
+                      AND BTRIM(kv.val) <> ''
+                    """,
+                    params,
+                )
+                present_json_keys = {row[0] for row in cursor.fetchall()}
+
+        for field in ProductCache.DATA_FIELDS:
+            if field in present_json_keys or self._clean_list(field):
+                available.append(field)
+
+        return available
+
     def has_active_filter_params(self):
         if (self.request_get.get('lquery') or self.request_get.get('gquery') or '').strip():
             return True
@@ -47,6 +81,11 @@ class ProductQueryBuilder:
 
     def build_queryset(self, base_chids):
         """Builds a pure ORM QuerySet, annotated with current state and beneficiary status."""
+
+        if hasattr(base_chids, 'query'):
+            if not base_chids.query.values_select:
+                base_chids = base_chids.values_list('root', flat=True)
+
         max_status = (
             DeviceBeneficiary.objects.filter(device_id=OuterRef('root'))
             .order_by('-status')
@@ -57,7 +96,6 @@ class ProductQueryBuilder:
             current_state_annotated=RawSQL(self.STATE_SQL, []),
             beneficiary_status_annotated=Subquery(max_status),
         )
-
         if not self.has_active_filter_params():
             return qs
 

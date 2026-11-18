@@ -161,7 +161,8 @@
                                        class="form-control"
                                        placeholder="{% trans 'Select lot or' %} &quot;{{ none_lot_label }}&quot;..."
                                        hx-get="{% url 'dashboard:autocomplete' 'lot' %}"
-                                       hx-trigger="keyup changed delay:300ms"
+                                       hx-vals='{"scope": "{{ autocomplete_scope }}", "lot_id": "{{ autocomplete_lot_id }}"}'
+                                       hx-trigger="focus once, input changed delay:250ms"
                                        hx-target="#list_lots">
                                 <button type="submit" class="btn btn-outline-secondary" title="{% trans 'Add lot filter' %}">
                                     <i class="bi bi-plus-lg"></i>
@@ -231,7 +232,8 @@
                                            class="form-control"
                                            placeholder="{% trans 'e.g. Tag, Origin...' %}"
                                            hx-get="{% url 'dashboard:autocomplete' 'up_key' %}"
-                                           hx-trigger="keyup changed delay:300ms"
+                                           hx-vals='{"scope": "{{ autocomplete_scope }}", "lot_id": "{{ autocomplete_lot_id }}"}'
+                                           hx-trigger="focus once, input changed delay:250ms"
                                            hx-target="#list_up_keys">
                                     <button type="submit" class="btn btn-outline-secondary" title="{% trans 'Add filter' %}">
                                         <i class="bi bi-plus-lg"></i>
@@ -257,7 +259,8 @@
                                            class="form-control"
                                            placeholder="{% trans 'Filter by value...' %}"
                                            hx-get="{% url 'dashboard:autocomplete' 'up_val' %}"
-                                           hx-trigger="keyup changed delay:300ms"
+                                           hx-vals='{"scope": "{{ autocomplete_scope }}", "lot_id": "{{ autocomplete_lot_id }}"}'
+                                           hx-trigger="focus once, input changed delay:250ms"
                                            hx-target="#list_up_vals">
                                     <button type="submit" class="btn btn-outline-secondary" title="{% trans 'Add filter' %}">
                                         <i class="bi bi-plus-lg"></i>
@@ -323,8 +326,9 @@
                                        name="{{ block.name }}"
                                        class="form-control"
                                        placeholder="{% trans 'Select or type' %} {{ block.title|lower }}..."
-                                       hx-get="/dashboard/autocomplete/{{ block.name }}/"
-                                       hx-trigger="keyup changed delay:300ms"
+                                       hx-get="{% url 'dashboard:autocomplete' block.name %}"
+                                       hx-vals='{"scope": "{{ autocomplete_scope }}", "lot_id": "{{ autocomplete_lot_id }}"}'
+                                       hx-trigger="focus once, input changed delay:250ms"
                                        hx-target="#list_{{ block.name }}">
                                 <button type="submit" class="btn btn-outline-secondary" title="{% trans 'Add filter' %}">
                                     <i class="bi bi-plus-lg"></i>
@@ -366,7 +370,6 @@
     </div>
     {% endif %}
 
-    <!-- (Rest of the table UI remains unchanged) -->
     <div class="row">
         <div class="col-12" id="mainContent">
             {% if count > 0 %}

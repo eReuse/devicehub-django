@@ -4,14 +4,16 @@ import logging
 import re
 from urllib.parse import parse_qsl
 
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.cache import cache
 from django.db.models import Count, Q
-from django.http import HttpResponseForbidden
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.utils import timezone
+from django.utils.html import format_html_join
 from django.utils.translation import gettext_lazy as _
+from django.views import View
 from django.views.generic.base import TemplateView
 
 from action.models import State, StateDefinition
@@ -34,50 +36,63 @@ from evidence.xapian import search
 from lot.models import DeviceBeneficiary, DeviceLot, Donor, Lot, LotSubscription
 from user.models import UserProfile
 
-
 logger = logging.getLogger('django')
 
 
+class AutocompleteFilterView(LoginRequiredMixin, View):
+    """HTMX endpoint that returns global <option> tags for datalists dynamically
+    across the entire institution, with cached cardinality checks and dynamic min-length thresholds."""
 
-@login_required
-def autocomplete_filter(request, field):
-    """HTMX endpoint that returns <option> tags for datalists dynamically."""
-    query = request.GET.get(field, '').strip()
+    max_results = 15
+    low_cardinality_limit = 30
+    medium_cardinality_limit = 200
+    cache_timeout = 600
 
-    # delay database query until at least 3 chars
-    if len(query) < 3:
-        return HttpResponse("")
+    def get_target_queryset(self, field, institution):
+        if field == 'lot':
+            qs, value_field = Lot.objects.filter(owner=institution), 'name'
+        elif field in ('up_key', 'up_val'):
+            qs = UserProperty.objects.filter(owner=institution, type=UserProperty.Type.USER)
+            value_field = 'key' if field == 'up_key' else 'value'
+        elif field in ProductQueryBuilder.STANDARD_FIELDS:
+            qs, value_field = ProductCache.objects.filter(owner=institution), field
+        elif field in ProductCache.DATA_FIELDS:
+            qs, value_field = ProductCache.objects.filter(owner=institution), f"data__{field}"
+        else:
+            return None, None
 
-    institution = request.user.institution
-    results = []
+        qs = qs.exclude(**{f"{value_field}__isnull": True}).exclude(**{value_field: ''})
+        return qs, value_field
 
-    if field == 'lot':
-        results = Lot.objects.filter(
-            owner=institution, name__icontains=query
-        ).exclude(name__isnull=True).exclude(name='').values_list('name', flat=True).distinct()[:15]
+    def get_min_length(self, distinct_count):
+        if distinct_count <= self.low_cardinality_limit:
+            return 0
+        if distinct_count <= self.medium_cardinality_limit:
+            return 1
+        return 3
 
-    elif field == 'up_key':
-        results = UserProperty.objects.filter(
-            owner=institution, type=UserProperty.Type.USER, key__icontains=query
-        ).values_list('key', flat=True).distinct()[:15]
+    def get(self, request, field):
+        query = request.GET.get(field, '').strip()
+        institution = request.user.institution
 
-    elif field == 'up_val':
-        results = UserProperty.objects.filter(
-            owner=institution, type=UserProperty.Type.USER, value__icontains=query
-        ).values_list('value', flat=True).distinct()[:15]
+        target_qs, value_field = self.get_target_queryset(field, institution)
+        if target_qs is None:
+            return HttpResponse("")
 
-    elif field in ProductQueryBuilder.STANDARD_FIELDS:
-        results = ProductCache.objects.filter(
-            owner=institution, **{f"{field}__icontains": query}
-        ).exclude(**{f"{field}": ''}).values_list(field, flat=True).distinct()[:15]
+        cache_key = f"autocomplete_count_{institution.pk}_{field}"
+        distinct_count = cache.get(cache_key)
+        if distinct_count is None:
+            distinct_count = target_qs.values_list(value_field).distinct().count()
+            cache.set(cache_key, distinct_count, self.cache_timeout)
 
-    elif field in ProductCache.DATA_FIELDS:
-        results = ProductCache.objects.filter(
-            owner=institution, **{f"data__{field}__icontains": query}
-        ).values_list(f"data__{field}", flat=True).distinct()[:15]
+        if len(query) < self.get_min_length(distinct_count):
+            return HttpResponse("")
 
-    html = "".join([f'<option value="{val}">' for val in results if val])
-    return HttpResponse(html)
+        if query:
+            target_qs = target_qs.filter(**{f"{value_field}__icontains": query})
+
+        results = target_qs.values_list(value_field, flat=True).distinct()[: self.max_results]
+        return HttpResponse(format_html_join('', '<option value="{}">', ((val,) for val in results if val)))
 
 
 class FilteredProductCacheMixin(ExportMixin, SingleTableMixin, InventaryMixin):
@@ -92,12 +107,21 @@ class FilteredProductCacheMixin(ExportMixin, SingleTableMixin, InventaryMixin):
     def get_base_chids(self):
         raise NotImplementedError
 
+    @staticmethod
+    def _extract_root(item):
+        if isinstance(item, dict):
+            return item.get("root") or item.get("device_id") or next(iter(item.values()))
+        if hasattr(item, "root"):
+            return item.root
+        if hasattr(item, "pk"):
+            return item.pk
+        if isinstance(item, (list, tuple)) and item:
+            return item[0]
+        return str(item)
+
     def _get_cached_base_chids(self):
         if not hasattr(self, '_cached_base_chids'):
-            self._cached_base_chids = [
-                raw_id["root"] if isinstance(raw_id, dict) else raw_id
-                for raw_id in self.get_base_chids()
-            ]
+            self._cached_base_chids = [self._extract_root(item) for item in self.get_base_chids()]
         return self._cached_base_chids
 
     def _get_state_definitions(self):
@@ -115,56 +139,36 @@ class FilteredProductCacheMixin(ExportMixin, SingleTableMixin, InventaryMixin):
         return self._query_builder
 
     def can_export(self):
-        # disallow export of all devices (query with no filters)
         is_unscoped_system_view = self.allow_lot_filter and not getattr(self, 'object', None)
         return not (is_unscoped_system_view and not self.get_query_builder().has_active_filter_params())
 
     def create_export(self, export_format):
-        query_builder = self.get_query_builder()
-        device_queryset = query_builder.build_queryset(self._get_cached_base_chids())
-
+        device_queryset = self.get_query_builder().build_queryset(self._get_cached_base_chids())
         lot = getattr(self, 'object', None)
         base_name = f"{lot.name}_lot" if lot and lot.name else self.export_name
 
-        exporter = DeviceExportService(
+        return DeviceExportService(
             institution=self.request.user.institution,
             device_qs=device_queryset,
             request_get=self.request.GET,
             base_name=base_name,
-        )
-        return exporter.create_export(export_format)
+        ).create_export(export_format)
 
     def get(self, request, *args, **kwargs):
         export_format = request.GET.get(self.export_trigger_param)
-
         if export_format in self.export_formats:
             if not self.can_export():
                 return HttpResponseForbidden(
                     _("Exporting all system devices without filters is not allowed.")
                 )
-
-            device_queryset = self.get_query_builder().build_queryset(self._get_cached_base_chids())
-            lot = getattr(self, 'object', None)
-            base_name = f"{lot.name}_lot" if (lot and lot.name) else self.export_name
-
-            exporter = DeviceExportService(
-                institution=request.user.institution,
-                device_qs=device_queryset,
-                request_get=request.GET,
-                base_name=base_name,
-            )
-            return exporter.create_export(export_format)
-
+            return self.create_export(export_format)
         return super().get(request, *args, **kwargs)
 
     def _build_table_rows(self, cache_objects):
         available_label = DeviceBeneficiary.Status.AVAILABLE.label
         rows = []
-
         for pc in cache_objects:
-            state = getattr(pc, 'current_state_annotated', None)
             status = getattr(pc, 'beneficiary_status_annotated', None)
-
             rows.append({
                 'id': pc.root,
                 'link_pk': pc.root,
@@ -173,28 +177,22 @@ class FilteredProductCacheMixin(ExportMixin, SingleTableMixin, InventaryMixin):
                 'manufacturer': pc.manufacturer or '',
                 'model': pc.model or '',
                 'cpu': pc.cpu_model or '',
-                'current_state': state or '--',
+                'current_state': getattr(pc, 'current_state_annotated', None) or '--',
                 'status_beneficiary': (
                     DeviceBeneficiary.Status(status).label if status is not None else available_label
                 ),
                 'last_updated': pc.last_updated or '--',
             })
-
         return rows
 
     def get_table_data(self):
-        limit = int(self.request.GET.get('limit', self.paginate_by))
-        page = int(self.request.GET.get('page', 1))
-        sort_param = self.request.GET.get('sort', '-last_updated')
-
         self.page_obj = self.get_query_builder().get_paginated_queryset(
             self._get_cached_base_chids(),
-            limit=limit,
-            page=page,
-            sort_param=sort_param,
+            limit=int(self.request.GET.get('limit', self.paginate_by)),
+            page=int(self.request.GET.get('page', 1)),
+            sort_param=self.request.GET.get('sort', '-last_updated'),
         )
-        items = getattr(self.page_obj, 'object_list', self.page_obj)
-        return self._build_table_rows(items)
+        return self._build_table_rows(getattr(self.page_obj, 'object_list', self.page_obj))
 
     def get_table_kwargs(self):
         kwargs = super().get_table_kwargs()
@@ -210,52 +208,40 @@ class FilteredProductCacheMixin(ExportMixin, SingleTableMixin, InventaryMixin):
 
         return kwargs
 
-    def _get_clean_list(self, key, lower=False):
-        vals = [v.strip() for v in self.request.GET.getlist(key) if v.strip()]
-        return [v.lower() for v in vals] if lower else vals
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        query_builder = self.get_query_builder()
+        qb = self.get_query_builder()
+        clean = qb._clean_list
 
         limit = int(self.request.GET.get('limit', self.paginate_by))
         page = int(self.request.GET.get('page', 1))
 
-        # pagination metadata extraction
         page_obj = getattr(self, 'page_obj', None)
         if hasattr(page_obj, 'paginator'):
-            count = page_obj.paginator.count
-            total_pages = page_obj.paginator.num_pages
+            count, total_pages = page_obj.paginator.count, page_obj.paginator.num_pages
         elif page_obj is not None:
-            count = page_obj.count()
-            total_pages = 1
+            count, total_pages = page_obj.count(), 1
         else:
             count, total_pages = 0, 1
 
         none_label = str(_("None"))
-        unassigned_tokens = {query_builder.UNASSIGNED_LOT_TOKEN.lower(), "none", none_label.lower()}
+        unassigned_tokens = {qb.UNASSIGNED_LOT_TOKEN.lower(), "none", none_label.lower()}
         active_lots = []
-        lot_op = 'or'
+        lot_op = 'and' if self.request.GET.get('lot_op', 'or').strip().lower() == 'and' else 'or'
 
         if self.allow_lot_filter:
-            for lot_value in self._get_clean_list('lot'):
+            for lot_value in clean('lot'):
                 normalized = none_label if lot_value.lower() in unassigned_tokens else lot_value
                 if normalized not in active_lots:
                     active_lots.append(normalized)
 
-            if self.request.GET.get('lot_op', 'or').strip().lower() == 'and':
-                lot_op = 'and'
-
-        # extract  filters
-        all_data_fields = query_builder.STANDARD_FIELDS + list(ProductCache.DATA_FIELDS)
         filter_blocks = [
             {
                 'name': field_name,
                 'title': field_name.replace('_', ' ').title(),
-                'active': active_values,
+                'active': clean(field_name),
             }
-            for field_name in all_data_fields
-            if (active_values := self._get_clean_list(field_name))
+            for field_name in qb.get_available_fields(self._get_cached_base_chids())
         ]
 
         def make_remove_url(param_name, value_to_remove):
@@ -267,19 +253,14 @@ class FilteredProductCacheMixin(ExportMixin, SingleTableMixin, InventaryMixin):
                 query_dict.pop('gquery', None)
             else:
                 target = str(value_to_remove).strip().lower()
-                is_lot = param_name == 'lot'
-                target_is_unassigned = is_lot and target in unassigned_tokens
-
-                retained = []
-                for current in query_dict.getlist(param_name):
-                    clean_curr = current.strip()
-                    if not clean_curr:
-                        continue
-                    lower_curr = clean_curr.lower()
-                    if lower_curr == target or (target_is_unassigned and lower_curr in unassigned_tokens):
-                        continue
-                    retained.append(clean_curr)
-
+                target_is_unassigned = param_name == 'lot' and target in unassigned_tokens
+                retained = [
+                    curr.strip()
+                    for curr in query_dict.getlist(param_name)
+                    if curr.strip()
+                    and curr.strip().lower() != target
+                    and not (target_is_unassigned and curr.strip().lower() in unassigned_tokens)
+                ]
                 if retained:
                     query_dict.setlist(param_name, retained)
                 else:
@@ -289,20 +270,17 @@ class FilteredProductCacheMixin(ExportMixin, SingleTableMixin, InventaryMixin):
             return f"?{encoded}" if encoded else "?"
 
         search_query = (self.request.GET.get('lquery') or self.request.GET.get('gquery') or '').strip()
-        active_states = self._get_clean_list('state', lower=True)
-        active_up_keys = self._get_clean_list('up_key')
-        active_up_vals = self._get_clean_list('up_val')
-        active_device_ids = self._get_clean_list('device_id')
+        active_states = clean('state', lower=True)
+        active_up_keys = clean('up_key')
+        active_up_vals = clean('up_val')
+        active_device_ids = clean('device_id')
 
         active_filters = []
-
         def add_filter_chips(category, param_name, values):
-            for val in values:
-                active_filters.append({
-                    'category': category,
-                    'value': val,
-                    'remove_url': make_remove_url(param_name, val),
-                })
+            active_filters.extend(
+                {'category': category, 'value': val, 'remove_url': make_remove_url(param_name, val)}
+                for val in values
+            )
 
         if search_query:
             add_filter_chips(_('Search'), 'lquery', [search_query])
@@ -313,18 +291,15 @@ class FilteredProductCacheMixin(ExportMixin, SingleTableMixin, InventaryMixin):
         add_filter_chips(_('State'), 'state', active_states)
         add_filter_chips(_('Key'), 'up_key', active_up_keys)
         add_filter_chips(_('Value'), 'up_val', active_up_vals)
-
         for block in filter_blocks:
             add_filter_chips(block['title'], block['name'], block['active'])
 
-        # Generate the clear all URL preserving only limit and sort
         clear_query_dict = self.request.GET.copy()
         for key in list(clear_query_dict.keys()):
             if key not in ('limit', 'sort'):
                 clear_query_dict.pop(key, None)
 
         encoded_clear = clear_query_dict.urlencode()
-        clear_all_url = f"?{encoded_clear}" if encoded_clear else "?"
 
         context.update({
             'count': count,
@@ -338,7 +313,7 @@ class FilteredProductCacheMixin(ExportMixin, SingleTableMixin, InventaryMixin):
             'can_export': self.can_export(),
             'show_filter_bar': True,
             'allow_lot_filter': self.allow_lot_filter,
-            'unassigned_lot_token': query_builder.UNASSIGNED_LOT_TOKEN,
+            'unassigned_lot_token': qb.UNASSIGNED_LOT_TOKEN,
             'none_lot_label': none_label,
             'lot_op': lot_op,
             'active_lots': active_lots,
@@ -351,7 +326,7 @@ class FilteredProductCacheMixin(ExportMixin, SingleTableMixin, InventaryMixin):
             'active_filters': active_filters,
             'active_filter_count': len(active_filters),
             'has_active_filters': bool(active_filters),
-            'clear_all_url': clear_all_url,
+            'clear_all_url': f"?{encoded_clear}" if encoded_clear else "?",
         })
         return context
 
