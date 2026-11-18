@@ -12,11 +12,11 @@
     {% endif %}
 
     {% if show_filter_bar %}
-    <div class="card filter-control-card shadow-sm mb-3 bg-white">
+    <div class="card shadow-sm mb-3 bg-white border-top border-3" style="border-top-color: #56beac !important;">
         <div class="card-body p-3">
             <div class="d-flex flex-column flex-md-row align-items-stretch align-items-md-center gap-2">
                 <!-- Filter Drawer Trigger -->
-                <button class="btn {% if has_active_filters %}btn-green-admin{% else %}btn-outline-green{% endif %} d-inline-flex align-items-center justify-content-center gap-2 flex-shrink-0 px-3"
+                <button class="btn {% if has_active_filters %}btn-secondary{% else %}btn-outline-secondary{% endif %} d-inline-flex align-items-center justify-content-center gap-2 flex-shrink-0 px-3"
                         type="button"
                         data-bs-toggle="offcanvas"
                         data-bs-target="#filterOffcanvas"
@@ -24,7 +24,7 @@
                     <i class="bi bi-sliders2"></i>
                     <span class="fw-semibold">{% trans "Filters" %}</span>
                     {% if active_filter_count %}
-                    <span class="badge rounded-pill bg-white text-green-theme fw-bold ms-1">
+                    <span class="badge rounded-pill bg-white text-dark fw-bold ms-1">
                         {{ active_filter_count }}
                     </span>
                     {% endif %}
@@ -32,8 +32,8 @@
 
                 <!-- Search Bar -->
                 <form method="get" class="flex-grow-1 m-0">
-                    <div class="input-group search-group-green">
-                        <span class="input-group-text bg-light border-end-0 text-green-theme">
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0 text-secondary">
                             <i class="bi bi-search"></i>
                         </span>
                         <input type="search"
@@ -48,7 +48,7 @@
                             <i class="bi bi-x-lg"></i>
                         </a>
                         {% endif %}
-                        <button type="submit" class="btn btn-green-user px-3 fw-medium">
+                        <button type="submit" class="btn btn-secondary px-3 fw-medium">
                             {% trans "Search" %}
                         </button>
                     </div>
@@ -66,19 +66,19 @@
             </div>
 
             <!-- Persistent Applied Filters Ribbon -->
-            <div class="filter-status-box d-flex flex-wrap align-items-center gap-2 mt-3 px-3 py-2 rounded-2">
+            <div class="d-flex flex-wrap align-items-center gap-2 mt-3 px-3 py-2 rounded-2 bg-light border">
                 <span class="text-secondary small fw-bold text-uppercase d-inline-flex align-items-center me-1" style="letter-spacing: 0.03em;">
-                    <i class="bi {% if has_active_filters %}bi-funnel-fill text-green-theme{% else %}bi-funnel text-muted{% endif %} me-1"></i>
+                    <i class="bi {% if has_active_filters %}bi-funnel-fill text-dark{% else %}bi-funnel text-muted{% endif %} me-1"></i>
                     {% trans "Applied Filters:" %}
                 </span>
 
                 {% if has_active_filters %}
                     {% for item in active_filters %}
-                    <span class="filter-chip d-inline-flex align-items-center gap-1 rounded-pill px-2 py-1">
-                        <span class="filter-chip-cat">{{ item.category }}:</span>
-                        <strong class="filter-chip-val">{{ item.value }}</strong>
+                    <span class="badge bg-white text-dark border d-inline-flex align-items-center gap-1 rounded-pill px-2 py-1" style="font-size: 0.8125rem;">
+                        <span class="text-secondary fw-medium">{{ item.category }}:</span>
+                        <strong class="fw-bold">{{ item.value }}</strong>
                         <a href="{{ item.remove_url }}"
-                           class="filter-chip-remove ms-1 d-inline-flex align-items-center text-decoration-none"
+                           class="text-secondary ms-1 d-inline-flex align-items-center text-decoration-none bg-hover"
                            title="{% trans 'Remove filter' %}"
                            aria-label="{% trans 'Remove' %} {{ item.category }} {{ item.value }}">
                             <i class="bi bi-x-circle-fill"></i>
@@ -98,12 +98,12 @@
 
     <!-- Offcanvas Filter Drawer -->
     <div class="offcanvas offcanvas-start bg-white" tabindex="-1" id="filterOffcanvas" aria-labelledby="filterOffcanvasLabel">
-        <div class="offcanvas-header border-bottom filter-drawer-header">
+        <div class="offcanvas-header border-bottom bg-light">
             <h6 class="offcanvas-title fw-bold text-dark d-flex align-items-center gap-2 mb-0" id="filterOffcanvasLabel">
-                <i class="bi bi-sliders2 text-green-theme"></i>
+                <i class="bi bi-sliders2" style="color: #56beac;"></i>
                 {% trans "Filter Products" %}
                 {% if active_filter_count %}
-                <span class="badge btn-green-user rounded-pill">{{ active_filter_count }}</span>
+                <span class="badge bg-secondary rounded-pill">{{ active_filter_count }}</span>
                 {% endif %}
             </h6>
             <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="{% trans 'Close' %}"></button>
@@ -113,7 +113,7 @@
             <form method="get"
                   id="advanced-filter-form"
                   class="d-flex flex-column h-100"
-                  onsubmit="this.querySelectorAll('input.filter-text-input').forEach(i => { if (!i.value.trim()) i.disabled = true; });">
+                  onsubmit="this.querySelectorAll('input.form-control').forEach(i => { if (!i.value.trim()) i.disabled = true; });">
 
                 <!-- Preservation of variables -->
                 {% if search %}<input type="hidden" name="lquery" value="{{ search }}">{% endif %}
@@ -121,87 +121,62 @@
                 {% if request.GET.sort %}<input type="hidden" name="sort" value="{{ request.GET.sort }}">{% endif %}
 
                 {% if allow_lot_filter %}
-                    {% for val in active_lots %}
-                        <input type="hidden" name="lot" value="{{ val }}">
-                    {% endfor %}
+                    {% for val in active_lots %}<input type="hidden" name="lot" value="{{ val }}">{% endfor %}
                 {% endif %}
                 {% for val in active_device_ids %}<input type="hidden" name="device_id" value="{{ val }}">{% endfor %}
                 {% for val in active_up_keys %}<input type="hidden" name="up_key" value="{{ val }}">{% endfor %}
                 {% for val in active_up_vals %}<input type="hidden" name="up_val" value="{{ val }}">{% endfor %}
                 {% for block in filter_blocks %}
-                    {% for val in block.active %}
-                    <input type="hidden" name="{{ block.name }}" value="{{ val }}">
-                    {% endfor %}
+                    {% for val in block.active %}<input type="hidden" name="{{ block.name }}" value="{{ val }}">{% endfor %}
                 {% endfor %}
 
                 <div class="p-3 overflow-auto flex-grow-1">
-                    <!--Lot Filter Section -->
+
+                    <!-- Lot Filter Section -->
                     {% if allow_lot_filter %}
-                    <details class="filter-group border-bottom pb-3 mb-3" open>
-                        <summary class="d-flex justify-content-between align-items-center fw-bold small text-uppercase text-secondary py-1">
+                    <div class="border-bottom pb-3 mb-3">
+                        <div class="d-flex justify-content-between align-items-center fw-bold small text-uppercase text-secondary py-1 mb-2">
                             <span>
                                 {% trans "Lot Assignment" %}
                                 {% if active_lots %}
-                                <span class="badge btn-green-user rounded-pill ms-1">{{ active_lots|length }}</span>
+                                <span class="badge bg-secondary rounded-pill ms-1">{{ active_lots|length }}</span>
                                 {% endif %}
                             </span>
-                            <i class="bi bi-chevron-down filter-chevron"></i>
-                        </summary>
-                        <div class="mt-2 pt-1">
+                        </div>
+                        <div>
                             <div class="d-flex align-items-center justify-content-between mb-2">
                                 <span class="text-muted" style="font-size: 0.75rem;">{% trans "Match mode:" %}</span>
                                 <div class="btn-group btn-group-sm" role="group" aria-label="{% trans 'Lot match operator' %}">
-                                    <input type="radio"
-                                           class="btn-check"
-                                           name="lot_op"
-                                           id="lot_op_or"
-                                           value="or"
-                                           {% if lot_op != 'and' %}checked{% endif %}>
-                                    <label class="btn btn-outline-green py-0 px-2"
-                                           for="lot_op_or"
-                                           style="font-size: 0.72rem;"
-                                           title="{% trans 'Device is in any of the selected lots' %}">
-                                        {% trans "Either" %}
-                                    </label>
+                                    <input type="radio" class="btn-check" name="lot_op" id="lot_op_or" value="or" {% if lot_op != 'and' %}checked{% endif %}>
+                                    <label class="btn btn-outline-secondary py-0 px-2" for="lot_op_or" style="font-size: 0.72rem;">{% trans "Either" %}</label>
 
-                                    <input type="radio"
-                                           class="btn-check"
-                                           name="lot_op"
-                                           id="lot_op_and"
-                                           value="and"
-                                           {% if lot_op == 'and' %}checked{% endif %}>
-                                    <label class="btn btn-outline-green py-0 px-2"
-                                           for="lot_op_and"
-                                           style="font-size: 0.72rem;"
-                                           title="{% trans 'Device must be in all selected lots simultaneously' %}">
-                                        {% trans "All" %}
-                                    </label>
+                                    <input type="radio" class="btn-check" name="lot_op" id="lot_op_and" value="and" {% if lot_op == 'and' %}checked{% endif %}>
+                                    <label class="btn btn-outline-secondary py-0 px-2" for="lot_op_and" style="font-size: 0.72rem;">{% trans "All" %}</label>
                                 </div>
                             </div>
 
                             <div class="input-group input-group-sm">
                                 <input list="list_lots"
                                        name="lot"
-                                       class="form-control filter-text-input"
-                                       placeholder="{% trans 'Select lot or' %} &quot;{{ none_lot_label }}&quot;...">
-                                <button type="submit" class="btn btn-outline-green" title="{% trans 'Add lot filter' %}">
+                                       class="form-control"
+                                       placeholder="{% trans 'Select lot or' %} &quot;{{ none_lot_label }}&quot;..."
+                                       hx-get="{% url 'dashboard:autocomplete' 'lot' %}"
+                                       hx-trigger="keyup changed delay:300ms"
+                                       hx-target="#list_lots">
+                                <button type="submit" class="btn btn-outline-secondary" title="{% trans 'Add lot filter' %}">
                                     <i class="bi bi-plus-lg"></i>
                                 </button>
                             </div>
-                            <datalist id="list_lots">
-                                {% for opt in lot_options %}
-                                    {% if opt not in active_lots %}<option value="{{ opt }}">{% endif %}
-                                {% endfor %}
-                            </datalist>
+                            <datalist id="list_lots"></datalist>
 
                             {% if active_lots %}
                             <div class="d-flex flex-wrap align-items-center gap-1 mt-2">
                                 {% for val in active_lots %}
-                                    <span class="drawer-active-tag">
-                                        <i class="bi bi-check2 text-green-theme me-1"></i>{{ val }}
+                                    <span class="badge bg-light text-dark border d-inline-flex align-items-center px-2 py-1">
+                                        <i class="bi bi-check2 text-success me-1"></i>{{ val }}
                                     </span>
                                     {% if not forloop.last %}
-                                    <span class="text-green-theme fw-bold" style="font-size: 0.65rem;">
+                                    <span class="text-secondary fw-bold" style="font-size: 0.65rem;">
                                         {% if lot_op == 'and' %}{% trans "AND" %}{% else %}{% trans "OR" %}{% endif %}
                                     </span>
                                     {% endif %}
@@ -209,24 +184,21 @@
                             </div>
                             {% endif %}
                         </div>
-                    </details>
+                    </div>
                     {% endif %}
 
                     <!-- Current State Section -->
-                    <details class="filter-group border-bottom pb-3 mb-3" open>
-                        <summary class="d-flex justify-content-between align-items-center fw-bold small text-uppercase text-secondary py-1">
-                            <span>
-                                {% trans "Current State" %}
-                                {% if active_states %}
-                                <span class="badge btn-green-user rounded-pill ms-1">{{ active_states|length }}</span>
-                                {% endif %}
-                            </span>
-                            <i class="bi bi-chevron-down filter-chevron"></i>
-                        </summary>
-                        <div class="mt-2 pt-1 d-flex flex-column gap-1">
+                    <div class="border-bottom pb-3 mb-3">
+                        <div class="fw-bold small text-uppercase text-secondary py-1 mb-2">
+                            {% trans "Current State" %}
+                            {% if active_states %}
+                            <span class="badge bg-secondary rounded-pill ms-1">{{ active_states|length }}</span>
+                            {% endif %}
+                        </div>
+                        <div class="d-flex flex-column gap-1">
                             {% for s in state_definitions %}
                             <div class="form-check">
-                                <input class="form-check-input filter-checkbox-green"
+                                <input class="form-check-input"
                                        type="checkbox"
                                        name="state"
                                        value="{{ s.state|lower }}"
@@ -238,40 +210,39 @@
                             </div>
                             {% endfor %}
                         </div>
-                    </details>
+                    </div>
 
-                    <!--User Properties Section -->
-                    <details class="filter-group border-bottom pb-3 mb-3" {% if active_up_keys or active_up_vals %}open{% endif %}>
-                        <summary class="d-flex justify-content-between align-items-center fw-bold small text-uppercase text-secondary py-1">
-                            <span>
-                                {% trans "User Properties" %}
-                                {% if active_up_keys or active_up_vals %}
-                                <span class="badge btn-green-user rounded-pill ms-1">
-                                    {{ active_up_keys|length|add:active_up_vals|length }}
-                                </span>
-                                {% endif %}
+                    <!-- User Properties Section -->
+                    <div class="border-bottom pb-3 mb-3">
+                        <div class="fw-bold small text-uppercase text-secondary py-1 mb-2">
+                            {% trans "User Properties" %}
+                            {% if active_up_keys or active_up_vals %}
+                            <span class="badge bg-secondary rounded-pill ms-1">
+                                {{ active_up_keys|length|add:active_up_vals|length }}
                             </span>
-                            <i class="bi bi-chevron-down filter-chevron"></i>
-                        </summary>
-                        <div class="mt-2 pt-1">
+                            {% endif %}
+                        </div>
+                        <div>
                             <div class="mb-3">
                                 <label class="form-label small text-muted mb-1">{% trans "Property Key" %}</label>
                                 <div class="input-group input-group-sm">
-                                    <input list="list_up_keys" name="up_key" class="form-control filter-text-input" placeholder="{% trans 'e.g. Tag, Origin...' %}">
-                                    <button type="submit" class="btn btn-outline-green" title="{% trans 'Add filter' %}">
+                                    <input list="list_up_keys"
+                                           name="up_key"
+                                           class="form-control"
+                                           placeholder="{% trans 'e.g. Tag, Origin...' %}"
+                                           hx-get="{% url 'dashboard:autocomplete' 'up_key' %}"
+                                           hx-trigger="keyup changed delay:300ms"
+                                           hx-target="#list_up_keys">
+                                    <button type="submit" class="btn btn-outline-secondary" title="{% trans 'Add filter' %}">
                                         <i class="bi bi-plus-lg"></i>
                                     </button>
                                 </div>
-                                <datalist id="list_up_keys">
-                                    {% for opt in up_keys_options %}
-                                        {% if opt not in active_up_keys %}<option value="{{ opt }}">{% endif %}
-                                    {% endfor %}
-                                </datalist>
+                                <datalist id="list_up_keys"></datalist>
                                 {% if active_up_keys %}
                                 <div class="d-flex flex-wrap gap-1 mt-2">
                                     {% for val in active_up_keys %}
-                                    <span class="drawer-active-tag">
-                                        <i class="bi bi-check2 text-green-theme me-1"></i>{{ val }}
+                                    <span class="badge bg-light text-dark border d-inline-flex align-items-center px-2 py-1">
+                                        <i class="bi bi-check2 text-success me-1"></i>{{ val }}
                                     </span>
                                     {% endfor %}
                                 </div>
@@ -281,47 +252,46 @@
                             <div>
                                 <label class="form-label small text-muted mb-1">{% trans "Property Value" %}</label>
                                 <div class="input-group input-group-sm">
-                                    <input list="list_up_vals" name="up_val" class="form-control filter-text-input" placeholder="{% trans 'Filter by value...' %}">
-                                    <button type="submit" class="btn btn-outline-green" title="{% trans 'Add filter' %}">
+                                    <input list="list_up_vals"
+                                           name="up_val"
+                                           class="form-control"
+                                           placeholder="{% trans 'Filter by value...' %}"
+                                           hx-get="{% url 'dashboard:autocomplete' 'up_val' %}"
+                                           hx-trigger="keyup changed delay:300ms"
+                                           hx-target="#list_up_vals">
+                                    <button type="submit" class="btn btn-outline-secondary" title="{% trans 'Add filter' %}">
                                         <i class="bi bi-plus-lg"></i>
                                     </button>
                                 </div>
-                                <datalist id="list_up_vals">
-                                    {% for opt in up_vals_options %}
-                                        {% if opt not in active_up_vals %}<option value="{{ opt }}">{% endif %}
-                                    {% endfor %}
-                                </datalist>
+                                <datalist id="list_up_vals"></datalist>
                                 {% if active_up_vals %}
                                 <div class="d-flex flex-wrap gap-1 mt-2">
                                     {% for val in active_up_vals %}
-                                    <span class="drawer-active-tag">
-                                        <i class="bi bi-check2 text-green-theme me-1"></i>{{ val }}
+                                    <span class="badge bg-light text-dark border d-inline-flex align-items-center px-2 py-1">
+                                        <i class="bi bi-check2 text-success me-1"></i>{{ val }}
                                     </span>
                                     {% endfor %}
                                 </div>
                                 {% endif %}
                             </div>
                         </div>
-                    </details>
+                    </div>
 
-                    <!-- 3. Device ID Section -->
-                    <details class="filter-group border-bottom pb-3 mb-3" {% if active_device_ids %}open{% endif %}>
-                        <summary class="d-flex justify-content-between align-items-center fw-bold small text-uppercase text-secondary py-1">
-                            <span>
-                                {% trans "Device ID" %}
-                                {% if active_device_ids %}
-                                <span class="badge btn-green-user rounded-pill ms-1">{{ active_device_ids|length }}</span>
-                                {% endif %}
-                            </span>
-                            <i class="bi bi-chevron-down filter-chevron"></i>
-                        </summary>
-                        <div class="mt-2 pt-1">
+                    <!-- Device ID Section -->
+                    <div class="border-bottom pb-3 mb-3">
+                        <div class="fw-bold small text-uppercase text-secondary py-1 mb-2">
+                            {% trans "Device ID" %}
+                            {% if active_device_ids %}
+                            <span class="badge bg-secondary rounded-pill ms-1">{{ active_device_ids|length }}</span>
+                            {% endif %}
+                        </div>
+                        <div>
                             <div class="input-group input-group-sm">
                                 <input type="text"
                                        name="device_id"
-                                       class="form-control filter-text-input"
+                                       class="form-control"
                                        placeholder="{% trans 'Search by full or short ID...' %}">
-                                <button type="submit" class="btn btn-outline-green" title="{% trans 'Add filter' %}">
+                                <button type="submit" class="btn btn-outline-secondary" title="{% trans 'Add filter' %}">
                                     <i class="bi bi-plus-lg"></i>
                                 </button>
                             </div>
@@ -329,68 +299,64 @@
                             {% if active_device_ids %}
                             <div class="d-flex flex-wrap gap-1 mt-2">
                                 {% for val in active_device_ids %}
-                                <span class="drawer-active-tag">
-                                    <i class="bi bi-check2 text-green-theme me-1"></i>{{ val }}
+                                <span class="badge bg-light text-dark border d-inline-flex align-items-center px-2 py-1">
+                                    <i class="bi bi-check2 text-success me-1"></i>{{ val }}
                                 </span>
                                 {% endfor %}
                             </div>
                             {% endif %}
                         </div>
-                    </details>
+                    </div>
 
-                    <!--  Harwdare filters -->
+                    <!-- Hardware filters loop -->
                     {% for block in filter_blocks %}
-                    <details class="filter-group border-bottom pb-3 mb-3" {% if block.active or forloop.counter <= 2 %}open{% endif %}>
-                        <summary class="d-flex justify-content-between align-items-center fw-bold small text-uppercase text-secondary py-1">
-                            <span>
-                                {{ block.title }}
-                                {% if block.active %}
-                                <span class="badge btn-green-user rounded-pill ms-1">{{ block.active|length }}</span>
-                                {% endif %}
-                            </span>
-                            <i class="bi bi-chevron-down filter-chevron"></i>
-                        </summary>
-                        <div class="mt-2 pt-1">
+                    <div class="border-bottom pb-3 mb-3">
+                        <div class="fw-bold small text-uppercase text-secondary py-1 mb-2">
+                            {{ block.title }}
+                            {% if block.active %}
+                            <span class="badge bg-secondary rounded-pill ms-1">{{ block.active|length }}</span>
+                            {% endif %}
+                        </div>
+                        <div>
                             <div class="input-group input-group-sm">
                                 <input list="list_{{ block.name }}"
                                        name="{{ block.name }}"
-                                       class="form-control filter-text-input"
-                                       placeholder="{% trans 'Select or type' %} {{ block.title|lower }}...">
-                                <button type="submit" class="btn btn-outline-green" title="{% trans 'Add filter' %}">
+                                       class="form-control"
+                                       placeholder="{% trans 'Select or type' %} {{ block.title|lower }}..."
+                                       hx-get="/dashboard/autocomplete/{{ block.name }}/"
+                                       hx-trigger="keyup changed delay:300ms"
+                                       hx-target="#list_{{ block.name }}">
+                                <button type="submit" class="btn btn-outline-secondary" title="{% trans 'Add filter' %}">
                                     <i class="bi bi-plus-lg"></i>
                                 </button>
                             </div>
-                            <datalist id="list_{{ block.name }}">
-                                {% for opt in block.options %}
-                                    {% if opt not in block.active %}<option value="{{ opt }}">{% endif %}
-                                {% endfor %}
-                            </datalist>
+                            <datalist id="list_{{ block.name }}"></datalist>
 
                             {% if block.active %}
                             <div class="d-flex flex-wrap gap-1 mt-2">
                                 {% for val in block.active %}
-                                <span class="drawer-active-tag">
-                                    <i class="bi bi-check2 text-green-theme me-1"></i>{{ val }}
+                                <span class="badge bg-light text-dark border d-inline-flex align-items-center px-2 py-1">
+                                    <i class="bi bi-check2 text-success me-1"></i>{{ val }}
                                 </span>
                                 {% endfor %}
                             </div>
                             {% endif %}
                         </div>
-                    </details>
+                    </div>
                     {% endfor %}
                 </div>
 
                 <!-- Footer -->
-                <div class="p-3 border-top filter-drawer-footer d-flex gap-2 mt-auto">
+                <div class="p-3 border-top bg-light d-flex gap-2 mt-auto">
                     {% if has_active_filters %}
                     <a href="{{ clear_all_url }}" class="btn btn-outline-danger btn-sm w-50 fw-semibold">
                         {% trans "Reset All" %}
                     </a>
-                    <button type="submit" class="btn btn-green-admin btn-sm w-50 fw-semibold">
+                    <button type="submit" class="btn btn-secondary btn-sm w-50 fw-semibold">
                         {% trans "Apply Filters" %}
                     </button>
                     {% else %}
-                    <button type="submit" class="btn btn-green-admin btn-sm w-100 fw-semibold">
+                    <button type="submit" class="btn btn-secondary btn-sm w-100 fw-semibold">
                         {% trans "Apply Filters" %}
                     </button>
                     {% endif %}
@@ -400,6 +366,7 @@
     </div>
     {% endif %}
 
+    <!-- (Rest of the table UI remains unchanged) -->
     <div class="row">
         <div class="col-12" id="mainContent">
             {% if count > 0 %}
@@ -630,132 +597,6 @@
         </div>
     </div>
 </div>
-
-<style>
-    :root {
-        --refurb-green: #3d9988;
-        --refurb-green-light: #56beac;
-        --refurb-green-dark: #296b5f;
-        --refurb-mint-bg: #f2f9f7;
-        --refurb-mint-chip: #e3f5f1;
-        --refurb-mint-border: #a7dcd1;
-        --refurb-forest-text: #134e4a;
-    }
-
-    .text-green-theme {
-        color: var(--refurb-green) !important;
-    }
-
-    .btn-outline-green {
-        color: var(--refurb-green-dark);
-        border: 1px solid var(--refurb-green);
-        background-color: transparent;
-        transition: all 0.15s ease-in-out;
-    }
-    .btn-outline-green:hover,
-    .btn-outline-green:focus,
-    .btn-check:checked + .btn-outline-green {
-        color: #ffffff !important;
-        background-color: var(--refurb-green) !important;
-        border-color: var(--refurb-green) !important;
-    }
-
-    .filter-control-card {
-        border: 1px solid #dceee9;
-        border-top: 3px solid var(--refurb-green-light);
-    }
-    .search-group-green:focus-within {
-        box-shadow: 0 0 0 0.2rem rgba(86, 190, 172, 0.25);
-        border-radius: 0.375rem;
-    }
-    .search-group-green:focus-within .form-control,
-    .search-group-green:focus-within .input-group-text {
-        border-color: var(--refurb-green-light);
-    }
-
-    .filter-status-box {
-        background-color: var(--refurb-mint-bg);
-        border: 1px solid #d4ece7;
-        min-height: 42px;
-    }
-
-    .filter-chip {
-        background-color: var(--refurb-mint-chip);
-        border: 1px solid var(--refurb-mint-border);
-        color: var(--refurb-forest-text);
-        font-size: 0.8125rem;
-        line-height: 1.2;
-        transition: background-color 0.15s ease, border-color 0.15s ease;
-    }
-    .filter-chip:hover {
-        background-color: #d0ede6;
-        border-color: var(--refurb-green-light);
-    }
-    .filter-chip-cat {
-        color: #2c6e63;
-        font-weight: 500;
-    }
-    .filter-chip-val {
-        color: #0b3733;
-        font-weight: 600;
-    }
-    .filter-chip-remove {
-        color: var(--refurb-green-dark);
-        opacity: 0.75;
-        transition: opacity 0.15s ease, color 0.15s ease, transform 0.15s ease;
-    }
-    .filter-chip-remove:hover {
-        color: #dc2626;
-        opacity: 1;
-        transform: scale(1.1);
-    }
-
-    .filter-drawer-header,
-    .filter-drawer-footer {
-        background-color: var(--refurb-mint-bg);
-    }
-    .drawer-active-tag {
-        display: inline-flex;
-        align-items: center;
-        background-color: var(--refurb-mint-chip);
-        border: 1px solid var(--refurb-mint-border);
-        color: var(--refurb-forest-text);
-        font-size: 0.75rem;
-        font-weight: 500;
-        padding: 0.2rem 0.55rem;
-        border-radius: 0.375rem;
-    }
-
-    .filter-checkbox-green:checked {
-        background-color: var(--refurb-green);
-        border-color: var(--refurb-green);
-    }
-    .filter-checkbox-green:focus,
-    .filter-text-input:focus {
-        border-color: var(--refurb-green-light);
-        box-shadow: 0 0 0 0.2rem rgba(86, 190, 172, 0.25);
-    }
-
-    details.filter-group > summary {
-        list-style: none;
-        cursor: pointer;
-        user-select: none;
-        transition: color 0.15s ease;
-    }
-    details.filter-group > summary:hover {
-        color: var(--refurb-green-dark) !important;
-    }
-    details.filter-group > summary::-webkit-details-marker {
-        display: none;
-    }
-    details.filter-group > summary .filter-chevron {
-        transition: transform 0.2s ease;
-        color: var(--refurb-green);
-    }
-    details.filter-group[open] > summary .filter-chevron {
-        transform: rotate(180deg);
-    }
-</style>
 
 <script>
     document.addEventListener('DOMContentLoaded', () => {
