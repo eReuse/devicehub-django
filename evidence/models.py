@@ -675,6 +675,9 @@ class Evidence:
     def _ram_size_to_gib(size):
         # RamModule sizes come from inxi as strings like "4 GB", "2048 MiB" or
         # "8 GiB". Normalise to GiB; treat GB/GiB as equivalent.
+        # Workbench 11 snapshots give a bare number, in MB (e.g. 4096.0).
+        if isinstance(size, (int, float)):
+            return size / 1024
         if not size:
             return 0.0
         match = re.match(r"\s*([\d.]+)\s*([a-zA-Z]+)?", str(size))

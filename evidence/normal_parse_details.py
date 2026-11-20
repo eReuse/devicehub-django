@@ -243,9 +243,15 @@ class ParseSnapshot:
 
     def get_data_storage(self):
         hdds= get_inxi_key(self.inxi, 'Drives') or []
+        # inxi prints one row per disk (ID, size, model...) followed, when
+        # smartctl ran, by a SMART row (cycles, health...). The disk is added
+        # on its ID row so it exists even without SMART data; the SMART row,
+        # if any, completes the last disk seen.
+        hd = None
         for d in hdds:
             usb = get_inxi(d, "type")
             if usb == "USB":
+                hd = None
                 continue
 
             serial = get_inxi(d, "serial")
@@ -272,21 +278,18 @@ class ParseSnapshot:
                 if sata:
                     hd["sata"] = sata
 
-                continue
-
-
-            cycles = get_inxi(d, "cycles")
-            if cycles:
-                hd['cycles'] = cycles
-                hd["health"] = get_inxi(d, "health")
-                hd["time of used"] = get_inxi(d, "on")
-                hd["read used"] = get_inxi(d, "read-units")
-                hd["written used"] = get_inxi(d, "written-units")
-
                 self.components.append(hd)
                 continue
 
-            hd = {}
+            cycles = get_inxi(d, "cycles")
+            if cycles and hd is not None:
+                hd['cycles'] = cycles
+                hd["health"] = get_inxi(d, "health")
+                hd["time of used"] = get_inxi(d, "on")
+                # inxi names these read/written (SATA rows in the samples) or
+                # read-units/written-units; accept both
+                hd["read used"] = get_inxi(d, "read-units") or get_inxi(d, "read")
+                hd["written used"] = get_inxi(d, "written-units") or get_inxi(d, "written")
 
     def sanitize(self, action):
         return []
