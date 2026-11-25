@@ -317,45 +317,7 @@ class ProductCacheTableMixin():
                 owner=institution, root__in=root_ids)
         }
 
-        # alias -> root, plus the full physical-id set, in one query.
-        alias_to_root = {}
-        alias_ids = set(root_ids)
-        for ra in RootAlias.objects.filter(
-            owner=institution, root__in=root_ids
-        ).values('alias', 'root'):
-            alias_to_root[ra['alias']] = ra['root']
-            alias_ids.add(ra['alias'])
-
-        # gather ALL uuids per root
-        uuid_to_root = {}
-        for sp in SystemProperty.objects.filter(
-            owner=institution, value__in=alias_ids
-        ).values('value', 'uuid'):
-            root = alias_to_root.get(sp['value'], sp['value'])
-            uuid_to_root[str(sp['uuid'])] = root
-
-        # fetch the default state
-        default_state_def = StateDefinition.objects.filter(
-            institution=institution
-        ).order_by('order').first()
-        default_state_name = str(default_state_def.state) if default_state_def else None
-
-        states_per_root = {}
-        for st in State.objects.filter(
-            snapshot_uuid__in=list(uuid_to_root.keys())
-        ).order_by('-date').values('snapshot_uuid', 'state'):
-
-            root = uuid_to_root.get(str(st['snapshot_uuid']))
-            if root is not None:
-                states_per_root.setdefault(root, []).append(str(st['state']))
-
-        # process the state fallback in case oif
-        state_by_root = {}
-        for root, states in states_per_root.items():
-            if len(states) > 1 and default_state_name and states[0] == default_state_name:
-                state_by_root[root] = states[1]
-            else:
-                state_by_root[root] = states[0]
+        state_by_root = State.current_by_root(institution, root_ids)
 
         return projections, state_by_root
 

@@ -15,7 +15,6 @@ from utils.constants import STR_EXTEND_SIZE, CHASSIS_DH
 from evidence.xapian import search
 from evidence.parse_details import ParseSnapshot
 from evidence.normal_parse_details import get_inxi, get_inxi_key
-from action.models import State, StateDefinition
 
 from device.product_cache import ProductCache
 
@@ -253,6 +252,9 @@ class RootAlias(models.Model):
 
         if old_root != new_root:
             cls._sync_memberships(owner, alias, new_root, old_root=old_root)
+            # Lazy import, same reason as in _sync_memberships.
+            from action.models import State
+            State.follow_reroot(owner, alias, old_root, new_root, user=user)
             # The read model follows the canonical change: rebuild the gaining
             # root; rebuild the losing root if it still has aliases, else drop
             # it (``alias`` was its last child, mirroring _sync_memberships).
@@ -372,7 +374,6 @@ def ensure_root_alias_self_reference(sender, instance, created, **kwargs):
     existing = RootAlias.objects.filter(
         owner=instance.owner, alias=instance.value,
     ).first()
-    is_new_device = False
     if existing is None:
         RootAlias.objects.create(
             owner=instance.owner,
@@ -382,22 +383,17 @@ def ensure_root_alias_self_reference(sender, instance, created, **kwargs):
             created=instance.created,
             updated=instance.created,
         )
-        is_new_device = True
+        # A new root is a new product: it enters the institution workflow
+        # in its first state. Lazy import, like _sync_memberships, to keep
+        # evidence.models free of import cycles.
+        from action.models import State
+        State.create_initial(
+            instance.owner, instance.value, instance.uuid,
+            user=instance.user, date=instance.created,
+        )
     elif instance.created > existing.updated:
         RootAlias.objects.filter(pk=existing.pk).update(
             updated=instance.created,
-        )
-
-    if is_new_device:
-        state_def = StateDefinition.objects.filter(
-           order=1,
-           institution=instance.owner
-        ).first()
-        State.objects.create(
-            snapshot_uuid=instance.uuid,
-            state=state_def.state,
-            user= instance.user,
-            institution= instance.owner,
         )
 
     # A new evidence changes the device's latest state: refresh its read model.

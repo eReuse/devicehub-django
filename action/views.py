@@ -36,12 +36,17 @@ class ChangeStateView(LoginRequiredMixin, FormView):
         device.initial()
         logger.info(f"User {self.request.user.id} changing state for device {self.device_id}: {previous_state} -> {new_state}")
 
-        #  check if auto-issuance is enabled
+        institution = self.request.user.institution
         state_def = StateDefinition.objects.filter(
             state=new_state,
-            institution=self.request.user.institution
+            institution=institution
         ).first()
-        auto_issue_dte = state_def.auto_issue_dte if state_def else False
+        if not state_def:
+            messages.error(self.request, _("Invalid state selected."))
+            return redirect(self.get_success_url())
+
+        #  check if auto-issuance is enabled
+        auto_issue_dte = state_def.auto_issue_dte
 
         dpp_settings, _created = InstitutionDPPSettings.objects.get_or_create(
             institution=self.request.user.institution
@@ -50,12 +55,12 @@ class ChangeStateView(LoginRequiredMixin, FormView):
 
         # apply local state changes and user notes
         with transaction.atomic():
-            State.objects.create(
-                snapshot_uuid=snapshot_uuid,
-                state=new_state,
-                user=self.request.user,
-                institution=self.request.user.institution,
-            )
+            # The state belongs to the product (its root), not to the
+            # evidence; snapshot_uuid only anchors the log and the note.
+            root = Device.get_canonical_id_for(self.device_id, institution)
+            previous_state = State.change(
+                institution, root, state_def, user=self.request.user
+            ) or previous_state
 
             message_log = _("<Created> State '{new}'. Previous State: '{prev}'").format(new=new_state, prev=previous_state)
             DeviceLog.objects.create(
@@ -145,16 +150,19 @@ class ChangeStateView(LoginRequiredMixin, FormView):
         if device_id:
             return reverse_lazy('product:details', args=[device_id])
 
-        return reverse_lazy('dashboard:all')
+        return reverse_lazy('dashboard:unassigned')
 
 
 class BulkStateChangeView(DashboardView, View):
 
     def post(self, request, *args, **kwargs):
         state_id = self.kwargs.get('pk')
-        state_def = StateDefinition.objects.filter(id=state_id).first()
+        institution = request.user.institution
+        state_def = StateDefinition.objects.filter(
+            id=state_id, institution=institution
+        ).first()
 
-        referer = request.META.get('HTTP_REFERER') or reverse_lazy('dashboard:all')
+        referer = request.META.get('HTTP_REFERER') or reverse_lazy('dashboard:unassigned')
 
         if not state_def:
             logger.warning(f"Bulk state change failed: Invalid state selected ({state_id}).")
@@ -172,7 +180,7 @@ class BulkStateChangeView(DashboardView, View):
 
         if not selected_devices:
             messages.error(request, _("No products selected"))
-            return self.get_success_url()
+            return redirect(referer)
 
         logger.info(f"User {request.user.id} initiating bulk state change to '{new_state}' for {len(selected_devices)} products.")
 
@@ -184,19 +192,17 @@ class BulkStateChangeView(DashboardView, View):
             try:
                 with transaction.atomic():
                     dev.initial()
-                    previous_state_obj = dev.get_current_state()
-                    previous_state = previous_state_obj.state if previous_state_obj else _("None")
                     snapshot_uuid = dev.last_uuid()
 
                     if not snapshot_uuid:
                         raise ValueError(f"Device {dev.id} is missing initial evidence/snapshot.")
 
-                    State.objects.create(
-                        snapshot_uuid=snapshot_uuid,
-                        state=new_state,
-                        user=self.request.user,
-                        institution=self.request.user.institution,
-                    )
+                    # Session devices may come without owner: resolve the
+                    # root against the user's institution explicitly.
+                    root = Device.get_canonical_id_for(dev.id, institution)
+                    previous_state = State.change(
+                        institution, root, state_def, user=self.request.user
+                    ) or _("None")
 
                     message = _("<Created> State '{new}'. Previous State: '{prev}'").format(new=new_state, prev=previous_state)
                     DeviceLog.objects.create(

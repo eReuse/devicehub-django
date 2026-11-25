@@ -3,8 +3,9 @@ from smtplib import SMTPException
 
 from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
+from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
-from django.shortcuts import Http404, get_object_or_404, redirect, HttpResponseRedirect
+from django.shortcuts import Http404, get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
@@ -275,8 +276,15 @@ class InstitutionView(AdminView, UpdateView):
 class StateDefinitionContextMixin(ContextMixin):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        institution = self.request.user.institution
+        state_definitions = list(
+            StateDefinition.objects.filter(institution=institution).order_by('order')
+        )
+        counts = StateDefinition.product_counts(institution)
+        for state_definition in state_definitions:
+            state_definition.product_count = counts.get(state_definition.pk, 0)
         context.update({
-            "state_definitions": StateDefinition.objects.filter(institution=self.request.user.institution).order_by('order'),
+            "state_definitions": state_definitions,
             "help_text": _('State definitions are the custom finite states that a product can be in.'),
         })
         return context
@@ -314,32 +322,40 @@ class AddStateDefinitionView(AdminView, StateDefinitionContextMixin, CreateView)
         return redirect(self.success_url)
 
 
-class DeleteStateDefinitionView(AdminView, StateDefinitionContextMixin, SuccessMessageMixin, DeleteView):
+class DeleteStateDefinitionView(AdminView, StateDefinitionContextMixin, DeleteView):
     model = StateDefinition
     success_url = reverse_lazy('admin:states_panel')
 
-    def get_success_message(self, cleaned_data):
-        return _("State definition: {state}, has been deleted").format(state=self.object.state)
-
     def form_valid(self, form):
-        if not self.object.institution == self.request.user.institution:
+        institution = self.request.user.institution
+        if not self.object.institution == institution:
             logger.warning(f"User {self.request.user.id} attempted to delete state definition belonging to another institution.")
             raise Http404
 
-        total_states = StateDefinition.objects.filter(institution=self.request.user.institution).count()
+        # Products in this state move to ``target``; rows of merged aliases
+        # (not shown anywhere) move too, so the RESTRICT FK never blocks.
+        target = None
+        target_id = self.request.POST.get('target')
+        if target_id:
+            target = StateDefinition.objects.filter(
+                pk=target_id, institution=institution).first()
+            if target is None:
+                messages.error(self.request, _("Invalid target state."))
+                return redirect(self.success_url)
+
         state_name = self.object.state
+        try:
+            target, moved = self.object.delete_reassigning(target)
+        except ValidationError as err:
+            messages.error(self.request, " ".join(err.messages))
+            return redirect(self.success_url)
 
-        if total_states <= 1:
-            logger.warning(f"User {self.request.user.id} attempted to delete the last state '{state_name}'. Blocked.")
-            messages.error(
-                self.request,
-                _("You cannot delete '{state}'. Your organization must have at least one active state definition.").format(state=state_name)
-            )
-            return HttpResponseRedirect(self.success_url)
-
-        response = super().form_valid(form)
-        logger.info(f"User {self.request.user.id} deleted state definition: '{state_name}'.")
-        return response
+        logger.info(
+            f"User {self.request.user.id} deleted state definition '{state_name}', "
+            f"{moved} state rows moved to '{target.state}'."
+        )
+        messages.success(self.request, _("State definition: {state}, has been deleted").format(state=state_name))
+        return redirect(self.success_url)
 
 
 class UpdateStateOrderView(AdminView, TemplateView):
@@ -348,23 +364,31 @@ class UpdateStateOrderView(AdminView, TemplateView):
     def post(self, request, *args, **kwargs):
         form = OrderingStateForm(request.POST)
 
-        if form.is_valid():
-            ordered_ids = form.cleaned_data["ordering"].split(',')
-
-            with transaction.atomic():
-                current_order = 1
-                _log = []
-                for lookup_id in ordered_ids:
-                    state_definition = StateDefinition.objects.get(id=lookup_id)
-                    state_definition.order = current_order
-                    state_definition.save()
-                    _log.append(f"{state_definition.state} (ID: {lookup_id} -> Order: {current_order})")
-                    current_order += 1
-
-            messages.success(self.request, _("Order changed succesfuly."))
+        if not form.is_valid():
+            messages.error(self.request, _("Invalid state order."))
             return redirect(self.success_url)
-        else:
-            return Http404
+
+        # The ordering must be exactly the institution's states, each once:
+        # ids from other institutions or a partial list are refused.
+        states = {
+            str(sd.pk): sd for sd in StateDefinition.objects.filter(
+                institution=self.request.user.institution)
+        }
+        ordered_ids = [i.strip() for i in form.cleaned_data["ordering"].split(',')]
+        if len(ordered_ids) != len(states) or set(ordered_ids) != set(states):
+            logger.warning(f"User {self.request.user.id} sent an invalid state ordering: {ordered_ids}.")
+            messages.error(self.request, _("Invalid state order."))
+            return redirect(self.success_url)
+
+        with transaction.atomic():
+            for order, lookup_id in enumerate(ordered_ids, start=1):
+                state_definition = states[lookup_id]
+                if state_definition.order != order:
+                    state_definition.order = order
+                    state_definition.save()
+
+        messages.success(self.request, _("Order changed succesfuly."))
+        return redirect(self.success_url)
 
 
 class UpdateStateDefinitionView(AdminView, UpdateView):

@@ -11,7 +11,7 @@ from django.utils import timezone
 from user.models import Institution, User
 from evidence.models import SystemProperty, UserProperty, RootAlias
 from device.product_cache import ProductCache
-from action.models import State, StateDefinition
+from action.models import INITIAL_STATE, State, StateDefinition
 from lot.models import (
     Lot, LotTag, LotSubscription, Beneficiary, DeviceBeneficiary,
 )
@@ -82,16 +82,18 @@ class LotExportTests(TestCase):
         self.assertEqual(rows["AAAAAA"]["beneficiary_status"], "Confirmed")
         self.assertEqual(rows["BBBBBB"]["beneficiary_status"], "Available")
 
-    def test_current_state_from_latest_evidence_uuid(self):
+    def test_current_state_from_root(self):
         StateDefinition.objects.create(
             institution=self.institution, state="Repaired", order=1)
-        State.objects.create(
-            institution=self.institution, user=self.user,
-            state="Repaired", snapshot_uuid=self.uuids["ereuse24:aaaaaa"])
+        State.change(
+            self.institution, "ereuse24:aaaaaa",
+            StateDefinition.objects.get(institution=self.institution, state="Repaired"),
+            user=self.user)
 
         rows = self._rows(self._view().create_export("csv"))
         self.assertEqual(rows["AAAAAA"]["current_state"], "Repaired")
-        self.assertEqual(rows["BBBBBB"]["current_state"], "")
+        # Every device gets the initial state when it enters.
+        self.assertEqual(rows["BBBBBB"]["current_state"], INITIAL_STATE)
 
     def test_user_properties_concatenated(self):
         UserProperty.objects.create(
@@ -159,7 +161,7 @@ class LotExportGoldenTests(TestCase):
     GOLDEN_ROWS = sorted([
         "AAAAAA,Laptop,Dell,Latitude,i7,4,Repaired,8,DDR4,2,1,SSD,Intel,"
         "(color:blue) ,SN-A,,Available",
-        "BBBBBB,Laptop,HP,EliteBook,i5,2,,16,DDR4,2,2,NVMe,AMD,,SN-B,,Confirmed",
+        "BBBBBB,Laptop,HP,EliteBook,i5,2,INBOX,16,DDR4,2,2,NVMe,AMD,,SN-B,,Confirmed",
     ])
 
     def setUp(self):
@@ -184,9 +186,10 @@ class LotExportGoldenTests(TestCase):
         # current_state for device A only.
         StateDefinition.objects.create(
             institution=self.institution, state="Repaired", order=1)
-        State.objects.create(
-            institution=self.institution, user=self.user,
-            state="Repaired", snapshot_uuid=self.uuids["ereuse24:aaaaaa"])
+        State.change(
+            self.institution, "ereuse24:aaaaaa",
+            StateDefinition.objects.get(institution=self.institution, state="Repaired"),
+            user=self.user)
 
         # a user property on device A.
         UserProperty.objects.create(
@@ -264,23 +267,28 @@ class LotTableDataTests(TestCase):
     def test_current_state_resolved_per_device(self):
         StateDefinition.objects.create(
             institution=self.institution, state="Repaired", order=1)
-        State.objects.create(
-            institution=self.institution, user=self.user,
-            state="Repaired", snapshot_uuid=self.uuids["ereuse24:aaaaaa"])
+        State.change(
+            self.institution, "ereuse24:aaaaaa",
+            StateDefinition.objects.get(institution=self.institution, state="Repaired"),
+            user=self.user)
 
         rows = {r['id']: r for r in self._view().get_table_data()}
         self.assertEqual(rows['ereuse24:aaaaaa']['current_state'], "Repaired")
-        self.assertEqual(rows['ereuse24:bbbbbb']['current_state'], '--')
+        # Every device gets the initial state when it enters.
+        self.assertEqual(rows['ereuse24:bbbbbb']['current_state'], INITIAL_STATE)
 
     def test_sort_by_current_state(self):
         StateDefinition.objects.create(
             institution=self.institution, state="Repaired", order=1)
-        State.objects.create(
-            institution=self.institution, user=self.user,
-            state="Repaired", snapshot_uuid=self.uuids["ereuse24:bbbbbb"])
+        State.change(
+            self.institution, "ereuse24:bbbbbb",
+            StateDefinition.objects.get(institution=self.institution, state="Repaired"),
+            user=self.user)
 
         rows = self._view(sort="current_state").get_table_data()
-        # Device with a state sorts ahead of the one whose state is None.
+        # B is "Repaired", A keeps the initial "INBOX": sorted by name.
+        self.assertEqual(rows[0]['id'], 'ereuse24:aaaaaa')
+        rows = self._view(sort="-current_state").get_table_data()
         self.assertEqual(rows[0]['id'], 'ereuse24:bbbbbb')
 
 
@@ -334,15 +342,17 @@ class ProductCacheDeviceListTests(TestCase):
     def test_current_state_resolved_per_device(self):
         StateDefinition.objects.create(
             institution=self.institution, state="Repaired", order=1)
-        State.objects.create(
-            institution=self.institution, user=self.user,
-            state="Repaired", snapshot_uuid=self.uuids["ereuse24:aaaaaa"])
+        State.change(
+            self.institution, "ereuse24:aaaaaa",
+            StateDefinition.objects.get(institution=self.institution, state="Repaired"),
+            user=self.user)
 
         view = self._view(AllDevicesView)
         rows = {r['id']: r for r in view.build_product_cache_rows(
             ["ereuse24:aaaaaa", "ereuse24:bbbbbb"])}
         self.assertEqual(rows['ereuse24:aaaaaa']['current_state'], "Repaired")
-        self.assertEqual(rows['ereuse24:bbbbbb']['current_state'], '--')
+        # Every device gets the initial state when it enters.
+        self.assertEqual(rows['ereuse24:bbbbbb']['current_state'], INITIAL_STATE)
 
     def test_inbox_excludes_assigned_devices(self):
         lot = Lot.objects.create(

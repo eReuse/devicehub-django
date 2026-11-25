@@ -323,37 +323,7 @@ class LotDashboardView(ExportMixin, SingleTableMixin, InventaryMixin, DetailsMix
             alias_to_root[ra['alias']] = ra['root']
             alias_ids.add(ra['alias'])
 
-        # gather all uuids
-        uuid_to_root = {}
-        for sp in SystemProperty.objects.filter(
-            owner=institution, value__in=alias_ids
-        ).values('value', 'uuid'):
-            root = alias_to_root.get(sp['value'], sp['value'])
-            uuid_to_root[str(sp['uuid'])] = root
-
-        # $get the default state (order 0)
-        default_state_def = StateDefinition.objects.filter(
-            institution=institution
-        ).order_by('order').first()
-        default_state_name = str(default_state_def.state) if default_state_def else None
-
-        # collect states of device aggregation
-        states_per_root = {}
-        for st in State.objects.filter(
-            snapshot_uuid__in=list(uuid_to_root.keys())
-        ).order_by('-date').values('snapshot_uuid', 'state'):
-
-            root = uuid_to_root.get(str(st['snapshot_uuid']))
-            if root is not None:
-                states_per_root.setdefault(root, []).append(str(st['state']))
-
-        # process the states
-        state_by_root = {}
-        for root, states in states_per_root.items():
-            if len(states) > 1 and default_state_name and states[0] == default_state_name:
-                state_by_root[root] = states[1]
-            else:
-                state_by_root[root] = states[0]
+        state_by_root = State.current_by_root(institution, device_ids)
 
         # beneficiary status per root (any physical id may carry the row).
         status_by_root = {}
@@ -755,19 +725,13 @@ class InventoryOverviewView(DashboardView, TemplateView):
             else:
                 assigned_types_counter[dtype] += 1
 
-        # get states
-        # currently everything is tied to an evidence uuid it should be a better way
-        sys_props = SystemProperty.objects.filter(owner=institution).order_by('-created').values_list('value', 'uuid')
-        root_to_uuid = {}
-        for val, uuid in sys_props.iterator(chunk_size=2000):
-            if val not in root_to_uuid:
-                root_to_uuid[val] = uuid
-
-        states = State.objects.filter(snapshot_uuid__in=root_to_uuid.values()).order_by('-date').values_list('snapshot_uuid', 'state')
-        uuid_to_state = {}
-        for uuid, state in states.iterator(chunk_size=2000):
-            if uuid not in uuid_to_state:
-                uuid_to_state[uuid] = state
+        # current state per root; dormant rows (merged aliases) are never
+        # looked up because only live roots from device_info are used.
+        root_to_state = dict(
+            State.objects.filter(institution=institution)
+            .values_list('root', 'state_definition__state')
+            .iterator(chunk_size=2000)
+        )
 
         # determine states
         target_state_names = None
@@ -776,8 +740,7 @@ class InventoryOverviewView(DashboardView, TemplateView):
 
         states_breakdown = {}
         for root, dtype in device_info:
-            uuid = root_to_uuid.get(root)
-            state_name = uuid_to_state.get(uuid, 'Unknown')
+            state_name = root_to_state.get(root, 'Unknown')
 
             # if user pinned states, ignore counting devices in non-pinned states
             if target_state_names is not None and state_name not in target_state_names:

@@ -7,7 +7,7 @@ from django.utils.dateparse import parse_datetime
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import gettext_lazy as _
 
-from action.models import State, StateDefinition
+from action.models import State
 from device.product_cache import ProductCache
 from evidence.models import (
     CredentialProperty,
@@ -249,29 +249,12 @@ class Device:
         return self.uuids[0]
 
     def get_current_state(self):
-        if not self.uuids:
-            self.get_uuids()
-        if not self.uuids:
+        if not self.owner:
             return None
-
-        recent_states = list(
-            State.objects.filter(snapshot_uuid__in=self.uuids).order_by('-date')[:2]
-        )
-
-        if not recent_states:
-            return None
-
-        latest_state = recent_states[0]
-
-        if len(recent_states) > 1:
-            default_state_def = StateDefinition.objects.filter(
-                institution_id=latest_state.institution_id
-            ).order_by('order').first()
-
-            if default_state_def and latest_state.state == default_state_def.state:
-                return recent_states[1]
-
-        return latest_state
+        # Resolve the root now: a Device built without owner caches its
+        # canonical id before get_last_evidence() fills the owner, and that
+        # stale value (the alias itself) would hit the alias' dormant row.
+        return State.current(self.owner, self.get_canonical_id_for(self.id, self.owner))
 
     def get_lots(self):
         # A lot row may have been stored with either the physical ID or the

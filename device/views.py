@@ -14,7 +14,7 @@ from django.views.generic import ListView
 from django.views.generic.base import TemplateView
 from django.views.generic.edit import CreateView, DeleteView, FormView, UpdateView, View
 
-from action.models import DeviceLog, Note, State, StateDefinition
+from action.models import DeviceLog, Note, StateDefinition
 from credentials.services import CredentialService
 from dashboard.mixins import DashboardView, Http403
 from device.forms import DeviceAttributeFormSet, DeviceMainForm
@@ -221,7 +221,7 @@ class DetailsView(DashboardView, TemplateView ):
         state_definitions = StateDefinition.objects.filter(
             institution=self.request.user.institution
         ).order_by('order')
-        device_states = State.objects.filter(snapshot_uuid__in=uuids).order_by('-date')
+        current_state = self.object.get_current_state()
         device_logs = DeviceLog.objects.filter(
             snapshot_uuid__in=uuids).order_by('-date')
         device_notes = Note.objects.filter(snapshot_uuid__in=uuids).order_by('-date')
@@ -233,7 +233,7 @@ class DetailsView(DashboardView, TemplateView ):
             'dpps': dpps,
             'impact': enviromental_impact,
             "state_definitions": state_definitions,
-            "device_states": device_states,
+            "current_state": current_state,
             "device_logs": device_logs,
             "device_notes": device_notes,
             "table": evidence_table,
