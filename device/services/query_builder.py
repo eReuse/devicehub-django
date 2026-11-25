@@ -1,3 +1,4 @@
+import logging
 import operator
 from functools import reduce
 
@@ -6,10 +7,13 @@ from django.db.models import Exists, OuterRef, Q, Subquery
 from django.db.models.expressions import RawSQL
 from django.utils.translation import gettext_lazy as _
 
+from django.db import connection
 from device.product_cache import ProductCache
 from evidence.models import UserProperty
 from lot.models import DeviceBeneficiary, DeviceLot
 
+
+logger = logging.getLogger('django')
 
 class ProductQueryBuilder:
     UNASSIGNED_LOT_TOKEN = "__unassigned__"
@@ -45,22 +49,52 @@ class ProductQueryBuilder:
                 available.append(field)
 
         present_json_keys = set()
-        if base_qs.exclude(data={}).exists():
-            from django.db import connection
-            sql, params = base_qs.exclude(data={}).values_list('root', flat=True).query.sql_with_params()
-            with connection.cursor() as cursor:
-                cursor.execute(
-                    f"""
+        non_empty_qs = base_qs.exclude(data={})
+        if non_empty_qs.exists():
+            sql, params = non_empty_qs.values_list('root', flat=True).query.sql_with_params()
+
+            if connection.vendor == 'postgresql':
+                query = f"""
                     SELECT DISTINCT kv.key
                     FROM device_productcache pc,
                          jsonb_each_text(pc.data::jsonb) AS kv(key, val)
-                    WHERE pc.root IN ({sql})
+                    WHERE pc.owner_id = %s
+                      AND pc.root IN ({sql})
                       AND kv.val IS NOT NULL
                       AND BTRIM(kv.val) <> ''
-                    """,
-                    params,
+                """
+            elif connection.vendor == 'sqlite':
+                logger.warning(
+                    "Running ProductQueryBuilder.get_available_fields on SQLite; "
+                    "JSON key extraction lacks GIN indexing and may degrade on large datasets."
                 )
-                present_json_keys = {row[0] for row in cursor.fetchall()}
+                query = f"""
+                    SELECT DISTINCT kv.key
+                    FROM device_productcache pc,
+                         json_each(pc.data) AS kv
+                    WHERE pc.owner_id = %s
+                      AND pc.root IN ({sql})
+                      AND kv.value IS NOT NULL
+                      AND TRIM(CAST(kv.value AS TEXT)) <> ''
+                """
+            else:
+                logger.warning(
+                    "Unsupported DB vendor '%s' for JSON key SQL; falling back to Python scan.",
+                    connection.vendor,
+                )
+                query = None
+
+            if query:
+                with connection.cursor() as cursor:
+                    cursor.execute(query, [self.institution.pk, *params])
+                    present_json_keys = {row[0] for row in cursor.fetchall()}
+            else:
+                for d in non_empty_qs.values_list('data', flat=True):
+                    if isinstance(d, dict):
+                        present_json_keys.update(
+                            k for k, v in d.items()
+                            if v is not None and str(v).strip() != ''
+                        )
 
         for field in ProductCache.DATA_FIELDS:
             if field in present_json_keys or self._clean_list(field):
