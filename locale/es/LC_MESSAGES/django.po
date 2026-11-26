@@ -2997,3 +2997,8 @@ msgstr "Administrador"
 #: user/views.py:31
 msgid "Download Settings"
 msgstr "Descargar preferencias"
+
+#: dashboard/templates/base.html:284
+#, python-format
+msgid "Help: %(page)s"
+msgstr "Ayuda: %(page)s"

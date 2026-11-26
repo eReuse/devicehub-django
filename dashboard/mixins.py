@@ -10,6 +10,7 @@ from device.product_cache import ProductCache
 from evidence.models import SystemProperty, RootAlias
 from lot.models import LotTag
 from action.models import StateDefinition, State
+from dashboard.help import help_url
 from dashboard.tables import DeviceTable, AllDevicesTable
 from django_tables2 import RequestConfig, SingleTableView
 from django.utils.dateparse import parse_datetime
@@ -38,6 +39,9 @@ class DashboardView(LoginRequiredMixin):
     title = ""
     subtitle = ""
     section = ""
+    # Page of the help site for this view, e.g. "admin/#states". Empty means
+    # there is no contextual help link for the view.
+    help_page = ""
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -51,6 +55,8 @@ class DashboardView(LoginRequiredMixin):
             'breadcrumb': self.breadcrumb,
             # 'icon': self.icon,
             'section': self.section,
+            'help_url': help_url(self.help_page) if self.help_page else "",
+            'help_home_url': help_url(),
             'path': resolve(self.request.path).view_name,
             'user': self.request.user,
             'lot_tags': lot_tags,

@@ -1310,3 +1310,8 @@ msgstr "Baixa la configuració"
 
 #~ msgid "Add new lot"
 #~ msgstr "Afegeix un lot nou"
+
+#: dashboard/templates/base.html:284
+#, python-format
+msgid "Help: %(page)s"
+msgstr "Ajuda: %(page)s"

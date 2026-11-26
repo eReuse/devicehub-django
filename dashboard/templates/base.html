@@ -148,7 +148,7 @@
 
               <li><hr class="dropdown-divider"></li>
               <li>
-                  <a class="dropdown-item" href="https://docs.ereuse.org/help">
+                  <a class="dropdown-item" href="{% firstof help_url help_home_url 'https://docs.ereuse.org/help/' %}" target="_blank" rel="noopener noreferrer">
                       <i class="bi bi-question-circle me-2"></i>{% trans 'Help' %}
                   </a>
               </li>
@@ -279,7 +279,12 @@
           {% endblock messages %}
           <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2">
             <h1 class="h2">{{ title }}
-              {% if help_text %}
+              {% if help_url %}
+              {% blocktrans asvar help_label with page=title %}Help: {{ page }}{% endblocktrans %}
+              <a href="{{ help_url }}" class="ms-1 text-decoration-none" target="_blank" rel="noopener noreferrer" data-bs-toggle="tooltip" data-bs-placement="right" title="{% if help_text %}{{ help_text }} – {% endif %}{{ help_label }}" aria-label="{{ help_label }}">
+                <i class="fas fa-question-circle text-secondary h6 align-top"></i>
+              </a>
+              {% elif help_text %}
               <span class="ms-1" data-bs-toggle="tooltip" data-bs-placement="right" title="{{ help_text }}">
                 <i class="fas fa-question-circle text-secondary h6 align-top"></i>
               </span>
@@ -343,7 +348,7 @@
   </body>
 
   <script>
-     //If help_text is passed to the view as context, a hover-able help icon is displayed
+     //If help_text or help_url is passed to the view as context, a hover-able help icon is displayed
       var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
       var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
         return new bootstrap.Tooltip(tooltipTriggerEl);

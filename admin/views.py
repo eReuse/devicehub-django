@@ -286,12 +286,14 @@ class StatesPanelView(AdminView, StateDefinitionContextMixin, TemplateView):
     template_name = "states_panel.html"
     title = _("States Panel")
     breadcrumb = [(_("Admin"), reverse_lazy("admin:panel")), (_("States"), None)]
+    help_page = "admin/#states"
 
 
 class AddStateDefinitionView(AdminView, StateDefinitionContextMixin, CreateView):
     template_name = "states_panel.html"
     title = _("New State Definition")
     breadcrumb = [(_("Admin"), reverse_lazy("admin:panel")), (_("States"), reverse_lazy("admin:states_panel")), (_("New state"), None)]
+    help_page = "admin/#states"
     success_url = reverse_lazy('admin:states_panel')
     model = StateDefinition
     fields = ('state',)
